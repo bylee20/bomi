@@ -270,16 +270,38 @@ auto PlayEngine::Data::updateMediaName(const QString &name) -> void
     mediaInfo.setName(category % ": "_a % display);
 }
 
-auto translator_display_language(const QString &iso) -> QString;
-
-SIA _IsAlphabet(ushort c) -> bool
+auto PlayEngine::Data::setStreamList(StreamType type, StreamList &&list) -> bool
 {
-    return _InRange<ushort>('a', c, 'z') || _InRange<ushort>('A', c, 'Z');
-}
-
-SIA _IsAlphabet(const QString &text) -> bool
-{
-    for (auto &c : text) { if (!_IsAlphabet(c.unicode())) return false; }
+    auto &info = streamTypeInfo[type];
+    auto &data = streams[type];
+    int id = data.reserved;
+    if (id < 0) {
+        const auto &pri = streams[type].priority;
+        auto findLang = [&] () {
+            for (auto &p : pri) {
+                const QRegEx rx(p);
+                for (auto &str : list) {
+                    auto m = rx.match(str.language());
+                    if (m.hasMatch())
+                        return str.id();
+                }
+            }
+            return -1;
+        };
+        if (!pri.isEmpty())
+            id = findLang();
+    }
+    if (id >= 0) {
+        for (auto &str : list)
+            str.m_selected = str.m_id == id;
+        setmpv(info.mpvName, id);
+    }
+    data.reserved = -1;
+    if (streams[type].tracks == list)
+        return false;
+    streams[type].tracks = std::move(list);
+    emit (p->*(info.notifyList))(streams[type].tracks);
+    emit (p->*(info.notifyTrack))(currentTrack(type));
     return true;
 }
 
@@ -318,50 +340,14 @@ auto PlayEngine::Data::observe() -> void
         QVector<StreamList> streams(3);
         auto list = getmpv<QVariant>("track-list").toList();
         for (auto &var : list) {
-            auto map = var.toMap();
-            auto type = Stream::Unknown;
-            switch (map[u"type"_q].toString().at(0).unicode()) {
-            case 'v': type = Stream::Video; break;
-            case 'a': type = Stream::Audio; break;
-            case 's': type = Stream::Subtitle; break;
-            default: continue;
-            }
-            Stream stream;
-            stream.m_type = type;
-            stream.m_albumart = map[u"albumart"_q].toBool();
-            stream.m_codec = map[u"codec"_q].toString();
-            stream.m_default = map[u"default"_q].toBool();
-            stream.m_id = map[u"id"_q].toInt();
-            stream.m_lang = map[u"lang"_q].toString();
-            if (_InRange(2, stream.m_lang.size(), 3) && _IsAlphabet(stream.m_lang))
-                stream.m_lang = translator_display_language(stream.m_lang);
-            stream.m_title = map[u"title"_q].toString();
-            stream.m_fileName = map[u"external-filename"_q].toString();
-            if (!stream.m_fileName.isEmpty())
-                stream.m_title = QFileInfo(stream.m_fileName).fileName();
-            stream.m_selected = map[u"selected"_q].toBool();
-            streams[stream.m_type].insert(stream.m_id, stream);
+            const auto track = StreamTrack::fromMpvData(var);
+            streams[track.type()].insert(track.id(), track);
         }
         return streams;
     }, [=] (QEvent *event) {
         auto strms = _MoveData<QVector<StreamList>>(event);
-        auto check = [&] (Stream::Type type)
-        {
-            if (!_Change(streams[type], strms[type]))
-                return false;
-            emit (p->*(streamTypeInfo[type].notifyList))(streams[type]);
-            emit (p->*(streamTypeInfo[type].notifyTrack))(currentTrack(type));
-            return true;
-        };
-        const bool hadVideo = !streams[Stream::Video].isEmpty();
-        const bool hasVideo = !strms[Stream::Video].isEmpty();
-        if (check(Stream::Video) && hasVideo != hadVideo)
-                emit p->hasVideoChanged();
-        if (check(Stream::Audio)) {
-            audioTrackInfo->setCount(streams[Stream::Audio].size());
-            audioTrackInfo->setCurrent(currentTrack(Stream::Audio));
-        }
-        check(Stream::Subtitle);
+        for (auto type : streamTypes)
+            setStreamList(type, std::move(strms[type]));
     });
     for (auto type : streamTypes)
         observeTrack(type);
@@ -473,13 +459,13 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         break;
     case MPV_EVENT_START_FILE:
         loaded = false;
-        this->mpvMrl = this->startInfo.mrl;
-        this->postState(Loading);
+        mpvMrl = startInfo.mrl;
+        postState(Loading);
         _PostEvent(p, PreparePlayback);
         break;
     case MPV_EVENT_FILE_LOADED: {
         loaded = true;
-        this->disc = this->mpvMrl.isDisc();
+        this->disc = mpvMrl.isDisc();
         if (this->initSeek > 0) {
             this->tellmpv("seek", this->initSeek, 2);
             this->initSeek = -1;
@@ -506,13 +492,11 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         break;
     } case MPV_EVENT_END_FILE: {
         disc = false;
-        auto reason = [] (void *data) {
+        auto reason = [] (void *data) -> int {
             const auto reason = static_cast<mpv_event_end_file*>(data)->reason;
-            if (reason > EndUnknown)
-                return EndUnknown;
-            if (reason == EndOfFile && !loaded)
-                return EndFailed;
-            return static_cast<EndReason>(reason);
+            if (reason == MPV_END_FILE_REASON_EOF && !loaded)
+                return MPV_END_FILE_REASON_ERROR;
+            return reason;
         };
         _PostEvent(p, EndPlayback, mpvMrl, reason(event->data));
         break;
@@ -576,19 +560,20 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         emit p->started(startInfo.mrl);
         break;
     } case EndPlayback: {
-        Mrl mrl; EndReason reason; _TakeData(event, mrl, reason);
+        Mrl mrl; int reason; _TakeData(event, mrl, reason);
         int remain = (this->duration + this->begin) - this->position;
         nextInfo = StartInfo();
         auto state = Stopped;
         switch (reason) {
-        case EndOfFile:
+        case MPV_END_FILE_REASON_EOF:
             _Info("Playback reached end-of-file");
             emit p->requestNextStartInfo();
             if (nextInfo.isValid())
                 state = Loading;
             remain = 0;
             break;
-        case EndQuit: case EndRequest:
+        case MPV_END_FILE_REASON_QUIT:
+        case MPV_END_FILE_REASON_STOP:
             _Info("Playback has been terminated by request");
             break;
         default:
@@ -603,7 +588,6 @@ auto PlayEngine::Data::process(QEvent *event) -> void
             info.remain = remain;
             for (auto type : streamTypes)
                 info.streamIds[type] = this->currentTrack(type);
-//            qDebug() << this->lastStreamIds << this->streamIds;
             emit p->finished(info);
         }
         if (nextInfo.isValid())

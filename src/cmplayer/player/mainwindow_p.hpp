@@ -59,6 +59,7 @@ struct MainWindow::Data {
     QList<EnumGroup> enumGroups;
     MainQuickView *view = nullptr;
     bool visible = false, sotChanging = false, fullScreen = false;
+    bool starting = false;
     QQuickItem *player = nullptr;
     RootMenu menu;
     RecentInfo recent;
@@ -67,6 +68,7 @@ struct MainWindow::Data {
     VideoRenderer vr;
     SubtitleRendererItem subtitle;
     QPoint prevPos;
+
     Qt::WindowStates winState = Qt::WindowNoState;
     Qt::WindowStates prevWinState = Qt::WindowNoState;
     Qt::MouseButton pressedButton = Qt::NoButton;

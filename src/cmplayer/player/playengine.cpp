@@ -31,12 +31,29 @@ PlayEngine::PlayEngine()
 
     d->observe();
 
+    auto setStreamInfo = [&] (AvCommonInfoObject *info, const StreamTrack &track)
+    {
+        info->setTrack(track.id());
+        info->setTitle(track.title());
+        info->setLanguage(track.language());
+    };
+
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
-    connect(this, &PlayEngine::currentVideoStreamChanged,
-            &d->videoInfo, &VideoInfoObject::setTrack);
-    connect(this, &PlayEngine::currentAudioStreamChanged,
-            &d->audioInfo, &AudioInfoObject::setTrack);
+    connect(this, &PlayEngine::videoStreamsChanged, this, [=] () {
+        if (_Change(d->hasVideo, !d->streams[StreamVideo].tracks.isEmpty()))
+            emit hasVideoChanged();
+    });
+    connect(this, &PlayEngine::audioStreamsChanged, this, [=] () {
+        d->audioTrackInfo->setCount(d->streams[StreamAudio].tracks.size());
+        d->audioTrackInfo->setCurrent(d->currentTrack(StreamAudio));
+    });
+
+    connect(this, &PlayEngine::currentVideoStreamChanged, this, [=] (int id)
+        { setStreamInfo(&d->videoInfo, d->streams[StreamVideo].tracks[id]); });
+    connect(this, &PlayEngine::currentAudioStreamChanged, this, [=] (int id)
+        { setStreamInfo(&d->audioInfo, d->streams[StreamAudio].tracks[id]); });
+
     auto checkDeint = [=] () {
         auto act = Unavailable;
         if (d->filter->isInputInterlaced())
@@ -207,9 +224,19 @@ auto PlayEngine::chapters() const -> const ChapterList&
     return d->chapters;
 }
 
+auto PlayEngine::setSubtitlePriority(const QStringList &sp) -> void
+{
+    d->streams[StreamSubtitle].priority = sp;
+}
+
+auto PlayEngine::setAudioPriority(const QStringList &ap) -> void
+{
+    d->streams[StreamAudio].priority = ap;
+}
+
 auto PlayEngine::subtitleStreams() const -> const StreamList&
 {
-    return d->streams[Stream::Subtitle];
+    return d->streams[StreamSubtitle].tracks;
 }
 
 auto PlayEngine::videoRenderer() const -> VideoRenderer*
@@ -219,7 +246,7 @@ auto PlayEngine::videoRenderer() const -> VideoRenderer*
 
 auto PlayEngine::videoStreams() const -> const StreamList&
 {
-    return d->streams[Stream::Video];
+    return d->streams[StreamVideo].tracks;
 }
 
 auto PlayEngine::audioSync() const -> int
@@ -229,7 +256,7 @@ auto PlayEngine::audioSync() const -> int
 
 auto PlayEngine::audioStreams() const -> const StreamList&
 {
-    return d->streams[Stream::Audio];
+    return d->streams[StreamAudio].tracks;
 }
 
 auto PlayEngine::run() -> void
@@ -358,16 +385,19 @@ auto PlayEngine::setSubtitleStreamsVisible(bool visible) -> void
     d->setmpv_async("sub-visibility", (d->subStreamsVisible && id >= 0));
 }
 
-auto PlayEngine::setCurrentSubtitleStream(int id) -> void
+auto PlayEngine::setCurrentSubtitleStream(int id, bool reserve) -> void
 {
     d->setmpv_async("sub-visibility", (d->subStreamsVisible && id > 0));
-    if (id > 0)
+    if (id > 0) {
         d->setmpv_async("sub", id);
+        if (reserve)
+            d->streams[StreamSubtitle].reserved = id;
+    }
 }
 
 auto PlayEngine::currentSubtitleStream() const -> int
 {
-    return d->currentTrack(Stream::Subtitle);
+    return d->currentTrack(StreamSubtitle);
 }
 
 auto PlayEngine::addSubtitleStream(const QString &fileName,
@@ -393,9 +423,9 @@ auto PlayEngine::addSubtitleStream(const QString &fileName,
 
 auto PlayEngine::removeSubtitleStream(int id) -> void
 {
-    auto &streams = d->streams[Stream::Subtitle];
-    auto it = streams.find(id);
-    if (it != streams.end()) {
+    auto &tracks = d->streams[StreamSubtitle].tracks;
+    auto it = tracks.find(id);
+    if (it != tracks.end()) {
         if (it->isExternal()) {
             for (int i=0; i<d->subtitleFiles.size(); ++i) {
                 if (d->subtitleFiles[i].path == it->m_fileName)
@@ -555,7 +585,7 @@ auto PlayEngine::isSeekable() const -> bool
 
 auto PlayEngine::hasVideo() const -> bool
 {
-    return !d->streams[Stream::Video].isEmpty();
+    return d->hasVideo;
 }
 
 auto PlayEngine::currentChapter() const -> int
@@ -586,24 +616,27 @@ auto PlayEngine::mrl() const -> Mrl
 
 auto PlayEngine::currentAudioStream() const -> int
 {
-    return d->currentTrack(Stream::Audio);
+    return d->currentTrack(StreamAudio);
 }
 
 auto PlayEngine::setCurrentVideoStream(int id) -> void
 {
-    if (d->streams[Stream::Video].contains(id))
+    if (d->streams[StreamVideo].tracks.contains(id))
         d->setmpv_async("video", id);
 }
 
 auto PlayEngine::currentVideoStream() const -> int
 {
-    return d->currentTrack(Stream::Video);
+    return d->currentTrack(StreamVideo);
 }
 
-auto PlayEngine::setCurrentAudioStream(int id) -> void
+auto PlayEngine::setCurrentAudioStream(int id, bool reserve) -> void
 {
-    if (d->streams[Stream::Audio].contains(id))
+    if (d->streams[StreamAudio].tracks.contains(id)) {
         d->setmpv_async("audio", id);
+        if (reserve)
+            d->streams[StreamAudio].reserved = id;
+    }
 }
 
 auto PlayEngine::setAudioSync(int sync) -> void

@@ -4,8 +4,8 @@ import CMPlayer 1.0
 Text {
     id: item
     font { pixelSize: parent.fontSize; family: Util.monospace }
-    color: "yellow"; style: Text.Outline; styleColor: "black"
-
+    color: "yellow"; styleColor: "black"
+    style: Text.Outline;
     property alias timer: t.running
     property alias interval: t.interval
     signal tick

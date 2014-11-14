@@ -1,5 +1,6 @@
 #include "audiocontroller.hpp"
 #include "audiomixer.hpp"
+#include "audioformat.hpp"
 #include "player/mpv_helper.hpp"
 #include "enum/channellayout.hpp"
 #include "misc/log.hpp"
@@ -60,7 +61,7 @@ struct AudioController::Data {
     int fmt_conv = AF_FORMAT_UNKNOWN, outrate = 0;
     SpeedMeasure<quint64> measure{10, 30};
     int srate = 0;
-    quint64 samples = 0, counter = 0;
+    quint64 samples = 0;
     bool normalizerActivated = false, tempoScalerActivated = false;
     bool resample = false;
     double scale = 1.0, amp = 1.0, gain = 1.0;
@@ -78,7 +79,12 @@ AudioController::AudioController(QObject *parent)
     : QObject(parent)
     , d(new Data)
 {
-
+    d->measure.setTimer([=] () {
+        if (_Change(d->srate, qRound(d->measure.get())))
+            emit samplerateChanged(d->srate);
+        if (_Change<double>(d->gain, d->normalizerActivated ? d->mixer->gain() : -1))
+            emit gainChanged(d->gain);
+    }, 100000);
 }
 
 AudioController::~AudioController()
@@ -133,7 +139,7 @@ auto AudioController::reinitialize(mp_audio *in) -> int
     if (!in)
         return AF_ERROR;
     d->measure.reset();
-    d->counter = d->samples = 0;
+    d->samples = 0;
     if (_Change(d->srate, 0))
         emit samplerateChanged(d->srate);
     if (_Change(d->gain, 1.0))
@@ -298,12 +304,6 @@ auto AudioController::filter(af_instance *af, mp_audio *data, int flags) -> int
     *data = *d->af->data;
     af->delay += d->mixer->delay();
     d->measure.push(d->samples += data->samples);
-    if (!tmp::remainder<4>(++d->counter)) {
-        if (_Change(d->srate, qRound(d->measure.get())))
-            emit ac->samplerateChanged(d->srate);
-        if (_Change<double>(d->gain, d->normalizerActivated ? d->mixer->gain() : -1))
-            emit ac->gainChanged(d->gain);
-    }
     return 0;
 }
 

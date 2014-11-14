@@ -46,6 +46,7 @@ public:
     bool use_heartbeat = false;
     QString heartbeat_command;
     int heartbeat_interval = 60;
+    QStringList sub_priority, audio_priority;
 
     bool show_osd_on_action = true, show_osd_on_resized = true;
     bool show_osd_timeline = true;
@@ -63,7 +64,7 @@ public:
     SubtitleAutoselect sub_autoselect = SubtitleAutoselect::Matched;
     QString sub_enc = defaultSubtitleEncoding(), sub_ext;
     int sub_enc_accuracy = defaultSubtitleEncodingDetectionAccuracy(), ms_per_char = 500;
-    SubtitleStyle sub_style;        QStringList sub_priority;
+    SubtitleStyle sub_style;
 
     bool enable_system_tray = true, hide_rather_close = true;
     MouseActionMap mouse_action_map = defaultMouseActionMap();

@@ -214,6 +214,7 @@ static const auto jio = JIO(
     JE(disable_screensaver),
     JE(sub_enc),
     JE(sub_priority),
+    JE(audio_priority),
     JE(sub_enc_autodetection),
     JE(sub_enc_accuracy),
     JE(ms_per_char),

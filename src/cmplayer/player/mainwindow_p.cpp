@@ -225,6 +225,7 @@ auto MainWindow::Data::initEngine() -> void
     });
 
     connect(&engine, &PlayEngine::started, p, [this] (Mrl mrl) {
+        starting = true;
         setOpen(mrl);
         as.state.mrl = mrl.toUnique();
         auto &state = as.state;
@@ -232,7 +233,7 @@ auto MainWindow::Data::initEngine() -> void
         const bool found = history.getState(&state);
         as.state.mrl = mrl;
         if (found) {
-            engine.setCurrentAudioStream(state.audio_track);
+            engine.setCurrentAudioStream(state.audio_track, true);
             syncWithState();
         }
         if (found && state.sub_track.isValid())
@@ -244,6 +245,7 @@ auto MainWindow::Data::initEngine() -> void
         as.state.last_played_date_time = QDateTime::currentDateTime();
         history.update(&as.state, true);
         as.state.mrl = mrl;
+        starting = false;
     });
     connect(&engine, &PlayEngine::finished,
             p, [this] (const FinishInfo &info) {
@@ -252,9 +254,9 @@ auto MainWindow::Data::initEngine() -> void
         as.state.last_played_date_time = QDateTime::currentDateTime();
         as.state.resume_position = info.remain > 500 ? info.position : -1;
         as.state.edition = engine.currentEdition();
-        as.state.audio_track = info.streamIds[Stream::Audio];
+        as.state.audio_track = info.streamIds[StreamAudio];
         as.state.sub_track = subtitleState();
-        as.state.sub_track.setTrack(info.streamIds[Stream::Subtitle]);
+        as.state.sub_track.setTrack(info.streamIds[StreamSubtitle]);
         syncState();
         history.update(&as.state, false);
         as.state.mrl = info.mrl;
@@ -620,7 +622,7 @@ auto MainWindow::Data::setSubtitleState(const SubtitleStateInfo &state) -> void
         engine.addSubtitleStream(f.path, f.encoding);
     auto loaded = state.load();
     subtitle.setComponents(loaded);
-    engine.setCurrentSubtitleStream(state.getTrack());
+    engine.setCurrentSubtitleStream(state.getTrack(), starting);
     syncSubtitleFileMenu();
 }
 
@@ -833,6 +835,8 @@ auto MainWindow::Data::applyPref() -> void
     engine.setVolumeNormalizerOption(normalizer);
     engine.setChannelLayoutMap(p.channel_manipulation);
     engine.setSubtitleStyle(p.sub_style);
+    engine.setSubtitlePriority(p.sub_priority);
+    engine.setAudioPriority(p.audio_priority);
     auto conv = [&p] (const DeintCaps &caps) {
         DeintOption option;
         option.method = caps.method();

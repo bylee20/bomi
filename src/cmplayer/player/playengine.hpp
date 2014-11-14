@@ -2,6 +2,7 @@
 #define PLAYENGINE_HPP
 
 #include "mrl.hpp"
+#include "streamtrack.hpp"
 #include "mediamisc.hpp"
 
 class VideoRenderer;                class VideoFormat;
@@ -13,6 +14,7 @@ enum class ClippingMethod;
 enum class DeintMethod;                 enum class DeintMode;
 enum class ChannelLayout;               enum class InterpolatorType;
 enum class ColorRange;                  enum class ColorSpace;
+class AudioInfoObject;                  class VideoInfoObject;
 
 struct StartInfo {
     StartInfo() {}
@@ -92,7 +94,7 @@ public:
     auto chapters() const -> const ChapterList&;
     auto currentSubtitleStream() const -> int;
     auto subtitleStreams() const -> const StreamList&;
-    auto setCurrentSubtitleStream(int id) -> void;
+    auto setCurrentSubtitleStream(int id, bool reserve = false) -> void;
     auto setCurrentEdition(int id, int from = 0) -> void;
     auto setCurrentChapter(int id) -> void;
     auto setSubtitleStyle(const SubtitleStyle &style) -> void;
@@ -117,7 +119,7 @@ public:
     auto volumeNormalizer() const -> double;
     auto amp() const -> double;
     auto audioStreams() const -> const StreamList&;
-    auto setCurrentAudioStream(int id) -> void;
+    auto setCurrentAudioStream(int id, bool reserve = false) -> void;
     auto setVolumeNormalizerOption(const AudioNormalizerOption &option) -> void;
     auto addSubtitleStream(const QString &fileName, const QString &enc) -> bool;
     auto removeSubtitleStream(int id) -> void;
@@ -172,6 +174,8 @@ public:
     auto unpause() -> void;
     auto relativeSeek(int pos) -> void;
     auto isOffscreenInitialized() const -> bool { return m_offscreenInit; }
+    auto setAudioPriority(const QStringList &ap) -> void;
+    auto setSubtitlePriority(const QStringList &sp) -> void;
     auto initializeOffscreenContext() -> void;
     Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);

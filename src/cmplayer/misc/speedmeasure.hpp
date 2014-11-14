@@ -2,6 +2,7 @@
 #define SPEEDMEASURE_HPP
 
 #include "tmp/static_op.hpp"
+#include <functional>
 
 template<class T>
 class SpeedMeasure {
@@ -13,14 +14,23 @@ class SpeedMeasure {
     };
 public:
     SpeedMeasure(int min, int max) { setDequeSize(min, max); }
-    auto reset() -> void { m_records.clear(); }
+    auto reset() -> void { m_records.clear(); m_last = 0; }
     auto get() const -> double
         { return ((int)m_records.size() < m_min) ? 0.0 : dvalue()/dsec(); }
     auto push(const T &t) -> void
     {
-        m_records.emplace_back(_SystemTime(), t);
+        const auto usec = _SystemTime();
+        m_records.emplace_back(usec, t);
         while ((int)m_records.size() > m_max)
             m_records.pop_front();
+        if (m_interval > 0 && m_timer) {
+            if (!m_last || m_last > usec ) {
+                m_last = usec;
+            } else if (usec - m_last > m_interval) {
+                m_timer();
+                m_last = usec;
+            }
+        }
     }
     auto count() const -> int { return m_records.size(); }
     auto setDequeSize(int min, int max) -> void
@@ -36,9 +46,14 @@ public:
     auto dsec() const -> double { return dusec() * 1e-6; }
     auto dvalue() const -> T
         { return m_records.back().value - m_records.front().value; }
+    auto setTimer(std::function<void(void)> &&timer,
+                  quint64 usec = 5000000) -> void
+        { m_timer = std::move(timer); m_interval = usec; }
 private:
     std::deque<Record> m_records;
     int m_min = 2, m_max = 20;
+    quint64 m_last = 0, m_interval = 0;
+    std::function<void(void)> m_timer;
 };
 
 #endif // SPEEDMEASURE_HPP

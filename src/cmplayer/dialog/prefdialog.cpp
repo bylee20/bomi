@@ -93,19 +93,21 @@ PrefDialog::PrefDialog(QWidget *parent)
         d->ui.page_name->setText(text);
         d->ui.stack->setCurrentWidget(widget);
     });
-    auto addCategory = [this] (const QString &name) {
+
+    QTreeWidgetItem *categoryItem = nullptr;
+    auto addCategory = [&] (const QString &name) {
         auto item = new QTreeWidgetItem;
         item->setText(0, name);
         item->setData(0, CategoryRole, true);
         item->setFlags(Qt::ItemIsEnabled);
         d->ui.tree->invisibleRootItem()->addChild(item);
         item->setExpanded(true);
-        return item;
+        return categoryItem = item;
     };
 
-    auto addPage = [this] (const QString &name, QWidget *widget,
-                           const QString &icon, QTreeWidgetItem *parent) {
-        auto item = new QTreeWidgetItem(parent);
+    auto addPage = [&] (const QString &name, QWidget *widget,
+                           const QString &icon) {
+        auto item = new QTreeWidgetItem(categoryItem);
         item->setText(0, name);
         item->setIcon(0, QIcon(icon));
         item->setData(0, CategoryRole, false);
@@ -113,53 +115,35 @@ PrefDialog::PrefDialog(QWidget *parent)
         return item;
     };
 
-    auto general = addCategory(tr("General"));
-    addPage(tr("Application"), d->ui.gen_behaviours,
-            u":/img/cmplayer-32.png"_q, general)->setSelected(true);
-    addPage(tr("Open"), d->ui.open_media,
-            u":/img/document-open-32.png"_q, general);
-    addPage(tr("Playback"), d->ui.playback,
-            u":/img/media-playback-start-32.png"_q, general);
-    addPage(tr("Cache"), d->ui.cache,
-            u":/img/preferences-web-browser-cache.png"_q, general);
-    addPage(tr("Miscellaneous"), d->ui.misc,
-            u":/img/applications-education-miscellaneous-32.png"_q, general);
+    addCategory(tr("General"));
+    addPage(tr("Application"), d->ui.gen_behaviours, u":/img/cmplayer-32.png"_q)->setSelected(true);
+    addPage(tr("Open"), d->ui.open_media, u":/img/document-open-32.png"_q);
+    addPage(tr("Playback"), d->ui.playback, u":/img/media-playback-start-32.png"_q);
+    addPage(tr("Cache"), d->ui.cache, u":/img/preferences-web-browser-cache.png"_q);
+    addPage(tr("Language"), d->ui.language, u":/img/preferences-desktop-locale.png"_q);
+    addPage(tr("Miscellaneous"), d->ui.misc, u":/img/applications-education-miscellaneous-32.png"_q);
 
-    auto appear = addCategory(tr("Appearance"));
-    addPage(tr("OSD"), d->ui.osd,
-            u":/img/view-multiple-objects.png"_q, appear);
-    addPage(tr("Skin & Style"), d->ui.skin_style,
-            u":/img/preferences-desktop-theme-32.png"_q, appear);
+    addCategory(tr("Appearance"));
+    addPage(tr("OSD"), d->ui.osd, u":/img/view-multiple-objects.png"_q);
+    addPage(tr("Skin & Style"), d->ui.skin_style, u":/img/preferences-desktop-theme-32.png"_q);
 
-    auto video = addCategory(tr("Video"));
-    addPage(tr("Hardware acceleration"), d->ui.video_hwacc,
-            u":/img/apps-hardware-icon.png"_q, video);
-    addPage(tr("Deinterlace"), d->ui.video_deint,
-            u":/img/format-line-spacing-double.png"_q, video);
-    addPage(tr("Video filter"), d->ui.video_filter,
-            u":/img/draw-brush.png"_q, video);
+    addCategory(tr("Video"));
+    addPage(tr("Hardware acceleration"), d->ui.video_hwacc, u":/img/apps-hardware-icon.png"_q);
+    addPage(tr("Deinterlace"), d->ui.video_deint, u":/img/format-line-spacing-double.png"_q);
+    addPage(tr("Video filter"), d->ui.video_filter, u":/img/draw-brush.png"_q);
 
-    auto audio = addCategory(tr("Audio"));
-    addPage(tr("Sound"), d->ui.audio_sound,
-            u":/img/audio-volume-high.png"_q, audio);
-    addPage(tr("Audio filter"), d->ui.audio_filter,
-            u":/img/applications-multimedia.png"_q, audio);
+    addCategory(tr("Audio"));
+    addPage(tr("Sound"), d->ui.audio_sound, u":/img/audio-volume-high.png"_q);
+    addPage(tr("Audio filter"), d->ui.audio_filter, u":/img/applications-multimedia.png"_q);
 
-    auto subtitle = addCategory(tr("Subtitle"));
-    addPage(tr("Load"), d->ui.sub_load,
-            u":/img/application-x-subrip-32.png"_q, subtitle);
-    addPage(tr("Appearance"), d->ui.sub_appearance,
-            u":/img/format-text-color-32.png"_q, subtitle);
-    addPage(tr("Priority"), d->ui.sub_unified,
-            u":/img/view-sort-descending-32.png"_q, subtitle);
+    addCategory(tr("Subtitle"));
+    addPage(tr("Load"), d->ui.sub_load, u":/img/application-x-subrip-32.png"_q);
+    addPage(tr("Appearance"), d->ui.sub_appearance, u":/img/format-text-color-32.png"_q);
 
-    auto ui = addCategory(tr("User interface"));
-    addPage(tr("Keyboard shortcuts"), d->ui.ui_shortcut,
-            u":/img/preferences-desktop-keyboard-32.png"_q, ui);
-    addPage(tr("Mouse actions"), d->ui.ui_mouse,
-            u":/img/input-mouse-32.png"_q, ui);
-    addPage(tr("Control step"), d->ui.ui_step,
-            u":/img/run-build-32.png"_q, ui);
+    addCategory(tr("User interface"));
+    addPage(tr("Keyboard shortcuts"), d->ui.ui_shortcut, u":/img/preferences-desktop-keyboard-32.png"_q);
+    addPage(tr("Mouse actions"), d->ui.ui_mouse, u":/img/input-mouse-32.png"_q);
+    addPage(tr("Control step"), d->ui.ui_step, u":/img/run-build-32.png"_q);
 
     auto vbox = new QVBoxLayout;
     vbox->setMargin(0);
@@ -246,6 +230,8 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.sub_priority->setAddingAndErasingEnabled(true);
     d->ui.sub_priority->setChangingOrderEnabled(true);
     checkSubAutoselect(d->ui.sub_autoselect->currentData());
+    d->ui.audio_priority->setAddingAndErasingEnabled(true);
+    d->ui.audio_priority->setChangingOrderEnabled(true);
 
     auto updateSkinPath = [this] (int idx) {
         if (idx >= 0) {
@@ -518,6 +504,7 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.sub_spacing_paragraph->setValue(p.sub_style.spacing.paragraph*100.0);
     d->ui.ms_per_char->setValue(p.ms_per_char);
     d->ui.sub_priority->setList(p.sub_priority);
+    d->ui.audio_priority->setList(p.audio_priority);
 
     d->ui.single_app->setChecked(cApp.isUnique());
     d->ui.window_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
@@ -657,6 +644,7 @@ auto PrefDialog::get(Pref &p) -> void
     p.sub_style.spacing.paragraph = d->ui.sub_spacing_paragraph->value()/100.0;
     p.ms_per_char = d->ui.ms_per_char->value();
     p.sub_priority = d->ui.sub_priority->list();
+    p.audio_priority = d->ui.audio_priority->list();
 
     cApp.setUnique(d->ui.single_app->isChecked());
     cApp.setLocale(d->ui.locale->currentLocale());

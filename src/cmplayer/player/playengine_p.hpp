@@ -3,12 +3,14 @@
 
 #include "playengine.hpp"
 #include "mpv_helper.hpp"
+#include "streamtrack.hpp"
 #include "tmp/type_test.hpp"
 #include "tmp/type_info.hpp"
 #include "misc/log.hpp"
 #include "misc/tmp.hpp"
 #include "misc/dataevent.hpp"
 #include "audio/audiocontroller.hpp"
+#include "audio/audioformat.hpp"
 #include "video/videooutput.hpp"
 #include "video/hwacc.hpp"
 #include "video/deintoption.hpp"
@@ -27,6 +29,7 @@
 #include "opengl/opengloffscreencontext.hpp"
 #include <libmpv/client.h>
 #include <functional>
+#include "avinfoobject.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 
@@ -36,14 +39,10 @@ enum EventType {
     EventTypeMax
 };
 
-static constexpr const int UpdateEventBegin = EventTypeMax;
-
-enum EndReason {
-    EndFailed = -1, EndOfFile, EndRestart, EndRequest, EndQuit, EndUnknown
-};
+static constexpr const int UpdateEventBegin = QEvent::User + 1000;
 
 struct StreamTypeInfo {
-    Stream::Type type;
+    StreamType type;
     const char *mpvName;
     void (PlayEngine::*notifyList)(const StreamList&);
     void (PlayEngine::*notifyTrack)(int);
@@ -51,26 +50,26 @@ struct StreamTypeInfo {
 
 static const QVector<StreamTypeInfo> streamTypeInfo = [] () {
     QVector<StreamTypeInfo> info(3);
-    info[Stream::Video] = {
-        Stream::Video, "vid",
+    info[StreamVideo] = {
+        StreamVideo, "vid",
         &PlayEngine::videoStreamsChanged,
         &PlayEngine::currentVideoStreamChanged
     };
-    info[Stream::Audio] = {
-        Stream::Audio, "aid",
+    info[StreamAudio] = {
+        StreamAudio, "aid",
         &PlayEngine::audioStreamsChanged,
         &PlayEngine::currentAudioStreamChanged
     };
-    info[Stream::Subtitle] = {
-        Stream::Subtitle, "sid",
+    info[StreamSubtitle] = {
+        StreamSubtitle, "sid",
         &PlayEngine::subtitleStreamsChanged,
         &PlayEngine::currentSubtitleStreamChanged
     };
     return info;
 }();
 
-static const QVector<Stream::Type> streamTypes
-    = { Stream::Audio, Stream::Video, Stream::Subtitle };
+static const QVector<StreamType> streamTypes
+    = { StreamAudio, StreamVideo, StreamSubtitle };
 
 struct Observation {
     int event;
@@ -178,6 +177,12 @@ private:
 template<class T>
 using mpv_type = typename mpv_format_trait<T>::mpv_type;
 
+struct StreamData {
+    StreamList tracks;
+    QStringList priority;
+    int reserved = -1;
+};
+
 SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
 
 struct PlayEngine::Data {
@@ -185,7 +190,7 @@ struct PlayEngine::Data {
     PlayEngine *p = nullptr;
     Thread thread{p};
     QTemporaryDir confDir;
-
+    QStringList audioPriorty;
     QVector<Observation> observations;
 
     VideoInfoObject videoInfo;
@@ -198,17 +203,15 @@ struct PlayEngine::Data {
     QString mediaName;
 
     double fps = 1.0;
-    bool hasImage = false, tempoScaler = false, seekable = false;
+    bool hasImage = false, tempoScaler = false, seekable = false, hasVideo = false;
     bool subStreamsVisible = true, startPaused = false, disc = false;
-    bool sgInit = false, glInit = false;
 
     AudioController *audio = nullptr;
     bool quit = false, muted = false, initialized = false;
-    bool cacheEnabled = false;
-    int volume = 100;
+    int volume = 100, avSync = 0;
     double amp = 1.0, speed = 1.0;
-    int avSync = 0;
     qreal cacheForPlayback = 0.02, cacheForSeeking = 0.05;
+    bool cacheEnabled = false;
     int cacheSize = 0, cacheUsed = 0, initSeek = -1;
     int updateEventMax = UpdateEventBegin;
 
@@ -220,7 +223,7 @@ struct PlayEngine::Data {
     ChannelLayout layout = ChannelLayoutInfo::default_();
     int duration = 0, audioSync = 0, begin = 0, position = 0;
     int subDelay = 0, chapter = -2, edition = -1;
-    QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
+    QVector<StreamData> streams = {StreamData(), StreamData(), StreamData()};
     Mrl mpvMrl;
 
     AudioTrackInfoObject *audioTrackInfo = nullptr;
@@ -357,28 +360,29 @@ struct PlayEngine::Data {
         return observe<int>(name, t, [=, &t] { return s2ms(getmpv<double>(name)); }, sig);
     }
 
-    auto observeTrack(Stream::Type type) -> int
+    auto observeTrack(StreamType type) -> int
     {
         const auto &info = streamTypeInfo[type];
         return observe(info.mpvName, [=, &info] () {
             int track = 0; return getmpv<int>(info.mpvName, track) ? track : 1;
         }, [=] (QEvent *event) { setCurrentTrack(type, _GetData<int>(event)); });
     }
-    auto setCurrentTrack(Stream::Type type, int id) -> void
+    auto setStreamList(StreamType type, StreamList &&list) -> bool;
+    auto setCurrentTrack(StreamType type, int id) -> void
     {
-        Q_ASSERT(type != Stream::Unknown);
+        Q_ASSERT(type != StreamUnknown);
         if (id == currentTrack(type))
             return;
-        for (auto &stream : streams[type])
-            stream.m_selected = stream.id() == id;
+        for (auto &track : streams[type].tracks)
+            track.m_selected = track.id() == id;
         emit (p->*(streamTypeInfo[type].notifyTrack))(id);
     }
-    auto currentTrack(Stream::Type type) -> int
+    auto currentTrack(StreamType type) -> int
     {
-        Q_ASSERT(type != Stream::Unknown);
-        for (auto &stream : streams[type]) {
-            if (stream.m_selected)
-                return stream.id();
+        Q_ASSERT(type != StreamUnknown);
+        for (auto &track : streams[type].tracks) {
+            if (track.m_selected)
+                return track.id();
         }
         return 0;
     }
@@ -454,7 +458,8 @@ auto PlayEngine::Data::check(int err, const char *msg,
     const auto lv = err == MPV_ERROR_PROPERTY_UNAVAILABLE ? Log::Debug
                                                           : Log::Error;
     if (lv <= Log::maximumLevel())
-        Log::write(getLogContext(), lv, "Error %%: %%", error(err),
+        Log::write(getLogContext(), lv, "%% %%: %%",
+                   lv == Log::Debug ? "Debug" : "Error", error(err),
                    Log::parse(msg, args...));
     return false;
 }

@@ -89,14 +89,8 @@ Item {
 
         PlayInfoText { }
 
-        PlayInfoText {
-            property var codec: video.codec
-            text: qsTr("Video Codec: %1[%2]")
-                    .arg(formatText(codec.family))
-                    .arg(formatText(codec.description))
-        }
-
-        PlayInfoVideoOutput { format: video.input; name: qsTr("Input #%1").arg(video.track) }
+        PlayInfoTrack { name: qsTr("Video Track"); info: video }
+        PlayInfoVideoOutput { format: video.input; name: qsTr("Input   ") }
         PlayInfoVideoOutput { format: video.output; name: qsTr("Output  ") }
         PlayInfoVideoOutput { format: video.renderer; name: qsTr("Renderer") }
 
@@ -124,13 +118,8 @@ Item {
 
         PlayInfoText { }
 
-        PlayInfoText {
-            property var codec: audio.codec
-            text: qsTr("Audio Codec: %1[%2]")
-                .arg(formatText(codec.family))
-                .arg(formatText(codec.description))
-        }
-        PlayInfoAudioOutput { format: audio.input; name: qsTr("Input #%1").arg(audio.track) }
+        PlayInfoTrack { name: qsTr("Audio Track"); info: audio }
+        PlayInfoAudioOutput { format: audio.input; name: qsTr("Input   ") }
         PlayInfoAudioOutput { format: audio.output; name: qsTr("Output  ") }
         PlayInfoAudioOutput { format: audio.renderer;  name: qsTr("Renderer") }
         PlayInfoText {

@@ -44,5 +44,6 @@
         <file>translations/cmplayer_es.qm</file>
         <file>img/media-optical.png</file>
         <file>img/view-multiple-objects.png</file>
+        <file>img/preferences-desktop-locale.png</file>
     </qresource>
 </RCC>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>708</width>
-    <height>575</height>
+    <width>713</width>
+    <height>650</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -295,7 +295,7 @@
             <item>
              <widget class="QRadioButton" name="save_quick_snapshot_current">
               <property name="text">
-               <string>Save in the same folder where current playing video exists</string>
+               <string>Save in the same folder where current playing &amp;video exists</string>
               </property>
              </widget>
             </item>
@@ -2407,7 +2407,7 @@
          <item>
           <widget class="QGroupBox" name="sub_bbox">
            <property name="title">
-            <string>Bounding Box</string>
+            <string>Bounding Bo&amp;x</string>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -2569,32 +2569,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="sub_unified">
-        <layout class="QVBoxLayout" name="verticalLayout_10">
-         <item>
-          <widget class="QLabel" name="label_7">
-           <property name="text">
-            <string>You can specify the order of unified(mulit) subtitles with the 'Name' property in a subtitle file.
-If not specified, they will be displayed in selected order.
-e.g.: English, Korean</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="StringListWidget" name="sub_priority" native="true">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
        <widget class="QWidget" name="ui_shortcut">
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
@@ -2737,32 +2711,6 @@ e.g.: English, Korean</string>
        </widget>
        <widget class="QWidget" name="gen_behaviours">
         <layout class="QVBoxLayout" name="verticalLayout_33">
-         <item>
-          <widget class="QGroupBox" name="groupBox_15">
-           <property name="title">
-            <string>Locale</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_15">
-            <item>
-             <widget class="LocaleComboBox" name="locale">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_26">
-              <property name="text">
-               <string>You may need to restart CMPlayer to apply the changes </string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
          <item>
           <widget class="QGroupBox" name="system_tray_group">
            <property name="title">
@@ -3134,7 +3082,7 @@ e.g.: English, Korean</string>
             <item>
              <widget class="QRadioButton" name="show_logo">
               <property name="text">
-               <string>Show default CMPlayer logo</string>
+               <string>Show default C&amp;MPlayer logo</string>
               </property>
              </widget>
             </item>
@@ -3212,7 +3160,13 @@ e.g.: English, Korean</string>
        <widget class="QWidget" name="ui_mouse">
         <layout class="QVBoxLayout" name="verticalLayout_41">
          <item>
-          <widget class="PrefMouseActionTree" name="mouse_action_tree"/>
+          <widget class="PrefMouseActionTree" name="mouse_action_tree">
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
+          </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="ui_mouse_invert_wheel">
@@ -3233,6 +3187,85 @@ e.g.: English, Korean</string>
             </size>
            </property>
           </spacer>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="language">
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <item>
+          <widget class="QGroupBox" name="groupBox_15">
+           <property name="title">
+            <string>Locale</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_15">
+            <item>
+             <widget class="LocaleComboBox" name="locale">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_26">
+              <property name="text">
+               <string>You may need to restart CMPlayer to apply the changes </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_33">
+           <property name="title">
+            <string>Audio Priority</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_32">
+            <item>
+             <widget class="StringListWidget" name="audio_priority" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_32">
+           <property name="title">
+            <string>Subtitle Priority</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_31">
+            <item>
+             <widget class="StringListWidget" name="sub_priority" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>These options will be used to determine audio/subtitle priority.
+Regular expression is supported.</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>

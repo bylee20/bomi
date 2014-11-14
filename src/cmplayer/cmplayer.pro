@@ -231,7 +231,10 @@ HEADERS += \
     video/videodata.hpp \
     video/mpimage.hpp \
     enum/mousebehavior.hpp \
-    misc/speedmeasure.hpp
+    misc/speedmeasure.hpp \
+	player/avinfoobject.hpp \
+    audio/audioformat.hpp \
+    player/streamtrack.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -404,7 +407,10 @@ SOURCES += \
     video/videodata.cpp \
     video/mpimage.cpp \
     enum/mousebehavior.cpp \
-    misc/speedmeasure.cpp
+    misc/speedmeasure.cpp \
+	player/avinfoobject.cpp \
+    audio/audioformat.cpp \
+    player/streamtrack.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -455,7 +461,8 @@ OTHER_FILES += \
     imports/CMPlayer/ProgressBar.qml \
     skins/Faenza-Zukitwo/cmplayer.qml \
     imports/CMPlayer/PlayInfoVideoOutput.qml \
-    imports/CMPlayer/PlayInfoAudioOutput.qml
+    imports/CMPlayer/PlayInfoAudioOutput.qml \
+    imports/CMPlayer/PlayInfoTrack.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

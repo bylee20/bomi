@@ -128,9 +128,8 @@ auto Translator::load(const QLocale &locale) -> bool
     if (l.language() == QLocale::English) {
         d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
         d->succ = true;
-    } else {
+    } else
         d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
-    }
     if (d->succ) {
         loadQt();
         QLocale::setDefault(l);

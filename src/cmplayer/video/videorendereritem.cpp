@@ -210,6 +210,11 @@ VideoRenderer::VideoRenderer(QQuickItem *parent)
     setFlag(ItemAcceptsDrops, true);
     connect(&d->sizeChecker, &QTimer::timeout, [=] () { d->updateOsdSize(); });
     d->sizeChecker.setInterval(300);
+
+    d->measure.setTimer([=]() {
+        if (_Change(d->fps, d->measure.get()))
+            emit fpsChanged(d->fps);
+    }, 100000);
 }
 
 VideoRenderer::~VideoRenderer() {
@@ -577,11 +582,6 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
         }
 
         d->measure.push(++d->drawn);
-        constexpr int interval = 4;
-        if (!(d->drawn & (interval - 1))) {
-            if (_Change(d->fps, d->measure.get()))
-                emit fpsChanged(d->fps);
-        }
         _Trace("VideoRendererItem::updateTexture(): "
                "render queued frame(%%), avgfps: %%",
                texture->size(), d->fps);
