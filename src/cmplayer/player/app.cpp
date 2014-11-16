@@ -5,6 +5,7 @@
 #include "misc/log.hpp"
 #include "misc/record.hpp"
 #include "misc/json.hpp"
+#include "misc/locale.hpp"
 
 #if defined(Q_OS_MAC)
 #include "app_mac.hpp"
@@ -23,7 +24,7 @@ auto set_open_folders(const QMap<QString, QString> &folders) -> void;
 }
 
 auto root_menu_execute(const QString &longId, const QString &argument) -> bool;
-auto translator_load(const QLocale &locale) -> bool;
+auto translator_load(const Locale &locale) -> bool;
 
 auto set_window_title(QWidget *w, const QString &title) -> void
 {
@@ -52,7 +53,7 @@ struct App::Data {
 #endif
     MainWindow *main = nullptr;
 
-    QLocale locale = QLocale::system();
+    Locale locale;
     QCommandLineOption dummy{u"__dummy__"_q};
     QCommandLineParser cmdParser, msgParser;
     QMap<LineCmd, QCommandLineOption> options;
@@ -136,8 +137,9 @@ App::App(int &argc, char **argv)
     setApplicationVersion(_L(version()));
 
     Record r(APP_GROUP);
-    r.read(d->locale, u"locale"_q);
-    setLocale(d->locale);
+    QVariant vLocale;
+    r.read(vLocale, u"locale"_q);
+    setLocale(Locale::fromVariant(vLocale));
 
     d->addOption(LineCmd::Open, u"open"_q,
                  tr("Open given %1 for file path or URL."), u"mrl"_q);
@@ -356,15 +358,16 @@ auto App::sendMessage(const QByteArray &message, int timeout) -> bool
     return d->connection.sendMessage(message, timeout);
 }
 
-auto App::setLocale(const QLocale &locale) -> void
+auto App::setLocale(const Locale &locale) -> void
 {
     if (translator_load(locale)) {
+        d->locale = locale;
         Record r(APP_GROUP);
-        r.write(d->locale = locale, u"locale"_q);
+        r.write(d->locale.toVariant(), u"locale"_q);
     }
 }
 
-auto App::locale() const -> QLocale
+auto App::locale() const -> Locale
 {
     return d->locale;
 }

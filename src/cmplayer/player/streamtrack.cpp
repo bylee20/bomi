@@ -1,7 +1,6 @@
 #include "streamtrack.hpp"
 #include "subtitle/subtitle.hpp"
-
-auto translator_display_language(const QString &iso) -> QString;
+#include "misc/locale.hpp"
 
 SIA _IsAlphabet(ushort c) -> bool
 {
@@ -44,7 +43,7 @@ auto StreamTrack::fromMpvData(const QVariant &mpv) -> StreamTrack
     track.m_id = map[u"id"_q].toInt();
     track.m_lang = map[u"lang"_q].toString();
     if (_InRange(2, track.m_lang.size(), 3) && _IsAlphabet(track.m_lang))
-        track.m_displayLang = translator_display_language(track.m_lang);
+        track.m_displayLang = Locale::isoToNativeName(track.m_lang);
     track.m_title = map[u"title"_q].toString();
     track.m_fileName = map[u"external-filename"_q].toString();
     if (!track.m_fileName.isEmpty())

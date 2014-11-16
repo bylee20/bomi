@@ -1,6 +1,7 @@
 #include "opensubtitlesfinder.hpp"
 #include "player/mrl.hpp"
 #include "misc/xmlrpcclient.hpp"
+#include "misc/locale.hpp"
 
 SIA _Args() -> QVariantList { return QVariantList(); }
 auto translator_display_language(const QString &iso) -> QString;
@@ -115,7 +116,7 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
                 if (iso.isEmpty())
                     link.language = map[u"LanguageName"_q].toString();
                 else
-                    link.language = translator_display_language(iso);
+                    link.language = Locale::isoToNativeName(iso);
                 links.append(link);
             }
             emit found(links);

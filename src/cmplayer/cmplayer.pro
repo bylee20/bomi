@@ -236,7 +236,8 @@ HEADERS += \
     misc/speedmeasure.hpp \
 	player/avinfoobject.hpp \
     audio/audioformat.hpp \
-    player/streamtrack.hpp
+    player/streamtrack.hpp \
+    misc/locale.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -412,7 +413,8 @@ SOURCES += \
     misc/speedmeasure.cpp \
 	player/avinfoobject.cpp \
     audio/audioformat.cpp \
-    player/streamtrack.cpp
+    player/streamtrack.cpp \
+    misc/locale.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

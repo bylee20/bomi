@@ -17,8 +17,6 @@
 #include "enum/quicksnapshotsave.hpp"
 #include "enum/mousebehavior.hpp"
 
-class QLocale;
-
 using Shortcuts = QHash<QString, QList<QKeySequence>>;
 enum class KeyMapPreset {CMPlayer, Movist};
 

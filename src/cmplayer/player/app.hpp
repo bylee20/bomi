@@ -5,6 +5,7 @@
 
 class QUrl;                             class Mrl;
 class MainWindow;                       class QMenuBar;
+class Locale;
 
 class App : public QApplication {
     Q_OBJECT
@@ -25,8 +26,8 @@ public:
     QMenuBar *globalMenuBar() const;
 #endif
     auto setStyleName(const QString &name) -> void;
-    auto setLocale(const QLocale &locale) -> void;
-    auto locale() const -> QLocale;
+    auto setLocale(const Locale &locale) -> void;
+    auto locale() const -> Locale;
     auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
     auto setScreensaverDisabled(bool disabled) -> void;
     auto setHeartbeat(const QString &command, int interval) -> void;
