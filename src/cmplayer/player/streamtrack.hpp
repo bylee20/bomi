@@ -40,10 +40,13 @@ using StreamList = QMap<int, StreamTrack>;
 
 SIA _FindSelectedTrack(const StreamList &tracks) -> StreamList::const_iterator
 {
-    using rit = std::reverse_iterator<StreamList::const_iterator>;
-    for (auto it = rit(tracks.end()); it != rit(tracks.begin()); ++it) {
-        if (it->isSelected())
-            return it.base();
+    if (!tracks.isEmpty()) {
+        auto it = tracks.end();
+        do {
+            --it;
+            if (it->isSelected())
+                return it;
+        } while (it != tracks.begin());
     }
     return tracks.end();
 }
