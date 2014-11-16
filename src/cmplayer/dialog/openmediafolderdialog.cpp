@@ -84,13 +84,7 @@ struct OpenMediaFolderDialog::Data {
     }
     auto getFolder() -> void
     {
-        const auto folder = _GetOpenDir(p, tr("Open Folder"));
-        if (!folder.isEmpty()) {
-            if (ui.folder->text() != folder) {
-                ui.folder->setText(folder);
-                updateList();
-            }
-        }
+        p->setFolder(_GetOpenDir(p, tr("Open Folder")));
     }
 };
 
@@ -137,10 +131,18 @@ auto OpenMediaFolderDialog::playlist() const -> Playlist
     return list;
 }
 
+auto OpenMediaFolderDialog::setFolder(const QString &folder) -> void
+{
+    if (!folder.isEmpty() && d->ui.folder->text() != folder) {
+        d->ui.folder->setText(folder);
+        d->updateList();
+    }
+}
 
 auto OpenMediaFolderDialog::exec() -> int
 {
-    d->getFolder();
+    if (d->ui.folder->text().isEmpty())
+        d->getFolder();
     if (d->ui.folder->text().isEmpty())
         return Rejected;
     QSettings settings;

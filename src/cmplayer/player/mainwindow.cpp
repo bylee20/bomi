@@ -124,11 +124,15 @@ MainWindow::~MainWindow() {
 
 auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
 {
-    if (mrl.isLocalFile() && _IsSuffixOf(PlaylistExt, mrl.suffix()))
-        d->playlist.open(mrl, QString());
+    if (mrl.isDir())
+        d->openDir(mrl.toLocalFile());
     else {
-        const auto mode = d->pref().open_media_from_file_manager;
-        d->openWith(mode, QList<Mrl>() << mrl);
+        if (mrl.isLocalFile() && _IsSuffixOf(PlaylistExt, mrl.suffix()))
+            d->playlist.open(mrl, QString());
+        else {
+            const auto mode = d->pref().open_media_from_file_manager;
+            d->openWith(mode, QList<Mrl>() << mrl);
+        }
     }
 }
 

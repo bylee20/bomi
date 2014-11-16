@@ -10,7 +10,6 @@
 #include "dialog/snapshotdialog.hpp"
 #include "dialog/subtitlefinddialog.hpp"
 #include "dialog/encodingfiledialog.hpp"
-#include "dialog/openmediafolderdialog.hpp"
 
 template<class F>
 auto MainWindow::Data::plugStreamActions(Menu *menu, F func,
@@ -191,17 +190,7 @@ auto MainWindow::Data::connectMenus() -> void
         if (!file.isEmpty())
             openMrl(Mrl(file));
     });
-    connect(open[u"folder"_q], &QAction::triggered, p, [this] () {
-        OpenMediaFolderDialog dlg(p);
-        if (dlg.exec()) {
-            const auto list = dlg.playlist();
-            if (!list.isEmpty()) {
-                playlist.setList(list);
-                load(list.first());
-                recent.stack(list.first());
-            }
-        }
-    });
+    connect(open[u"folder"_q], &QAction::triggered, p, [this] () { openDir(); });
     connect(open[u"url"_q], &QAction::triggered, p, [this] () {
         UrlDialog dlg(p);
         if (dlg.exec()) {

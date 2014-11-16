@@ -10,6 +10,7 @@
 #include "subtitle/subtitlemodel.hpp"
 #include "subtitle/subtitle_parser.hpp"
 #include "dialog/mbox.hpp"
+#include "dialog/openmediafolderdialog.hpp"
 
 MainWindow::Data::Data(MainWindow *p)
     : p(p)
@@ -26,8 +27,7 @@ auto MainWindow::Data::updateListMenu(Menu &menu, const List &list,
     if (!list.isEmpty()) {
         menu.g(group)->clear();
         for (auto it = list.begin(); it != list.end(); ++it) {
-            auto act = menu.addActionToGroupWithoutKey(it->name(),
-                                                       true, group);
+            auto act = menu.addActionToGroupWithoutKey(it->name(), true, group);
             act->setData(it->id());
             if (current == it->id())
                 act->setChecked(true);
@@ -688,6 +688,20 @@ auto MainWindow::Data::updateWindowPosState() -> void
         const auto screen = screenSize();
         as.win_pos.rx() = qBound(0.0, p->x()/(double)screen.width(), 1.0);
         as.win_pos.ry() = qBound(0.0, p->y()/(double)screen.height(), 1.0);
+    }
+}
+
+auto MainWindow::Data::openDir(const QString &dir) -> void
+{
+    OpenMediaFolderDialog dlg(p);
+    dlg.setFolder(dir);
+    if (dlg.exec()) {
+        const auto list = dlg.playlist();
+        if (!list.isEmpty()) {
+            playlist.setList(list);
+            load(list.first());
+            recent.stack(list.first());
+        }
     }
 }
 

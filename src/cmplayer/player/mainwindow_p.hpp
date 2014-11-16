@@ -151,6 +151,7 @@ struct MainWindow::Data {
     auto readyToHideCursor() -> void;
     auto initContextMenu() -> void;
     auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;
+    auto openDir(const QString &dir = QString()) -> void;
     auto lastCheckedSubtitleIndex() const -> int;
     auto setSubtitleTracksToEngine() -> void;
     auto syncSubtitleFileMenu() -> void;

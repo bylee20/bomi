@@ -11,6 +11,7 @@ public:
     ~OpenMediaFolderDialog();
     auto playlist() const -> Playlist;
     auto exec() -> int final;
+    auto setFolder(const QString &folder) -> void;
 private:
     struct Data;
     Data *d;

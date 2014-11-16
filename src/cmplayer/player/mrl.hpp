@@ -32,6 +32,7 @@ public:
     auto updateHash() -> void;
     auto isUnique() const -> bool { return !isDisc() || !m_hash.isEmpty(); }
     auto toUnique() const -> Mrl;
+    auto isDir() const { return QFileInfo(toLocalFile()).isDir(); }
     static auto fromString(const QString str) -> Mrl
         { Mrl mrl; mrl.m_loc = str; return mrl; }
     static auto fromDisc(const QString &scheme, const QString &device,
