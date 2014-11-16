@@ -48,15 +48,15 @@ auto reg_play_engine() -> void
     qRegisterMetaType<StreamList>("StreamList");
     qRegisterMetaType<AudioFormat>("AudioFormat");
     qmlRegisterType<ChapterInfoObject>();
-    qmlRegisterType<AudioTrackInfoObject>();
-    qmlRegisterType<SubtitleTrackInfoObject>();
     qmlRegisterType<VideoInfoObject>();
+    qmlRegisterType<AvTrackInfoObject>();
     qmlRegisterType<VideoFormatInfoObject>();
     qmlRegisterType<VideoHwAccInfoObject>();
     qmlRegisterType<AudioFormatInfoObject>();
     qmlRegisterType<AudioInfoObject>();
     qmlRegisterType<CodecInfoObject>();
     qmlRegisterType<MediaInfoObject>();
+    qmlRegisterType<SubtitleInfoObject>();
     qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
 }
 

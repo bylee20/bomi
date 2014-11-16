@@ -3,6 +3,8 @@
 
 enum StreamType { StreamAudio = 0, StreamVideo, StreamSubtitle, StreamUnknown };
 
+class SubComp;
+
 class StreamTrack {
 public:
     auto name() const -> QString;
@@ -24,6 +26,7 @@ public:
     auto isAlbumArt() const -> bool { return m_albumart; }
     auto language() const -> QString { return m_lang; }
     static auto fromMpvData(const QVariant &mpv) -> StreamTrack;
+    static auto fromSubComp(const SubComp &comp) -> StreamTrack;
 private:
     friend class MpMessage;
     friend class PlayEngine;
@@ -34,5 +37,21 @@ private:
 };
 
 using StreamList = QMap<int, StreamTrack>;
+
+SIA _FindSelectedTrack(const StreamList &tracks) -> StreamList::const_iterator
+{
+    using rit = std::reverse_iterator<StreamList::const_iterator>;
+    for (auto it = rit(tracks.end()); it != rit(tracks.begin()); ++it) {
+        if (it->isSelected())
+            return it.base();
+    }
+    return tracks.end();
+}
+
+SIA _FindSelectedTrackId(const StreamList &tracks) -> int
+{
+    auto it = _FindSelectedTrack(tracks);
+    return it != tracks.end() ? it->id() : 0;
+}
 
 #endif // STREAMTRACK_HPP

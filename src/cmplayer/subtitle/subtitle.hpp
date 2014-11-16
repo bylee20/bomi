@@ -4,6 +4,14 @@
 #include "richtextdocument.hpp"
 #include "submisc.hpp"
 
+enum class SubType {
+    Unknown,
+    SAMI,
+    SubRip,
+    TMPlayer,
+    MicroDVD
+};
+
 struct SubCapt : public RichTextDocument {
     SubCapt() {index = -1;}
     RichTextDocument &doc() {return *this;}
@@ -21,24 +29,15 @@ public:
     using ConstIt = Map::const_iterator;
     using iterator = Map::iterator;
     using const_iterator = Map::const_iterator;
-//    struct Lang {
-//        auto id() const -> QString {
-//            if (!name.isEmpty())
-//                return name;
-//            if (!locale.isEmpty())
-//                return locale;
-//            return klass;
-//        }
-//        QString name, locale, klass;
-//    };
     enum SyncType {Time, Frame};
     SubComp();
-    SubComp(const QFileInfo &file, const QString &enc, int id, SyncType base);
-    bool operator == (const SubComp &rhs) const {return m_info.path == rhs.m_info.path && m_klass == rhs.m_klass;}
-    bool operator != (const SubComp &rhs) const {return !operator==(rhs);}
-    SubCapt &operator[] (int key) { return m_capts[key]; }
-    SubCapt operator[] (int key) const { return m_capts[key]; }
-    SubComp &unite(const SubComp &other, double frameRate);
+    SubComp(SubType type, const QFileInfo &file, const QString &enc, int id, SyncType base);
+    auto operator == (const SubComp &rhs) const -> bool
+        {return m_info.path == rhs.m_info.path && m_klass == rhs.m_klass;}
+    auto operator != (const SubComp &rhs) const -> bool {return !operator==(rhs);}
+    auto operator[] (int key) -> SubCapt& { return m_capts[key]; }
+    auto operator[] (int key) const -> SubCapt { return m_capts[key]; }
+    auto unite(const SubComp &other, double frameRate) -> SubComp&;
     auto united(const SubComp &other, double frameRate) const -> SubComp;
 
     auto hasWords() const -> bool { for (auto &capt : m_capts) if (capt.hasWords()) return true; return false; }
@@ -56,9 +55,9 @@ public:
     auto insert(int key, const SubCapt &capt) -> It { return m_capts.insert(key, capt); }
 
     auto name() const -> QString;
-    const QString &fileName() const {return m_file;}
-    const QString &path() const { return m_info.path; }
-    const SubtitleFileInfo &fileInfo() const { return m_info; }
+    auto fileName() const -> const QString& {return m_file;}
+    auto path() const -> const QString& { return m_info.path; }
+    auto fileInfo() const -> const SubtitleFileInfo& { return m_info; }
     auto base() const -> SyncType {return m_base;}
     auto isBasedOnFrame() const -> bool {return m_base == Frame;}
 //    const Language &language() const {return m_lang;}
@@ -73,15 +72,16 @@ public:
     auto selection() const -> bool { return m_selection; }
     bool &selection() { return m_selection; }
     auto id() const -> int { return m_id; }
+    auto type() const -> SubType { return m_type; }
 private:
     friend class Parser;
     QString m_file, m_klass;
     SubtitleFileInfo m_info;
     SyncType m_base = Time;
-//    Language m_lang;
     Map m_capts;
     bool m_selection = false;
     int m_id = -1;
+    SubType m_type = SubType::Unknown;
 };
 
 using SubtitleComponentIterator = QMapIterator<int, SubCapt>;

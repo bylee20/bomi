@@ -195,6 +195,7 @@ struct PlayEngine::Data {
 
     VideoInfoObject videoInfo;
     AudioInfoObject audioInfo;
+    SubtitleInfoObject subInfo;
     ChapterInfoObject *chapterInfo = nullptr;
 
     MediaInfoObject mediaInfo;
@@ -226,7 +227,6 @@ struct PlayEngine::Data {
     QVector<StreamData> streams = {StreamData(), StreamData(), StreamData()};
     Mrl mpvMrl;
 
-    AudioTrackInfoObject *audioTrackInfo = nullptr;
     SubtitleStyle subStyle;
     VideoRenderer *renderer = nullptr;
     ChapterList chapters;
@@ -239,8 +239,6 @@ struct PlayEngine::Data {
     QString audioDevice = u"auto"_q;
 
     StartInfo startInfo, nextInfo;
-
-    SubtitleTrackInfoObject subtitleTrackInfo;
 
     auto af() const -> QByteArray;
     auto vf() const -> QByteArray;
@@ -380,11 +378,7 @@ struct PlayEngine::Data {
     auto currentTrack(StreamType type) -> int
     {
         Q_ASSERT(type != StreamUnknown);
-        for (auto &track : streams[type].tracks) {
-            if (track.m_selected)
-                return track.id();
-        }
-        return 0;
+        return _FindSelectedTrackId(streams[type].tracks);
     }
     auto observe() -> void;
     auto dispatch(mpv_event *event) -> void;

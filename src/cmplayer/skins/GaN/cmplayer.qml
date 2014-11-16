@@ -15,16 +15,22 @@ Cp.AppWithFloating {
                 clip: true; anchors { fill: parent; margins: 1 }
                 Item {
                     id: topBox; width: parent.width; height: 26
+                    function formatTrack(i) { return i <= 0 ? "-" : i; }
+                    function formatTrackNumber(info) {
+                        return formatTrack(info.track.id) + "/" + formatTrack(info.tracks.length)
+                    }
                     RowLayout {
                         anchors { fill: parent; topMargin: 4.5; leftMargin: 10; rightMargin: 10 } spacing: 2
+
                         Button {
                             id: audioTrackIcon; bind: audioTrackText; width: 20; height: 12; iconName: "audios"
                             action: "audio/track/next"; action2: "audio/track"
                             tooltip: makeToolTip(qsTr("Next Audio Track"), qsTr("Show Audio tracks"))
                         }
+
                         TimeText {
                             id: audioTrackText; bind: audioTrackIcon; width: textWidth; height: 12
-                            text: engine.audioTrack.currentText + "/" + engine.audioTrack.countText
+                            text: topBox.formatTrackNumber(engine.audio)
                         }
                         Item { width: 2; height: 1 }
                         Button {
@@ -33,8 +39,9 @@ Cp.AppWithFloating {
                             tooltip: makeToolTip(qsTr("Next Subtitle"), qsTr("Show Subtitles"))
                         }
                         TimeText {
+                            readonly property var sub: engine.subtitle
                             id: subTrackText; bind: subTrackIcon; width: textWidth; height: 12
-                            text: engine.subtitleTrack.currentText + "/" + engine.subtitleTrack.countText
+                            text: topBox.formatTrack(sub.currentNumber) + "/" + topBox.formatTrack(sub.totalLength)
                         }
                         Item { Layout.fillWidth: true }
                         Button {

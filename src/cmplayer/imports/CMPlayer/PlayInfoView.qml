@@ -13,6 +13,7 @@ Item {
     readonly property Engine engine: App.engine
     readonly property var audio: engine.audio
     readonly property var video: engine.video
+    readonly property var sub: engine.subtitle
 
     onVisibleChanged: if (visible) bringIn.start()
     NumberAnimation {
@@ -89,7 +90,7 @@ Item {
 
         PlayInfoText { }
 
-        PlayInfoTrack { name: qsTr("Video Track"); info: video }
+        PlayInfoTrack { id: ti; name: qsTr("Video Track"); info: video }
         PlayInfoVideoOutput { format: video.input; name: qsTr("Input   ") }
         PlayInfoVideoOutput { format: video.output; name: qsTr("Output  ") }
         PlayInfoVideoOutput { format: video.renderer; name: qsTr("Renderer") }
@@ -104,15 +105,23 @@ Item {
         }
 
         PlayInfoText {
-            text: qsTr("Dropped Frames: %1 Delayed Frames: %2")
-                .arg(video.droppedFrames).arg(video.delayedFrames)
+            text: qsTr("Dropped Frames: %1").arg(video.droppedFrames)
+        }
+        PlayInfoText {
+            text: qsTr("Delayed Frames: %1").arg(video.delayedFrames)
         }
 
         PlayInfoText {
             readonly property var hw: video.hwacc
             function driverText(d) { return (d === "" || d === "no") ? "--" : d }
-            text: qsTr("Hardware Acceleration: %1[%2] Deinterlacer: %3")
+            text: qsTr("Hardware Acceleration: %1[%2]")
                 .arg(box.activationText(hw.state)).arg(driverText(hw.driver))
+        }
+
+        PlayInfoText {
+            readonly property var hw: video.hwacc
+            function driverText(d) { return (d === "" || d === "no") ? "--" : d }
+            text: qsTr("Deinterlacer: %3")
                 .arg(box.activationText(video.deinterlacer))
         }
 
@@ -133,5 +142,9 @@ Item {
                 .arg(audio.driver.length > 0 ? audio.driver : "--")
                 .arg(audio.device)
         }
+
+        PlayInfoText { }
+        PlayInfoSubtitleList { list: sub.files; name: qsTr("Subtitle File") }
+        PlayInfoSubtitleList { list: sub.tracks; name: qsTr("Subtitle Track") }
     }
 }

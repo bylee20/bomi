@@ -4,12 +4,6 @@
 #include "video/videoformat.hpp"
 #include <video/img_format.h>
 
-AudioTrackInfoObject::AudioTrackInfoObject(const PlayEngine *engine, QObject *parent)
-: TrackInfoObject(parent) {
-    connect(engine, &PlayEngine::currentAudioStreamChanged,
-            this, &AudioTrackInfoObject::setCurrent);
-}
-
 ChapterInfoObject::ChapterInfoObject(const PlayEngine *engine, QObject *parent)
 : TrackInfoObject(parent), m_engine(engine) {
     connect(engine, &PlayEngine::currentChapterChanged, this, &ChapterInfoObject::setCurrent);

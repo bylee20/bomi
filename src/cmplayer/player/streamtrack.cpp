@@ -1,4 +1,5 @@
 #include "streamtrack.hpp"
+#include "subtitle/subtitle.hpp"
 
 auto translator_display_language(const QString &iso) -> QString;
 
@@ -49,5 +50,25 @@ auto StreamTrack::fromMpvData(const QVariant &mpv) -> StreamTrack
     if (!track.m_fileName.isEmpty())
         track.m_title = QFileInfo(track.m_fileName).fileName();
     track.m_selected = map[u"selected"_q].toBool();
+    return track;
+}
+
+auto StreamTrack::fromSubComp(const SubComp &comp) -> StreamTrack
+{
+    StreamTrack track;
+    track.m_type = StreamSubtitle;
+    track.m_id = comp.id();
+    track.m_lang = comp.language();
+    track.m_selected = comp.selection();
+    track.m_title = track.m_fileName = comp.fileName();
+    switch (comp.type()) {
+#define TYPE(t) case SubType::t: track.m_codec = u"" #t ""_q; break;
+    TYPE(SAMI);
+    TYPE(SubRip);
+    TYPE(MicroDVD);
+    TYPE(TMPlayer);
+    default: break;
+#undef TYPE
+    }
     return track;
 }

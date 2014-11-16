@@ -10,12 +10,14 @@ class SamiParser : public SubtitleParser {
 public:
     auto _parse(Subtitle &sub) -> void;
     auto isParsable() const -> bool;
+    auto type() const -> SubType { return SubType::SAMI; }
 };
 
 class SubRipParser : public SubtitleParser {
 public:
     auto _parse(Subtitle &sub) -> void;
     auto isParsable() const -> bool;
+    auto type() const -> SubType { return SubType::SubRip; }
 };
 
 class LineParser : public SubtitleParser {
@@ -34,12 +36,14 @@ public:
         : LineParser(uR"(^\s*(\d?\d)\s*:\s*(\d\d)\s*:\s*(\d\d)\s*:\s*(.*)$)"_q)
     { }
     auto _parse(Subtitle &sub) -> void;
+    auto type() const -> SubType { return SubType::TMPlayer; }
 };
 
 class MicroDVDParser : public LineParser {
 public:
     MicroDVDParser(): LineParser(uR"(^\{(\d+)\}\{(\d+)\}(.*)$)"_q) { }
     auto _parse(Subtitle &sub) -> void;
+    auto type() const -> SubType { return SubType::MicroDVD; }
 };
 
 #endif // SUBTITLE_PARSER_P_HPP

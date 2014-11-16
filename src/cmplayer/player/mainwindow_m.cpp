@@ -587,7 +587,7 @@ auto MainWindow::Data::connectMenus() -> void
         const int count = subtitle.componentsCount();
         const auto text = tr("%1 Subtitle(s)").arg(count);
         showMessage(tr("Select All Subtitles"), text);
-        setCurrentSubtitleIndexToEngine();
+        setSubtitleTracksToEngine();
     });
     connect(strack[u"hide"_q], &QAction::triggered,
             p, [this, &strack] (bool hide) {
@@ -634,7 +634,7 @@ auto MainWindow::Data::connectMenus() -> void
                 subtitle.deselect(a->data().toInt());
         }
         showMessage(tr("Selected Subtitle"), a->text());
-        setCurrentSubtitleIndexToEngine();
+        setSubtitleTracksToEngine();
     });
     connect(strack.g(u"internal"_q), &ActionGroup::triggered,
             p, [this, &strack] (QAction *a) {
@@ -648,11 +648,10 @@ auto MainWindow::Data::connectMenus() -> void
             showMessage(tr("Selected Subtitle"), a->text());
         } else
             engine.setCurrentSubtitleStream(-1);
-        setCurrentSubtitleIndexToEngine();
+        setSubtitleTracksToEngine();
     });
     connect(&strack, &Menu::actionsSynchronized, p, [this] () {
         setSubtitleTracksToEngine();
-        setCurrentSubtitleIndexToEngine();
     });
     plugEnumMenu<SubtitleDisplay>
             (sub, "sub_display", &MrlState::subDisplayChanged, [this] () {

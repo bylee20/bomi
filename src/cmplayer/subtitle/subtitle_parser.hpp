@@ -12,6 +12,7 @@ public:
 protected:
     virtual bool isParsable() const = 0;
     virtual void _parse(Subtitle &sub) = 0;
+    virtual auto type() const -> SubType = 0;
     const QString &all() const { return m_all; }
     auto getLine() const -> QStringRef;
     auto pos() const -> int { return m_pos; }
@@ -44,7 +45,7 @@ private:
 
 inline auto SubtitleParser::append(Subtitle &s, SubComp::SyncType b) -> SubComp&
 {
-    s.m_comp.append(SubComp(m_file, m_encoding, s.m_comp.size(), b));
+    s.m_comp.append(SubComp(type(), m_file, m_encoding, s.m_comp.size() + 1, b));
     return s.m_comp.last();
 }
 

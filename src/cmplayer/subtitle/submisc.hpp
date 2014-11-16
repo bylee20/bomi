@@ -5,9 +5,12 @@ class SubComp;
 
 struct SubtitleFileInfo {
     SubtitleFileInfo() {}
-    SubtitleFileInfo(const QString &path, const QString &encoding): path(path), encoding(encoding) {}
-    bool operator == (const SubtitleFileInfo &rhs) const { return path == rhs.path && encoding == rhs.encoding; }
-    bool operator < (const SubtitleFileInfo &rhs) const { return path < rhs.path; }
+    SubtitleFileInfo(const QString &path, const QString &encoding)
+        : path(path), encoding(encoding) {}
+    auto operator == (const SubtitleFileInfo &rhs) const -> bool
+        { return path == rhs.path && encoding == rhs.encoding; }
+    auto operator < (const SubtitleFileInfo &rhs) const -> bool
+        { return path < rhs.path; }
     auto toString() const -> QString { return path % '#'_q % encoding; }
     static auto fromString(const QString &text) -> SubtitleFileInfo {
         const int index = text.lastIndexOf('#'_q);
@@ -26,13 +29,14 @@ struct SubtitleStateInfo {
     struct Comp {
         Comp() {}
         Comp(int id, bool selected): id(id), selected(selected) {}
-        bool operator == (const Comp &rhs) const { return id == rhs.id && selected == rhs.selected; }
+        auto operator == (const Comp &rhs) const -> bool
+            { return id == rhs.id && selected == rhs.selected; }
         int id = -1; bool selected = false;
     };
-    bool operator == (const SubtitleStateInfo &rhs) const {
-        return m_track == rhs.m_track && m_mpv == rhs.m_mpv && m_cmplayer == rhs.m_cmplayer;
-    }
-    bool operator != (const SubtitleStateInfo &rhs) const { return !operator == (rhs); }
+    auto operator == (const SubtitleStateInfo &rhs) const -> bool
+        { return m_track == rhs.m_track && m_mpv == rhs.m_mpv && m_cmplayer == rhs.m_cmplayer; }
+    auto operator != (const SubtitleStateInfo &rhs) const -> bool
+        { return !operator == (rhs); }
     auto toString() const -> QString;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;

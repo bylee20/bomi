@@ -21,12 +21,13 @@ SubComp::SubComp() {
     m_capts[0].index = 0;
 }
 
-SubComp::SubComp(const QFileInfo &file, const QString &enc, int id, SyncType b)
+SubComp::SubComp(SubType type, const QFileInfo &file, const QString &enc, int id, SyncType b)
     : m_file(file.fileName())
     , m_info(file.absoluteFilePath(), enc)
     , m_base(b)
     , m_id(id)
 {
+    m_type = type;
     m_capts[0].index = 0;
 }
 

@@ -11,6 +11,7 @@
 #include "playlistmodel.hpp"
 #include "historymodel.hpp"
 #include "pref.hpp"
+#include "streamtrack.hpp"
 #include "misc/downloader.hpp"
 #include "video/videorendereritem.hpp"
 #include "subtitle/subtitlerendereritem.hpp"
@@ -151,8 +152,6 @@ struct MainWindow::Data {
     auto initContextMenu() -> void;
     auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;
     auto lastCheckedSubtitleIndex() const -> int;
-    auto setCurrentSubtitleIndexToEngine() -> void
-        { engine.setCurrentSubtitleIndex(lastCheckedSubtitleIndex()); }
     auto setSubtitleTracksToEngine() -> void;
     auto syncSubtitleFileMenu() -> void;
     auto updateWindowSizeState() -> void;

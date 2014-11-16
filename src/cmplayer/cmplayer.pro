@@ -462,7 +462,8 @@ OTHER_FILES += \
     skins/Faenza-Zukitwo/cmplayer.qml \
     imports/CMPlayer/PlayInfoVideoOutput.qml \
     imports/CMPlayer/PlayInfoAudioOutput.qml \
-    imports/CMPlayer/PlayInfoTrack.qml
+    imports/CMPlayer/PlayInfoTrack.qml \
+    imports/CMPlayer/PlayInfoSubtitleList.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

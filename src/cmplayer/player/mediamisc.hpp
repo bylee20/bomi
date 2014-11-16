@@ -36,7 +36,8 @@ class MediaInfoObject : public QObject {
 public:
     MediaInfoObject(QObject *parent = nullptr): QObject(parent) {}
     auto name() const -> QString {return m_name;}
-    auto setName(const QString &name) -> void { if (_Change(m_name, name)) emit nameChanged(m_name); }
+    auto setName(const QString &name) -> void
+        { if (_Change(m_name, name)) emit nameChanged(m_name); }
 signals:
     void nameChanged(const QString &name);
 private:
@@ -48,7 +49,7 @@ struct Chapter {
     auto name() const -> QString {return m_name;}
     auto id() const -> int {return m_id;}
     auto operator == (const Chapter &rhs) const -> bool
-    { return m_id == rhs.m_id && m_name == rhs.m_name; }
+        { return m_id == rhs.m_id && m_name == rhs.m_name; }
 private:
     friend class PlayEngine;
     QString m_name;
@@ -107,23 +108,6 @@ public:
     Q_INVOKABLE QString name(int i) const;
 private:
     const PlayEngine *m_engine = nullptr;
-};
-
-class AudioTrackInfoObject : public TrackInfoObject {
-    Q_OBJECT
-public:
-    AudioTrackInfoObject(const PlayEngine *engine, QObject *parent = nullptr);
-};
-
-class SubtitleTrackInfoObject : public TrackInfoObject {
-    Q_OBJECT
-public:
-    SubtitleTrackInfoObject(QObject *parent = nullptr): TrackInfoObject(parent) {}
-    auto set(const QStringList &tracks) -> void { m_tracks = tracks; setCount(m_tracks.size()); }
-    auto setCurrentIndex(int idx) -> void { setCurrent(idx+1); }
-    Q_INVOKABLE QString name(int i) const { return m_tracks.value(i); }
-private:
-    QStringList m_tracks;
 };
 
 #endif // MEDIAMISC_HPP

@@ -11,7 +11,6 @@ PlayEngine::PlayEngine()
     d->filter = new VideoFilter;
 
     d->chapterInfo = new ChapterInfoObject(this, this);
-    d->audioTrackInfo = new AudioTrackInfoObject(this, this);
     d->updateMediaName();
 
     _Debug("Make registrations and connections");
@@ -30,30 +29,23 @@ PlayEngine::PlayEngine()
     mpv_request_log_messages(d->handle, verbose.constData());
 
     d->observe();
-
-    auto setStreamInfo = [&] (AvCommonInfoObject *info, const StreamTrack &track)
-    {
-        info->setTrack(track.id());
-        info->setTitle(track.title());
-        info->setLanguage(track.language());
-    };
-
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::videoStreamsChanged, this, [=] () {
         if (_Change(d->hasVideo, !d->streams[StreamVideo].tracks.isEmpty()))
             emit hasVideoChanged();
+        d->videoInfo.setTracks(d->streams[StreamVideo].tracks);
     });
-    connect(this, &PlayEngine::audioStreamsChanged, this, [=] () {
-        d->audioTrackInfo->setCount(d->streams[StreamAudio].tracks.size());
-        d->audioTrackInfo->setCurrent(d->currentTrack(StreamAudio));
-    });
-
+    connect(this, &PlayEngine::audioStreamsChanged, this, [=] ()
+        { d->audioInfo.setTracks(d->streams[StreamAudio].tracks); });
+    connect(this, &PlayEngine::subtitleStreamsChanged, this, [=] ()
+        { d->subInfo.setTracks(d->streams[StreamSubtitle].tracks); });
     connect(this, &PlayEngine::currentVideoStreamChanged, this, [=] (int id)
-        { setStreamInfo(&d->videoInfo, d->streams[StreamVideo].tracks[id]); });
+        { d->videoInfo.setTrack(d->streams[StreamVideo].tracks.value(id)); });
     connect(this, &PlayEngine::currentAudioStreamChanged, this, [=] (int id)
-        { setStreamInfo(&d->audioInfo, d->streams[StreamAudio].tracks[id]); });
-
+        { d->audioInfo.setTrack(d->streams[StreamAudio].tracks.value(id)); });
+    connect(this, &PlayEngine::currentSubtitleStreamChanged, this, [=] ()
+        { d->subInfo.setTracks(d->streams[StreamSubtitle].tracks); });
     auto checkDeint = [=] () {
         auto act = Unavailable;
         if (d->filter->isInputInterlaced())
@@ -126,7 +118,6 @@ PlayEngine::~PlayEngine()
     d->initialized = false;
     mpv_terminate_destroy(d->handle);
     delete d->chapterInfo;
-    delete d->audioTrackInfo;
     delete d->audio;
     delete d->video;
     delete d->filter;
@@ -147,36 +138,20 @@ auto PlayEngine::updateVideoFormat(VideoFormat format) -> void
 //    output->setBps(d->videoFormat.bitrate(output->m_fps));
 }
 
-auto PlayEngine::subtitleTrackInfo() const -> SubtitleTrackInfoObject*
-{
-    return &d->subtitleTrackInfo;
-}
-
 auto PlayEngine::setSubtitleDelay(int ms) -> void
 {
     if (_Change(d->subDelay, ms))
         d->setmpv_async("sub-delay", d->subDelay/1000.0);
 }
 
-auto PlayEngine::setSubtitleTracks(const QStringList &tracks) -> void
+auto PlayEngine::setSubtitleFiles(const StreamList &files) -> void
 {
-    d->subtitleTrackInfo.set(tracks);
-    emit subtitleTrackInfoChanged();
-}
-
-auto PlayEngine::setCurrentSubtitleIndex(int idx) -> void
-{
-    d->subtitleTrackInfo.setCurrentIndex(idx);
+    d->subInfo.setFiles(files);
 }
 
 auto PlayEngine::chapterInfo() const -> ChapterInfoObject*
 {
     return d->chapterInfo;
-}
-
-auto PlayEngine::audioTrackInfo() const -> AudioTrackInfoObject*
-{
-    return d->audioTrackInfo;
 }
 
 auto PlayEngine::mediaName() const -> QString
@@ -485,6 +460,11 @@ auto PlayEngine::audioInfo() const -> AudioInfoObject*
 auto PlayEngine::videoInfo() const -> VideoInfoObject*
 {
     return &d->videoInfo;
+}
+
+auto PlayEngine::subInfo() const -> SubtitleInfoObject*
+{
+    return &d->subInfo;
 }
 
 auto PlayEngine::setCurrentChapter(int id) -> void

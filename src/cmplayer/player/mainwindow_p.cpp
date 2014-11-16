@@ -221,7 +221,6 @@ auto MainWindow::Data::initEngine() -> void
         for (auto action : acts)
             action->setChecked(action->data().toInt() == stream);
         menu(u"subtitle"_q)(u"track"_q).syncActions();
-        setCurrentSubtitleIndexToEngine();
     });
 
     connect(&engine, &PlayEngine::started, p, [this] (Mrl mrl) {
@@ -566,15 +565,12 @@ auto MainWindow::Data::lastCheckedSubtitleIndex() const -> int
 
 auto MainWindow::Data::setSubtitleTracksToEngine() -> void
 {
-    auto &list = menu(u"subtitle"_q)(u"track"_q);
-    const auto internal = list.g(u"internal"_q)->actions();
-    const auto external = list.g(u"external"_q)->actions();
-    QStringList tracks; tracks.reserve(internal.size() + external.size());
-    for (int i=0; i<internal.size(); ++i)
-        tracks.append(internal[i]->text());
-    for (auto action : external)
-        tracks.append(action->text());
-    engine.setSubtitleTracks(tracks);
+    StreamList track;
+    for (auto comp : subtitle.components()) {
+        if (comp->selection())
+            track[comp->id()] = StreamTrack::fromSubComp(*comp);
+    }
+    engine.setSubtitleFiles(track);
 }
 
 auto MainWindow::Data::syncSubtitleFileMenu() -> void

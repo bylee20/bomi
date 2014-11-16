@@ -2,10 +2,9 @@
 #define PLAYENGINE_HPP
 
 #include "mrl.hpp"
-#include "streamtrack.hpp"
 #include "mediamisc.hpp"
 
-class VideoRenderer;                class VideoFormat;
+class VideoRenderer;                    class VideoFormat;
 class DeintOption;                      class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct SubtitleStyle;
@@ -15,6 +14,9 @@ enum class DeintMethod;                 enum class DeintMode;
 enum class ChannelLayout;               enum class InterpolatorType;
 enum class ColorRange;                  enum class ColorSpace;
 class AudioInfoObject;                  class VideoInfoObject;
+
+class StreamTrack;                      class SubtitleInfoObject;
+using StreamList = QMap<int, StreamTrack>;
 
 struct StartInfo {
     StartInfo() {}
@@ -59,8 +61,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
-    Q_PROPERTY(AudioTrackInfoObject *audioTrack READ audioTrackInfo NOTIFY audioStreamsChanged)
-    Q_PROPERTY(SubtitleTrackInfoObject *subtitleTrack READ subtitleTrackInfo NOTIFY subtitleTrackInfoChanged)
+    Q_PROPERTY(SubtitleInfoObject* subtitle READ subInfo NOTIFY subInfoChanged)
 public:
     enum State {
         Stopped = 1, Playing = 2, Paused = 4,
@@ -151,13 +152,11 @@ public:
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterInfo() const -> ChapterInfoObject*;
-    auto audioTrackInfo() const -> AudioTrackInfoObject*;
-    auto subtitleTrackInfo() const -> SubtitleTrackInfoObject*;
-    auto setSubtitleTracks(const QStringList &tracks) -> void;
-    auto setCurrentSubtitleIndex(int idx) -> void;
+    auto setSubtitleFiles(const StreamList &files) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
     auto mousePosition() const -> const QPoint& { return m_mouse; }
+    auto subInfo() const -> SubtitleInfoObject*;
     auto subtitleFiles() const -> QVector<SubtitleFileInfo>;
     auto setSubtitleDelay(int ms) -> void;
     auto setNextStartInfo(const StartInfo &startInfo) -> void;
@@ -181,6 +180,7 @@ public:
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
 signals:
+    void subInfoChanged();
     void fpsChanged(double fps);
     void seeked(int time);
     void sought();
