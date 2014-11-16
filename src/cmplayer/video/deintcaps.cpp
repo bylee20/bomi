@@ -2,17 +2,18 @@
 #include "hwacc.hpp"
 #include "misc/json.hpp"
 
-#define JSON_IO_DEINT_CAPS _JIO<DeintCaps>(\
-    _JE(u"method"_q, &DeintCaps::m_method),\
-    _JE(u"decoders"_q, &DeintCaps::m_decoders),\
-    _JE(u"devices"_q, &DeintCaps::m_devices),\
-    _JE(u"doubler"_q, &DeintCaps::m_doubler)\
-)
-
 template<>
 struct JsonIO<DeintCaps> {
-    static auto io() -> const decltype(JSON_IO_DEINT_CAPS)*
-    { static const auto io = JSON_IO_DEINT_CAPS; return &io; }
+    static auto io()
+    {
+        static const auto io = _JIO<DeintCaps>(\
+            _JE(u"method"_q, &DeintCaps::m_method),\
+            _JE(u"decoders"_q, &DeintCaps::m_decoders),\
+            _JE(u"devices"_q, &DeintCaps::m_devices),\
+            _JE(u"doubler"_q, &DeintCaps::m_doubler)\
+        );
+        return &io;
+    }
 };
 
 static const auto jio = JsonIO<DeintCaps>::io();

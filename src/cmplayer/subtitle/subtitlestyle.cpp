@@ -22,11 +22,11 @@ static const auto spacingIO = JIO(JE(line), JE(paragraph));
 static const auto bboxIO = JIO(JE(enabled), JE(color), JE(padding));
 #undef JSON_CLASS
 
-auto json_io(SubtitleStyle::Font*) -> decltype(&fontIO) { return &fontIO; }
-auto json_io(SubtitleStyle::Outline*) -> decltype(&outlineIO) { return &outlineIO; }
-auto json_io(SubtitleStyle::Shadow*) -> decltype(&shadowIO) { return &shadowIO; }
-auto json_io(SubtitleStyle::Spacing*) -> decltype(&spacingIO) { return &spacingIO; }
-auto json_io(SubtitleStyle::BBox*) -> decltype(&bboxIO) { return &bboxIO; }
+auto json_io(SubtitleStyle::Font*) { return &fontIO; }
+auto json_io(SubtitleStyle::Outline*) { return &outlineIO; }
+auto json_io(SubtitleStyle::Shadow*) { return &shadowIO; }
+auto json_io(SubtitleStyle::Spacing*) { return &spacingIO; }
+auto json_io(SubtitleStyle::BBox*) { return &bboxIO; }
 
 #define JSON_CLASS SubtitleStyle
 static const auto jio = JIO(

@@ -112,29 +112,28 @@ struct JsonIOSelector;
 template<class T>
 struct JsonIOSelector<T, true, false> {
     using U = tmp::remove_all_t<T>;
-    static auto select(const T*) -> const JsonValueIO<U>* { static const JsonValueIO<U> io{}; return &io; }
+    static auto select(const T*) { static const JsonValueIO<U> io{}; return &io; }
 };
 
 template<class T>
 struct JsonIOSelector<T, false, true> {
     using U = tmp::remove_all_t<T>;
-    static auto select(const T*) -> decltype(::JsonIO<U>::io()) { return ::JsonIO<U>::io(); }
+    static auto select(const T*) { return ::JsonIO<U>::io(); }
 };
 
 template<class T>
 struct JsonIOSelector<T, false, false> {
     using U = tmp::remove_all_t<T>;
-    static auto select(const T*) -> const JsonIO<U>* { static const JsonIO<U> io{}; return &io; }
+    static auto select(const T*) { static const JsonIO<U> io{}; return &io; }
 };
 
 }
 
 template<class T>
-SIA json_io(const T*) -> decltype(detail::JsonIOSelector<T>::select((T*)0))
-{ return detail::JsonIOSelector<T>::select((T*)0); }
+SIA json_io(const T*) { return detail::JsonIOSelector<T>::select((T*)0); }
 
 template<class T>
-SIA json_io() -> decltype(json_io((T*)0)) { return json_io((T*)0); }
+SIA json_io() { return json_io((T*)0); }
 
 template<class T, class D>
 struct JsonMemberEntry {
@@ -172,7 +171,7 @@ struct WriteToJsonObject {
     template<class Getter, class Setter>
     auto operator () (const JsonPropertyEntry<T, Getter, Setter> &entry) const -> void
     { auto d = (from->*entry.get)(); m_json.insert(entry.key, json_io(&d)->toJson(d)); }
-    const QJsonObject &json() const { return m_json; }
+    auto json() const -> const QJsonObject& { return m_json; }
 private:
     const T *from = nullptr;
     mutable QJsonObject m_json;
@@ -319,20 +318,19 @@ struct JsonMapIO {
 };
 
 template<class T, class D>
-SCIA _JE(const QString &key, D T::*data) -> JsonMemberEntry<T, D>
+SCIA _JE(const QString &key, D T::*data)
     { return JsonMemberEntry<T, D>(key, data); }
 
 template<class T, class D>
-SCIA _JE(const QString &key, D&(T::*ref)()) -> JsonReferenceEntry<T, D>
+SCIA _JE(const QString &key, D&(T::*ref)())
     { return JsonReferenceEntry<T, D>(key, ref); }
 
 template<class T, class D, class Set>
 SCIA _JE(const QString &key, D(T::*get)()const, Set set)
--> JsonPropertyEntry<T, decltype(get), Set>
     { return JsonPropertyEntry<T, decltype(get), Set>(key, get, set); }
 
 template<class T, class... Entry>
-SCIA _JIO(Entry&&... entry) -> JsonObjectIO<T, Entry...>
+SCIA _JIO(Entry&&... entry)
     { return JsonObjectIO<T, Entry...>(std::forward<Entry>(entry)...); }
 
 //#define JSON_CLASS ClassName
@@ -353,7 +351,7 @@ auto json_io(const QSizeF*) -> const decltype(JSON_IO_SIZE(QSizeF))*;
 
 #define JSON_DECLARE_MAP_IO(C) \
 template<class Key, class T> \
-auto json_io(const C<Key, T>*) -> const JsonMapIO<Key, T, C<Key, T>>* \
+auto json_io(const C<Key, T>*) \
 { static const JsonMapIO<Key, T, C<Key, T>> io{}; return &io; }
 JSON_DECLARE_MAP_IO(QMap)
 JSON_DECLARE_MAP_IO(QHash)
@@ -361,7 +359,7 @@ JSON_DECLARE_MAP_IO(std::map)
 
 #define JSON_DECLARE_ARRAY_IO(C) \
 template<class T> \
-auto json_io(const C<T>*) -> const JsonArrayIO<T, C<T>>* \
+auto json_io(const C<T>*) \
 { static const JsonArrayIO<T, C<T>> io{}; return &io; }
 JSON_DECLARE_ARRAY_IO(QList)
 JSON_DECLARE_ARRAY_IO(QVector)
@@ -428,8 +426,7 @@ struct JsonIO<QKeySequence> : JsonQStringType {
 };
 
 template<class T>
-auto _ToJson(const T &t) -> decltype(json_io<T>()->toJson(t))
-{ return json_io<T>()->toJson(t); }
+auto _ToJson(const T &t) { return json_io<T>()->toJson(t); }
 
 template<class T>
 auto _FromJson(const QJsonValue &json) -> T

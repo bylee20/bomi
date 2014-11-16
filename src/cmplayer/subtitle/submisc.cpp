@@ -10,8 +10,8 @@ static const auto fileIO = JIO( JE(path), JE(encoding) );
 static const auto compIO = JIO( JE(id), JE(selected) );
 #undef JSON_CLASS
 
-auto json_io(SubtitleFileInfo*) -> decltype(&fileIO) { return &fileIO; }
-auto json_io(SubtitleStateInfo::Comp*) -> decltype(&compIO) { return &compIO; }
+auto json_io(SubtitleFileInfo*) { return &fileIO; }
+auto json_io(SubtitleStateInfo::Comp*) { return &compIO; }
 
 auto SubtitleFileInfo::toJson() const -> QJsonObject
 {

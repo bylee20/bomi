@@ -17,6 +17,8 @@ contains( DEFINES, CMPLAYER_RELEASE ) {
     macx:CONFIG += app_bundle
 } else:CONFIG -= release
 
+QMAKE_CXXFLAGS_CXX11 = -std=c++1y
+
 !contains(QMAKE_CXX, clang++) {
 QMAKE_CXXFLAGS += -Wno-non-template-friend
 }

@@ -22,13 +22,14 @@ struct SubCompSelection::Thread::Data {
     SubCompSelection *selection = nullptr;
 
     SubComp::ConstIt iterator(int time) const { return comp->start(time, fps); }
-    auto newPicture(SubCompItMapIt it) -> decltype(pool.begin())
+    auto newPicture(SubCompItMapIt it)
     {
         auto pic = pool.insert(it, SubCompImage(comp, *it, item));
         drawer.draw(*pic, rect, dpr);
         return pic;
     }
-    void update() {
+    auto update()
+    {
         if (quit)
             return;
         auto post = [this] (const SubCompImage &pic)
@@ -42,7 +43,8 @@ struct SubCompSelection::Thread::Data {
             post(comp);
     }
 
-    void fillCache() {
+    auto fillCache()
+    {
         if (it == its.end())
             return;
         auto iit = pool.begin();
@@ -60,7 +62,8 @@ struct SubCompSelection::Thread::Data {
         }
     }
 
-    void draw(bool force) {
+    auto draw(bool force)
+    {
         auto iit = --its.upperBound(time);
         if (force || it != iit) {
             if (it == its.end() || ++it != iit) {
@@ -74,7 +77,8 @@ struct SubCompSelection::Thread::Data {
         }
     }
 
-    void rebuild() {
+    auto rebuild()
+    {
         pool.clear();
         its.clear();
         it = its.end();
