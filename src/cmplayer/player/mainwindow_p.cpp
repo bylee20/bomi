@@ -408,7 +408,6 @@ auto MainWindow::Data::tryToAutoselect(const QVector<SubComp> &loaded,
 auto MainWindow::Data::tryToAutoload(const Mrl &mrl,
                                      const QDir &dir) -> QVector<SubComp>
 {
-    qDebug() << "try" << dir.absolutePath();
     QVector<SubComp> loaded;
     const auto &p = pref();
     if (!p.sub_enable_autoload)
@@ -482,11 +481,11 @@ auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
             pl.append(mrls);
             break;
         case OpenMediaBehavior::ClearAndAppend:
-            pl.clear();
+            playlist.clear();
             pl.append(mrls);
             break;
         case OpenMediaBehavior::NewPlaylist:
-            pl.clear();
+            playlist.clear();
             pl = generatePlaylist(mrl);
             break;
         }
