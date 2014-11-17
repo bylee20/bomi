@@ -120,7 +120,7 @@ auto VideoFilter::reconfig(vf_instance *vf,
     auto v = priv(vf); auto d = v->d;
     d->params = *in;
     *out = *in;
-    if (_Change(d->hwacc, IMGFMT_IS_HWACCEL(in->imgfmt)))
+    if (_Change(d->hwacc, !!IMGFMT_IS_HWACCEL(in->imgfmt)))
         d->updateDeint();
     return 0;
 }

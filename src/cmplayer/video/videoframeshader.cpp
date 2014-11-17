@@ -256,20 +256,20 @@ auto VideoFrameShader::setFormat(const mp_image_params &params,
 
     const int bits = [&] () {
         switch (m_imgfmtOut) {
-        case IMGFMT_420P16_LE: case IMGFMT_420P16_BE: return 16;
-        case IMGFMT_420P14_LE: case IMGFMT_420P14_BE: return 14;
-        case IMGFMT_420P12_LE: case IMGFMT_420P12_BE: return 12;
-        case IMGFMT_420P10_LE: case IMGFMT_420P10_BE: return 10;
-        case IMGFMT_420P9_LE:  case IMGFMT_420P9_BE:  return 9;
-        default:                                      return 8;
+        case IMGFMT_420P16: return 16;
+        case IMGFMT_420P14: return 14;
+        case IMGFMT_420P12: return 12;
+        case IMGFMT_420P10: return 10;
+        case IMGFMT_420P9:  return 9;
+        default:            return 8;
         }
     }();
     const bool little = [&] () {
         switch (m_imgfmtOut) {
-        case IMGFMT_420P16_LE: case IMGFMT_420P14_LE:
-        case IMGFMT_420P12_LE: case IMGFMT_420P10_LE:
-        case IMGFMT_420P9_LE:  return true;
-        default:               return false;
+        case IMGFMT_420P16: case IMGFMT_420P14:
+        case IMGFMT_420P12: case IMGFMT_420P10:
+        case IMGFMT_420P9:  return true;
+        default:            return false;
         }
     }();
     m_texel = "vec4 texel(const in vec4 tex0) { return tex0.rgba; }";
@@ -285,11 +285,11 @@ auto VideoFrameShader::setFormat(const mp_image_params &params,
             { return vec4(tex0.r, tex1.r, tex2.ra); }
         )";
         break;
-    case IMGFMT_420P16_BE: case IMGFMT_420P16_LE:
-    case IMGFMT_420P14_BE: case IMGFMT_420P14_LE:
-    case IMGFMT_420P12_BE: case IMGFMT_420P12_LE:
-    case IMGFMT_420P10_BE: case IMGFMT_420P10_LE:
-    case IMGFMT_420P9_BE:  case IMGFMT_420P9_LE:
+    case IMGFMT_420P16:
+    case IMGFMT_420P14:
+    case IMGFMT_420P12:
+    case IMGFMT_420P10:
+    case IMGFMT_420P9:
         m_texel = R"(
             float convBits(const in vec4 tex)
             {
@@ -529,11 +529,11 @@ auto VideoFrameShader::fillInfo(const MpImage &mpi) -> void
         if (m_imgfmtOut == IMGFMT_420P)
             cc(2, 0.5);
         break;
-    case IMGFMT_420P16_BE:  case IMGFMT_420P16_LE:
-    case IMGFMT_420P14_BE:  case IMGFMT_420P14_LE:
-    case IMGFMT_420P12_BE:  case IMGFMT_420P12_LE:
-    case IMGFMT_420P10_BE:  case IMGFMT_420P10_LE:
-    case IMGFMT_420P9_BE:   case IMGFMT_420P9_LE:
+    case IMGFMT_420P16:
+    case IMGFMT_420P14:
+    case IMGFMT_420P12:
+    case IMGFMT_420P10:
+    case IMGFMT_420P9:
         add(0, 2); add(1, 2); add(2, 2); cc(2, 0.5);
         break;
     case IMGFMT_NV12:       case IMGFMT_NV21:
