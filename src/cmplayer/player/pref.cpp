@@ -243,6 +243,7 @@ static const auto jio = JIO(
     JE(channel_manipulation),
     JE(enable_generate_playist),
     JE(sub_search_paths),
+    JE(sub_search_paths_v2),
     JE(sub_enable_autoload),
     JE(sub_enable_autoselect),
     JE(generate_playlist),
@@ -437,6 +438,14 @@ auto Pref::load() -> void
     }
     if (!jio.fromJson(*this, json))
         _Error("Error: Cannot convert JSON object to preferences");
+
+    if (!sub_search_paths.isEmpty()) {
+        sub_search_paths_v2.clear();
+        sub_search_paths_v2.reserve(sub_search_paths.size());
+        for (auto &path : sub_search_paths)
+            sub_search_paths_v2.push_back({path});
+        sub_search_paths.clear();
+    }
 }
 
 #ifdef Q_OS_LINUX

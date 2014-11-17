@@ -16,15 +16,17 @@ signals:
 protected:
     auto setSpecialFont(const QFont &font) -> void { m_specialFont = font; }
     auto setSpecialRow(int row) -> void
-    { if (_Change(m_special, row)) emit specialRowChanged(m_special); }
+        { if (_Change(m_special, row)) emit specialRowChanged(m_special); }
     auto emitRowsChanged(int rows) -> void { emit rowsChanged(rows); }
     auto emitDataChanged(int row) -> void
-    { emit dataChanged(index(row, 0), index(row, m_columns-1)); }
+        { emit dataChanged(index(row, 0), index(row, m_columns-1)); }
     auto emitDataChanged(const QModelIndex &index, int role) -> void
-    { emitDataChanged(index, index, role); }
+        { emitDataChanged(index, index, role); }
     auto emitDataChanged(const QModelIndex &tl,
                          const QModelIndex &br, int role) -> void
-    { emit dataChanged(tl, br, QVector<int>() << role); }
+        { emit dataChanged(tl, br, QVector<int>() << role); }
+    auto emitDataChanged(const QModelIndex &index) -> void
+        { emit dataChanged(index, index, QVector<int>()); }
 private:
     SimpleListModelBase(int columns, QObject *parent = nullptr);
     template<class T, class List> friend class SimpleListModel;
@@ -43,7 +45,6 @@ public:
     SimpleListModel(int columns, QObject *parent = nullptr)
         : SimpleListModelBase(columns, parent) { }
     auto rows() const -> int { return m_list.size(); }
-    auto colums() const -> int { return m_columns; }
     auto at(int row) const -> const T& { return m_list.at(row); }
     auto value(int row) const -> T { return m_list.value(row); }
     auto size() const -> int { return m_list.size(); }
@@ -59,7 +60,7 @@ public:
     auto isValidRow(int row) const -> bool
     { return _InRange0(row, m_list.size()); }
     auto isValidColumn(int column) const -> bool
-    { return _InRange0(column, m_columns); }
+    { return _InRange0(column, columns()); }
 
     auto setList(const Container &list) -> void;
     auto append(const T &t) -> void { append(Container() << t); }
@@ -70,11 +71,13 @@ public:
     auto rowOf(const T &t) const -> int {return m_list.indexOf(t);}
     auto swap(int r1, int r2) -> bool;
     virtual auto header(int column) const -> QString;
+    virtual auto edit(int row, int column, const QVariant &var) -> bool;
 protected:
     virtual auto flags(int row, int column) const -> Qt::ItemFlags;
     virtual auto displayData(int row, int column) const -> QVariant;
     virtual auto roleData(int row, int column, int role) const -> QVariant;
     virtual auto fontData(int row, int column) const -> QFont;
+    virtual auto editData(int row, int column) const -> QVariant;
     auto getList() -> Container& { return m_list; }
     auto get(int r) -> T& { return m_list[r]; }
 private:
@@ -158,6 +161,14 @@ auto SimpleListModel<T, List>::roleData(int r, int c, int role) const -> QVarian
 { Q_UNUSED((r | c | role)); return QVariant(); }
 
 template<class T, class List>
+auto SimpleListModel<T, List>::edit(int r, int c, const QVariant &var) -> bool
+{ Q_UNUSED((r | c)); Q_UNUSED(var); return false; }
+
+template<class T, class List>
+auto SimpleListModel<T, List>::editData(int row, int column) const -> QVariant
+{ return displayData(row, column); }
+
+template<class T, class List>
 auto SimpleListModel<T, List>::headerData(int idx, Qt::Orientation o,
                                     int role) const -> QVariant
 {
@@ -176,6 +187,8 @@ auto SimpleListModel<T, List>::data(const QModelIndex &idx,
     switch (role) {
     case Qt::DisplayRole:
         return displayData(row, col);
+    case Qt::EditRole:
+        return editData(row, col);
     case Qt::CheckStateRole: {
         auto it = m_checked.find(col);
         if (it == m_checked.end())
@@ -198,6 +211,12 @@ auto SimpleListModel<T, List>::setData(const QModelIndex &idx,
         return false;
     if (role == Qt::CheckStateRole)
         return setChecked(idx.row(), idx.column(), val.toBool());
+    if (role == Qt::EditRole) {
+        const auto res = edit(idx.row(), idx.column(), val);
+        if (res)
+            emitDataChanged(idx);
+        return res;
+    }
     return false;
 }
 

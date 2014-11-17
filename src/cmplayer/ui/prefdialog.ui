@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>713</width>
-    <height>650</height>
+    <height>666</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>4</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -767,10 +767,39 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QPushButton" name="sub_search_path_remove">
+                <property name="text">
+                 <string>Remove</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item>
-             <widget class="QListView" name="sub_search_paths"/>
+             <layout class="QHBoxLayout" name="horizontalLayout_33">
+              <item>
+               <widget class="QCheckBox" name="sub_search_regex">
+                <property name="text">
+                 <string>Regular expression</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="sub_search_case_sensitive">
+                <property name="text">
+                 <string>Case-sensitive</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTreeView" name="sub_search_paths">
+              <property name="rootIsDecorated">
+               <bool>false</bool>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>

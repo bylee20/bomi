@@ -2,6 +2,7 @@
 #define PREF_HPP
 
 #include "openmediainfo.hpp"
+#include "misc/matchstring.hpp"
 #include "quick/osdtheme.hpp"
 #include "video/hwacc.hpp"
 #include "video/deintcaps.hpp"
@@ -56,7 +57,7 @@ public:
     ChannelLayoutMap channel_manipulation
         = ChannelLayoutMap::default_();
 
-    QStringList sub_search_paths;
+    QList<MatchString> sub_search_paths_v2;
     bool sub_enable_autoload = true, sub_enable_autoselect = true, sub_enc_autodetection = true;
     SubtitleAutoload sub_autoload = SubtitleAutoload::Contain;
     SubtitleAutoselect sub_autoselect = SubtitleAutoselect::Matched;
@@ -104,6 +105,8 @@ public:
 
     auto save() const -> void;
     auto load() -> void;
+
+    QStringList sub_search_paths;
 private:
     auto loadFromRecord() -> void;
 

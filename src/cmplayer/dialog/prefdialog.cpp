@@ -1,4 +1,5 @@
 #include "prefdialog.hpp"
+#include "mbox.hpp"
 #include "prefdialog_p.hpp"
 #include "shortcutdialog.hpp"
 #include "player/app.hpp"
@@ -34,7 +35,7 @@ struct PrefDialog::Data {
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     QStringList imports;
-    StringListModel subSearchPaths;
+    SubSearchPathModel subSearchPaths;
     DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
     MrlStatePropertyListModel properties;
     auto updateCodecCheckBox() -> void
@@ -334,20 +335,30 @@ PrefDialog::PrefDialog(QWidget *parent)
     });
 
     d->ui.sub_search_paths->setModel(&d->subSearchPaths);
+    d->ui.sub_search_paths->setItemDelegate(new SubSearchPathDelegate(this));
+    d->ui.sub_search_path_edit->setValidator(new SubSearchPathValidator(this));
     connect(d->ui.sub_search_path_edit, &QLineEdit::textChanged,
             [this] (const QString &text) {
         d->ui.sub_search_path_add->setEnabled(!text.isEmpty());
     });
     connect(d->ui.sub_search_path_add, &QPushButton::clicked, [this] () {
         const auto text = d->ui.sub_search_path_edit->text();
-        if (!text.isEmpty())
-            d->subSearchPaths.append(text);
+        if (text.isEmpty() || text.contains(u'/'_q))
+            return;
+        MatchString str(text);
+        str.setCaseSensitive(d->ui.sub_search_case_sensitive->isChecked());
+        str.setRegEx(d->ui.sub_search_regex->isChecked());
+        d->subSearchPaths.append(str);
     });
     connect(d->ui.sub_search_path_browse, &QPushButton::clicked, [this] () {
         const auto dir = _GetOpenDir(this, tr("Browse for Folder"),
                                      u"sub-search-paths"_q);
         if (!dir.isEmpty())
             d->subSearchPaths.append(dir);
+    });
+    connect(d->ui.sub_search_path_remove, &QPushButton::clicked, [this] () {
+        const int idx = d->ui.sub_search_paths->currentIndex().row();
+        d->subSearchPaths.remove(idx);
     });
 
     d->retranslate();
@@ -472,7 +483,7 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.sharpen_kern_n->setValue(p.sharpen_kern_n);
     d->ui.sharpen_kern_d->setValue(p.sharpen_kern_d);
 
-    d->subSearchPaths.setList(p.sub_search_paths);
+    d->subSearchPaths.setList(p.sub_search_paths_v2);
     d->ui.sub_enable_autoload->setChecked(p.sub_enable_autoload);
     d->ui.sub_enable_autoselect->setChecked(p.sub_enable_autoselect);
     d->ui.sub_autoload->setCurrentValue(p.sub_autoload);
@@ -615,7 +626,8 @@ auto PrefDialog::get(Pref &p) -> void
     p.normalizer_length = d->ui.normalizer_length->value();
     p.channel_manipulation = d->ui.channel_manipulation->map();
 
-    p.sub_search_paths = d->subSearchPaths.list();
+    p.sub_search_paths_v2 = d->subSearchPaths.list();
+    qDebug() << p.sub_search_paths_v2.value(0).string();
     p.sub_enable_autoload = d->ui.sub_enable_autoload->isChecked();
     p.sub_enable_autoselect = d->ui.sub_enable_autoselect->isChecked();
     p.sub_autoload = d->ui.sub_autoload->currentValue();

@@ -238,7 +238,8 @@ HEADERS += \
     audio/audioformat.hpp \
     player/streamtrack.hpp \
     misc/locale.hpp \
-    dialog/youtubedialog.hpp
+    dialog/youtubedialog.hpp \
+    misc/matchstring.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -416,7 +417,8 @@ SOURCES += \
     audio/audioformat.cpp \
     player/streamtrack.cpp \
     misc/locale.cpp \
-    dialog/youtubedialog.cpp
+    dialog/youtubedialog.cpp \
+    misc/matchstring.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

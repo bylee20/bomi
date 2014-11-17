@@ -147,7 +147,7 @@ struct MainWindow::Data {
     auto tryToAutoselect(const QVector<SubComp> &loaded,
                          const Mrl &mrl) -> QVector<int>;
     auto tryToAutoload(const Mrl &mrl,
-                       const QString &path = QString()) -> QVector<SubComp>;
+                       const QDir &dir = QString()) -> QVector<SubComp>;
     auto cancelToHideCursor() -> void
         { hider.stop(); view->setCursorVisible(true); }
     auto readyToHideCursor() -> void;

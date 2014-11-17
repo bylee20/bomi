@@ -406,15 +406,15 @@ auto MainWindow::Data::tryToAutoselect(const QVector<SubComp> &loaded,
 }
 
 auto MainWindow::Data::tryToAutoload(const Mrl &mrl,
-                                     const QString &path) -> QVector<SubComp>
+                                     const QDir &dir) -> QVector<SubComp>
 {
+    qDebug() << "try" << dir.absolutePath();
     QVector<SubComp> loaded;
     const auto &p = pref();
     if (!p.sub_enable_autoload)
         return loaded;
     const QFileInfo fileInfo(mrl.toLocalFile());
-    auto dir = fileInfo.dir();
-    if (!path.isEmpty() && !dir.cd(path))
+    if (!dir.exists())
         return loaded;
     static const auto filter = _ToNameFilter(SubtitleExt);
     const auto all = dir.entryInfoList(filter, QDir::Files, QDir::Name);
@@ -440,9 +440,19 @@ auto MainWindow::Data::updateSubtitleState() -> void
 {
     const auto &mrl = as.state.mrl;
     if (mrl.isLocalFile()) {
-        auto loaded = tryToAutoload(mrl);
-        for (auto &path : pref().sub_search_paths)
-            loaded += tryToAutoload(mrl, path);
+        const QFileInfo fileInfo(mrl.toLocalFile());
+        auto root = fileInfo.dir();
+        auto loaded = tryToAutoload(mrl, root);
+        auto list = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        for (auto &path : pref().sub_search_paths_v2) {
+            for (auto &one : list) {
+                if (path.match(one)) {
+                    auto dir = root;
+                    if (dir.cd(one))
+                        loaded += tryToAutoload(mrl, dir);
+                }
+            }
+        }
         const auto selected = tryToAutoselect(loaded, mrl);
         for (int i=0; i<selected.size(); ++i)
             loaded[selected[i]].selection() = true;
