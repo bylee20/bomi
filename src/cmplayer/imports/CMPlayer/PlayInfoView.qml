@@ -84,8 +84,8 @@ Item {
             readonly property real percent: 100.0*used/size
             text: qsTr("Cache: %1")
                 .arg(!size ? qsTr("Unavailable")
-                           : "%1KiB(%3% of %2KiB)".arg(used).arg(size)
-                                             .arg(percent.toFixed(1)))
+                           : qsTr("%1KiB(%3% of %2KiB)").arg(used).arg(size)
+                                .arg(percent.toFixed(1)))
         }
 
         PlayInfoText { }
@@ -98,7 +98,7 @@ Item {
         function activationText(s) {
             switch (s) {
             case Engine.Unavailable: return qsTr("Unavailable")
-            case Engine.Deactivated: return qsTr("Deavtivated")
+            case Engine.Deactivated: return qsTr("Deactivated")
             case Engine.Activated:   return qsTr("Activated")
             default:                 return ""
             }
