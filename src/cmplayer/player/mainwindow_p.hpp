@@ -18,6 +18,7 @@
 #include "opengl/opengllogger.hpp"
 #include "quick/themeobject.hpp"
 #include "misc/stepaction.hpp"
+#include "dialog/youtubedialog.hpp"
 
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {
@@ -69,6 +70,7 @@ struct MainWindow::Data {
     VideoRenderer vr;
     SubtitleRendererItem subtitle;
     QPoint prevPos;
+    YouTubeDialog *youtube = nullptr;
 
     Qt::WindowStates winState = Qt::WindowNoState;
     Qt::WindowStates prevWinState = Qt::WindowNoState;

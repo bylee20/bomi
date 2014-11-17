@@ -831,6 +831,8 @@ auto MainWindow::Data::applyPref() -> void
         break;
     }
     auto &p = pref();
+    youtube->setUserAgent(p.yt_user_agent);
+    youtube->setProgram(p.yt_program);
     history.setRememberImage(p.remember_image);
     history.setPropertiesToRestore(p.restore_properties);
     const auto backend = p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None;

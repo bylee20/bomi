@@ -790,7 +790,7 @@ auto PlayEngine::subtitleFiles() const -> QVector<SubtitleFileInfo>
     return d->subtitleFiles;
 }
 
-auto PlayEngine::audioDeviceList() const -> QList<QPair<QString, QString>>
+auto PlayEngine::audioDeviceList() const -> QList<QPair<QString, QString> >
 {
     const QVariantList list = d->getmpv<QVariant>("audio-device-list").toList();
     QList<QPair<QString, QString>> devs;
@@ -800,4 +800,9 @@ auto PlayEngine::audioDeviceList() const -> QList<QPair<QString, QString>>
         devs.append({map[u"name"_q].toString(), map[u"description"_q].toString()});
     }
     return devs;
+}
+
+auto PlayEngine::setYouTube(YouTubeDialog *yt) -> void
+{
+    d->youtube = yt;
 }

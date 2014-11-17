@@ -9,6 +9,7 @@
 #include "misc/log.hpp"
 #include "misc/tmp.hpp"
 #include "misc/dataevent.hpp"
+#include "dialog/youtubedialog.hpp"
 #include "audio/audiocontroller.hpp"
 #include "audio/audioformat.hpp"
 #include "video/videooutput.hpp"
@@ -226,6 +227,8 @@ struct PlayEngine::Data {
     int subDelay = 0, chapter = -2, edition = -1;
     QVector<StreamData> streams = {StreamData(), StreamData(), StreamData()};
     Mrl mpvMrl;
+
+    YouTubeDialog *youtube = nullptr;
 
     SubtitleStyle subStyle;
     VideoRenderer *renderer = nullptr;

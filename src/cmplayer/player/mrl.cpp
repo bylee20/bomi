@@ -238,3 +238,9 @@ auto Mrl::fromUniqueId(const QString &id, const QString &device) -> Mrl
         mrl.m_loc += '/'_q % device;
     return mrl;
 }
+
+auto Mrl::isYouTube() const -> bool
+{
+    QRegEx rx(uR"(^https?://(www\.)?youtube\.com)"_q, QRegEx::CaseInsensitiveOption);
+    return rx.match(m_loc).hasMatch();
+}

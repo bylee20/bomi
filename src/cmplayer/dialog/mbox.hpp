@@ -42,6 +42,7 @@ public:
     }
     DEC_POPUP(warn, Icon::Warning)
     DEC_POPUP(info, Icon::Information)
+    DEC_POPUP(critical, Icon::Critical)
 #undef DEC_POPUP
 private:
     QMessageBox *m_mbox = nullptr;

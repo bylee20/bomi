@@ -21,7 +21,9 @@ MainWindow::MainWindow(QWidget *parent)
     AppObject::setDownloader(&d->downloader);
     AppObject::setTheme(&d->theme);
     d->playlist.setDownloader(&d->downloader);
+    d->youtube = new YouTubeDialog(this);
 
+    d->engine.setYouTube(d->youtube);
     d->engine.run();
     d->initWidget();
     d->initContextMenu();

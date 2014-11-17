@@ -237,7 +237,8 @@ HEADERS += \
 	player/avinfoobject.hpp \
     audio/audioformat.hpp \
     player/streamtrack.hpp \
-    misc/locale.hpp
+    misc/locale.hpp \
+    dialog/youtubedialog.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -414,7 +415,8 @@ SOURCES += \
 	player/avinfoobject.cpp \
     audio/audioformat.cpp \
     player/streamtrack.cpp \
-    misc/locale.cpp
+    misc/locale.cpp \
+    dialog/youtubedialog.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -14,7 +14,7 @@ enum class DeintMethod;                 enum class DeintMode;
 enum class ChannelLayout;               enum class InterpolatorType;
 enum class ColorRange;                  enum class ColorSpace;
 class AudioInfoObject;                  class VideoInfoObject;
-
+class YouTubeDialog;
 class StreamTrack;                      class SubtitleInfoObject;
 using StreamList = QMap<int, StreamTrack>;
 
@@ -153,6 +153,7 @@ public:
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterInfo() const -> ChapterInfoObject*;
     auto setSubtitleFiles(const StreamList &files) -> void;
+    auto setYouTube(YouTubeDialog *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
     auto mousePosition() const -> const QPoint& { return m_mouse; }

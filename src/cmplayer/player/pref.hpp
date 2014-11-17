@@ -96,6 +96,10 @@ public:
     int cache_min_playback = 0, cache_min_seeking = 2;
     QStringList network_folders;
 
+    QString yt_user_agent = u"Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0 (Chrome)"_q;
+    QString yt_program = u"youtube-dl"_q;
+    int yt_timeout = 60000;
+
     static auto preset(KeyMapPreset id) -> Shortcuts;
 
     auto save() const -> void;

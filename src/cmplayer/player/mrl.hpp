@@ -22,6 +22,7 @@ public:
 //    auto isPlaylist() const -> bool;
     auto displayName() const -> QString;
     auto isEmpty() const -> bool;
+    auto isYouTube() const -> bool;
     auto suffix() const -> QString;
     auto name() const -> QString { return m_name; }
     auto isImage() const -> bool;

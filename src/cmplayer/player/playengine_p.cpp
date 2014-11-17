@@ -235,6 +235,16 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
 
     opts.add("af"_b, af(), true);
     opts.add("vf"_b, vf(), true);
+
+    if (mrl.isYouTube() && youtube) {
+        youtube->translate(file);
+        if (youtube->exec()) {
+            file = youtube->videoUrl();
+            opts.add("cookies", true);
+            opts.add("cookies-file", youtube->cookies().toLocal8Bit(), true);
+            opts.add("user-agent", youtube->userAgent().toLocal8Bit(), true);
+        }
+    }
     _Debug("Load: %% (%%)", file, opts.get());
     tellmpv("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
 //    mpv_resume(handle);
@@ -372,7 +382,8 @@ auto PlayEngine::Data::observe() -> void
         metaData.m_duration = s2ms(getmpv<double>("length"));
         return metaData;
     }, &PlayEngine::metaDataChanged);
-    observeType<QString>("media-title", [=] (QString &&t) { updateMediaName(t); });
+    observeType<QString>("media-title", [=] (QString &&t)
+        { updateMediaName(mpvMrl.isYouTube() ? mpvMrl.toString() : t); });
 
     observeType<QString>("video-codec", [=] (QString &&c) { videoInfo.codec()->parse(c); });
     observeType<double>("fps", [=] (double fps) {
