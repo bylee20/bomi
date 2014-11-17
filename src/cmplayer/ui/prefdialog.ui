@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>18</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -544,7 +544,7 @@
               <item row="0" column="1">
                <widget class="QSpinBox" name="cache_local">
                 <property name="suffix">
-                 <string notr="true">kB</string>
+                 <string notr="true">KiB</string>
                 </property>
                 <property name="maximum">
                  <number>99999</number>
@@ -561,7 +561,7 @@
               <item row="1" column="1">
                <widget class="QSpinBox" name="cache_network">
                 <property name="suffix">
-                 <string notr="true">kB</string>
+                 <string notr="true">KiB</string>
                 </property>
                 <property name="maximum">
                  <number>99999</number>
@@ -585,7 +585,7 @@
               <item row="0" column="1">
                <widget class="QSpinBox" name="cache_disc">
                 <property name="suffix">
-                 <string notr="true">kB</string>
+                 <string notr="true">KiB</string>
                 </property>
                 <property name="maximum">
                  <number>99999</number>

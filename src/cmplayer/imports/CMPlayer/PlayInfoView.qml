@@ -74,7 +74,7 @@ Item {
         }
         PlayInfoText {
             property alias mem: wrapper.__mem
-            text: qsTr("RAM Usage: %3MB(%4% of %5GB)")
+            text: qsTr("RAM Usage: %3MiB(%4% of %5GiB)")
                 .arg(mem.toFixed(1)).arg((mem/Util.totalMemory*100.0).toFixed(1))
                 .arg((Util.totalMemory/1024.0).toFixed(2));
         }
@@ -84,7 +84,7 @@ Item {
             readonly property real percent: 100.0*used/size
             text: qsTr("Cache: %1")
                 .arg(!size ? qsTr("Unavailable")
-                           : "%1kB/%2kB(%3%)".arg(used).arg(size)
+                           : "%1KiB(%3% of %2KiB)".arg(used).arg(size)
                                              .arg(percent.toFixed(1)))
         }
 
