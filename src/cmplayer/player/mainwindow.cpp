@@ -170,9 +170,9 @@ auto MainWindow::play() -> void
         const auto state = d->engine.state();
         switch (state) {
         case PlayEngine::Playing:
+            break;
         case PlayEngine::Loading:
         case PlayEngine::Buffering:
-            break;
         case PlayEngine::Paused:
             d->engine.unpause();
             break;

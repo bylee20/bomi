@@ -40,6 +40,10 @@ enum EventType {
     EventTypeMax
 };
 
+enum MpvState {
+    MpvStopped, MpvLoading, MpvRunning
+};
+
 static constexpr const int UpdateEventBegin = QEvent::User + 1000;
 
 struct StreamTypeInfo {
@@ -204,6 +208,8 @@ struct PlayEngine::Data {
     MetaData metaData;
     QString mediaName;
 
+    MpvState mpvState = MpvStopped;
+
     double fps = 1.0;
     bool hasImage = false, tempoScaler = false, seekable = false, hasVideo = false;
     bool subStreamsVisible = true, startPaused = false, disc = false;
@@ -300,6 +306,18 @@ struct PlayEngine::Data {
         return observations[event - UpdateEventBegin];
     }
     auto newUpdateEvent() -> int { return updateEventMax++; }
+    auto observe(const char *name, std::function<void(void)> &&post) -> int
+    {
+        const int event = newUpdateEvent();
+        Observation ob;
+        ob.event = event;
+        ob.name = name;
+        ob.post = post;
+        ob.handle = [] (QEvent*) {};
+        observations.append(ob);
+        Q_ASSERT(observations.size() == updateEventMax - UpdateEventBegin);
+        return event;
+    }
     template<class Get>
     auto observe(const char *name, Get get,
                  std::function<void(QEvent*)> &&handle) -> int
@@ -387,6 +405,7 @@ struct PlayEngine::Data {
     auto dispatch(mpv_event *event) -> void;
     auto process(QEvent *event) -> void;
     auto log(const QByteArray &prefix, const QByteArray &text) -> void;
+    auto translateMpvStateToState() -> void;
 };
 
 template<class T>

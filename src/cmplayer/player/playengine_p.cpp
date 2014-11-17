@@ -315,8 +315,29 @@ auto PlayEngine::Data::setStreamList(StreamType type, StreamList &&list) -> bool
     return true;
 }
 
+auto PlayEngine::Data::translateMpvStateToState() -> void
+{
+    State state = State::Stopped;
+    if (getmpv<bool>("pause"))
+        state = State::Paused;
+    else if (getmpv<bool>("paused-for-cache"))
+        state = State::Buffering;
+    else {
+        if (mpvState != MpvRunning || getmpv<bool>("seeking"))
+            return;
+        state = getmpv<bool>("core-idle") ? Loading : Playing;
+    }
+    postState(state);
+}
+
 auto PlayEngine::Data::observe() -> void
 {
+    auto getPausedState = [=] () { translateMpvStateToState(); };
+    observe("pause", getPausedState);
+    observe("core-idle", getPausedState);
+    observe("paused-for-cache", getPausedState);
+    observe("seeking", getPausedState);
+
     observe("cache-used", cacheUsed, [=] () {
         return cacheEnabled ? getmpv<int>("cache-used") : 0;
     }, &PlayEngine::cacheUsedChanged);
@@ -447,8 +468,6 @@ auto PlayEngine::Data::observe() -> void
 
 auto PlayEngine::Data::dispatch(mpv_event *event) -> void
 {
-    thread_local bool loaded = false;
-
     switch (event->event_id) {
     case MPV_EVENT_LOG_MESSAGE: {
         thread_local QMap<QByteArray, QByteArray> leftmsg;
@@ -467,15 +486,18 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         left = left.mid(from);
         break;
     } case MPV_EVENT_IDLE:
+        if (mpvState != MpvLoading)
+            mpvState = MpvStopped;
         break;
     case MPV_EVENT_START_FILE:
-        loaded = false;
+        mpvState = MpvLoading;
         mpvMrl = startInfo.mrl;
         postState(Loading);
         _PostEvent(p, PreparePlayback);
         break;
     case MPV_EVENT_FILE_LOADED: {
-        loaded = true;
+        mpvState = MpvRunning;
+        translateMpvStateToState();
         this->disc = mpvMrl.isDisc();
         if (this->initSeek > 0) {
             this->tellmpv("seek", this->initSeek, 2);
@@ -503,23 +525,19 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         break;
     } case MPV_EVENT_END_FILE: {
         disc = false;
-        auto reason = [] (void *data) -> int {
+        auto reason = [=] (void *data) -> int {
             const auto reason = static_cast<mpv_event_end_file*>(data)->reason;
-            if (reason == MPV_END_FILE_REASON_EOF && !loaded)
+            if (reason == MPV_END_FILE_REASON_EOF && mpvState != MpvRunning)
                 return MPV_END_FILE_REASON_ERROR;
             return reason;
         };
+        mpvState = MpvStopped;
         _PostEvent(p, EndPlayback, mpvMrl, reason(event->data));
         break;
     } case MPV_EVENT_PROPERTY_CHANGE:
         observation(event->reply_userdata).post();
         break;
-    case MPV_EVENT_PAUSE: case MPV_EVENT_UNPAUSE: {
-        const auto paused = getmpv<bool>("core-idle");
-        const auto byCache = getmpv<bool>("paused-for-cache");
-        postState(byCache ? Buffering : paused ? Paused : Playing);
-        break;
-    } case MPV_EVENT_SET_PROPERTY_REPLY:
+    case MPV_EVENT_SET_PROPERTY_REPLY:
         if (!isSuccess(event->error)) {
             auto ptr = reinterpret_cast<void*>(event->reply_userdata);
             auto data = static_cast<QByteArray*>(ptr);
@@ -566,8 +584,6 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         }
         this->edition = title;
         emit p->editionsChanged(this->editions);
-        if (!getmpv<bool>("pause"))
-            p->updateState(Playing);
         emit p->started(startInfo.mrl);
         break;
     } case EndPlayback: {
@@ -579,8 +595,10 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         case MPV_END_FILE_REASON_EOF:
             _Info("Playback reached end-of-file");
             emit p->requestNextStartInfo();
-            if (nextInfo.isValid())
+            if (nextInfo.isValid()) {
+                mpvState = MpvLoading;
                 state = Loading;
+            }
             remain = 0;
             break;
         case MPV_END_FILE_REASON_QUIT:
