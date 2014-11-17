@@ -287,7 +287,9 @@ static const auto jio = JIO(
     JE(quick_snapshot_folder),
     JE(quick_snapshot_save),
     JE(quick_snapshot_format),
-    JE(quick_snapshot_quality)
+    JE(quick_snapshot_quality),
+    JE(yt_program),
+    JE(yt_user_agent)
 );
 
 #define PREF_GROUP u"preference"_q

@@ -540,6 +540,9 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.cache_min_seeking->setValue(p.cache_min_seeking);
     d->ui.network_folders->setList(p.network_folders);
 
+    d->ui.yt_program->setText(p.yt_program);
+    d->ui.yt_user_agent->setText(p.yt_user_agent);
+
     d->setShortcuts(p.shortcuts);
 
     QVector<bool> restores(d->properties.size(), false);
@@ -680,6 +683,9 @@ auto PrefDialog::get(Pref &p) -> void
     p.cache_min_playback = d->ui.cache_min_playback->value();
     p.cache_min_seeking = d->ui.cache_min_seeking->value();
     p.network_folders = d->ui.network_folders->list();
+
+    p.yt_program = d->ui.yt_program->text();
+    p.yt_user_agent = d->ui.yt_user_agent->text();
 
     p.shortcuts = d->shortcuts();
 
