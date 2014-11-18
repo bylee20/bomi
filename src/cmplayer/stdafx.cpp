@@ -21,7 +21,7 @@ static const QStringList videoExts = QStringList()
         << u"rm"_q << u"rmvb"_q
         << u"trp"_q << u"tp"_q << u"ts"_q
         << u"vcd"_q << u"vfw"_q << u"vob"_q
-        << u"wmv"_q;
+        << u"webm"_q << u"wmv"_q;
 static const QStringList audioExts = QStringList()
         << u"aac"_q << u"ac3"_q << u"aiff"_q
         << u"m4a"_q << u"mka"_q << u"mp3"_q
