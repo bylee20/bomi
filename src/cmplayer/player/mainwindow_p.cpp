@@ -735,9 +735,14 @@ auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
     const auto mode = pref().generate_playlist;
     const QFileInfo file(mrl.toLocalFile());
     const QDir dir = file.dir();
-    if (mode == GeneratePlaylist::Folder)
-        return Playlist().loadAll(dir);
-    const auto filter = _ToNameFilter(MediaExt);
+    const auto filter = _ToNameFilter(pref().exclude_images ? VideoExt | AudioExt : MediaExt);
+    if (mode == GeneratePlaylist::Folder) {
+        Playlist pl;
+        const auto files = dir.entryList(filter, QDir::Files, QDir::Name);
+        for (int i=0; i<files.size(); ++i)
+            pl.push_back(dir.absoluteFilePath(files[i]));
+        return pl;
+    }
     const auto files = dir.entryInfoList(filter, QDir::Files, QDir::Name);
     const auto fileName = file.fileName();
     Playlist list;

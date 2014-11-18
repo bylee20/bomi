@@ -252,6 +252,7 @@ static const auto jio = JIO(
     JE(enable_hwaccel),
     JE(hwaccel_backend),
     JE(skin_name),
+    JE(exclude_images),
     JE(hwaccel_codecs),
     JE(hwdeints),
     JE(normalizer_silence),

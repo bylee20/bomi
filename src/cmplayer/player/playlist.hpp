@@ -19,7 +19,6 @@ public:
     bool load(const QString &filePath, const QString &enc = QString(), Type type = Unknown);
     bool load(const Mrl &url, const QString &enc = QString(), Type type = Unknown);
     auto load(const QUrl &url, QByteArray *data, const QString &enc, Type type) -> bool;
-    Playlist &loadAll(const QDir &dir);
     static auto guessType(const QString &fileName) -> Type;
 private:
     static auto resolve(const QString &location, const QUrl &url) -> QString;

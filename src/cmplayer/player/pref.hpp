@@ -43,6 +43,7 @@ public:
     int hide_cursor_delay = 3000;
     bool show_logo = true; QColor bg_color = Qt::black;
     bool use_heartbeat = false;
+    bool exclude_images = true;
     QString heartbeat_command;
     int heartbeat_interval = 60;
     QStringList sub_priority, audio_priority;

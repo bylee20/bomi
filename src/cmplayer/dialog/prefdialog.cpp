@@ -553,7 +553,7 @@ auto PrefDialog::set(const Pref &p) -> void
 
     d->ui.yt_program->setText(p.yt_program);
     d->ui.yt_user_agent->setText(p.yt_user_agent);
-
+    d->ui.exclude_images->setChecked(p.exclude_images);
     d->setShortcuts(p.shortcuts);
 
     QVector<bool> restores(d->properties.size(), false);
@@ -573,6 +573,7 @@ auto PrefDialog::get(Pref &p) -> void
     p.quick_snapshot_folder = d->ui.quick_snapshot_folder->text();
     p.quick_snapshot_format = d->ui.quick_snapshot_format->currentText();
     p.quick_snapshot_quality = d->ui.quick_snapshot_quality->value();
+    p.exclude_images = d->ui.exclude_images->isChecked();
 
     p.use_mpris2 = d->ui.use_mpris2->isChecked();
     p.fit_to_video = d->ui.fit_to_video->isChecked();

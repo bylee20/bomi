@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>6</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -122,6 +122,13 @@
           <widget class="OpenMediaBehaviorGroupBox" name="open_media_by_drag_and_drop">
            <property name="title">
             <string>Open by drag-and-drop</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="exclude_images">
+           <property name="text">
+            <string>Exclude images when generate playlist</string>
            </property>
           </widget>
          </item>
