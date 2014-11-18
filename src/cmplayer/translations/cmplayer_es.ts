@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="es_ES">
+<TS version="2.0" language="es_ES">
 <context>
     <name>AboutDialog</name>
     <message>
@@ -353,87 +353,87 @@ Click derecho: %2</translation>
     <name>EncodingComboBox</name>
     <message>
         <source>Western European Languages</source>
-        <translation type="vanished">Europa Occidental</translation>
+        <translation>Europa Occidental</translation>
     </message>
     <message>
         <source>Western European Languages With Euro</source>
-        <translation type="vanished">Europa Occidental con €uro</translation>
+        <translation>Europa Occidental con €uro</translation>
     </message>
     <message>
         <source>Slavic/Central European Languages</source>
-        <translation type="vanished">Eslavo/Centro Europeo</translation>
+        <translation>Eslavo/Centro Europeo</translation>
     </message>
     <message>
         <source>Slavic/Central European Windows</source>
-        <translation type="vanished">Eslavo/Centro Europeo Windows</translation>
+        <translation>Eslavo/Centro Europeo Windows</translation>
     </message>
     <message>
         <source>Esperanto, Galician, Maltese, Turkish</source>
-        <translation type="vanished">Esperanto, Gallego, Maltés, Turco</translation>
+        <translation>Esperanto, Gallego, Maltés, Turco</translation>
     </message>
     <message>
         <source>Old Baltic Charset</source>
-        <translation type="vanished">Báltico antiguo</translation>
+        <translation>Báltico antiguo</translation>
     </message>
     <message>
         <source>Cyrillic</source>
-        <translation type="vanished">Cirílico</translation>
+        <translation>Cirílico</translation>
     </message>
     <message>
         <source>Cyrillic Windows</source>
-        <translation type="vanished">Cirílico Windows</translation>
+        <translation>Cirílico Windows</translation>
     </message>
     <message>
         <source>Arabic</source>
-        <translation type="vanished">Árabe</translation>
+        <translation>Árabe</translation>
     </message>
     <message>
         <source>Modern Greek</source>
-        <translation type="vanished">Griego moderno</translation>
+        <translation>Griego moderno</translation>
     </message>
     <message>
         <source>Turkish</source>
-        <translation type="vanished">Turco</translation>
+        <translation>Turco</translation>
     </message>
     <message>
         <source>Baltic</source>
-        <translation type="vanished">Báltico</translation>
+        <translation>Báltico</translation>
     </message>
     <message>
         <source>Celtic</source>
-        <translation type="vanished">Céltico</translation>
+        <translation>Céltico</translation>
     </message>
     <message>
         <source>Hebrew Charset</source>
-        <translation type="vanished">Hebreo</translation>
+        <translation>Hebreo</translation>
     </message>
     <message>
         <source>Russian</source>
-        <translation type="vanished">Ruso</translation>
+        <translation>Ruso</translation>
     </message>
     <message>
         <source>Ukrainian, Belarusian</source>
-        <translation type="vanished">Ucraniano, Bielorruso</translation>
+        <translation>Ucraniano, Bielorruso</translation>
     </message>
     <message>
         <source>Simplified Chinese Charset</source>
-        <translation type="vanished">Chino simplificado</translation>
+        <translation>Chino simplificado</translation>
     </message>
     <message>
         <source>Traditional Chinese Charset</source>
-        <translation type="vanished">Chino tradicional</translation>
+        <translation>Chino tradicional</translation>
     </message>
     <message>
         <source>Japanese Charset</source>
-        <translation type="vanished">Japonés</translation>
+        <translation>Japonés</translation>
     </message>
     <message>
         <source>Korean Charset</source>
-        <translation type="vanished">Coreano</translation>
+        <translation>Coreano</translation>
     </message>
     <message>
         <source>Thai Charset</source>
-        <translation type="vanished">Tailandés</translation>
+        <translation>Tailandés</translation>
     </message>
 </context>
 <context>
@@ -857,43 +857,43 @@ Click derecho: %2</translation>
     </message>
     <message>
         <source>Open a file</source>
-        <translation type="vanished">Abrir un archivo</translation>
+        <translation>Abrir un archivo</translation>
     </message>
     <message>
         <source>Toggle fullscreen mode</source>
-        <translation type="vanished">Cambiar a pantalla completa</translation>
+        <translation>Cambiar a pantalla completa</translation>
     </message>
     <message>
         <source>Toggle play/pause</source>
-        <translation type="vanished">Cambiar reproducir/pausar</translation>
+        <translation>Cambiar reproducir/pausar</translation>
     </message>
     <message>
         <source>Toggle mute/unmute</source>
-        <translation type="vanished">Cambiar silenciar/no silenciar</translation>
+        <translation>Cambiar silenciar/no silenciar</translation>
     </message>
     <message>
         <source>Seek playback for step 1</source>
-        <translation type="vanished">Desplazar reproducción para paso 1</translation>
+        <translation>Desplazar reproducción para paso 1</translation>
     </message>
     <message>
         <source>Seek playback for step 2</source>
-        <translation type="vanished">Desplazar reproducción para paso 2</translation>
+        <translation>Desplazar reproducción para paso 2</translation>
     </message>
     <message>
         <source>Seek playback for step 3</source>
-        <translation type="vanished">Desplazar reproducción para paso 3</translation>
+        <translation>Desplazar reproducción para paso 3</translation>
     </message>
     <message>
         <source>Play previous/next</source>
-        <translation type="vanished">Reproducir anterior/siguiente</translation>
+        <translation>Reproducir anterior/siguiente</translation>
     </message>
     <message>
         <source>Volumn up/down</source>
-        <translation type="vanished">Subir/Bajar volumen</translation>
+        <translation>Subir/Bajar volumen</translation>
     </message>
     <message>
         <source>Amp. up/down</source>
-        <translation type="vanished">Subir/Bajar amplificación</translation>
+        <translation>Subir/Bajar amplificación</translation>
     </message>
     <message>
         <location filename="../enum/verticalalignment.hpp" line="72"/>
@@ -1009,32 +1009,32 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enum/colorspace.hpp" line="83"/>
         <source>RGB</source>
-        <translation type="unfinished"></translation>
+        <translation>RGB</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="83"/>
         <source>Double click</source>
-        <translation type="unfinished"></translation>
+        <translation>Doble click</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="85"/>
         <source>Middle button</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón central</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="87"/>
         <source>Scroll up</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar hacia arriba</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="89"/>
         <source>Scroll down</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar hacia abajo</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="93"/>
         <source>Extra button %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra %1</translation>
     </message>
 </context>
 <context>
@@ -1064,34 +1064,34 @@ Click derecho: %2</translation>
     <name>GetShortcutDialog</name>
     <message>
         <source>Get Shortcut</source>
-        <translation type="vanished">Obtener acceso directo</translation>
+        <translation>Obtener acceso directo</translation>
     </message>
     <message>
         <source>Erase</source>
-        <translation type="vanished">Eliminar</translation>
+        <translation>Eliminar</translation>
     </message>
     <message>
         <source>Ok</source>
-        <translation type="vanished">Acepar</translation>
+        <translation>Acepar</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="vanished">Cancelar</translation>
+        <translation>Cancelar</translation>
     </message>
 </context>
 <context>
     <name>GetUrlDialog</name>
     <message>
         <source>URL</source>
-        <translation type="vanished">URL</translation>
+        <translation>URL</translation>
     </message>
     <message>
         <source>Encoding for Playlist</source>
-        <translation type="vanished">Codificación para la lista de reproducción</translation>
+        <translation>Codificación para la lista de reproducción</translation>
     </message>
     <message>
         <source>Open URL</source>
-        <translation type="vanished">Abrir URL</translation>
+        <translation>Abrir URL</translation>
     </message>
 </context>
 <context>
@@ -1147,7 +1147,7 @@ Click derecho: %2</translation>
     </message>
     <message>
         <source>All Files</source>
-        <translation type="vanished">Todos los archivos</translation>
+        <translation>Todos los archivos</translation>
     </message>
 </context>
 <context>
@@ -1237,7 +1237,7 @@ Por favor espere un momento.</translation>
 Played Date: %1
 Stopped Position: %2
 </source>
-        <translation type="vanished">¿Desea continuar la reproducción desde el último punto reproducido?
+        <translation>¿Desea continuar la reproducción desde el último punto reproducido?
 Fecha de reproducción: %1
 Parado en la posición: %2
 </translation>
@@ -1322,12 +1322,12 @@ Parado en la posición: %2
     <message>
         <location filename="../player/mainwindow_m.cpp" line="725"/>
         <source>Shuffle Playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista de reproducción aleatoria</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="736"/>
         <source>Repeat Playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Repetir lista de reproducción</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="776"/>
@@ -1417,7 +1417,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
-        <translation type="vanished">CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.&lt;br&gt;Puedes cambiar este comportamiento en las preferencias.&lt;br&gt;Si deseas salir de CMPlayer, por favor usa el menú &apos;Salir&apos;.</translation>
+        <translation>CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.&lt;br&gt;Puedes cambiar este comportamiento en las preferencias.&lt;br&gt;Si deseas salir de CMPlayer, por favor usa el menú &apos;Salir&apos;.</translation>
     </message>
     <message>
         <location filename="../player/mainwindow.cpp" line="441"/>
@@ -1606,7 +1606,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>ISO Image Files</source>
-        <translation type="vanished">Archivo ISO</translation>
+        <translation>Archivo ISO</translation>
     </message>
     <message>
         <location filename="../dialog/opendiscdialog.cpp" line="48"/>
@@ -1673,15 +1673,15 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Activated</source>
-        <translation type="vanished">Activado</translation>
+        <translation>Activado</translation>
     </message>
     <message>
         <source>Deactivated</source>
-        <translation type="vanished">Desactivado</translation>
+        <translation>Desactivado</translation>
     </message>
     <message>
         <source>Unavailable</source>
-        <translation type="vanished">No disponible</translation>
+        <translation>No disponible</translation>
     </message>
     <message>
         <location filename="../player/playengine_p.cpp" line="490"/>
@@ -1724,7 +1724,7 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoSubtitleList.qml" line="15"/>
         <source>%1 #%2: Codec=%3, Title=%4, Language=%5</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 #%2: Codec=%3, Título=%4, Idioma=%5</translation>
     </message>
 </context>
 <context>
@@ -1732,19 +1732,19 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoTrack.qml" line="9"/>
         <source>%1 #%2: Codec=%3, Title=%4, Language=%5</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 #%2: Codec=%3, Título=%4, Idioma=%5</translation>
     </message>
 </context>
 <context>
     <name>PlayInfoView</name>
     <message>
         <source>Playback Speed: ×%1</source>
-        <translation type="vanished">Velocidad de reproducción: %1</translation>
+        <translation>Velocidad de reproducción: %1</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="57"/>
         <source>State: %2/%3(%4%) ×%5 [%1]</source>
-        <translation type="unfinished"></translation>
+        <translation>Estado: %2/%3(%4%) ×%5 [%1]</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="72"/>
@@ -1753,7 +1753,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>RAM Usage: %3MB(%4% of %5GB)</source>
-        <translation type="vanished">Uso de RAM: %3MB(%4% de %5GB)</translation>
+        <translation>Uso de RAM: %3MB(%4% de %5GB)</translation>
     </message>
     <message>
         <source>Video Codec: %1[%2]</source>
@@ -1762,76 +1762,76 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="77"/>
         <source>RAM Usage: %3MiB(%4% of %5GiB)</source>
-        <translation type="unfinished"></translation>
+        <translation>Uso de RAM: %3MiB(%4% of %5GiB)</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="93"/>
         <source>Video Track</source>
-        <translation type="unfinished">Pista de vídeo</translation>
+        <translation>Pista de vídeo</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="94"/>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="131"/>
         <source>Input   </source>
-        <translation type="unfinished"></translation>
+        <translation>Entrada </translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="95"/>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="132"/>
         <source>Output  </source>
-        <translation type="unfinished"></translation>
+        <translation>Salida </translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="96"/>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="133"/>
         <source>Renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Renderizador</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="101"/>
         <source>Deavtivated</source>
-        <translation type="unfinished"></translation>
+        <translation>Desactivado</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="102"/>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="137"/>
         <source>Activated</source>
-        <translation type="unfinished">Activado</translation>
+        <translation>Activado</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="108"/>
         <source>Dropped Frames: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Frames pérdidos: %1</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="111"/>
         <source>Delayed Frames: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Frames retrasados: %1</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="117"/>
         <source>Hardware Acceleration: %1[%2]</source>
-        <translation type="unfinished">Aceleración por hardware: %1[%2]</translation>
+        <translation>Aceleración por hardware: %1[%2]</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="124"/>
         <source>Deinterlacer: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Desentrelazador: %3</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="130"/>
         <source>Audio Track</source>
-        <translation type="unfinished">Pista de audio</translation>
+        <translation>Pista de audio</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="147"/>
         <source>Subtitle File</source>
-        <translation type="unfinished"></translation>
+        <translation>Archivo de subtítulo</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="148"/>
         <source>Subtitle Track</source>
-        <translation type="unfinished">Pista de subtítulos</translation>
+        <translation>Pista de subtítulos</translation>
     </message>
     <message>
         <source>Audio Codec: %1[%2]</source>
@@ -1840,28 +1840,28 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="136"/>
         <source>Normalizer: %1[%2%]</source>
-        <translation type="unfinished"></translation>
+        <translation>Normalizador: %1[%2%]</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="141"/>
         <source>Driver: %1[%2]</source>
-        <translation type="unfinished"></translation>
+        <translation>Controlador %1[%2]</translation>
     </message>
     <message>
         <source>Audio/Video Sync: %6ms</source>
-        <translation type="vanished">Sincronización Audio/Vídeo: %6ms</translation>
+        <translation>Sincronización Audio/Vídeo: %6ms</translation>
     </message>
     <message>
         <source>Avg. Frame Rate: %7fps(%8MB/s)</source>
-        <translation type="vanished">Pro. Vel. frames: %7fps(%8MB/s)</translation>
+        <translation>Pro. Vel. frames: %7fps(%8MB/s)</translation>
     </message>
     <message>
         <source>Dropped Frames: %1 frames</source>
-        <translation type="vanished">Frames caídos: %1 frames</translation>
+        <translation>Frames caídos: %1 frames</translation>
     </message>
     <message>
         <source>Volume Normalizer: %1</source>
-        <translation type="vanished">Normalizar volumen: %1</translation>
+        <translation>Normalizar volumen: %1</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="137"/>
@@ -1870,11 +1870,11 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Input : %1 %2kbps %3kHz %4 %5bits</source>
-        <translation type="vanished">Entrada: %1 %2kbps %3kHz %4 %5bits</translation>
+        <translation>Entrada: %1 %2kbps %3kHz %4 %5bits</translation>
     </message>
     <message>
         <source>Output: %1 %2kbps %3kHz %4 %5bits</source>
-        <translation type="vanished">Salida: %1 %2kbps  %3kHz %4 %5bits</translation>
+        <translation>Salida: %1 %2kbps  %3kHz %4 %5bits</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="85"/>
@@ -1894,27 +1894,27 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Video Codec: %1</source>
-        <translation type="vanished">Códec de vídeo: %1</translation>
+        <translation>Códec de vídeo: %1</translation>
     </message>
     <message>
         <source>Input : %1 %2x%3 %4fps(%5MB/s)</source>
-        <translation type="vanished">Entrada: %1 %2x%3 %4fps(%5MB/s)</translation>
+        <translation>Entrada: %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
         <source>Output: %1 %2x%3 %4fps(%5MB/s)</source>
-        <translation type="vanished">Salida: %1 %2x%3 %4fps(%5MB/s)</translation>
+        <translation>Salida: %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
         <source>Hardware Acceleration: %1</source>
-        <translation type="vanished">Aceleración por hardware: %1</translation>
+        <translation>Aceleración por hardware: %1</translation>
     </message>
     <message>
         <source>Audio Codec: %1</source>
-        <translation type="vanished">Códec de audio: %1</translation>
+        <translation>Códec de audio: %1</translation>
     </message>
     <message>
         <source>Output Driver: %1</source>
-        <translation type="vanished">Dispositivo de salida: %1</translation>
+        <translation>Dispositivo de salida: %1</translation>
     </message>
 </context>
 <context>
@@ -1995,7 +1995,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Duration</source>
-        <translation type="vanished">Duración</translation>
+        <translation>Duración</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1728"/>
@@ -2068,7 +2068,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="3114"/>
         <source>Show default C&amp;MPlayer logo</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar logotipo de C&amp;MPlayer por defecto</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3167"/>
@@ -2120,11 +2120,11 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Image slide show</source>
-        <translation type="vanished">Presentación de diapositivas</translation>
+        <translation>Presentación de diapositivas</translation>
     </message>
     <message>
         <source>Use &apos;play/pause&apos; as &apos;play next&apos; when duration is &apos;Infinite&apos;</source>
-        <translation type="vanished">Usar &apos;reproducir/pausar&apos; como &apos;reproducir siguiente&apos; cuando la duración está en &apos;bucle&apos;</translation>
+        <translation>Usar &apos;reproducir/pausar&apos; como &apos;reproducir siguiente&apos; cuando la duración está en &apos;bucle&apos;</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="423"/>
@@ -2133,7 +2133,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Show default CMPlayer logo</source>
-        <translation type="vanished">Mostrar por defecto el logo de CMPlayer</translation>
+        <translation>Mostrar por defecto el logo de CMPlayer</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1736"/>
@@ -2159,7 +2159,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Preferred Output driver</source>
-        <translation type="vanished">Dispositivo de salida preferido</translation>
+        <translation>Dispositivo de salida preferido</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="210"/>
@@ -2194,7 +2194,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Save in the same folder where current playing video exists</source>
-        <translation type="vanished">Guardar en el mismo directorio dónde se encuentra el vídeo reproducido</translation>
+        <translation>Guardar en el mismo directorio dónde se encuentra el vídeo reproducido</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="305"/>
@@ -2204,12 +2204,12 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="467"/>
         <source>Audio output device (Restart required)</source>
-        <translation type="unfinished"></translation>
+        <translation>Dispositivo de salida de audio (Requiere reiniciar el programa)</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="475"/>
         <source>Name</source>
-        <translation type="unfinished">Nombre</translation>
+        <translation>Nombre</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="504"/>
@@ -2320,24 +2320,24 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Enable encoding auto-detection</source>
-        <translation type="vanished">Habilitar la detección automática de la codificación</translation>
+        <translation>Habilitar la detección automática de la codificación</translation>
     </message>
     <message>
         <source>Accuracy to enforce</source>
-        <translation type="vanished">Con una precisión del</translation>
+        <translation>Con una precisión del</translation>
     </message>
     <message>
         <source>Default display time</source>
-        <translation type="vanished">Tiempo de visualización por defecto</translation>
+        <translation>Tiempo de visualización por defecto</translation>
     </message>
     <message>
         <source>Caculate the end time of a subtitle when the time is not specified</source>
-        <translation type="vanished">Calcular el tiempo de finalización de un subtítulo cuando no se especifica el tiempo</translation>
+        <translation>Calcular el tiempo de finalización de un subtítulo cuando no se especifica el tiempo</translation>
     </message>
     <message>
         <source>Display time per one character</source>
         <translatorcomment>i don&apos;t know if this is refers character like a letter, or character like a actor</translatorcomment>
-        <translation type="vanished">Tiempo de visualización por personaje</translation>
+        <translation>Tiempo de visualización por personaje</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="921"/>
@@ -2346,7 +2346,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>msec</source>
-        <translation type="vanished">miliseg</translation>
+        <translation>miliseg</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="198"/>
@@ -2471,7 +2471,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Infinite</source>
-        <translation type="vanished">Búcle</translation>
+        <translation>Búcle</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="610"/>
@@ -2506,7 +2506,7 @@ Parado en la posición: %2
     </message>
     <message>
         <source>Bounding Box</source>
-        <translation type="vanished">Cuadro delimitador</translation>
+        <translation>Cuadro delimitador</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2513"/>
@@ -2523,7 +2523,7 @@ Parado en la posición: %2
 If not specified, they will be displayed in selected order.
 e.g.: English, Korean</source>
         <translatorcomment>sin terminar, no está muy claro lo que quiere decir</translatorcomment>
-        <translation type="vanished">Aquí se puede especificar el orden de preferencia por el que CMPlayer deberá elegir el archivo de subtítulos a usar según el campo &apos;Name&apos; del archivo.
+        <translation>Aquí se puede especificar el orden de preferencia por el que CMPlayer deberá elegir el archivo de subtítulos a usar según el campo &apos;Name&apos; del archivo.
 Si no se especifica, estos se mostrarán en orden seleccionado. 
 Por ejemplo: English, Korean</translation>
     </message>
@@ -2558,11 +2558,11 @@ Por ejemplo: English, Korean</translation>
     </message>
     <message>
         <source>Hide mouse cursor</source>
-        <translation type="vanished">Ocultar puntero del ratón</translation>
+        <translation>Ocultar puntero del ratón</translation>
     </message>
     <message>
         <source>Apply after timeout</source>
-        <translation type="vanished">Aplicar después de</translation>
+        <translation>Aplicar después de</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="200"/>
@@ -2572,12 +2572,12 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="298"/>
         <source>Save in the same folder where current playing &amp;video exists</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardar en la misma carpeta donde se esté reproduciendo el &amp;video actual</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="321"/>
         <source>Script path</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruta del script</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="864"/>
@@ -2602,7 +2602,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2439"/>
         <source>Bounding Bo&amp;x</source>
-        <translation type="unfinished"></translation>
+        <translation>Cuadro &amp;delimitador</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2772"/>
@@ -2651,7 +2651,7 @@ Por ejemplo: English, Korean</translation>
     </message>
     <message>
         <source>Button Click</source>
-        <translation type="vanished">Click del botón</translation>
+        <translation>Click del botón</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3203"/>
@@ -2661,18 +2661,19 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="3253"/>
         <source>Audio Priority</source>
-        <translation type="unfinished"></translation>
+        <translation>Prioridad del audio</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3272"/>
         <source>Subtitle Priority</source>
-        <translation type="unfinished"></translation>
+        <translation>Prioridad del subtítulo</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3291"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Estas opciones se utilizarán para determinar la prioridad del audio / subtítulos.
+Soporta expresiónes regulares.</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3310"/>
@@ -2765,7 +2766,7 @@ Regular expression is supported.</source>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="123"/>
         <source>Language</source>
-        <translation type="unfinished">Idioma</translation>
+        <translation>Idioma</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="124"/>
@@ -2790,7 +2791,7 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>Priority</source>
-        <translation type="vanished">Prioridad</translation>
+        <translation>Prioridad</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="143"/>
@@ -2819,11 +2820,11 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>Behaviour</source>
-        <translation type="vanished">Comportamiento</translation>
+        <translation>Comportamiento</translation>
     </message>
     <message>
         <source>Look</source>
-        <translation type="vanished">Vista</translation>
+        <translation>Vista</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="122"/>
@@ -2867,11 +2868,11 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>Scroll Up</source>
-        <translation type="vanished">Desplazar arriba</translation>
+        <translation>Desplazar arriba</translation>
     </message>
     <message>
         <source>Scroll Down</source>
-        <translation type="vanished">Desplazar abajo</translation>
+        <translation>Desplazar abajo</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="52"/>
@@ -2887,7 +2888,7 @@ Regular expression is supported.</source>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="216"/>
         <source>Unused</source>
-        <translation type="unfinished"></translation>
+        <translation>Sin usar</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="325"/>
@@ -2901,15 +2902,15 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>Double Click</source>
-        <translation type="vanished">Doble clic</translation>
+        <translation>Doble clic</translation>
     </message>
     <message>
         <source>Middle Click</source>
-        <translation type="vanished">Clic del botón central</translation>
+        <translation>Clic del botón central</translation>
     </message>
     <message>
         <source>Wheel Scroll</source>
-        <translation type="vanished">Rueda de desplazamiento</translation>
+        <translation>Rueda de desplazamiento</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="58"/>
@@ -2918,38 +2919,38 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>Ok</source>
-        <translation type="vanished">Acepar</translation>
+        <translation>Acepar</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="vanished">Cancelar</translation>
+        <translation>Cancelar</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="vanished">Aplicar</translation>
+        <translation>Aplicar</translation>
     </message>
     <message>
         <source>Restore Defaults</source>
-        <translation type="vanished">Restaurar por defecto</translation>
+        <translation>Restaurar por defecto</translation>
     </message>
     <message>
         <source>Reset</source>
-        <translation type="vanished">Reiniciar</translation>
+        <translation>Reiniciar</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="217"/>
         <source>No modifier</source>
-        <translation type="unfinished"></translation>
+        <translation>Sin modificar</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="266"/>
         <source>Typically denoted as &apos;Back&apos; button</source>
-        <translation type="unfinished"></translation>
+        <translation>Por lo general se denota como botón &apos;Volver&apos;</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="268"/>
         <source>Typically denoted as &apos;Forward&apos; button</source>
-        <translation type="unfinished"></translation>
+        <translation>Por lo general se denota como botón &apos;Avanzar&apos;</translation>
     </message>
 </context>
 <context>
@@ -2957,19 +2958,19 @@ Regular expression is supported.</source>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="256"/>
         <source>Behavior</source>
-        <translation type="unfinished"></translation>
+        <translation>Comportamiento</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="256"/>
         <source>Menu</source>
-        <translation type="unfinished">Menú</translation>
+        <translation>Menú</translation>
     </message>
 </context>
 <context>
     <name>PrefOpenMediaGroup</name>
     <message>
         <source>Start the playback</source>
-        <translation type="vanished">Empezar la reproducción</translation>
+        <translation>Empezar la reproducción</translation>
     </message>
 </context>
 <context>
@@ -3407,7 +3408,7 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>DVD Menu</source>
-        <translation type="vanished">Menú DVD</translation>
+        <translation>Menú DVD</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="475"/>
@@ -3533,12 +3534,12 @@ Regular expression is supported.</source>
     <message>
         <location filename="../player/rootmenu.cpp" line="568"/>
         <source>Shuffle</source>
-        <translation type="unfinished"></translation>
+        <translation>Aleatorio</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="569"/>
         <source>Repeat</source>
-        <translation type="unfinished"></translation>
+        <translation>Repetir</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="571"/>
@@ -3648,27 +3649,27 @@ Regular expression is supported.</source>
     <name>SimpleListWidget</name>
     <message>
         <source>Add</source>
-        <translation type="vanished">Añadir</translation>
+        <translation>Añadir</translation>
     </message>
     <message>
         <source>Erase</source>
-        <translation type="vanished">Eliminar</translation>
+        <translation>Eliminar</translation>
     </message>
     <message>
         <source>Move Up</source>
-        <translation type="vanished">Mover arriba</translation>
+        <translation>Mover arriba</translation>
     </message>
     <message>
         <source>Move Down</source>
-        <translation type="vanished">Mover abajo</translation>
+        <translation>Mover abajo</translation>
     </message>
     <message>
         <source>&amp;Ok</source>
-        <translation type="vanished">&amp;Aceptar</translation>
+        <translation>&amp;Aceptar</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation type="vanished">&amp;Cancelar</translation>
+        <translation>&amp;Cancelar</translation>
     </message>
 </context>
 <context>
@@ -3855,7 +3856,7 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="vanished">Cancelar</translation>
+        <translation>Cancelar</translation>
     </message>
     <message>
         <location filename="../dialog/subtitlefinddialog.cpp" line="143"/>
@@ -3955,7 +3956,7 @@ Regular expression is supported.</source>
     </message>
     <message>
         <source>Encoding for Playlist</source>
-        <translation type="vanished">Codificación para la lista de reproducción</translation>
+        <translation>Codificación para la lista de reproducción</translation>
     </message>
     <message>
         <location filename="../dialog/urldialog.cpp" line="51"/>
@@ -3996,27 +3997,27 @@ Regular expression is supported.</source>
     <message>
         <location filename="../dialog/youtubedialog.cpp" line="29"/>
         <source>Retrieving YouTube video address...</source>
-        <translation type="unfinished"></translation>
+        <translation>Recuperando dirección del vídeo de YouTube ...</translation>
     </message>
     <message>
         <location filename="../dialog/youtubedialog.cpp" line="37"/>
         <source>Failed to start &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>No se puede iniciar &apos;%1&apos;</translation>
     </message>
     <message>
         <location filename="../dialog/youtubedialog.cpp" line="52"/>
         <source>Script crashed</source>
-        <translation type="unfinished"></translation>
+        <translation>Fallo del script</translation>
     </message>
     <message>
         <location filename="../dialog/youtubedialog.cpp" line="56"/>
         <source>IO error occurred</source>
-        <translation type="unfinished"></translation>
+        <translation>Error de Entrada/Salida</translation>
     </message>
     <message>
         <location filename="../dialog/youtubedialog.cpp" line="60"/>
         <source>Unknown error occurred</source>
-        <translation type="unfinished"></translation>
+        <translation>Error desconocido</translation>
     </message>
 </context>
 <context>
