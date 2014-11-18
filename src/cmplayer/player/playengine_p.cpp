@@ -525,14 +525,11 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         break;
     } case MPV_EVENT_END_FILE: {
         disc = false;
-        auto reason = [=] (void *data) -> int {
-            const auto reason = static_cast<mpv_event_end_file*>(data)->reason;
-            if (reason == MPV_END_FILE_REASON_EOF && mpvState != MpvRunning)
-                return MPV_END_FILE_REASON_ERROR;
-            return reason;
-        };
+        auto reason = static_cast<mpv_event_end_file*>(event->data)->reason;
+        if (reason == MPV_END_FILE_REASON_EOF && mpvState != MpvRunning)
+            reason = MPV_END_FILE_REASON_ERROR;
         mpvState = MpvStopped;
-        _PostEvent(p, EndPlayback, mpvMrl, reason(event->data));
+        _PostEvent(p, EndPlayback, mpvMrl, reason);
         break;
     } case MPV_EVENT_PROPERTY_CHANGE:
         observation(event->reply_userdata).post();
