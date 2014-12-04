@@ -6,8 +6,11 @@
 #include "subtitle/opensubtitlesfinder.hpp"
 #include "ui_subtitlefinddialog.h"
 
-static constexpr int UrlRole = Qt::UserRole + 1;
-static constexpr int FileNameRole = UrlRole + 1;
+enum CustomRole {
+    UrlRole = Qt::UserRole + 1,
+    FileNameRole,
+    LangCodeRole
+};
 
 class SubtitleLinkModel
         : public SimpleListModel<SubtitleLink, QVector<SubtitleLink>> {
@@ -26,6 +29,7 @@ public:
     auto roleData(int row, int /*column*/, int role) const -> QVariant {
         if (role == UrlRole)      return at(row).url;
         if (role == FileNameRole) return at(row).fileName;
+        if (role == LangCodeRole) return at(row).langCode;
         return QVariant();
     }
     auto displayData(int row, int column) const -> QVariant {
@@ -48,6 +52,8 @@ struct SubtitleFindDialog::Data {
     QSortFilterProxyModel proxy;
     QString fileName;
     QMap<QUrl, QString> downloads;
+    QMap<QString, QString> languages; // code, name
+    QString langCode;
     void updateState() {
         const bool ok = finder->isAvailable() && !downloader.isRunning();
         ui.open->setEnabled(ok);
@@ -86,6 +92,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     d->ui.setupUi(this);
     d->proxy.setSourceModel(&d->model);
     d->proxy.setFilterKeyColumn(d->model.Language);
+    d->proxy.setFilterRole(LangCodeRole);
     d->ui.view->setModel(&d->proxy);
     d->ui.view->header()->resizeSection(0, 100);
     d->ui.view->header()->resizeSection(1, 450);
@@ -117,8 +124,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     });
     Signal<QComboBox, int> changed = &QComboBox::currentIndexChanged;
     connect(d->ui.language, changed, [this] (int i) {
-        const auto text = i > 0 ? d->ui.language->itemText(i) : QString();
-        d->proxy.setFilterFixedString(text);
+        d->langCode = i > 0 ? d->ui.language->itemData(i).toString() : QString();
+        d->proxy.setFilterFixedString(d->langCode);
     });
     connect(d->ui.get, &QPushButton::clicked, [this] () {
         const auto index = d->ui.view->currentIndex();
@@ -161,15 +168,17 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             [this] () { d->updateState(); });
     connect(d->finder, &OpenSubtitlesFinder::found,
             [this] (const QVector<SubtitleLink> &links) {
+        auto prev = d->langCode;
         d->model.setList(links);
-        std::set<QString> set;
+        d->languages.clear();
         for (auto &it : links)
-            set.insert(it.language);
+            d->languages[it.langCode] = it.language;
         d->ui.language->clear();
-        d->ui.language->addItem(tr("All"));
+        d->ui.language->addItem(tr("All"), QString());
         d->ui.language->insertSeparator(1);
-        for (auto &it : set)
-            d->ui.language->addItem(it);
+        for (auto it = d->languages.cbegin(); it != d->languages.cend(); ++it)
+            d->ui.language->addItem(it.value(), it.key());
+        setSelectedLangCode(prev);
     });
     d->updateState();
 }
@@ -190,4 +199,18 @@ auto SubtitleFindDialog::find(const Mrl &mrl) -> void
                    tr("Cannot find subtitles for %1.").arg(name),
                    { BBox::Ok });
     }
+}
+
+auto SubtitleFindDialog::selectedLangCode() const -> QString
+{
+    return d->langCode;
+}
+
+auto SubtitleFindDialog::setSelectedLangCode(const QString &langCode) -> void
+{
+    d->langCode = langCode;
+    const int idx = d->ui.language->findData(langCode);
+    if (d->ui.language->count() > 0)
+        d->ui.language->setCurrentIndex(idx < 1 ? 0 : idx);
+    d->proxy.setFilterFixedString(d->ui.language->currentData().toString());
 }

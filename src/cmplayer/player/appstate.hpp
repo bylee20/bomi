@@ -26,7 +26,7 @@ public:
     // misc
     bool ask_system_tray = true;
 
-    QString dvd_device, bluray_device;
+    QString dvd_device, bluray_device, sub_find_lang_code;
     auto save() const -> void;
 signals:
     void winStaysOnTopChanged();

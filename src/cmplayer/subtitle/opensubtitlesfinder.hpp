@@ -4,7 +4,7 @@
 class Mrl;
 
 struct SubtitleLink {
-    QString language, fileName, date;
+    QString language, fileName, date, langCode;
     QUrl url;
 };
 

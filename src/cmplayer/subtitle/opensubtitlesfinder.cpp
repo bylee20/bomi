@@ -110,13 +110,13 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
                 link.fileName = map[u"SubFileName"_q].toString();
                 link.date = map[u"SubAddDate"_q].toString();
                 link.url = map[u"SubDownloadLink"_q].toString();
-                auto iso = map[u"SubLanguageID"_q].toString();
-                if (iso.isEmpty())
-                    iso = map[u"ISO639"_q].toString();
-                if (iso.isEmpty())
-                    link.language = map[u"LanguageName"_q].toString();
+                link.langCode = map[u"SubLanguageID"_q].toString();
+                if (link.langCode.isEmpty())
+                    link.langCode = map[u"ISO639"_q].toString();
+                if (link.langCode.isEmpty())
+                    link.langCode = link.language = map[u"LanguageName"_q].toString();
                 else
-                    link.language = Locale::isoToNativeName(iso);
+                    link.language = Locale::isoToNativeName(link.langCode);
                 links.append(link);
             }
             emit found(links);

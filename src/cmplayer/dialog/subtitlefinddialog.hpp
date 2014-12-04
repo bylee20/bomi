@@ -9,6 +9,8 @@ public:
     SubtitleFindDialog(QWidget *parent = nullptr);
     ~SubtitleFindDialog();
     auto find(const Mrl &mrl) -> void;
+    auto setSelectedLangCode(const QString &langCode) -> void;
+    auto selectedLangCode() const -> QString;
 signals:
     void loadRequested(const QString &fileName);
 private:

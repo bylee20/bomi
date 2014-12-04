@@ -770,6 +770,7 @@ auto MainWindow::Data::connectMenus() -> void
     connect(tool[u"find-subtitle"_q], &QAction::triggered, p, [this] () {
         if (!subFindDlg) {
             subFindDlg = new SubtitleFindDialog(p);
+            subFindDlg->setSelectedLangCode(as.sub_find_lang_code);
             connect(subFindDlg, &SubtitleFindDialog::loadRequested,
                     p, [this] (const QString &fileName) {
                 appendSubFiles(QStringList(fileName), true, pref().sub_enc);

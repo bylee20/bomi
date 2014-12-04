@@ -11,6 +11,7 @@
 #include "subtitle/subtitle_parser.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/openmediafolderdialog.hpp"
+#include "dialog/subtitlefinddialog.hpp"
 
 MainWindow::Data::Data(MainWindow *p)
     : p(p)
@@ -655,6 +656,7 @@ auto MainWindow::Data::commitData() -> void
         as.playlist_shuffled = playlist.isShuffled();
         as.playlist_repeat = playlist.repeat();
         as.history_visible = history.isVisible();
+        as.sub_find_lang_code = subFindDlg->selectedLangCode();
         as.save();
         syncState();
         engine.waitUntilTerminated();
