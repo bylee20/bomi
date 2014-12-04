@@ -19,7 +19,7 @@ Some packages marked with (*) can be in-tree-built.
 
 ### Common dependencies
 
-* Linux / OS X >= 10.7
+* Linux
 * Qt5 >= 5.2
 * OpenGL >= 2.1 with framebuffer object
 * FFmpeg >= 2.0 (libav is not supported)
@@ -36,10 +36,6 @@ Some packages marked with (*) can be in-tree-built.
 * dvdread
 * dvdnav
 * icu-uc
-* libquvi-0.9 (or libquvi)
-
-### Specific dependencies for Linux
-
 * xcb xcb-icccm x11
 * libva libva-glx libva-x11
 * vdpau
@@ -59,10 +55,11 @@ In such cases, you can build them with in-tree source.
 
 In order to build and install CMPlayer, follow next:
 
+0. If you're trying from Git repository, run `./init-mpv` first.
 1. Run `./configure` with proper options. For details, run `./configure --help`.
 2. Run `make` to build CMPlayer
 
-You can find built executable (for Linux) or application bundle (for OS X) in `./build` directory.
+You can find built executable in `./build` directory.
 If you want to install CMPlayer into specified directory by `--prefix` option, run `make install`.
 
 ## Contacts
@@ -82,7 +79,7 @@ If you want to contact me privately, please send me an e-mail.
 
 CMPlayer is distributed under GPLv2.
 
-Copyright (C) 2013 xylosper
+Copyright (C) 2014 xylosper
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
