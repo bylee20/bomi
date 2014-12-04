@@ -18,14 +18,14 @@ public:
         setup(this);
         retranslate(this);
     }
-    auto currentValue() const -> Enum { return EnumInfo<Enum>::from(currentData().toInt()); }
-    auto setCurrentValue(Enum e) -> void { setCurrentData((int)e); }
+    auto currentValue() const -> Enum { return currentData().template value<Enum>(); }
+    auto setCurrentValue(Enum e) -> void { setCurrentData(QVariant::fromValue(e)); }
     auto setRetranslatable(bool retrans) -> void { m_retrans = retrans; }
 private:
     static auto setup(QComboBox *combo) -> void {
         combo->clear();
         for (auto &item : EnumInfo<Enum>::items())
-            combo->addItem(QString(), (int)item.value);
+            combo->addItem(QString(), QVariant::fromValue(item.value));
     }
     static auto retranslate(QComboBox *combo) -> void {
         const auto items = EnumInfo<Enum>::items();

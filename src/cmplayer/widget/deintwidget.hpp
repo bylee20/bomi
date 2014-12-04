@@ -1,11 +1,13 @@
 #ifndef DEINTWIDGET_HPP
 #define DEINTWIDGET_HPP
 
-class DeintCaps;
+#include "video/deintcaps.hpp"
+
 enum class DecoderDevice;
 
 class DeintWidget : public QWidget {
     Q_OBJECT
+    Q_PROPERTY(DeintCaps value READ get WRITE set)
 public:
     DeintWidget(DecoderDevice decoder, QWidget *parent = nullptr);
     ~DeintWidget();

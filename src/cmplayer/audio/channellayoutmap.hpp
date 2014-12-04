@@ -30,4 +30,6 @@ private:
 
 auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool;
 
+Q_DECLARE_METATYPE(ChannelLayoutMap)
+
 #endif // CHANNELLAYOUTMAP_HPP

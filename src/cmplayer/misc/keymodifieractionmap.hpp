@@ -19,4 +19,6 @@ private:
 
 using MouseActionMap = QMap<MouseBehavior, KeyModifierActionMap>;
 
+Q_DECLARE_METATYPE(MouseActionMap)
+
 #endif // KEYMODIFIERACTIONMAP_HPP

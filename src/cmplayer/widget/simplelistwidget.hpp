@@ -91,6 +91,7 @@ auto SimpleListWidget<T, List>::setModel(Model *model) -> void
 
 class StringListWidget : public SimpleListWidget<QString, QStringList> {
     Q_OBJECT
+    Q_PROPERTY(QStringList value READ list WRITE setList)
 public:
     StringListWidget(QWidget *parent = 0)
         : Super(parent) { setModel(new StringListModel(this)); }

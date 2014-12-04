@@ -91,7 +91,7 @@ HEADERS += \
 	subtitle/richtextblock.hpp \
 	subtitle/richtextdocument.hpp \
 	subtitle/subtitlerendereritem.hpp \
-	subtitle/subtitlestyle.hpp \
+	misc/osdtheme.hpp \
 	subtitle/subtitledrawer.hpp \
 	subtitle/subtitlerenderingthread.hpp \
 	subtitle/submisc.hpp \
@@ -108,7 +108,7 @@ HEADERS += \
 	quick/simplevertexitem.hpp \
 	quick/simplefboitem.hpp \
 	quick/geometryitem.hpp \
-	quick/osdtheme.hpp \
+	quick/osdthemeobject.hpp \
 	quick/themeobject.hpp \
 	quick/globalqmlobject.hpp \
 	opengl/interpolator.hpp \
@@ -239,7 +239,10 @@ HEADERS += \
     player/streamtrack.hpp \
     misc/locale.hpp \
     dialog/youtubedialog.hpp \
-    misc/matchstring.hpp
+    misc/matchstring.hpp \
+    misc/simplelistdelegate.hpp \
+    player/pref_helper.hpp \
+    widget/prefwidgets.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -278,7 +281,7 @@ SOURCES += \
 	subtitle/richtextblock.cpp \
 	subtitle/richtextdocument.cpp \
 	subtitle/subtitlerendereritem.cpp \
-	subtitle/subtitlestyle.cpp \
+	misc/osdtheme.cpp \
 	subtitle/subtitledrawer.cpp \
 	subtitle/subtitlerenderingthread.cpp \
 	subtitle/submisc.cpp \
@@ -295,7 +298,7 @@ SOURCES += \
 	quick/simpletextureitem.cpp \
 	quick/simplevertexitem.cpp \
 	quick/simplefboitem.cpp \
-	quick/osdtheme.cpp \
+	quick/osdthemeobject.cpp \
 	quick/themeobject.cpp \
 	quick/globalqmlobject.cpp \
 	opengl/interpolator.cpp \
@@ -418,7 +421,10 @@ SOURCES += \
     player/streamtrack.cpp \
     misc/locale.cpp \
     dialog/youtubedialog.cpp \
-    misc/matchstring.cpp
+    misc/matchstring.cpp \
+    misc/simplelistdelegate.cpp \
+	player/pref_helper.cpp \
+    widget/prefwidgets.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -435,7 +441,9 @@ FORMS += \
     ui/snapshotdialog.ui \
     ui/prefdialog.ui \
     ui/openmediafolderdialog.ui \
-    ui/subtitlefinddialog.ui
+    ui/subtitlefinddialog.ui \
+    ui/osdthemewidget.ui \
+    ui/audionormalizeroptionwidget.ui
 
 OTHER_FILES += \
     imports/CMPlayer/qmldir \

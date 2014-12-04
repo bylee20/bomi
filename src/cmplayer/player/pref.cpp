@@ -3,40 +3,40 @@
 #include "mrlstate.hpp"
 #include "video/hwacc.hpp"
 #include "misc/record.hpp"
-#include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
+#include "pref_helper.hpp"
 
 DECLARE_LOG_CONTEXT(Pref)
 
-template<>
-struct JsonIO<QMetaProperty> {
-    auto toJson(const QMetaProperty &prop) const -> QJsonValue
-    { return _L(prop.name()); }
-    auto fromJson(QMetaProperty &prop, const QJsonValue &json) const -> bool
-    {
-        const auto &mo = MrlState::staticMetaObject;
-        const int idx = mo.indexOfProperty(json.toString().toLatin1());
-        if (idx < 0)
-            return false;
-        prop = mo.property(idx);
-        return true;
-    }
-    SCA qt_type = QJsonValue::String;
-};
+static bool init = false;
 
-template<>
-struct JsonIO<HwAcc::Type> {
-    auto toJson(HwAcc::Type type) const -> QJsonValue
-    { return HwAcc::backendName(type); }
-    auto fromJson(HwAcc::Type &type, const QJsonValue &json) const -> bool
-    {
-        const auto t = HwAcc::backend(json.toString());
-        if (t != HwAcc::None)
-            type = t;
-        return t != HwAcc::None;
+auto Pref::initialize() -> void
+{
+    if (init)
+        return;
+    init = true;
+    qRegisterMetaType<const PrefFieldInfo*>();
+    qRegisterMetaType<QVector<QMetaProperty>>();
+    qRegisterMetaType<ChannelLayoutMap>();
+    qRegisterMetaType<QList<MatchString>>();
+    qRegisterMetaType<MouseActionMap>();
+    qRegisterMetaType<AudioNormalizerOption>();
+    qRegisterMetaType<DeintCaps>();
+    qRegisterMetaType<Shortcuts>();
+    qRegisterMetaType<OsdTheme>();
+    qRegisterMetaType<HwAcc::Type>();
+    auto &mo = *this->metaObject();
+    for (int i =  mo.methodOffset(); i < mo.methodCount(); ++i) {
+        auto method = mo.method(i);
+        if (method.name().startsWith("init_"))
+            method.invoke(this, Qt::DirectConnection);
     }
-    SCA qt_type = QJsonValue::String;
-};
+}
+
+auto Pref::fields() -> const QVector<const PrefFieldInfo*>&
+{
+    return PrefFieldInfo::getList();
+}
 
 #define PREF_FILE_PATH QString(_WritablePath(Location::Config) % "/pref.json"_a)
 
@@ -197,103 +197,6 @@ auto Pref::preset(KeyMapPreset id) -> Shortcuts
     return keys;
 }
 
-#define JSON_CLASS Pref
-static const auto jio = JIO(
-    JE(fit_to_video),
-    JE(remember_stopped),
-    JE(ask_record_found),
-    JE(pause_minimized),
-    JE(pause_video_only),
-    JE(hide_cursor),
-    JE(hide_cursor_fs_only),
-    JE(hide_cursor_delay),
-    JE(enable_system_tray),
-    JE(hide_rather_close),
-    JE(restore_properties),
-    JE(invert_wheel),
-    JE(disable_screensaver),
-    JE(sub_enc),
-    JE(sub_priority),
-    JE(audio_priority),
-    JE(sub_enc_autodetection),
-    JE(sub_enc_accuracy),
-    JE(ms_per_char),
-    JE(seek_step1),
-    JE(seek_step2),
-    JE(seek_step3),
-    JE(speed_step),
-    JE(volume_step),
-    JE(amp_step),
-    JE(sub_pos_step),
-    JE(volume_step),
-    JE(sub_sync_step),
-    JE(brightness_step),
-    JE(saturation_step),
-    JE(contrast_step),
-    JE(hue_step),
-    JE(sub_ext),
-    JE(blur_kern_c),
-    JE(blur_kern_n),
-    JE(blur_kern_d),
-    JE(sharpen_kern_c),
-    JE(sharpen_kern_n),
-    JE(sharpen_kern_d),
-    JE(remap_luma_min),
-    JE(remap_luma_max),
-    JE(channel_manipulation),
-    JE(enable_generate_playist),
-    JE(sub_search_paths),
-    JE(sub_search_paths_v2),
-    JE(sub_enable_autoload),
-    JE(sub_enable_autoselect),
-    JE(generate_playlist),
-    JE(sub_autoload),
-    JE(sub_autoselect),
-    JE(enable_hwaccel),
-    JE(hwaccel_backend),
-    JE(skin_name),
-    JE(exclude_images),
-    JE(hwaccel_codecs),
-    JE(hwdeints),
-    JE(normalizer_silence),
-    JE(normalizer_target),
-    JE(normalizer_min),
-    JE(normalizer_max),
-    JE(normalizer_length),
-    JE(lion_style_fullscreen),
-    JE(show_logo),
-    JE(bg_color),
-    JE(deint_hwdec),
-    JE(deint_swdec),
-    JE(audio_device),
-    JE(clipping_method),
-    JE(cache_local),
-    JE(cache_disc),
-    JE(cache_network),
-    JE(cache_min_playback),
-    JE(cache_min_seeking),
-    JE(network_folders),
-    JE(use_mpris2),
-    JE(show_osd_on_action),
-    JE(show_osd_on_resized),
-    JE(show_osd_timeline),
-    JE(use_heartbeat),
-    JE(heartbeat_command),
-    JE(heartbeat_interval),
-    JE(open_media_from_file_manager),
-    JE(open_media_by_drag_and_drop),
-    JE(osd_theme),
-    JE(sub_style),
-    JE(mouse_action_map),
-    JE(shortcuts),
-    JE(quick_snapshot_folder),
-    JE(quick_snapshot_save),
-    JE(quick_snapshot_format),
-    JE(quick_snapshot_quality),
-    JE(yt_program),
-    JE(yt_user_agent)
-);
-
 #define PREF_GROUP u"preference"_q
 
 #define DO(FUNC1, FUNC2) { \
@@ -304,7 +207,6 @@ static const auto jio = JIO(
     FUNC1(pause_video_only); \
     FUNC1(hide_cursor); \
     FUNC1(hide_cursor_fs_only); \
-    FUNC1(hide_cursor_delay); \
     FUNC1(enable_system_tray); \
     FUNC1(hide_rather_close); \
     FUNC1(restore_properties); \
@@ -315,15 +217,11 @@ static const auto jio = JIO(
     FUNC1(sub_enc_autodetection); \
     FUNC1(sub_enc_accuracy); \
     FUNC1(ms_per_char); \
-    FUNC1(seek_step1); \
-    FUNC1(seek_step2); \
-    FUNC1(seek_step3); \
     FUNC1(speed_step); \
     FUNC1(volume_step); \
     FUNC1(amp_step); \
     FUNC1(sub_pos_step); \
     FUNC1(volume_step); \
-    FUNC1(sub_sync_step); \
     FUNC1(brightness_step); \
     FUNC1(saturation_step); \
     FUNC1(contrast_step); \
@@ -335,10 +233,8 @@ static const auto jio = JIO(
     FUNC1(sharpen_kern_c); \
     FUNC1(sharpen_kern_n); \
     FUNC1(sharpen_kern_d); \
-    FUNC1(remap_luma_min); \
-    FUNC1(remap_luma_max); \
     FUNC1(channel_manipulation); \
-    FUNC1(enable_generate_playist); \
+    FUNC1(enable_generate_playlist); \
     FUNC1(sub_enable_autoload); \
     FUNC1(sub_enable_autoselect); \
     FUNC1(generate_playlist); \
@@ -348,11 +244,6 @@ static const auto jio = JIO(
     FUNC1(skin_name); \
     FUNC1(hwaccel_codecs); \
     FUNC1(hwdeints); \
-    FUNC1(normalizer_silence); \
-    FUNC1(normalizer_target); \
-    FUNC1(normalizer_min); \
-    FUNC1(normalizer_max); \
-    FUNC1(normalizer_length); \
     FUNC1(lion_style_fullscreen); \
     FUNC1(show_logo); \
     FUNC1(bg_color); \
@@ -375,14 +266,16 @@ static const auto jio = JIO(
     FUNC1(heartbeat_interval); \
     FUNC1(open_media_from_file_manager); \
     FUNC1(open_media_by_drag_and_drop); \
-    FUNC1(osd_theme); \
     FUNC2(sub_style); \
 }
 
 auto Pref::save() const -> void
 {
     JsonStorage storage(PREF_FILE_PATH);
-    storage.write(jio.toJson(*this));
+    QJsonObject json;
+    for (auto field : fields())
+        json.insert(QString::fromLatin1(field->propertyName()), field->toJson(this));
+    storage.write(json);
 }
 
 auto Pref::loadFromRecord() -> void
@@ -437,7 +330,14 @@ auto Pref::load() -> void
             return;
         }
     }
-    if (!jio.fromJson(*this, json))
+    bool res = true;
+    for (auto field : fields()) {
+        auto it = json.constFind(QString::fromLatin1(field->propertyName()));
+        if (it == json.constEnd())
+            continue;
+        res = field->setFromJson(this, *it) && res;
+    }
+    if (!res)
         _Error("Error: Cannot convert JSON object to preferences");
 
     if (!sub_search_paths.isEmpty()) {
@@ -447,6 +347,26 @@ auto Pref::load() -> void
             sub_search_paths_v2.push_back({path});
         sub_search_paths.clear();
     }
+
+    if (json.contains(u"enable_generate_playist"_q))
+        enable_generate_playlist = json[u"enable_generate_playist"_q].toBool();
+
+    if (json.contains(u"normalizer_silence"_q)) {
+        audio_normalizer.silenceLevel = json[u"normalizer_silence"_q].toDouble();
+        audio_normalizer.targetLevel = json[u"normalizer_target"_q].toDouble();
+        audio_normalizer.minimumGain = json[u"normalizer_min"_q].toDouble();
+        audio_normalizer.maximumGain = json[u"normalizer_max"_q].toDouble();
+        audio_normalizer.bufferLengthInSeconds = json[u"normalizer_length"_q].toDouble();
+    }
+
+#define CONV_SEC(name) \
+    {if (json.contains(_L(#name))) name##_sec = json[_L(#name)].toInt()/1000.0;}
+    CONV_SEC(seek_step1)
+    CONV_SEC(seek_step2)
+    CONV_SEC(seek_step3)
+    CONV_SEC(sub_sync_step)
+    CONV_SEC(audio_sync_step)
+    CONV_SEC(hide_cursor_delay)
 }
 
 #ifdef Q_OS_LINUX
@@ -506,15 +426,18 @@ auto Pref::defaultSubtitleEncodingDetectionAccuracy() -> int
     return ok ? qBound(0, accuracy, 100) : 70;
 }
 
-auto Pref::defaultOsdTheme() -> OsdTheme
+auto Pref::defaultOsdStyle() -> OsdTheme
 {
     OsdTheme theme;
-    theme.underline = theme.strikeout = theme.italic = theme.bold = false;
-    theme.font = qApp->font().family();
-    theme.scale = 0.03;
-    theme.style = TextThemeStyle::Outline;
-    theme.color = Qt::white;
-    theme.styleColor = Qt::black;
+    theme.font.setUnderline(false);
+    theme.font.setStrikeOut(false);
+    theme.font.setItalic(false);
+    theme.font.setBold(false);
+    theme.font.setFamily(qApp->font().family());
+    theme.font.size = 0.03;
+//    theme.style = TextThemeStyle::Outline;
+    theme.font.color = Qt::white;
+    theme.outline.color = Qt::black;
     return theme;
 }
 
@@ -530,4 +453,9 @@ auto Pref::defaultMouseActionMap() -> MouseActionMap
     map[MouseBehavior::Extra1Click][KeyModifier::None] = u"play/seek/backward1"_q;
     map[MouseBehavior::Extra2Click][KeyModifier::None] = u"play/seek/forward1"_q;
     return map;
+}
+
+auto Pref::defaultHwAccBackend() -> HwAcc::Type
+{
+    return HwAcc::VaApiGLX;
 }

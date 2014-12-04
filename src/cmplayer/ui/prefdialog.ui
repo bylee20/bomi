@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>0</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -165,7 +165,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="hide_delay">
+               <widget class="QSpinBox" name="hide_cursor_delay_sec">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -439,7 +439,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QTreeView" name="restore_properties">
+          <widget class="QTreeView" name="restore_properties_view">
            <property name="rootIsDecorated">
             <bool>false</bool>
            </property>
@@ -1759,189 +1759,13 @@
        <widget class="QWidget" name="audio_filter">
         <layout class="QVBoxLayout" name="verticalLayout_35">
          <item>
-          <widget class="QGroupBox" name="groupBox_12">
+          <widget class="QGroupBox" name="normalizer">
            <property name="title">
             <string>Volume Normalizer</string>
            </property>
-           <layout class="QGridLayout" name="gridLayout_3">
-            <item row="0" column="0" colspan="2">
-             <layout class="QHBoxLayout" name="horizontalLayout_12">
-              <item>
-               <widget class="QLabel" name="label_42">
-                <property name="text">
-                 <string>Buffer length for calculating average level</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="normalizer_length">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string>sec</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="minimum">
-                 <double>0.500000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>30.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.500000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_17">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="1" column="0">
-             <layout class="QFormLayout" name="formLayout_13">
-              <property name="fieldGrowthPolicy">
-               <enum>QFormLayout::ExpandingFieldsGrow</enum>
-              </property>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_22">
-                <property name="text">
-                 <string>Target level</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="normalizer_target">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="decimals">
-                 <number>5</number>
-                </property>
-                <property name="maximum">
-                 <double>1.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.010000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_16">
-                <property name="text">
-                 <string>Silence level</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="normalizer_silence">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="decimals">
-                 <number>6</number>
-                </property>
-                <property name="maximum">
-                 <double>0.100000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.000001000000000</double>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="1" column="1">
-             <layout class="QFormLayout" name="formLayout_14">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_28">
-                <property name="text">
-                 <string>Minimum gain</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="normalizer_min">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <double>999.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_29">
-                <property name="text">
-                 <string>Maximum gain</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="normalizer_max">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <double>9999.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-             </layout>
+           <layout class="QVBoxLayout" name="verticalLayout_27">
+            <item>
+             <widget class="AudioNormalizerOptionWidget" name="audio_normalizer" native="true"/>
             </item>
            </layout>
           </widget>
@@ -1964,6 +1788,13 @@
        <widget class="QWidget" name="video_hwacc">
         <layout class="QVBoxLayout" name="verticalLayout_29">
          <item>
+          <widget class="QCheckBox" name="enable_hwaccel">
+           <property name="text">
+            <string>Use hardware-accelerated decoding</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <layout class="QHBoxLayout" name="horizontalLayout_24">
            <item>
             <widget class="QLabel" name="label_55">
@@ -1973,7 +1804,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="hwacc_backend">
+            <widget class="DataComboBox" name="hwaccel_backend">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -1985,25 +1816,10 @@
           </layout>
          </item>
          <item>
-          <widget class="QGroupBox" name="enable_hwdec">
+          <widget class="HwAccCodecBox" name="hwaccel_codecs">
            <property name="title">
-            <string>Use hardware-accelerated decoding</string>
+            <string>Codec to allow hardware-acceleration</string>
            </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0">
-            <item>
-             <widget class="QWidget" name="hwdec_list" native="true">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </widget>
          </item>
          <item>
@@ -2024,600 +1840,7 @@
        <widget class="QWidget" name="sub_appearance">
         <layout class="QVBoxLayout" name="verticalLayout_17">
          <item>
-          <widget class="QGroupBox" name="groupBox_11">
-           <property name="title">
-            <string>Text</string>
-           </property>
-           <layout class="QFormLayout" name="formLayout_2">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Font</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QFontComboBox" name="sub_font_family"/>
-            </item>
-            <item row="1" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_8">
-              <item>
-               <widget class="ColorSelectWidget" name="sub_font_color" native="true">
-                <property name="minimumSize">
-                 <size>
-                  <width>10</width>
-                  <height>10</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="FontOptionWidget" name="sub_font_option" native="true"/>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_22">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_21">
-              <property name="text">
-               <string>Size</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_13">
-              <item>
-               <widget class="QDoubleSpinBox" name="sub_font_size">
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <double>99.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="OsdScalePolicyComboBox" name="sub_font_scale">
-                <property name="sizeAdjustPolicy">
-                 <enum>QComboBox::AdjustToContents</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_21">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="sub_outline">
-           <property name="title">
-            <string>Outline</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
-            <item>
-             <spacer name="horizontalSpacer_7">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>Color</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="ColorSelectWidget" name="sub_outline_color" native="true">
-              <property name="minimumSize">
-               <size>
-                <width>10</width>
-                <height>10</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>Width</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="sub_outline_width">
-              <property name="accelerated">
-               <bool>true</bool>
-              </property>
-              <property name="suffix">
-               <string notr="true">%</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <double>99.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>1.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_8">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="sub_shadow">
-           <property name="title">
-            <string>Shadow</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_20">
-            <item>
-             <spacer name="horizontalSpacer_11">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Expanding</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>55</width>
-                <height>13</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <layout class="QFormLayout" name="formLayout_3">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Color</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <layout class="QHBoxLayout" name="horizontalLayout_10">
-                <item>
-                 <widget class="ColorSelectWidget" name="sub_shadow_color" native="true">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>10</width>
-                    <height>10</height>
-                   </size>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="sub_shadow_blur">
-                  <property name="text">
-                   <string>Blur</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_24">
-                <property name="text">
-                 <string>Opacity</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="sub_shadow_opacity">
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QFormLayout" name="formLayout_8">
-              <property name="fieldGrowthPolicy">
-               <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-              </property>
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_8">
-                <property name="text">
-                 <string>X-offset</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="sub_shadow_offset_x">
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="minimum">
-                 <double>-99.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>99.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_15">
-                <property name="text">
-                 <string>Y-offset</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="sub_shadow_offset_y">
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="minimum">
-                 <double>-99.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>99.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_10">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>54</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_23">
-           <property name="title">
-            <string>Line spacing</string>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_15">
-            <item>
-             <spacer name="horizontalSpacer_13">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>24</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>New line</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="sub_spacing_line">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="accelerated">
-               <bool>true</bool>
-              </property>
-              <property name="suffix">
-               <string notr="true">%</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="minimum">
-               <double>-99.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>99.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>1.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_17">
-              <property name="text">
-               <string>New paragraph</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="sub_spacing_paragraph">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="accelerated">
-               <bool>true</bool>
-              </property>
-              <property name="suffix">
-               <string notr="true">%</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="minimum">
-               <double>-99.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>99.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>1.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_14">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>24</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="sub_bbox">
-           <property name="title">
-            <string>Bounding Bo&amp;x</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_19">
-            <item>
-             <spacer name="horizontalSpacer_18">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Expanding</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>55</width>
-                <height>13</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <layout class="QFormLayout" name="formLayout_18">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_30">
-                <property name="text">
-                 <string>Color</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="ColorSelectWidget" name="sub_bbox_color" native="true">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>10</width>
-                  <height>10</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_34">
-                <property name="text">
-                 <string>Opacity</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="sub_bbox_opacity">
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QFormLayout" name="formLayout_19">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_46">
-                <property name="text">
-                 <string>Horizontal padding</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QDoubleSpinBox" name="sub_bbox_hpadding">
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="minimum">
-                 <double>-99.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>99.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_48">
-                <property name="text">
-                 <string>Vertical padding</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="sub_bbox_vpadding">
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="minimum">
-                 <double>-99.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>99.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_19">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>54</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
+          <widget class="OsdThemeWidget" name="sub_style" native="true"/>
          </item>
          <item>
           <spacer name="verticalSpacer_4">
@@ -2665,7 +1888,7 @@
           </layout>
          </item>
          <item>
-          <widget class="QTreeWidget" name="shortcut_tree">
+          <widget class="PrefMenuTreeWidget" name="shortcuts">
            <property name="alternatingRowColors">
             <bool>true</bool>
            </property>
@@ -2938,139 +2161,7 @@
        <widget class="QWidget" name="osd">
         <layout class="QVBoxLayout" name="verticalLayout_39">
          <item>
-          <widget class="QGroupBox" name="groupBox_28">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="title">
-            <string>Text</string>
-           </property>
-           <layout class="QFormLayout" name="formLayout_20">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_56">
-              <property name="text">
-               <string>Font</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QFontComboBox" name="osd_font"/>
-            </item>
-            <item row="1" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_25">
-              <item>
-               <widget class="ColorSelectWidget" name="osd_color" native="true">
-                <property name="minimumSize">
-                 <size>
-                  <width>10</width>
-                  <height>10</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="FontOptionWidget" name="osd_font_option" native="true"/>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_24">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_57">
-              <property name="text">
-               <string>Size</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_27">
-              <item>
-               <widget class="QDoubleSpinBox" name="osd_scale">
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string>% of height</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <double>99.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_25">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_58">
-              <property name="text">
-               <string>Style</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_28">
-              <item>
-               <widget class="TextThemeStyleComboBox" name="osd_style"/>
-              </item>
-              <item>
-               <widget class="ColorSelectWidget" name="osd_style_color" native="true">
-                <property name="minimumSize">
-                 <size>
-                  <width>10</width>
-                  <height>10</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_26">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
+          <widget class="OsdThemeWidget" name="osd_style" native="true"/>
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox_29">
@@ -3225,7 +2316,7 @@
        <widget class="QWidget" name="ui_mouse">
         <layout class="QVBoxLayout" name="verticalLayout_41">
          <item>
-          <widget class="PrefMouseActionTree" name="mouse_action_tree">
+          <widget class="PrefMouseActionTree" name="mouse_action_map">
            <column>
             <property name="text">
              <string notr="true">1</string>
@@ -3234,7 +2325,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="ui_mouse_invert_wheel">
+          <widget class="QCheckBox" name="invert_wheel">
            <property name="text">
             <string>Invert direction of mouse wheel scroll</string>
            </property>
@@ -3357,7 +2448,7 @@ Regular expression is supported.</string>
                  </widget>
                 </item>
                 <item row="0" column="1">
-                 <widget class="QSpinBox" name="seek_step1">
+                 <widget class="QSpinBox" name="seek_step1_sec">
                   <property name="suffix">
                    <string>sec</string>
                   </property>
@@ -3380,7 +2471,7 @@ Regular expression is supported.</string>
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QSpinBox" name="seek_step2">
+                 <widget class="QSpinBox" name="seek_step2_sec">
                   <property name="suffix">
                    <string>sec</string>
                   </property>
@@ -3403,7 +2494,7 @@ Regular expression is supported.</string>
                  </widget>
                 </item>
                 <item row="2" column="1">
-                 <widget class="QSpinBox" name="seek_step3">
+                 <widget class="QSpinBox" name="seek_step3_sec">
                   <property name="suffix">
                    <string>sec</string>
                   </property>
@@ -3487,7 +2578,7 @@ Regular expression is supported.</string>
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QDoubleSpinBox" name="sub_sync_step">
+                 <widget class="QDoubleSpinBox" name="sub_sync_step_sec">
                   <property name="suffix">
                    <string>sec</string>
                   </property>
@@ -3575,7 +2666,7 @@ Regular expression is supported.</string>
                  </widget>
                 </item>
                 <item row="2" column="1">
-                 <widget class="QDoubleSpinBox" name="audio_sync_step">
+                 <widget class="QDoubleSpinBox" name="audio_sync_step_sec">
                   <property name="suffix">
                    <string>sec</string>
                   </property>
@@ -3742,12 +2833,6 @@ Regular expression is supported.</string>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>FontOptionWidget</class>
-   <extends>QWidget</extends>
-   <header>widget/fontoptionwidget.hpp</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ColorSelectWidget</class>
    <extends>QWidget</extends>
    <header>widget/colorselectwidget.hpp</header>
@@ -3774,11 +2859,6 @@ Regular expression is supported.</string>
    <header>widget/datacombobox.hpp</header>
   </customwidget>
   <customwidget>
-   <class>OsdScalePolicyComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widget/enumcombobox.hpp</header>
-  </customwidget>
-  <customwidget>
    <class>ClippingMethodComboBox</class>
    <extends>QComboBox</extends>
    <header>widget/enumcombobox.hpp</header>
@@ -3795,11 +2875,6 @@ Regular expression is supported.</string>
    <header>widget/localecombobox.hpp</header>
   </customwidget>
   <customwidget>
-   <class>TextThemeStyleComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widget/enumcombobox.hpp</header>
-  </customwidget>
-  <customwidget>
    <class>OpenMediaBehaviorGroupBox</class>
    <extends>QGroupBox</extends>
    <header>widget/openmediabehaviorgroupbox.hpp</header>
@@ -3807,6 +2882,29 @@ Regular expression is supported.</string>
   </customwidget>
   <customwidget>
    <class>PrefMouseActionTree</class>
+   <extends>QTreeWidget</extends>
+   <header>dialog/prefdialog_p.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>HwAccCodecBox</class>
+   <extends>QGroupBox</extends>
+   <header>widget/prefwidgets.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>OsdThemeWidget</class>
+   <extends>QWidget</extends>
+   <header>misc/osdtheme.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AudioNormalizerOptionWidget</class>
+   <extends>QWidget</extends>
+   <header>audio/audionormalizeroption.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PrefMenuTreeWidget</class>
    <extends>QTreeWidget</extends>
    <header>dialog/prefdialog_p.hpp</header>
   </customwidget>
@@ -3822,12 +2920,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>502</x>
-     <y>344</y>
+     <x>528</x>
+     <y>512</y>
     </hint>
     <hint type="destinationlabel">
-     <x>455</x>
-     <y>374</y>
+     <x>606</x>
+     <y>517</y>
     </hint>
    </hints>
   </connection>
@@ -3838,12 +2936,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>294</x>
-     <y>76</y>
+     <x>515</x>
+     <y>98</y>
     </hint>
     <hint type="destinationlabel">
-     <x>294</x>
-     <y>67</y>
+     <x>515</x>
+     <y>135</y>
     </hint>
    </hints>
   </connection>
@@ -3854,12 +2952,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>552</x>
-     <y>96</y>
+     <x>539</x>
+     <y>98</y>
     </hint>
     <hint type="destinationlabel">
-     <x>552</x>
-     <y>122</y>
+     <x>539</x>
+     <y>125</y>
     </hint>
    </hints>
   </connection>
@@ -3870,12 +2968,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>552</x>
-     <y>189</y>
+     <x>539</x>
+     <y>193</y>
     </hint>
     <hint type="destinationlabel">
-     <x>552</x>
-     <y>215</y>
+     <x>539</x>
+     <y>220</y>
     </hint>
    </hints>
   </connection>
@@ -3886,12 +2984,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>552</x>
-     <y>96</y>
+     <x>539</x>
+     <y>98</y>
     </hint>
     <hint type="destinationlabel">
-     <x>552</x>
-     <y>124</y>
+     <x>539</x>
+     <y>135</y>
     </hint>
    </hints>
   </connection>
@@ -3902,12 +3000,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>552</x>
-     <y>191</y>
+     <x>539</x>
+     <y>362</y>
     </hint>
     <hint type="destinationlabel">
-     <x>309</x>
-     <y>248</y>
+     <x>540</x>
+     <y>400</y>
     </hint>
    </hints>
   </connection>
@@ -3918,28 +3016,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>552</x>
-     <y>191</y>
+     <x>539</x>
+     <y>362</y>
     </hint>
     <hint type="destinationlabel">
-     <x>474</x>
-     <y>248</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>enable_hwdec</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>hwdec_list</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>306</x>
-     <y>53</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>294</x>
-     <y>82</y>
+     <x>690</x>
+     <y>400</y>
     </hint>
    </hints>
   </connection>
@@ -3950,12 +3032,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>294</x>
-     <y>82</y>
+     <x>298</x>
+     <y>81</y>
     </hint>
     <hint type="destinationlabel">
-     <x>294</x>
-     <y>75</y>
+     <x>298</x>
+     <y>74</y>
     </hint>
    </hints>
   </connection>
@@ -3966,12 +3048,60 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>294</x>
-     <y>79</y>
+     <x>298</x>
+     <y>77</y>
     </hint>
     <hint type="destinationlabel">
-     <x>294</x>
-     <y>70</y>
+     <x>298</x>
+     <y>68</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>enable_hwaccel</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>hwaccel_backend</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>282</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>301</x>
+     <y>85</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>enable_hwaccel</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_55</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>257</x>
+     <y>61</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>253</x>
+     <y>79</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>enable_hwaccel</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>hwaccel_codecs</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>448</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>451</x>
+     <y>124</y>
     </hint>
    </hints>
   </connection>

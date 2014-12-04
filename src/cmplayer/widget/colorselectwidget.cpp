@@ -5,7 +5,7 @@ struct ColorSelectWidget::Data {
     QtSolution::QtColorPicker *color;
     QLabel *alphaLabel;
     QDoubleSpinBox *alpha;
-    bool hasAlpha;
+    bool hasAlpha = false;
 };
 
 ColorSelectWidget::ColorSelectWidget(QWidget *parent)
@@ -34,9 +34,8 @@ ColorSelectWidget::~ColorSelectWidget() {
     delete d;
 }
 
-auto ColorSelectWidget::setColor(const QColor &color, bool hasAlpha) -> void
+auto ColorSelectWidget::setColor(const QColor &color) -> void
 {
-    d->hasAlpha = hasAlpha;
     d->alpha->setVisible(d->hasAlpha);
     d->alpha->setValue(d->hasAlpha ? color.alphaF()*100.0 : 100.0);
     d->alphaLabel->setVisible(d->hasAlpha);
@@ -48,4 +47,14 @@ auto ColorSelectWidget::color() const -> QColor
     QColor color = d->color->currentColor();
     color.setAlphaF(d->hasAlpha ? d->alpha->value()/100.0 : 1.0);
     return color;
+}
+
+auto ColorSelectWidget::setAlphaChannel(bool on) -> void
+{
+    d->hasAlpha = on;
+}
+
+auto ColorSelectWidget::hasAlphaChannel() const -> bool
+{
+    return d->hasAlpha;
 }

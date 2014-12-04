@@ -42,7 +42,7 @@ auto SubtitleDrawer::pos(const QSizeF &img, const QRectF &area) const -> QPointF
     return pos;
 }
 
-auto SubtitleDrawer::setStyle(const SubtitleStyle &style) -> void
+auto SubtitleDrawer::setStyle(const OsdTheme &style) -> void
 {
     m_style = style;
     updateStyle(m_front, style);

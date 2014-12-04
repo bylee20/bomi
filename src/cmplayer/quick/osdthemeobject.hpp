@@ -1,22 +1,23 @@
 #ifndef OSDSTYLE_HPP
 #define OSDSTYLE_HPP
 
+#include "misc/osdtheme.hpp"
 #include "enum/textthemestyle.hpp"
 
 class Record;
 
-struct OsdTheme {
-    QString font = qApp->font().family();
-    qreal scale = 0.025;
-    bool underline = false, bold = false;
-    bool strikeout = false, italic = false;
-    TextThemeStyle style;
-    QColor color = Qt::white, styleColor = Qt::black;
-    auto save(Record &r, const QString &group) const -> void;
-    auto load(Record &r, const QString &group) -> void;
-    auto toJson() const -> QJsonObject;
-    auto setFromJson(const QJsonObject &json) -> bool;
-};
+//struct OsdTheme {
+//    QString font = qApp->font().family();
+//    qreal scale = 0.025;
+//    bool underline = false, bold = false;
+//    bool strikeout = false, italic = false;
+//    TextThemeStyle style;
+//    QColor color = Qt::white, styleColor = Qt::black;
+//    auto save(Record &r, const QString &group) const -> void;
+//    auto load(Record &r, const QString &group) -> void;
+//    auto toJson() const -> QJsonObject;
+//    auto setFromJson(const QJsonObject &json) -> bool;
+//};
 
 /******************************************************************************/
 
@@ -41,15 +42,15 @@ public:
     };
     OsdThemeObject(QObject *parent = nullptr);
     auto set(const OsdTheme &theme) -> void { m = theme; }
-    auto font() const -> QString { return m.font; }
-    auto underline() const -> bool { return m.underline; }
-    auto strikeout() const -> bool { return m.strikeout; }
-    auto bold() const -> bool { return m.bold; }
-    auto italic() const -> bool { return m.italic; }
-    auto color() const -> QColor { return m.color; }
-    auto styleColor() const -> QColor { return m.styleColor; }
-    auto style() const -> Style { return static_cast<Style>(m.style); }
-    auto scale() const -> qreal { return m.scale; }
+    auto font() const -> QString { return m.font.family(); }
+    auto underline() const -> bool { return m.font.underline(); }
+    auto strikeout() const -> bool { return m.font.strikeOut(); }
+    auto bold() const -> bool { return m.font.bold(); }
+    auto italic() const -> bool { return m.font.italic(); }
+    auto color() const -> QColor { return m.font.color; }
+    auto styleColor() const -> QColor { return m.outline.color; }
+    auto style() const -> Style { return Outline; }
+    auto scale() const -> qreal { return m.font.size; }
 private:
     OsdTheme m;
 };

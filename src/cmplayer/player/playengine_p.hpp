@@ -20,7 +20,7 @@
 #include "video/videofilter.hpp"
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
-#include "subtitle/subtitlestyle.hpp"
+#include "misc/osdtheme.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/colorspace.hpp"
 #include "enum/colorrange.hpp"
@@ -236,7 +236,7 @@ struct PlayEngine::Data {
 
     YouTubeDialog *youtube = nullptr;
 
-    SubtitleStyle subStyle;
+    OsdTheme subStyle;
     VideoRenderer *renderer = nullptr;
     ChapterList chapters;
     EditionList editions;

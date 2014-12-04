@@ -7,7 +7,7 @@
 class VideoRenderer;                    class VideoFormat;
 class DeintOption;                      class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
-class MetaData;                         struct SubtitleStyle;
+class MetaData;                         struct OsdTheme;
 struct AudioNormalizerOption;           struct SubtitleFileInfo;
 enum class ClippingMethod;
 enum class DeintMethod;                 enum class DeintMode;
@@ -99,7 +99,7 @@ public:
     auto setCurrentSubtitleStream(int id, bool reserve = false) -> void;
     auto setCurrentEdition(int id, int from = 0) -> void;
     auto setCurrentChapter(int id) -> void;
-    auto setSubtitleStyle(const SubtitleStyle &style) -> void;
+    auto setSubtitleStyle(const OsdTheme &style) -> void;
     auto hasVideo() const -> bool;
     auto setVolumeNormalizerActivated(bool on) -> void;
     auto setTempoScalerActivated(bool on) -> void;

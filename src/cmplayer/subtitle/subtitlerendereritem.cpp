@@ -172,7 +172,7 @@ auto SubtitleRendererItem::setPriority(const QStringList &priority) -> void
         d->langMap[priority[i]] = priority.size()-i;
 }
 
-auto SubtitleRendererItem::setStyle(const SubtitleStyle &style) -> void
+auto SubtitleRendererItem::setStyle(const OsdTheme &style) -> void
 {
     d->drawer.setStyle(style);
     d->updateDrawer();
@@ -241,7 +241,7 @@ auto SubtitleRendererItem::setTopAligned(bool top) -> void
     }
 }
 
-auto SubtitleRendererItem::style() const -> const SubtitleStyle&
+auto SubtitleRendererItem::style() const -> const OsdTheme&
 {
     return d->drawer.style();
 }

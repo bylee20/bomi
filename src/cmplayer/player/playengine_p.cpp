@@ -194,11 +194,11 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     if (!fontStyles.isEmpty())
         family += ":style="_a % fontStyles.join(' '_q);
     double factor = font.size;
-    if (font.scale == OsdScalePolicy::Width)
-        factor *= 1280;
-    else if (font.scale == OsdScalePolicy::Diagonal)
-        factor *= sqrt(1280*1280 + 720*720);
-    else
+//    if (font.scale == OsdScalePolicy::Width)
+//        factor *= 1280;
+//    else if (font.scale == OsdScalePolicy::Diagonal)
+//        factor *= sqrt(1280*1280 + 720*720);
+//    else
         factor *= 720.0;
     opts.add("sub-text-font"_b, family.toLatin1(), true);
     opts.add("sub-text-font-size"_b, factor);

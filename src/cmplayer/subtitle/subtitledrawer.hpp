@@ -133,7 +133,7 @@ private:
 
 class SubtitleDrawer {
 public:
-    auto setStyle(const SubtitleStyle &style) -> void;
+    auto setStyle(const OsdTheme &style) -> void;
     auto setAlignment(Qt::Alignment alignment) -> void;
     auto setMargin(const Margin &margin) -> void { m_margin = margin; }
     auto hasDrawn() const -> bool {return m_drawn;}
@@ -143,12 +143,12 @@ public:
     auto pos(const QSizeF &image, const QRectF &area) const -> QPointF;
     auto alignment() const -> Qt::Alignment { return m_alignment; }
     auto margin() const -> const Margin& { return m_margin; }
-    auto style() const -> const SubtitleStyle& {return m_style;}
+    auto style() const -> const OsdTheme& {return m_style;}
     auto scale(const QRectF &area) const -> double;
 private:
     static auto updateStyle(RichTextDocument &doc,
-                            const SubtitleStyle &style) -> void;
-    SubtitleStyle m_style;
+                            const OsdTheme &style) -> void;
+    OsdTheme m_style;
     RichTextDocument m_front, m_back;
     Margin m_margin;
     Qt::Alignment m_alignment;
@@ -178,19 +178,18 @@ SIA _Diagonal(const QSizeF &size) -> double
 
 inline auto SubtitleDrawer::scale(const QRectF &area) const -> double
 {
-    const auto policy = m_style.font.scale;
     double px = m_style.font.size;
-    if (policy == SubtitleStyle::Font::Scale::Diagonal)
-        px *= _Diagonal(area.size());
-    else if (policy == SubtitleStyle::Font::Scale::Width)
-        px *= area.width();
-    else
+//    if (policy == OsdTheme::Font::Scale::Diagonal)
+//        px *= _Diagonal(area.size());
+//    else if (policy == OsdTheme::Font::Scale::Width)
+//        px *= area.width();
+//    else
         px *= area.height();
     return px/m_style.font.height();
 }
 
 inline auto SubtitleDrawer::updateStyle(RichTextDocument &doc,
-                                        const SubtitleStyle &style) -> void {
+                                        const OsdTheme &style) -> void {
     doc.setFontPixelSize(style.font.height());
     doc.setWrapMode(style.wrapMode);
     doc.setFormat(QTextFormat::ForegroundBrush, QBrush(style.font.color));

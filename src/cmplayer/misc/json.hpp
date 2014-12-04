@@ -38,7 +38,7 @@ struct JsonValueIO<T, detail::JsonValueType::Integer>  {
     {
         if (!json.isDouble())
             return false;
-        val = std::llround(json.toDouble(val));
+        val = (T)std::llround(json.toDouble(val));
         return true;
     }
     SCA qt_type = QJsonValue::Double;

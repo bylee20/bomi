@@ -1,10 +1,11 @@
 #ifndef OPENMEDIABEHAVIORGROUPBOX_HPP
 #define OPENMEDIABEHAVIORGROUPBOX_HPP
 
-struct OpenMediaInfo;
+#include "player/openmediainfo.hpp"
 
 class OpenMediaBehaviorGroupBox : public QGroupBox {
     Q_OBJECT
+    Q_PROPERTY(OpenMediaInfo value READ value WRITE setValue)
 public:
     OpenMediaBehaviorGroupBox(QWidget *parent = nullptr);
     ~OpenMediaBehaviorGroupBox();

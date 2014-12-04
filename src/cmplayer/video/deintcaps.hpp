@@ -36,4 +36,6 @@ inline auto DeintCaps::isAvailable() const -> bool
     return m_method != DeintMethod::None && m_devices != 0 && m_decoders != 0;
 }
 
+Q_DECLARE_METATYPE(DeintCaps);
+
 #endif // DEINTCAPS_HPP

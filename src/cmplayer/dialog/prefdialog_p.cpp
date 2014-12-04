@@ -47,18 +47,6 @@ auto PrefMenuTreeItem::shortcuts() const -> QList<QKeySequence>
     return shortcuts;
 }
 
-auto PrefMenuTreeItem::makeRoot(QTreeWidget *parent)
--> T<QVector<PrefMenuTreeItem*>, QVector<ActionInfo>>
-{
-    RootMenu &root = RootMenu::instance();
-    QVector<PrefMenuTreeItem*> items;
-    QVector<ActionInfo> info;
-    auto item = create(&root, items, QString(), info);
-    parent->addTopLevelItems(item->takeChildren());
-    delete item;
-    return _T(items, info);
-}
-
 auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
                               const QString &prefix, QVector<ActionInfo> &list)
 -> PrefMenuTreeItem*
@@ -92,6 +80,21 @@ auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
     item->addChildren(children);
     return item;
 }
+
+/******************************************************************************/
+
+PrefMenuTreeWidget::PrefMenuTreeWidget(QWidget *parent)
+    : QTreeWidget(parent)
+{
+    RootMenu &root = RootMenu::instance();
+    auto item = PrefMenuTreeItem::create(&root, m_actionItems, QString(), m_actionInfos);
+    addTopLevelItems(item->takeChildren());
+    delete item;
+    m_actionInfos.prepend({QString(), tr("Unused")});
+    header()->resizeSection(0, 200);
+}
+
+/******************************************************************************/
 
 auto PrefDelegate::sizeHint(const QStyleOptionViewItem& option,
                             const QModelIndex& index) const -> QSize

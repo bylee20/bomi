@@ -1,11 +1,14 @@
 #ifndef CHANNELMANIPULATIONWIDGET_HPP
 #define CHANNELMANIPULATIONWIDGET_HPP
 
+#include "audio/channellayoutmap.hpp"
+
 class ChannelLayoutMap;
 enum class ChannelLayout;
 
 class ChannelManipulationWidget : public QWidget {
     Q_OBJECT
+    Q_PROPERTY(ChannelLayoutMap value READ map WRITE setMap)
 public:
     ChannelManipulationWidget(QWidget *parent = nullptr);
     ~ChannelManipulationWidget();

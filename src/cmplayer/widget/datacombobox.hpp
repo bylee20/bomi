@@ -3,6 +3,7 @@
 
 class DataComboBox : public QComboBox {
     Q_OBJECT
+    Q_PROPERTY(QVariant value READ currentData WRITE setCurrentData NOTIFY currentDataChanged)
 protected:
 public:
     DataComboBox(QWidget *parent = nullptr);

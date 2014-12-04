@@ -15,6 +15,7 @@
 MainWindow::Data::Data(MainWindow *p)
     : p(p)
 {
+    preferences.initialize();
     preferences.load();
 }
 
@@ -635,7 +636,7 @@ auto MainWindow::Data::readyToHideCursor() -> void
 {
     if (pref().hide_cursor
             && (p->isFullScreen() || !pref().hide_cursor_fs_only))
-        hider.start(pref().hide_cursor_delay);
+        hider.start(pref().hide_cursor_delay_sec * 1000);
     else
         cancelToHideCursor();
 }
@@ -730,7 +731,7 @@ auto MainWindow::Data::openMrl(const Mrl &mrl) -> void
 
 auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
 {
-    if (!mrl.isLocalFile() || !pref().enable_generate_playist)
+    if (!mrl.isLocalFile() || !pref().enable_generate_playlist)
         return Playlist(mrl);
     const auto mode = pref().generate_playlist;
     const QFileInfo file(mrl.toLocalFile());
@@ -852,13 +853,7 @@ auto MainWindow::Data::applyPref() -> void
     const auto backend = p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None;
     const auto codecs = p.enable_hwaccel ? p.hwaccel_codecs : QVector<int>();
     engine.setHwAcc(backend, codecs);
-    AudioNormalizerOption normalizer;
-    normalizer.bufferLengthInSeconds = p.normalizer_length;
-    normalizer.targetLevel = p.normalizer_target;
-    normalizer.minimumGain = p.normalizer_min;
-    normalizer.maximumGain = p.normalizer_max;
-    normalizer.silenceLevel = p.normalizer_silence;
-    engine.setVolumeNormalizerOption(normalizer);
+    engine.setVolumeNormalizerOption(p.audio_normalizer);
     engine.setChannelLayoutMap(p.channel_manipulation);
     engine.setSubtitleStyle(p.sub_style);
     engine.setSubtitlePriority(p.sub_priority);
@@ -902,16 +897,16 @@ auto MainWindow::Data::applyPref() -> void
     menu.retranslate();
     menu.setShortcuts(p.shortcuts);
     menu(u"play"_q)(u"speed"_q).s()->setStep(p.speed_step);
-    menu(u"play"_q)(u"seek"_q).s(u"seek1"_q)->setStep(p.seek_step1);
-    menu(u"play"_q)(u"seek"_q).s(u"seek2"_q)->setStep(p.seek_step2);
-    menu(u"play"_q)(u"seek"_q).s(u"seek3"_q)->setStep(p.seek_step3);
+    menu(u"play"_q)(u"seek"_q).s(u"seek1"_q)->setStep(p.seek_step1_sec * 1000);
+    menu(u"play"_q)(u"seek"_q).s(u"seek2"_q)->setStep(p.seek_step2_sec * 1000);
+    menu(u"play"_q)(u"seek"_q).s(u"seek3"_q)->setStep(p.seek_step3_sec * 1000);
     menu(u"subtitle"_q)(u"position"_q).s()->setStep(p.sub_pos_step);
-    menu(u"subtitle"_q)(u"sync"_q).s()->setStep(p.sub_sync_step);
+    menu(u"subtitle"_q)(u"sync"_q).s()->setStep(p.sub_sync_step_sec * 1000);
     menu(u"video"_q)(u"color"_q).s(u"brightness"_q)->setStep(p.brightness_step);
     menu(u"video"_q)(u"color"_q).s(u"contrast"_q)->setStep(p.contrast_step);
     menu(u"video"_q)(u"color"_q).s(u"saturation"_q)->setStep(p.saturation_step);
     menu(u"video"_q)(u"color"_q).s(u"hue"_q)->setStep(p.hue_step);
-    menu(u"audio"_q)(u"sync"_q).s()->setStep(p.audio_sync_step);
+    menu(u"audio"_q)(u"sync"_q).s()->setStep(p.audio_sync_step_sec * 1000);
     menu(u"audio"_q)(u"volume"_q).s()->setStep(p.volume_step);
     menu(u"audio"_q)(u"amp"_q).s()->setStep(p.amp_step);
     menu.syncTitle();
@@ -920,7 +915,7 @@ auto MainWindow::Data::applyPref() -> void
     cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
                       p.heartbeat_interval);
 
-    theme.setOsd(p.osd_theme);
+    theme.setOsd(p.osd_style);
     reloadSkin();
 
     if (time >= 0) {

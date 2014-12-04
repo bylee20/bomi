@@ -3,6 +3,7 @@
 
 class EncodingComboBox : public QComboBox {
     Q_OBJECT
+    Q_PROPERTY(QString encoding READ encoding WRITE setEncoding)
 public:
     EncodingComboBox(QWidget *parent = 0);
     auto encoding() const -> QString;

@@ -1,6 +1,5 @@
 #include "openmediabehaviorgroupbox.hpp"
 #include "enumcombobox.hpp"
-#include "player/openmediainfo.hpp"
 
 struct OpenMediaBehaviorGroupBox::Data {
     QCheckBox *start;
@@ -31,5 +30,5 @@ auto OpenMediaBehaviorGroupBox::setValue(const OpenMediaInfo &open) -> void
 }
 auto OpenMediaBehaviorGroupBox::value() const -> OpenMediaInfo
 {
-    return OpenMediaInfo(d->start->isChecked(), d->playlist->currentValue());
+    return OpenMediaInfo(d->playlist->currentValue(), d->start->isChecked());
 }

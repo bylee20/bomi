@@ -1,13 +1,13 @@
 #ifndef SUBTITLESTYLE_H
 #define SUBTITLESTYLE_H
 
-#include "enum/osdscalepolicy.hpp"
+//#include "enum/osdscalepolicy.hpp"
 
 class Record;
 
-struct SubtitleStyle {
+struct OsdTheme {
     struct Font {
-        using Scale = OsdScalePolicy;
+//        using Scale = OsdScalePolicy;
         Font() { qfont.setPixelSize(height()); }
         auto family() const -> QString { return qfont.family(); }
         auto bold() const -> bool { return qfont.bold(); }
@@ -27,7 +27,7 @@ struct SubtitleStyle {
         auto weight() const -> int { return qfont.weight(); }
         QColor color = { Qt::white };
         double size = 0.03;
-        Scale scale = Scale::Width;
+//        Scale scale = Scale::Width;
         QFont qfont;
     };
     struct BBox {
@@ -58,6 +58,29 @@ struct SubtitleStyle {
     auto load(Record &r, const QString &group) -> void;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
+};
+
+Q_DECLARE_METATYPE(OsdTheme);
+
+/******************************************************************************/
+
+class OsdThemeWidget : public QWidget {
+    Q_OBJECT
+    Q_PROPERTY(OsdTheme value READ value WRITE setValue)
+public:
+    OsdThemeWidget(QWidget *parent = nullptr);
+    ~OsdThemeWidget();
+    auto setTextAlphaChannel(bool on) -> void;
+    auto setShadowVsible(bool visible) -> void;
+    auto setOutlineVisible(bool visible) -> void;
+    auto setSpacingVisible(bool visible) -> void;
+    auto setBBoxVisible(bool visible) -> void;
+    auto setValue(const OsdTheme &v) -> void;
+    auto value() const -> OsdTheme;
+private:
+    struct Data;
+    Data *d;
+
 };
 
 #endif // SUBTITLESTYLE_H

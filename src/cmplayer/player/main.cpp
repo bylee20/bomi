@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "stdafx.hpp"
 #include "mainwindow.hpp"
 #include "video/hwacc.hpp"
 #include "misc/log.hpp"
@@ -24,6 +25,7 @@ extern QStringList writableImageExts;
 namespace OGL { auto check() -> void; }
 
 int main(int argc, char **argv) {
+
     qunsetenv("VDPAU_DRIVER");
     qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
 #ifdef Q_OS_LINUX

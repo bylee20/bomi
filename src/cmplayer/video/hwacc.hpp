@@ -77,4 +77,6 @@ private:
     QSize m_size = {0,0};
 };
 
+Q_DECLARE_METATYPE(HwAcc::Type);
+
 #endif // HWACC_HPP

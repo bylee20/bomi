@@ -5,6 +5,7 @@
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/simplelistmodel.hpp"
 #include "misc/matchstring.hpp"
+#include "player/pref.hpp"
 
 class Menu;
 
@@ -27,9 +28,8 @@ public:
     auto hasShortcut(const QKeySequence &key) -> bool;
     auto id() const -> QString { return m_id; }
     auto description() const -> QString { return m_desc; }
-    static auto makeRoot(QTreeWidget *parent)
-        -> T<QVector<PrefMenuTreeItem*>, QVector<ActionInfo>>;
 private:
+    friend class PrefMenuTreeWidget;
     static auto create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
                        const QString &prefix,
                        QVector<ActionInfo> &list) -> PrefMenuTreeItem*;
@@ -37,6 +37,40 @@ private:
     PrefMenuTreeItem(QAction *action, PrefMenuTreeItem *parent);
     QAction *m_action; QString m_id, m_desc;
     std::array<QKeySequence, 4> m_shortcuts;
+};
+
+class PrefMenuTreeWidget : public QTreeWidget {
+    Q_OBJECT
+    Q_PROPERTY(Shortcuts value READ get WRITE set)
+public:
+    PrefMenuTreeWidget(QWidget *parent = nullptr);
+    auto actionInfoList() const -> const QVector<ActionInfo>& { return m_actionInfos; }
+    auto set(const Shortcuts &shortcuts) -> void
+    {
+        for (auto item : m_actionItems)
+            item->setShortcuts(shortcuts[item->id()]);
+    }
+    auto get() -> Shortcuts
+    {
+        Shortcuts shortcuts;
+        for (auto item : m_actionItems) {
+            const auto keys = item->shortcuts();
+            if (!keys.isEmpty())
+                shortcuts[item->id()] = keys;
+        }
+        return shortcuts;
+    }
+    auto item(const QKeySequence &key) const -> PrefMenuTreeItem*
+    {
+        for (auto item : m_actionItems) {
+            if (item->hasShortcut(key))
+                return item;
+        }
+        return nullptr;
+    }
+private:
+    QVector<PrefMenuTreeItem*> m_actionItems;
+    QVector<ActionInfo> m_actionInfos;
 };
 
 // from clementine's preferences dialog
@@ -58,6 +92,7 @@ private:
 
 class PrefMouseActionTree : public QTreeWidget {
     Q_OBJECT
+    Q_PROPERTY(MouseActionMap value READ get WRITE set)
 public:
     PrefMouseActionTree(QWidget *parent = nullptr): QTreeWidget(parent) { }
     auto setActionList(const QVector<ActionInfo> *actions) -> void;
@@ -67,6 +102,7 @@ public:
 
 class SubSearchPathModel : public SimpleListModel<MatchString> {
     Q_OBJECT
+    Q_PROPERTY(QList<MatchString> value READ list WRITE setList)
 public:
     SubSearchPathModel(QObject *parent = nullptr)
         : SimpleListModel(3, parent) { }

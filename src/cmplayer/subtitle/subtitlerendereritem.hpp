@@ -5,7 +5,7 @@
 
 class SubComp;                         class Subtitle;
 class RichTextDocument;                class SubCompModel;
-struct SubtitleStyle;                  class SubtitleDrawer;
+struct OsdTheme;                  class SubtitleDrawer;
 
 class SubtitleRendererItem : public SimpleTextureItem  {
     Q_OBJECT
@@ -33,8 +33,8 @@ public:
     auto unload() -> void;
     auto select(int idx) -> void;
     auto deselect(int idx = -1) -> void;
-    auto style() const -> const SubtitleStyle&;
-    auto setStyle(const SubtitleStyle &style) -> void;
+    auto style() const -> const OsdTheme&;
+    auto setStyle(const OsdTheme &style) -> void;
     auto text() const -> const RichTextDocument&;
     auto draw(const QRectF &rect, QRectF *put = nullptr) const -> QImage;
     auto updateVertexOnGeometryChanged() const -> bool override { return true; }
