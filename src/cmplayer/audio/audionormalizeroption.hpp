@@ -1,6 +1,11 @@
 #ifndef AUDIONORMALIZEROPTION_HPP
 #define AUDIONORMALIZEROPTION_HPP
 
+struct AudioDevice {
+    QString name;
+    QString description;
+};
+
 struct AudioNormalizerOption {
     auto operator == (const AudioNormalizerOption &rhs) const -> bool
     {

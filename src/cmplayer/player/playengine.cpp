@@ -1,4 +1,5 @@
 #include "playengine.hpp"
+#include "audio/audionormalizeroption.hpp"
 #include "playengine_p.hpp"
 
 PlayEngine::PlayEngine()
@@ -790,14 +791,17 @@ auto PlayEngine::subtitleFiles() const -> QVector<SubtitleFileInfo>
     return d->subtitleFiles;
 }
 
-auto PlayEngine::audioDeviceList() const -> QList<QPair<QString, QString> >
+auto PlayEngine::audioDeviceList() const -> QList<AudioDevice>
 {
     const QVariantList list = d->getmpv<QVariant>("audio-device-list").toList();
-    QList<QPair<QString, QString>> devs;
+    QList<AudioDevice> devs;
     devs.reserve(list.size());
     for (auto &one : list) {
         const auto map = one.toMap();
-        devs.append({map[u"name"_q].toString(), map[u"description"_q].toString()});
+        AudioDevice dev;
+        dev.name = map[u"name"_q].toString();
+        dev.description = map[u"description"_q].toString();
+        devs.push_back(dev);
     }
     return devs;
 }

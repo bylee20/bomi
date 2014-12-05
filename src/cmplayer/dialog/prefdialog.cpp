@@ -356,11 +356,10 @@ PrefDialog::~PrefDialog() {
     delete d;
 }
 
-auto PrefDialog::setAudioDeviceList(const QList<QPair<QString, QString>> &devices)
--> void {
+auto PrefDialog::setAudioDeviceList(const QList<AudioDevice> &devices) -> void {
     d->ui.audio_device->clear();
     for (auto &dev : devices)
-        d->ui.audio_device->addItem(dev.first, dev.second);
+        d->ui.audio_device->addItem(dev.name, dev.description);
     if (!devices.isEmpty()) {
         d->ui.audio_device->setCurrentIndex(0);
         d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(0).toString());

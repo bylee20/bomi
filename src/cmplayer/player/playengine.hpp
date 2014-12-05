@@ -14,7 +14,7 @@ enum class DeintMethod;                 enum class DeintMode;
 enum class ChannelLayout;               enum class InterpolatorType;
 enum class ColorRange;                  enum class ColorSpace;
 class AudioInfoObject;                  class VideoInfoObject;
-class YouTubeDialog;
+class YouTubeDialog;                    struct AudioDevice;
 class StreamTrack;                      class SubtitleInfoObject;
 using StreamList = QMap<int, StreamTrack>;
 
@@ -168,7 +168,7 @@ public:
     auto setAmp(double amp) -> void;
     auto setMuted(bool muted) -> void;
     auto setVideoRenderer(VideoRenderer *renderer) -> void;
-    auto audioDeviceList() const -> QList<QPair<QString, QString>>;
+    auto audioDeviceList() const -> QList<AudioDevice>;
     auto stop() -> void;
     auto reload() -> void;
     auto pause() -> void;
