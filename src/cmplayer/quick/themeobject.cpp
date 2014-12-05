@@ -1,5 +1,5 @@
 #include "themeobject.hpp"
-#include "osdtheme.hpp"
+#include "osdthemeobject.hpp"
 
 auto reg_theme_object() -> void
 {

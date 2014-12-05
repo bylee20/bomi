@@ -1,7 +1,7 @@
 #ifndef SUBTITLEDRAWER_HPP
 #define SUBTITLEDRAWER_HPP
 
-#include "subtitlestyle.hpp"
+#include "misc/osdtheme.hpp"
 #include "subtitle.hpp"
 
 struct Margin {
