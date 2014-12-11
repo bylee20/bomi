@@ -12,12 +12,11 @@ If you don't like, you can configure almost everything.
 
 For more details, please visit [CMPlayer Project Page](http://cmplayer.github.io).
 
+
 ## Requirements
 
 Items in next list are the name of each package for pkg-config except OpenGL.
 Some packages marked with (*) can be in-tree-built.
-
-### Common dependencies
 
 * Linux
 * Qt5 >= 5.2
@@ -41,6 +40,7 @@ Some packages marked with (*) can be in-tree-built.
 * vdpau
 * alsa
 
+
 ## Compilation
 
 FFmpeg and chardet packages cannot be prepared easily for some Linux ditros.
@@ -55,21 +55,18 @@ In such cases, you can build them with in-tree source.
 
 In order to build and install CMPlayer, follow next:
 
-0. If you're trying from Git repository, run `./init-mpv` first.
+0. If you're trying latest source code from Git repository, run `./init-mpv` first.
 1. Run `./configure` with proper options. For details, run `./configure --help`.
 2. Run `make` to build CMPlayer
 
 You can find built executable in `./build` directory.
 If you want to install CMPlayer into specified directory by `--prefix` option, run `make install`.
 
+
 ## Contacts
 
 ### [Issue Tracker](https://github.com/xylosper/cmplayer/issues)
-If you have problems or want some features, please report them. 
-
-### [Blog](http://xylosper.net)
-It is author's personal blog. You are free to leave any comment about CMPlayer.
-Although it's Korean page, I can understand English and Japanese as well. 
+If you have problems or want some features, please report them in English, Korean, or Japanese.
 
 ### [E-mail](mailto:darklin20@gmail.com)
 If you want to contact me privately, please send me an e-mail. 
