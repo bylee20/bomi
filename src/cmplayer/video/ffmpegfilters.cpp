@@ -138,16 +138,17 @@ auto FFmpegFilterGraph::release() -> void
 
 auto FFmpegPostProc::process(MpImage &di, const MpImage&si) const -> bool
 {
-    if (!m_context)
-        return false;
-    const uint8_t *src[3]  = {si->planes[0], si->planes[1], si->planes[2]};
-          uint8_t *dst[3]  = {di->planes[0], di->planes[1], di->planes[2]};
-    const int srcStride[3] = {si->stride[0], si->stride[1], si->stride[2]};
-    const int dstStride[3] = {di->stride[0], di->stride[1], di->stride[2]};
-    pp_postprocess(src, srcStride, dst, dstStride, si->w, si->h
-                   , (const int8_t*)si->qscale, si->qstride, m_mode, m_context
-                   , si->pict_type | (si->qscale_type ? PP_PICT_TYPE_QP2 : 0));
-    return true;
+    return false;
+//    if (!m_context)
+//        return false;
+//    const uint8_t *src[3]  = {si->planes[0], si->planes[1], si->planes[2]};
+//          uint8_t *dst[3]  = {di->planes[0], di->planes[1], di->planes[2]};
+//    const int srcStride[3] = {si->stride[0], si->stride[1], si->stride[2]};
+//    const int dstStride[3] = {di->stride[0], di->stride[1], di->stride[2]};
+//    pp_postprocess(src, srcStride, dst, dstStride, si->w, si->h
+//                   , (const int8_t*)si->qscale, si->qstride, m_mode, m_context
+//                   , si->pict_type | (si->qscale_type ? PP_PICT_TYPE_QP2 : 0));
+//    return true;
 }
 
 auto FFmpegPostProc::initialize(const QString &option, const QSize &size,

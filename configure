@@ -180,7 +180,6 @@ setup_dirs() {
 }
 
 jack=disable
-portaudio=disable
 pulseaudio=disable
 cdda=disable
 
@@ -196,7 +195,6 @@ mf() { # make_feature
 
 feature_opts="""
 $(mf jack "enable JACK support")
-$(mf portaudio "enable PortAudio support" "portaudio-2.0")
 $(mf pulseaudio "enable PulseAudio support" "libpulse")
 $(mf cdda "enable CDDA support" "libcdio_paranoia libcdio libcdio_cdda")
 """
@@ -207,7 +205,6 @@ add_mpv() {
 }
 setup_features() {
         add_mpv $jack jack
-        add_mpv $portaudio portaudio
         add_mpv $pulseaudio pulse
         add_mpv $cdda cdda
 }
@@ -339,7 +336,6 @@ check_pkg_or_exit() {
 if has_arg "developer"; then
         if [ "$os" = "linux" ]; then
                 jack=enable
-                portaudio=enable
                 pulseaudio=enable
                 cdda=enable
         elif [ "$os" = "osx" ]; then

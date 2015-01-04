@@ -151,8 +151,9 @@ auto ChannelLayoutMap::toLayout(const mp_chmap &chmap) -> ChannelLayout
             }
         }
         if (id < 0) {
-            char *str = mp_chmap_to_str(&chmap);
-            _Error("Cannot convert mp_chmap(%%) to ChannelLayout", str);
+            char str[64] = {0};
+            _Error("Cannot convert mp_chmap(%%) to ChannelLayout",
+                   mp_chmap_to_str_buf(str, 64, &chmap));
             talloc_free(str);
             return ChannelLayoutInfo::default_();
         }
