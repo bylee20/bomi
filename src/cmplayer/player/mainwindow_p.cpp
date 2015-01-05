@@ -101,12 +101,14 @@ auto MainWindow::Data::initWidget() -> void
         if (cApp.isOpenGLDebugLoggerRequested())
             glLogger.initialize(context);
         sgInit = true;
+        engine.initializeGL(context);
         emit p->sceneGraphInitialized();
     }, Qt::DirectConnection);
     connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
         sgInit = false;
         auto context = QOpenGLContext::currentContext();
         glLogger.finalize(context);
+        engine.finalizeGL(context);
     }, Qt::DirectConnection);
     desktop = cApp.desktop();
     auto reset = [this] () {

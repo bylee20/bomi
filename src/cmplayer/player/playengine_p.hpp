@@ -29,6 +29,7 @@
 #include "enum/interpolatortype.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include <libmpv/client.h>
+#include <libmpv/opengl_cb.h>
 #include <functional>
 #include "avinfoobject.hpp"
 
@@ -233,6 +234,7 @@ struct PlayEngine::Data {
     int subDelay = 0, chapter = -2, edition = -1;
     QVector<StreamData> streams = {StreamData(), StreamData(), StreamData()};
     Mrl mpvMrl;
+    mpv_opengl_cb_context *glMpv = nullptr;
 
     YouTubeDialog *youtube = nullptr;
 

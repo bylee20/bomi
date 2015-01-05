@@ -3,6 +3,7 @@
 
 #include "quick/highqualitytextureitem.hpp"
 #include "enum/videoeffect.hpp"
+#include <functional>
 
 class VideoColor;                       class Kernel3x3;
 enum class DeintMethod;                 enum class ColorRange;
@@ -10,7 +11,9 @@ enum class ColorSpace;                  class DeintOption;
 
 template<class T> class VideoImageCache;
 class VideoTexture;                     class MpOsdBitmap;
-class VideoData;                        class VideoFormat;
+//class VideoData;                        class VideoFormat;
+class OpenGLFramebufferObject;
+using RenderFrameFunc = std::function<void(OpenGLFramebufferObject*)>;
 
 class VideoRenderer : public HighQualityTextureItem {
     Q_OBJECT
@@ -32,8 +35,8 @@ public:
     auto setDeintOptions(DeintOption swdec, DeintOption hwdec) -> void;
     auto setOverlay(GeometryItem *overlay) -> void;
     auto overlay() const -> QQuickItem*;
-    auto present(const VideoData &data) -> void;
-    auto prepare(const VideoFormat &format) -> void;
+//    auto present(const VideoData &data) -> void;
+//    auto prepare(const VideoFormat &format) -> void;
     auto hasFrame() const -> bool;
     auto requestFrameImage() const -> void;
     auto frameRect(const QRectF &area) const -> QRectF;
@@ -65,15 +68,17 @@ public:
     auto delayedFrames() const -> int;
     auto fps() const -> double;
     auto resetTimings() -> void;
+    auto updateForNewFrame(const QSize &displaySize) -> void;
+    auto setRenderFrameFunction(const RenderFrameFunc &func) -> void;
 signals:
     void transferred();
     void frameImageObtained(const QImage &video, const QImage &osd) const;
     void effectsChanged(VideoEffects effects);
     void offsetChanged(const QPoint &pos);
     void screenRectChanged(const QRectF &rect);
-    void frameRectChanged(const QRectF &rect);
+//    void frameRectChanged(const QRectF &rect);
     void kernelChanged(const Kernel3x3 &kernel);
-    void osdSizeChanged(const QSize &size);
+//    void osdSizeChanged(const QSize &size);
 
     void colorRangeChanged(ColorRange range);
     void colorSpaceChanged(ColorSpace space);
@@ -81,7 +86,7 @@ signals:
     void equalizerChanged(const VideoColor &eq);
     void overlayOnLetterboxChanged(bool on);
     void alignmentChanged(int alignment);
-    void formatChanged(const VideoFormat &format);
+//    void formatChanged(const VideoFormat &format);
     void droppedFramesChanged(int dropped);
     void delayedFramesChanged(int delayed);
     void deintMethodChanged(DeintMethod method);
@@ -94,6 +99,7 @@ private:
     auto customEvent(QEvent *event) -> void override;
     auto updatePolish() -> void override;
     auto updateVertex(Vertex *vertex) -> void override;
+    auto geometryChanged(const QRectF &new_, const QRectF&) -> void override;
     auto updateTexture(OpenGLTexture2D *texture) -> void override;
     struct Data;
     Data *d;

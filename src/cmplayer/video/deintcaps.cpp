@@ -65,10 +65,10 @@ auto DeintCaps::list() -> QList<DeintCaps>
             cap.m_devices |= DeintDevice::OpenGL;
             cap.m_decoders |= (DecoderDevice::CPU | DecoderDevice::GPU);
         }
-        if (HwAcc::supports(method)) {
-            cap.m_devices |= DeintDevice::GPU;
-            cap.m_decoders |= DecoderDevice::GPU;
-        }
+//        if (HwAcc::supports(method)) {
+//            cap.m_devices |= DeintDevice::GPU;
+//            cap.m_decoders |= DecoderDevice::GPU;
+//        }
         cap.m_doubler = doubler;
         return caps[(int)method];
     };

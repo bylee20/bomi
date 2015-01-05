@@ -6,8 +6,8 @@ HwAccCodecBox::HwAccCodecBox(QWidget *parent)
     : QGroupBox(parent)
 {
     auto vbox = new QVBoxLayout;
-    for (const auto codec : HwAcc::fullCodecList())
-        vbox->addWidget(m_checks[codec] = new QCheckBox);
+//    for (const auto codec : HwAcc::fullCodecList())
+//        vbox->addWidget(m_checks[codec] = new QCheckBox);
     setLayout(vbox);
 }
 
@@ -29,17 +29,17 @@ auto HwAccCodecBox::setValue(const QVector<int> &list) -> void
 auto HwAccCodecBox::setBackend(int t) -> void
 {
     const auto type = static_cast<HwAcc::Type>(t);
-    const auto codecs = HwAcc::fullCodecList();
-    for (const auto codec : codecs) {
-        auto box = m_checks[codec];
-        const auto supported = HwAcc::supports(type, codec);
-        const QString desc(_L(avcodec_descriptor_get(codec)->long_name));
-        if (supported)
-            box->setText(desc);
-        else
-            box->setText(desc % ' '_q % tr("Not supported") % ')'_q);
-        box->setEnabled(supported);
-    }
+//    const auto codecs = HwAcc::fullCodecList();
+//    for (const auto codec : codecs) {
+//        auto box = m_checks[codec];
+//        const auto supported = HwAcc::supports(type, codec);
+//        const QString desc(_L(avcodec_descriptor_get(codec)->long_name));
+//        if (supported)
+//            box->setText(desc);
+//        else
+//            box->setText(desc % ' '_q % tr("Not supported") % ')'_q);
+//        box->setEnabled(supported);
+//    }
 }
 
 

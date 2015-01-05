@@ -136,8 +136,8 @@ auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
         return 0;
     auto v = priv(vf); auto d = v->d;
     auto mpi = MpImage::wrap(_mpi);
-    if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
-        mpi = d->acc->getImage(mpi);
+//    if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
+//        mpi = d->acc->getImage(mpi);
     if (_Change(d->inter_i, mpi.isInterlaced()))
         emit v->inputInterlacedChanged();
     d->deinterlacer.push(std::move(mpi));

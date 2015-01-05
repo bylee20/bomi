@@ -59,14 +59,14 @@ int main(int argc, char **argv) {
     }
 
     OGL::check();
-    HwAcc::initialize();
+//    HwAcc::initialize();
     MainWindow *mw = new MainWindow;
     _Debug("Show MainWindow.");
     mw->show();
     app.setMainWindow(mw);
     _Debug("Start main event loop.");
     auto ret = app.exec();
-    HwAcc::finalize();
+//    HwAcc::finalize();
     _Debug("Exit...");
     return ret;
 }

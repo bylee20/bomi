@@ -48,19 +48,19 @@ struct JsonIO<QMetaProperty> {
     SCA qt_type = QJsonValue::String;
 };
 
-template<>
-struct JsonIO<HwAcc::Type> {
-    auto toJson(HwAcc::Type type) const -> QJsonValue
-    { return HwAcc::backendName(type); }
-    auto fromJson(HwAcc::Type &type, const QJsonValue &json) const -> bool
-    {
-        const auto t = HwAcc::backend(json.toString());
-        if (t != HwAcc::None)
-            type = t;
-        return t != HwAcc::None;
-    }
-    SCA qt_type = QJsonValue::String;
-};
+//template<>
+//struct JsonIO<HwAcc::Type> {
+//    auto toJson(HwAcc::Type type) const -> QJsonValue
+//    { return HwAcc::backendName(type); }
+//    auto fromJson(HwAcc::Type &type, const QJsonValue &json) const -> bool
+//    {
+//        const auto t = HwAcc::backend(json.toString());
+//        if (t != HwAcc::None)
+//            type = t;
+//        return t != HwAcc::None;
+//    }
+//    SCA qt_type = QJsonValue::String;
+//};
 
 struct PrefFieldInfo {
     auto setFromEditor(QObject *p, const QObject *e) const -> void;

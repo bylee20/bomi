@@ -7,9 +7,9 @@ args="--prefix=../../build --disable-client-api-examples --disable-manpage-build
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-libavdevice --disable-libavresample --disable-vapoursynth \
   --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi \
-  --disable-cocoa --disable-wayland --disable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama \
-  --disable-gl-cocoa --disable-gl-x11 --disable-gl-wayland --disable-gl-win32 --disable-gl \
-  --disable-vdpau --disable-vdpau-gl-x11 --disable-vaapi --disable-vaapi-vpp --disable-vaapi-glx --disable-caca \
+  --disable-cocoa --disable-wayland --enable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama \
+  --disable-gl-cocoa --enable-gl-x11 --disable-gl-wayland --disable-gl-win32 --enable-gl \
+  --enable-vdpau --enable-vdpau-gl-x11 --enable-vaapi --disable-vaapi-vpp --enable-vaapi-glx --disable-caca \
   --disable-dvb --disable-dvbin --disable-jpeg --disable-direct3d --disable-vda-gl \
   --disable-tv --disable-tv-v4l2 --disable-libv4l2 --disable-pvr --disable-audio-input --disable-lua --enable-libbluray \
   @mpv_args@"

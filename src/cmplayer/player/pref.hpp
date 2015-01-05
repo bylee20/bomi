@@ -115,7 +115,8 @@ public:
     P0(int, amp_step, 10)
     P0(int, sub_pos_step, 1)
     P0(bool, enable_hwaccel, false)
-    P0(HwAcc::Type, hwaccel_backend, defaultHwAccBackend())
+//    P0(HwAcc::Type, hwaccel_backend, defaultHwAccBackend())
+    int hwaccel_backend = defaultHwAccBackend();
     P0(QVector<int>, hwaccel_codecs, defaultHwAccCodecs())
     QVector<DeintMethod> hwdeints = defaultHwAccDeints();
     P0(DeintCaps, deint_hwdec, DeintCaps::default_(DecoderDevice::GPU))

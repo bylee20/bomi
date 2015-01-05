@@ -159,13 +159,13 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
 //    mpv_suspend(handle);
     OptionList opts;
     opts.add("audio-device"_b, audioDevice.toLatin1(), true);
-    if (hwCodecs.isEmpty() || hwBackend == HwAcc::None)
-        opts.add("hwdec"_b, "no"_b);
-    else {
-        const auto name = HwAcc::backendName(hwBackend);
-        opts.add("hwdec"_b, name.toLatin1());
-        opts.add("hwdec-codecs"_b, hwCodecs, true);
-    }
+//    if (hwCodecs.isEmpty() || hwBackend == HwAcc::None)
+//        opts.add("hwdec"_b, "no"_b);
+//    else {
+//        const auto name = HwAcc::backendName(hwBackend);
+//        opts.add("hwdec"_b, name.toLatin1());
+//        opts.add("hwdec-codecs"_b, hwCodecs, true);
+//    }
 
     if (mrl.isDisc()) {
         file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
@@ -234,7 +234,7 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     opts.add("audio-channels"_b, ChannelLayoutInfo::data(layout), true);
 
     opts.add("af"_b, af(), true);
-    opts.add("vf"_b, vf(), true);
+//    opts.add("vf"_b, vf(), true);
 
     if (mrl.isYouTube() && youtube) {
         youtube->translate(file);
@@ -434,16 +434,16 @@ auto PlayEngine::Data::observe() -> void
         output->setRange(toColorRange(params[u"colorlevels"_q].toString()));
         output->setSpace(toColorSpace(params[u"colormatrix"_q].toString()));
         auto hwState = [&] () {
-            if (hwBackend == HwAcc::None)
-                return Deactivated;
-            static QVector<QString> types = { u"vaapi"_q, u"vdpau"_q, u"vda"_q };
-            auto codec = HwAcc::codecId(videoInfo.codec()->type().toLatin1());
-            if (!HwAcc::supports(hwBackend, codec))
-                return Unavailable;
-            if (types.contains(type))
-                return Activated;
-            if (hwCodecs.contains(codec))
-                return Unavailable;
+//            if (hwBackend == HwAcc::None)
+//                return Deactivated;
+//            static QVector<QString> types = { u"vaapi"_q, u"vdpau"_q, u"vda"_q };
+//            auto codec = HwAcc::codecId(videoInfo.codec()->type().toLatin1());
+//            if (!HwAcc::supports(hwBackend, codec))
+//                return Unavailable;
+//            if (types.contains(type))
+//                return Activated;
+//            if (hwCodecs.contains(codec))
+//                return Unavailable;
             return Deactivated;
         };
         auto hwacc = videoInfo.hwacc();

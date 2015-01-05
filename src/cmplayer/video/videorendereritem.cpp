@@ -1,4 +1,8 @@
 #include "videorendereritem.hpp"
+#include "opengl/opengltexture2d.hpp"
+#include "opengl/openglframebufferobject.hpp"
+#include "enum/colorrange.hpp"
+#include "enum/colorspace.hpp"
 #include "mposditem.hpp"
 #include "mposdbitmap.hpp"
 #include "videodata.hpp"
@@ -27,6 +31,7 @@ enum Dirty {
     DirtyChromaUpscaler = 0x0004,
     DirtyFormat         = 0x0008,
     DirtyDeint          = 0x0016,
+    DirtySize           = 0x0032,
     DirtyVertex         = 0xff00
 };
 
@@ -39,17 +44,17 @@ struct FrameTime {
 struct VideoRenderer::Data {
     Data(VideoRenderer *p): p(p) {}
     VideoRenderer *p = nullptr;
-    QTimer sizeChecker; QSize prevSize, osdSize;
-    std::deque<VideoData> queue;
+//    std::deque<VideoData> queue;
     MpOsdItem mposd;
     VideoData data;
-    VideoFormat format;
+//    VideoFormat format;
     bool take = false, overlayOnLetterbox = true, rectangle = false;
     bool forceToUpdateOsd = false;
     QRectF vtx;
     QPoint offset = {0, 0};
     double crop = -1.0, aspect = -1.0, dar = 0.0;
     int alignment = Qt::AlignCenter;
+    int queued = 0;
     VideoEffects effects = 0;
     LetterboxItem *letterbox = nullptr;
     GeometryItem *overlay = nullptr;
@@ -57,9 +62,9 @@ struct VideoRenderer::Data {
     OpenGLTexture2D black;
     QOpenGLContext *ctx = nullptr;
     OpenGLFramebufferObject *fbo = nullptr;
-    VideoFrameShader *shader = nullptr;
-    QSize displaySize{1, 1};
-
+//    VideoFrameShader *shader = nullptr;
+    QSize displaySize{1, 1}, fboSize, prevSize;
+    QTimer sizeChecker;
 
     uint dirty = 0;
     VideoColor eq;
@@ -69,6 +74,7 @@ struct VideoRenderer::Data {
     ColorRange matrixRange = ColorRange::Auto;
     ColorSpace matrixSpace = ColorSpace::Auto;
     DeintOption deint_swdec, deint_hwdec;
+    RenderFrameFunc render = nullptr;
 
     quint64 drawn = 0, dropped = 0, delayed = 0;
     SpeedMeasure<quint64> measure{5, 20};
@@ -160,39 +166,52 @@ struct VideoRenderer::Data {
         return rect;
     }
 
-    auto updateOsdSize() -> void
-    {
-        if (forceToUpdateOsd | !_Change(prevSize, vtx.size().toSize())) {
-            sizeChecker.stop();
-            emit p->osdSizeChanged(osdSize = prevSize);
-        }
-        forceToUpdateOsd = false;
-    }
+//    auto updateOsdSize() -> void
+//    {
+//        if (forceToUpdateOsd | !_Change(prevSize, vtx.size().toSize())) {
+//            sizeChecker.stop();
+//            emit p->osdSizeChanged(osdSize = prevSize);
+//        }
+//        forceToUpdateOsd = false;
+//    }
 
     auto updateColorMatrixInfo() -> void
     {
-        auto range_o = range;
-        const bool pc = format.params().colorlevels == MP_CSP_LEVELS_PC;
-        switch (range_o) {
-        case ColorRange::Auto:
-            range_o = pc ? ColorRange::Full : ColorRange::Limited;
-            break;
-        case ColorRange::Remap:
-        case ColorRange::Extended:
-            if (pc)
-                range_o = ColorRange::Full;
-            break;
-        default:
-            break;
-        }
-        auto space_o = this->space;
-        if (space_o == ColorSpace::Auto)
-            space_o = ColorSpaceInfo::fromData(format.params().colorspace,
-                                               ColorSpace::BT709);
-        if (_Change(matrixRange, range_o) | _Change(matrixSpace, space_o)) {
-            dirty |= DirtyColorMatrix;
-            p->reserve(UpdateMaterial);
-            emit p->colorMatrixChanged();
+//        auto range_o = range;
+//        const bool pc = format.params().colorlevels == MP_CSP_LEVELS_PC;
+//        switch (range_o) {
+//        case ColorRange::Auto:
+//            range_o = pc ? ColorRange::Full : ColorRange::Limited;
+//            break;
+//        case ColorRange::Remap:
+//        case ColorRange::Extended:
+//            if (pc)
+//                range_o = ColorRange::Full;
+//            break;
+//        default:
+//            break;
+//        }
+//        auto space_o = this->space;
+//        if (space_o == ColorSpace::Auto)
+//            space_o = ColorSpaceInfo::fromData(format.params().colorspace,
+//                                               ColorSpace::BT709);
+//        if (_Change(matrixRange, range_o) | _Change(matrixSpace, space_o)) {
+//            dirty |= DirtyColorMatrix;
+//            p->reserve(UpdateMaterial);
+//            emit p->colorMatrixChanged();
+//        }
+    }
+    auto fboSizeHint() const -> QSize
+    {
+        auto size = displaySize;
+        size.scale(vtx.width() + 0.5, vtx.height() + 0.5, Qt::KeepAspectRatio);
+        return size;
+    }
+    auto updateFboSize(const QSize &size) -> void
+    {
+        if (_Change(fboSize, size)) {
+            dirty |= DirtySize;
+            p->reserve(UpdateAll);
         }
     }
 };
@@ -208,17 +227,32 @@ VideoRenderer::VideoRenderer(QQuickItem *parent)
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsDrops, true);
-    connect(&d->sizeChecker, &QTimer::timeout, [=] () { d->updateOsdSize(); });
-    d->sizeChecker.setInterval(300);
-
     d->measure.setTimer([=]() {
         if (_Change(d->fps, d->measure.get()))
             emit fpsChanged(d->fps);
     }, 100000);
+    connect(&d->sizeChecker, &QTimer::timeout, [this] () {
+        if (_Change(d->prevSize, d->fboSizeHint())) {
+            d->sizeChecker.stop();
+            d->updateFboSize(d->prevSize);
+        }
+    });
+    d->sizeChecker.setInterval(300);
+    d->sizeChecker.setSingleShot(true);
 }
 
 VideoRenderer::~VideoRenderer() {
     delete d;
+}
+
+auto VideoRenderer::setRenderFrameFunction(const RenderFrameFunc &func) -> void
+{
+    d->render = func;
+}
+
+auto VideoRenderer::updateForNewFrame(const QSize &displaySize) -> void
+{
+    _PostEvent(Qt::HighEventPriority, this, NewFrame, displaySize);
 }
 
 auto VideoRenderer::droppedFrames() const -> int
@@ -257,14 +291,14 @@ auto VideoRenderer::initializeGL() -> void
 {
     HighQualityTextureItem::initializeGL();
     d->ctx = QOpenGLContext::currentContext();
-    initialize_vdpau_interop(d->ctx);
+//    initialize_vdpau_interop(d->ctx);
 
     d->black.create(OGL::Repeat);
     OpenGLTextureBinder<OGL::Target2D> binder(&d->black);
     const quint32 p = 0x0;
     d->black.initialize(1, 1, OGL::BGRA, &p);
     d->mposd.initialize();
-    d->shader = new VideoFrameShader;
+//    d->shader = new VideoFrameShader;
     d->dirty = 0xffffffff;
 }
 
@@ -272,12 +306,12 @@ auto VideoRenderer::finalizeGL() -> void
 {
     HighQualityTextureItem::finalizeGL();
     d->data = VideoData();
-    d->queue.clear();
+//    d->queue.clear();
     d->black.destroy();
     d->mposd.finalize();
-    _Delete(d->shader);
+//    _Delete(d->shader);
     _Delete(d->fbo);
-    finalize_vdpau_interop(d->ctx);
+//    finalize_vdpau_interop(d->ctx);
     d->ctx = nullptr;
 }
 
@@ -285,10 +319,15 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
 {
     switch (static_cast<int>(event->type())) {
     case NewFrame: {
-        VideoData data;
-        _TakeData(event, data);
-        if (data.hasImage())
-            d->queue.push_back(data);
+        auto ds = _GetData<QSize>(event);
+        if (_Change(d->displaySize, ds))
+            reserve(UpdateGeometry, false);
+//        VideoData data;
+//        _TakeData(event, data);
+//        if (data.hasImage())
+//            d->queue.push_back(data);
+        d->fboSize = d->fboSizeHint();
+        ++d->queued;
         reserve(UpdateMaterial);
         break;
     } case NewFrameImage: {
@@ -297,10 +336,10 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
         emit frameImageObtained(image, osd);
         break;
     } case NewFormat: {
-        VideoFormat format; _TakeData(event, format);
-        if (d->mark(d->format, format, DirtyFormat,
-                    &VideoRenderer::formatChanged, UpdateAll))
-            d->updateColorMatrixInfo();
+//        VideoFormat format; _TakeData(event, format);
+//        if (d->mark(d->format, format, DirtyFormat,
+//                    &VideoRenderer::formatChanged, UpdateAll))
+//            d->updateColorMatrixInfo();
         break;
     } default:
         break;
@@ -314,7 +353,7 @@ auto VideoRenderer::overlay() const -> QQuickItem*
 
 auto VideoRenderer::hasFrame() const -> bool
 {
-    return d->data.hasImage() && !d->format.size().isEmpty();
+    return !d->displaySize.isEmpty();
 }
 
 auto VideoRenderer::requestFrameImage() const -> void
@@ -324,26 +363,6 @@ auto VideoRenderer::requestFrameImage() const -> void
     else {
         d->take = true;
         const_cast<VideoRenderer*>(this)->reserve(UpdateMaterial, true);
-    }
-}
-
-auto VideoRenderer::prepare(const VideoFormat &format) -> void
-{
-    if (!isInitialized())
-        _Trace("VideoRendererItem::prepare(): not initialized");
-    else {
-        _Trace("VideoRendererItem::prepare(): prepare new format");
-        _PostEvent(Qt::HighEventPriority, this, NewFormat, format);
-    }
-}
-
-auto VideoRenderer::present(const VideoData &data) -> void
-{
-    if (!isInitialized())
-        _Trace("VideoRendererItem::present(): not initialized");
-    else {
-        _Trace("VideoRendererItem::present(): post new frame");
-        _PostEvent(Qt::HighEventPriority, this, NewFrame, data);
     }
 }
 
@@ -459,7 +478,7 @@ auto VideoRenderer::sizeHint() const -> QSize
 
 auto VideoRenderer::osdSize() const -> QSize
 {
-    return d->osdSize;
+    return QSize();
 }
 
 auto VideoRenderer::chromaUpscaler() const -> InterpolatorType
@@ -519,73 +538,127 @@ auto VideoRenderer::equalizer() const -> const VideoColor&
 auto VideoRenderer::updatePolish() -> void
 {
     HighQualityTextureItem::updatePolish();
+    if (d->dirty & DirtySize) {
+        QRectF letter;
+        if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
+    //        emit frameRectChanged(d->vtx);
+    //        if (d->forceToUpdateOsd)
+    //            d->updateOsdSize();
+    //        else
+    //            d->sizeChecker.start();
+        }
+        if (d->letterbox->set(rect(), letter))
+            emit screenRectChanged(d->letterbox->screen());
+        if (d->overlay) {
+            const auto g = d->overlayOnLetterbox ? rect() : d->letterbox->screen();
+            d->overlay->setGeometry(g);
+        }
+
+        double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
+        if (d->rectangle) {
+            const auto &texture = this->texture();
+            right = texture.width();
+            bottom = texture.height();
+        }
+        if (!d->effects.contains(VideoEffect::Disable)) {
+            if (d->effects.contains(VideoEffect::FlipV))
+                std::swap(top, bottom);
+            if (d->effects.contains(VideoEffect::FlipH))
+                std::swap(left, right);
+        }
+        d->dirty &= ~DirtySize;
+    }
     //    d->hasOsd = false;
 }
 
 auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
 {
-    if (d->queue.empty()) {
+    Q_ASSERT(d->queued >= 0);
+    if (!d->queued) {
         _Trace("VideoRendererItem::updateTexture(): no queued frame");
-    } else {
-        auto &prev = d->queue.front();
-        std::swap(d->data, prev);
-        if (d->data.hasImage() && !d->format.isEmpty()) {
-            if (d->dirty) {
-                if (d->dirty & DirtyFormat) {
-                    d->shader->setFormat(d->format.params(), d->format.isInverted());
-                    if (!d->fbo || d->fbo->size() != d->format.size())
-                        _Renew(d->fbo, d->format.size());
-                    reserve(UpdateGeometry, false);
-                }
-
-                if (d->dirty & DirtyEffects)
-                    d->shader->setEffects(d->effects);
-                if (d->dirty & DirtyColorMatrix)
-                    d->shader->setColor(d->eq, d->matrixSpace, d->matrixRange);
-                if (d->dirty & DirtyChromaUpscaler)
-                    d->shader->setChromaUpscaler(d->chromaUpscaler);
-                if (d->dirty & DirtyDeint) {
-                    auto method = d->deint_swdec.method;
-                    if (IMGFMT_IS_HWACCEL(d->format.params().imgfmt))
-                        method = d->deint_hwdec.method;
-                    d->shader->setDeintMethod(method);
-                }
-                d->dirty = 0;
-            }
-
-            d->shader->prepare(d->data.image());
-            d->shader->upload(d->data.image());
-            d->fbo->bind();
-            d->shader->render(d->kernel);
-            d->fbo->release();
-            *texture = d->fbo->texture();
+    } else if (!d->fboSize.isEmpty()) {
+        qDebug() << d->fboSize;
+        if (!d->fbo || d->fbo->size() != d->fboSize)
+            _Renew(d->fbo, d->fboSize);
+        auto w = window();
+        if (w && d->render) {
+            w->resetOpenGLState();
+            d->render(d->fbo);
+            w->resetOpenGLState();
+            if (d->fbo)
+                *texture = d->fbo->texture();
+            --d->queued;
         }
-
         d->mposd.draw(d->data.osd());
         setOverlayTexture(d->mposd.isVisible() ? d->mposd.texture()
                                                : transparentTexture());
-        d->queue.pop_front();
-        if (!d->queue.empty()) {
-            if (d->queue.size() > 3) {
-                d->dropped += d->queue.size();
-                d->queue.clear();
-                emit droppedFramesChanged(d->dropped);
-            } else
-                reserve(UpdateMaterial);
+        if (d->queued > 0) {
+            d->dropped += d->queued;
+            d->queued = 0;
+            emit droppedFramesChanged(d->dropped);
         }
-        if (_Change<quint64>(d->delayed, d->queue.size()))
-            emit delayedFramesChanged(d->delayed);
-        if (_Change(d->rectangle, texture->target() == OGL::TargetRectangle)
-                | _Change(d->displaySize, d->format.displaySize())) {
-            d->forceToUpdateOsd = true;
-            reserve(UpdateGeometry, false);
-        }
+
+
+//        if (!d->queue.empty()) {
+//            if (d->queue.size() > 3) {
+//                d->dropped += d->queue.size();
+//                d->queue.clear();
+//                emit droppedFramesChanged(d->dropped);
+//            } else
+//                reserve(UpdateMaterial);
+//        }
+//        if (_Change<quint64>(d->delayed, d->queue.size()))
+//            emit delayedFramesChanged(d->delayed);
+//        if (_Change(d->rectangle, texture->target() == OGL::TargetRectangle)
+//                | _Change(d->displaySize, d->format.displaySize())) {
+//            d->forceToUpdateOsd = true;
+//            reserve(UpdateGeometry, false);
+//        }
 
         d->measure.push(++d->drawn);
         _Trace("VideoRendererItem::updateTexture(): "
                "render queued frame(%%), avgfps: %%",
                texture->size(), d->fps);
     }
+//    if (d->queue.empty()) {
+//        _Trace("VideoRendererItem::updateTexture(): no queued frame");
+//    } else {
+//        auto &prev = d->queue.front();
+//        std::swap(d->data, prev);
+//        if (d->data.hasImage() && !d->format.isEmpty()) {
+//            if (d->dirty) {
+//                if (d->dirty & DirtyFormat) {
+//                    d->shader->setFormat(d->format.params(), d->format.isInverted());
+//                    if (!d->fbo || d->fbo->size() != d->format.size())
+//                        _Renew(d->fbo, d->format.size());
+//                    reserve(UpdateGeometry, false);
+//                }
+
+//                if (d->dirty & DirtyEffects)
+//                    d->shader->setEffects(d->effects);
+//                if (d->dirty & DirtyColorMatrix)
+//                    d->shader->setColor(d->eq, d->matrixSpace, d->matrixRange);
+//                if (d->dirty & DirtyChromaUpscaler)
+//                    d->shader->setChromaUpscaler(d->chromaUpscaler);
+//                if (d->dirty & DirtyDeint) {
+//                    auto method = d->deint_swdec.method;
+//                    if (IMGFMT_IS_HWACCEL(d->format.params().imgfmt))
+//                        method = d->deint_hwdec.method;
+//                    d->shader->setDeintMethod(method);
+//                }
+//                d->dirty = 0;
+//            }
+
+//            d->shader->prepare(d->data.image());
+//            d->shader->upload(d->data.image());
+//            d->fbo->bind();
+//            d->shader->render(d->kernel);
+//            d->fbo->release();
+//            *texture = d->fbo->texture();
+//        }
+
+
+//    }
 
     if (d->take) {
         auto image = texture->toImage();
@@ -607,13 +680,8 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
 auto VideoRenderer::updateVertex(Vertex *vertex) -> void
 {
     QRectF letter;
-    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
-        emit frameRectChanged(d->vtx);
-        if (d->forceToUpdateOsd)
-            d->updateOsdSize();
-        else
-            d->sizeChecker.start();
-    }
+    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter)))
+        QMetaObject::invokeMethod(&d->sizeChecker, "start", Qt::QueuedConnection);
     if (d->letterbox->set(rect(), letter))
         emit screenRectChanged(d->letterbox->screen());
     if (d->overlay) {
@@ -639,8 +707,8 @@ auto VideoRenderer::updateVertex(Vertex *vertex) -> void
 
 auto VideoRenderer::afterUpdate() -> void
 {
-    if (!d->queue.empty())
-        reserve(UpdateMaterial);
+//    if (!d->queue.empty())
+//        reserve(UpdateMaterial);
 }
 
 auto VideoRenderer::setKernel(const Kernel3x3 &blur,
@@ -658,10 +726,18 @@ auto VideoRenderer::kernel() const -> const Kernel3x3&
 
 auto VideoRenderer::mapToVideo(const QPointF &pos) -> QPointF
 {
-    auto hratio = d->osdSize.width()/d->vtx.width();
-    auto vratio = d->osdSize.height()/d->vtx.height();
-    auto p = pos - d->vtx.topLeft();
-    p.rx() *= hratio;
-    p.ry() *= vratio;
-    return p;
+//    auto hratio = d->osdSize.width()/d->vtx.width();
+//    auto vratio = d->osdSize.height()/d->vtx.height();
+//    auto p = pos - d->vtx.topLeft();
+//    p.rx() *= hratio;
+//    p.ry() *= vratio;
+//    return p;
+    return pos;
+}
+
+auto VideoRenderer::geometryChanged(const QRectF &new_, const QRectF& old) -> void
+{
+    HighQualityTextureItem::geometryChanged(new_, old);
+    if (!d->displaySize.isEmpty())
+        d->sizeChecker.start();
 }

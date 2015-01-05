@@ -288,7 +288,7 @@ auto Pref::loadFromRecord() -> void
 
     QString backend;
     r.read(backend, "hwaccel_backend");
-    hwaccel_backend = HwAcc::backend(backend);
+//    hwaccel_backend = HwAcc::backend(backend);
 
     this->restore_properties.clear();
     this->restore_properties.reserve(restore_properties.size());
@@ -376,18 +376,18 @@ auto Pref::load() -> void
 auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>
 {
     QVector<DeintMethod> deints;
-    for (auto deint : HwAcc::fullDeintList()) {
-        if (HwAcc::supports(deint))
-            deints << deint;
-    }
+//    for (auto deint : HwAcc::fullDeintList()) {
+//        if (HwAcc::supports(deint))
+//            deints << deint;
+//    }
     return deints;
 }
 
 auto Pref::defaultHwAccCodecs() -> QVector<int>
 {
     QVector<int> codecs;
-    for (auto codec : HwAcc::fullCodecList())
-        codecs.push_back(codec);
+//    for (auto codec : HwAcc::fullCodecList())
+//        codecs.push_back(codec);
     return codecs;
 }
 

@@ -113,11 +113,11 @@ PrefDialog::PrefDialog(QWidget *parent)
     auto vbox = new QVBoxLayout;
     vbox->setMargin(0);
 
-    auto backends = HwAcc::availableBackends();
-    for (auto type : backends) {
-        const auto desc = HwAcc::backendDescription(type);
-        d->ui.hwaccel_backend->addItem(desc, QVariant::fromValue(type));
-    }
+//    auto backends = HwAcc::availableBackends();
+//    for (auto type : backends) {
+//        const auto desc = HwAcc::backendDescription(type);
+//        d->ui.hwaccel_backend->addItem(desc, QVariant::fromValue(type));
+//    }
 
     void(QComboBox::*curIdxChanged)(int) = &QComboBox::currentIndexChanged;
     auto updateCodecList = [this] () {

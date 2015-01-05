@@ -125,9 +125,9 @@ VideoOutput::~VideoOutput()
 
 auto VideoOutput::setRenderer(VideoRenderer *renderer) -> void
 {
-    if (!_Change(d->renderer, renderer) || !d->renderer)
-        return;
-    d->renderer->prepare(d->format);
+//    if (!_Change(d->renderer, renderer) || !d->renderer)
+//        return;
+//    d->renderer->prepare(d->format);
 }
 
 auto VideoOutput::preinit(vo *out) -> int
@@ -163,8 +163,8 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     const auto desc = mp_imgfmt_get_desc(d->params.imgfmt);
     const auto inverted = flags & VOFLAG_FLIPPING;
     if (_Change(d->format, VideoFormat(d->params, desc, inverted))) {
-        if (d->renderer)
-            d->renderer->prepare(d->format);
+//        if (d->renderer)
+//            d->renderer->prepare(d->format);
         emit v->formatChanged(d->format);
     }
     _Debug("Configure VideoOutput with %%(%%x%%) format",
@@ -212,7 +212,7 @@ auto VideoOutput::flipPage(vo *out) -> void
     if (!d->hasOsd)
         d->data.setOsd(VideoOsdCache());
     Q_ASSERT(!d->format.isEmpty());
-    d->renderer->present(d->data);
+//    d->renderer->present(d->data);
     d->hasOsd = false;
 //    d->data.setImage(MpImage{});
 //    d->data.pass(nullptr);

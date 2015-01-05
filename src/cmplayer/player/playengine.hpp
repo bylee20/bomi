@@ -16,6 +16,7 @@ enum class ColorRange;                  enum class ColorSpace;
 class AudioInfoObject;                  class VideoInfoObject;
 class YouTubeDialog;                    struct AudioDevice;
 class StreamTrack;                      class SubtitleInfoObject;
+class OpenGLFramebufferObject;
 using StreamList = QMap<int, StreamTrack>;
 
 struct StartInfo {
@@ -32,6 +33,7 @@ struct FinishInfo {
     int position = 0, remain = 0;
     QVector<int> streamIds = { 0, 0, 0 };
 };
+
 
 class PlayEngine : public QObject {
     Q_OBJECT
@@ -177,7 +179,9 @@ public:
     auto isOffscreenInitialized() const -> bool { return m_offscreenInit; }
     auto setAudioPriority(const QStringList &ap) -> void;
     auto setSubtitlePriority(const QStringList &sp) -> void;
-    auto initializeOffscreenContext() -> void;
+    auto initializeGL(QOpenGLContext *ctx) -> void;
+    auto finalizeGL(QOpenGLContext *ctx) -> void;
+
     Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;

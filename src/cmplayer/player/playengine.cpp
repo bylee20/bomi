@@ -1,4 +1,6 @@
 #include "playengine.hpp"
+#include <libmpv/opengl_cb.h>
+#include "opengl/openglframebufferobject.hpp"
 #include "audio/audionormalizeroption.hpp"
 #include "playengine_p.hpp"
 
@@ -82,8 +84,11 @@ PlayEngine::PlayEngine()
     setOption("input-terminal", "no");
     setOption("ad-lavc-downmix", "no");
     setOption("title", "\"\"");
-    setOption("vo", d->vo().constData());
-    setOption("fixed-vo", "yes");
+    setOption("vo", "opengl-cb");
+//    setOption("fixed-vo", "yes");
+    setOption("hwdec", "auto");
+    setOption("hwdec-codecs", "all");
+
 
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
@@ -112,11 +117,22 @@ PlayEngine::PlayEngine()
     d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
     _Debug("Initialized");
     d->initialized = true;
+
+    auto ptr = mpv_get_sub_api(d->handle, MPV_SUB_API_OPENGL_CB);
+    d->glMpv = static_cast<mpv_opengl_cb_context*>(ptr);
+    Q_ASSERT(d->glMpv);
+    auto cbUpdate = [] (void *priv) {
+        auto p = static_cast<PlayEngine*>(priv);
+        if (p->d->renderer)
+            p->d->renderer->updateForNewFrame(p->d->videoInfo.output()->size());
+    };
+    mpv_opengl_cb_set_update_callback(d->glMpv, cbUpdate, this);
 }
 
 PlayEngine::~PlayEngine()
 {
     d->initialized = false;
+    qDebug() << "terminate mpv";
     mpv_terminate_destroy(d->handle);
     delete d->chapterInfo;
     delete d->audio;
@@ -124,6 +140,23 @@ PlayEngine::~PlayEngine()
     delete d->filter;
     delete d;
     _Debug("Finalized");
+}
+
+auto PlayEngine::initializeGL(QOpenGLContext *ctx) -> void
+{
+    auto getProcAddr = [] (void *ctx, const char *name) -> void* {
+        auto gl = static_cast<QOpenGLContext*>(ctx);
+        if (!gl)
+            return nullptr;
+        return reinterpret_cast<void*>(gl->getProcAddress(QByteArray(name)));
+    };
+    auto err = mpv_opengl_cb_init_gl(d->glMpv, nullptr, getProcAddr, ctx);
+    Q_ASSERT(err >= 0);
+}
+
+auto PlayEngine::finalizeGL(QOpenGLContext */*ctx*/) -> void
+{
+    mpv_opengl_cb_uninit_gl(d->glMpv);
 }
 
 auto PlayEngine::metaData() const -> const MetaData&
@@ -342,10 +375,10 @@ auto PlayEngine::volumeNormalizer() const -> double
 
 auto PlayEngine::setHwAcc(int backend, const QVector<int> &codecs) -> void
 {
-    d->hwCodecs = _ToStringList(codecs, [] (int id) {
-        const char *name = HwAcc::codecName(id);
-        return name ? QString::fromLatin1(name) : QString();
-    }).join(','_q).toLatin1();
+//    d->hwCodecs = _ToStringList(codecs, [] (int id) {
+//        const char *name = HwAcc::codecName(id);
+//        return name ? QString::fromLatin1(name) : QString();
+//    }).join(','_q).toLatin1();
     d->hwBackend = static_cast<HwAcc::Type>(backend);
 }
 
@@ -635,22 +668,28 @@ auto PlayEngine::setVideoRenderer(VideoRenderer *renderer) -> void
 {
     if (d->renderer != renderer) {
         if (d->renderer) {
+            d->renderer->setRenderFrameFunction(nullptr);
             disconnect(d->renderer, nullptr, this, nullptr);
             disconnect(d->renderer, nullptr, d->filter, nullptr);
             disconnect(d->filter, nullptr, d->renderer, nullptr);
             disconnect(this, nullptr, d->renderer, nullptr);
         }
+        auto render = [this] (OpenGLFramebufferObject *fbo) {
+            int vp[4] = {0, 0, fbo->width(), fbo->height()};
+            mpv_opengl_cb_render(d->glMpv, fbo->id(), vp);
+        };
         d->renderer = renderer;
+        d->renderer->setRenderFrameFunction(render);
         d->video->setRenderer(d->renderer);
         connect(d->renderer, &VideoRenderer::fpsChanged,
                 d->videoInfo.renderer(), &VideoFormatInfoObject::setFps);
-        connect(d->renderer, &VideoRenderer::formatChanged,
-                [this] (const VideoFormat &format) {
-            auto renderer = d->videoInfo.renderer();
-            renderer->setImgFmt(format.params().imgfmt);
-            renderer->setBppSize(format.size());
-            renderer->setSize(format.displaySize());
-        });
+//        connect(d->renderer, &VideoRenderer::formatChanged,
+//                [this] (const VideoFormat &format) {
+//            auto renderer = d->videoInfo.renderer();
+//            renderer->setImgFmt(format.params().imgfmt);
+//            renderer->setBppSize(format.size());
+//            renderer->setSize(format.displaySize());
+//        });
         connect(d->renderer, &VideoRenderer::colorMatrixChanged, [this] () {
             const auto info = d->videoInfo.renderer();
             info->setSpace(d->renderer->colorMatrixSpace());
