@@ -13,8 +13,8 @@ class MrlStateV1 : public QObject {
     Q_PROPERTY(int resume_position MEMBER resume_position)
     Q_PROPERTY(int play_speed MEMBER play_speed NOTIFY playSpeedChanged)
 
-    Q_PROPERTY(InterpolatorType video_interpolator MEMBER video_interpolator NOTIFY videoInterpolatorChanged)
-    Q_PROPERTY(InterpolatorType video_chroma_upscaler MEMBER video_chroma_upscaler NOTIFY videoChromaUpscalerChanged)
+    Q_PROPERTY(Interpolator video_interpolator MEMBER video_interpolator NOTIFY videoInterpolatorChanged)
+    Q_PROPERTY(Interpolator video_chroma_upscaler MEMBER video_chroma_upscaler NOTIFY videoChromaUpscalerChanged)
     Q_PROPERTY(VideoRatio video_aspect_ratio MEMBER video_aspect_ratio NOTIFY videoAspectRatioChanged)
     Q_PROPERTY(VideoRatio video_crop_ratio MEMBER video_crop_ratio NOTIFY videoCropRatioChanged)
     Q_PROPERTY(DeintMode video_deinterlacing MEMBER video_deinterlacing NOTIFY videoDeinterlacingChanged)
@@ -51,8 +51,8 @@ public:
     VideoRatio video_aspect_ratio = VideoRatio::Source;
     VideoRatio video_crop_ratio = VideoRatio::Source;
     DeintMode video_deinterlacing = DeintMode::Auto;
-    InterpolatorType video_interpolator = InterpolatorType::Bilinear;
-    InterpolatorType video_chroma_upscaler = InterpolatorType::Bilinear;
+    Interpolator video_interpolator = Interpolator::Bilinear;
+    Interpolator video_chroma_upscaler = Interpolator::Bilinear;
     Dithering video_dithering = Dithering::Fruit;
     QPoint video_offset = {0, 0};
     VerticalAlignment video_vertical_alignment = VerticalAlignment::Center;

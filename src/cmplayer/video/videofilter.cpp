@@ -136,8 +136,6 @@ auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
         return 0;
     auto v = priv(vf); auto d = v->d;
     auto mpi = MpImage::wrap(_mpi);
-//    if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
-//        mpi = d->acc->getImage(mpi);
     if (_Change(d->inter_i, mpi.isInterlaced()))
         emit v->inputInterlacedChanged();
     d->deinterlacer.push(std::move(mpi));
@@ -147,7 +145,6 @@ auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
 auto VideoFilter::filterOut(vf_instance *vf) -> int
 {
     auto v = priv(vf); auto d = v->d;
-//    if (auto mpi = d->deinterlacer.pop().take())
     auto mpi = std::move(d->deinterlacer.pop());
     if (_Change(d->inter_o, d->deinterlacer.pass() ? mpi.isInterlaced() : false))
         emit v->outputInterlacedChanged();
@@ -176,7 +173,27 @@ auto VideoFilter::uninit(vf_instance *vf) -> void {
     d->deinterlacer.clear();
 }
 
-auto query_video_format(quint32 format) -> int;
+auto query_video_format(quint32 format) -> int
+{
+    switch (format) {
+    case IMGFMT_VDPAU:     case IMGFMT_VDA:       case IMGFMT_VAAPI:
+    case IMGFMT_420P:      case IMGFMT_444P:
+    case IMGFMT_420P16:
+    case IMGFMT_420P14:
+    case IMGFMT_420P12:
+    case IMGFMT_420P10:
+    case IMGFMT_420P9:
+    case IMGFMT_NV12:      case IMGFMT_NV21:
+    case IMGFMT_YUYV:      case IMGFMT_UYVY:
+    case IMGFMT_BGRA:      case IMGFMT_RGBA:
+    case IMGFMT_ARGB:      case IMGFMT_ABGR:
+    case IMGFMT_BGR0:      case IMGFMT_RGB0:
+    case IMGFMT_0RGB:      case IMGFMT_0BGR:
+        return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
+    default:
+        return 0;
+    }
+}
 
 auto VideoFilter::queryFormat(vf_instance *vf, uint fmt) -> int
 {

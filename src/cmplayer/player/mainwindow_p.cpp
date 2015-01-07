@@ -12,6 +12,7 @@
 #include "dialog/mbox.hpp"
 #include "dialog/openmediafolderdialog.hpp"
 #include "dialog/subtitlefinddialog.hpp"
+#include "avinfoobject.hpp"
 
 MainWindow::Data::Data(MainWindow *p)
     : p(p)
@@ -130,7 +131,6 @@ auto MainWindow::Data::initWidget() -> void
 
 auto MainWindow::Data::initEngine() -> void
 {
-    engine.setVideoRenderer(&vr);
     connect(&engine, &PlayEngine::mrlChanged,
             p, [=] (const Mrl &mrl) { updateMrl(mrl); });
     connect(&engine, &PlayEngine::stateChanged, p,
@@ -175,7 +175,7 @@ auto MainWindow::Data::initEngine() -> void
             menu(u"audio"_q)[u"tempo-scaler"_q], &QAction::setChecked);
     connect(&engine, &PlayEngine::mutedChanged,
             menu(u"audio"_q)(u"volume"_q)[u"mute"_q], &QAction::setChecked);
-    connect(&engine, &PlayEngine::fpsChanged,
+    connect(engine.videoInfo()->output(), &VideoFormatInfoObject::fpsChanged,
             &subtitle, &SubtitleRendererItem::setFPS);
     connect(&engine, &PlayEngine::editionsChanged,
             p, [this] (const EditionList &editions) {
@@ -653,7 +653,7 @@ auto MainWindow::Data::commitData() -> void
         engine.shutdown();
         if (!p->isFullScreen())
             updateWindowPosState();
-        as.state.video_effects = vr.effects();
+        as.state.video_effects = engine.videoEffects();
         as.playlist_visible = playlist.isVisible();
         as.playlist_shuffled = playlist.isShuffled();
         as.playlist_repeat = playlist.repeat();
@@ -855,9 +855,7 @@ auto MainWindow::Data::applyPref() -> void
     youtube->setProgram(p.yt_program);
     history.setRememberImage(p.remember_image);
     history.setPropertiesToRestore(p.restore_properties);
-    const auto backend = p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None;
-    const auto codecs = p.enable_hwaccel ? p.hwaccel_codecs : QVector<int>();
-    engine.setHwAcc(backend, codecs);
+    engine.setHwAcc(p.enable_hwaccel, p.hwaccel_codecs);
     engine.setVolumeNormalizerOption(p.audio_normalizer);
     engine.setChannelLayoutMap(p.channel_manipulation);
     engine.setSubtitleStyle(p.sub_style);
@@ -887,14 +885,6 @@ auto MainWindow::Data::applyPref() -> void
     engine.setAudioDevice(p.audio_device);
     engine.setClippingMethod(p.clipping_method);
     engine.setMinimumCache(p.cache_min_playback/100., p.cache_min_seeking/100.);
-    Kernel3x3 blur, sharpen;
-    blur.setCenter(p.blur_kern_c);
-    blur.setNeighbor(p.blur_kern_n);
-    blur.setDiagonal(p.blur_kern_d);
-    sharpen.setCenter(p.sharpen_kern_c);
-    sharpen.setNeighbor(p.sharpen_kern_n);
-    sharpen.setDiagonal(p.sharpen_kern_d);
-    vr.setKernel(blur, sharpen);
     SubtitleParser::setMsPerCharactor(p.ms_per_char);
     subtitle.setPriority(p.sub_priority);
     subtitle.setStyle(p.sub_style);

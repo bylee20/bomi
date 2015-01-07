@@ -434,28 +434,28 @@ auto MainWindow::Data::connectMenus() -> void
              &MrlState::videoDeinterlacingChanged, [this] () {
         engine.setDeintMode(as.state.video_deinterlacing);
     });
-    plugEnumActions<InterpolatorType>
+    plugEnumActions<Interpolator>
             (video(u"interpolator"_q), "video_interpolator",
              &MrlState::videoInterpolatorChanged, [this] () {
-        vr.setInterpolator(as.state.video_interpolator);
+        engine.setInterpolator(as.state.video_interpolator);
     });
-    plugEnumActions<InterpolatorType>
+    plugEnumActions<Interpolator>
             (video(u"chroma-upscaler"_q), "video_chroma_upscaler",
              &MrlState::videoChromaUpscalerChanged, [this] () {
-        vr.setChromaUpscaler(as.state.video_chroma_upscaler);
+        engine.setChromaUpscaler(as.state.video_chroma_upscaler);
     });
     plugEnumMenu<Dithering>
             (video, "video_dithering",
              &MrlState::videoDitheringChanged, [this] () {
-        vr.setDithering(as.state.video_dithering);
+//        vr.setDithering(as.state.video_dithering);
     });
     plugEnumMenu<ColorSpace>(video, "video_space",
                                    &MrlState::videoSpaceChanged, [this] () {
-        vr.setColorSpace(as.state.video_space);
+        engine.setColorSpace(as.state.video_space);
     });
     plugEnumMenu<ColorRange>(video, "video_range",
                                    &MrlState::videoRangeChanged, [this] () {
-        vr.setColorRange(as.state.video_range);
+        engine.setColorRange(as.state.video_range);
     });
 
     connect(&video(u"filter"_q), &Menu::triggered, p, [this] () {
@@ -464,10 +464,10 @@ auto MainWindow::Data::connectMenus() -> void
             if (act->isChecked())
                 effects |= act->data().value<VideoEffect>();
         }
-        if (vr.effects() != effects)
-            push(effects, vr.effects(),
+        if (engine.videoEffects() != effects)
+            push(effects, engine.videoEffects(),
                     [this] (VideoEffects effects) {
-                vr.setEffects(effects);
+                engine.setVideoEffects(effects);
                 as.state.video_effects = effects;
                 for (auto a : menu(u"video"_q)(u"filter"_q).actions())
                     a->setChecked(a->data().value<VideoEffect>() & effects);
@@ -491,7 +491,7 @@ auto MainWindow::Data::connectMenus() -> void
         as.state.setProperty("video_color", var);
     });
     connect(&as.state, &MrlState::videoColorChanged,
-            &vr, &VideoRenderer::setEqualizer);
+            &engine, &PlayEngine::setVideoEqualizer);
 
     Menu &audio = menu(u"audio"_q);
     connect(audio(u"track"_q).g(), &ActionGroup::triggered,

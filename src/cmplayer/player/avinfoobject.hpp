@@ -246,11 +246,10 @@ public:
         { if (_Change(m_size, s)) emit sizeChanged(); }
     auto setBppSize(const QSize &s) -> void
         { if (_Change(m_bppSize, s)) updateBitrate(); }
-public slots:
     void setFps(double fps)
-        { if (_Change(m_fps, fps)) { emit fpsChanged(); updateBitrate(); } }
+        { if (_Change(m_fps, fps)) { emit fpsChanged(fps); updateBitrate(); } }
 signals:
-    void fpsChanged();
+    void fpsChanged(double fps);
     void spaceChanged();
     void rangeChanged();
     void bppChanged();
@@ -273,7 +272,10 @@ class VideoInfoObject : public AvCommonInfoObject {
     Q_PROPERTY(int deinterlacer READ deinterlacer NOTIFY deinterlacerChanged)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(int delayedFrames READ delayedFrames NOTIFY delayedFramesChanged)
+    Q_PROPERTY(int delayedTime READ delayedTime NOTIFY delayedTimeChanged)
+    Q_PROPERTY(qreal droppedFps READ droppedFps NOTIFY droppedFpsChanged)
 public:
+    VideoInfoObject();
     auto input() const -> const VideoFormatInfoObject* { return &m_input; }
     auto renderer() const -> const VideoFormatInfoObject* { return &m_renderer; }
     auto output() const -> const VideoFormatInfoObject* { return &m_output; }
@@ -286,20 +288,25 @@ public:
     auto setDeinterlacer(int deint) -> void
         { if (_Change(m_deint, deint)) emit deinterlacerChanged(); }
     auto droppedFrames() const -> int { return m_dropped; }
+    auto droppedFps() const -> qreal { return m_droppedFps; }
     auto delayedFrames() const -> int { return m_delayed; }
-public slots:
-    void setDroppedFrames(int f)
-        { if (_Change(m_dropped, f)) emit droppedFramesChanged(); }
+    auto delayedTime() const -> int
+        { return m_output.fps() > 1 ? (m_delayed / m_output.fps()) * 1e3 + 0.5: 0.0; }
+    void setDroppedFrames(int f);
     void setDelayedFrames(int f)
         { if (_Change(m_delayed, f)) emit delayedFramesChanged(); }
 signals:
     void deinterlacerChanged();
     void droppedFramesChanged();
+    void droppedFpsChanged();
     void delayedFramesChanged();
+    void delayedTimeChanged();
 private:
     VideoFormatInfoObject m_input, m_output, m_renderer;
     VideoHwAccInfoObject m_hwacc;
     int m_deint = 0, m_dropped = 0, m_delayed = 0;
+    qreal m_droppedFps = 0.0;
+    QTime m_time; QTimer m_timer;
 };
 
 /******************************************************************************/

@@ -3,8 +3,6 @@
 
 class DeintOption;        class MpImage;
 
-static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
-
 class SoftwareDeinterlacer {
 public:
     enum Type {Graph, PP, Mark, Pass};

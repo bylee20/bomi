@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>9</number>
+        <number>10</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1795,27 +1795,6 @@
           </widget>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_24">
-           <item>
-            <widget class="QLabel" name="label_55">
-             <property name="text">
-              <string>Backend</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="DataComboBox" name="hwaccel_backend">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
           <widget class="HwAccCodecBox" name="hwaccel_codecs">
            <property name="title">
             <string>Codec to allow hardware-acceleration</string>
@@ -3054,38 +3033,6 @@ Regular expression is supported.</string>
     <hint type="destinationlabel">
      <x>298</x>
      <y>68</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>enable_hwaccel</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>hwaccel_backend</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>282</x>
-     <y>54</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>301</x>
-     <y>85</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>enable_hwaccel</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>label_55</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>257</x>
-     <y>61</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>253</x>
-     <y>79</y>
     </hint>
    </hints>
   </connection>

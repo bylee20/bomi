@@ -64,23 +64,23 @@ ${ return rhs & EnumFlags<SpeakerId>((SpeakerId)lhs); }
 $constexpr inline auto operator | (SpeakerId lhs, SpeakerId rhs) -> EnumFlags<SpeakerId>
 ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 
-+ColorRange[[range]][-Color Range-]
--Auto[[auto]][-Auto-]
--Limited[[limited]][-Limited Range-]
--Full[[full]][-Full Range-]
--Remap[[remap]][-Remap Range-]
--Extended[[luma]][-Extended Range-]
++ColorRange[[range]][-Color Range-][:ColorEnumData:]
+!#include "colorenumdata.hpp"
+-Auto[[auto]][-Auto-][:{"auto"_b, u"Autoselect"_q, u"--"_q}:]
+-Limited[[limited]][-Limited Range-][:{"limited"_b, u"TV"_q, u"Limited"_q}:]
+-Full[[full]][-Full Range-][:{"full"_b, u"PC"_q, u"Full"_q}:]
 
-+ColorSpace[[space]][-Color Space-][:mp_csp:]
-!extern "C" {
-!#include <video/csputils.h>
-!}
--Auto[[auto]][-Auto-][:MP_CSP_AUTO:]
--BT601[[bt.601]][-BT.601(SD)-][:MP_CSP_BT_601:]
--BT709[[bt.709]][-BT.709(HD)-][:MP_CSP_BT_709:]
--SMPTE240M[[smpte]][-SMPTE-240M-][:MP_CSP_SMPTE_240M:]
--YCgCo[[ycgco]][-YCgCo-][:MP_CSP_YCGCO:]
--RGB[[rgb]][-RGB-][:MP_CSP_RGB:]
++ColorSpace[[space]][-Color Space-][:ColorEnumData:]
+!#include "colorenumdata.hpp"
+-Auto[[auto]][-Auto-][:{"auto"_b, u"Autoselect"_q, u"--"_q}:]
+-SMPTE240M[[smpte]][-SMPTE-240M-][:"SMPTE-240M"_b:]
+-BT601[[bt.601]][-BT.601(SD)-][:{"BT.601"_b, u"BT.601 (SD)"_q}:]
+-BT709[[bt.709]][-BT.709(HD)-][:{"BT.709"_b, u"BT.709 (HD)"_q}:]
+-BT2020NCL[[bt.2020-ncl]][-BT.2020-NCL(UHD)-][:{"BT.2020-NCL"_b, u"BT.2020-NCL (UHD)"_q}:]
+-BT2020CL[[bt.2020-cl]][-BT.2020-CL(UHD)-][:{"BT.2020-CL"_b, u"BT.2020-CL (UHD)"_q}:]
+-RGB[[rgb]][-RGB-][:"RGB"_b:]
+-XYZ[[xyz]][-XYZ-][:"XYZ"_b:]
+-YCgCo[[ycgco]][-YCgCo-][:"YCgCo"_b:]
 
 #+AdjustColor[[color]][:VideoColor:]
 #!#include "video/videocolor.hpp"
@@ -115,10 +115,10 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -_1_85__1[[1.85:1]][-1.85:1 (Wide Vision)-][:1.85:]
 -_2_35__1[[2.35:1]][-2.35:1 (CinemaScope)-][:2.35:]
 
-+Dithering[[dithering]][-Dithering-]
--None[[off]][-Off-]
--*Fruit[[random]][-Random Dithering-]
--Ordered[[ordered]][-Ordered Dithering-]
++Dithering[[dithering]][-Dithering-][:QByteArray:]
+-*None[[off]][-Off-][:"no":]
+-Fruit[[random]][-Random Dithering-][:"fruit":]
+-Ordered[[ordered]][-Ordered Dithering-][:"ordered":]
 
 +DecoderDevice[~DecoderDevices~]
 -None[=0=]
@@ -145,18 +145,20 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Yadif
 -MotionAdaptive
 
-+InterpolatorType
--Bilinear[[bilinear]][-Bilinear-]
--BicubicBS[[b-spline]][-B-Spline-]
--BicubicCR[[catmull]][-Catmull-Rom-]
--BicubicMN[[mitchell]][-Mitchell-Netravali-]
--Spline16[[spline16]][-2-Lobed Spline-]
--Spline36[[spline36]][-3-Lobed Spline-]
--Spline64[[spline64]][-4-Lobed Spline-]
--LanczosFast[[lanczos-fast]][-Fast Lanczos-]
--Lanczos2[[lancoz2]][-2-Lobed Lanczos-]
--Lanczos3[[lanczos3]][-3-Lobed Lanczos-]
--Lanczos4[[lanczos4]][-4-Lobed Lanczos-]
++Interpolator[:QByteArray:]
+-Bilinear[[bilinear]][-Bilinear-][:"bilinear"_b:]
+-BicubicBS[[b-spline]][-B-Spline-][:"bicubic_fast"_b:]
+-BicubicCR[[catmull]][-Catmull-Rom-][:"catmull_rom"_b:]
+-BicubicMN[[mitchell]][-Mitchell-Netravali-][:"mitchell"_b:]
+-Spline16[[spline16]][-Spline (Radius: 2)-][:"spline16"_b:]
+-Spline36[[spline36]][-Spline (Radius: 3)-][:"spline36"_b:]
+-Spline64[[spline64]][-Spline (Radius: 4)-][:"spline64"_b:]
+#-LanczosFast[[lanczos-fast]][-Fast Lanczos-]
+-Lanczos2[[lanczos2]][-Lanczos (Radius: 2)-][:"lanczos2"_b:]
+-Lanczos3[[lanczos3]][-Lanczos (Radius: 3)-][:"lanczos3"_b:]
+-Lanczos4[[lanczos4]][-Lanczos (Radius: 4)-][:"lanczos4"_b:]
+-Sharpen3[[sharpen3]][-Unsharp Masking (Radius: 3)-][:"sharpen3"_b:]
+-Sharpen5[[sharpen5]][-Unsharp Masking (Radius: 5)-][:"sharpen5"_b:]
 
 +AudioDriver
 -Auto
@@ -242,14 +244,10 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -None[=0=]
 -FlipV[=(1 << 0)=]
 -FlipH[=(1 << 1)=]
+-Remap[=(1 << 4)=]
 -Gray[=(1 << 2)=]
 -Invert[=(1 << 3)=]
--Blur[=(1 << 4)=]
--Sharpen[=(1 << 5)=]
 -Disable[=(1 << 8)=]
-$static constexpr VideoEffects KernelEffects = VideoEffect::Blur | VideoEffect::Sharpen;
-$static constexpr VideoEffects ColorEffects  = VideoEffect::Gray | VideoEffect::Invert;
-$static constexpr VideoEffects ShaderEffects = KernelEffects | ColorEffects;
 
 +QuickSnapshotSave
 -Fixed

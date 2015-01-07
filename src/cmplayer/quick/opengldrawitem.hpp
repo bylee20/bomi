@@ -17,7 +17,6 @@ public:
     ~OpenGLDrawItem();
     auto devicePixelRatio() const -> double;
     auto logAt(const char *func) const -> QByteArray;
-    auto polishAndUpdate() -> void { polish(); update(); }
     virtual auto rerender() -> void { reserve(UpdateAll); }
     static auto func() -> QOpenGLFunctions* { return context()->functions(); }
     static auto context() -> QOpenGLContext*;
@@ -74,7 +73,8 @@ public:
     using Vertex = T;
     auto vertices() -> QVector<Vertex>& { return m_vertices; }
     const QVector<Vertex> &vertices() const { return m_vertices; }
-    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void;
+protected:
+    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void override;
     virtual auto updateVertexOnGeometryChanged() const -> bool { return false; }
 private:
     virtual auto initializeVertex(Vertex *vertex) const -> void;

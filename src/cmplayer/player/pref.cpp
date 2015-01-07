@@ -286,10 +286,6 @@ auto Pref::loadFromRecord() -> void
 #define READ2(a) a.load(r, u###a##_q)
     DO(READ1, READ2);
 
-    QString backend;
-    r.read(backend, "hwaccel_backend");
-//    hwaccel_backend = HwAcc::backend(backend);
-
     this->restore_properties.clear();
     this->restore_properties.reserve(restore_properties.size());
     for (auto &name : _C(restore_properties)) {
@@ -369,25 +365,23 @@ auto Pref::load() -> void
     CONV_SEC(hide_cursor_delay)
 }
 
-#ifdef Q_OS_LINUX
-#include "video/hwacc_vaapi.hpp"
-#endif
-
 auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>
 {
     QVector<DeintMethod> deints;
-//    for (auto deint : HwAcc::fullDeintList()) {
-//        if (HwAcc::supports(deint))
-//            deints << deint;
-//    }
+    for (auto deint : HwAcc::fullDeintList()) {
+        if (HwAcc::supports(deint))
+            deints << deint;
+    }
     return deints;
 }
 
-auto Pref::defaultHwAccCodecs() -> QVector<int>
+auto Pref::defaultHwAccCodecs() -> QStringList
 {
-    QVector<int> codecs;
-//    for (auto codec : HwAcc::fullCodecList())
-//        codecs.push_back(codec);
+    QStringList codecs;
+    for (auto codec : HwAcc::fullCodecList()) {
+        if (HwAcc::supports(codec))
+            codecs.push_back(codec);
+    }
     return codecs;
 }
 

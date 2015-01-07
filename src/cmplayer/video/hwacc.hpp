@@ -4,10 +4,8 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <video/img_format.h>
-#undef bswap_16
-#undef bswap_32
-#include <video/decode/lavc.h>
 }
+#include <QObject>
 
 struct lavc_ctx;
 struct vd_lavc_hwdec;                   struct mp_hwdec_info;
@@ -15,37 +13,25 @@ class VideoOutput;                      class OpenGLTexture2D;
 class VideoTexture;                     class MpImage;
 enum class DeintMethod;
 
-//class HwAccMixer {
-//public:
-//    HwAccMixer(const QSize &size): m_size(size) { }
-//    virtual ~HwAccMixer() {}
-//    virtual auto upload(OpenGLTexture2D &texture,
-//                        const MpImage &mpi, bool deint) -> bool = 0;
-//    auto size() const -> const QSize& { return m_size; }
-//    auto width() const -> int { return m_size.width(); }
-//    auto height() const -> int { return m_size.height(); }
-//private:
-//    QSize m_size;
-//};
-
 class HwAcc {
 public:
-    enum Type {None, VaApiGLX, VdpauX11, Vda};
+    enum Type {None, VaApiGLX, VdpauX11};
 //    virtual ~HwAcc();
-//    static auto initialize() -> void;
-//    static auto finalize() -> void;
-    static auto availableBackends() -> QList<Type>;
-//    static auto fullCodecList() -> QList<AVCodecID>;
-//    static auto fullDeintList() -> QList<DeintMethod>;
-//    static auto supports(Type backend, AVCodecID codec) -> bool;
-//    static auto supports(DeintMethod method) -> bool;
-    static auto backend(const QString &name) -> Type;
-    static auto backendDescription(Type type) -> QString;
-    static auto backendName(Type type) -> QString;
+    static auto isAvailable() -> bool;
+    static auto initialize() -> void;
+    static auto finalize() -> void;
+    static auto fullCodecList() -> QStringList;
+    static auto fullDeintList() -> QList<DeintMethod>;
+    static auto codecDescription(const QString &codec) -> QString;
+    static auto supports(const QString &codecs) -> bool;
+    static auto supports(DeintMethod method) -> bool;
+    static auto type(const QString &name) -> Type;
+    static auto type() -> Type;
+    static auto description() -> QString;
+    static auto name(Type type) -> QString;
+    static auto name() -> QString;
 //    static auto codecName(int id) -> const char*;
-//    static auto codecId(const char *name) -> AVCodecID;
-//    static auto renderType(mp_imgfmt hwtype) -> mp_imgfmt;
-//    static auto createMixer(mp_imgfmt imgfmt, const QSize &size) -> HwAccMixer*;
+//    static auto codecId(const char *type) -> AVCodecID;
 //    auto imgfmt() const -> int;
 //    virtual auto getImage(const MpImage &mpi) -> MpImage = 0;
 //    virtual auto type() const -> Type = 0;

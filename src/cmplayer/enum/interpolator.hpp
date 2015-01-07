@@ -1,10 +1,10 @@
-#ifndef INTERPOLATORTYPE_HPP
-#define INTERPOLATORTYPE_HPP
+#ifndef INTERPOLATOR_HPP
+#define INTERPOLATOR_HPP
 
 #include "enums.hpp"
-#define INTERPOLATORTYPE_IS_FLAG 0
+#define INTERPOLATOR_IS_FLAG 0
 
-enum class InterpolatorType : int {
+enum class Interpolator : int {
     Bilinear = (int)0,
     BicubicBS = (int)1,
     BicubicCR = (int)2,
@@ -12,54 +12,55 @@ enum class InterpolatorType : int {
     Spline16 = (int)4,
     Spline36 = (int)5,
     Spline64 = (int)6,
-    LanczosFast = (int)7,
-    Lanczos2 = (int)8,
-    Lanczos3 = (int)9,
-    Lanczos4 = (int)10
+    Lanczos2 = (int)7,
+    Lanczos3 = (int)8,
+    Lanczos4 = (int)9,
+    Sharpen3 = (int)10,
+    Sharpen5 = (int)11
 };
 
-Q_DECLARE_METATYPE(InterpolatorType)
+Q_DECLARE_METATYPE(Interpolator)
 
-constexpr inline auto operator == (InterpolatorType e, int i) -> bool { return (int)e == i; }
-constexpr inline auto operator != (InterpolatorType e, int i) -> bool { return (int)e != i; }
-constexpr inline auto operator == (int i, InterpolatorType e) -> bool { return (int)e == i; }
-constexpr inline auto operator != (int i, InterpolatorType e) -> bool { return (int)e != i; }
-constexpr inline auto operator > (InterpolatorType e, int i) -> bool { return (int)e > i; }
-constexpr inline auto operator < (InterpolatorType e, int i) -> bool { return (int)e < i; }
-constexpr inline auto operator >= (InterpolatorType e, int i) -> bool { return (int)e >= i; }
-constexpr inline auto operator <= (InterpolatorType e, int i) -> bool { return (int)e <= i; }
-constexpr inline auto operator > (int i, InterpolatorType e) -> bool { return i > (int)e; }
-constexpr inline auto operator < (int i, InterpolatorType e) -> bool { return i < (int)e; }
-constexpr inline auto operator >= (int i, InterpolatorType e) -> bool { return i >= (int)e; }
-constexpr inline auto operator <= (int i, InterpolatorType e) -> bool { return i <= (int)e; }
-#if INTERPOLATORTYPE_IS_FLAG
+constexpr inline auto operator == (Interpolator e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (Interpolator e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, Interpolator e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, Interpolator e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (Interpolator e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (Interpolator e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (Interpolator e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (Interpolator e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, Interpolator e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, Interpolator e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, Interpolator e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, Interpolator e) -> bool { return i <= (int)e; }
+#if INTERPOLATOR_IS_FLAG
 #include "enumflags.hpp"
-using  = EnumFlags<InterpolatorType>;
-constexpr inline auto operator | (InterpolatorType e1, InterpolatorType e2) -> 
+using  = EnumFlags<Interpolator>;
+constexpr inline auto operator | (Interpolator e1, Interpolator e2) -> 
 { return (::IntType(e1) | ::IntType(e2)); }
-constexpr inline auto operator ~ (InterpolatorType e) -> EnumNot<InterpolatorType>
-{ return EnumNot<InterpolatorType>(e); }
-constexpr inline auto operator & (InterpolatorType lhs,  rhs) -> EnumAnd<InterpolatorType>
+constexpr inline auto operator ~ (Interpolator e) -> EnumNot<Interpolator>
+{ return EnumNot<Interpolator>(e); }
+constexpr inline auto operator & (Interpolator lhs,  rhs) -> EnumAnd<Interpolator>
 { return rhs & lhs; }
 Q_DECLARE_METATYPE()
 #endif
 
 template<>
-class EnumInfo<InterpolatorType> {
-    typedef InterpolatorType Enum;
+class EnumInfo<Interpolator> {
+    typedef Interpolator Enum;
 public:
-    typedef InterpolatorType type;
-    using Data =  QVariant;
+    typedef Interpolator type;
+    using Data =  QByteArray;
     struct Item {
         Enum value;
         QString name, key;
-        QVariant data;
+        QByteArray data;
     };
-    using ItemList = std::array<Item, 11>;
+    using ItemList = std::array<Item, 12>;
     static constexpr auto size() -> int
-    { return 11; }
+    { return 12; }
     static constexpr auto typeName() -> const char*
-    { return "InterpolatorType"; }
+    { return "Interpolator"; }
     static constexpr auto typeKey() -> const char*
     { return ""; }
     static auto typeDescription() -> QString
@@ -70,8 +71,8 @@ public:
     { auto i = item(e); return i ? i->name : QString(); }
     static auto key(Enum e) -> QString
     { auto i = item(e); return i ? i->key : QString(); }
-    static auto data(Enum e) -> QVariant
-    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto data(Enum e) -> QByteArray
+    { auto i = item(e); return i ? i->data : QByteArray(); }
     static auto description(int e) -> QString
     { return description((Enum)e); }
     static auto description(Enum e) -> QString
@@ -81,13 +82,14 @@ public:
         case Enum::BicubicBS: return qApp->translate("EnumInfo", "B-Spline");
         case Enum::BicubicCR: return qApp->translate("EnumInfo", "Catmull-Rom");
         case Enum::BicubicMN: return qApp->translate("EnumInfo", "Mitchell-Netravali");
-        case Enum::Spline16: return qApp->translate("EnumInfo", "2-Lobed Spline");
-        case Enum::Spline36: return qApp->translate("EnumInfo", "3-Lobed Spline");
-        case Enum::Spline64: return qApp->translate("EnumInfo", "4-Lobed Spline");
-        case Enum::LanczosFast: return qApp->translate("EnumInfo", "Fast Lanczos");
-        case Enum::Lanczos2: return qApp->translate("EnumInfo", "2-Lobed Lanczos");
-        case Enum::Lanczos3: return qApp->translate("EnumInfo", "3-Lobed Lanczos");
-        case Enum::Lanczos4: return qApp->translate("EnumInfo", "4-Lobed Lanczos");
+        case Enum::Spline16: return qApp->translate("EnumInfo", "Spline (Radius: 2)");
+        case Enum::Spline36: return qApp->translate("EnumInfo", "Spline (Radius: 3)");
+        case Enum::Spline64: return qApp->translate("EnumInfo", "Spline (Radius: 4)");
+        case Enum::Lanczos2: return qApp->translate("EnumInfo", "Lanczos (Radius: 2)");
+        case Enum::Lanczos3: return qApp->translate("EnumInfo", "Lanczos (Radius: 3)");
+        case Enum::Lanczos4: return qApp->translate("EnumInfo", "Lanczos (Radius: 4)");
+        case Enum::Sharpen3: return qApp->translate("EnumInfo", "Unsharp Masking (Radius: 3)");
+        case Enum::Sharpen5: return qApp->translate("EnumInfo", "Unsharp Masking (Radius: 5)");
         default: return QString();
         }
     }
@@ -117,7 +119,7 @@ public:
         val = it->value;
         return true;
     }
-    static auto fromData(const QVariant &data,
+    static auto fromData(const QByteArray &data,
                          Enum def = default_()) -> Enum
     {
         auto it = std::find_if(info.cbegin(), info.cend(),
@@ -126,11 +128,11 @@ public:
         return it != info.cend() ? it->value : def;
     }
     static constexpr auto default_() -> Enum
-    { return InterpolatorType::Bilinear; }
+    { return Interpolator::Bilinear; }
 private:
     static const ItemList info;
 };
 
-using InterpolatorTypeInfo = EnumInfo<InterpolatorType>;
+using InterpolatorInfo = EnumInfo<Interpolator>;
 
 #endif

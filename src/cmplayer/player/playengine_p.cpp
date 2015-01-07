@@ -1,42 +1,15 @@
 #include "playengine_p.hpp"
+#include "opengl/openglframebufferobject.hpp"
 
-template<int N>
-auto findIndex(const QString &name, const char *const list[N]) -> int
+template<class T>
+SIA findEnum(const QString &mpv) -> T
 {
-    const auto data = name.toLatin1();
-    for (int i = 0; i < N; ++i) {
-        if (!qstrcmp(list[i], data.data()))
-            return i;
+    auto items = EnumInfo<T>::items();
+    for (auto item : items) {
+        if (mpv == item.data.property)
+            return item.value;
     }
-    return N;
-}
-
-static auto toColorRange(const QString &mpvname) -> ColorRange
-{
-    switch (findIndex<MP_CSP_LEVELS_COUNT>(mpvname, mp_csp_levels_names)) {
-    case MP_CSP_LEVELS_TV:
-        return ColorRange::Limited;
-    case MP_CSP_LEVELS_PC:
-        return ColorRange::Full;
-    default:
-        return ColorRange::Auto;
-    }
-}
-
-static auto toColorSpace(const QString &mpvname) -> ColorSpace
-{
-    switch (findIndex<MP_CSP_COUNT>(mpvname, mp_csp_names)) {
-    case MP_CSP_BT_601:
-        return ColorSpace::BT601;
-    case MP_CSP_BT_709:
-        return ColorSpace::BT709;
-    case MP_CSP_SMPTE_240M:
-        return ColorSpace::SMPTE240M;
-    case MP_CSP_YCGCO:
-        return ColorSpace::YCgCo;
-    default:
-        return ColorSpace::Auto;
-    }
+    return EnumInfo<T>::default_();
 }
 
 auto reg_play_engine() -> void
@@ -103,6 +76,7 @@ auto PlayEngine::Data::af() const -> QByteArray
     af.add("layout"_b, (int)layout);
     return af.get();
 }
+
 auto PlayEngine::Data::vf() const -> QByteArray
 {
     OptionList vf(':');
@@ -112,11 +86,66 @@ auto PlayEngine::Data::vf() const -> QByteArray
     return vf.get();
 }
 
-auto PlayEngine::Data::vo() const -> QByteArray
+auto PlayEngine::Data::videoSubOptions() -> QByteArray
 {
-    OptionList vo(':');
-    vo.add("null:address"_b, video);
-    return vo.get();
+    static const QByteArray shader = "const mat4 c_matrix = mat4(__C_MATRIX__); "
+                        "vec4 custom_shader(vec4 color) { return c_matrix * color; }";
+//    vec4(1.0, 0.0, 0.0, 0.0),
+//    vec4(0.0, 1.0, 0.0, 0.0),
+//    vec4(0.0, 0.0, 1.0, 0.0),
+//    vec4(0.0, 0.0, 0.0, 1.0)ggggg
+//    c_matrix = QMatrix4x4();
+    auto customShader = [&] (const QMatrix4x4 &c_matrix) -> QByteArray {
+        QByteArray mat;
+        for (int c = 0; c < 4; ++c) {
+            mat += "vec4(";
+            for (int r = 0; r < 4; ++r) {
+                mat += QByteArray::number(c_matrix(r, c), 'e');
+                mat += ',';
+            }
+            mat[mat.size()-1] = ')';
+            mat += ',';
+        }
+        mat.chop(1);
+        auto cs = shader;
+        cs.replace("__C_MATRIX__", mat);
+        return '%' + QByteArray::number(cs.length()) + '%' + cs;
+    };
+    OptionList opts(':');
+    opts.add("lscale", _EnumData(lscale));
+    opts.add("cscale", _EnumData(cscale));
+    opts.add("dither-depth", "auto"_b);
+    opts.add("dither", _EnumData(dithering));
+    opts.add("custom-shader", customShader(c_matrix));
+    return opts.get();
+}
+
+auto PlayEngine::Data::updateColorMatrix() -> void
+{
+
+    c_matrix = QMatrix4x4();
+    if (videoEffects & VideoEffect::Invert)
+        c_matrix = QMatrix4x4(-1, 0, 0, 1,
+                              0, -1, 0, 1,
+                              0, 0, -1, 1,
+                              0, 0,  0, 1);
+    auto eq = videoEq;
+    if (videoEffects & VideoEffect::Gray)
+        eq.setSaturation(-100);
+    c_matrix *= eq.matrix();
+    if (videoEffects & VideoEffect::Remap) {
+        const float a = 255.0 / (235.0 - 16.0);
+        const float b = -16.0 / 255.0 * a;
+        c_matrix *= QMatrix4x4(a, 0, 0, b,
+                               0, a, 0, b,
+                               0, 0, a, b,
+                               0, 0, 0, 1);
+    }
+}
+
+auto PlayEngine::Data::updateVideoSubOptions() -> void
+{
+    tellmpv_async("vo_cmdline", videoSubOptions());
 }
 
 auto PlayEngine::Data::tellmpv(const QByteArray &cmd) -> void
@@ -156,16 +185,12 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     QString file = mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
     if (file.isEmpty())
         return;
-//    mpv_suspend(handle);
     OptionList opts;
     opts.add("audio-device"_b, audioDevice.toLatin1(), true);
-//    if (hwCodecs.isEmpty() || hwBackend == HwAcc::None)
-//        opts.add("hwdec"_b, "no"_b);
-//    else {
-//        const auto name = HwAcc::backendName(hwBackend);
-//        opts.add("hwdec"_b, name.toLatin1());
-//        opts.add("hwdec-codecs"_b, hwCodecs, true);
-//    }
+    if (useHwAcc)
+        opts.add("hwdec-codecs"_b, hwCodecs, true);
+    else
+        opts.add("hwdec-codecs"_b, "", true);
 
     if (mrl.isDisc()) {
         file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
@@ -193,13 +218,7 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     QString family = font.family();
     if (!fontStyles.isEmpty())
         family += ":style="_a % fontStyles.join(' '_q);
-    double factor = font.size;
-//    if (font.scale == OsdScalePolicy::Width)
-//        factor *= 1280;
-//    else if (font.scale == OsdScalePolicy::Diagonal)
-//        factor *= sqrt(1280*1280 + 720*720);
-//    else
-        factor *= 720.0;
+    const double factor = font.size * 720.0;
     opts.add("sub-text-font"_b, family.toLatin1(), true);
     opts.add("sub-text-font-size"_b, factor);
     const auto &outline = subStyle.outline;
@@ -234,7 +253,7 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     opts.add("audio-channels"_b, ChannelLayoutInfo::data(layout), true);
 
     opts.add("af"_b, af(), true);
-//    opts.add("vf"_b, vf(), true);
+    opts.add("vf"_b, vf(), true);
 
     if (mrl.isYouTube() && youtube) {
         youtube->translate(file);
@@ -245,9 +264,12 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
             opts.add("user-agent", youtube->userAgent().toLocal8Bit(), true);
         }
     }
+
+    opts.add("colormatrix"_b, _EnumData(colorSpace).option);
+    opts.add("colormatrix-input-range", _EnumData(colorRange).option);
+    opts.add("vo", "opengl-cb:"_b + videoSubOptions(), true);
     _Debug("Load: %% (%%)", file, opts.get());
     tellmpv("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
-//    mpv_resume(handle);
 }
 
 auto PlayEngine::Data::updateMrl() -> void
@@ -423,33 +445,50 @@ auto PlayEngine::Data::observe() -> void
     });
     observeType<int>("video-bitrate", [=] (int bps) { videoInfo.input()->setBitrate(bps); });
     observeType<QString>("video-format", [=] (QString &&f) { videoInfo.input()->setType(f); });
+    QRegularExpression rx(uR"(Video decoder: ([^\n]*))"_q);
+    auto decoderOutput = [=] (const char *name) -> QString {
+        auto m = rx.match(getmpvosd(name));
+        if (!m.hasMatch() || m.capturedRef(1) == "unknown"_a)
+            return u"Autoselect"_q;
+        return m.captured(1);
+    };
     observeType<QVariant>("video-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
+        auto info = videoInfo.output();
         const auto type = params[u"pixelformat"_q].toString();
         const auto w = params[u"w"_q].toInt(), h = params[u"h"_q].toInt();
-        auto output = videoInfo.output();
-        output->setImgFmt(mp_imgfmt_from_name(bstr0(type.toLatin1()), true));
-        output->setSize({w, h});
-        output->setBppSize({w, h});
-        output->setRange(toColorRange(params[u"colorlevels"_q].toString()));
-        output->setSpace(toColorSpace(params[u"colormatrix"_q].toString()));
+        info->setImgFmt(mp_imgfmt_from_name(bstr0(type.toLatin1()), true));
+        info->setSize({w, h});
+        info->setBppSize({w, h});
+        info->setRange(findEnum<ColorRange>(decoderOutput("colormatrix-input-range")));
+        info->setSpace(findEnum<ColorSpace>(decoderOutput("colormatrix")));
         auto hwState = [&] () {
-//            if (hwBackend == HwAcc::None)
-//                return Deactivated;
-//            static QVector<QString> types = { u"vaapi"_q, u"vdpau"_q, u"vda"_q };
-//            auto codec = HwAcc::codecId(videoInfo.codec()->type().toLatin1());
-//            if (!HwAcc::supports(hwBackend, codec))
-//                return Unavailable;
-//            if (types.contains(type))
-//                return Activated;
-//            if (hwCodecs.contains(codec))
-//                return Unavailable;
+            if (!useHwAcc)
+                return Deactivated;
+            static QVector<QString> types = { u"vaapi"_q, u"vdpau"_q, u"vda"_q };
+            const auto codec = videoInfo.codec()->type();
+            if (!HwAcc::supports(codec))
+                return Unavailable;
+            if (types.contains(type))
+                return Activated;
+            if (hwCodecs.contains(codec.toLatin1()))
+                return Unavailable;
             return Deactivated;
         };
         auto hwacc = videoInfo.hwacc();
         hwacc->setState(hwState());
         const auto hwdec = getmpv<QString>("hwdec");
         hwacc->setDriver(hwdec == "no"_a ? QString() : hwdec);
+    });
+    observeType<QVariant>("video-out-params", [=] (QVariant &&var) {
+        const auto params = var.toMap();
+        auto info = videoInfo.renderer();
+        const auto type = params[u"pixelformat"_q].toString();
+        info->setImgFmt(mp_imgfmt_from_name(bstr0(type.toLatin1()), true));
+        info->setSize({params[u"dw"_q].toInt(), params[u"dh"_q].toInt()});
+        info->setBppSize({params[u"w"_q].toInt(), params[u"h"_q].toInt()});
+        info->setRange(findEnum<ColorRange>(params[u"colorlevels"_q].toString()));
+        info->setSpace(findEnum<ColorSpace>(params[u"colormatrix"_q].toString()));
     });
 
     observeType<QString>("audio-codec", [=] (QString &&c) { audioInfo.codec()->parse(c); });
@@ -496,6 +535,7 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         _PostEvent(p, PreparePlayback);
         break;
     case MPV_EVENT_FILE_LOADED: {
+        updateVideoSubOptions();
         mpvState = MpvRunning;
         translateMpvStateToState();
         this->disc = mpvMrl.isDisc();
@@ -572,7 +612,8 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         this->subtitleFiles.clear();
         break;
     } case StartPlayback: {
-        this->renderer->resetTimings();
+        videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
+        clearTimings();
         _TakeData(event, this->editions);
         int title = -1;
         for (auto &item : this->editions) {
@@ -638,4 +679,28 @@ auto PlayEngine::Data::log(const QByteArray &prefix,
         QMetaObject::invokeMethod(&audioInfo, "setDriver",
                                   Qt::QueuedConnection, Q_ARG(QString, driver));
     }
+}
+
+auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
+{
+    int vp[4] = {0, 0, fbo->width(), fbo->height()};
+    mpv_opengl_cb_render(glMpv, fbo->id(), vp);
+
+    fpsMeasure.push(++drawnFrames);
+
+    quint64 delayed = mpv_opengl_cb_get_queued_frames(glMpv);
+    if (delayed > 0) {
+        if (delayed >= 3) {
+            mpv_opengl_cb_empty_frame_queue(glMpv);
+            delayed = 0;
+        } else
+            video->updateForNewFrame(videoInfo.renderer()->size());
+    }
+
+    videoInfo.setDelayedFrames(delayed);
+    videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
+
+    _Trace("PlayEngine::Data::renderVideoFrame(): "
+           "render queued frame(%%), avgfps: %%",
+           fbo->size(), videoInfo.renderer()->fps());
 }

@@ -3,17 +3,18 @@
 
 #include "enums.hpp"
 #define COLORSPACE_IS_FLAG 0
-extern "C" {
-#include <video/csputils.h>
-}
+#include "colorenumdata.hpp"
 
 enum class ColorSpace : int {
     Auto = (int)0,
-    BT601 = (int)1,
-    BT709 = (int)2,
-    SMPTE240M = (int)3,
-    YCgCo = (int)4,
-    RGB = (int)5
+    SMPTE240M = (int)1,
+    BT601 = (int)2,
+    BT709 = (int)3,
+    BT2020NCL = (int)4,
+    BT2020CL = (int)5,
+    RGB = (int)6,
+    XYZ = (int)7,
+    YCgCo = (int)8
 };
 
 Q_DECLARE_METATYPE(ColorSpace)
@@ -47,15 +48,15 @@ class EnumInfo<ColorSpace> {
     typedef ColorSpace Enum;
 public:
     typedef ColorSpace type;
-    using Data =  mp_csp;
+    using Data =  ColorEnumData;
     struct Item {
         Enum value;
         QString name, key;
-        mp_csp data;
+        ColorEnumData data;
     };
-    using ItemList = std::array<Item, 6>;
+    using ItemList = std::array<Item, 9>;
     static constexpr auto size() -> int
-    { return 6; }
+    { return 9; }
     static constexpr auto typeName() -> const char*
     { return "ColorSpace"; }
     static constexpr auto typeKey() -> const char*
@@ -68,19 +69,22 @@ public:
     { auto i = item(e); return i ? i->name : QString(); }
     static auto key(Enum e) -> QString
     { auto i = item(e); return i ? i->key : QString(); }
-    static auto data(Enum e) -> mp_csp
-    { auto i = item(e); return i ? i->data : mp_csp(); }
+    static auto data(Enum e) -> ColorEnumData
+    { auto i = item(e); return i ? i->data : ColorEnumData(); }
     static auto description(int e) -> QString
     { return description((Enum)e); }
     static auto description(Enum e) -> QString
     {
         switch (e) {
         case Enum::Auto: return qApp->translate("EnumInfo", "Auto");
+        case Enum::SMPTE240M: return qApp->translate("EnumInfo", "SMPTE-240M");
         case Enum::BT601: return qApp->translate("EnumInfo", "BT.601(SD)");
         case Enum::BT709: return qApp->translate("EnumInfo", "BT.709(HD)");
-        case Enum::SMPTE240M: return qApp->translate("EnumInfo", "SMPTE-240M");
-        case Enum::YCgCo: return qApp->translate("EnumInfo", "YCgCo");
+        case Enum::BT2020NCL: return qApp->translate("EnumInfo", "BT.2020-NCL(UHD)");
+        case Enum::BT2020CL: return qApp->translate("EnumInfo", "BT.2020-CL(UHD)");
         case Enum::RGB: return qApp->translate("EnumInfo", "RGB");
+        case Enum::XYZ: return qApp->translate("EnumInfo", "XYZ");
+        case Enum::YCgCo: return qApp->translate("EnumInfo", "YCgCo");
         default: return QString();
         }
     }
@@ -110,7 +114,7 @@ public:
         val = it->value;
         return true;
     }
-    static auto fromData(const mp_csp &data,
+    static auto fromData(const ColorEnumData &data,
                          Enum def = default_()) -> Enum
     {
         auto it = std::find_if(info.cbegin(), info.cend(),

@@ -13,7 +13,7 @@
 #include "pref.hpp"
 #include "streamtrack.hpp"
 #include "misc/downloader.hpp"
-#include "video/videorendereritem.hpp"
+#include "video/videorenderer.hpp"
 #include "subtitle/subtitlerendereritem.hpp"
 #include "opengl/opengllogger.hpp"
 #include "quick/themeobject.hpp"
@@ -67,7 +67,7 @@ struct MainWindow::Data {
     RecentInfo recent;
     AppState as;
     PlayEngine engine;
-    VideoRenderer vr;
+    VideoRenderer &vr = *engine.videoRenderer();
     SubtitleRendererItem subtitle;
     QPoint prevPos;
     YouTubeDialog *youtube = nullptr;

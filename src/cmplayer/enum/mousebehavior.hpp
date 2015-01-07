@@ -79,29 +79,20 @@ public:
     static auto description(Enum e) -> QString
     {
         switch (e) {
-        case Enum::DoubleClick:
-            return qApp->translate("EnumInfo", "Double click");
-        case Enum::MiddleClick:
-            return qApp->translate("EnumInfo", "Middle button");
-        case Enum::ScrollUp:
-            return qApp->translate("EnumInfo", "Scroll up");
-        case Enum::ScrollDown:
-            return qApp->translate("EnumInfo", "Scroll down");
-        default:
-            break;
-        }
-        auto s = qApp->translate("EnumInfo", "Extra button %1");
-        switch (e) {
-            case Enum::Extra1Click: return s.arg(1);
-            case Enum::Extra2Click: return s.arg(2);
-            case Enum::Extra3Click: return s.arg(3);
-            case Enum::Extra4Click: return s.arg(4);
-            case Enum::Extra5Click: return s.arg(5);
-            case Enum::Extra6Click: return s.arg(6);
-            case Enum::Extra7Click: return s.arg(7);
-            case Enum::Extra8Click: return s.arg(8);
-            case Enum::Extra9Click: return s.arg(9);
-            default:                return QString();
+        case Enum::DoubleClick: return qApp->translate("EnumInfo", "Double click");
+        case Enum::MiddleClick: return qApp->translate("EnumInfo", "Middle button");
+        case Enum::ScrollUp: return qApp->translate("EnumInfo", "Scroll up: ");
+        case Enum::ScrollDown: return qApp->translate("EnumInfo", "Scroll down");
+        case Enum::Extra1Click: return qApp->translate("EnumInfo", "Extra button 1");
+        case Enum::Extra2Click: return qApp->translate("EnumInfo", "Extra button 2");
+        case Enum::Extra3Click: return qApp->translate("EnumInfo", "Extra button 3");
+        case Enum::Extra4Click: return qApp->translate("EnumInfo", "Extra button 4");
+        case Enum::Extra5Click: return qApp->translate("EnumInfo", "Extra button 5");
+        case Enum::Extra6Click: return qApp->translate("EnumInfo", "Extra button 6");
+        case Enum::Extra7Click: return qApp->translate("EnumInfo", "Extra button 7");
+        case Enum::Extra8Click: return qApp->translate("EnumInfo", "Extra button 8");
+        case Enum::Extra9Click: return qApp->translate("EnumInfo", "Extra button 9");
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

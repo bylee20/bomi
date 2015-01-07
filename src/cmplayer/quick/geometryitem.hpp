@@ -1,6 +1,8 @@
 #ifndef GEOMETRYITEM_HPP
 #define GEOMETRYITEM_HPP
 
+#include <QQuickItem>
+
 class GeometryItem : public QQuickItem {
     Q_OBJECT
 public:

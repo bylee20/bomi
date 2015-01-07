@@ -63,22 +63,13 @@ HEADERS += \
 	video/videooutput.hpp \
 	video/videoformat.hpp \
 	video/hwacc.hpp \
-	video/hwacc_vaapi.hpp \
-	video/hwacc_vdpau.hpp \
-	video/hwacc_vda.hpp \
 	video/videofilter.hpp \
 	video/deintoption.hpp \
 	video/letterboxitem.hpp \
 	video/ffmpegfilters.hpp \
 	video/softwaredeinterlacer.hpp \
-	video/vaapipostprocessor.hpp \
-	video/videoframeshader.glsl.hpp \
 	video/videoframeshader.hpp \
 	video/videocolor.hpp \
-	video/hwacc_helper.hpp \
-	video/videorendereritem.hpp \
-	video/mposditem.hpp \
-	video/mposdbitmap.hpp \
 	video/deintcaps.hpp \
 	video/videoimagepool.hpp \
 	video/kernel3x3.hpp \
@@ -111,7 +102,6 @@ HEADERS += \
 	quick/osdthemeobject.hpp \
 	quick/themeobject.hpp \
 	quick/globalqmlobject.hpp \
-	opengl/interpolator.hpp \
 	opengl/openglmisc.hpp \
 	opengl/openglvertex.hpp \
 	opengl/opengltexturebase.hpp \
@@ -156,7 +146,7 @@ HEADERS += \
 	enum/enums.hpp \
 	enum/generateplaylist.hpp \
 	enum/horizontalalignment.hpp \
-	enum/interpolatortype.hpp \
+	enum/interpolator.hpp \
 	enum/keymodifier.hpp \
 	enum/movetoward.hpp \
 	enum/osdscalepolicy.hpp \
@@ -228,9 +218,7 @@ HEADERS += \
     opengl/openglbenchmarker.hpp \
     enum/colorspace.hpp \
     player/mainwindow_p.hpp \
-    video/videotexture.hpp \
     enum/quicksnapshotsave.hpp \
-    video/videodata.hpp \
     video/mpimage.hpp \
     enum/mousebehavior.hpp \
     misc/speedmeasure.hpp \
@@ -242,7 +230,9 @@ HEADERS += \
     misc/matchstring.hpp \
     misc/simplelistdelegate.hpp \
     player/pref_helper.hpp \
-    widget/prefwidgets.hpp
+    widget/prefwidgets.hpp \
+    enum/colorenumdata.hpp \
+    video/videorenderer.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -253,23 +243,15 @@ SOURCES += \
 	audio/audionormalizeroption.cpp \
 	video/videoimagepool.cpp \
 	video/videooutput.cpp \
-	video/videorendereritem.cpp \
 	video/hwacc.cpp \
 	video/videoformat.cpp \
-	video/hwacc_vaapi.cpp \
-	video/hwacc_vdpau.cpp \
-	video/hwacc_vda.cpp \
 	video/videofilter.cpp \
 	video/deintoption.cpp \
 	video/letterboxitem.cpp \
 	video/videoframeshader.cpp \
 	video/ffmpegfilters.cpp \
 	video/softwaredeinterlacer.cpp \
-	video/vaapipostprocessor.cpp \
 	video/videocolor.cpp \
-	video/hwacc_helper.cpp \
-	video/mposditem.cpp \
-	video/mposdbitmap.cpp \
 	video/deintcaps.cpp \
 	video/kernel3x3.cpp \
 	subtitle/subtitle.cpp \
@@ -301,7 +283,6 @@ SOURCES += \
 	quick/osdthemeobject.cpp \
 	quick/themeobject.cpp \
 	quick/globalqmlobject.cpp \
-	opengl/interpolator.cpp \
 	opengl/openglmisc.cpp \
 	opengl/openglvertex.cpp \
 	opengl/opengltexturebase.cpp \
@@ -346,7 +327,7 @@ SOURCES += \
 	enum/enums.cpp \
 	enum/generateplaylist.cpp \
 	enum/horizontalalignment.cpp \
-	enum/interpolatortype.cpp \
+	enum/interpolator.cpp \
 	enum/keymodifier.cpp \
 	enum/movetoward.cpp \
 	enum/osdscalepolicy.cpp \
@@ -410,9 +391,7 @@ SOURCES += \
     player/mainwindow_p.cpp \
     player/mainwindow_m.cpp \
     player/playengine_p.cpp \
-    video/videotexture.cpp \
     enum/quicksnapshotsave.cpp \
-    video/videodata.cpp \
     video/mpimage.cpp \
     enum/mousebehavior.cpp \
     misc/speedmeasure.cpp \
@@ -424,7 +403,8 @@ SOURCES += \
     misc/matchstring.cpp \
     misc/simplelistdelegate.cpp \
 	player/pref_helper.cpp \
-    widget/prefwidgets.cpp
+    widget/prefwidgets.cpp \
+    video/videorenderer.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

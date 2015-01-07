@@ -7,7 +7,7 @@
 #include "enum/subtitleautoselect.hpp"
 #include "enum/osdscalepolicy.hpp"
 #include "enum/clippingmethod.hpp"
-#include "enum/interpolatortype.hpp"
+#include "enum/interpolator.hpp"
 #include "enum/textthemestyle.hpp"
 #include "enum/channellayout.hpp"
 
@@ -46,7 +46,7 @@ using SubtitleAutoloadComboBox = EnumComboBox<SubtitleAutoload>;
 using SubtitleAutoselectComboBox = EnumComboBox<SubtitleAutoselect>;
 using OsdScalePolicyComboBox = EnumComboBox<OsdScalePolicy>;
 using ClippingMethodComboBox = EnumComboBox<ClippingMethod>;
-using InterpolatorTypeComboBox = EnumComboBox<InterpolatorType>;
+using InterpolatorComboBox = EnumComboBox<Interpolator>;
 using TextThemeStyleComboBox = EnumComboBox<TextThemeStyle>;
 using ChannelComboBox = EnumComboBox<ChannelLayout>;
 

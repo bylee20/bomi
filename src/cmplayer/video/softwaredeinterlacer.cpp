@@ -118,7 +118,7 @@ auto SoftwareDeinterlacer::pop() -> MpImage
                 ret->fields |= fields[topFirst];
             else {
                 ret->fields &= ~(MP_IMGFIELD_BOTTOM | MP_IMGFIELD_TOP);
-                ret->fields |= fields[!topFirst] | MP_IMGFIELD_ADDITIONAL;
+                ret->fields |= fields[!topFirst];
             }
             break;
         } case Graph: {

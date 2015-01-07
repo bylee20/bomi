@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
         resize(d->as.win_size);
     }
 
-    d->vr.setEffects(d->as.state.video_effects);
+    d->engine.setVideoEffects(d->as.state.video_effects);
     auto effectGroup = d->menu(u"video"_q)(u"filter"_q).g();
     for (auto &item : VideoEffectInfo::items()) {
         if (d->as.state.video_effects & item.value)
@@ -85,20 +85,20 @@ MainWindow::MainWindow(QWidget *parent)
     d->menu(u"tool"_q)[u"undo"_q]->setEnabled(d->undo->canUndo());
     d->menu(u"tool"_q)[u"redo"_q]->setEnabled(d->undo->canRedo());
 
-    if (!VideoRenderer::supportsHighQualityRendering()) {
-        auto &video = d->menu(u"video"_q);
-        auto key = _L(DitheringInfo::typeKey());
-        video(key).g(key)->find(Dithering::Fruit)->setDisabled(true);
-        key = _L(InterpolatorTypeInfo::typeKey());
-        auto disable = [&] (const QString &subkey) {
-            for (auto a : video(subkey).g(key)->actions()) {
-                if (a->data().toInt() != InterpolatorType::Bilinear)
-                    a->setDisabled(true);
-            }
-        };
-        disable(u"chroma-upscaler"_q);
-        disable(u"interpolator"_q);
-    }
+//    if (!VideoRenderer::supportsHighQualityRendering()) {
+//        auto &video = d->menu(u"video"_q);
+//        auto key = _L(DitheringInfo::typeKey());
+//        video(key).g(key)->find(Dithering::Fruit)->setDisabled(true);
+//        key = _L(InterpolatorInfo::typeKey());
+//        auto disable = [&] (const QString &subkey) {
+//            for (auto a : video(subkey).g(key)->actions()) {
+//                if (a->data().toInt() != Interpolator::Bilinear)
+//                    a->setDisabled(true);
+//            }
+//        };
+//        disable(u"chroma-upscaler"_q);
+//        disable(u"interpolator"_q);
+//    }
     if (TrayIcon::isAvailable()) {
         d->tray = new TrayIcon(cApp.defaultIcon(), this);
         connect(d->tray, &TrayIcon::activated,

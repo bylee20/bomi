@@ -3,13 +3,12 @@
 
 #include "enums.hpp"
 #define COLORRANGE_IS_FLAG 0
+#include "colorenumdata.hpp"
 
 enum class ColorRange : int {
     Auto = (int)0,
     Limited = (int)1,
-    Full = (int)2,
-    Remap = (int)3,
-    Extended = (int)4
+    Full = (int)2
 };
 
 Q_DECLARE_METATYPE(ColorRange)
@@ -43,15 +42,15 @@ class EnumInfo<ColorRange> {
     typedef ColorRange Enum;
 public:
     typedef ColorRange type;
-    using Data =  QVariant;
+    using Data =  ColorEnumData;
     struct Item {
         Enum value;
         QString name, key;
-        QVariant data;
+        ColorEnumData data;
     };
-    using ItemList = std::array<Item, 5>;
+    using ItemList = std::array<Item, 3>;
     static constexpr auto size() -> int
-    { return 5; }
+    { return 3; }
     static constexpr auto typeName() -> const char*
     { return "ColorRange"; }
     static constexpr auto typeKey() -> const char*
@@ -64,8 +63,8 @@ public:
     { auto i = item(e); return i ? i->name : QString(); }
     static auto key(Enum e) -> QString
     { auto i = item(e); return i ? i->key : QString(); }
-    static auto data(Enum e) -> QVariant
-    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto data(Enum e) -> ColorEnumData
+    { auto i = item(e); return i ? i->data : ColorEnumData(); }
     static auto description(int e) -> QString
     { return description((Enum)e); }
     static auto description(Enum e) -> QString
@@ -74,8 +73,6 @@ public:
         case Enum::Auto: return qApp->translate("EnumInfo", "Auto");
         case Enum::Limited: return qApp->translate("EnumInfo", "Limited Range");
         case Enum::Full: return qApp->translate("EnumInfo", "Full Range");
-        case Enum::Remap: return qApp->translate("EnumInfo", "Remap Range");
-        case Enum::Extended: return qApp->translate("EnumInfo", "Extended Range");
         default: return QString();
         }
     }
@@ -105,7 +102,7 @@ public:
         val = it->value;
         return true;
     }
-    static auto fromData(const QVariant &data,
+    static auto fromData(const ColorEnumData &data,
                          Enum def = default_()) -> Enum
     {
         auto it = std::find_if(info.cbegin(), info.cend(),

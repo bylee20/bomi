@@ -113,20 +113,8 @@ PrefDialog::PrefDialog(QWidget *parent)
     auto vbox = new QVBoxLayout;
     vbox->setMargin(0);
 
-//    auto backends = HwAcc::availableBackends();
-//    for (auto type : backends) {
-//        const auto desc = HwAcc::backendDescription(type);
-//        d->ui.hwaccel_backend->addItem(desc, QVariant::fromValue(type));
-//    }
-
     void(QComboBox::*curIdxChanged)(int) = &QComboBox::currentIndexChanged;
-    auto updateCodecList = [this] () {
-        const auto type = d->ui.hwaccel_backend->currentData().value<HwAcc::Type>();
-        d->ui.hwaccel_codecs->setBackend(type);
-    };
-    connect(d->ui.hwaccel_backend, curIdxChanged, this, updateCodecList);
-    updateCodecList();
-
+    d->ui.enable_hwaccel->setEnabled(HwAcc::isAvailable());
     auto checkHearbeat = [this] () {
         const auto enable = d->ui.use_heartbeat->isChecked()
                             && d->ui.disable_screensaver->isChecked();

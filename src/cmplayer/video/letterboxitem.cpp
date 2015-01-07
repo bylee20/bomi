@@ -13,7 +13,8 @@ auto LetterboxItem::set(const QRectF &outer, const QRectF &inner) -> bool
         return false;
     m_screen = outer & inner;
     reserve(UpdateGeometry);
-    polishAndUpdate();
+    polish();
+    update();
     return true;
 }
 

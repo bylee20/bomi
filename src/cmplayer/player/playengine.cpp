@@ -10,18 +10,26 @@ PlayEngine::PlayEngine()
 
     _Debug("Create audio/video plugins");
     d->audio = new AudioController(this);
-    d->video = new VideoOutput(this);
+    d->video = new VideoRenderer;
     d->filter = new VideoFilter;
+
+    d->video->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
+        { d->renderVideoFrame(fbo); });
+    //        connect(d->renderer, &VideoRenderer::formatChanged,
+    //                [this] (const VideoFormat &format) {
+    //            auto renderer = d->videoInfo.renderer();
+    //            renderer->setImgFmt(format.params().imgfmt);
+    //            renderer->setBppSize(format.size());
+    //            renderer->setSize(format.displaySize());
+    //        });
 
     d->chapterInfo = new ChapterInfoObject(this, this);
     d->updateMediaName();
 
     _Debug("Make registrations and connections");
 
-    connect(d->video, &VideoOutput::formatChanged,
-            this, &PlayEngine::updateVideoFormat);
-    connect(d->video, &VideoOutput::droppedFramesChanged,
-            this, &PlayEngine::droppedFramesChanged);
+//    connect(d->video, &VideoOutput::formatChanged,
+//            this, &PlayEngine::updateVideoFormat);
 
     d->handle = mpv_create();
     auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower().trimmed();
@@ -84,11 +92,10 @@ PlayEngine::PlayEngine()
     setOption("input-terminal", "no");
     setOption("ad-lavc-downmix", "no");
     setOption("title", "\"\"");
-    setOption("vo", "opengl-cb");
-//    setOption("fixed-vo", "yes");
-    setOption("hwdec", "auto");
-    setOption("hwdec-codecs", "all");
-
+    setOption("vo", "opengl-cb:" + d->videoSubOptions());
+    setOption("fixed-vo", "yes");
+    auto hwdec = HwAcc::name();
+    setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.toLatin1().constData());
 
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
@@ -123,16 +130,19 @@ PlayEngine::PlayEngine()
     Q_ASSERT(d->glMpv);
     auto cbUpdate = [] (void *priv) {
         auto p = static_cast<PlayEngine*>(priv);
-        if (p->d->renderer)
-            p->d->renderer->updateForNewFrame(p->d->videoInfo.output()->size());
+        if (p->d->video)
+            p->d->video->updateForNewFrame(p->d->videoInfo.renderer()->size());
     };
     mpv_opengl_cb_set_update_callback(d->glMpv, cbUpdate, this);
+    mpv_opengl_cb_set_frame_queue_size(d->glMpv, 3);
+
+    d->fpsMeasure.setTimer([=]()
+        { d->videoInfo.renderer()->setFps(d->fpsMeasure.get()); }, 100000);
 }
 
 PlayEngine::~PlayEngine()
 {
     d->initialized = false;
-    qDebug() << "terminate mpv";
     mpv_terminate_destroy(d->handle);
     delete d->chapterInfo;
     delete d->audio;
@@ -168,8 +178,6 @@ auto PlayEngine::updateVideoFormat(VideoFormat format) -> void
 {
     if (_Change(d->videoFormat, format))
         emit videoFormatChanged(d->videoFormat);
-//    auto output = d->videoInfo->m_output;
-//    output->setBps(d->videoFormat.bitrate(output->m_fps));
 }
 
 auto PlayEngine::setSubtitleDelay(int ms) -> void
@@ -250,7 +258,7 @@ auto PlayEngine::subtitleStreams() const -> const StreamList&
 
 auto PlayEngine::videoRenderer() const -> VideoRenderer*
 {
-    return d->renderer;
+    return d->video;
 }
 
 auto PlayEngine::videoStreams() const -> const StreamList&
@@ -359,7 +367,7 @@ auto PlayEngine::setAudioDevice(const QString &device) -> void
 
 auto PlayEngine::screen() const -> QQuickItem*
 {
-    return d->renderer;
+    return d->video;
 }
 
 auto PlayEngine::setMinimumCache(qreal playback, qreal seeking) -> void
@@ -373,13 +381,10 @@ auto PlayEngine::volumeNormalizer() const -> double
     auto gain = d->audio->gain(); return gain < 0 ? 1.0 : gain;
 }
 
-auto PlayEngine::setHwAcc(int backend, const QVector<int> &codecs) -> void
+auto PlayEngine::setHwAcc(bool use, const QStringList &codecs) -> void
 {
-//    d->hwCodecs = _ToStringList(codecs, [] (int id) {
-//        const char *name = HwAcc::codecName(id);
-//        return name ? QString::fromLatin1(name) : QString();
-//    }).join(','_q).toLatin1();
-    d->hwBackend = static_cast<HwAcc::Type>(backend);
+    d->hwCodecs = codecs.join(','_q).toLatin1();
+    d->useHwAcc = use;
 }
 
 auto PlayEngine::isSubtitleStreamsVisible() const -> bool
@@ -443,11 +448,6 @@ auto PlayEngine::removeSubtitleStream(int id) -> void
         }
         d->tellmpv("sub_remove", id);
     }
-}
-
-auto PlayEngine::avgfps() const -> double
-{
-    return d->renderer->fps();
 }
 
 auto PlayEngine::avSync() const -> int
@@ -659,54 +659,6 @@ auto PlayEngine::setAudioSync(int sync) -> void
         d->setmpv_async("audio-delay", sync*0.001);
 }
 
-auto PlayEngine::fps() const -> double
-{
-    return d->fps;
-}
-
-auto PlayEngine::setVideoRenderer(VideoRenderer *renderer) -> void
-{
-    if (d->renderer != renderer) {
-        if (d->renderer) {
-            d->renderer->setRenderFrameFunction(nullptr);
-            disconnect(d->renderer, nullptr, this, nullptr);
-            disconnect(d->renderer, nullptr, d->filter, nullptr);
-            disconnect(d->filter, nullptr, d->renderer, nullptr);
-            disconnect(this, nullptr, d->renderer, nullptr);
-        }
-        auto render = [this] (OpenGLFramebufferObject *fbo) {
-            int vp[4] = {0, 0, fbo->width(), fbo->height()};
-            mpv_opengl_cb_render(d->glMpv, fbo->id(), vp);
-        };
-        d->renderer = renderer;
-        d->renderer->setRenderFrameFunction(render);
-        d->video->setRenderer(d->renderer);
-        connect(d->renderer, &VideoRenderer::fpsChanged,
-                d->videoInfo.renderer(), &VideoFormatInfoObject::setFps);
-//        connect(d->renderer, &VideoRenderer::formatChanged,
-//                [this] (const VideoFormat &format) {
-//            auto renderer = d->videoInfo.renderer();
-//            renderer->setImgFmt(format.params().imgfmt);
-//            renderer->setBppSize(format.size());
-//            renderer->setSize(format.displaySize());
-//        });
-        connect(d->renderer, &VideoRenderer::colorMatrixChanged, [this] () {
-            const auto info = d->videoInfo.renderer();
-            info->setSpace(d->renderer->colorMatrixSpace());
-            info->setRange(d->renderer->colorMatrixRange());
-        });
-        connect(d->renderer, &VideoRenderer::droppedFramesChanged,
-                &d->videoInfo, &VideoInfoObject::setDroppedFrames);
-        connect(d->renderer, &VideoRenderer::delayedFramesChanged,
-                &d->videoInfo, &VideoInfoObject::setDelayedFrames);
-    }
-}
-
-auto PlayEngine::droppedFrames() const -> int
-{
-    return d->renderer->droppedFrames();
-}
-
 auto PlayEngine::bitrate(double fps) const -> double
 {
     return d->videoFormat.bitrate(fps);
@@ -760,7 +712,6 @@ auto PlayEngine::setDeintOptions(const DeintOption &swdec,
     d->deint_swdec = swdec;
     d->deint_hwdec = hwdec;
     emit deintOptionsChanged();
-    d->renderer->setDeintOptions(swdec, hwdec);
 }
 
 auto PlayEngine::deintOptionForSwDec() const -> DeintOption
@@ -848,4 +799,76 @@ auto PlayEngine::audioDeviceList() const -> QList<AudioDevice>
 auto PlayEngine::setYouTube(YouTubeDialog *yt) -> void
 {
     d->youtube = yt;
+}
+
+auto PlayEngine::setColorRange(ColorRange range) -> void
+{
+    if (_Change(d->colorRange, range))
+        d->setmpv_async("colormatrix-input-range", _EnumData(range).option);
+}
+
+auto PlayEngine::setColorSpace(ColorSpace space) -> void
+{
+    if (_Change(d->colorSpace, space))
+        d->setmpv_async("colormatrix", _EnumData(space).option);
+}
+
+auto PlayEngine::setInterpolator(Interpolator type) -> void
+{
+    if (_Change(d->lscale, type))
+        d->updateVideoSubOptions();
+}
+
+auto PlayEngine::setChromaUpscaler(Interpolator type) -> void
+{
+    if (_Change(d->cscale, type))
+        d->updateVideoSubOptions();
+}
+
+auto PlayEngine::interpolator() const -> Interpolator
+{
+    return d->lscale;
+}
+
+auto PlayEngine::chromaUpscaler() const -> Interpolator
+{
+    return d->cscale;
+}
+
+auto PlayEngine::dithering() const -> Dithering
+{
+    return d->dithering;
+}
+
+auto PlayEngine::setDithering(Dithering dithering) -> void
+{
+    if (_Change(d->dithering, dithering))
+        d->updateVideoSubOptions();
+}
+
+auto PlayEngine::videoEqualizer() const -> VideoColor
+{
+    return d->videoEq;
+}
+
+auto PlayEngine::setVideoEqualizer(const VideoColor &eq) -> void
+{
+    if (_Change(d->videoEq, eq)) {
+        d->updateColorMatrix();
+        d->updateVideoSubOptions();
+    }
+}
+
+auto PlayEngine::setVideoEffects(VideoEffects e) -> void
+{
+    if (_Change(d->videoEffects, e)) {
+        d->video->setFlipped(e & VideoEffect::FlipH, e & VideoEffect::FlipV);
+        d->updateColorMatrix();
+        d->updateVideoSubOptions();
+    }
+}
+
+auto PlayEngine::videoEffects() const -> VideoEffects
+{
+    return d->videoEffects;
 }

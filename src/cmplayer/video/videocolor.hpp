@@ -38,7 +38,7 @@ public:
     auto setHue(int v) -> void { m[Hue] = clip(v); }
     auto isZero() const -> bool
         { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
-    auto matrix(ColorSpace csp, ColorRange range) const -> QMatrix4x4;
+    auto matrix() const -> QMatrix4x4;
     auto getText(Type type) const -> QString;
     auto packed() const -> qint64;
     auto toString() const -> QString;

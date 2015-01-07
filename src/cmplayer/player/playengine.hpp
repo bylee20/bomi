@@ -3,16 +3,18 @@
 
 #include "mrl.hpp"
 #include "mediamisc.hpp"
+#include "enum/videoeffect.hpp"
 
 class VideoRenderer;                    class VideoFormat;
 class DeintOption;                      class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct OsdTheme;
 struct AudioNormalizerOption;           struct SubtitleFileInfo;
-enum class ClippingMethod;
+enum class ClippingMethod;              enum class VideoEffect;
 enum class DeintMethod;                 enum class DeintMode;
-enum class ChannelLayout;               enum class InterpolatorType;
+enum class ChannelLayout;               enum class Interpolator;
 enum class ColorRange;                  enum class ColorSpace;
+enum class Dithering;
 class AudioInfoObject;                  class VideoInfoObject;
 class YouTubeDialog;                    struct AudioDevice;
 class StreamTrack;                      class SubtitleInfoObject;
@@ -52,7 +54,6 @@ class PlayEngine : public QObject {
     Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
     Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
     Q_PROPERTY(int avSync READ avSync NOTIFY avSyncChanged)
-    Q_PROPERTY(double avgfps READ avgfps)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
@@ -61,7 +62,6 @@ class PlayEngine : public QObject {
     Q_PROPERTY(double rate READ rate NOTIFY tick)
     Q_PROPERTY(QQuickItem *screen READ screen)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
-    Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
     Q_PROPERTY(SubtitleInfoObject* subtitle READ subInfo NOTIFY subInfoChanged)
 public:
@@ -82,7 +82,7 @@ public:
     auto duration() const -> int;
     auto mrl() const -> Mrl;
     auto isSeekable() const -> bool;
-    auto setHwAcc(int backend, const QVector<int> &codecs) -> void;
+    auto setHwAcc(bool use, const QStringList &codecs) -> void;
     auto isRunning() const -> bool { return m_state & Running; }
     auto isPlaying() const -> bool {return m_state & Playing;}
     auto isPaused() const -> bool {return m_state & Paused;}
@@ -107,7 +107,6 @@ public:
     auto setTempoScalerActivated(bool on) -> void;
     auto isVolumeNormalizerActivated() const -> bool;
     auto isTempoScaled() const -> bool;
-    auto fps() const -> double;
     auto videoRenderer() const -> VideoRenderer*;
     auto videoFormat() const -> VideoFormat;
     auto videoStreams() const -> const StreamList&;
@@ -146,12 +145,10 @@ public:
     auto audioInfo() const -> AudioInfoObject*;
     auto videoInfo() const -> VideoInfoObject*;
     auto avSync() const -> int;
-    auto avgfps() const -> double;
     auto stateText() const -> QString { return stateText(m_state); }
     auto rate() const -> double { return (double)(time()-begin())/duration(); }
     auto cacheSize() const -> int;
     auto cacheUsed() const -> int;
-    auto droppedFrames() const -> int;
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterInfo() const -> ChapterInfoObject*;
@@ -169,7 +166,6 @@ public:
     auto setVolume(int volume) -> void;
     auto setAmp(double amp) -> void;
     auto setMuted(bool muted) -> void;
-    auto setVideoRenderer(VideoRenderer *renderer) -> void;
     auto audioDeviceList() const -> QList<AudioDevice>;
     auto stop() -> void;
     auto reload() -> void;
@@ -182,12 +178,27 @@ public:
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL(QOpenGLContext *ctx) -> void;
 
+    auto setColorRange(ColorRange range) -> void;
+    auto setColorSpace(ColorSpace space) -> void;
+    auto colorRange() const -> ColorRange;
+    auto colorSpace() const -> ColorSpace;
+    auto videoEqualizer() const -> VideoColor;
+    auto setVideoEqualizer(const VideoColor &eq) -> void;
+    auto setInterpolator(Interpolator type) -> void;
+    auto setChromaUpscaler(Interpolator type) -> void;
+    auto interpolator() const -> Interpolator;
+    auto chromaUpscaler() const -> Interpolator;
+    auto setDithering(Dithering dithering) -> void;
+    auto dithering() const -> Dithering;
+
+    auto setVideoEffects(VideoEffects effects) -> void;
+    auto videoEffects() const -> VideoEffects;
     Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
 signals:
     void subInfoChanged();
-    void fpsChanged(double fps);
+//    void fpsChanged(double fps);
     void seeked(int time);
     void sought();
     void tempoScaledChanged(bool on);
@@ -217,7 +228,6 @@ signals:
     void hwaccChanged();
     void cacheUsedChanged();
     void hasVideoChanged();
-    void droppedFramesChanged();
     void currentChapterChanged(int chapter);
     void currentAudioStreamChanged(int stream);
     void currentSubtitleStreamChanged(int stream);

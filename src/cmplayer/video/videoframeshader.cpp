@@ -7,11 +7,11 @@
 //#include "opengl/interpolator.hpp"
 //#include "opengl/opengltexture2d.hpp"
 //#include "opengl/opengltexturebinder.hpp"
-//#include "enum/interpolatortype.hpp"
+//#include "enum/interpolator.hpp"
 
 //VideoFrameShader::ShaderInfo::ShaderInfo()
 //{
-//    interpolator = Interpolator::get(InterpolatorType::Bilinear);
+//    interpolator = Interpolator::get(Interpolator::Bilinear);
 //}
 
 //using Vertex = OGL::TextureVertex;
@@ -85,7 +85,7 @@
 //    updateColorMatrix();
 //}
 
-//auto VideoFrameShader::setChromaUpscaler(InterpolatorType type) -> void
+//auto VideoFrameShader::setChromaUpscaler(Interpolator type) -> void
 //{
 //    for (auto &shader : m_shaders) {
 //        if (shader.interpolator->type() != type) {
@@ -182,7 +182,7 @@
 //const vec2 tex_size = vec2(texWidth, texHeight);
 //)"_b;
 //        auto interpolator = m_space != ColorSpace::RGB ? shader.interpolator
-//            : Interpolator::get(InterpolatorType::Bilinear);
+//            : Interpolator::get(Interpolator::Bilinear);
 //        m_lutCount = interpolator->textures();
 //        Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
 

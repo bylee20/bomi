@@ -41,11 +41,11 @@ class EnumInfo<Dithering> {
     typedef Dithering Enum;
 public:
     typedef Dithering type;
-    using Data =  QVariant;
+    using Data =  QByteArray;
     struct Item {
         Enum value;
         QString name, key;
-        QVariant data;
+        QByteArray data;
     };
     using ItemList = std::array<Item, 3>;
     static constexpr auto size() -> int
@@ -62,8 +62,8 @@ public:
     { auto i = item(e); return i ? i->name : QString(); }
     static auto key(Enum e) -> QString
     { auto i = item(e); return i ? i->key : QString(); }
-    static auto data(Enum e) -> QVariant
-    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto data(Enum e) -> QByteArray
+    { auto i = item(e); return i ? i->data : QByteArray(); }
     static auto description(int e) -> QString
     { return description((Enum)e); }
     static auto description(Enum e) -> QString
@@ -101,7 +101,7 @@ public:
         val = it->value;
         return true;
     }
-    static auto fromData(const QVariant &data,
+    static auto fromData(const QByteArray &data,
                          Enum def = default_()) -> Enum
     {
         auto it = std::find_if(info.cbegin(), info.cend(),
@@ -110,7 +110,7 @@ public:
         return it != info.cend() ? it->value : def;
     }
     static constexpr auto default_() -> Enum
-    { return Dithering::Fruit; }
+    { return Dithering::None; }
 private:
     static const ItemList info;
 };

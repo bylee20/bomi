@@ -16,17 +16,19 @@
 #include "video/hwacc.hpp"
 #include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
-#include "video/videorendereritem.hpp"
+#include "video/videorenderer.hpp"
 #include "video/videofilter.hpp"
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
 #include "misc/osdtheme.hpp"
+#include "misc/speedmeasure.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/colorspace.hpp"
 #include "enum/colorrange.hpp"
 #include "enum/audiodriver.hpp"
 #include "enum/channellayout.hpp"
-#include "enum/interpolatortype.hpp"
+#include "enum/interpolator.hpp"
+#include "enum/dithering.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include <libmpv/client.h>
 #include <libmpv/opengl_cb.h>
@@ -196,6 +198,7 @@ struct PlayEngine::Data {
     PlayEngine *p = nullptr;
     Thread thread{p};
     QTemporaryDir confDir;
+    QTemporaryFile customShader;
     QStringList audioPriorty;
     QVector<Observation> observations;
 
@@ -225,8 +228,10 @@ struct PlayEngine::Data {
     int updateEventMax = UpdateEventBegin;
 
     mpv_handle *handle = nullptr;
-    VideoOutput *video = nullptr;
+
+//    VideoOutput *video = nullptr;
     VideoFilter *filter = nullptr;
+    bool useHwAcc = false;
     QByteArray hwCodecs;
     QVector<SubtitleFileInfo> subtitleFiles;
     ChannelLayout layout = ChannelLayoutInfo::default_();
@@ -235,15 +240,17 @@ struct PlayEngine::Data {
     QVector<StreamData> streams = {StreamData(), StreamData(), StreamData()};
     Mrl mpvMrl;
     mpv_opengl_cb_context *glMpv = nullptr;
+    QMatrix4x4 c_matrix;
+    VideoColor videoEq;
+    VideoEffects videoEffects = 0;
 
     YouTubeDialog *youtube = nullptr;
 
     OsdTheme subStyle;
-    VideoRenderer *renderer = nullptr;
+    VideoRenderer *video = nullptr;
     ChapterList chapters;
     EditionList editions;
 
-    HwAcc::Type hwBackend = HwAcc::None;
     VideoFormat videoFormat;
     DeintOption deint_swdec, deint_hwdec;
     DeintMode deint = DeintMode::Auto;
@@ -251,9 +258,29 @@ struct PlayEngine::Data {
 
     StartInfo startInfo, nextInfo;
 
+    Interpolator lscale = Interpolator::Bilinear, cscale = Interpolator::Bilinear;
+    ColorSpace colorSpace = ColorSpace::Auto;
+    ColorRange colorRange = ColorRange::Auto;
+    Dithering dithering = Dithering::None;
+
+    quint64 drawnFrames = 0, droppedFrames = 0, delayedFrames = 0;
+    SpeedMeasure<quint64> fpsMeasure{5, 20};
+
+    auto clearTimings()
+    {
+        fpsMeasure.reset();
+        videoInfo.setDroppedFrames(0);
+        videoInfo.setDelayedFrames(0);
+        videoInfo.renderer()->setFps(0);
+        drawnFrames = 0;
+    }
+
     auto af() const -> QByteArray;
     auto vf() const -> QByteArray;
-    auto vo() const -> QByteArray;
+    auto videoSubOptions() -> QByteArray;
+    auto updateVideoSubOptions() -> void;
+    auto updateColorMatrix() -> void;
+    auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
 
     auto postState(State state) -> void { _PostEvent(p, StateChange, state); }
     auto exec() -> void;
@@ -300,6 +327,12 @@ struct PlayEngine::Data {
     auto check(int err, const char *msg, const Args &... args) -> bool;
     template<class... Args>
     auto fatal(int err, const char *msg, const Args &... args) -> void;
+    auto getmpvosd(const char *name) -> QString {
+        auto buf = mpv_get_property_osd_string(handle, name);
+        auto ret = QString::fromLatin1(buf);
+        mpv_free(buf);
+        return ret;
+    }
 
     auto observation(int event) -> const Observation&
     {

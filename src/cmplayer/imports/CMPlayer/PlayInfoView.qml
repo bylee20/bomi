@@ -24,9 +24,6 @@ Item {
 
     property real __cpu: 0.0
     property real __mem: 0.0
-    property real __fps: 1.0
-    property real __sync: 0.0
-    property real __volnorm: 1.0
 
     Timer {
         running: parent.visible
@@ -35,15 +32,6 @@ Item {
         onTriggered: {
             __cpu = Util.cpu
             __mem = Util.memory
-        }
-    }
-    Timer {
-        running: parent.visible
-        interval: 100
-        repeat: true
-        onTriggered: {
-            __fps = engine.avgfps
-            __volnorm = engine.volumeNormalizerActivated ? engine.volumeNormalizer*100.0 : -1.0;
         }
     }
     ColumnLayout {
@@ -105,10 +93,10 @@ Item {
         }
 
         PlayInfoText {
-            text: qsTr("Dropped Frames: %1").arg(video.droppedFrames)
+            text: qsTr("Dropped Frames: %1 (%2fps)").arg(video.droppedFrames).arg(video.droppedFps.toFixed(3));
         }
         PlayInfoText {
-            text: qsTr("Delayed Frames: %1").arg(video.delayedFrames)
+            text: qsTr("Delayed Frames: %1 (%2ms)").arg(video.delayedFrames).arg(video.delayedTime);
         }
 
         PlayInfoText {

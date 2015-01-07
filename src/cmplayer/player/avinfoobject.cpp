@@ -126,13 +126,10 @@ auto VideoFormatInfoObject::rangeText() const -> QString
         return u"Limited"_q;
     case ColorRange::Full:
         return u"Full"_q;
-    case ColorRange::Extended:
-        return u"Extended"_q;
-    case ColorRange::Remap:
-        return u"Remapped"_q;
-    default:
+    case ColorRange::Auto:
         return u"--"_q;
     }
+    return QString();
 }
 
 auto VideoFormatInfoObject::spaceText() const -> QString
@@ -148,9 +145,46 @@ auto VideoFormatInfoObject::spaceText() const -> QString
         return u"YCgCo"_q;
     case ColorSpace::RGB:
         return u"RGB"_q;
-    default:
+    case ColorSpace::XYZ:
+        return u"XYZ"_q;
+    case ColorSpace::BT2020NCL:
+        return u"BT.2020-NCL"_q;
+    case ColorSpace::BT2020CL:
+        return u"BT.2020-CL"_q;
+    case ColorSpace::Auto:
         return u"--"_q;
     }
+    return QString();
+}
+
+VideoInfoObject::VideoInfoObject()
+{
+    connect(&m_output, &VideoFormatInfoObject::fpsChanged,
+            this, &VideoInfoObject::delayedTimeChanged);
+    connect(this, &VideoInfoObject::delayedFramesChanged,
+            this, &VideoInfoObject::delayedTimeChanged);
+    connect(&m_timer, &QTimer::timeout, this, [=] () {
+        auto fps = 0.0;
+        if (m_dropped)
+            fps = m_dropped / (m_time.elapsed() * 1e-3);
+        if (_Change(m_droppedFps, fps))
+            emit droppedFpsChanged();
+    });
+    m_timer.setInterval(100);
+}
+
+void VideoInfoObject::setDroppedFrames(int f)
+{
+    if (f > 0 && m_dropped < 1) {
+        QMetaObject::invokeMethod(&m_timer, "start");
+        m_time.restart();
+    } else if (f < 1 && m_timer.isActive()) {
+        QMetaObject::invokeMethod(&m_timer, "stop");
+        if (_Change(m_droppedFps, 0.0))
+            emit droppedFpsChanged();
+    }
+    if (_Change(m_dropped, f))
+        emit droppedFramesChanged();
 }
 
 /******************************************************************************/

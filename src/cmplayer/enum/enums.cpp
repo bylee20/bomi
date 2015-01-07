@@ -11,7 +11,7 @@
 #include "deintmode.hpp"
 #include "deintdevice.hpp"
 #include "deintmethod.hpp"
-#include "interpolatortype.hpp"
+#include "interpolator.hpp"
 #include "audiodriver.hpp"
 #include "clippingmethod.hpp"
 #include "staysontop.hpp"
@@ -42,7 +42,7 @@ bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<DeintMode>()
         || userType == qMetaTypeId<DeintDevice>()
         || userType == qMetaTypeId<DeintMethod>()
-        || userType == qMetaTypeId<InterpolatorType>()
+        || userType == qMetaTypeId<Interpolator>()
         || userType == qMetaTypeId<AudioDriver>()
         || userType == qMetaTypeId<ClippingMethod>()
         || userType == qMetaTypeId<StaysOnTop>()
@@ -100,9 +100,9 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
     } else    if (varType == qMetaTypeId<DeintMethod>()) {
         toSql = _EnumVariantToSql<DeintMethod>;
         fromSql = _EnumVariantFromSql<DeintMethod>;
-    } else    if (varType == qMetaTypeId<InterpolatorType>()) {
-        toSql = _EnumVariantToSql<InterpolatorType>;
-        fromSql = _EnumVariantFromSql<InterpolatorType>;
+    } else    if (varType == qMetaTypeId<Interpolator>()) {
+        toSql = _EnumVariantToSql<Interpolator>;
+        fromSql = _EnumVariantFromSql<Interpolator>;
     } else    if (varType == qMetaTypeId<AudioDriver>()) {
         toSql = _EnumVariantToSql<AudioDriver>;
         fromSql = _EnumVariantFromSql<AudioDriver>;
@@ -197,9 +197,9 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<DeintMethod>()) {
         conv.variantToName = _EnumVariantToEnumName<DeintMethod>;
         conv.nameToVariant = _EnumNameToEnumVariant<DeintMethod>;
-    } else    if (metaType == qMetaTypeId<InterpolatorType>()) {
-        conv.variantToName = _EnumVariantToEnumName<InterpolatorType>;
-        conv.nameToVariant = _EnumNameToEnumVariant<InterpolatorType>;
+    } else    if (metaType == qMetaTypeId<Interpolator>()) {
+        conv.variantToName = _EnumVariantToEnumName<Interpolator>;
+        conv.nameToVariant = _EnumNameToEnumVariant<Interpolator>;
     } else    if (metaType == qMetaTypeId<AudioDriver>()) {
         conv.variantToName = _EnumVariantToEnumName<AudioDriver>;
         conv.nameToVariant = _EnumNameToEnumVariant<AudioDriver>;

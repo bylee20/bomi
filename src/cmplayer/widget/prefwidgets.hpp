@@ -6,16 +6,15 @@
 
 class HwAccCodecBox : public QGroupBox {
     Q_OBJECT
-    Q_PROPERTY(QVector<int> value READ value WRITE setValue NOTIFY valueChanged)
+    Q_PROPERTY(QStringList value READ value WRITE setValue NOTIFY valueChanged)
 public:
     HwAccCodecBox(QWidget *parent = nullptr);
-    auto value() const -> QVector<int>;
-    auto setValue(const QVector<int> &list) -> void;
-    auto setBackend(int type) -> void;
+    auto value() const -> QStringList;
+    auto setValue(const QStringList &list) -> void;
 signals:
     void valueChanged();
 private:
-    QMap<int, QCheckBox*> m_checks;
+    QMap<QString, QCheckBox*> m_checks;
 };
 
 class DataButtonGroup : public QButtonGroup {

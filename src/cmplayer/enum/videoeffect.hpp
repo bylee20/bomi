@@ -8,10 +8,9 @@ enum class VideoEffect : int {
     None = (int)0,
     FlipV = (int)(1 << 0),
     FlipH = (int)(1 << 1),
+    Remap = (int)(1 << 4),
     Gray = (int)(1 << 2),
     Invert = (int)(1 << 3),
-    Blur = (int)(1 << 4),
-    Sharpen = (int)(1 << 5),
     Disable = (int)(1 << 8)
 };
 
@@ -52,9 +51,9 @@ public:
         QString name, key;
         QVariant data;
     };
-    using ItemList = std::array<Item, 8>;
+    using ItemList = std::array<Item, 7>;
     static constexpr auto size() -> int
-    { return 8; }
+    { return 7; }
     static constexpr auto typeName() -> const char*
     { return "VideoEffect"; }
     static constexpr auto typeKey() -> const char*
@@ -82,10 +81,9 @@ public:
         case Enum::None: return qApp->translate("EnumInfo", "");
         case Enum::FlipV: return qApp->translate("EnumInfo", "");
         case Enum::FlipH: return qApp->translate("EnumInfo", "");
+        case Enum::Remap: return qApp->translate("EnumInfo", "");
         case Enum::Gray: return qApp->translate("EnumInfo", "");
         case Enum::Invert: return qApp->translate("EnumInfo", "");
-        case Enum::Blur: return qApp->translate("EnumInfo", "");
-        case Enum::Sharpen: return qApp->translate("EnumInfo", "");
         case Enum::Disable: return qApp->translate("EnumInfo", "");
         default: return QString();
         }
@@ -131,9 +129,5 @@ private:
 };
 
 using VideoEffectInfo = EnumInfo<VideoEffect>;
-
-static constexpr VideoEffects KernelEffects = VideoEffect::Blur | VideoEffect::Sharpen;
-static constexpr VideoEffects ColorEffects  = VideoEffect::Gray | VideoEffect::Invert;
-static constexpr VideoEffects ShaderEffects = KernelEffects | ColorEffects;
 
 #endif

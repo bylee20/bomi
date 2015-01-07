@@ -12,7 +12,7 @@
 
 //class HwAccMixer;                       class Kernel3x3;
 //class Interpolator;
-//enum class InterpolatorType;
+//enum class Interpolator;
 
 //class VideoFrameShader {
 //    enum Attr {AttrPosition, AttrTexCoord};
@@ -27,7 +27,7 @@
 //    auto setEffects(VideoEffects effects) -> void;
 //    auto setColor(const VideoColor &color,
 //                  ColorSpace space, ColorRange range) -> void;
-//    auto setChromaUpscaler(InterpolatorType type) -> void;
+//    auto setChromaUpscaler(Interpolator type) -> void;
 //    auto isDirectlyRenderable() const -> bool;
 //    auto upload(const MpImage &mpi) -> void;
 //    auto upload(const MpImage &mpi, VideoTexture &texture) -> void;
