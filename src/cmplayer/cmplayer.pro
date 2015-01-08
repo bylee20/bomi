@@ -226,13 +226,13 @@ HEADERS += \
     audio/audioformat.hpp \
     player/streamtrack.hpp \
     misc/locale.hpp \
-    dialog/youtubedialog.hpp \
     misc/matchstring.hpp \
     misc/simplelistdelegate.hpp \
     player/pref_helper.hpp \
     widget/prefwidgets.hpp \
     enum/colorenumdata.hpp \
-    video/videorenderer.hpp
+    video/videorenderer.hpp \
+    misc/youtubedl.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -399,12 +399,12 @@ SOURCES += \
     audio/audioformat.cpp \
     player/streamtrack.cpp \
     misc/locale.cpp \
-    dialog/youtubedialog.cpp \
     misc/matchstring.cpp \
     misc/simplelistdelegate.cpp \
 	player/pref_helper.cpp \
     widget/prefwidgets.cpp \
-    video/videorenderer.cpp
+    video/videorenderer.cpp \
+    misc/youtubedl.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -32,6 +32,7 @@ PlayEngine::PlayEngine()
 //            this, &PlayEngine::updateVideoFormat);
 
     d->handle = mpv_create();
+    d->client = mpv_client_name(d->handle);
     QByteArray loglv = "no";
     switch (Log::maximumLevel()) {
     case Log::Trace: loglv = "trace"; break;
@@ -96,7 +97,7 @@ PlayEngine::PlayEngine()
     setOption("input-terminal", "no");
     setOption("ad-lavc-downmix", "no");
     setOption("title", "\"\"");
-    setOption("vo", "opengl-cb:" + d->videoSubOptions());
+    setOption("vo", d->vo());
     setOption("fixed-vo", "yes");
     auto hwdec = HwAcc::name();
     setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.toLatin1().constData());
@@ -128,6 +129,7 @@ PlayEngine::PlayEngine()
     d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
     _Debug("Initialized");
     d->initialized = true;
+    d->hook();
 
     auto ptr = mpv_get_sub_api(d->handle, MPV_SUB_API_OPENGL_CB);
     d->glMpv = static_cast<mpv_opengl_cb_context*>(ptr);
@@ -799,7 +801,7 @@ auto PlayEngine::audioDeviceList() const -> QList<AudioDevice>
     return devs;
 }
 
-auto PlayEngine::setYouTube(YouTubeDialog *yt) -> void
+auto PlayEngine::setYouTube(YouTubeDL *yt) -> void
 {
     d->youtube = yt;
 }

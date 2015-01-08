@@ -16,7 +16,7 @@ enum class ChannelLayout;               enum class Interpolator;
 enum class ColorRange;                  enum class ColorSpace;
 enum class Dithering;
 class AudioInfoObject;                  class VideoInfoObject;
-class YouTubeDialog;                    struct AudioDevice;
+class YouTubeDL;                    struct AudioDevice;
 class StreamTrack;                      class SubtitleInfoObject;
 class OpenGLFramebufferObject;
 using StreamList = QMap<int, StreamTrack>;
@@ -153,7 +153,7 @@ public:
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterInfo() const -> ChapterInfoObject*;
     auto setSubtitleFiles(const StreamList &files) -> void;
-    auto setYouTube(YouTubeDialog *yt) -> void;
+    auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
     auto mousePosition() const -> const QPoint& { return m_mouse; }

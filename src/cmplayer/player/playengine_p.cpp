@@ -86,7 +86,13 @@ auto PlayEngine::Data::vf() const -> QByteArray
     return vf.get();
 }
 
-auto PlayEngine::Data::videoSubOptions() -> QByteArray
+auto PlayEngine::Data::vo() const -> QByteArray
+{
+    return "opengl-cb:"
+            + videoSubOptions();
+}
+
+auto PlayEngine::Data::videoSubOptions() const -> QByteArray
 {
     static const QByteArray shader =
             "const mat4 c_matrix = mat4(__C_MATRIX__); "
@@ -108,12 +114,13 @@ auto PlayEngine::Data::videoSubOptions() -> QByteArray
         return '%' + QByteArray::number(cs.length()) + '%' + cs;
     };
     OptionList opts(':');
+
     opts.add("lscale", _EnumData(lscale));
     opts.add("cscale", _EnumData(cscale));
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(dithering));
     opts.add("custom-shader", customShader(c_matrix));
-    return opts.get();
+    return "frame-queue-size=3:frame-drop-mode=clear:" + opts.get();
 }
 
 auto PlayEngine::Data::updateColorMatrix() -> void
@@ -251,19 +258,9 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     opts.add("af"_b, af(), true);
     opts.add("vf"_b, vf(), true);
 
-//    if (mrl.isYouTube() && youtube) {
-//        youtube->translate(file);
-//        if (youtube->exec()) {
-//            file = youtube->videoUrl();
-//            opts.add("cookies", true);
-//            opts.add("cookies-file", youtube->cookies().toLocal8Bit(), true);
-//            opts.add("user-agent", youtube->userAgent().toLocal8Bit(), true);
-//        }
-//    }
-
     opts.add("colormatrix"_b, _EnumData(colorSpace).option);
     opts.add("colormatrix-input-range", _EnumData(colorRange).option);
-    opts.add("vo", "opengl-cb:"_b + videoSubOptions(), true);
+    opts.add("vo"_b, vo(), true);
     _Debug("Load: %% (%%)", file, opts.get());
     tellmpv("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
 }
@@ -346,6 +343,21 @@ auto PlayEngine::Data::translateMpvStateToState() -> void
         state = getmpv<bool>("core-idle") ? Loading : Playing;
     }
     postState(state);
+}
+
+auto PlayEngine::Data::hook() -> void
+{
+    hook("on_load", [=] () {
+        auto file = getmpv<QString>("stream-open-filename");
+        if (!file.startsWith("http://"_a) && !file.startsWith("https://"_a))
+            return;
+        if (youtube->run(file)) {
+            setmpv("options/cookies", true);
+            setmpv("options/cookies-file", youtube->cookies().toLocal8Bit());
+            setmpv("options/user-agent", youtube->userAgent().toLocal8Bit());
+            setmpv("stream-open-filename", youtube->url().toLocal8Bit());
+        }
+    });
 }
 
 auto PlayEngine::Data::observe() -> void
@@ -519,6 +531,17 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
             from = to + 1;
         }
         left = left.mid(from);
+        break;
+    } case MPV_EVENT_CLIENT_MESSAGE: {
+        auto message = static_cast<mpv_event_client_message*>(event->data);
+        if (message->num_args < 1)
+            break;
+        if (message->args[0] == "hook_run"_b && message->num_args == 3) {
+            QByteArray when(message->args[2]);
+            Q_ASSERT(hooks.contains(when));
+            hooks[when]();
+            tellmpv("hook_ack", when);
+        }
         break;
     } case MPV_EVENT_IDLE:
         if (mpvState != MpvLoading)

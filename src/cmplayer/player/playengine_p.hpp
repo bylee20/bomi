@@ -9,7 +9,7 @@
 #include "misc/log.hpp"
 #include "misc/tmp.hpp"
 #include "misc/dataevent.hpp"
-#include "dialog/youtubedialog.hpp"
+#include "misc/youtubedl.hpp"
 #include "audio/audiocontroller.hpp"
 #include "audio/audioformat.hpp"
 #include "video/videooutput.hpp"
@@ -228,6 +228,7 @@ struct PlayEngine::Data {
     int updateEventMax = UpdateEventBegin;
 
     mpv_handle *handle = nullptr;
+    QByteArray client;
 
 //    VideoOutput *video = nullptr;
     VideoFilter *filter = nullptr;
@@ -244,7 +245,7 @@ struct PlayEngine::Data {
     VideoColor videoEq;
     VideoEffects videoEffects = 0;
 
-    YouTubeDialog *youtube = nullptr;
+    YouTubeDL *youtube = nullptr;
 
     OsdTheme subStyle;
     VideoRenderer *video = nullptr;
@@ -277,7 +278,8 @@ struct PlayEngine::Data {
 
     auto af() const -> QByteArray;
     auto vf() const -> QByteArray;
-    auto videoSubOptions() -> QByteArray;
+    auto vo() const -> QByteArray;
+    auto videoSubOptions() const -> QByteArray;
     auto updateVideoSubOptions() -> void;
     auto updateColorMatrix() -> void;
     auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
@@ -441,6 +443,16 @@ struct PlayEngine::Data {
     auto process(QEvent *event) -> void;
     auto log(const QByteArray &prefix, const QByteArray &text) -> void;
     auto translateMpvStateToState() -> void;
+    int hookId = 0;
+    template<class F>
+    auto hook(const QByteArray &when, F &&handler) -> void
+    {
+        Q_ASSERT(!hooks.contains(when));
+        tellmpv("hook_add", when, hookId++, 0);
+        hooks[when] = std::move(handler);
+    }
+    auto hook() -> void;
+    QMap<QByteArray, std::function<void(void)>> hooks;
 };
 
 template<class T>

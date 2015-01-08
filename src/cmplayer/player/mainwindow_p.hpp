@@ -13,12 +13,12 @@
 #include "pref.hpp"
 #include "streamtrack.hpp"
 #include "misc/downloader.hpp"
+#include "misc/youtubedl.hpp"
 #include "video/videorenderer.hpp"
 #include "subtitle/subtitlerendereritem.hpp"
 #include "opengl/opengllogger.hpp"
 #include "quick/themeobject.hpp"
 #include "misc/stepaction.hpp"
-#include "dialog/youtubedialog.hpp"
 
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {
@@ -70,7 +70,7 @@ struct MainWindow::Data {
     VideoRenderer &vr = *engine.videoRenderer();
     SubtitleRendererItem subtitle;
     QPoint prevPos;
-    YouTubeDialog *youtube = nullptr;
+    YouTubeDL youtube;
 
     Qt::WindowStates winState = Qt::WindowNoState;
     Qt::WindowStates prevWinState = Qt::WindowNoState;
