@@ -32,12 +32,16 @@ PlayEngine::PlayEngine()
 //            this, &PlayEngine::updateVideoFormat);
 
     d->handle = mpv_create();
-    auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower().trimmed();
-    const QVector<QByteArray> lvs = {"no", "fatal", "error", "warn", "info",
-                                     "status", "v", "debug", "trace"};
-    if (lvs.indexOf(verbose) < lvs.indexOf("info"))
-        verbose = "info";
-    mpv_request_log_messages(d->handle, verbose.constData());
+    QByteArray loglv = "no";
+    switch (Log::maximumLevel()) {
+    case Log::Trace: loglv = "trace"; break;
+    case Log::Debug: loglv = "v";     break;
+    case Log::Info:  loglv = "info";  break;
+    case Log::Warn:  loglv = "warn";  break;
+    case Log::Error: loglv = "error"; break;
+    case Log::Fatal: loglv = "fatal"; break;
+    }
+    mpv_request_log_messages(d->handle, loglv.constData());
 
     d->observe();
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);

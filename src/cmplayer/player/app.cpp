@@ -88,12 +88,9 @@ struct App::Data {
             { return parser->value(options.value(cmd, dummy)); };
         auto values = [parser, this] (LineCmd cmd)
             { return parser->values(options.value(cmd, dummy)); };
-        if (isSet(LineCmd::LogLevel)) {
+        if (isSet(LineCmd::LogLevel))
             Log::setMaximumLevel(value(LineCmd::LogLevel));
-            if (Log::maximumLevel() >= Log::Debug)
-                qputenv("CMPLAYER_MPV_VERBOSE", "v");
-        }
-        if (isSet(LineCmd::OpenGLDebug) || qgetenv("CMPLAYER_GL_DEBUG").toInt())
+        if (isSet(LineCmd::OpenGLDebug))
             gldebug = true;
         if (main) {
             if (isSet(LineCmd::Wake))
@@ -113,7 +110,6 @@ struct App::Data {
             if (Log::maximumLevel() < Log::Debug)
                 Log::setMaximumLevel(Log::Debug);
             gldebug = true;
-            qputenv("CMPLAYER_MPV_VERBOSE", "v");
         }
     }
     auto getCommandParser(QCommandLineParser *parser) const

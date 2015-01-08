@@ -111,6 +111,27 @@ auto OpenGLLogger::initialize(QOpenGLContext *ctx, bool autolog) -> bool
         return false;
     }
     d->debug("OpenGL debug logger is running.");
+
+    d->logger->disableMessages();
+    QOpenGLDebugMessage::Types types = QOpenGLDebugMessage::InvalidType;
+    switch (Log::maximumLevel()) {
+    case Log::Trace:
+        types = QOpenGLDebugMessage::AnyType;
+        break;
+    case Log::Debug:
+        types |= QOpenGLDebugMessage::PerformanceType
+                | QOpenGLDebugMessage::MarkerType;
+    case Log::Info:
+    case Log::Warn:
+        types |= QOpenGLDebugMessage::DeprecatedBehaviorType
+                | QOpenGLDebugMessage::PortabilityType;
+    case Log::Error:
+    case Log::Fatal:
+        types |= QOpenGLDebugMessage::ErrorType
+                | QOpenGLDebugMessage::UndefinedBehaviorType;
+    }
+    d->logger->enableMessages(QOpenGLDebugMessage::AnySource, types);
+
     if (autolog)
         connect(d->logger, &QOpenGLDebugLogger::messageLogged,
                 this, &OpenGLLogger::print, Qt::DirectConnection);
