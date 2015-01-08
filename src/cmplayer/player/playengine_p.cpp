@@ -703,19 +703,11 @@ auto PlayEngine::Data::log(const QByteArray &prefix,
 auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
 {
     int vp[4] = {0, 0, fbo->width(), fbo->height()};
-    mpv_opengl_cb_render(glMpv, fbo->id(), vp);
+    const int delay = mpv_opengl_cb_render(glMpv, fbo->id(), vp);
 
     fpsMeasure.push(++drawnFrames);
-
-//    const auto delayed = mpv_opengl_cb_get_queued_frames(glMpv);
-//    videoInfo.setDelayedFrames(delayed);
-//    videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
-//    if (delayed > 0) {
-//        if (delayed > 3)
-//            mpv_opengl_cb_empty_frame_queue(glMpv);
-//        else
-//            video->updateForNewFrame(videoInfo.renderer()->size());
-//    }
+    videoInfo.setDelayedFrames(delay);
+    videoInfo.setDroppedFrames(getmpv<int64_t>("vo-drop-frame-count"));
 
     _Trace("PlayEngine::Data::renderVideoFrame(): "
            "render queued frame(%%), avgfps: %%",

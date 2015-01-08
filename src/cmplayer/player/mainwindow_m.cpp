@@ -343,8 +343,8 @@ auto MainWindow::Data::connectMenus() -> void
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
         connect(snap[actionName], &QAction::triggered, p, [this, mode] () {
-            snapshotMode = mode;
-            vr.requestFrameImage();
+//            snapshotMode = mode;
+//            vr.requestFrameImage();
         });
     };
     connectSnapshot(u"quick"_q, QuickSnapshot);
