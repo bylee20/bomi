@@ -14,7 +14,7 @@ struct VideoRenderer::Data {
     Data(VideoRenderer *p): p(p) {}
     VideoRenderer *p = nullptr;
     double crop = -1.0, aspect = -1.0, dar = 0.0;
-    bool take = false, onLetterbox = true, newFrame = false;
+    bool take = false, onLetterbox = true, redraw = false;
     bool flip_h = false, flip_v = false;
     Qt::Alignment alignment = Qt::AlignCenter;
     QRectF vtx; QPoint offset = {0, 0};
@@ -93,8 +93,10 @@ struct VideoRenderer::Data {
     }
     auto updateFboSize(const QSize &size) -> void
     {
-        if (_Change(fboSize, size))
+        if (_Change(fboSize, size)) {
+            redraw = true;
             p->reserve(UpdateAll);
+        }
     }
 };
 
@@ -139,16 +141,6 @@ auto VideoRenderer::setOverlayOnLetterbox(bool letterbox) -> void
         polish();
         emit overlayOnLetterboxChanged(d->onLetterbox);
     }
-//    if (_Change(t, prev)) {
-//        dirty |= flag;
-//        p->reserve(hints, true);
-//        emit (p->*sig)(t);
-//        return true;
-//    }
-//    return false;
-
-//    d->mark(d->overlayOnLetterbox, letterbox, DirtyVertex,
-//            &VideoRenderer::overlayOnLetterboxChanged, UpdateGeometry);
 }
 
 auto VideoRenderer::overlayOnLetterbox() const -> bool
@@ -182,7 +174,7 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
             d->fboSize = d->fboSizeHint();
             polish();
         }
-        d->newFrame = true;
+        d->redraw = true;
         reserve(UpdateMaterial);
         break;
     } case NewFrameImage: {
@@ -317,10 +309,10 @@ auto VideoRenderer::updatePolish() -> void
 
 auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
 {
-    if (!d->newFrame) {
+    if (!d->redraw) {
         _Trace("VideoRendererItem::updateTexture(): no queued frame");
     } else if (!d->fboSize.isEmpty()) {
-        d->newFrame = false;
+        d->redraw = false;
         if (!d->fbo || d->fbo->size() != d->fboSize)
             _Renew(d->fbo, d->fboSize);
         auto w = window();

@@ -88,13 +88,9 @@ auto PlayEngine::Data::vf() const -> QByteArray
 
 auto PlayEngine::Data::videoSubOptions() -> QByteArray
 {
-    static const QByteArray shader = "const mat4 c_matrix = mat4(__C_MATRIX__); "
-                        "vec4 custom_shader(vec4 color) { return c_matrix * color; }";
-//    vec4(1.0, 0.0, 0.0, 0.0),
-//    vec4(0.0, 1.0, 0.0, 0.0),
-//    vec4(0.0, 0.0, 1.0, 0.0),
-//    vec4(0.0, 0.0, 0.0, 1.0)ggggg
-//    c_matrix = QMatrix4x4();
+    static const QByteArray shader =
+            "const mat4 c_matrix = mat4(__C_MATRIX__); "
+            "vec4 custom_shader(vec4 color) { return c_matrix * color; }";
     auto customShader = [&] (const QMatrix4x4 &c_matrix) -> QByteArray {
         QByteArray mat;
         for (int c = 0; c < 4; ++c) {
@@ -255,15 +251,15 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     opts.add("af"_b, af(), true);
     opts.add("vf"_b, vf(), true);
 
-    if (mrl.isYouTube() && youtube) {
-        youtube->translate(file);
-        if (youtube->exec()) {
-            file = youtube->videoUrl();
-            opts.add("cookies", true);
-            opts.add("cookies-file", youtube->cookies().toLocal8Bit(), true);
-            opts.add("user-agent", youtube->userAgent().toLocal8Bit(), true);
-        }
-    }
+//    if (mrl.isYouTube() && youtube) {
+//        youtube->translate(file);
+//        if (youtube->exec()) {
+//            file = youtube->videoUrl();
+//            opts.add("cookies", true);
+//            opts.add("cookies-file", youtube->cookies().toLocal8Bit(), true);
+//            opts.add("user-agent", youtube->userAgent().toLocal8Bit(), true);
+//        }
+//    }
 
     opts.add("colormatrix"_b, _EnumData(colorSpace).option);
     opts.add("colormatrix-input-range", _EnumData(colorRange).option);
@@ -612,7 +608,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         this->subtitleFiles.clear();
         break;
     } case StartPlayback: {
-        videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
+//        videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
         clearTimings();
         _TakeData(event, this->editions);
         int title = -1;
@@ -688,17 +684,15 @@ auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
 
     fpsMeasure.push(++drawnFrames);
 
-    quint64 delayed = mpv_opengl_cb_get_queued_frames(glMpv);
-    if (delayed > 0) {
-        if (delayed >= 3) {
-            mpv_opengl_cb_empty_frame_queue(glMpv);
-            delayed = 0;
-        } else
-            video->updateForNewFrame(videoInfo.renderer()->size());
-    }
-
-    videoInfo.setDelayedFrames(delayed);
-    videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
+//    const auto delayed = mpv_opengl_cb_get_queued_frames(glMpv);
+//    videoInfo.setDelayedFrames(delayed);
+//    videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
+//    if (delayed > 0) {
+//        if (delayed > 3)
+//            mpv_opengl_cb_empty_frame_queue(glMpv);
+//        else
+//            video->updateForNewFrame(videoInfo.renderer()->size());
+//    }
 
     _Trace("PlayEngine::Data::renderVideoFrame(): "
            "render queued frame(%%), avgfps: %%",

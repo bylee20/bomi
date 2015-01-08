@@ -238,6 +238,7 @@ signals:
 
     void deintOptionsChanged();
     void cacheSizeChanged();
+    void messageRequested(const QString &message);
 private:
     auto updateState(State state) -> void;
     auto exec() -> void;

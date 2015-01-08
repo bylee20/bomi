@@ -134,7 +134,6 @@ PlayEngine::PlayEngine()
             p->d->video->updateForNewFrame(p->d->videoInfo.renderer()->size());
     };
     mpv_opengl_cb_set_update_callback(d->glMpv, cbUpdate, this);
-    mpv_opengl_cb_set_frame_queue_size(d->glMpv, 3);
 
     d->fpsMeasure.setTimer([=]()
         { d->videoInfo.renderer()->setFps(d->fpsMeasure.get()); }, 100000);
