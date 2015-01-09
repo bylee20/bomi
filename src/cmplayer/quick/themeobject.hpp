@@ -1,19 +1,21 @@
 #ifndef THEMEOBJECT_HPP
 #define THEMEOBJECT_HPP
 
-struct OsdTheme;                        class OsdThemeObject;
+#include "playlistthemeobject.hpp"
+#include "osdthemeobject.hpp"
 
 class ThemeObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(OsdThemeObject *osd READ osd NOTIFY osdChanged)
-public:
-    ThemeObject(QObject *parent = nullptr);
-    auto osd() const -> OsdThemeObject* { return m_osd; }
-    auto setOsd(const OsdTheme &osd) -> void;
-signals:
-    void osdChanged();
+#define P_(type, name) \
+private: \
+    type m_##name; \
+    Q_PROPERTY(type *name READ name CONSTANT FINAL) \
+public: \
+    auto name() -> type* { return &m_##name; } \
 private:
-    OsdThemeObject *m_osd = nullptr;
+    P_(OsdThemeObject, osd)
+    P_(PlaylistThemeObject, playlist)
+#undef P_
 };
 
 #endif // THEMEOBJECT_HPP

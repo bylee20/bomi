@@ -910,7 +910,8 @@ auto MainWindow::Data::applyPref() -> void
     cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
                       p.heartbeat_interval);
 
-    theme.setOsd(p.osd_style);
+    theme.osd()->set(p.osd_style);
+    theme.playlist()->set(p.playlist_theme);
     reloadSkin();
 
     if (time >= 0) {

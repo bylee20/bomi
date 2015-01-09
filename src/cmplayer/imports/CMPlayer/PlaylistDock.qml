@@ -34,8 +34,9 @@ Item {
 
         model: playlist
         headerVisible: false
-        rowHeight: 40
+        rowHeight: showLocation ? 40 : 25
         readonly property int nameFontSize: 15
+        readonly property bool showLocation: Cp.App.theme.playlist.showLocation
         readonly property int locationFontSize: 10
         readonly property string nameFontFamily: Util.monospace
         readonly property string locationFontFamily: Util.monospace
@@ -45,8 +46,11 @@ Item {
             for (var i=0; i<table.count; ++i) {
                 var number = Util.textWidth(playlist.number(i), table.nameFontSize, table.nameFontFamily);
                 var name = Util.textWidth(playlist.name(i), table.nameFontSize, table.nameFontFamily);
-                var loc = Util.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
-                max = Math.max(number + name, loc, max);
+                if (showLocation) {
+                    var loc = Util.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
+                    max = Math.max(number + name, loc, max);
+                } else
+                    max = Math.max(number + name, max);
             }
             return max+30
         }
@@ -75,6 +79,7 @@ Item {
                     color: "white"; text: value; elide: Text.ElideRight
                 }
                 Text {
+                    visible: table.showLocation
                     anchors { margins: 5; left: parent.left; right: parent.right }
                     font { family: table.locationFontFamily; pixelSize: table.locationFontSize }
                     width: parent.width; height: table.locationFontSize; verticalAlignment: Text.AlignTop

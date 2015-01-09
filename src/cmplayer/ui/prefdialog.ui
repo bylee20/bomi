@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>10</number>
+        <number>16</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2188,20 +2188,31 @@
         </layout>
        </widget>
        <widget class="QWidget" name="skin_style">
-        <layout class="QVBoxLayout" name="verticalLayout_31">
+        <layout class="QVBoxLayout" name="verticalLayout_40">
          <item>
           <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
             <string>Skin</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_9">
+           <layout class="QVBoxLayout" name="verticalLayout_31">
             <item>
-             <widget class="DataComboBox" name="skin_name"/>
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <item>
+               <widget class="DataComboBox" name="skin_name"/>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="skin_path">
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
-             <widget class="QLineEdit" name="skin_path">
-              <property name="readOnly">
-               <bool>true</bool>
+             <widget class="PlaylistThemeWidget" name="playlist_theme">
+              <property name="text">
+               <string>Show media location in playlist</string>
               </property>
              </widget>
             </item>
@@ -2886,6 +2897,11 @@ Regular expression is supported.</string>
    <class>PrefMenuTreeWidget</class>
    <extends>QTreeWidget</extends>
    <header>dialog/prefdialog_p.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>PlaylistThemeWidget</class>
+   <extends>QCheckBox</extends>
+   <header>quick/playlistthemeobject.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

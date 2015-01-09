@@ -78,9 +78,3 @@
 //}
 
 /******************************************************************************/
-
-OsdThemeObject::OsdThemeObject(QObject *parent)
-    : QObject(parent)
-{
-
-}

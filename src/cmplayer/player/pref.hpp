@@ -2,14 +2,14 @@
 #define PREF_HPP
 
 #include "openmediainfo.hpp"
-#include "misc/matchstring.hpp"
+#include "player/mrlstate.hpp"
+#include "audio/channellayoutmap.hpp"
+#include "audio/audionormalizeroption.hpp"
 #include "video/hwacc.hpp"
 #include "video/deintcaps.hpp"
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/osdtheme.hpp"
-#include "player/mrlstate.hpp"
-#include "audio/channellayoutmap.hpp"
-#include "audio/audionormalizeroption.hpp"
+#include "misc/matchstring.hpp"
 #include "enum/generateplaylist.hpp"
 #include "enum/subtitleautoload.hpp"
 #include "enum/subtitleautoselect.hpp"
@@ -18,6 +18,7 @@
 #include "enum/verticalalignment.hpp"
 #include "enum/quicksnapshotsave.hpp"
 #include "enum/mousebehavior.hpp"
+#include "quick/playlistthemeobject.hpp"
 #include "pref_helper.hpp"
 
 using Shortcuts = QHash<QString, QList<QKeySequence>>;
@@ -74,6 +75,7 @@ public:
     P0(bool, show_osd_on_resized, true)
     P0(bool, show_osd_timeline, true)
     P0(OsdTheme, osd_style, defaultOsdStyle())
+    P0(PlaylistTheme, playlist_theme, {})
 
     P0(int, blur_kern_c, 1)
     P0(int, blur_kern_n, 2)

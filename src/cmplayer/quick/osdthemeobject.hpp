@@ -24,15 +24,15 @@ class Record;
 class OsdThemeObject : public QObject {
     Q_OBJECT
     Q_ENUMS(Style)
-    Q_PROPERTY(QString font READ font CONSTANT FINAL)
-    Q_PROPERTY(qreal scale READ scale CONSTANT FINAL)
-    Q_PROPERTY(bool underline READ underline CONSTANT FINAL)
-    Q_PROPERTY(bool bold READ bold CONSTANT FINAL)
-    Q_PROPERTY(bool strikeout READ strikeout CONSTANT FINAL)
-    Q_PROPERTY(bool italic READ italic CONSTANT FINAL)
-    Q_PROPERTY(Style style READ style CONSTANT FINAL)
-    Q_PROPERTY(QColor color READ color CONSTANT FINAL)
-    Q_PROPERTY(QColor styleColor READ styleColor CONSTANT FINAL)
+    Q_PROPERTY(QString font READ font NOTIFY changed)
+    Q_PROPERTY(qreal scale READ scale NOTIFY changed)
+    Q_PROPERTY(bool underline READ underline NOTIFY changed)
+    Q_PROPERTY(bool bold READ bold NOTIFY changed)
+    Q_PROPERTY(bool strikeout READ strikeout NOTIFY changed)
+    Q_PROPERTY(bool italic READ italic NOTIFY changed)
+    Q_PROPERTY(Style style READ style NOTIFY changed)
+    Q_PROPERTY(QColor color READ color NOTIFY changed)
+    Q_PROPERTY(QColor styleColor READ styleColor NOTIFY changed)
 public:
     enum Style {
         Normal  = static_cast<int>(TextThemeStyle::Normal),
@@ -40,8 +40,7 @@ public:
         Raised  = static_cast<int>(TextThemeStyle::Raised),
         Sunked  = static_cast<int>(TextThemeStyle::Sunken)
     };
-    OsdThemeObject(QObject *parent = nullptr);
-    auto set(const OsdTheme &theme) -> void { m = theme; }
+    auto set(const OsdTheme &theme) -> void { m = theme; emit changed(); }
     auto font() const -> QString { return m.font.family(); }
     auto underline() const -> bool { return m.font.underline(); }
     auto strikeout() const -> bool { return m.font.strikeOut(); }
@@ -51,6 +50,8 @@ public:
     auto styleColor() const -> QColor { return m.outline.color; }
     auto style() const -> Style { return Outline; }
     auto scale() const -> qreal { return m.font.size; }
+signals:
+    void changed();
 private:
     OsdTheme m;
 };
