@@ -458,6 +458,14 @@ struct PlayEngine::Data {
     }
     auto hook() -> void;
     QMap<QByteArray, std::function<void(void)>> hooks;
+    QPoint mouse;
+    auto setMousePos(const QPointF &pos)
+    {
+        if (!_Change(mouse, video->mapToVideo(pos).toPoint()))
+            return false;
+        mpv_opengl_cb_set_mouse_pos(glMpv, mouse.x(), mouse.y());
+        return true;
+    }
 };
 
 template<class T>

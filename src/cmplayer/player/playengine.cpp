@@ -776,7 +776,7 @@ auto PlayEngine::stateText(State state) -> QString
 auto PlayEngine::sendMouseClick(const QPointF &pos) -> void
 {
     if (d->handle && d->disc) {
-        m_mouse = pos.toPoint();
+        d->setMousePos(pos);
         static const char *cmds[] = {"discnav", "mouse", nullptr};
         d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse.");
     }
@@ -784,7 +784,7 @@ auto PlayEngine::sendMouseClick(const QPointF &pos) -> void
 
 auto PlayEngine::sendMouseMove(const QPointF &pos) -> void
 {
-    if (d->handle && d->disc && _Change(m_mouse, pos.toPoint())) {
+    if (d->handle && d->disc && d->setMousePos(pos)) {
         static const char *cmds[] = {"discnav", "mouse_move", nullptr};
         d->check(mpv_command_async(d->handle, 0, cmds),
                  "Couldn't send mouse_move.");

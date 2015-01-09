@@ -360,13 +360,7 @@ auto VideoRenderer::setFlipped(bool horizontal, bool vertical) -> void
 
 auto VideoRenderer::mapToVideo(const QPointF &pos) -> QPointF
 {
-//    auto hratio = d->osdSize.width()/d->vtx.width();
-//    auto vratio = d->osdSize.height()/d->vtx.height();
-//    auto p = pos - d->vtx.topLeft();
-//    p.rx() *= hratio;
-//    p.ry() *= vratio;
-//    return p;
-    return pos;
+    return pos - d->vtx.topLeft();
 }
 
 auto VideoRenderer::geometryChanged(const QRectF &new_, const QRectF& old) -> void
