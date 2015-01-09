@@ -26,7 +26,7 @@ struct OsdTheme {
         static constexpr auto height() -> int { return 20; }
         auto weight() const -> int { return qfont.weight(); }
         QColor color = { Qt::white };
-        double size = 0.03;
+        double size = 0.05;
 //        Scale scale = Scale::Width;
         QFont qfont;
     };
