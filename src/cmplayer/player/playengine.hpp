@@ -190,7 +190,7 @@ public:
     auto chromaUpscaler() const -> Interpolator;
     auto setDithering(Dithering dithering) -> void;
     auto dithering() const -> Dithering;
-
+    auto snapshot(bool withOsd) const -> QImage;
     auto setVideoEffects(VideoEffects effects) -> void;
     auto videoEffects() const -> VideoEffects;
     Q_INVOKABLE double bitrate(double fps) const;

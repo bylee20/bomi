@@ -30,6 +30,7 @@
 #include "enum/interpolator.hpp"
 #include "enum/dithering.hpp"
 #include "opengl/opengloffscreencontext.hpp"
+#include "opengl/opengllogger.hpp"
 #include <libmpv/client.h>
 #include <libmpv/opengl_cb.h>
 #include <functional>
@@ -213,6 +214,10 @@ struct PlayEngine::Data {
     QString mediaName;
 
     MpvState mpvState = MpvStopped;
+    bool initOffscreen = false;
+    OpenGLOffscreenContext offscreen;
+    OpenGLFramebufferObject *fbo = nullptr;
+    OpenGLLogger glLogger{"Offscreen"};
 
     double fps = 1.0;
     bool hasImage = false, tempoScaler = false, seekable = false, hasVideo = false;
@@ -283,7 +288,7 @@ struct PlayEngine::Data {
     auto updateVideoSubOptions() -> void;
     auto updateColorMatrix() -> void;
     auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
-
+    auto displaySize() const { return videoInfo.renderer()->size(); }
     auto postState(State state) -> void { _PostEvent(p, StateChange, state); }
     auto exec() -> void;
 

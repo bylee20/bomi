@@ -149,6 +149,9 @@ PlayEngine::~PlayEngine()
 {
     d->initialized = false;
     mpv_terminate_destroy(d->handle);
+    d->offscreen.makeCurrent();
+    d->glLogger.finalize(d->offscreen.context());
+    d->offscreen.doneCurrent();
     delete d->chapterInfo;
     delete d->audio;
     delete d->video;
@@ -167,6 +170,13 @@ auto PlayEngine::initializeGL(QOpenGLContext *ctx) -> void
     };
     auto err = mpv_opengl_cb_init_gl(d->glMpv, nullptr, getProcAddr, ctx);
     Q_ASSERT(err >= 0);
+
+    auto surface = ctx->surface();
+    ctx->doneCurrent();
+    d->offscreen.setFormat(ctx->format());
+    d->offscreen.setShareContext(ctx);
+    d->offscreen.createContext();
+    ctx->makeCurrent(surface);
 }
 
 auto PlayEngine::finalizeGL(QOpenGLContext */*ctx*/) -> void
@@ -876,4 +886,34 @@ auto PlayEngine::setVideoEffects(VideoEffects e) -> void
 auto PlayEngine::videoEffects() const -> VideoEffects
 {
     return d->videoEffects;
+}
+
+auto PlayEngine::snapshot(bool withOsd) const -> QImage
+{
+    const auto size = d->displaySize();
+    if (size.isEmpty())
+        return QImage();
+
+    if (!d->initOffscreen) {
+        d->initOffscreen = true;
+        d->offscreen.createSurface();
+        d->offscreen.makeCurrent();
+        d->glLogger.initialize(d->offscreen.context());
+    } else
+        d->offscreen.makeCurrent();
+    QImage image;
+    {
+        const auto blocked = const_cast<PlayEngine*>(this)->blockSignals(true);
+        const auto was = d->getmpv<bool>("sub-visibility");
+        if (was != withOsd)
+            d->setmpv("sub-visibility", withOsd);
+        OpenGLFramebufferObject fbo(size);
+        d->renderVideoFrame(&fbo);
+        image = fbo.texture().toImage();
+        if (was != withOsd)
+            d->setmpv("sub-visibility", was);
+        const_cast<PlayEngine*>(this)->blockSignals(blocked);
+    }
+    d->offscreen.doneCurrent();
+    return image;
 }

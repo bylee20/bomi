@@ -120,7 +120,10 @@ auto PlayEngine::Data::videoSubOptions() const -> QByteArray
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(dithering));
     opts.add("custom-shader", customShader(c_matrix));
-    return "frame-queue-size=3:frame-drop-mode=clear:" + opts.get();
+    opts.add("vao", false);
+    opts.add("frame-queue-size", 3);
+    opts.add("frame-drop-mode", "clear"_b);
+    return opts.get();
 }
 
 auto PlayEngine::Data::updateColorMatrix() -> void
@@ -704,7 +707,6 @@ auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
 {
     int vp[4] = {0, 0, fbo->width(), fbo->height()};
     const int delay = mpv_opengl_cb_render(glMpv, fbo->id(), vp);
-
     fpsMeasure.push(++drawnFrames);
     videoInfo.setDelayedFrames(delay);
     videoInfo.setDroppedFrames(getmpv<int64_t>("vo-drop-frame-count"));

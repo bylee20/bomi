@@ -2,6 +2,7 @@
 
 OpenGLOffscreenContext::OpenGLOffscreenContext()
 {
+    setContextName(u"OpenGLOffscreenContext"_q);
 }
 
 auto OpenGLOffscreenContext::setFormat(const QSurfaceFormat &format) -> void
