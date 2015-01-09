@@ -72,6 +72,10 @@ public:
     };
     static constexpr int Running = Playing | Loading | Buffering;
     enum ActivationState { Unavailable, Deactivated, Activated };
+    enum Snapshot {
+        NoSnapshot = 0, VideoOnly = 1, VideoWidthOsd = 2,
+        VideoAndOsd = VideoOnly | VideoWidthOsd
+    };
     enum DVDCmd { DVDMenu = -1 };
     PlayEngine();
     ~PlayEngine();
@@ -190,15 +194,14 @@ public:
     auto chromaUpscaler() const -> Interpolator;
     auto setDithering(Dithering dithering) -> void;
     auto dithering() const -> Dithering;
-    auto snapshot(bool withOsd) const -> QImage;
     auto setVideoEffects(VideoEffects effects) -> void;
     auto videoEffects() const -> VideoEffects;
+    auto takeSnapshot(Snapshot mode) -> void;
     Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
 signals:
     void subInfoChanged();
-//    void fpsChanged(double fps);
     void seeked(int time);
     void sought();
     void tempoScaledChanged(bool on);
@@ -239,6 +242,7 @@ signals:
     void deintOptionsChanged();
     void cacheSizeChanged();
     void messageRequested(const QString &message);
+    void snapshotTaken(QImage video, QImage osd);
 private:
     auto updateState(State state) -> void;
     auto exec() -> void;

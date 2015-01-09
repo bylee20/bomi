@@ -29,8 +29,7 @@
 #include "enum/channellayout.hpp"
 #include "enum/interpolator.hpp"
 #include "enum/dithering.hpp"
-#include "opengl/opengloffscreencontext.hpp"
-#include "opengl/opengllogger.hpp"
+#include "opengl/openglframebufferobject.hpp"
 #include <libmpv/client.h>
 #include <libmpv/opengl_cb.h>
 #include <functional>
@@ -214,10 +213,6 @@ struct PlayEngine::Data {
     QString mediaName;
 
     MpvState mpvState = MpvStopped;
-    bool initOffscreen = false;
-    OpenGLOffscreenContext offscreen;
-    OpenGLFramebufferObject *fbo = nullptr;
-    OpenGLLogger glLogger{"Offscreen"};
 
     double fps = 1.0;
     bool hasImage = false, tempoScaler = false, seekable = false, hasVideo = false;
@@ -249,7 +244,7 @@ struct PlayEngine::Data {
     QMatrix4x4 c_matrix;
     VideoColor videoEq;
     VideoEffects videoEffects = 0;
-
+    Snapshot snapshot = NoSnapshot;
     YouTubeDL *youtube = nullptr;
 
     OsdTheme subStyle;
@@ -466,6 +461,12 @@ struct PlayEngine::Data {
         mpv_opengl_cb_set_mouse_pos(glMpv, mouse.x(), mouse.y());
         return true;
     }
+    auto render(OpenGLFramebufferObject *fbo) -> int
+    {
+        int vp[4] = {0, 0, fbo->width(), fbo->height()};
+        return mpv_opengl_cb_render(glMpv, fbo->id(), vp);
+    }
+    auto takeSnapshot() -> void;
 };
 
 template<class T>

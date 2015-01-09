@@ -41,6 +41,10 @@ struct EnumGroup {
     ActionGroup *group = nullptr;
 };
 
+enum SnapshotMode {
+    NoSnapshot, QuickSnapshot, QuickSnapshotNoSub, SnapshotTool
+};
+
 using MSig = Signal<MrlState>;
 
 class SubtitleFindDialog;               class SnapshotDialog;
@@ -94,6 +98,7 @@ struct MainWindow::Data {
     ThemeObject theme;
     QList<QAction*> unblockedActions;
     HistoryModel history;
+    SnapshotMode snapshotMode = NoSnapshot;
 
     auto pref() const -> const Pref& {return preferences;}
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString

@@ -4,27 +4,18 @@
 struct SnapshotDialog::Data {
     SnapshotDialog *p = nullptr;
     Ui::SnapshotDialog ui;
-    QImage video, osd, sub;
-    QRectF subRect;
+    QImage video, osd;
     auto updateSnapshot(bool showSub) -> void
     {
-        if (video.isNull())
+        auto image = showSub ? osd : video;
+        if (image.isNull())
             ui.viewer->setText(tr("Failed in getting a snapshot!"));
-        else {
-            auto pixmap = QPixmap::fromImage(video);
-            if (showSub) {
-                QPainter painter(&pixmap);
-                if (!osd.isNull())
-                    painter.drawImage(video.rect(), osd);
-                if (!sub.isNull())
-                    painter.drawImage(subRect, sub);
-            }
-            ui.viewer->setImage(pixmap);
-        }
-        ui.save->setEnabled(!video.isNull());
+        else
+            ui.viewer->setImage(QPixmap::fromImage(image));
+        ui.save->setEnabled(!image.isNull());
         if (!p->isVisible()) {
-            if (!video.isNull())
-                p->resize(video.size() + QSize(40, 60));
+            if (!image.isNull())
+                p->resize(image.size() + QSize(40, 60));
             p->show();
         }
     }
@@ -60,16 +51,13 @@ SnapshotDialog::~SnapshotDialog() {
     delete d;
 }
 
-auto SnapshotDialog::setImage(const QImage &video, const QImage &osd,
-                              const QImage &sub, const QRectF &subRect) -> void
+auto SnapshotDialog::setImage(const QImage &video, const QImage &osd) -> void
 {
     if (video.isNull())
         clear();
     else {
         d->video = video;
         d->osd = osd;
-        d->sub = sub;
-        d->subRect = subRect;
         d->updateSnapshot(d->ui.subtitle->isChecked());
         d->ui.take->setEnabled(true);
     }
@@ -77,8 +65,7 @@ auto SnapshotDialog::setImage(const QImage &video, const QImage &osd,
 
 auto SnapshotDialog::clear() -> void
 {
-    d->video = d->osd = d->sub = QImage();
-    d->subRect = QRectF();
+    d->video = d->osd = QImage();
     d->ui.take->setEnabled(true);
     d->updateSnapshot(false);
 }

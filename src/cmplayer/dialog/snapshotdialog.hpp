@@ -9,8 +9,7 @@ public:
     SnapshotDialog(QWidget *parent = 0);
     ~SnapshotDialog();
     auto take() -> void;
-    auto setImage(const QImage &video, const QImage &osd,
-                  const QImage &subtitle, const QRectF &subRect) -> void;
+    auto setImage(const QImage &video, const QImage &osd) -> void;
     auto clear() -> void;
 signals:
     void request();

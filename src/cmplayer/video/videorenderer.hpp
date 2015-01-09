@@ -23,7 +23,6 @@ public:
     auto setOverlay(GeometryItem *overlay) -> void;
     auto overlay() const -> QQuickItem*;
     auto hasFrame() const -> bool;
-    auto requestFrameImage() const -> void;
     auto frameRect(const QRectF &area) const -> QRectF;
     auto setOverlayOnLetterbox(bool letterbox) -> void;
     auto overlayOnLetterbox() const -> bool;
@@ -36,7 +35,6 @@ public:
     auto updateForNewFrame(const QSize &displaySize) -> void;
     auto setRenderFrameFunction(const RenderFrameFunc &func) -> void;
 signals:
-    void frameImageObtained(const QImage &video, const QImage &osd) const;
     void offsetChanged(const QPoint &pos);
     void screenRectChanged(const QRectF &rect);
     void overlayOnLetterboxChanged(bool on);

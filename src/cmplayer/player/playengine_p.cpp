@@ -1,5 +1,4 @@
 #include "playengine_p.hpp"
-#include "opengl/openglframebufferobject.hpp"
 
 template<class T>
 SIA findEnum(const QString &mpv) -> T
@@ -120,7 +119,6 @@ auto PlayEngine::Data::videoSubOptions() const -> QByteArray
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(dithering));
     opts.add("custom-shader", customShader(c_matrix));
-    opts.add("vao", false);
     opts.add("frame-queue-size", 3);
     opts.add("frame-drop-mode", "clear"_b);
     return opts.get();
@@ -703,10 +701,44 @@ auto PlayEngine::Data::log(const QByteArray &prefix,
     }
 }
 
+auto PlayEngine::Data::takeSnapshot() -> void
+{
+    const auto size = displaySize();
+    if (size.isEmpty()) {
+        emit p->snapshotTaken(QImage(), QImage());
+        return;
+    }
+
+    QImage video, osd;
+    OpenGLFramebufferObject fbo(size);
+
+    auto take = [&](bool withOsd) -> QImage {
+        QImage image;
+        if (withOsd && !p->subtitleStreams().isEmpty()) {
+            const auto was = getmpv<bool>("sub-visibility");
+            if (was != withOsd)
+                setmpv("sub-visibility", withOsd);
+            render(&fbo);
+            if (was != withOsd)
+                setmpv("sub-visibility", was);
+            return fbo.texture().toImage();
+        }
+        if (!video.isNull())
+            return video;
+        render(&fbo);
+        return fbo.texture().toImage();
+    };
+
+    if (snapshot & VideoOnly)
+        video = take(false);
+    if (snapshot & VideoWidthOsd)
+        osd = take(true);
+    emit p->snapshotTaken(video, osd);
+}
+
 auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
 {
-    int vp[4] = {0, 0, fbo->width(), fbo->height()};
-    const int delay = mpv_opengl_cb_render(glMpv, fbo->id(), vp);
+    const int delay = render(fbo);
     fpsMeasure.push(++drawnFrames);
     videoInfo.setDelayedFrames(delay);
     videoInfo.setDroppedFrames(getmpv<int64_t>("vo-drop-frame-count"));
@@ -714,4 +746,9 @@ auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
     _Trace("PlayEngine::Data::renderVideoFrame(): "
            "render queued frame(%%), avgfps: %%",
            fbo->size(), videoInfo.renderer()->fps());
+
+    if (snapshot) {
+        this->takeSnapshot();
+        snapshot = NoSnapshot;
+    }
 }

@@ -341,75 +341,83 @@ auto MainWindow::Data::connectMenus() -> void
                                 &MrlState::videoCropRatioChanged, [this] ()
         { vr.setCropRatio(_EnumData(as.state.video_crop_ratio)); });
 
-    enum SnapshotMode {
-        NoSnapshot, QuickSnapshot, QuickSnapshotNoSub, SnapshotTool
-    };
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
         connect(snap[actionName], &QAction::triggered, p, [this, mode] () {
-            switch (mode) {
-            case SnapshotTool: {
-                auto set = [=] () {
-                    const auto video = engine.snapshot(false);
-                    if (!video.isNull()) {
-                        const auto withOsd = engine.snapshot(true);
-                        QRectF subRect;
-                        auto sub = subtitle.draw(video.rect(), &subRect);
-                        snapshot->setImage(video, withOsd, sub, subRect);
-                    } else
-                        snapshot->clear();
-                };
-                if (!snapshot) {
-                    snapshot = new SnapshotDialog(p);
-                    connect(snapshot, &SnapshotDialog::request, p, set);
-                }
-                set();
-                break;
-            } case QuickSnapshot: case QuickSnapshotNoSub: {
-                auto image = engine.snapshot(mode == QuickSnapshot);
-                if (image.isNull())
-                    break;
-                if (mode == QuickSnapshot) {
-                    QRectF subRect;
-                    auto sub = subtitle.draw(image.rect(), &subRect);
-                    if (!sub.isNull()) {
-                        QPainter painter(&image);
-                        painter.drawImage(subRect, sub);
-                    }
-                }
-                const auto time = QDateTime::currentDateTime();
-                const QString fileName = "cmplayer-snapshot-"_a
-                        % time.toString(u"yyyy-MM-dd-hh-mm-ss-zzz"_q)
-                        % '.'_q % pref().quick_snapshot_format;
-                QString file;
-                switch (pref().quick_snapshot_save) {
-                case QuickSnapshotSave::Current:
-                    if (engine.mrl().isLocalFile()) {
-                        file = _ToAbsPath(engine.mrl().toLocalFile())
-                               % '/'_q % fileName;
-                        break;
-                    }
-                case QuickSnapshotSave::Ask:
-                    file = _GetSaveFile(p, tr("Save File"), fileName, WritableImageExt);
-                    break;
-                case QuickSnapshotSave::Fixed:
-                    file = pref().quick_snapshot_folder % '/'_q % fileName;
-                    break;
-                }
-                if (!file.isEmpty() && image.save(file, nullptr,
-                                                  pref().quick_snapshot_quality))
-                    showMessage(tr("Snapshot saved"), fileName);
-                else
-                    showMessage(tr("Failed to save a snapshot"));
-                break;
-            } default:
-                break;
-            }
+            snapshotMode = mode;
+            if (snapshotMode == NoSnapshot)
+                return;
+            PlayEngine::Snapshot snapshot = PlayEngine::VideoOnly;
+            if (snapshotMode == QuickSnapshot || snapshotMode == SnapshotTool)
+                snapshot = PlayEngine::VideoAndOsd;
+            engine.takeSnapshot(snapshot);
         });
     };
     connectSnapshot(u"quick"_q, QuickSnapshot);
     connectSnapshot(u"quick-nosub"_q, QuickSnapshotNoSub);
     connectSnapshot(u"tool"_q, SnapshotTool);
+    connect(&engine, &PlayEngine::snapshotTaken,
+            p, [this] (QImage video, QImage osd) {
+        if (video.isNull() && osd.isNull())
+            return;
+        if (snapshotMode == QuickSnapshot || snapshotMode == SnapshotTool) {
+            QRectF subRect;
+            auto sub = subtitle.draw(osd.rect(), &subRect);
+            if (!sub.isNull()) {
+                QPainter painter(&osd);
+                painter.drawImage(subRect, sub);
+            }
+        }
+        switch (snapshotMode) {
+        case SnapshotTool: {
+            if (!snapshot) {
+                snapshot = new SnapshotDialog(p);
+                connect(snapshot, &SnapshotDialog::request, p, [=] () {
+                    if (vr.hasFrame()) {
+                        snapshotMode = SnapshotTool;
+                        engine.takeSnapshot(PlayEngine::VideoAndOsd);
+                    } else
+                        snapshot->clear();
+                });
+            }
+            if (!video.isNull())
+                snapshot->setImage(video, osd);
+            else
+                snapshot->clear();
+            break;
+        } case QuickSnapshot: case QuickSnapshotNoSub: {
+            auto image = video;
+            if (snapshotMode == QuickSnapshot)
+                image = osd;
+            const auto time = QDateTime::currentDateTime();
+            const QString fileName = "cmplayer-snapshot-"_a
+                    % time.toString(u"yyyy-MM-dd-hh-mm-ss-zzz"_q)
+                    % '.'_q % pref().quick_snapshot_format;
+            QString file;
+            switch (pref().quick_snapshot_save) {
+            case QuickSnapshotSave::Current:
+                if (engine.mrl().isLocalFile()) {
+                    file = _ToAbsPath(engine.mrl().toLocalFile())
+                           % '/'_q % fileName;
+                    break;
+                }
+            case QuickSnapshotSave::Ask:
+                file = _GetSaveFile(p, tr("Save File"), fileName, WritableImageExt);
+                break;
+            case QuickSnapshotSave::Fixed:
+                file = pref().quick_snapshot_folder % '/'_q % fileName;
+                break;
+            }
+            if (!file.isEmpty() && image.save(file, nullptr,
+                                              pref().quick_snapshot_quality))
+                showMessage(tr("Snapshot saved"), fileName);
+            else
+                showMessage(tr("Failed to save a snapshot"));
+            break;
+        } default:
+            break;
+        }
+    }, Qt::QueuedConnection);
 
     auto setVideoAlignment = [this] () {
         const auto v = _EnumData(as.state.video_vertical_alignment);

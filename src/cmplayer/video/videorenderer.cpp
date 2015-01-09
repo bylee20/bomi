@@ -177,11 +177,6 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
         d->redraw = true;
         reserve(UpdateMaterial);
         break;
-    } case NewFrameImage: {
-        QImage image, osd;
-        _TakeData(event, image, osd);
-        emit frameImageObtained(image, osd);
-        break;
     } default:
         break;
     }
@@ -195,16 +190,6 @@ auto VideoRenderer::overlay() const -> QQuickItem*
 auto VideoRenderer::hasFrame() const -> bool
 {
     return !d->displaySize.isEmpty();
-}
-
-auto VideoRenderer::requestFrameImage() const -> void
-{
-    if (!hasFrame())
-        emit frameImageObtained(QImage(), QImage());
-    else {
-        d->take = true;
-        const_cast<VideoRenderer*>(this)->reserve(UpdateMaterial, true);
-    }
 }
 
 auto VideoRenderer::screenRect() const -> QRectF
