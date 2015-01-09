@@ -283,11 +283,15 @@ auto SubtitleRendererItem::updateData(ShaderData *sd) -> void
 auto SubtitleRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
 {
     d->imageSize = {0, 0};
-    d->selection.forImages([this] (const SubCompImage &image) {
+    const int spacing = d->drawer.style().font.height()
+            * d->drawer.scale(geometry())
+            * d->drawer.style().spacing.paragraph + 0.5;
+    d->selection.forImages([=] (const SubCompImage &image) {
         if (d->imageSize.width() < image.width())
             d->imageSize.rwidth() = image.width();
-        d->imageSize.rheight() += image.height();
+        d->imageSize.rheight() += image.height() + spacing;
     });
+    d->imageSize.rheight() -= spacing;
     if (!d->imageSize.isEmpty()) {
         const auto len = d->imageSize.width()*d->imageSize.height();
         _Expand(d->zeros, len);
@@ -310,7 +314,7 @@ auto SubtitleRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
                     d->bbox.upload(rect, d->bboxData.data());
                 }
             }
-            y += image.height();
+            y += image.height() + spacing;
         });
         reserve(UpdateGeometry, false);
     }

@@ -59,13 +59,14 @@ private:
     inline auto setChanged(bool changed) -> void {
         m_dirty = m_blockChanged = m_formatChanged = m_pxChanged = m_optionChanged = changed;
     }
-    QVector<Layout*> m_layouts;
     QList<RichTextBlock> m_blocks;
     QVector<QRectF> m_boxes;
     QTextOption m_option;
     QTextCharFormat m_format;
-    bool m_blockChanged, m_formatChanged, m_optionChanged, m_pxChanged, m_dirty;
     double m_lineLeading = 0, m_paragraphLeading = 0;
+
+    QVector<Layout*> m_layouts;
+    bool m_blockChanged, m_formatChanged, m_optionChanged, m_pxChanged, m_dirty;
     QRectF m_natural;
 };
 

@@ -14,6 +14,8 @@ RichTextDocument::RichTextDocument(const RichTextDocument &rhs)
     : m_blocks(rhs.blocks())
     , m_option(rhs.m_option)
     , m_format(rhs.m_format)
+    , m_lineLeading(rhs.m_lineLeading)
+    , m_paragraphLeading(rhs.m_paragraphLeading)
 {
     setChanged(!m_blocks.isEmpty());
 }
@@ -38,6 +40,8 @@ auto RichTextDocument::operator = (const RichTextDocument &rhs)
         m_blocks = rhs.blocks();
         m_option = rhs.m_option;
         m_format = rhs.m_format;
+        m_lineLeading = rhs.m_lineLeading;
+        m_paragraphLeading = rhs.m_paragraphLeading;
         setChanged(true);
     }
     return *this;
@@ -186,7 +190,7 @@ auto RichTextDocument::doLayout(double maxWidth) -> void
                 } else {
                     const auto leading = m_blocks[i].paragraph
                             ? m_paragraphLeading : m_lineLeading;
-                    pos.ry() += qMax(rt_height, leading);
+                    pos.ry() += qMax(rt_height, leading * px);
                 }
                 line.setPosition(pos);
                 pos.ry() += line.height();
