@@ -469,8 +469,8 @@ auto PlayEngine::Data::observe() -> void
         info->setType(type);
         info->setSize({w, h});
         info->setBppSize({p[u"w"_q].toInt(), p[u"h"_q].toInt()},
-                         p[u"average_bpp"_q].toInt());
-        info->setDepth(p[u"plane_depth"_q].toInt());
+                         p[u"average-bpp"_q].toInt());
+        info->setDepth(p[u"plane-depth"_q].toInt());
     };
     observeType<QVariant>("video-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
