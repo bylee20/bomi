@@ -39,7 +39,6 @@ public:
     template<class T>
     auto sendMessage(MessageType type, const T &t, int timeout = 5000)
     -> tmp::enable_if_t<tmp::is_one_of<T, QJsonObject, QJsonArray, QJsonValue>(), bool>;
-    static constexpr auto versionNumber() -> int { return 0x00816; }
     static constexpr auto version() -> const char* { return "0.8.16"; }
     static constexpr auto name() -> const char* { return "CMPlayer"; }
     static auto defaultIcon() -> QIcon;
