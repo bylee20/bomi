@@ -353,8 +353,13 @@ auto PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) -> void
 
 auto PlayEngine::reload() -> void
 {
-    d->startInfo.edition = d->edition;
-    d->loadfile(d->position);
+    if (m_state == PlayEngine::Stopped)
+        return;
+    auto info = d->startInfo;
+    info.resume = d->position;
+    info.edition = d->edition;
+    info.reloaded = true;
+    load(info);
 }
 
 auto PlayEngine::setChannelLayout(ChannelLayout layout) -> void

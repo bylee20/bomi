@@ -28,6 +28,9 @@ struct StartInfo {
     int resume = -1, cache = -1, edition = -1;
     auto isValid() const -> bool
     { return (!mrl.isEmpty() || mrl.isDisc()) && resume >= 0 && cache >= 0; }
+private:
+    bool reloaded = false;
+    friend class PlayEngine;
 };
 
 struct FinishInfo {
@@ -206,7 +209,7 @@ signals:
     void sought();
     void tempoScaledChanged(bool on);
     void volumeNormalizerActivatedChanged(bool on);
-    void started(Mrl mrl);
+    void started(Mrl mrl, bool reloaded);
     void finished(const FinishInfo &info);
     void tick(int pos);
     void mrlChanged(const Mrl &mrl);

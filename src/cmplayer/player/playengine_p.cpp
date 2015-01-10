@@ -646,7 +646,8 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         }
         this->edition = title;
         emit p->editionsChanged(this->editions);
-        emit p->started(startInfo.mrl);
+        emit p->started(startInfo.mrl, startInfo.reloaded);
+        startInfo.reloaded = false;
         break;
     } case EndPlayback: {
         Mrl mrl; int reason; _TakeData(event, mrl, reason);
@@ -670,6 +671,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         default:
             _Info("Playback has been terminated by error(s)");
             state = Error;
+            startInfo.reloaded = false;
         }
         p->updateState(state);
         if (state != Error && !mrl.isEmpty()) {

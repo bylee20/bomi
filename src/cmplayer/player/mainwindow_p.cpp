@@ -227,7 +227,7 @@ auto MainWindow::Data::initEngine() -> void
         menu(u"subtitle"_q)(u"track"_q).syncActions();
     });
 
-    connect(&engine, &PlayEngine::started, p, [this] (Mrl mrl) {
+    connect(&engine, &PlayEngine::started, p, [this] (Mrl mrl, bool reloaded) {
         starting = true;
         setOpen(mrl);
         as.state.mrl = mrl.toUnique();
@@ -235,14 +235,16 @@ auto MainWindow::Data::initEngine() -> void
         state.sub_track = SubtitleStateInfo();
         const bool found = history.getState(&state);
         as.state.mrl = mrl;
-        if (found) {
-            engine.setCurrentAudioStream(state.audio_track, true);
-            syncWithState();
+        if (!reloaded) {
+            if (found) {
+                engine.setCurrentAudioStream(state.audio_track, true);
+                syncWithState();
+            }
+            if (found && state.sub_track.isValid())
+                setSubtitleState(state.sub_track);
+            else
+                updateSubtitleState();
         }
-        if (found && state.sub_track.isValid())
-            setSubtitleState(state.sub_track);
-        else
-            updateSubtitleState();
         as.state.mrl = mrl.toUnique();
         as.state.device = mrl.device();
         as.state.last_played_date_time = QDateTime::currentDateTime();
@@ -839,17 +841,6 @@ auto MainWindow::Data::clearSubtitleFiles() -> void
 
 auto MainWindow::Data::applyPref() -> void
 {
-    int time = -1, title = -1;
-    switch (engine.state()) {
-    case PlayEngine::Playing:
-    case PlayEngine::Loading:
-    case PlayEngine::Paused:
-        time = engine.time();
-        title = engine.currentEdition();
-        break;
-    default:
-        break;
-    }
     auto &p = pref();
     youtube.setUserAgent(p.yt_user_agent);
     youtube.setProgram(p.yt_program);
@@ -913,16 +904,7 @@ auto MainWindow::Data::applyPref() -> void
     theme.osd()->set(p.osd_style);
     theme.playlist()->set(p.playlist_theme);
     reloadSkin();
-
-    if (time >= 0) {
-        auto info = engine.startInfo();
-        info.resume = time;
-        info.cache = cache(info.mrl);
-        if (info.mrl.isDisc())
-            info.mrl = info.mrl.titleMrl(title);
-        engine.load(info);
-    }
-
+    engine.reload();
     if (tray)
         tray->setVisible(p.enable_system_tray);
     preferences.save();
