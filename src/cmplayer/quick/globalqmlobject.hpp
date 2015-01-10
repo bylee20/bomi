@@ -56,7 +56,6 @@ public:
     static auto isFullScreen() -> bool;
     static auto tr() -> QString {return QString();}
     static auto itemToAcceptKey() -> QQuickItem*;
-    static auto setItemPressed(QQuickItem *item) -> void;
     static auto get() -> UtilObject& { if (!object) create(); return *object; }
     static auto setQmlEngine(QQmlEngine *engine) -> void;
     static auto qmlEngine() -> QQmlEngine* { return get().m_engine; }

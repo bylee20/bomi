@@ -217,11 +217,3 @@ auto UtilObject::registerItemToAcceptKey(QQuickItem *item) -> void
             m_keyItems.push_front(item);
     });
 }
-
-auto UtilObject::setItemPressed(QQuickItem *item) -> void
-{
-    auto &o = get();
-    if (o.m_itemsToAcceptKey.contains(item) && o.removeKeyItem(item))
-        o.m_keyItems.push_front(item);
-}
-
