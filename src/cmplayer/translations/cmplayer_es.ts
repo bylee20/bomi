@@ -99,32 +99,32 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../ui/audionormalizeroptionwidget.ui" line="31"/>
         <source>Buffer length for calculating average level</source>
-        <translation type="unfinished">Longitud de buffer para el cálculo del nivel promedio</translation>
+        <translation>Longitud de buffer para el cálculo del nivel promedio</translation>
     </message>
     <message>
         <location filename="../ui/audionormalizeroptionwidget.ui" line="47"/>
         <source>sec</source>
-        <translation type="unfinished">seg</translation>
+        <translation>seg</translation>
     </message>
     <message>
         <location filename="../ui/audionormalizeroptionwidget.ui" line="83"/>
         <source>Target level</source>
-        <translation type="unfinished">Nivel objetivo</translation>
+        <translation>Nivel objetivo</translation>
     </message>
     <message>
         <location filename="../ui/audionormalizeroptionwidget.ui" line="112"/>
         <source>Silence level</source>
-        <translation type="unfinished">Nivel de silencio</translation>
+        <translation>Nivel de silencio</translation>
     </message>
     <message>
         <location filename="../ui/audionormalizeroptionwidget.ui" line="145"/>
         <source>Minimum gain</source>
-        <translation type="unfinished">Ganancia Mínima</translation>
+        <translation>Ganancia Mínima</translation>
     </message>
     <message>
         <location filename="../ui/audionormalizeroptionwidget.ui" line="174"/>
         <source>Maximum gain</source>
-        <translation type="unfinished">Ganancia Máxima</translation>
+        <translation>Ganancia Máxima</translation>
     </message>
 </context>
 <context>
@@ -749,42 +749,42 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enum/interpolator.hpp" line="85"/>
         <source>Spline (Radius: 2)</source>
-        <translation type="unfinished"></translation>
+        <translation>Spline (Radio: 2)</translation>
     </message>
     <message>
         <location filename="../enum/interpolator.hpp" line="86"/>
         <source>Spline (Radius: 3)</source>
-        <translation type="unfinished"></translation>
+        <translation>Spline (Radio: 3)</translation>
     </message>
     <message>
         <location filename="../enum/interpolator.hpp" line="87"/>
         <source>Spline (Radius: 4)</source>
-        <translation type="unfinished"></translation>
+        <translation>Spline (Radio: 4)</translation>
     </message>
     <message>
         <location filename="../enum/interpolator.hpp" line="88"/>
         <source>Lanczos (Radius: 2)</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enum/interpolator.hpp" line="89"/>
         <source>Lanczos (Radius: 3)</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enum/interpolator.hpp" line="90"/>
         <source>Lanczos (Radius: 4)</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enum/interpolator.hpp" line="91"/>
         <source>Unsharp Masking (Radius: 3)</source>
-        <translation type="unfinished"></translation>
+        <translation>Máscara de enfoque (Radio: 3)</translation>
     </message>
     <message>
         <location filename="../enum/interpolator.hpp" line="92"/>
         <source>Unsharp Masking (Radius: 5)</source>
-        <translation type="unfinished"></translation>
+        <translation>Máscara de enfoque (Radio: 5)</translation>
     </message>
     <message>
         <source>2-Lobed Spline</source>
@@ -1068,17 +1068,17 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enum/colorspace.hpp" line="83"/>
         <source>BT.2020-NCL(UHD)</source>
-        <translation type="unfinished"></translation>
+        <translation>BT.2020-NCL(UHD)</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="84"/>
         <source>BT.2020-CL(UHD)</source>
-        <translation type="unfinished"></translation>
+        <translation>BT.2020-CL(UHD)</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="86"/>
         <source>XYZ</source>
-        <translation type="unfinished"></translation>
+        <translation>XYZ</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="87"/>
@@ -1103,47 +1103,47 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="86"/>
         <source>Extra button 1</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 1</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="87"/>
         <source>Extra button 2</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 2</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="88"/>
         <source>Extra button 3</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 3</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="89"/>
         <source>Extra button 4</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 4</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="90"/>
         <source>Extra button 5</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 5</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="91"/>
         <source>Extra button 6</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 6</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="92"/>
         <source>Extra button 7</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 7</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="93"/>
         <source>Extra button 8</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 8</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="94"/>
         <source>Extra button 9</source>
-        <translation type="unfinished"></translation>
+        <translation>Botón extra 9</translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="84"/>
@@ -1240,7 +1240,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../widget/prefwidgets.cpp" line="15"/>
         <source>Not supported</source>
-        <translation type="unfinished">No soportado</translation>
+        <translation>No soportado</translation>
     </message>
 </context>
 <context>
@@ -1795,87 +1795,87 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/osdthemewidget.ui" line="17"/>
         <source>Text</source>
-        <translation type="unfinished">Texto</translation>
+        <translation>Texto</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="23"/>
         <source>Font</source>
-        <translation type="unfinished">Fuente</translation>
+        <translation>Fuente</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="35"/>
         <source>Size</source>
-        <translation type="unfinished">Tamaño</translation>
+        <translation>Tamaño</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="96"/>
         <source>Spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Interlineado</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="118"/>
         <source>New line</source>
-        <translation type="unfinished">Nueva linea</translation>
+        <translation>Nueva linea</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="150"/>
         <source>New paragraph</source>
-        <translation type="unfinished">Nuevo párrafo</translation>
+        <translation>Nuevo párrafo</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="201"/>
         <source>Style</source>
-        <translation type="unfinished">Estilo del borde</translation>
+        <translation>Estilo</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="207"/>
         <source>Text Color</source>
-        <translation type="unfinished"></translation>
+        <translation>Color del Texto</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="241"/>
         <source>Outline</source>
-        <translation type="unfinished"></translation>
+        <translation>Contorno</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="276"/>
         <source>Width</source>
-        <translation type="unfinished">Ancho</translation>
+        <translation>Ancho</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="318"/>
         <source>Shadow</source>
-        <translation type="unfinished">Sombra</translation>
+        <translation>Sombra</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="361"/>
         <source>Blur</source>
-        <translation type="unfinished"></translation>
+        <translation>Desenfoque</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="385"/>
         <source>X-offset</source>
-        <translation type="unfinished">Compensar-X</translation>
+        <translation>Compensar-X</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="414"/>
         <source>Y-offset</source>
-        <translation type="unfinished">Compensar-Y</translation>
+        <translation>Compensar-Y</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="461"/>
         <source>Bounding box</source>
-        <translation type="unfinished"></translation>
+        <translation>Cuadro delimitador</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="521"/>
         <source>Horizontal padding</source>
-        <translation type="unfinished">Relleno horizontal</translation>
+        <translation>Relleno horizontal</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="550"/>
         <source>Vertical padding</source>
-        <translation type="unfinished">Relleno vertical</translation>
+        <translation>Relleno vertical</translation>
     </message>
 </context>
 <context>
@@ -1986,7 +1986,7 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="75"/>
         <source>%1KiB(%3% of %2KiB)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1KiB(%3% de %2KiB)</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="81"/>
@@ -2014,12 +2014,12 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="96"/>
         <source>Dropped Frames: %1 (%2fps)</source>
-        <translation type="unfinished"></translation>
+        <translation>Fotogramas perdidos: %1 (%2ms)</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="99"/>
         <source>Delayed Frames: %1 (%2ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>Fotogramas atrasados: %1 (%2ms)</translation>
     </message>
     <message>
         <source>Deavtivated</source>
@@ -2285,7 +2285,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="1800"/>
         <source>Codec to allow hardware-acceleration</source>
-        <translation type="unfinished"></translation>
+        <translation>Codecs que permiten la aceleración por hardware</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2099"/>
@@ -2300,7 +2300,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2215"/>
         <source>Show media location in playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Muestra la ubicación del medio en la lista de reproducción</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2231"/>
@@ -2525,17 +2525,17 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="780"/>
         <source>Remove</source>
-        <translation type="unfinished">Quitar</translation>
+        <translation>Quitar</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="791"/>
         <source>Regular expression</source>
-        <translation type="unfinished"></translation>
+        <translation>Expresión regular</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="798"/>
         <source>Case-sensitive</source>
-        <translation type="unfinished"></translation>
+        <translation>Respetar mayúsculas y minúsculas</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="817"/>
@@ -2950,7 +2950,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="131"/>
         <source>Exclude images when generate playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Excluir imagenes cuando se genera la lista de reproducción</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2566"/>
@@ -3186,7 +3186,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="93"/>
         <source>Unused</source>
-        <translation type="unfinished">Sin usar</translation>
+        <translation>Sin usar</translation>
     </message>
 </context>
 <context>
@@ -3712,7 +3712,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="531"/>
         <source>Remap</source>
-        <translation type="unfinished"></translation>
+        <translation>Remapear</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="544"/>
@@ -4039,22 +4039,22 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../dialog/prefdialog_p.hpp" line="140"/>
         <source>Text</source>
-        <translation type="unfinished">Texto</translation>
+        <translation>Texto</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.hpp" line="140"/>
         <source>RegEx</source>
-        <translation type="unfinished"></translation>
+        <translation>RegEx</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.hpp" line="144"/>
         <source>Yes</source>
-        <translation type="unfinished">Si</translation>
+        <translation>Si</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.hpp" line="144"/>
         <source>No</source>
-        <translation type="unfinished">No</translation>
+        <translation>No</translation>
     </message>
 </context>
 <context>
@@ -4062,37 +4062,37 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="292"/>
         <source>Directory name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nombre del directorio</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="294"/>
         <source>Type</source>
-        <translation type="unfinished"></translation>
+        <translation>Tipo</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="296"/>
         <source>Case sensitive</source>
-        <translation type="unfinished"></translation>
+        <translation>Respetar mayúsculas y minúsculas</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="308"/>
         <source>RegEx</source>
-        <translation type="unfinished"></translation>
+        <translation>RegEx</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="308"/>
         <source>Text</source>
-        <translation type="unfinished">Texto</translation>
+        <translation>Texto</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="310"/>
         <source>Yes</source>
-        <translation type="unfinished">Si</translation>
+        <translation>Si</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog_p.cpp" line="310"/>
         <source>No</source>
-        <translation type="unfinished">No</translation>
+        <translation>No</translation>
     </message>
 </context>
 <context>
