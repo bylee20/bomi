@@ -34,7 +34,7 @@ macx {
     LIBS += -liconv -framework Cocoa -framework QuartzCore -framework IOKit \
 		-framework IOSurface -framework Carbon -framework AudioUnit \
 		-framework CoreAudio -framework VideoDecodeAcceleration \
-		-framework AudioToolBox
+		-framework AudioToolbox
 	HEADERS += player/app_mac.hpp
 	OBJECTIVE_SOURCES += player/app_mac.mm
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
