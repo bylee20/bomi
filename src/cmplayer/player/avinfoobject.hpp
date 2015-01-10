@@ -236,7 +236,6 @@ public:
         { if (_Change(m_space, space)) emit spaceChanged(); }
     auto setRange(ColorRange range) -> void
         { if (_Change(m_range, range)) emit rangeChanged(); }
-    auto setImgFmt(int imgfmt) -> void;
     auto size() const -> QSize { return m_size; }
     auto width() const -> int { return m_size.width(); }
     auto height() const -> int { return m_size.height(); }
@@ -246,6 +245,15 @@ public:
         { if (_Change(m_size, s)) emit sizeChanged(); }
     auto setBppSize(const QSize &s) -> void
         { if (_Change(m_bppSize, s)) updateBitrate(); }
+    auto setBppSize(const QSize &s, int bpp) -> void
+    {
+        if (m_bppSize != s || m_bpp != bpp) {
+            m_bppSize = s;
+            if (_Change(m_bpp, bpp))
+                emit bppChanged();
+            updateBitrate();
+        }
+    }
     void setFps(double fps)
         { if (_Change(m_fps, fps)) { emit fpsChanged(fps); updateBitrate(); } }
 signals:

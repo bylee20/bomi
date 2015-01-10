@@ -461,14 +461,21 @@ auto PlayEngine::Data::observe() -> void
             return u"Autoselect"_q;
         return m.captured(1);
     };
+
+    auto setParams = [] (VideoFormatInfoObject *info, const QVariantMap &p,
+                         const QString &wkey, const QString &hkey) {
+        const auto type = p[u"pixelformat"_q].toString();
+        const auto w = p[wkey].toInt(), h = p[hkey].toInt();
+        info->setType(type);
+        info->setSize({w, h});
+        info->setBppSize({p[u"w"_q].toInt(), p[u"h"_q].toInt()},
+                         p[u"bpp"_q].toInt());
+        info->setDepth(p[u"depth"_q].toInt());
+    };
     observeType<QVariant>("video-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
         auto info = videoInfo.output();
-        const auto type = params[u"pixelformat"_q].toString();
-        const auto w = params[u"w"_q].toInt(), h = params[u"h"_q].toInt();
-        info->setImgFmt(mp_imgfmt_from_name(bstr0(type.toLatin1()), true));
-        info->setSize({w, h});
-        info->setBppSize({w, h});
+        setParams(info, params, u"w"_q, u"h"_q);
         info->setRange(findEnum<ColorRange>(decoderOutput("colormatrix-input-range")));
         info->setSpace(findEnum<ColorSpace>(decoderOutput("colormatrix")));
         auto hwState = [&] () {
@@ -478,7 +485,7 @@ auto PlayEngine::Data::observe() -> void
             const auto codec = videoInfo.codec()->type();
             if (!HwAcc::supports(codec))
                 return Unavailable;
-            if (types.contains(type))
+            if (types.contains(info->type()))
                 return Activated;
             if (hwCodecs.contains(codec.toLatin1()))
                 return Unavailable;
@@ -492,10 +499,7 @@ auto PlayEngine::Data::observe() -> void
     observeType<QVariant>("video-out-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
         auto info = videoInfo.renderer();
-        const auto type = params[u"pixelformat"_q].toString();
-        info->setImgFmt(mp_imgfmt_from_name(bstr0(type.toLatin1()), true));
-        info->setSize({params[u"dw"_q].toInt(), params[u"dh"_q].toInt()});
-        info->setBppSize({params[u"w"_q].toInt(), params[u"h"_q].toInt()});
+        setParams(info, params, u"dw"_q, u"dh"_q);
         info->setRange(findEnum<ColorRange>(params[u"colorlevels"_q].toString()));
         info->setSpace(findEnum<ColorSpace>(params[u"colormatrix"_q].toString()));
     });

@@ -2,7 +2,6 @@
 #include "streamtrack.hpp"
 #include "video/videoformat.hpp"
 #include "audio/audioformat.hpp"
-#include <video/img_format.h>
 
 SIA updateTracks(QVector<AvTrackInfoObject*> &objs, const StreamList &tracks) -> StreamTrack
 {
@@ -105,19 +104,6 @@ auto AudioInfoObject::device() const -> QString
 }
 
 /******************************************************************************/
-
-auto VideoFormatInfoObject::setImgFmt(int imgfmt) -> void
-{
-    char name[32] = {0};
-    mp_imgfmt_to_name_buf(name, 32, imgfmt);
-    AvCommonFormatObject::setType(QString::fromLatin1(name));
-    const auto desc = mp_imgfmt_get_desc(imgfmt);
-    const auto bpp = VideoFormat::bpp(desc);
-    if (_Change(m_bpp, bpp))
-        emit bppChanged();
-    setDepth(IMGFMT_IS_HWACCEL(imgfmt) ? 8 : desc.plane_bits);
-    updateBitrate();
-}
 
 auto VideoFormatInfoObject::rangeText() const -> QString
 {
