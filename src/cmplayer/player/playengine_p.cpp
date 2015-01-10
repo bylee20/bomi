@@ -487,7 +487,7 @@ auto PlayEngine::Data::observe() -> void
                 return Unavailable;
             if (types.contains(info->type()))
                 return Activated;
-            if (hwCodecs.contains(codec.toLatin1()))
+            if (!hwCodecs.contains(codec.toLatin1()))
                 return Unavailable;
             return Deactivated;
         };
