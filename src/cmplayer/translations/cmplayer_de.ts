@@ -59,39 +59,72 @@ Projektseite: %3</translation>
 <context>
     <name>App</name>
     <message>
-        <location filename="../player/app.cpp" line="123"/>
+        <location filename="../player/app.cpp" line="122"/>
         <source>The file path or URL to open.</source>
         <translation>Pfad der Datei oder URL, die geöffnet werden soll.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="145"/>
+        <location filename="../player/app.cpp" line="144"/>
         <source>Open given %1 for file path or URL.</source>
         <translation>Pfad %1 der Datei oder URL öffnen.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="147"/>
+        <location filename="../player/app.cpp" line="146"/>
         <source>Bring the application window in front.</source>
         <translation>Anwendungsfenster nach vorne bringen.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="149"/>
+        <location filename="../player/app.cpp" line="148"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation>Aktion %1 ausführen oder %1-Menü öffnen.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="151"/>
+        <location filename="../player/app.cpp" line="150"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation>Maximale Ausführlichkeit für Log. %1 sollte eines der folgenden sein:</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="154"/>
+        <location filename="../player/app.cpp" line="153"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation>OpenGL-Debug-Log aktivieren.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="156"/>
+        <location filename="../player/app.cpp" line="155"/>
         <source>Turn on options for debugging.</source>
         <translation>Optionen fürs Debugging aktivieren.</translation>
+    </message>
+</context>
+<context>
+    <name>AudioNormalizerOptionWidget</name>
+    <message>
+        <location filename="../ui/audionormalizeroptionwidget.ui" line="31"/>
+        <source>Buffer length for calculating average level</source>
+        <translation type="unfinished">Pufferlänge zur Berechnung des Durchschnittspegels</translation>
+    </message>
+    <message>
+        <location filename="../ui/audionormalizeroptionwidget.ui" line="47"/>
+        <source>sec</source>
+        <translation type="unfinished">s</translation>
+    </message>
+    <message>
+        <location filename="../ui/audionormalizeroptionwidget.ui" line="83"/>
+        <source>Target level</source>
+        <translation type="unfinished">Zielpegel</translation>
+    </message>
+    <message>
+        <location filename="../ui/audionormalizeroptionwidget.ui" line="112"/>
+        <source>Silence level</source>
+        <translation type="unfinished">Schwellenwert für Stille</translation>
+    </message>
+    <message>
+        <location filename="../ui/audionormalizeroptionwidget.ui" line="145"/>
+        <source>Minimum gain</source>
+        <translation type="unfinished">Minimale Verstärkung</translation>
+    </message>
+    <message>
+        <location filename="../ui/audionormalizeroptionwidget.ui" line="174"/>
+        <source>Maximum gain</source>
+        <translation type="unfinished">Maximale Verstärkung</translation>
     </message>
 </context>
 <context>
@@ -447,18 +480,18 @@ Rechtsklick: %2</translation>
 <context>
     <name>EnumInfo</name>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="80"/>
+        <location filename="../enum/interpolator.hpp" line="81"/>
         <source>Bilinear</source>
         <translation>Bilinear</translation>
     </message>
     <message>
-        <location filename="../enum/colorrange.hpp" line="60"/>
+        <location filename="../enum/colorrange.hpp" line="59"/>
         <source>Color Range</source>
         <translation>Farbraum</translation>
     </message>
     <message>
-        <location filename="../enum/colorrange.hpp" line="74"/>
-        <location filename="../enum/colorspace.hpp" line="78"/>
+        <location filename="../enum/colorrange.hpp" line="73"/>
+        <location filename="../enum/colorspace.hpp" line="79"/>
         <location filename="../enum/deintmode.hpp" line="72"/>
         <source>Auto</source>
         <translation>Automatisch</translation>
@@ -610,25 +643,23 @@ Rechtsklick: %2</translation>
         <translation>7.1 (seitlich)</translation>
     </message>
     <message>
-        <location filename="../enum/colorrange.hpp" line="75"/>
+        <location filename="../enum/colorrange.hpp" line="74"/>
         <source>Limited Range</source>
         <translation>Eingeschränkter Farbraum</translation>
     </message>
     <message>
-        <location filename="../enum/colorrange.hpp" line="76"/>
+        <location filename="../enum/colorrange.hpp" line="75"/>
         <source>Full Range</source>
         <translation>Voller Farbraum</translation>
     </message>
     <message>
-        <location filename="../enum/colorrange.hpp" line="77"/>
         <source>Remap Range</source>
         <translatorcomment>Found no suitable translation for &apos;remap&apos;, now it&apos;s &apos;recalculated range&apos;</translatorcomment>
-        <translation>Umgerechneter Farbraum</translation>
+        <translation type="vanished">Umgerechneter Farbraum</translation>
     </message>
     <message>
-        <location filename="../enum/colorrange.hpp" line="78"/>
         <source>Extended Range</source>
-        <translation>Erweiterter Farbraum</translation>
+        <translation type="vanished">Erweiterter Farbraum</translation>
     </message>
     <message>
         <location filename="../enum/subtitledisplay.hpp" line="71"/>
@@ -708,54 +739,87 @@ Rechtsklick: %2</translation>
         <translation>Deinterlacing</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="81"/>
+        <location filename="../enum/interpolator.hpp" line="82"/>
         <source>B-Spline</source>
         <translation>B-Spline</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="82"/>
+        <location filename="../enum/interpolator.hpp" line="83"/>
         <source>Catmull-Rom</source>
         <translation>Catmull-Rom</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="83"/>
+        <location filename="../enum/interpolator.hpp" line="84"/>
         <source>Mitchell-Netravali</source>
         <translation>Mitchell-Netravali</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="84"/>
+        <location filename="../enum/interpolator.hpp" line="85"/>
+        <source>Spline (Radius: 2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/interpolator.hpp" line="86"/>
+        <source>Spline (Radius: 3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/interpolator.hpp" line="87"/>
+        <source>Spline (Radius: 4)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/interpolator.hpp" line="88"/>
+        <source>Lanczos (Radius: 2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/interpolator.hpp" line="89"/>
+        <source>Lanczos (Radius: 3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/interpolator.hpp" line="90"/>
+        <source>Lanczos (Radius: 4)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/interpolator.hpp" line="91"/>
+        <source>Unsharp Masking (Radius: 3)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/interpolator.hpp" line="92"/>
+        <source>Unsharp Masking (Radius: 5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>2-Lobed Spline</source>
-        <translation>2-Lobed Spline</translation>
+        <translation type="vanished">2-Lobed Spline</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="85"/>
         <source>3-Lobed Spline</source>
-        <translation>3-Lobed Spline</translation>
+        <translation type="vanished">3-Lobed Spline</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="86"/>
         <source>4-Lobed Spline</source>
-        <translation>4-Lobed Spline</translation>
+        <translation type="vanished">4-Lobed Spline</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="87"/>
         <source>Fast Lanczos</source>
-        <translation>Fast Lanczos</translation>
+        <translation type="vanished">Fast Lanczos</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="88"/>
         <source>2-Lobed Lanczos</source>
-        <translation>2-Lobed Lanczos</translation>
+        <translation type="vanished">2-Lobed Lanczos</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="89"/>
         <source>3-Lobed Lanczos</source>
-        <translation>3-Lobed Lanczos</translation>
+        <translation type="vanished">3-Lobed Lanczos</translation>
     </message>
     <message>
-        <location filename="../enum/interpolatortype.hpp" line="90"/>
         <source>4-Lobed Lanczos</source>
-        <translation>4-Lobed Lanczos</translation>
+        <translation type="vanished">4-Lobed Lanczos</translation>
     </message>
     <message>
         <location filename="../enum/clippingmethod.hpp" line="72"/>
@@ -943,58 +1007,113 @@ Rechtsklick: %2</translation>
         <translation>Versenkt</translation>
     </message>
     <message>
-        <location filename="../enum/colorspace.hpp" line="64"/>
+        <location filename="../enum/colorspace.hpp" line="65"/>
         <source>Color Space</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/colorspace.hpp" line="79"/>
+        <location filename="../enum/colorspace.hpp" line="81"/>
         <source>BT.601(SD)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/colorspace.hpp" line="80"/>
+        <location filename="../enum/colorspace.hpp" line="82"/>
         <source>BT.709(HD)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/colorspace.hpp" line="81"/>
+        <location filename="../enum/colorspace.hpp" line="80"/>
         <source>SMPTE-240M</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/colorspace.hpp" line="82"/>
+        <location filename="../enum/colorspace.hpp" line="83"/>
+        <source>BT.2020-NCL(UHD)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/colorspace.hpp" line="84"/>
+        <source>BT.2020-CL(UHD)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/colorspace.hpp" line="86"/>
+        <source>XYZ</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/colorspace.hpp" line="87"/>
         <source>YCgCo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/colorspace.hpp" line="83"/>
+        <location filename="../enum/colorspace.hpp" line="85"/>
         <source>RGB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/mousebehavior.hpp" line="83"/>
+        <location filename="../enum/mousebehavior.hpp" line="82"/>
         <source>Double click</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/mousebehavior.hpp" line="85"/>
+        <location filename="../enum/mousebehavior.hpp" line="83"/>
         <source>Middle button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enum/mousebehavior.hpp" line="87"/>
+        <location filename="../enum/mousebehavior.hpp" line="84"/>
         <source>Scroll up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../enum/mousebehavior.hpp" line="86"/>
+        <source>Extra button 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/mousebehavior.hpp" line="87"/>
+        <source>Extra button 2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/mousebehavior.hpp" line="88"/>
+        <source>Extra button 3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../enum/mousebehavior.hpp" line="89"/>
-        <source>Scroll down</source>
+        <source>Extra button 4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/mousebehavior.hpp" line="90"/>
+        <source>Extra button 5</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/mousebehavior.hpp" line="91"/>
+        <source>Extra button 6</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/mousebehavior.hpp" line="92"/>
+        <source>Extra button 7</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../enum/mousebehavior.hpp" line="93"/>
-        <source>Extra button %1</source>
+        <source>Extra button 8</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/mousebehavior.hpp" line="94"/>
+        <source>Extra button 9</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enum/mousebehavior.hpp" line="85"/>
+        <source>Scroll down</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1058,17 +1177,17 @@ Rechtsklick: %2</translation>
 <context>
     <name>HistoryDock</name>
     <message>
-        <location filename="../imports/CMPlayer/HistoryDock.qml" line="28"/>
+        <location filename="../imports/CMPlayer/HistoryDock.qml" line="33"/>
         <source>Name</source>
         <translation>Name</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/HistoryDock.qml" line="29"/>
+        <location filename="../imports/CMPlayer/HistoryDock.qml" line="34"/>
         <source>Latest Playback</source>
         <translation>Zuletzt wiedergegeben</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/HistoryDock.qml" line="30"/>
+        <location filename="../imports/CMPlayer/HistoryDock.qml" line="35"/>
         <source>Location</source>
         <translation>Ort</translation>
     </message>
@@ -1082,6 +1201,14 @@ Rechtsklick: %2</translation>
     <message>
         <source>Location</source>
         <translation type="vanished">Ort</translation>
+    </message>
+</context>
+<context>
+    <name>HwAccCodecBox</name>
+    <message>
+        <location filename="../widget/prefwidgets.cpp" line="15"/>
+        <source>Not supported</source>
+        <translation type="unfinished">Nicht unterstützt</translation>
     </message>
 </context>
 <context>
@@ -1138,18 +1265,18 @@ Rechtsklick: %2</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="189"/>
-        <location filename="../player/mainwindow_m.cpp" line="673"/>
-        <location filename="../player/mainwindow_m.cpp" line="688"/>
+        <location filename="../player/mainwindow_m.cpp" line="681"/>
+        <location filename="../player/mainwindow_m.cpp" line="696"/>
         <source>Open File</source>
         <translation>Datei öffnen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="484"/>
+        <location filename="../player/mainwindow_m.cpp" line="492"/>
         <source>Adjust Video Color</source>
         <translation>Videofarbe anpassen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="601"/>
+        <location filename="../player/mainwindow_m.cpp" line="609"/>
         <source>Open Subtitle</source>
         <translation>Untertitel öffnen</translation>
     </message>
@@ -1159,26 +1286,26 @@ Rechtsklick: %2</translation>
         <translation>Spulen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="327"/>
+        <location filename="../player/mainwindow_p.cpp" line="333"/>
         <source>Do you want to resume the playback at the last played position?</source>
         <translation>Soll die Wiedergabe an der letzten Position fortgesetzt werden?</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="332"/>
+        <location filename="../player/mainwindow_p.cpp" line="338"/>
         <source>Played Date: %1
 Stopped Position: %2</source>
         <translation>Abspieldatum: %1
 Gestoppte Position: %2</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="142"/>
+        <location filename="../player/mainwindow_p.cpp" line="146"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>Fehler!
 Kann Medium nicht öffnen.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="307"/>
+        <location filename="../player/mainwindow_p.cpp" line="313"/>
         <source>Loading ...
 Please wait for a while.</source>
         <translation>Lädt...
@@ -1190,42 +1317,42 @@ Bitte warten.</translation>
         <translation>s</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="578"/>
+        <location filename="../player/mainwindow_m.cpp" line="586"/>
         <source>Select All Subtitles</source>
         <translation>Alle Untertitel auswählen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="577"/>
+        <location filename="../player/mainwindow_m.cpp" line="585"/>
         <source>%1 Subtitle(s)</source>
         <translation>%1 Untertitel</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="805"/>
+        <location filename="../player/mainwindow_m.cpp" line="814"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>Automatisches Herunterfahren wurde abgebrochen.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="330"/>
+        <location filename="../player/mainwindow_p.cpp" line="336"/>
         <source>Title %1</source>
         <translation>Titel %1</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="326"/>
+        <location filename="../player/mainwindow_p.cpp" line="332"/>
         <source>Resume Playback</source>
         <translation>Wiedergabe fortsetzen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="334"/>
+        <location filename="../player/mainwindow_p.cpp" line="340"/>
         <source>Don&apos;t ask again</source>
         <translation>Nicht noch einmal fragen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="147"/>
+        <location filename="../player/mainwindow_p.cpp" line="151"/>
         <source>Pause</source>
         <translation>Pause</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="150"/>
+        <location filename="../player/mainwindow_p.cpp" line="154"/>
         <source>Play</source>
         <translation>Wiedergabe</translation>
     </message>
@@ -1245,90 +1372,90 @@ Bitte warten.</translation>
         <translation>Aktueller Titel</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="405"/>
+        <location filename="../player/mainwindow_m.cpp" line="413"/>
         <source>Snapshot saved</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="407"/>
+        <location filename="../player/mainwindow_m.cpp" line="415"/>
         <source>Failed to save a snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="489"/>
+        <location filename="../player/mainwindow_m.cpp" line="497"/>
         <source>Reset Video Color</source>
         <translation>Videofarbe zurücksetzen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="588"/>
+        <location filename="../player/mainwindow_m.cpp" line="596"/>
         <source>Hide Subtitles</source>
         <translation>Untertitel ausblenden</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="590"/>
+        <location filename="../player/mainwindow_m.cpp" line="598"/>
         <source>Show Subtitles</source>
         <translation>Untertitel anzeigen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="625"/>
-        <location filename="../player/mainwindow_m.cpp" line="637"/>
+        <location filename="../player/mainwindow_m.cpp" line="633"/>
+        <location filename="../player/mainwindow_m.cpp" line="645"/>
         <source>Selected Subtitle</source>
         <translation>Ausgewählter Untertitel</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="397"/>
-        <location filename="../player/mainwindow_m.cpp" line="680"/>
+        <location filename="../player/mainwindow_m.cpp" line="405"/>
+        <location filename="../player/mainwindow_m.cpp" line="688"/>
         <source>Save File</source>
         <translation>Datei speichern</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="725"/>
+        <location filename="../player/mainwindow_m.cpp" line="733"/>
         <source>Shuffle Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="736"/>
+        <location filename="../player/mainwindow_m.cpp" line="744"/>
         <source>Repeat Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="776"/>
+        <location filename="../player/mainwindow_m.cpp" line="785"/>
         <source>Downloaded</source>
         <translation>Heruntergeladen</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="788"/>
+        <location filename="../player/mainwindow_m.cpp" line="797"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
         <translation>CMPlayer beenden, wenn die Wiedergabeliste beendet wird.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="790"/>
+        <location filename="../player/mainwindow_m.cpp" line="799"/>
         <source>Auto-exit is canceled.</source>
         <translation>Automatisches Beenden wurde abgebrochen.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="796"/>
+        <location filename="../player/mainwindow_m.cpp" line="805"/>
         <source>Auto-shutdown</source>
         <translation>Automatisches Herunterfahren</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="797"/>
-        <location filename="../player/mainwindow_m.cpp" line="802"/>
+        <location filename="../player/mainwindow_m.cpp" line="806"/>
+        <location filename="../player/mainwindow_m.cpp" line="811"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>Das System wird heruntergefahren, wenn die Wiedergabeliste beendet wird.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="435"/>
+        <location filename="../player/mainwindow.cpp" line="436"/>
         <source>CMPlayer will be running in the system tray when the window closed.</source>
         <translation>CMPlayer wird im System-Tray weiter laufen, wenn das Fenster geschlossen wird.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="438"/>
+        <location filename="../player/mainwindow.cpp" line="439"/>
         <source>You can change this behavior in the preferences. If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation>Dieses Verhalten kann in den Einstellungen geändert werden. Verwenden sie das &apos;Beenden&apos;-Menü, um CMPlayer zu beenden.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="501"/>
+        <location filename="../player/mainwindow_m.cpp" line="509"/>
         <source>Current Audio Track</source>
         <translation>Aktuelle Audiospur</translation>
     </message>
@@ -1373,12 +1500,12 @@ Bitte warten.</translation>
         <translation>A-B-Wiederholung</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="434"/>
+        <location filename="../player/mainwindow.cpp" line="435"/>
         <source>System Tray Icon</source>
         <translation>System-Tray-Icon</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="441"/>
+        <location filename="../player/mainwindow.cpp" line="442"/>
         <source>Do not display this message again</source>
         <translation>Diesen Hinweis nicht noch einmal anzeigen</translation>
     </message>
@@ -1580,7 +1707,7 @@ Bitte warten.</translation>
 <context>
     <name>OpenMediaBehaviorGroupBox</name>
     <message>
-        <location filename="../widget/openmediabehaviorgroupbox.cpp" line="14"/>
+        <location filename="../widget/openmediabehaviorgroupbox.cpp" line="13"/>
         <source>Start the playback</source>
         <translation>Wiedergabe starten</translation>
     </message>
@@ -1618,6 +1745,94 @@ Bitte warten.</translation>
     </message>
 </context>
 <context>
+    <name>OsdThemeWidget</name>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="17"/>
+        <source>Text</source>
+        <translation type="unfinished">Text</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="23"/>
+        <source>Font</source>
+        <translation type="unfinished">Schriftart</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="35"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="96"/>
+        <source>Spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="118"/>
+        <source>New line</source>
+        <translation type="unfinished">Neue Zeile</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="150"/>
+        <source>New paragraph</source>
+        <translation type="unfinished">Neuer Absatz</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="201"/>
+        <source>Style</source>
+        <translation type="unfinished">Stil</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="207"/>
+        <source>Text Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="241"/>
+        <source>Outline</source>
+        <translation type="unfinished">Umrandung</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="276"/>
+        <source>Width</source>
+        <translation type="unfinished">Breite</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="318"/>
+        <source>Shadow</source>
+        <translation type="unfinished">Schatten</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="361"/>
+        <source>Blur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="385"/>
+        <source>X-offset</source>
+        <translation type="unfinished">X-Offset</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="414"/>
+        <source>Y-offset</source>
+        <translation type="unfinished">Y-Offset</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="461"/>
+        <source>Bounding box</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="521"/>
+        <source>Horizontal padding</source>
+        <translation type="unfinished">Horizontaler Abstand</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdthemewidget.ui" line="550"/>
+        <source>Vertical padding</source>
+        <translation type="unfinished">Vertikaler Abstand</translation>
+    </message>
+</context>
+<context>
     <name>PlayEngine</name>
     <message>
         <source>No Subtitle</source>
@@ -1628,12 +1843,12 @@ Bitte warten.</translation>
         <translation type="vanished">Untertitel %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="272"/>
+        <location filename="../player/playengine_p.cpp" line="288"/>
         <source>File</source>
         <translation>Datei</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="276"/>
+        <location filename="../player/playengine_p.cpp" line="292"/>
         <source>Blu-ray</source>
         <translation>Blu-ray</translation>
     </message>
@@ -1650,17 +1865,17 @@ Bitte warten.</translation>
         <translation type="vanished">Nicht verfügbar</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="490"/>
+        <location filename="../player/playengine_p.cpp" line="576"/>
         <source>Title %1</source>
         <translation>Titel %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="756"/>
+        <location filename="../player/playengine.cpp" line="757"/>
         <source>Playing</source>
         <translation>Spielt ab</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="758"/>
+        <location filename="../player/playengine.cpp" line="759"/>
         <source>Stopped</source>
         <translation>Gestoppt</translation>
     </message>
@@ -1669,22 +1884,22 @@ Bitte warten.</translation>
         <translation type="vanished">Beendet</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="760"/>
+        <location filename="../player/playengine.cpp" line="761"/>
         <source>Loading</source>
         <translation>Lädt</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="762"/>
+        <location filename="../player/playengine.cpp" line="763"/>
         <source>Buffering</source>
         <translation>Puffert</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="764"/>
+        <location filename="../player/playengine.cpp" line="765"/>
         <source>Error</source>
         <translation>Fehler</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="766"/>
+        <location filename="../player/playengine.cpp" line="767"/>
         <source>Paused</source>
         <translation>Angehalten</translation>
     </message>
@@ -1712,12 +1927,12 @@ Bitte warten.</translation>
         <translation type="vanished">Wiedergabegeschwindigkeit: x%1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="57"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="45"/>
         <source>State: %2/%3(%4%) ×%5 [%1]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="72"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="60"/>
         <source>CPU Usage: %1%(avg. %2%/core)</source>
         <translation>CPU-Nutzung: %1%(durchschnittlich %2%/Kern)</translation>
     </message>
@@ -1730,76 +1945,76 @@ Bitte warten.</translation>
         <translation type="obsolete">Video-Codec: %1[%2]</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="77"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="65"/>
         <source>RAM Usage: %3MiB(%4% of %5GiB)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="93"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="75"/>
+        <source>%1KiB(%3% of %2KiB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="81"/>
         <source>Video Track</source>
         <translation type="unfinished">Videospur</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="94"/>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="131"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="82"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="119"/>
         <source>Input   </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="95"/>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="132"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="83"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="120"/>
         <source>Output  </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="96"/>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="133"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="84"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="121"/>
         <source>Renderer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="101"/>
-        <source>Deavtivated</source>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="96"/>
+        <source>Dropped Frames: %1 (%2fps)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="102"/>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="137"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="99"/>
+        <source>Delayed Frames: %1 (%2ms)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="90"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="125"/>
         <source>Activated</source>
         <translation type="unfinished">Aktiviert</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="108"/>
-        <source>Dropped Frames: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="111"/>
-        <source>Delayed Frames: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="117"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="105"/>
         <source>Hardware Acceleration: %1[%2]</source>
         <translation type="unfinished">Hardwarebeschleunigung: %1[%2]</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="124"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="112"/>
         <source>Deinterlacer: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="130"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="118"/>
         <source>Audio Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="147"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="135"/>
         <source>Subtitle File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="148"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="136"/>
         <source>Subtitle Track</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1808,12 +2023,12 @@ Bitte warten.</translation>
         <translation type="obsolete">Audio-Codec: %1[%2]</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="136"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="124"/>
         <source>Normalizer: %1[%2%]</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="141"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="129"/>
         <source>Driver: %1[%2]</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1834,7 +2049,8 @@ Bitte warten.</translation>
         <translation type="vanished">Lautstärkenormalisierung: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="137"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="89"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="125"/>
         <source>Deactivated</source>
         <translation>Deaktiviert</translation>
     </message>
@@ -1847,18 +2063,18 @@ Bitte warten.</translation>
         <translation type="vanished">Ausgabe: %1 %2 kbps %3 kHz %4 %5 bits</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="85"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="73"/>
         <source>Cache: %1</source>
         <translation>Cache: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="86"/>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="100"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="74"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="88"/>
         <source>Unavailable</source>
         <translation>Nicht verfügbar</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="64"/>
+        <location filename="../imports/CMPlayer/PlayInfoView.qml" line="52"/>
         <source>Audio/Video Sync: %1%2ms</source>
         <translation>Audio/Videosynchronisierung: %1%2 ms</translation>
     </message>
@@ -1903,7 +2119,7 @@ Bitte warten.</translation>
 <context>
     <name>Pref</name>
     <message>
-        <location filename="../player/pref.cpp" line="491"/>
+        <location filename="../player/pref.cpp" line="415"/>
         <source>70</source>
         <comment>This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. Higher value means that auto-detection will be applied only if the result is more reliable.</comment>
         <translation>70</translation>
@@ -1912,7 +2128,7 @@ Bitte warten.</translation>
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="372"/>
+        <location filename="../dialog/prefdialog.cpp" line="333"/>
         <source>Preferences</source>
         <translation>Einstellungen</translation>
     </message>
@@ -1922,17 +2138,17 @@ Bitte warten.</translation>
         <translation>Wiedergabeliste erstellen, wenn ein Medium geöffnet ist</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="358"/>
+        <location filename="../ui/prefdialog.ui" line="365"/>
         <source>Play</source>
         <translation>Abspielen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="394"/>
+        <location filename="../ui/prefdialog.ui" line="401"/>
         <source>Auto-pausing</source>
         <translation>Automatisch pausieren</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="400"/>
+        <location filename="../ui/prefdialog.ui" line="407"/>
         <source>Pause when minimized</source>
         <translation>Pausieren, wenn das Fenster minimiert ist</translation>
     </message>
@@ -1942,19 +2158,18 @@ Bitte warten.</translation>
         <translation>Nächste Dateien zur Wiedergabeliste hinzufügen, wenn eine Datei geöffnet wird.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="169"/>
-        <location filename="../ui/prefdialog.ui" line="1752"/>
-        <location filename="../ui/prefdialog.ui" line="2839"/>
-        <location filename="../ui/prefdialog.ui" line="3326"/>
-        <location filename="../ui/prefdialog.ui" line="3349"/>
-        <location filename="../ui/prefdialog.ui" line="3372"/>
-        <location filename="../ui/prefdialog.ui" line="3456"/>
-        <location filename="../ui/prefdialog.ui" line="3544"/>
+        <location filename="../ui/prefdialog.ui" line="176"/>
+        <location filename="../ui/prefdialog.ui" line="2077"/>
+        <location filename="../ui/prefdialog.ui" line="2443"/>
+        <location filename="../ui/prefdialog.ui" line="2466"/>
+        <location filename="../ui/prefdialog.ui" line="2489"/>
+        <location filename="../ui/prefdialog.ui" line="2573"/>
+        <location filename="../ui/prefdialog.ui" line="2661"/>
         <source>sec</source>
         <translation>s</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2778"/>
+        <location filename="../ui/prefdialog.ui" line="2016"/>
         <source>Disable screensaver while playing</source>
         <translation>Bildschirmschoner während der Wiedergabe deaktivieren</translation>
     </message>
@@ -1968,123 +2183,119 @@ Bitte warten.</translation>
         <translation type="vanished">Dauer</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1728"/>
+        <location filename="../ui/prefdialog.ui" line="1764"/>
         <source>Volume Normalizer</source>
         <translation>Lautstärke-Normalisierung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1791"/>
         <source>Target level</source>
-        <translation>Zielpegel</translation>
+        <translation type="vanished">Zielpegel</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1820"/>
         <source>Silence level</source>
-        <translation>Schwellenwert für Stille</translation>
+        <translation type="vanished">Schwellenwert für Stille</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1853"/>
         <source>Minimum gain</source>
-        <translation>Minimale Verstärkung</translation>
+        <translation type="vanished">Minimale Verstärkung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1882"/>
         <source>Maximum gain</source>
-        <translation>Maximale Verstärkung</translation>
+        <translation type="vanished">Maximale Verstärkung</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="133"/>
+        <location filename="../dialog/prefdialog.cpp" line="98"/>
         <source>Video filter</source>
         <translation>Video-Filter</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="966"/>
+        <location filename="../ui/prefdialog.ui" line="1002"/>
         <source>Blur kernel</source>
         <translation>Glättungsfilter</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="987"/>
-        <location filename="../ui/prefdialog.ui" line="1338"/>
+        <location filename="../ui/prefdialog.ui" line="1023"/>
+        <location filename="../ui/prefdialog.ui" line="1374"/>
         <source>Center</source>
         <translation>Mitte</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1001"/>
-        <location filename="../ui/prefdialog.ui" line="1352"/>
+        <location filename="../ui/prefdialog.ui" line="1037"/>
+        <location filename="../ui/prefdialog.ui" line="1388"/>
         <source>Neighbor</source>
         <translation>Nachbar</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1015"/>
-        <location filename="../ui/prefdialog.ui" line="1366"/>
+        <location filename="../ui/prefdialog.ui" line="1051"/>
+        <location filename="../ui/prefdialog.ui" line="1402"/>
         <source>Diagonal</source>
         <translation>Diagonal</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1317"/>
+        <location filename="../ui/prefdialog.ui" line="1353"/>
         <source>Sharpen kernel</source>
         <translation>Schärfefilter</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2861"/>
+        <location filename="../ui/prefdialog.ui" line="2099"/>
         <source>Run only single CMPlayer application at the same time</source>
         <translation>Nur eine Instanz von CMPlayer zur gleichen Zeit erlauben</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2875"/>
+        <location filename="../ui/prefdialog.ui" line="2113"/>
         <source>Use Lion-style fullscreen mode</source>
         <translation>Vollbildmodus im Lion-Stil verwenden</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="123"/>
+        <location filename="../dialog/prefdialog.cpp" line="88"/>
         <source>Language</source>
         <translation>Sprache</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3167"/>
-        <location filename="../ui/prefdialog.ui" line="3243"/>
+        <location filename="../ui/prefdialog.ui" line="2284"/>
+        <location filename="../ui/prefdialog.ui" line="2360"/>
         <source>You may need to restart CMPlayer to apply the changes </source>
         <translation>CMPlayer muss möglicherweise neu gestartet werden, um die Änderungen anzuwenden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3158"/>
+        <location filename="../ui/prefdialog.ui" line="2275"/>
         <source>Window style</source>
         <translation>Fensterstil</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3108"/>
+        <location filename="../ui/prefdialog.ui" line="2225"/>
         <source>Background Image</source>
         <translation>Hintergrundbild</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3123"/>
+        <location filename="../ui/prefdialog.ui" line="2240"/>
         <source>Fill color:</source>
         <translation>Farbe:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2746"/>
+        <location filename="../ui/prefdialog.ui" line="1984"/>
         <source>System tray</source>
         <translation>System-Tray</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2752"/>
+        <location filename="../ui/prefdialog.ui" line="1990"/>
         <source>Show system tray icon</source>
         <translation>Icon im System-Tray anzeigen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2762"/>
+        <location filename="../ui/prefdialog.ui" line="2000"/>
         <source>Hide the window rather than quit when closed </source>
         <translation>Beim Schließen Fenster ausblenden und nicht beenden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="704"/>
-        <location filename="../ui/prefdialog.ui" line="3423"/>
-        <location filename="../dialog/prefdialog.cpp" line="139"/>
+        <location filename="../ui/prefdialog.ui" line="711"/>
+        <location filename="../ui/prefdialog.ui" line="2540"/>
+        <location filename="../dialog/prefdialog.cpp" line="104"/>
         <source>Subtitle</source>
         <translation>Untertitel</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="410"/>
+        <location filename="../ui/prefdialog.ui" line="417"/>
         <source>Apply to video only</source>
         <translation>Nur bei Videos anwenden</translation>
     </message>
@@ -2097,7 +2308,7 @@ Bitte warten.</translation>
         <translation type="vanished">Verwende &apos;Wiedergabe/Pause&apos; als &apos;Zeige nächstes Bild&apos;, wenn die Dauer &apos;unendlich&apos; ist</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="423"/>
+        <location filename="../ui/prefdialog.ui" line="430"/>
         <source>Remember image slides history</source>
         <translation>Speichere Verlauf von Diashows</translation>
     </message>
@@ -2106,24 +2317,23 @@ Bitte warten.</translation>
         <translation type="vanished">Standard-CMPlayer-Logo anzeigen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1736"/>
         <source>Buffer length for calculating average level</source>
-        <translation>Pufferlänge zur Berechnung des Durchschnittspegels</translation>
+        <translation type="vanished">Pufferlänge zur Berechnung des Durchschnittspegels</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="714"/>
-        <location filename="../ui/prefdialog.ui" line="2625"/>
-        <location filename="../dialog/prefdialog.cpp" line="140"/>
+        <location filename="../ui/prefdialog.ui" line="721"/>
+        <location filename="../ui/prefdialog.ui" line="1863"/>
+        <location filename="../dialog/prefdialog.cpp" line="105"/>
         <source>Load</source>
         <translation>Laden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="430"/>
+        <location filename="../ui/prefdialog.ui" line="437"/>
         <source>Save and restore state per media playback</source>
         <translation>Einstellungen für Medienwiedergabe speichern und wiederherstellen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3227"/>
+        <location filename="../ui/prefdialog.ui" line="2344"/>
         <source>Locale</source>
         <translation>Sprache</translation>
     </message>
@@ -2132,153 +2342,168 @@ Bitte warten.</translation>
         <translation type="vanished">Bevorzugter Ausgabetreiber</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="210"/>
+        <location filename="../ui/prefdialog.ui" line="217"/>
         <source>Quick Snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="218"/>
+        <location filename="../ui/prefdialog.ui" line="225"/>
         <source>Format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="228"/>
+        <location filename="../ui/prefdialog.ui" line="235"/>
         <source>Quality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="235"/>
+        <location filename="../ui/prefdialog.ui" line="242"/>
         <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="275"/>
+        <location filename="../ui/prefdialog.ui" line="282"/>
         <source>Save in</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="289"/>
-        <location filename="../ui/prefdialog.ui" line="766"/>
+        <location filename="../ui/prefdialog.ui" line="296"/>
+        <location filename="../ui/prefdialog.ui" line="773"/>
         <source>Browse...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="305"/>
+        <location filename="../ui/prefdialog.ui" line="312"/>
         <source>Ask where to save snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="467"/>
+        <location filename="../ui/prefdialog.ui" line="474"/>
         <source>Audio output device (Restart required)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="475"/>
+        <location filename="../ui/prefdialog.ui" line="482"/>
         <source>Name</source>
         <translation type="unfinished">Name</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="504"/>
+        <location filename="../ui/prefdialog.ui" line="511"/>
         <source>Volume control</source>
         <translation>Lautstärkeregelung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="513"/>
+        <location filename="../ui/prefdialog.ui" line="520"/>
         <source>Clipping method</source>
         <translation>Clipping-Verfahren</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="526"/>
+        <location filename="../ui/prefdialog.ui" line="533"/>
         <source>Channel Manipulation</source>
         <translation>Kanalanpassung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="561"/>
+        <location filename="../ui/prefdialog.ui" line="568"/>
         <source>Default Cache</source>
         <translation>Standard-Zwischenspeicher</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="569"/>
+        <location filename="../ui/prefdialog.ui" line="576"/>
         <source>Local files</source>
         <translation>Lokale Dateien</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="586"/>
+        <location filename="../ui/prefdialog.ui" line="593"/>
         <source>Network media</source>
         <translation>Netzwerkmedien</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="632"/>
+        <location filename="../ui/prefdialog.ui" line="639"/>
         <source>Minimum Cache</source>
         <translation>Minimaler Zwischenspeicher</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="640"/>
+        <location filename="../ui/prefdialog.ui" line="647"/>
         <source>For playback</source>
         <translation>Für die Wiedergabe</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="658"/>
+        <location filename="../ui/prefdialog.ui" line="665"/>
         <source>For seeking</source>
         <translation>Für das Spulen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="677"/>
+        <location filename="../ui/prefdialog.ui" line="684"/>
         <source>Network folders</source>
         <translation>Netzwerkordner</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="683"/>
+        <location filename="../ui/prefdialog.ui" line="690"/>
         <source>Folders of network drives or NFS</source>
         <translation>Ordner von Netzwerklaufwerken oder NFS</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="720"/>
+        <location filename="../ui/prefdialog.ui" line="727"/>
         <source>Load subtitle files when a local media file is open</source>
         <translation>Untertiteldateien laden, wenn eine lokale Mediendatei geöffnet wurde</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="730"/>
+        <location filename="../ui/prefdialog.ui" line="737"/>
         <source>Load next subtitles when starting to play a file.</source>
         <translation>Nächste Untertitel laden, wenn die Wiedergabe einer Datei gestartet wird.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="749"/>
+        <location filename="../ui/prefdialog.ui" line="756"/>
         <source>Search Path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="759"/>
+        <location filename="../ui/prefdialog.ui" line="766"/>
         <source>Add</source>
         <translation type="unfinished">Hinzufügen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="781"/>
+        <location filename="../ui/prefdialog.ui" line="780"/>
+        <source>Remove</source>
+        <translation type="unfinished">Entfernen</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="791"/>
+        <source>Regular expression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="798"/>
+        <source>Case-sensitive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="817"/>
         <source>Auto-selection</source>
         <translation>Automatische Auswahl</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="787"/>
+        <location filename="../ui/prefdialog.ui" line="823"/>
         <source>Select subtitles from loaded ones automatically</source>
         <translation>Untertitel aus den geladenen Untertiteln automatisch auswählen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="805"/>
+        <location filename="../ui/prefdialog.ui" line="841"/>
         <source>Select next subtitles in automatically loaded subtitles.</source>
         <translation>Nächste Untertitel bei automatisch geladenen Untertiteln auswählen.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="818"/>
+        <location filename="../ui/prefdialog.ui" line="854"/>
         <source>Extension</source>
         <translation>Erweiterung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="843"/>
+        <location filename="../ui/prefdialog.ui" line="879"/>
         <source>Encoding</source>
         <translation>Zeichensatz</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="849"/>
+        <location filename="../ui/prefdialog.ui" line="885"/>
         <source>Open subtitle file with selected encoding.</source>
         <translation>Untertiteldatei mit ausgewähltem Zeichensatz öffnen.</translation>
     </message>
@@ -2303,7 +2528,7 @@ Bitte warten.</translation>
         <translation type="vanished">Anzeigezeitraum pro Zeichen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="921"/>
+        <location filename="../ui/prefdialog.ui" line="957"/>
         <source>When display time is not specifid in subtitle, caculate interval wih this value.</source>
         <translation>Wenn keine Anzeigezeitraum im Untertitel angegeben ist, den Zeitraum mit diesem Wert berechnen.</translation>
     </message>
@@ -2312,123 +2537,108 @@ Bitte warten.</translation>
         <translation type="vanished">ms</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="198"/>
+        <location filename="../dialog/prefdialog.cpp" line="158"/>
         <source>For S/W decoding</source>
         <translation>Software-Dekodierung</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="199"/>
+        <location filename="../dialog/prefdialog.cpp" line="159"/>
         <source>For H/W decoding</source>
         <translation>Hardware-Dekodierung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1954"/>
+        <location filename="../ui/prefdialog.ui" line="1793"/>
         <source>Use hardware-accelerated decoding</source>
         <translation>Hardwarebeschleunigung verwenden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2359"/>
         <source>New line</source>
-        <translation>Neue Zeile</translation>
+        <translation type="vanished">Neue Zeile</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2391"/>
         <source>New paragraph</source>
-        <translation>Neuer Absatz</translation>
+        <translation type="vanished">Neuer Absatz</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2608"/>
+        <location filename="../ui/prefdialog.ui" line="1846"/>
         <source>Preset</source>
         <translation>Voreinstellung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2663"/>
+        <location filename="../ui/prefdialog.ui" line="1901"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="148"/>
+        <location filename="../ui/prefdialog.ui" line="155"/>
         <source>Mouse cursor</source>
         <translation>Mauszeiger</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="156"/>
+        <location filename="../ui/prefdialog.ui" line="163"/>
         <source>Hide mouse cursor after timeout:</source>
         <translation>Mauszeiger nach Zeitraum verstecken:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3048"/>
+        <location filename="../ui/prefdialog.ui" line="2154"/>
         <source>Show OSD messages when actions are triggered</source>
         <translation>OSD-Nachrichten anzeigen, wenn Aktionen ausgelöst werden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3055"/>
+        <location filename="../ui/prefdialog.ui" line="2161"/>
         <source>Show OSD messages when the window is resized</source>
         <translation>OSD-Nachrichten anzeigen, wenn die Fenstergröße geändert wird</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3511"/>
+        <location filename="../ui/prefdialog.ui" line="2628"/>
         <source>Amplifier</source>
         <translation>Verstärker</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1999"/>
-        <location filename="../ui/prefdialog.ui" line="2919"/>
         <source>Font</source>
-        <translation>Schriftart</translation>
+        <translation type="vanished">Schriftart</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2117"/>
-        <location filename="../ui/prefdialog.ui" line="2206"/>
-        <location filename="../ui/prefdialog.ui" line="2469"/>
-        <location filename="../ui/prefdialog.ui" line="3563"/>
+        <location filename="../ui/prefdialog.ui" line="2680"/>
         <source>Color</source>
         <translation>Farbe</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1993"/>
-        <location filename="../ui/prefdialog.ui" line="2913"/>
         <source>Text</source>
-        <translation>Text</translation>
+        <translation type="vanished">Text</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2092"/>
         <source>Outline</source>
-        <translation>Umrandung</translation>
+        <translation type="vanished">Umrandung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2039"/>
-        <location filename="../ui/prefdialog.ui" line="2959"/>
         <source>Size</source>
-        <translation>Größe</translation>
+        <translation type="vanished">Größe</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2134"/>
         <source>Width</source>
-        <translation>Breite</translation>
+        <translation type="vanished">Breite</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2340"/>
         <source>Line spacing</source>
-        <translation>Zeilenabstand</translation>
+        <translation type="vanished">Zeilenabstand</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2176"/>
         <source>Shadow</source>
-        <translation>Schatten</translation>
+        <translation type="vanished">Schatten</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="368"/>
+        <location filename="../ui/prefdialog.ui" line="375"/>
         <source>Resume playback</source>
         <translation>Wiedergabe fortsetzen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="374"/>
+        <location filename="../ui/prefdialog.ui" line="381"/>
         <source>Resume playback at last played position</source>
         <translation>Wiedergabe an letzter Position fortsetzen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="384"/>
+        <location filename="../ui/prefdialog.ui" line="391"/>
         <source>Confirm resume playback</source>
         <translation>Fortsetzung der Wiedergabe bestätigen</translation>
     </message>
@@ -2437,49 +2647,41 @@ Bitte warten.</translation>
         <translation type="vanished">Unendlich</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="610"/>
+        <location filename="../ui/prefdialog.ui" line="617"/>
         <source>Optical disc</source>
         <translation>Optische Medien</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1935"/>
         <source>Backend</source>
-        <translation>Backend</translation>
+        <translation type="vanished">Backend</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2231"/>
         <source>Blur</source>
-        <translation>Glättung</translation>
+        <translation type="vanished">Glättung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2240"/>
-        <location filename="../ui/prefdialog.ui" line="2492"/>
         <source>Opacity</source>
-        <translation>Deckkraft</translation>
+        <translation type="vanished">Deckkraft</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2264"/>
         <source>X-offset</source>
-        <translation>X-Offset</translation>
+        <translation type="vanished">X-Offset</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2293"/>
         <source>Y-offset</source>
-        <translation>Y-Offset</translation>
+        <translation type="vanished">Y-Offset</translation>
     </message>
     <message>
         <source>Bounding Box</source>
         <translation type="vanished">Rahmen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2513"/>
         <source>Horizontal padding</source>
-        <translation>Horizontaler Abstand</translation>
+        <translation type="vanished">Horizontaler Abstand</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2542"/>
         <source>Vertical padding</source>
-        <translation>Vertikaler Abstand</translation>
+        <translation type="vanished">Vertikaler Abstand</translation>
     </message>
     <message>
         <source>You can specify the order of unified(mulit) subtitles with the &apos;Name&apos; property in a subtitle file.
@@ -2490,31 +2692,31 @@ Ist die Eigenschaft nicht angegeben, werden sie in der ausgewählten Reihenfolge
 Z.B.: German, English</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2638"/>
+        <location filename="../ui/prefdialog.ui" line="1876"/>
         <source>Menu</source>
         <translation>Menü</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2643"/>
-        <location filename="../ui/prefdialog.ui" line="2685"/>
+        <location filename="../ui/prefdialog.ui" line="1881"/>
+        <location filename="../ui/prefdialog.ui" line="1923"/>
         <source>Shortcut1</source>
         <translation>Kürzel 1</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2648"/>
-        <location filename="../ui/prefdialog.ui" line="2701"/>
+        <location filename="../ui/prefdialog.ui" line="1886"/>
+        <location filename="../ui/prefdialog.ui" line="1939"/>
         <source>Shortcut2</source>
         <translation>Kürzel 2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2653"/>
-        <location filename="../ui/prefdialog.ui" line="2717"/>
+        <location filename="../ui/prefdialog.ui" line="1891"/>
+        <location filename="../ui/prefdialog.ui" line="1955"/>
         <source>Shortcut3</source>
         <translation>Kürzel 3</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2658"/>
-        <location filename="../ui/prefdialog.ui" line="2733"/>
+        <location filename="../ui/prefdialog.ui" line="1896"/>
+        <location filename="../ui/prefdialog.ui" line="1971"/>
         <source>Shortcut4</source>
         <translation>Kürzel 4</translation>
     </message>
@@ -2527,87 +2729,80 @@ Z.B.: German, English</translation>
         <translation type="vanished">Nach Zeitraum ausblenden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="200"/>
+        <location filename="../ui/prefdialog.ui" line="207"/>
         <source>Apply in fullscreen mode only</source>
         <translation>Nur im Vollbildmodus ausblenden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="298"/>
+        <location filename="../ui/prefdialog.ui" line="305"/>
         <source>Save in the same folder where current playing &amp;video exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="321"/>
+        <location filename="../ui/prefdialog.ui" line="328"/>
         <source>Script path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="864"/>
+        <location filename="../ui/prefdialog.ui" line="900"/>
         <source>Auto-detect encoding when accuracy is above</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="908"/>
+        <location filename="../ui/prefdialog.ui" line="944"/>
         <source>Display Time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="914"/>
+        <location filename="../ui/prefdialog.ui" line="950"/>
         <source>Calculate display time when not specified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="927"/>
+        <location filename="../ui/prefdialog.ui" line="963"/>
         <source>msec/character</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2439"/>
-        <source>Bounding Bo&amp;x</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/prefdialog.ui" line="2772"/>
+        <location filename="../ui/prefdialog.ui" line="2010"/>
         <source>Screensaver</source>
         <translation>Bildschirmschoner</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2788"/>
+        <location filename="../ui/prefdialog.ui" line="2026"/>
         <source>Use external command</source>
         <translation>Externen Befehl verwenden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2832"/>
+        <location filename="../ui/prefdialog.ui" line="2070"/>
         <source>Interval</source>
         <translation>Intervall</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2868"/>
+        <location filename="../ui/prefdialog.ui" line="2106"/>
         <source>Resize to video resolution in windowed-mode when video is changed</source>
         <translation>Im Fenstermodus Fenster an Videoauflösung anpassen, wenn das Video geändert wird</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2882"/>
+        <location filename="../ui/prefdialog.ui" line="2120"/>
         <source>Use D-Bus interface for MPRISv2</source>
         <translation>D-Bus-Schnittstelle für MPRISv2 verwenden</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2971"/>
         <source>% of height</source>
-        <translation>% der Höhe</translation>
+        <translation type="vanished">% der Höhe</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3002"/>
         <source>Style</source>
-        <translation>Stil</translation>
+        <translation type="vanished">Stil</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3042"/>
+        <location filename="../ui/prefdialog.ui" line="2148"/>
         <source>Display</source>
         <translation>Bildschirm</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3062"/>
+        <location filename="../ui/prefdialog.ui" line="2168"/>
         <source>Show OSD timeline when seeking</source>
         <translation>OSD-Zeitleiste beim Spulen anzeigen</translation>
     </message>
@@ -2620,137 +2815,152 @@ Z.B.: German, English</translation>
         <translation type="vanished">Mausrad</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3203"/>
+        <location filename="../ui/prefdialog.ui" line="2320"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation>Scrollrichtung des Mausrads umkehren</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3253"/>
+        <location filename="../ui/prefdialog.ui" line="2370"/>
         <source>Audio Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3272"/>
+        <location filename="../ui/prefdialog.ui" line="2389"/>
         <source>Subtitle Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3291"/>
+        <location filename="../ui/prefdialog.ui" line="2408"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3310"/>
+        <location filename="../ui/prefdialog.ui" line="2427"/>
         <source>Seek</source>
         <translation>Spulen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3319"/>
+        <location filename="../ui/prefdialog.ui" line="2436"/>
         <source>Step 1</source>
         <translation>Sprungweite 1</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3342"/>
+        <location filename="../ui/prefdialog.ui" line="2459"/>
         <source>Step 2</source>
         <translation>Sprungweite 2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3365"/>
+        <location filename="../ui/prefdialog.ui" line="2482"/>
         <source>Step 3</source>
         <translation>Sprungweite 3</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3391"/>
-        <location filename="../dialog/prefdialog.cpp" line="121"/>
+        <location filename="../ui/prefdialog.ui" line="2508"/>
+        <location filename="../dialog/prefdialog.cpp" line="86"/>
         <source>Playback</source>
         <translation>Wiedergabe</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3400"/>
+        <location filename="../ui/prefdialog.ui" line="2517"/>
         <source>Speed</source>
         <translation>Geschwindigkeit</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3479"/>
-        <location filename="../dialog/prefdialog.cpp" line="135"/>
+        <location filename="../ui/prefdialog.ui" line="2596"/>
+        <location filename="../dialog/prefdialog.cpp" line="100"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3485"/>
+        <location filename="../ui/prefdialog.ui" line="2602"/>
         <source>Volume</source>
         <translation>Lautstärke</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3429"/>
+        <location filename="../ui/prefdialog.ui" line="2546"/>
         <source>Position</source>
         <translation>Position</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3114"/>
+        <location filename="../ui/prefdialog.ui" line="131"/>
+        <source>Exclude images when generate playlist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1800"/>
+        <source>Codec to allow hardware-acceleration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2215"/>
+        <source>Show media location in playlist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2231"/>
         <source>Show default C&amp;MPlayer logo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3449"/>
-        <location filename="../ui/prefdialog.ui" line="3537"/>
+        <location filename="../ui/prefdialog.ui" line="2566"/>
+        <location filename="../ui/prefdialog.ui" line="2654"/>
         <source>Sync Delay</source>
         <translation>Synchronisierung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3569"/>
+        <location filename="../ui/prefdialog.ui" line="2686"/>
         <source>Brightness</source>
         <translation>Helligkeit</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3589"/>
+        <location filename="../ui/prefdialog.ui" line="2706"/>
         <source>Contrast</source>
         <translation>Kontrast</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3609"/>
+        <location filename="../ui/prefdialog.ui" line="2726"/>
         <source>Saturation</source>
         <translation>Sättigung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3629"/>
+        <location filename="../ui/prefdialog.ui" line="2746"/>
         <source>Hue</source>
         <translation>Farbton</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="118"/>
+        <location filename="../dialog/prefdialog.cpp" line="83"/>
         <source>General</source>
         <translation>Allgemein</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="119"/>
+        <location filename="../dialog/prefdialog.cpp" line="84"/>
         <source>Application</source>
         <translation>Anwendung</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="120"/>
+        <location filename="../dialog/prefdialog.cpp" line="85"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="124"/>
+        <location filename="../dialog/prefdialog.cpp" line="89"/>
         <source>Miscellaneous</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="126"/>
-        <location filename="../dialog/prefdialog.cpp" line="141"/>
+        <location filename="../dialog/prefdialog.cpp" line="91"/>
+        <location filename="../dialog/prefdialog.cpp" line="106"/>
         <source>Appearance</source>
         <translation>Aussehen</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="127"/>
+        <location filename="../dialog/prefdialog.cpp" line="92"/>
         <source>OSD</source>
         <translation>OSD</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="128"/>
+        <location filename="../dialog/prefdialog.cpp" line="93"/>
         <source>Skin &amp; Style</source>
         <translation>Skin &amp; Stil</translation>
     </message>
@@ -2759,27 +2969,27 @@ Regular expression is supported.</source>
         <translation type="vanished">Reihenfolge</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="143"/>
+        <location filename="../dialog/prefdialog.cpp" line="108"/>
         <source>User interface</source>
         <translation>Benutzeroberfläche</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="144"/>
+        <location filename="../dialog/prefdialog.cpp" line="109"/>
         <source>Keyboard shortcuts</source>
         <translation>Tastaturkürzel</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="145"/>
+        <location filename="../dialog/prefdialog.cpp" line="110"/>
         <source>Mouse actions</source>
         <translation>Mausaktionen</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="146"/>
+        <location filename="../dialog/prefdialog.cpp" line="111"/>
         <source>Control step</source>
         <translation>Sprungweite</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3089"/>
+        <location filename="../ui/prefdialog.ui" line="2195"/>
         <source>Skin</source>
         <translation>Skin</translation>
     </message>
@@ -2792,32 +3002,32 @@ Regular expression is supported.</source>
         <translation type="vanished">Aussehen</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="122"/>
+        <location filename="../dialog/prefdialog.cpp" line="87"/>
         <source>Cache</source>
         <translation>Cache</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="130"/>
+        <location filename="../dialog/prefdialog.cpp" line="95"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="131"/>
+        <location filename="../dialog/prefdialog.cpp" line="96"/>
         <source>Hardware acceleration</source>
         <translation>Hardwarebeschleunigung</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="132"/>
+        <location filename="../dialog/prefdialog.cpp" line="97"/>
         <source>Deinterlace</source>
         <translation>Deinterlacing</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="136"/>
+        <location filename="../dialog/prefdialog.cpp" line="101"/>
         <source>Sound</source>
         <translation>Sound</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="137"/>
+        <location filename="../dialog/prefdialog.cpp" line="102"/>
         <source>Audio filter</source>
         <translation>Audio-Filter</translation>
     </message>
@@ -2840,28 +3050,22 @@ Regular expression is supported.</source>
         <translation type="vanished">Herunterscrollen</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="52"/>
         <source>Not supported</source>
-        <translation>Nicht unterstützt</translation>
+        <translation type="vanished">Nicht unterstützt</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="178"/>
-        <location filename="../dialog/prefdialog.cpp" line="347"/>
+        <location filename="../dialog/prefdialog.cpp" line="130"/>
+        <location filename="../dialog/prefdialog.cpp" line="304"/>
         <source>Browse for Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="216"/>
-        <source>Unused</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../dialog/prefdialog.cpp" line="325"/>
+        <location filename="../dialog/prefdialog.cpp" line="276"/>
         <source>CMPlayer</source>
         <translation>CMPlayer</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="326"/>
+        <location filename="../dialog/prefdialog.cpp" line="277"/>
         <source>Movist</source>
         <translation>Movist</translation>
     </message>
@@ -2894,7 +3098,7 @@ Regular expression is supported.</source>
         <translation type="vanished">Mittelklick</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="58"/>
+        <location filename="../dialog/prefdialog.cpp" line="34"/>
         <source>All</source>
         <translation>Alle</translation>
     </message>
@@ -2915,30 +3119,38 @@ Regular expression is supported.</source>
         <translation type="vanished">Zurücksetzen</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog_p.cpp" line="217"/>
+        <location filename="../dialog/prefdialog_p.cpp" line="220"/>
         <source>No modifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog_p.cpp" line="266"/>
+        <location filename="../dialog/prefdialog_p.cpp" line="269"/>
         <source>Typically denoted as &apos;Back&apos; button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog_p.cpp" line="268"/>
+        <location filename="../dialog/prefdialog_p.cpp" line="271"/>
         <source>Typically denoted as &apos;Forward&apos; button</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PrefMenuTreeWidget</name>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="93"/>
+        <source>Unused</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>PrefMouseActionTree</name>
     <message>
-        <location filename="../dialog/prefdialog_p.cpp" line="256"/>
+        <location filename="../dialog/prefdialog_p.cpp" line="259"/>
         <source>Behavior</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog_p.cpp" line="256"/>
+        <location filename="../dialog/prefdialog_p.cpp" line="259"/>
         <source>Menu</source>
         <translation type="unfinished">Menü</translation>
     </message>
@@ -3072,304 +3284,302 @@ Regular expression is supported.</source>
 <context>
     <name>RootMenu</name>
     <message>
-        <location filename="../player/rootmenu.cpp" line="436"/>
-        <location filename="../player/rootmenu.cpp" line="560"/>
+        <location filename="../player/rootmenu.cpp" line="437"/>
+        <location filename="../player/rootmenu.cpp" line="562"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="437"/>
+        <location filename="../player/rootmenu.cpp" line="438"/>
         <source>Open File</source>
         <translation>Datei öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="438"/>
+        <location filename="../player/rootmenu.cpp" line="439"/>
         <source>Open Folder</source>
         <translation>Ordner öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="439"/>
+        <location filename="../player/rootmenu.cpp" line="440"/>
         <source>Load URL</source>
         <translation>URL laden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="440"/>
+        <location filename="../player/rootmenu.cpp" line="441"/>
         <source>Open DVD</source>
         <translation>DVD öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="445"/>
-        <location filename="../player/rootmenu.cpp" line="562"/>
-        <location filename="../player/rootmenu.cpp" line="575"/>
+        <location filename="../player/rootmenu.cpp" line="446"/>
+        <location filename="../player/rootmenu.cpp" line="564"/>
+        <location filename="../player/rootmenu.cpp" line="577"/>
         <source>Clear</source>
         <translation>Leeren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="447"/>
         <location filename="../player/rootmenu.cpp" line="448"/>
+        <location filename="../player/rootmenu.cpp" line="449"/>
         <source>Play</source>
         <translation>Wiedergabe</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="449"/>
+        <location filename="../player/rootmenu.cpp" line="450"/>
         <source>Stop</source>
         <translation>Stopp</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="450"/>
+        <location filename="../player/rootmenu.cpp" line="451"/>
         <source>Play Previous</source>
         <translation>Vorherigen Titel wiedergeben</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="451"/>
+        <location filename="../player/rootmenu.cpp" line="452"/>
         <source>Play Next</source>
         <translation>Nächsten Titel wiedergeben</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="452"/>
+        <location filename="../player/rootmenu.cpp" line="453"/>
         <source>Disc Menu</source>
         <translation>Diskmenü</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="460"/>
+        <location filename="../player/rootmenu.cpp" line="461"/>
         <source>Playback Speed</source>
         <translation>Wiedergabegeschwindigkeit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="462"/>
+        <location filename="../player/rootmenu.cpp" line="463"/>
         <source>A-B Repeat</source>
         <translation>A-B-Wiederholung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="463"/>
+        <location filename="../player/rootmenu.cpp" line="464"/>
         <source>Set Range to Current Time</source>
         <translation>Auswahl auf aktuelle Zeit setzen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="464"/>
+        <location filename="../player/rootmenu.cpp" line="465"/>
         <source>Repeat Current Subtitle</source>
         <translation>Aktuellen Untertitel wiederholen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="465"/>
+        <location filename="../player/rootmenu.cpp" line="466"/>
         <source>Quit</source>
         <translation>Schließen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="467"/>
+        <location filename="../player/rootmenu.cpp" line="468"/>
         <source>Seek</source>
         <translation>Suchen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="472"/>
+        <location filename="../player/rootmenu.cpp" line="473"/>
         <source>Forward %1sec</source>
         <translation>%1 s nach vorne springen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="473"/>
+        <location filename="../player/rootmenu.cpp" line="474"/>
         <source>Backward %1sec</source>
         <translation>%1 s zurück springen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="478"/>
+        <location filename="../player/rootmenu.cpp" line="479"/>
         <source>To Previous Subtitle</source>
         <translation>Zum vorherigen Untertitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="479"/>
+        <location filename="../player/rootmenu.cpp" line="480"/>
         <source>To Beginning of Current Subtitle</source>
         <translation>Zum Anfang des aktuellen Untertitels</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="480"/>
+        <location filename="../player/rootmenu.cpp" line="481"/>
         <source>To Next Subtitle</source>
         <translation>Zum nächsten Untertitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="482"/>
+        <location filename="../player/rootmenu.cpp" line="483"/>
         <source>Title</source>
         <translation>Titel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="483"/>
+        <location filename="../player/rootmenu.cpp" line="484"/>
         <source>Chapter</source>
         <translation>Kapitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="487"/>
+        <location filename="../player/rootmenu.cpp" line="488"/>
         <source>Subtitle</source>
         <translation>Untertitel</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="116"/>
-        <location filename="../player/rootmenu.cpp" line="494"/>
-        <location filename="../player/rootmenu.cpp" line="543"/>
+        <location filename="../player/rootmenu.cpp" line="495"/>
+        <location filename="../player/rootmenu.cpp" line="545"/>
         <source>Select Next</source>
         <translation>Nächste(s) auswählen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="495"/>
+        <location filename="../player/rootmenu.cpp" line="496"/>
         <source>Select All</source>
         <translation>Alle auswählen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="496"/>
+        <location filename="../player/rootmenu.cpp" line="497"/>
         <source>Hide</source>
         <translation>Ausblenden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="489"/>
+        <location filename="../player/rootmenu.cpp" line="490"/>
         <source>Subtitle Track</source>
         <translation>Untertitelspur</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="503"/>
+        <location filename="../player/rootmenu.cpp" line="504"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="504"/>
+        <location filename="../player/rootmenu.cpp" line="505"/>
         <source>Video Track</source>
         <translation>Videospur</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="510"/>
+        <location filename="../player/rootmenu.cpp" line="511"/>
         <source>Aspect Ratio</source>
         <translation>Seitenverhältnis</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="511"/>
+        <location filename="../player/rootmenu.cpp" line="512"/>
         <source>Crop</source>
         <translation>Beschneiden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="513"/>
+        <location filename="../player/rootmenu.cpp" line="514"/>
         <source>Screen Alignment</source>
         <translation>Bild-Ausrichtung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="516"/>
+        <location filename="../player/rootmenu.cpp" line="517"/>
         <source>Screen Position</source>
         <translation>Bild-Position</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="499"/>
+        <location filename="../player/rootmenu.cpp" line="500"/>
         <source>Subtitle Alignment</source>
         <translation>Untertitel-Ausrichtung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="500"/>
+        <location filename="../player/rootmenu.cpp" line="501"/>
         <source>Subtitle Position</source>
         <translation>Untertitel-Position</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="501"/>
+        <location filename="../player/rootmenu.cpp" line="502"/>
         <source>Subtitle Sync</source>
         <translation>Untertitel-Synchronisierung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="501"/>
-        <location filename="../player/rootmenu.cpp" line="544"/>
+        <location filename="../player/rootmenu.cpp" line="502"/>
+        <location filename="../player/rootmenu.cpp" line="546"/>
         <source>%1sec</source>
         <translation>%1 s</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="520"/>
+        <location filename="../player/rootmenu.cpp" line="521"/>
         <source>Chroma Upscaler</source>
         <translation>Chroma-Upscaling</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="521"/>
+        <location filename="../player/rootmenu.cpp" line="522"/>
         <source>Interpolator</source>
         <translation>Interpolation</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="525"/>
+        <location filename="../player/rootmenu.cpp" line="526"/>
         <source>Filter</source>
         <translation>Filter</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="526"/>
+        <location filename="../player/rootmenu.cpp" line="527"/>
         <source>Flip Vertically</source>
         <translation>Vertikal spiegeln</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="527"/>
+        <location filename="../player/rootmenu.cpp" line="528"/>
         <source>Flip Horizontally</source>
         <translation>Horizontal spiegeln</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="528"/>
         <source>Blur</source>
-        <translation>Glätten</translation>
+        <translation type="vanished">Glätten</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="529"/>
         <source>Sharpen</source>
-        <translation>Schärfen</translation>
+        <translation type="vanished">Schärfen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="530"/>
+        <location filename="../player/rootmenu.cpp" line="532"/>
         <source>Grayscale</source>
         <translation>Graustufen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="531"/>
+        <location filename="../player/rootmenu.cpp" line="533"/>
         <source>Invert Color</source>
         <translation>Farben invertieren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="532"/>
+        <location filename="../player/rootmenu.cpp" line="534"/>
         <source>Disable Filters</source>
         <translation>Filter deaktivieren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="544"/>
+        <location filename="../player/rootmenu.cpp" line="546"/>
         <source>Audio Sync</source>
         <translation>Audiosynchronisierung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="546"/>
+        <location filename="../player/rootmenu.cpp" line="548"/>
         <source>Volume</source>
         <translation>Lautstärke</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="547"/>
+        <location filename="../player/rootmenu.cpp" line="549"/>
         <source>Amp</source>
         <translation>Verstärkung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="549"/>
+        <location filename="../player/rootmenu.cpp" line="551"/>
         <source>Volume Normalizer</source>
         <translation>Lautstärkenormalisierung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="550"/>
+        <location filename="../player/rootmenu.cpp" line="552"/>
         <source>Tempo Scaler</source>
         <translation>Geschwindigkeitsanpassung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="553"/>
+        <location filename="../player/rootmenu.cpp" line="555"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="554"/>
+        <location filename="../player/rootmenu.cpp" line="556"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="564"/>
+        <location filename="../player/rootmenu.cpp" line="566"/>
         <source>Append URL</source>
         <translation>URL anhängen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="581"/>
+        <location filename="../player/rootmenu.cpp" line="583"/>
         <source>Playback Information</source>
         <translation>Wiedergabeinformationen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="444"/>
+        <location filename="../player/rootmenu.cpp" line="445"/>
         <source>Recently Opened</source>
         <translation>Zuletzt geöffnet</translation>
     </message>
@@ -3379,223 +3589,228 @@ Regular expression is supported.</source>
         <translation>Umschalten</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="441"/>
+        <location filename="../player/rootmenu.cpp" line="442"/>
         <source>Open Blu-ray</source>
         <translation>Blu-ray öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="475"/>
+        <location filename="../player/rootmenu.cpp" line="476"/>
         <source>Previous Frame</source>
         <translation>Vorheriges Frame</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="476"/>
+        <location filename="../player/rootmenu.cpp" line="477"/>
         <source>Next Frame</source>
         <translation>Nächstes Frame</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="484"/>
+        <location filename="../player/rootmenu.cpp" line="485"/>
         <source>Previous Chapter</source>
         <translation>Vorheriges Kapitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="485"/>
+        <location filename="../player/rootmenu.cpp" line="486"/>
         <source>Next Chapter</source>
         <translation>Nächstes Kapitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="490"/>
+        <location filename="../player/rootmenu.cpp" line="491"/>
         <source>Open File(s)</source>
         <translation>Datei(en) öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="491"/>
+        <location filename="../player/rootmenu.cpp" line="492"/>
         <source>Auto-load File(s)</source>
         <translation>Datei(en) automatisch laden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="492"/>
+        <location filename="../player/rootmenu.cpp" line="493"/>
         <source>Reload File(s)</source>
         <translation>Datei(en) neu laden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="493"/>
+        <location filename="../player/rootmenu.cpp" line="494"/>
         <source>Clear File(s)</source>
         <translation>Datei(en) entfernen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="534"/>
+        <location filename="../player/rootmenu.cpp" line="536"/>
         <source>Adjust Color</source>
         <translation>Farben anpassen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="505"/>
+        <location filename="../player/rootmenu.cpp" line="506"/>
         <source>Take Snapshot</source>
         <translation>Schnappschuss aufnehmen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="506"/>
+        <location filename="../player/rootmenu.cpp" line="507"/>
         <source>Quick Snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="507"/>
+        <location filename="../player/rootmenu.cpp" line="508"/>
         <source>Quick Snapshot(No Subtitles)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="508"/>
+        <location filename="../player/rootmenu.cpp" line="509"/>
         <source>Snapshot Tool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="542"/>
+        <location filename="../player/rootmenu.cpp" line="531"/>
+        <source>Remap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/rootmenu.cpp" line="544"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="543"/>
+        <location filename="../player/rootmenu.cpp" line="545"/>
         <source>Audio Track</source>
         <translation>Audiospur</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="545"/>
+        <location filename="../player/rootmenu.cpp" line="547"/>
         <source>Mute</source>
         <translation>Ton aus</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="555"/>
+        <location filename="../player/rootmenu.cpp" line="557"/>
         <source>Tools</source>
         <translation>Werkzeuge</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="558"/>
+        <location filename="../player/rootmenu.cpp" line="560"/>
         <source>Playlist</source>
         <translation>Wiedergabeliste</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="559"/>
-        <location filename="../player/rootmenu.cpp" line="574"/>
+        <location filename="../player/rootmenu.cpp" line="561"/>
+        <location filename="../player/rootmenu.cpp" line="576"/>
         <source>Show/Hide</source>
         <translation>Anzeigen/Ausblenden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="561"/>
+        <location filename="../player/rootmenu.cpp" line="563"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="563"/>
+        <location filename="../player/rootmenu.cpp" line="565"/>
         <source>Append File</source>
         <translation>Datei anhängen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="565"/>
+        <location filename="../player/rootmenu.cpp" line="567"/>
         <source>Remove</source>
         <translation>Entfernen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="566"/>
+        <location filename="../player/rootmenu.cpp" line="568"/>
         <source>Move Up</source>
         <translation>Nach oben</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="567"/>
+        <location filename="../player/rootmenu.cpp" line="569"/>
         <source>Move Down</source>
         <translation>Nach unten</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="568"/>
+        <location filename="../player/rootmenu.cpp" line="570"/>
         <source>Shuffle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="569"/>
+        <location filename="../player/rootmenu.cpp" line="571"/>
         <source>Repeat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="571"/>
+        <location filename="../player/rootmenu.cpp" line="573"/>
         <source>Favorites</source>
         <translation>Favoriten</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="573"/>
+        <location filename="../player/rootmenu.cpp" line="575"/>
         <source>History</source>
         <translation>Verlauf</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="577"/>
+        <location filename="../player/rootmenu.cpp" line="579"/>
         <source>Find Subtitle</source>
         <translation>Untertitel suchen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="578"/>
+        <location filename="../player/rootmenu.cpp" line="580"/>
         <source>Subtitle View</source>
         <translation>Untertitelansicht</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="579"/>
+        <location filename="../player/rootmenu.cpp" line="581"/>
         <source>Preferences</source>
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="580"/>
+        <location filename="../player/rootmenu.cpp" line="582"/>
         <source>Reload Skin</source>
         <translation>Skin neu laden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="582"/>
+        <location filename="../player/rootmenu.cpp" line="584"/>
         <source>Auto-exit</source>
         <translation>Automatisch beenden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="583"/>
+        <location filename="../player/rootmenu.cpp" line="585"/>
         <source>Auto-shutdown</source>
         <translation>Automatisch herunterfahren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="585"/>
+        <location filename="../player/rootmenu.cpp" line="587"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="587"/>
+        <location filename="../player/rootmenu.cpp" line="589"/>
         <source>Proper Size</source>
         <translation>Passende Größe</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="588"/>
+        <location filename="../player/rootmenu.cpp" line="590"/>
         <source>Fullscreen</source>
         <translation>Vollbild</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="589"/>
+        <location filename="../player/rootmenu.cpp" line="591"/>
         <source>Minimize</source>
         <translation>Minimieren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="590"/>
+        <location filename="../player/rootmenu.cpp" line="592"/>
         <source>Maximize</source>
         <translation>Maximieren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="591"/>
+        <location filename="../player/rootmenu.cpp" line="593"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="594"/>
+        <location filename="../player/rootmenu.cpp" line="596"/>
         <source>Help</source>
         <translation>Hilfe</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="595"/>
+        <location filename="../player/rootmenu.cpp" line="597"/>
         <source>About %1</source>
         <translation>Über %1</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="596"/>
+        <location filename="../player/rootmenu.cpp" line="598"/>
         <source>Exit</source>
         <translation>Beenden</translation>
     </message>
@@ -3726,7 +3941,7 @@ Regular expression is supported.</source>
         <translation type="vanished">Bilder</translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="52"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="43"/>
         <source>Save File</source>
         <translation>Datei speichern</translation>
     </message>
@@ -3773,6 +3988,67 @@ Regular expression is supported.</source>
     </message>
 </context>
 <context>
+    <name>SubSearchPathDelegate</name>
+    <message>
+        <location filename="../dialog/prefdialog_p.hpp" line="140"/>
+        <source>Text</source>
+        <translation type="unfinished">Text</translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.hpp" line="140"/>
+        <source>RegEx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.hpp" line="144"/>
+        <source>Yes</source>
+        <translation type="unfinished">Ja</translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.hpp" line="144"/>
+        <source>No</source>
+        <translation type="unfinished">Nein</translation>
+    </message>
+</context>
+<context>
+    <name>SubSearchPathModel</name>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="292"/>
+        <source>Directory name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="294"/>
+        <source>Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="296"/>
+        <source>Case sensitive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="308"/>
+        <source>RegEx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="308"/>
+        <source>Text</source>
+        <translation type="unfinished">Text</translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="310"/>
+        <source>Yes</source>
+        <translation type="unfinished">Ja</translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog_p.cpp" line="310"/>
+        <source>No</source>
+        <translation type="unfinished">Nein</translation>
+    </message>
+</context>
+<context>
     <name>SubtitleFindDialog</name>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="14"/>
@@ -3781,7 +4057,7 @@ Regular expression is supported.</source>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="22"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="114"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="121"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
@@ -3796,38 +4072,38 @@ Regular expression is supported.</source>
         <translation>Schließen</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="71"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="77"/>
         <source>Connecting...</source>
         <translation>Verbinden...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="74"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="80"/>
         <source>Finding...</source>
         <translation>Suchen...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="77"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="83"/>
         <source>Find</source>
         <translation>Suchen</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="131"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="189"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="198"/>
         <source>Find Subtitle</source>
         <translation>Untertitel suchen</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="132"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="139"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation>Eine Datei mit demselben Namen existiert bereits. Soll die Datei überschrieben werden?</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="134"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Overwrite</source>
         <translation>Überschreiben</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="135"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="142"/>
         <source>Save as...</source>
         <translation>Speichern als...</translation>
     </message>
@@ -3836,22 +4112,22 @@ Regular expression is supported.</source>
         <translation type="obsolete">Stornieren</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="143"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="150"/>
         <source>Save As...</source>
         <translation>Speichern als...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="148"/>
         <source>Subtitle Files</source>
         <translation>Untertitel-Dateien</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="169"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="177"/>
         <source>All</source>
         <translation>Alle</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="190"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="199"/>
         <source>Cannot find subtitles for %1.</source>
         <translation>Kann keine Untertitel für %1 finden.</translation>
     </message>
@@ -3859,17 +4135,17 @@ Regular expression is supported.</source>
 <context>
     <name>SubtitleLinkModel</name>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="20"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="23"/>
         <source>Language</source>
         <translation>Sprache</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="21"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="24"/>
         <source>File Name</source>
         <translation>Dateiname</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="22"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="25"/>
         <source>Date</source>
         <translation>Datum</translation>
     </message>
@@ -3944,57 +4220,29 @@ Regular expression is supported.</source>
 <context>
     <name>VideoColor</name>
     <message>
-        <location filename="../video/videocolor.cpp" line="193"/>
+        <location filename="../video/videocolor.cpp" line="137"/>
         <source>Brightness %1%</source>
         <translation>Helligkeit %1%</translation>
     </message>
     <message>
-        <location filename="../video/videocolor.cpp" line="195"/>
+        <location filename="../video/videocolor.cpp" line="139"/>
         <source>Saturation %1%</source>
         <translation>Sättigung %1%</translation>
     </message>
     <message>
-        <location filename="../video/videocolor.cpp" line="197"/>
+        <location filename="../video/videocolor.cpp" line="141"/>
         <source>Contrast %1%</source>
         <translation>Kontrast %1%</translation>
     </message>
     <message>
-        <location filename="../video/videocolor.cpp" line="199"/>
+        <location filename="../video/videocolor.cpp" line="143"/>
         <source>Hue %1%</source>
         <translation>Farbton %1%</translation>
     </message>
     <message>
-        <location filename="../video/videocolor.cpp" line="201"/>
+        <location filename="../video/videocolor.cpp" line="145"/>
         <source>Reset</source>
         <translation>Zurücksetzen</translation>
-    </message>
-</context>
-<context>
-    <name>YouTubeDialog</name>
-    <message>
-        <location filename="../dialog/youtubedialog.cpp" line="29"/>
-        <source>Retrieving YouTube video address...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../dialog/youtubedialog.cpp" line="37"/>
-        <source>Failed to start &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../dialog/youtubedialog.cpp" line="52"/>
-        <source>Script crashed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../dialog/youtubedialog.cpp" line="56"/>
-        <source>IO error occurred</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../dialog/youtubedialog.cpp" line="60"/>
-        <source>Unknown error occurred</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
