@@ -9,9 +9,17 @@ Slider {
     property real range: max - min
     readonly property Engine engine: App.engine
     minimumValue: engine.begin; maximumValue: engine.end
+    QtObject {
+        id: d;
+        property bool ticking: false
+    }
     Connections {
         target: engine
-        onTick: if (!seeker.pressed) seeker.value = engine.time
+        onTick: {
+            d.ticking = true;
+            seeker.value = engine.time
+            d.ticking = false;
+        }
     }
-    onValueChanged: if (pressed) engine.seek(value)
+    onValueChanged: if (!d.ticking) engine.seek(value)
 }
