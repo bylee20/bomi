@@ -1,3 +1,45 @@
+cmplayer (0.8.17-1~trusty1) trusty; urgency=low
+
+  * New: option to show/hide media location in playlist under Skin & Style tab
+  * New: remember the last choice of language in subtitle find dialog (#154)
+  * New: 'Exclude images when generate playlist' option in Open tab of preferences
+  * New: regular expression support for subtitle search path (#114)
+  * New: add 'youtube-dl' script support (libquvi support dropped)
+  * New: language priority for audio track (#125)
+  * New: more informative playback information display
+  * New: support for open folder from file manager or terminal (#144)
+  * New: shuffle/repeat playlist (#110)
+  * New: support mouse action for extra buttons (#128)
+  * New: audio device list (#121)
+  * Mod: adjust log level for mpv and opengl automatically
+  * Mod: remove blur/sharpen filter
+  * Mod: remove portaudio support
+  * Mod: use native hardware acceleration API only
+  * Fix: don't propagate wheel event in skin
+  * Fix: floating OSC wasn't visible in some cases even if cursor visible
+  * Fix: hide/show cursor when toggle fullscreen mode (#130) 
+  * Fix: make TimeSlider work with wheel
+  * Fix: keep state when reload by changing preferences (#163)
+  * Fix: wrong deinterlacer state
+  * Fix: line spacing option didn't work (#162)
+  * Fix: add some missing mimetype/file extensions including webm (#149)
+  * Fix: wrong playback state while opening
+  * Fix: playback wasn't restarted on cache filled
+  * Fix: media was reloaded when paused while buffering (#123)
+  * Fix: dock type control in skin wasn't hidden on reloading skin in fullscreen mode (#130)
+  * Fix: wrong behavior of playlist generation option (#115)
+  * Fix: use binary prefix for storage size
+  * Fix: cannot select system locale
+  * Fix: english locale was ignored
+  * Fix: ignore level check for VDPAU
+  * Fix: occasional crush on exiting
+  * Fix: wrong cache size handling (#122)
+  * Fix: handle C locale as en_US not system locale
+  * Fix: broken video for some resolution of frames with VDPAU
+  * Fix: save and restore volume normalizer length
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sun, 11 Jan 2015 06:29:00 +0900
+
 cmplayer (0.8.16-1~trusty1) trusty; urgency=low
 
   * New: additional subtitle search path

@@ -22,7 +22,7 @@ build-stamp:
 	# Add here commands to compile the package.
 	./build-libchardet
 	./build-ffmpeg
-	./configure --prefix=/usr --mkspec=linux-clang --qmake=qmake --enable-quvi4 \
+	./configure --prefix=/usr --mkspec=linux-clang --qmake=qmake \
 		--actiondir=/usr/share/kde4/apps/solid/actions
 	CC=clang make mpv
 	make
