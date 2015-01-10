@@ -163,7 +163,6 @@ public:
     auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
-    auto mousePosition() const -> const QPoint& { return m_mouse; }
     auto subInfo() const -> SubtitleInfoObject*;
     auto subtitleFiles() const -> QVector<SubtitleFileInfo>;
     auto setSubtitleDelay(int ms) -> void;
@@ -179,7 +178,6 @@ public:
     auto pause() -> void;
     auto unpause() -> void;
     auto relativeSeek(int pos) -> void;
-    auto isOffscreenInitialized() const -> bool { return m_offscreenInit; }
     auto setAudioPriority(const QStringList &ap) -> void;
     auto setSubtitlePriority(const QStringList &sp) -> void;
     auto initializeGL(QOpenGLContext *ctx) -> void;
@@ -255,8 +253,6 @@ private:
     template<class T>
     friend class SimpleObservation;
     PlayEngine::State m_state = PlayEngine::Stopped;
-    QPoint m_mouse;
-    bool m_offscreenInit = false;
 };
 
 #endif // PLAYENGINE_HPP

@@ -636,7 +636,6 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         this->subtitleFiles.clear();
         break;
     } case StartPlayback: {
-//        videoInfo.setDroppedFrames(mpv_opengl_cb_get_dropped_frames(glMpv));
         clearTimings();
         _TakeData(event, this->editions);
         int title = -1;
