@@ -3,6 +3,10 @@
 
 #if defined(__cplusplus) && !defined(__OBJC__)
 
+#if __cplusplus > 201100L
+char *gets(char *str);
+#endif
+
 #include <QtCore>
 #include <QtGui>
 #include <QtWidgets>
