@@ -485,7 +485,7 @@ auto PlayEngine::Data::observe() -> void
             const auto codec = videoInfo.codec()->type();
             if (!HwAcc::supports(codec))
                 return Unavailable;
-            if (types.contains(info->type()))
+            if (types.contains(info->type().toLower()))
                 return Activated;
             if (!hwCodecs.contains(codec.toLatin1()))
                 return Unavailable;
