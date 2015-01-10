@@ -888,3 +888,13 @@ auto PlayEngine::takeSnapshot(Snapshot mode) -> void
     d->snapshot = mode;
     d->video->updateForNewFrame(d->displaySize());
 }
+
+auto PlayEngine::snapshot(bool withOsd) -> QImage
+{
+    return withOsd ? d->ssWithOsd : d->ssNoOsd;
+}
+
+auto PlayEngine::clearSnapshots() -> void
+{
+    d->ssNoOsd = d->ssWithOsd = QImage();
+}

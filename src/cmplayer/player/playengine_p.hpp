@@ -267,6 +267,8 @@ struct PlayEngine::Data {
     quint64 drawnFrames = 0, droppedFrames = 0, delayedFrames = 0;
     SpeedMeasure<quint64> fpsMeasure{5, 20};
 
+    QImage ssNoOsd, ssWithOsd;
+
     auto clearTimings()
     {
         fpsMeasure.reset();

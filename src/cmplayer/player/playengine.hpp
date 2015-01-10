@@ -198,6 +198,8 @@ public:
     auto setVideoEffects(VideoEffects effects) -> void;
     auto videoEffects() const -> VideoEffects;
     auto takeSnapshot(Snapshot mode) -> void;
+    auto snapshot(bool withOsd = true) -> QImage;
+    auto clearSnapshots() -> void;
     Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
@@ -243,7 +245,7 @@ signals:
     void deintOptionsChanged();
     void cacheSizeChanged();
     void messageRequested(const QString &message);
-    void snapshotTaken(QImage video, QImage osd);
+    void snapshotTaken();
 private:
     auto updateState(State state) -> void;
     auto exec() -> void;

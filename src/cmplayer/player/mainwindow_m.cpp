@@ -356,8 +356,10 @@ auto MainWindow::Data::connectMenus() -> void
     connectSnapshot(u"quick"_q, QuickSnapshot);
     connectSnapshot(u"quick-nosub"_q, QuickSnapshotNoSub);
     connectSnapshot(u"tool"_q, SnapshotTool);
-    connect(&engine, &PlayEngine::snapshotTaken,
-            p, [this] (QImage video, QImage osd) {
+    connect(&engine, &PlayEngine::snapshotTaken, p, [this] () {
+        auto video = engine.snapshot(false);
+        auto osd = engine.snapshot(true);
+        engine.clearSnapshots();
         if (video.isNull() && osd.isNull())
             return;
         if (snapshotMode == QuickSnapshot || snapshotMode == SnapshotTool) {

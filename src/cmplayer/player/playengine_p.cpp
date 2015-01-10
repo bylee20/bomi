@@ -708,15 +708,13 @@ auto PlayEngine::Data::log(const QByteArray &prefix,
 
 auto PlayEngine::Data::takeSnapshot() -> void
 {
+    p->clearSnapshots();
     const auto size = displaySize();
     if (size.isEmpty()) {
-        emit p->snapshotTaken(QImage(), QImage());
+        emit p->snapshotTaken();
         return;
     }
-
-    QImage video, osd;
     OpenGLFramebufferObject fbo(size);
-
     auto take = [&](bool withOsd) -> QImage {
         QImage image;
         if (withOsd && !p->subtitleStreams().isEmpty()) {
@@ -728,17 +726,16 @@ auto PlayEngine::Data::takeSnapshot() -> void
                 setmpv("sub-visibility", was);
             return fbo.texture().toImage();
         }
-        if (!video.isNull())
-            return video;
+        if (!ssNoOsd.isNull())
+            return ssNoOsd;
         render(&fbo);
         return fbo.texture().toImage();
     };
-
     if (snapshot & VideoOnly)
-        video = take(false);
+        ssNoOsd = take(false);
     if (snapshot & VideoWidthOsd)
-        osd = take(true);
-    emit p->snapshotTaken(video, osd);
+        ssWithOsd = take(true);
+    emit p->snapshotTaken();
 }
 
 auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
