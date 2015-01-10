@@ -37,8 +37,6 @@ public:
                                  const QString &text);
     Q_INVOKABLE void hideToolTip() { QToolTip::hideText(); }
     Q_INVOKABLE void filterDoubleClick() { m_filterDoubleClick = true; }
-    Q_INVOKABLE void setCursor(QQuickItem *item, Qt::CursorShape cursor);
-    Q_INVOKABLE void unsetCursor(QQuickItem *item);
     Q_INVOKABLE void registerItemToAcceptKey(QQuickItem *item);
     static auto isDoubleClickFiltered() -> bool;
     static auto resetFilterDoubleClick() -> void;
@@ -105,13 +103,6 @@ inline auto UtilObject::setCursorVisible(bool visible) -> void
     if (_Change(self.m_cursor, visible))
         emit self.cursorVisibleChanged(self.m_cursor);
 }
-
-inline auto UtilObject::setCursor(QQuickItem *item,
-                                  Qt::CursorShape cursor) -> void
-{ if (item) item->setCursor(cursor); }
-
-inline auto UtilObject::unsetCursor(QQuickItem *item) -> void
-{ if (item) item->unsetCursor(); }
 
 inline auto UtilObject::itemToAcceptKey() -> QQuickItem*
 { return get().m_keyItems.isEmpty() ? nullptr : get().m_keyItems.front(); }
