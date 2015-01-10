@@ -7,9 +7,9 @@ Build-Depends: clang (>= 3.3), debhelper (>= 7), pkg-config
  , libqt5x11extras5-dev, python, libicu-dev, libbluray-dev
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
- , libasound2-dev, libva-dev, libquvi-dev, libvdpau-dev
+ , libasound2-dev, libva-dev, libvdpau-dev
  , libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
- , libpulse-dev, portaudio19-dev, libxcb-icccm4-dev
+ , libpulse-dev, libxcb-icccm4-dev
  , libxcb-util0-dev, qt5-default
 
 Package: cmplayer
@@ -17,5 +17,6 @@ Architecture: any
 Depends: ${shlibs:Depends}, qtdeclarative5-qtquick2-plugin
  , qtdeclarative5-quicklayouts-plugin, libqt5qml-quickcontrols
  , libqt5sql5-sqlite
+Recommends: youtube-dl
 Description: CMPlayer - a multimedia player
  CMPlayer is a multimedia player.

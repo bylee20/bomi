@@ -395,6 +395,7 @@ auto PlayEngine::setHwAcc(bool use, const QStringList &codecs) -> void
 {
     d->hwCodecs = codecs.join(','_q).toLatin1();
     d->useHwAcc = use;
+    qDebug() << d->useHwAcc << d->hwCodecs;
 }
 
 auto PlayEngine::isSubtitleStreamsVisible() const -> bool
