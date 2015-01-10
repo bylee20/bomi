@@ -146,7 +146,7 @@ auto VideoFilter::filterOut(vf_instance *vf) -> int
 {
     auto v = priv(vf); auto d = v->d;
     auto mpi = std::move(d->deinterlacer.pop());
-    if (_Change(d->inter_o, d->deinterlacer.pass() ? mpi.isInterlaced() : false))
+    if (_Change(d->inter_o, d->deinterlacer.pass() ? d->inter_i : false))
         emit v->outputInterlacedChanged();
     vf_add_output_frame(vf, mpi.take());
     return 0;
