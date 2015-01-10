@@ -29,6 +29,11 @@ Item {
     onWidthChanged: { updateDestination() }
     onDestChanged: { if (dock.show) dock.x = dock.dest }
 
+    MouseArea {
+        anchors.fill: parent
+        onWheel: wheel.accepted = true
+    }
+
     Cp.ModelView {
         id: table
 

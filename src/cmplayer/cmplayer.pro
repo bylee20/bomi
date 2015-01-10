@@ -468,3 +468,6 @@ SOURCES += $${OTHER_FILES}
 }
 
 OBJECTIVE_SOURCES +=
+
+DISTFILES += \
+    imports/CMPlayer/Slider.qml

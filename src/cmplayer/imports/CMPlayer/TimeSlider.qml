@@ -1,14 +1,10 @@
 import QtQuick 2.0
-import QtQuick.Controls 1.0
 import CMPlayer 1.0
 
 Slider {
     id: seeker
-    property alias min: seeker.minimumValue
-    property alias max: seeker.maximumValue
-    property real range: max - min
     readonly property Engine engine: App.engine
-    minimumValue: engine.begin; maximumValue: engine.end
+    min: engine.begin; max: engine.end
     QtObject {
         id: d;
         property bool ticking: false

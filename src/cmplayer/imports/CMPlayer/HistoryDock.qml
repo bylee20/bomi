@@ -21,6 +21,11 @@ Item {
         NumberAnimation { property: "x" }
     }
 
+    MouseArea {
+        anchors.fill: parent
+        onWheel: wheel.accepted = true
+    }
+
     Cp.ModelView {
         id: view
         model: Cp.App.history

@@ -19,3 +19,4 @@ MessageBox          1.0 MessageBox.qml
 ProgressBar         1.0 ProgressBar.qml
 PlayInfoVideoOutput 1.0 PlayInfoVideoOutput.qml
 PlayInfoAudioOutput 1.0 PlayInfoAudioOutput.qml
+Slider				1.0 Slider.qml
