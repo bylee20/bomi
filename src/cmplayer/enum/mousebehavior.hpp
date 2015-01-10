@@ -81,7 +81,7 @@ public:
         switch (e) {
         case Enum::DoubleClick: return qApp->translate("EnumInfo", "Double click");
         case Enum::MiddleClick: return qApp->translate("EnumInfo", "Middle button");
-        case Enum::ScrollUp: return qApp->translate("EnumInfo", "Scroll up: ");
+        case Enum::ScrollUp: return qApp->translate("EnumInfo", "Scroll up");
         case Enum::ScrollDown: return qApp->translate("EnumInfo", "Scroll down");
         case Enum::Extra1Click: return qApp->translate("EnumInfo", "Extra button 1");
         case Enum::Extra2Click: return qApp->translate("EnumInfo", "Extra button 2");

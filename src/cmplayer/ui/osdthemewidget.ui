@@ -10,9 +10,6 @@
     <height>392</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Form</string>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <widget class="QGroupBox" name="groupBox_11">
@@ -601,15 +598,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>FontOptionWidget</class>
-   <extends>QWidget</extends>
-   <header>widget/fontoptionwidget.hpp</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ColorSelectWidget</class>
    <extends>QWidget</extends>
    <header>widget/colorselectwidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FontOptionWidget</class>
+   <extends>QWidget</extends>
+   <header>widget/fontoptionwidget.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
