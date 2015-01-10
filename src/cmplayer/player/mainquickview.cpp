@@ -46,13 +46,11 @@ auto MainQuickView::setSkin(const QString &name) -> bool
 
 auto MainQuickView::setCursorVisible(bool visible) -> void
 {
-    if (visible && cursor().shape() == Qt::BlankCursor) {
+    if (visible && cursor().shape() == Qt::BlankCursor)
         unsetCursor();
-        UtilObject::setCursorVisible(true);
-    } else if (!visible && cursor().shape() != Qt::BlankCursor) {
+    else if (!visible && cursor().shape() != Qt::BlankCursor)
         setCursor(Qt::BlankCursor);
-        UtilObject::setCursorVisible(false);
-    }
+    UtilObject::setCursorVisible(cursor().shape() != Qt::BlankCursor);
 }
 
 auto MainQuickView::eventFilter(QObject *obj, QEvent *ev) -> bool
