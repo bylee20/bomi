@@ -29,15 +29,15 @@ static const CodecInfo codecs[] = {
     { u"mpeg4"_q, u"MPEG-4 part 2"_q,
       {VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Main, VAProfileMPEG4Simple},
       {VDP_DECODER_PROFILE_MPEG4_PART2_ASP, VDP_DECODER_PROFILE_MPEG4_PART2_SP} },
-    { u"wmv3"_q, u"Windows Media Video 9"_q,
-      {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple},
-      {VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE} },
+    { u"h264"_q, u"H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"_q,
+      {VAProfileH264Baseline, VAProfileH264ConstrainedBaseline, VAProfileH264High, VAProfileH264Main},
+      {VDP_DECODER_PROFILE_H264_BASELINE, VDP_DECODER_PROFILE_H264_MAIN, VDP_DECODER_PROFILE_H264_HIGH} },
     { u"vc1"_q, u"SMPTE VC-1"_q, // same as wmv3
       {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple},
       {VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE} },
-    { u"h264"_q, u"H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10"_q,
-      {VAProfileH264Baseline, VAProfileH264ConstrainedBaseline, VAProfileH264High, VAProfileH264Main},
-      {VDP_DECODER_PROFILE_H264_BASELINE, VDP_DECODER_PROFILE_H264_MAIN, VDP_DECODER_PROFILE_H264_HIGH} }
+    { u"wmv3"_q, u"Windows Media Video 9"_q,
+      {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple},
+      {VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE} }
 };
 
 class HwAccInfo {
@@ -134,6 +134,8 @@ public:
                 }
             }
             isOk(VA_STATUS_SUCCESS);
+            if (codecs.contains(u"vc1"_q))
+                codecs.push_back(u"wmv3"_q);
             setCodecList(codecs);
         } while (false);
         vaTerminate(display);
