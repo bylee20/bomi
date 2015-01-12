@@ -266,10 +266,10 @@ auto MainWindow::Data::initEngine() -> void
         history.update(&as.state, false);
         as.state.mrl = info.mrl;
     });
-    connect(&engine, &PlayEngine::videoFormatChanged,
-            p, [this] (const VideoFormat &format) {
-        if (pref().fit_to_video && !format.displaySize().isEmpty())
-            setVideoSize(format.displaySize());
+    connect(engine.videoInfo()->renderer(), &VideoFormatInfoObject::sizeChanged,
+            p, [this] (const QSize &size) {
+        if (pref().fit_to_video && !size.isEmpty())
+            setVideoSize(size);
     });
     connect(&engine, &PlayEngine::requestNextStartInfo, p, [this] () {
         const auto mrl = playlist.nextMrl(); if (!mrl.isEmpty()) load(mrl);

@@ -242,7 +242,7 @@ public:
     auto setWidth(int w) -> void { setSize({w, height()}); }
     auto setHeight(int h) -> void { setSize({width(), h}); }
     auto setSize(const QSize &s) -> void
-        { if (_Change(m_size, s)) emit sizeChanged(); }
+        { if (_Change(m_size, s)) emit sizeChanged(m_size); }
     auto setBppSize(const QSize &s) -> void
         { if (_Change(m_bppSize, s)) updateBitrate(); }
     auto setBppSize(const QSize &s, int bpp) -> void
@@ -261,7 +261,7 @@ signals:
     void spaceChanged();
     void rangeChanged();
     void bppChanged();
-    void sizeChanged();
+    void sizeChanged(const QSize &size);
 private:
     auto updateBitrate() -> void
         { setBitrate(m_bpp * width() * height() * m_fps); }
