@@ -166,11 +166,11 @@ auto AudioController::reinitialize(mp_audio *in) -> int
         mp_audio_set_format(in, af_fmt_is_planar(in->format) ? AF_FORMAT_FLOATP
                                                              : AF_FORMAT_FLOAT);
     }
-    if (d->fmt_conv) {
-        mp_audio_set_format(out, d->fmt_conv);
-        d->fmt_conv = AF_FORMAT_UNKNOWN;
-    } else
-        mp_audio_set_format(out, in->format);
+    int fmtout = d->fmt_conv;
+    if (!fmtout)
+        fmtout = af_fmt_is_planar(in->format) ? AF_FORMAT_FLOATP : AF_FORMAT_FLOAT;
+    mp_audio_set_format(out, fmtout);
+    d->fmt_conv = AF_FORMAT_UNKNOWN;
     d->chmap = in->channels;
     if (!_ChmapFromLayout(&d->chmap, d->layout))
         _Error("Cannot find matched channel layout for '%%'",
@@ -180,6 +180,7 @@ auto AudioController::reinitialize(mp_audio *in) -> int
         out->rate = d->outrate;
     if (!ret)
         return false;
+
     d->af->mul = (double)out->channels.num/in->channels.num;
     if (d->tempoScalerActivated)
         d->af->mul /= d->scale;
