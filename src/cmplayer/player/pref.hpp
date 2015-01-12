@@ -154,8 +154,6 @@ public:
 
     static auto fields() -> const QVector<const PrefFieldInfo*>&;
 private:
-    auto loadFromRecord() -> void;
-
     static auto defaultHwAccBackend() -> HwAcc::Type;
     static auto defaultRestoreProperties() -> QVector<QMetaProperty>;
     static auto defaultOsdStyle() -> OsdTheme;

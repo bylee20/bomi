@@ -207,11 +207,6 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -All[-All loaded subtitles-]
 -EachLanguage[-Each language subtitle-]
 
-+OsdScalePolicy
--Width[-Fit to width of video-]
--Height[-Fit to height of video-]
--Diagonal[-Fit to diagonal of video-]
-
 +KeyModifier
 -None[=Qt::NoModifier=]
 -Ctrl[=Qt::ControlModifier=]

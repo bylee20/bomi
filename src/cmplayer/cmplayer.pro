@@ -145,7 +145,6 @@ HEADERS += \
 	enum/interpolator.hpp \
 	enum/keymodifier.hpp \
 	enum/movetoward.hpp \
-	enum/osdscalepolicy.hpp \
 	enum/seekingstep.hpp \
 	enum/speakerid.hpp \
 	enum/staysontop.hpp \
@@ -167,7 +166,6 @@ HEADERS += \
 	misc/keymodifieractionmap.hpp \
 	misc/enumaction.hpp \
 	misc/stepaction.hpp \
-	misc/record.hpp \
 	misc/tmp.hpp \
 	misc/undostack.hpp \
 	misc/trayicon.hpp \
@@ -186,7 +184,6 @@ HEADERS += \
 	player/recentinfo.hpp \
 	player/mpv_helper.hpp \
 	player/playengine_p.hpp \
-	player/mrlstate_old.hpp \
 	player/historymodel.hpp \
 	player/playlistmodel.hpp \
 	player/mainquickview.hpp \
@@ -324,7 +321,6 @@ SOURCES += \
 	enum/interpolator.cpp \
 	enum/keymodifier.cpp \
 	enum/movetoward.cpp \
-	enum/osdscalepolicy.cpp \
 	enum/seekingstep.cpp \
 	enum/speakerid.cpp \
 	enum/staysontop.cpp \
@@ -345,7 +341,6 @@ SOURCES += \
 	misc/udf25.cpp \
 	misc/keymodifieractionmap.cpp \
 	misc/stepaction.cpp \
-	misc/record.cpp \
 	misc/undostack.cpp \
 	misc/trayicon.cpp \
 	player/main.cpp \
@@ -364,7 +359,6 @@ SOURCES += \
 	player/mediamisc.cpp \
 	player/mrlstate.cpp \
 	player/historymodel.cpp \
-	player/mrlstate_old.cpp \
 	player/mpv_helper.cpp \
 	player/mainquickview.cpp \
     audio/channellayoutmap.cpp \

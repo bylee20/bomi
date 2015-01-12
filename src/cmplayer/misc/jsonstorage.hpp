@@ -9,6 +9,7 @@ public:
     auto setFileName(const QString &fileName) noexcept -> void
     { m_fileName = fileName; m_error = NoError; }
     auto fileName() const noexcept -> QString { return m_fileName; }
+    auto printError() const -> bool;
     auto write(const QJsonObject &json) noexcept -> bool;
     auto read() noexcept -> QJsonObject;
     auto hasError() const noexcept -> bool { return m_error != NoError; }

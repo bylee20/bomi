@@ -2,7 +2,6 @@
 #include "misc/log.hpp"
 #include "mrlstate.hpp"
 #include "video/hwacc.hpp"
-#include "misc/record.hpp"
 #include "misc/jsonstorage.hpp"
 #include "pref_helper.hpp"
 
@@ -278,54 +277,12 @@ auto Pref::save() const -> void
     storage.write(json);
 }
 
-auto Pref::loadFromRecord() -> void
-{
-    Record r(PREF_GROUP);
-    QList<QByteArray> restore_properties;
-#define READ1(a) r.read(a, #a)
-#define READ2(a) a.load(r, u###a##_q)
-    DO(READ1, READ2);
-
-    this->restore_properties.clear();
-    this->restore_properties.reserve(restore_properties.size());
-    for (auto &name : _C(restore_properties)) {
-        auto &mo = MrlState::staticMetaObject;
-        const int idx = mo.indexOfProperty(name.constData());
-        if (idx != -1)
-            this->restore_properties.append(mo.property(idx));
-    }
-
-    const auto size = r.beginReadArray(u"shortcuts"_q);
-    if (size > 0) {
-        shortcuts.clear();
-        for (int i=0; i<size; ++i) {
-            r.setArrayIndex(i);
-            const auto id = r.value(u"id"_q).toString();
-            if (!id.isEmpty()) {
-                const auto keys = fromStringList<QKeySequence>(r.value(u"keys"_q).toStringList());
-                if (!keys.isEmpty())
-                    shortcuts[id] = keys;
-            }
-        }
-    }
-    r.endArray();
-}
-
 auto Pref::load() -> void
 {
     JsonStorage storage(PREF_FILE_PATH);
     auto json = storage.read();
-    if (storage.hasError()) {
-        if (storage.error() != JsonStorage::NoFile)
-            return;
-        storage = JsonStorage(_WritablePath(Location::Data) % "/pref.json"_a);
-        json = storage.read();
-        if (storage.hasError()) {
-            if (storage.error() == JsonStorage::NoFile)
-                loadFromRecord();
-            return;
-        }
-    }
+    if (storage.hasError())
+        return;
     bool res = true;
     for (auto field : fields()) {
         auto it = json.constFind(QString::fromLatin1(field->propertyName()));
@@ -335,34 +292,6 @@ auto Pref::load() -> void
     }
     if (!res)
         _Error("Error: Cannot convert JSON object to preferences");
-
-    if (!sub_search_paths.isEmpty()) {
-        sub_search_paths_v2.clear();
-        sub_search_paths_v2.reserve(sub_search_paths.size());
-        for (auto &path : sub_search_paths)
-            sub_search_paths_v2.push_back({path});
-        sub_search_paths.clear();
-    }
-
-    if (json.contains(u"enable_generate_playist"_q))
-        enable_generate_playlist = json[u"enable_generate_playist"_q].toBool();
-
-    if (json.contains(u"normalizer_silence"_q)) {
-        audio_normalizer.silenceLevel = json[u"normalizer_silence"_q].toDouble();
-        audio_normalizer.targetLevel = json[u"normalizer_target"_q].toDouble();
-        audio_normalizer.minimumGain = json[u"normalizer_min"_q].toDouble();
-        audio_normalizer.maximumGain = json[u"normalizer_max"_q].toDouble();
-        audio_normalizer.bufferLengthInSeconds = json[u"normalizer_length"_q].toDouble();
-    }
-
-#define CONV_SEC(name) \
-    {if (json.contains(_L(#name))) name##_sec = json[_L(#name)].toInt()/1000.0;}
-    CONV_SEC(seek_step1)
-    CONV_SEC(seek_step2)
-    CONV_SEC(seek_step3)
-    CONV_SEC(sub_sync_step)
-    CONV_SEC(audio_sync_step)
-    CONV_SEC(hide_cursor_delay)
 }
 
 auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>

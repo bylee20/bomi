@@ -3,7 +3,7 @@
 
 #include "enum/keymodifier.hpp"
 
-enum class MouseBehavior;               class Record;
+enum class MouseBehavior;
 
 struct KeyModifierActionMap {
     KeyModifierActionMap();

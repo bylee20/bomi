@@ -3,7 +3,6 @@
 #include "mainwindow.hpp"
 #include "misc/localconnection.hpp"
 #include "misc/log.hpp"
-#include "misc/record.hpp"
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
 
@@ -13,8 +12,6 @@
 #include "app_x11.hpp"
 #include "mpris.hpp"
 #endif
-
-#define APP_GROUP "application"_a
 
 DECLARE_LOG_CONTEXT(App)
 
@@ -123,6 +120,25 @@ struct App::Data {
         parser->addPositionalArgument(u"mrl"_q, desc, u"mrl"_q);
         return parser;
     }
+
+    const QString APP_GROUP{u"application"_q};
+    template<class T>
+    auto read(const char *key, const T &t = T()) -> T
+    {
+        QSettings s;
+        s.beginGroup(APP_GROUP);
+        auto ret = s.value(_L(key), t).template value<T>();
+        s.endGroup();
+        return ret;
+    }
+    template<class T>
+    auto write(const char *key, const T &t) -> void
+    {
+        QSettings s;
+        s.beginGroup(APP_GROUP);
+        s.setValue(_L(key), t);
+        s.endGroup();
+    }
 };
 
 App::App(int &argc, char **argv)
@@ -135,10 +151,7 @@ App::App(int &argc, char **argv)
     setApplicationName(_L(name()));
     setApplicationVersion(_L(version()));
 
-    Record r(APP_GROUP);
-    QVariant vLocale;
-    r.read(vLocale, u"locale"_q);
-    setLocale(Locale::fromVariant(vLocale));
+    setLocale(Locale::fromVariant(d->read("locale", Locale().toVariant())));
 
     d->addOption(LineCmd::Open, u"open"_q,
                  tr("Open given %1 for file path or URL."), u"mrl"_q);
@@ -171,7 +184,7 @@ App::App(int &argc, char **argv)
 #endif
 
     auto makeStyle = [&]() {
-        auto name = r.value(u"style"_q, styleName()).toString();
+        auto name = d->read("style", styleName());
         if (style()->objectName().compare(name, QCI) == 0)
             return;
         if (!d->styleNames.contains(name, QCI))
@@ -194,7 +207,7 @@ App::App(int &argc, char **argv)
     makeStyle();
     connect(&d->connection, &LocalConnection::messageReceived,
              this, &App::handleMessage);
-    const auto map = r.value(u"open_folders"_q).toMap();
+    const auto map = d->read<QMap<QString, QVariant>>("open_folders");
     QMap<QString, QString> folders;
     for (auto it = map.begin(); it != map.end(); ++it)
         folders.insert(it.key(), it->toString());
@@ -203,12 +216,11 @@ App::App(int &argc, char **argv)
 
 App::~App() {
     setMprisActivated(false);
-    Record r(APP_GROUP);
     const auto folders = Pch::open_folders();
     QMap<QString, QVariant> map;
     for (auto it = folders.begin(); it != folders.end(); ++it)
         map.insert(it.key(), *it);
-    r.setValue(u"open_folders"_q, map);
+    d->write("open_folders", map);
     delete d->main;
     delete d->mb;
     delete d;
@@ -361,8 +373,7 @@ auto App::setLocale(const Locale &locale) -> void
 {
     if (translator_load(locale)) {
         d->locale = locale;
-        Record r(APP_GROUP);
-        r.write(d->locale.toVariant(), u"locale"_q);
+        d->write("locale", d->locale.toVariant());
     }
 }
 
@@ -383,14 +394,12 @@ auto App::setStyleName(const QString &name) -> void
     if (style()->objectName().compare(name, QCI) == 0)
         return;
     setStyle(QStyleFactory::create(name));
-    Record r(APP_GROUP);
-    r.write(name, "style");
+    d->write("style", name);
 }
 
 auto App::setUnique(bool unique) -> void
 {
-    Record r(APP_GROUP);
-    r.write(unique, "unique");
+    d->write("unique", unique);
 }
 
 auto App::styleName() const -> QString
@@ -400,11 +409,8 @@ auto App::styleName() const -> QString
 
 auto App::isUnique() const -> bool
 {
-    Record r(APP_GROUP);
-    return r.value(u"unique"_q, true).toBool();
+    return d->read("unique", true);
 }
-
-#undef APP_GROUP
 
 auto App::shutdown() -> bool
 {

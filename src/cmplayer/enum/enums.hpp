@@ -14,18 +14,6 @@ class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 using EnumVariantToSqlFunc   = QString (*)(const QVariant &var);
 using EnumVariantFromSqlFunc = QVariant(*)(const QVariant &var, const QVariant &def);
 
-template<class T>
-QString _EnumVariantToSql(const QVariant &var) {
-    Q_ASSERT(var.userType() == qMetaTypeId<T>());
-    return QLatin1Char('\'') % EnumInfo<T>::name(var.value<T>()) % QLatin1Char('\'');
-}
-
-template<class T>
-QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
-    const auto enum_ = EnumInfo<T>::from(name.toString(), def.value<T>());
-    return QVariant::fromValue<T>(enum_);
-}
-
 template<class Enum>
 using EnumData = typename EnumInfo<Enum>::Data;
 
@@ -62,8 +50,4 @@ struct EnumNameVariantConverter
 
 auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter;
 
-bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVariantFromSqlFunc &fromSql);
-bool _IsEnumTypeId(int userType);
-
 #endif
-

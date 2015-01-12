@@ -30,8 +30,6 @@ public:
     auto save() const -> void;
 signals:
     void winStaysOnTopChanged();
-private:
-    auto loadFromRecord() -> void;
 };
 
 #endif // APPSTATE_HPP

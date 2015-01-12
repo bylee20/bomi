@@ -246,26 +246,19 @@ static void generate() {
 
     string enumConverter = "auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter\n{\n    EnumNameVariantConverter conv;\n";
     
-    const string convtmpl = "    if (varType == qMetaTypeId<__ENUM_NAME>()) {\n        toSql = _EnumVariantToSql<__ENUM_NAME>;\n        fromSql = _EnumVariantFromSql<__ENUM_NAME>;\n    } else";
-    string enumConv = "bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVariantFromSqlFunc &fromSql) {\n";
-    string isEnum = "bool _IsEnumTypeId(int userType) {\n    return ";
     string cpp = "#include \"enums.hpp\"\n" ;
     string headers;
     for (const EnumType &type : enums) {
         write(type);
-        string conv = convtmpl;
-        enumConv += replace(conv, "__ENUM_NAME", type.name);
-        isEnum += "userType == qMetaTypeId<" + type.name + ">()\n        || ";
         cpp += "#include \"" + toLower(type.name) + ".hpp\"\n";
         
-        conv = "    if (metaType == qMetaTypeId<__ENUM_NAME>()) {\n        conv.variantToName = _EnumVariantToEnumName<__ENUM_NAME>;\n        conv.nameToVariant = _EnumNameToEnumVariant<__ENUM_NAME>;\n    } else";
+        string conv = "    if (metaType == qMetaTypeId<__ENUM_NAME>()) {\n"
+                      "        conv.variantToName = _EnumVariantToEnumName<__ENUM_NAME>;\n"
+                      "        conv.nameToVariant = _EnumNameToEnumVariant<__ENUM_NAME>;\n"
+                      "    } else";
         enumConverter += replace(conv, "__ENUM_NAME", type.name);
     }
     enumConverter += "\n        return EnumNameVariantConverter();\n    return conv;\n}\n";
-    isEnum += "false;\n}\n\n";
-    enumConv += "\n        return false;\n    return true;\n}\n";
-    cpp += isEnum;
-    cpp += enumConv;
     cpp += enumConverter;
     overwrite("../enum/enums.cpp", cpp);
 }

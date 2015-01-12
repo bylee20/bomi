@@ -1,6 +1,5 @@
 #include "deintwidget.hpp"
 #include "datacombobox.hpp"
-#include "misc/record.hpp"
 #include "video/deintcaps.hpp"
 
 static constexpr auto GPU = DeintDevice::GPU;
@@ -24,10 +23,11 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
 {
     d->decoder = decoder;
     d->hwdec = decoder == DecoderDevice::GPU;
-    Record r(u"deint_caps"_q);
-    const auto name = DecoderDeviceInfo::name(decoder);
-    const auto tokens = r.value(name).toStringList();
-    for (const auto &token : tokens) {
+    QSettings r;
+    r.beginGroup(u"deint_caps"_q);
+    const auto tokens = r.value(DecoderDeviceInfo::name(decoder));
+    r.endGroup();
+    for (const auto &token : tokens.toStringList()) {
         auto caps = DeintCaps::fromString(token);
         if (caps.isAvailable())
             d->caps[caps.method()] = caps;
@@ -96,11 +96,13 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
 }
 
 DeintWidget::~DeintWidget() {
-    Record r(u"deint_caps"_q);
     QStringList tokens;
     for (auto it = d->caps.begin(); it != d->caps.end(); ++it)
         tokens.push_back(it->toString());
-    r.write(tokens, DecoderDeviceInfo::name(d->decoder));
+    QSettings r;
+    r.beginGroup(u"deint_caps"_q);
+    r.setValue(DecoderDeviceInfo::name(d->decoder), tokens);
+    r.endGroup();
     delete d;
 }
 

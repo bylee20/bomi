@@ -1,13 +1,8 @@
 #ifndef SUBTITLESTYLE_H
 #define SUBTITLESTYLE_H
 
-//#include "enum/osdscalepolicy.hpp"
-
-class Record;
-
 struct OsdTheme {
     struct Font {
-//        using Scale = OsdScalePolicy;
         Font() { qfont.setPixelSize(height()); }
         auto family() const -> QString { return qfont.family(); }
         auto bold() const -> bool { return qfont.bold(); }
@@ -27,7 +22,6 @@ struct OsdTheme {
         auto weight() const -> int { return qfont.weight(); }
         QColor color = { Qt::white };
         double size = 0.05;
-//        Scale scale = Scale::Width;
         QFont qfont;
     };
     struct BBox {
@@ -54,8 +48,6 @@ struct OsdTheme {
     Font font;
     Spacing spacing;
     BBox bbox;
-    auto save(Record &r, const QString &group) const -> void;
-    auto load(Record &r, const QString &group) -> void;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };

@@ -1,5 +1,4 @@
 #include "appstate.hpp"
-#include "misc/record.hpp"
 #include "misc/log.hpp"
 #include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
@@ -33,34 +32,10 @@ static const auto jio = JIO(
 AppState::AppState() {
     JsonStorage storage(APP_STATE_FILE);
     const auto json = storage.read();
-    if (storage.hasError()) {
-        if (storage.error() == JsonStorage::NoFile)
-            loadFromRecord();
+    if (storage.hasError())
         return;
-    }
     if (!jio.fromJson(*this, json))
         _Error("Cannot convert JSON object to AppState");
-}
-
-auto AppState::loadFromRecord() -> void
-{
-    Record r(u"app-state"_q);
-#define READ(a) r.read(a, #a)
-    READ(win_stays_on_top);
-
-    READ(ask_system_tray);
-
-    READ(auto_exit);
-
-    READ(win_pos);
-    READ(win_size);
-
-    READ(playlist_visible);
-    READ(history_visible);
-    READ(playinfo_visible);
-    READ(dvd_device);
-    READ(bluray_device);
-#undef READ
 }
 
 auto AppState::save() const -> void

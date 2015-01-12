@@ -1,6 +1,8 @@
 #include "mrlstate.hpp"
-#include "mrlstate_old.hpp"
 #include "misc/json.hpp"
+#include "misc/log.hpp"
+
+DECLARE_LOG_CONTEXT(History)
 
 template<>
 struct JsonIO<Mrl> : JsonQStringType {
@@ -147,54 +149,9 @@ auto _FillMrlStateFromRecord(T *state, const QList<F> &fields,
 auto _ImportMrlStates(int version, QSqlDatabase db)
 -> QVector<MrlState*>
 {
+    Q_UNUSED(db);
     QVector<MrlState*> states;
-    if (version < 1) {
-        QSettings set;
-        set.beginGroup(u"history"_q);
-        const int size = set.beginReadArray(u"list"_q);
-        states.reserve(size);
-        for (int i=0; i<size; ++i) {
-            set.setArrayIndex(i);
-            const Mrl mrl = set.value(u"mrl"_q, QString()).toString();
-            if (mrl.isEmpty())
-                continue;
-            auto state = new MrlState;
-            state->mrl = mrl;
-            state->last_played_date_time
-                    = set.value(u"date"_q, QDateTime()).toDateTime();
-            state->resume_position
-                    = set.value(u"stopped-position"_q, 0).toInt();
-            states.append(state);
-        }
-    } else if (version < 2) {
-        QSqlQuery query(db);
-        db.transaction();
-        const auto fields = MrlFieldV1::list();
-        const auto columns = _MrlFieldColumnListString(fields);
-        MrlStateV1 prev;
-        query.exec(u"SELECT %1, (SELECT COUNT(*) FROM state) as total "
-                   u"FROM state"_q.arg(columns));
-        while (query.next()) {
-            _FillMrlStateFromRecord(&prev, fields, query.record());
-            auto state = new MrlState;
-            prev.fillCurrentVersion(state);
-            states.append(state);
-        }
-        db.rollback();
-    } else if (version < 3) {
-        const auto fields = MrlFieldV2::list();
-        const QString stateTable = "state"_a % _N(2);
-        const QString select = QString::fromLatin1("SELECT %1 FROM %2")
-                               .arg(_MrlFieldColumnListString(fields));
-        QSqlQuery query(db);
-        db.transaction();
-        query.exec(select.arg(stateTable));
-        while (query.next()) {
-            auto state = new MrlState;
-            _FillMrlStateFromRecord(state, fields, query.record());
-            states.push_back(state);
-        }
-        db.rollback();
-    }
+    if (version < 3)
+        _Error("This version of history database is not supported.");
     return states;
 }

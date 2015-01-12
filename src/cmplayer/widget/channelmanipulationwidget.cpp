@@ -1,7 +1,6 @@
 #include "channelmanipulationwidget.hpp"
 #include "enumcombobox.hpp"
 #include "verticallabel.hpp"
-#include "misc/record.hpp"
 #include "audio/channellayoutmap.hpp"
 #include "audio/channelmanipulation.hpp"
 
@@ -132,18 +131,20 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     connect(d->output, &DataComboBox::currentDataChanged, this, onComboChanged);
     connect(d-> input, &DataComboBox::currentDataChanged, this, onComboChanged);
 
-    Record r(u"channel_layouts"_q);
-    ChannelLayout src = ChannelLayout::_2_0;
-    ChannelLayout dst = ChannelLayout::_2_0;
-    r.read(dst, "output");
-    r.read(src, "input");
+    QSettings r;
+    r.beginGroup(u"channel_layouts"_q);
+    const auto src = _EnumFrom<ChannelLayout>(r.value("input"_a, _EnumName(ChannelLayout::_2_0)).toString());
+    const auto dst = _EnumFrom<ChannelLayout>(r.value("output"_a, _EnumName(ChannelLayout::_2_0)).toString());
+    r.endGroup();
     setCurrentLayouts(src, dst);
 }
 
 ChannelManipulationWidget::~ChannelManipulationWidget() {
-    Record r(u"channel_layouts"_q);
-    r.write(d->output->currentValue(), "output");
-    r.write(d->input->currentValue(), "input");
+    QSettings r;
+    r.beginGroup(u"channel_layouts"_q);
+    r.setValue("output"_a, _EnumName(d->output->currentValue()));
+    r.setValue("input"_a, _EnumName(d->input->currentValue()));
+    r.endGroup();
     delete d;
 }
 
