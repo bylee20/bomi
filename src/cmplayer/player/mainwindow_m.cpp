@@ -457,7 +457,7 @@ auto MainWindow::Data::connectMenus() -> void
     plugEnumMenu<Dithering>
             (video, "video_dithering",
              &MrlState::videoDitheringChanged, [this] () {
-//        vr.setDithering(as.state.video_dithering);
+        engine.setDithering(as.state.video_dithering);
     });
     plugEnumMenu<ColorSpace>(video, "video_space",
                                    &MrlState::videoSpaceChanged, [this] () {
