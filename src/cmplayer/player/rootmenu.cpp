@@ -272,9 +272,6 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     addEnumAction(effect, VideoEffect::FlipV, u"flip-v"_q, true);
     addEnumAction(effect, VideoEffect::FlipH, u"flip-h"_q, true);
     effect.addSeparator();
-//    addEnumAction(effect, VideoEffect::Blur, u"blur"_q, true);
-//    addEnumAction(effect, VideoEffect::Sharpen, u"sharpen"_q, true);
-//    effect.addSeparator();
     addEnumAction(effect, VideoEffect::Remap, u"remap"_q, true);
     addEnumAction(effect, VideoEffect::Gray, u"gray"_q, true);
     addEnumAction(effect, VideoEffect::Invert, u"invert"_q, true);
@@ -526,8 +523,6 @@ auto RootMenu::retranslate() -> void
     auto &effect = video(u"filter"_q, tr("Filter"));
     effect.a(u"flip-v"_q, tr("Flip Vertically"));
     effect.a(u"flip-h"_q, tr("Flip Horizontally"));
-//    effect.a(u"blur"_q, tr("Blur"));
-//    effect.a(u"sharpen"_q, tr("Sharpen"));
     effect.a(u"remap"_q, tr("Remap"));
     effect.a(u"gray"_q, tr("Grayscale"));
     effect.a(u"invert"_q, tr("Invert Color"));

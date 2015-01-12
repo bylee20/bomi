@@ -5,7 +5,7 @@
 #include "mediamisc.hpp"
 #include "enum/videoeffect.hpp"
 
-class VideoRenderer;                    class VideoFormat;
+class VideoRenderer;
 class DeintOption;                      class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct OsdTheme;
@@ -116,7 +116,6 @@ public:
     auto isVolumeNormalizerActivated() const -> bool;
     auto isTempoScaled() const -> bool;
     auto videoRenderer() const -> VideoRenderer*;
-    auto videoFormat() const -> VideoFormat;
     auto videoStreams() const -> const StreamList&;
     auto setCurrentVideoStream(int id) -> void;
     auto currentVideoStream() const -> int;
@@ -202,7 +201,6 @@ public:
     auto takeSnapshot(Snapshot mode) -> void;
     auto snapshot(bool withOsd = true) -> QImage;
     auto clearSnapshots() -> void;
-    Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
 signals:
@@ -224,7 +222,6 @@ signals:
     void preampChanged(double amp);
     void mutedChanged(bool muted);
     void avSyncChanged(int avSync);
-    void videoFormatChanged(const VideoFormat &format);
     void audioStreamsChanged(const StreamList &streams);
     void videoStreamsChanged(const StreamList &streams);
     void subtitleStreamsChanged(const StreamList &streams);
@@ -252,7 +249,6 @@ private:
     auto updateState(State state) -> void;
     auto exec() -> void;
     auto customEvent(QEvent *event) -> void;
-    auto updateVideoFormat(VideoFormat format) -> void;
     class Thread; struct Data; Data *d;
     template<class T>
     friend class SimpleObservation;

@@ -12,7 +12,6 @@
 #include "misc/youtubedl.hpp"
 #include "audio/audiocontroller.hpp"
 #include "audio/audioformat.hpp"
-#include "video/videooutput.hpp"
 #include "video/hwacc.hpp"
 #include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
@@ -254,7 +253,6 @@ struct PlayEngine::Data {
     ChapterList chapters;
     EditionList editions;
 
-    VideoFormat videoFormat;
     DeintOption deint_swdec, deint_hwdec;
     DeintMode deint = DeintMode::Auto;
     QString audioDevice = u"auto"_q;

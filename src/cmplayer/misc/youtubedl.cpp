@@ -9,65 +9,12 @@ struct YouTubeDL::Data {
     QProcess *proc = nullptr;
     int timeout = 60000;
     QMutex mutex;
-//    auto mbox(const QString &msg) -> void
-//    {
-//        if (!running)
-//            return;
-//        running = false;
-//        MBox::critical(p, p->windowTitle(), msg, { BBox::Ok });
-//        p->reject();
-//        proc.kill();
-//        proc.waitForFinished();
-//    }
 };
 
 YouTubeDL::YouTubeDL(QObject *parent)
     : QObject(parent), d(new Data)
 {
     d->p = this;
-//    setLabelText(tr("Retrieving YouTube video address..."));
-//    setRange(0, 0);
-
-//    using Error = Signal<QProcess, QProcess::ProcessError>;
-//    using Finished = Signal<QProcess, int, QProcess::ExitStatus>;
-//    connect(&d->proc, static_cast<Error>(&QProcess::error), this, [=] () {
-//        switch (d->proc.error()) {
-//        case QProcess::FailedToStart:
-//            d->mbox(tr("Failed to start '%1'").arg(d->program));
-//            break;
-//        default:
-//            break;
-//        }
-//    });
-//    connect(&d->proc, static_cast<Finished>(&QProcess::finished), this, [=] () {
-//        d->videoUrl.clear();
-//        if (d->proc.exitStatus() == QProcess::NormalExit && !d->proc.exitCode()) {
-//            const auto address = d->proc.readAllStandardOutput().trimmed();
-//            if (address.startsWith("http"))
-//                d->videoUrl = QUrl::fromPercentEncoding(address);
-//        }
-//        switch (d->proc.error()) {
-//        case QProcess::Crashed:
-//            d->mbox(tr("Script crashed"));
-//            break;
-//        case QProcess::WriteError:
-//        case QProcess::ReadError:
-//            d->mbox(tr("IO error occurred"));
-//            break;
-//        default:
-//            if (d->videoUrl.isEmpty())
-//                d->mbox(tr("Unknown error occurred"));
-//            break;
-//        }
-//        if (!d->videoUrl.isEmpty())
-//            accept();
-//    });
-//    connect(this, &YouTubeDL::canceled, this, [=] () {
-//        d->running = false;
-//        d->proc.kill();
-//        d->videoUrl.clear();
-//        reset();
-//    });
 }
 
 YouTubeDL::~YouTubeDL()

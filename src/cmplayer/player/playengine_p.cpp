@@ -15,7 +15,6 @@ auto reg_play_engine() -> void
 {
     qRegisterMetaType<PlayEngine::State>("State");
     qRegisterMetaType<Mrl>("Mrl");
-    qRegisterMetaType<VideoFormat>("VideoFormat");
     qRegisterMetaType<QVector<int>>("QVector<int>");
     qRegisterMetaType<StreamList>("StreamList");
     qRegisterMetaType<AudioFormat>("AudioFormat");

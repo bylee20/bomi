@@ -4,23 +4,6 @@
 #include "misc/osdtheme.hpp"
 #include "enum/textthemestyle.hpp"
 
-class Record;
-
-//struct OsdTheme {
-//    QString font = qApp->font().family();
-//    qreal scale = 0.025;
-//    bool underline = false, bold = false;
-//    bool strikeout = false, italic = false;
-//    TextThemeStyle style;
-//    QColor color = Qt::white, styleColor = Qt::black;
-//    auto save(Record &r, const QString &group) const -> void;
-//    auto load(Record &r, const QString &group) -> void;
-//    auto toJson() const -> QJsonObject;
-//    auto setFromJson(const QJsonObject &json) -> bool;
-//};
-
-/******************************************************************************/
-
 class OsdThemeObject : public QObject {
     Q_OBJECT
     Q_ENUMS(Style)

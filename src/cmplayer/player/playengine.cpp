@@ -15,21 +15,11 @@ PlayEngine::PlayEngine()
 
     d->video->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
         { d->renderVideoFrame(fbo); });
-    //        connect(d->renderer, &VideoRenderer::formatChanged,
-    //                [this] (const VideoFormat &format) {
-    //            auto renderer = d->videoInfo.renderer();
-    //            renderer->setImgFmt(format.params().imgfmt);
-    //            renderer->setBppSize(format.size());
-    //            renderer->setSize(format.displaySize());
-    //        });
 
     d->chapterInfo = new ChapterInfoObject(this, this);
     d->updateMediaName();
 
     _Debug("Make registrations and connections");
-
-//    connect(d->video, &VideoOutput::formatChanged,
-//            this, &PlayEngine::updateVideoFormat);
 
     d->handle = mpv_create();
     d->client = mpv_client_name(d->handle);
@@ -177,12 +167,6 @@ auto PlayEngine::finalizeGL(QOpenGLContext */*ctx*/) -> void
 auto PlayEngine::metaData() const -> const MetaData&
 {
     return d->metaData;
-}
-
-auto PlayEngine::updateVideoFormat(VideoFormat format) -> void
-{
-    if (_Change(d->videoFormat, format))
-        emit videoFormatChanged(d->videoFormat);
 }
 
 auto PlayEngine::setSubtitleDelay(int ms) -> void
@@ -667,16 +651,6 @@ auto PlayEngine::setAudioSync(int sync) -> void
 {
     if (_Change(d->audioSync, sync))
         d->setmpv_async("audio-delay", sync*0.001);
-}
-
-auto PlayEngine::bitrate(double fps) const -> double
-{
-    return d->videoFormat.bitrate(fps);
-}
-
-auto PlayEngine::videoFormat() const -> VideoFormat
-{
-    return d->videoFormat;
 }
 
 auto PlayEngine::setVolumeNormalizerActivated(bool on) -> void

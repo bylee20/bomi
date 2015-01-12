@@ -60,7 +60,6 @@ HEADERS += \
 	audio/audiomixer.hpp \
 	audio/audio_helper.hpp \
 	audio/audionormalizeroption.hpp \
-	video/videooutput.hpp \
 	video/videoformat.hpp \
 	video/hwacc.hpp \
 	video/videofilter.hpp \
@@ -68,10 +67,8 @@ HEADERS += \
 	video/letterboxitem.hpp \
 	video/ffmpegfilters.hpp \
 	video/softwaredeinterlacer.hpp \
-	video/videoframeshader.hpp \
 	video/videocolor.hpp \
 	video/deintcaps.hpp \
-	video/videoimagepool.hpp \
 	video/kernel3x3.hpp \
 	subtitle/subtitle.hpp \
 	subtitle/subtitle_parser.hpp \
@@ -87,7 +84,6 @@ HEADERS += \
 	subtitle/subtitlerenderingthread.hpp \
 	subtitle/submisc.hpp \
 	subtitle/opensubtitlesfinder.hpp \
-	quick/highqualitytextureitem.hpp \
 	quick/busyiconitem.hpp \
 	quick/toplevelitem.hpp \
 	quick/itemwrapper.hpp \
@@ -243,14 +239,11 @@ SOURCES += \
 	audio/audiomixer.cpp \
 	audio/audio_helper.cpp \
 	audio/audionormalizeroption.cpp \
-	video/videoimagepool.cpp \
-	video/videooutput.cpp \
 	video/hwacc.cpp \
 	video/videoformat.cpp \
 	video/videofilter.cpp \
 	video/deintoption.cpp \
 	video/letterboxitem.cpp \
-	video/videoframeshader.cpp \
 	video/ffmpegfilters.cpp \
 	video/softwaredeinterlacer.cpp \
 	video/videocolor.cpp \
@@ -270,7 +263,6 @@ SOURCES += \
 	subtitle/subtitlerenderingthread.cpp \
 	subtitle/submisc.cpp \
 	subtitle/opensubtitlesfinder.cpp \
-	quick/highqualitytextureitem.cpp \
 	quick/geometryitem.cpp \
 	quick/busyiconitem.cpp \
 	quick/toplevelitem.cpp \
