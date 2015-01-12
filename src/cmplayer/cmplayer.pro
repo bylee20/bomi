@@ -233,7 +233,8 @@ HEADERS += \
     enum/colorenumdata.hpp \
     video/videorenderer.hpp \
     misc/youtubedl.hpp \
-    quick/playlistthemeobject.hpp
+    quick/playlistthemeobject.hpp \
+    misc/yledl.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -406,7 +407,8 @@ SOURCES += \
     widget/prefwidgets.cpp \
     video/videorenderer.cpp \
     misc/youtubedl.cpp \
-    quick/playlistthemeobject.cpp
+    quick/playlistthemeobject.cpp \
+    misc/yledl.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

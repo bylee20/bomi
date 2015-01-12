@@ -22,6 +22,7 @@
 #include "subtitle/submisc.hpp"
 #include "misc/osdtheme.hpp"
 #include "misc/speedmeasure.hpp"
+#include "misc/yledl.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/colorspace.hpp"
 #include "enum/colorrange.hpp"
@@ -246,6 +247,7 @@ struct PlayEngine::Data {
     VideoEffects videoEffects = 0;
     Snapshot snapshot = NoSnapshot;
     YouTubeDL *youtube = nullptr;
+    YleDL *yle = nullptr;
 
     OsdTheme subStyle;
     VideoRenderer *video = nullptr;

@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>16</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -319,28 +319,38 @@
          <item>
           <widget class="QGroupBox" name="groupBox_34">
            <property name="title">
-            <string notr="true">youtube-dl</string>
+            <string notr="true">Streaming</string>
            </property>
            <layout class="QFormLayout" name="formLayout_21">
             <item row="0" column="0">
              <widget class="QLabel" name="label_25">
               <property name="text">
-               <string>Script path</string>
+               <string>youtube-dl</string>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
              <widget class="QLineEdit" name="yt_program"/>
             </item>
-            <item row="1" column="0">
+            <item row="2" column="0">
              <widget class="QLabel" name="label_59">
               <property name="text">
                <string notr="true">User-Agent</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="2" column="1">
              <widget class="QLineEdit" name="yt_user_agent"/>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="yle_program"/>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>yle-dl</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -1796,6 +1806,9 @@
          </item>
          <item>
           <widget class="HwAccCodecBox" name="hwaccel_codecs">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="title">
             <string>Codec to allow hardware-acceleration</string>
            </property>
@@ -2915,12 +2928,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>528</x>
-     <y>512</y>
+     <x>521</x>
+     <y>527</y>
     </hint>
     <hint type="destinationlabel">
-     <x>606</x>
-     <y>517</y>
+     <x>590</x>
+     <y>528</y>
     </hint>
    </hints>
   </connection>
@@ -2935,8 +2948,8 @@ Regular expression is supported.</string>
      <y>98</y>
     </hint>
     <hint type="destinationlabel">
-     <x>515</x>
-     <y>135</y>
+     <x>684</x>
+     <y>130</y>
     </hint>
    </hints>
   </connection>
@@ -2983,8 +2996,8 @@ Regular expression is supported.</string>
      <y>98</y>
     </hint>
     <hint type="destinationlabel">
-     <x>539</x>
-     <y>135</y>
+     <x>684</x>
+     <y>130</y>
     </hint>
    </hints>
   </connection>
@@ -2995,12 +3008,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>539</x>
-     <y>362</y>
+     <x>684</x>
+     <y>394</y>
     </hint>
     <hint type="destinationlabel">
-     <x>540</x>
-     <y>400</y>
+     <x>539</x>
+     <y>425</y>
     </hint>
    </hints>
   </connection>
@@ -3011,12 +3024,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>539</x>
-     <y>362</y>
+     <x>684</x>
+     <y>394</y>
     </hint>
     <hint type="destinationlabel">
-     <x>690</x>
-     <y>400</y>
+     <x>683</x>
+     <y>425</y>
     </hint>
    </hints>
   </connection>
@@ -3027,12 +3040,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>298</x>
-     <y>81</y>
+     <x>313</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>298</x>
-     <y>74</y>
+     <x>313</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3043,8 +3056,8 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>298</x>
-     <y>77</y>
+     <x>313</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
      <x>298</x>
@@ -3059,12 +3072,12 @@ Regular expression is supported.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>448</x>
-     <y>53</y>
+     <x>281</x>
+     <y>61</y>
     </hint>
     <hint type="destinationlabel">
-     <x>451</x>
-     <y>124</y>
+     <x>287</x>
+     <y>106</y>
     </hint>
    </hints>
   </connection>

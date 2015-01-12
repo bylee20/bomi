@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     d->playlist.setDownloader(&d->downloader);
 
     d->engine.setYouTube(&d->youtube);
+    d->engine.setYle(&d->yle);
     d->engine.run();
     d->initWidget();
     d->initContextMenu();

@@ -352,7 +352,12 @@ auto PlayEngine::Data::hook() -> void
         auto file = getmpv<QString>("stream-open-filename");
         if (!file.startsWith("http://"_a) && !file.startsWith("https://"_a))
             return;
-        if (youtube->run(file)) {
+        if (yle && yle->supports(file)) {
+            if (!yle->run(file))
+                return;
+            setmpv("stream-open-filename", yle->url().toLocal8Bit());
+
+        } else if (youtube && youtube->run(file)) {
             setmpv("options/cookies", true);
             setmpv("options/cookies-file", youtube->cookies().toLocal8Bit());
             setmpv("options/user-agent", youtube->userAgent().toLocal8Bit());

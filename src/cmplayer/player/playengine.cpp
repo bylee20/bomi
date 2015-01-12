@@ -806,6 +806,11 @@ auto PlayEngine::audioDeviceList() const -> QList<AudioDevice>
     return devs;
 }
 
+auto PlayEngine::setYle(YleDL *yle) -> void
+{
+    d->yle = yle;
+}
+
 auto PlayEngine::setYouTube(YouTubeDL *yt) -> void
 {
     d->youtube = yt;

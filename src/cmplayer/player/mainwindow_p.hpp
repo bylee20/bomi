@@ -14,6 +14,7 @@
 #include "streamtrack.hpp"
 #include "misc/downloader.hpp"
 #include "misc/youtubedl.hpp"
+#include "misc/yledl.hpp"
 #include "video/videorenderer.hpp"
 #include "subtitle/subtitlerendereritem.hpp"
 #include "opengl/opengllogger.hpp"
@@ -70,6 +71,7 @@ struct MainWindow::Data {
     SubtitleRendererItem subtitle;
     QPoint prevPos;
     YouTubeDL youtube;
+    YleDL yle;
 
     Qt::WindowStates winState = Qt::WindowNoState;
     Qt::WindowStates prevWinState = Qt::WindowNoState;
