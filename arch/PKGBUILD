@@ -1,7 +1,7 @@
 # Maintainer: xylosper <darklin20@gmail.com>
 # Contributor: willemw <willemw12@gmail.com>
 
-pkgname=cmplayer
+pkgname=bomi
 pkgver=0.8.17
 pkgrel=1
 pkgdesc="Powerful and easy-to-use multimedia player"
@@ -17,7 +17,7 @@ makedepends=('mesa' 'gcc' 'pkg-config' 'python')
 optdepends=('libaacs: AACS decryption for Blu-ray support'
             'libbdplus: BD+ decryption for Blu-ray support'
             'youtube-dl: streaming website support including YouTube')
-source=(https://github.com/xylosper/cmplayer/releases/download/v$pkgver/cmplayer-$pkgver-source.tar.gz)
+source=(https://github.com/xylosper/bomi/releases/download/v$pkgver/bomi-$pkgver-source.tar.gz)
 md5sums=('7158a294a41832198297ba4d95d3ba97')
 options=(debug !strip)
 

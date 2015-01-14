@@ -243,7 +243,7 @@
 0.8.2
 
   * Fix: too distorted color in Extended Range
-  * Fix: cannot open media in some file managers which call cmplayer with url)
+  * Fix: cannot open media in some file managers which call bomi with url)
   * Fix: mute button in skin didn't work
   * Fix: workaround to enable libquvi-0.9 (libproxy is always disabled)
 
@@ -383,7 +383,7 @@
 
   * New: introduce OSD options in 'Behaviours' tab
   * New: '--action=%ID%' command where %ID% can be confirmed in keyboard shortcut option
-  * New: '--wake-up' command to activate CMPlayer window
+  * New: '--wake-up' command to activate bomi window
   * New: libass support
   * Mod: subtitle file list and subtitle track list is unified
   * Mod: '--open=%FILE%' command to open a file
@@ -469,7 +469,7 @@
 - Bug fix
   * Wrong parsing font color in subtitle
   * Crash when open a dialog after playing
-  * Now CMPlayer ignores the config files of mplayer
+  * Now bomi ignores the config files of mplayer
 
 0.6.0
 

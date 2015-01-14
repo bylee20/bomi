@@ -1,0 +1,30 @@
+# bomi completions                               -*- shell-script -*-
+
+_bomi()
+{
+    local short_release="-h -v"
+    local long_completes="--wake --open --action --log-level --opengl-debug \
+        --debug --help --version"
+    local debug_opts="fatal error warn info debug trace"
+
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    local prev=${COMP_WORDS[COMP_CWORD-1]}
+
+    case "${prev}" in
+        --log-level)
+            COMPREPLY=( $(compgen -W "$debug_opts" -- $cur) )
+            return 0
+            ;;
+    esac
+
+    if [[ "$cur" == --* ]]; then
+        COMPREPLY=( $(compgen -W "$long_completes" -- $cur) )
+        return 0
+    elif [[ "$cur" == -* ]]; then
+        COMPREPLY=( $(compgen -W "$short_release" -- $cur) )
+    else
+        _filedir
+        return 0
+    fi
+}
+complete -F _bomi bomi

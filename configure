@@ -162,8 +162,8 @@ install_opts="""
 --icondir=ICONDIR|directory for application icons|DATADIR/icons/hicolor
 --appdir=APPDIR|directory for application launchers|DATADIR/applications
 --actiondir=ACTIONDIR|directory for action launchers|DATADIR/apps/solid/actions
---skindir=SKINDIR|directory for skin files|DATADIR/cmplayer/skins
---importdir=IMPORTDIR|directory for QML files|DATADIR/cmplayer/imports
+--skindir=SKINDIR|directory for skin files|DATADIR/bomi/skins
+--importdir=IMPORTDIR|directory for QML files|DATADIR/bomi/imports
 """
 
 setup_dirs() {
@@ -175,8 +175,8 @@ setup_dirs() {
         if [ -z "$icondir"   ]; then   icondir=$datadir/icons/hicolor;      fi
         if [ -z "$appdir"    ]; then    appdir=$datadir/applications;       fi
         if [ -z "$actiondir" ]; then actiondir=$datadir/apps/solid/actions; fi
-        if [ -z "$skindir"   ]; then   skindir=$datadir/cmplayer/skins;     fi
-        if [ -z "$importdir" ]; then importdir=$datadir/cmplayer/imports;   fi
+        if [ -z "$skindir"   ]; then   skindir=$datadir/bomi/skins;     fi
+        if [ -z "$importdir" ]; then importdir=$datadir/bomi/imports;   fi
 }
 
 jack=disable
@@ -413,10 +413,10 @@ parse_file() {
 
 rootdir=`pwd`
 
-parse_file "src/cmplayer/configure.pro" defines config libs cflags rootdir
+parse_file "src/bomi/configure.pro" defines config libs cflags rootdir
 parse_file "Makefile" os qmake PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
         skindir importdir parallel qtsdk macdeployqt
 parse_file "build-mpv" mpv_args parallel os njobs PKG_CONFIG_PATH
 chmod +x build-mpv
 
-printf "\nCMPlayer has been configured successfully!\n\n"
+printf "\nbomi has been configured successfully!\n\n"

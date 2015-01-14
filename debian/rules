@@ -52,7 +52,7 @@ install: build
 
 	# Add here commands to install the package into debian/gentoo.
 	# The DESTDIR Has To Be Exactly /usr/src/packages/BUILD/debian/debian/<nameOfPackage>
-	make DEST_DIR=$(CURDIR)/debian/cmplayer install
+	make DEST_DIR=$(CURDIR)/debian/bomi install
 	
 # Build architecture-independent files here.
 binary-indep: build install

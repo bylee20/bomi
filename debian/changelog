@@ -1,4 +1,4 @@
-cmplayer (0.8.17-1~trusty1) trusty; urgency=low
+bomi (0.8.17-1~trusty1) trusty; urgency=low
 
   * New: option to show/hide media location in playlist under Skin & Style tab
   * New: remember the last choice of language in subtitle find dialog (#154)
@@ -40,7 +40,7 @@ cmplayer (0.8.17-1~trusty1) trusty; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sun, 11 Jan 2015 06:29:00 +0900
 
-cmplayer (0.8.16-1~trusty1) trusty; urgency=low
+bomi (0.8.16-1~trusty1) trusty; urgency=low
 
   * New: additional subtitle search path
   * Fix: don't handle empty audio samples as error
@@ -48,7 +48,7 @@ cmplayer (0.8.16-1~trusty1) trusty; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 23 Jun 2014 10:53:00 +0900
 
-cmplayer (0.8.15-1~trusty1) trusty; urgency=low
+bomi (0.8.15-1~trusty1) trusty; urgency=low
 
   * New: format/quality/ask options for quick snapshot(#99)
   * Fix: too many initialization of VDPAU mixer
@@ -58,7 +58,7 @@ cmplayer (0.8.15-1~trusty1) trusty; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 16 Jun 2014 15:30:00 +0900
 
-cmplayer (0.8.14-1~trusty1) trusty; urgency=low
+bomi (0.8.14-1~trusty1) trusty; urgency=low
 
   * New: quick snapshot
   * New: support YCgCo color space
@@ -98,7 +98,7 @@ cmplayer (0.8.14-1~trusty1) trusty; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 13 Jun 2014 12:12:00 +0900
 
-cmplayer (0.8.13-1~trusty1) trusty; urgency=low
+bomi (0.8.13-1~trusty1) trusty; urgency=low
 
   * New: Blu-ray support
   * New: basic support for MPRISv2
@@ -118,7 +118,7 @@ cmplayer (0.8.13-1~trusty1) trusty; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Thu, 20 Mar 2014 22:03:00 +0900
 
-cmplayer (0.8.11-1~saucy1) saucy; urgency=low
+bomi (0.8.11-1~saucy1) saucy; urgency=low
 
   * Fix: audio output channel layout didn't work
   * Fix: hide scrollbar in history/playlist when no scrolling is needed
@@ -133,7 +133,7 @@ cmplayer (0.8.11-1~saucy1) saucy; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Wed, 12 Feb 2014 13:47:00 +0900
 
-cmplayer (0.8.10-1) saucy; urgency=low
+bomi (0.8.10-1) saucy; urgency=low
 
   * New: keyboard navigation in history and playlist
   * New: 444P image format support
@@ -159,7 +159,7 @@ cmplayer (0.8.10-1) saucy; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sun, 9 Feb 2014 13:12:00 +0900
 
-cmplayer (0.8.8-1) saucy; urgency=low
+bomi (0.8.8-1) saucy; urgency=low
 
   * New: download subtitle from opensubtitles.org
   * Fix: broken synchronization of app state and menu state
@@ -169,7 +169,7 @@ cmplayer (0.8.8-1) saucy; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sun, 2 Feb 2014 17:09:00 +0900
 
-cmplayer (0.8.7-1) saucy; urgency=low
+bomi (0.8.7-1) saucy; urgency=low
 
   * New: states such as volume, subtitle selections, and so on, are preserved for each playback
   * New: Serbian translations (thanks to Alen)
@@ -185,7 +185,7 @@ cmplayer (0.8.7-1) saucy; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 31 Jan 2014 23:56:00 +0900
 
-cmplayer (0.8.6-1) saucy; urgency=low
+bomi (0.8.6-1) saucy; urgency=low
 
   * New: new option 'Apply in fullscreen mode only' for 'Hide mouse cursor'
   * Fix: hiding mouse cursor with Qt 5.2.0 didn't work (#22)
@@ -206,7 +206,7 @@ cmplayer (0.8.6-1) saucy; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 11 Nov 2013 10:27:00 +0900
  
-cmplayer (0.8.4-1) saucy; urgency=low
+bomi (0.8.4-1) saucy; urgency=low
 
   * New: channel manipulation options and channel layout menu
   * New: 'Dropped Frames' item in playback informations
@@ -231,19 +231,19 @@ cmplayer (0.8.4-1) saucy; urgency=low
   * Fix: restoring window position didn't work
   * Fix: wrong color display of non-8bit-encoded sources
   * Fix: too distorted color in Extended Range
-  * Fix: cannot open media in some file managers which call cmplayer with url)
+  * Fix: cannot open media in some file managers which call bomi with url)
   * Fix: mute button in skin didn't work
   * Fix: workaround to enable libquvi-0.9 (libproxy is always disabled)
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 11 Nov 2013 10:27:00 +0900
 
-cmplayer (0.8.1-2) saucy; urgency=low
+bomi (0.8.1-2) saucy; urgency=low
 
   * Fix: disable tray icon in Unity(workaround)
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sat, 26 Oct 2013 13:49:00 +0900
 
-cmplayer (0.8.1-1) saucy; urgency=low
+bomi (0.8.1-1) saucy; urgency=low
 
   * New: Remap Range/Extended Range in Color Range menu
   * New: 'Invert direction of mouse wheel scroll' in mouse action tab of preferences
@@ -359,11 +359,11 @@ cmplayer (0.8.1-1) saucy; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sat, 26 Oct 2013 13:00:00 +0900
 
-cmplayer (0.7.5-1) raring; urgency=low
+bomi (0.7.5-1) raring; urgency=low
 
   * Add: introduce OSD options in 'Behaviours' tab
   * Add: '--action=%ID%' command where %ID% can be confirmed in keyboard shortcut option
-  * Add: '--wake-up' command to activate CMPlayer window
+  * Add: '--wake-up' command to activate bomi window
   * Add: libass support
   * Mod: subtitle file list and subtitle track list is unified
   * Mod: '--open=%FILE%' command to open a file
@@ -378,7 +378,7 @@ cmplayer (0.7.5-1) raring; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Wed, 3 Jul 2013 21:17:00 +0900
 
-cmplayer (0.7.4-1) raring; urgency=low
+bomi (0.7.4-1) raring; urgency=low
 
   * New: Audio track circulation
   * New: Keyboard shortcut preset and Movist preset
@@ -397,7 +397,7 @@ cmplayer (0.7.4-1) raring; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 26 Apr 2013 18:26:00 +0900
 
-cmplayer (0.7.0-1) quantal; urgency=low
+bomi (0.7.0-1) quantal; urgency=low
 
   * New skin: modern
   * Tempo scaler auido filter is enabled
@@ -416,7 +416,7 @@ cmplayer (0.7.0-1) quantal; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Tue, 26 Feb 2013 19:15:00 +0900
 
-cmplayer (0.6.2-1) precise; urgency=low
+bomi (0.6.2-1) precise; urgency=low
 
   * Fix: Wrong stride of video frame
   * Fix: Wrong behavior when mouse moving in fullscreen mode
@@ -424,102 +424,102 @@ cmplayer (0.6.2-1) precise; urgency=low
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 31 Aug 2012 16:49:00 +0900
 
-cmplayer (0.6.1-1) precise; urgency=low
+bomi (0.6.1-1) precise; urgency=low
 
   * Add open mode for 'from file manager' and 'by drag and drop'
   * Add auto-exit and auto-shutdown when playlist finished
   * Fix: Wrong parsing font color in subtitle
   * Fix: Crash when open a dialog after playing
-  * Fix: Now CMPlayer ignores the config files of mplayer
+  * Fix: Now bomi ignores the config files of mplayer
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Wed, 28 Aug 2012 18:42:00 +0900
 
-cmplayer (0.6.0-3) precise; urgency=low
+bomi (0.6.0-3) precise; urgency=low
 
   * Add build dependency on libqt4-opengl-dev
   * Bug fix from upstream
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 24 Aug 2012 11:11:00 +0900
 
-cmplayer (0.6.0-2) precise; urgency=low
+bomi (0.6.0-2) precise; urgency=low
 
   * Add build dependency on libx11-dev
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 24 Aug 2012 11:11:00 +0900
 
-cmplayer (0.6.0-1) precise; urgency=low
+bomi (0.6.0-1) precise; urgency=low
 
   * Released
 
  -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Wed, 22 Aug 2012 11:11:00 +0900
 
-cmplayer (0.5.4-1) unstable; urgency=low
+bomi (0.5.4-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Mon, 14 Nov 2011 11:11:00 +0900
 
-cmplayer (0.5.3-1) unstable; urgency=low
+bomi (0.5.3-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Mon, 03 May 2011 11:11:00 +0900
 
-cmplayer (0.5.2-2) unstable; urgency=low
+bomi (0.5.2-2) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Mon, 02 May 2011 23:22:00 +0900
 
-cmplayer (0.5.2-1) unstable; urgency=low
+bomi (0.5.2-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Tue, 25 Apr 2011 03:14:00 +0100
 
-cmplayer (0.5.1-1) unstable; urgency=low
+bomi (0.5.1-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Tue, 05 Apr 2011 02:06:00 +0100
 
-cmplayer (0.4.0-1) unstable; urgency=low
+bomi (0.4.0-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Sat, 25 Jun 2010 07:19:00 +0100
 
-cmplayer (0.3.2-1) unstable; urgency=low
+bomi (0.3.2-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Sat, 11 Jul 2009 05:59:12 +0100
 
-cmplayer (0.3.1-1) unstable; urgency=low
+bomi (0.3.1-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Mon, 27 Apr 2009 09:36:50 +0100
 
-cmplayer (0.3.0-1) unstable; urgency=low
+bomi (0.3.0-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Fri, 09 Apr 2009 00:01:01 +0100
 
-cmplayer (0.2.8-1) unstable; urgency=low
+bomi (0.2.8-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Sun, 01 Apr 2009 15:00:01 +0100
 
-cmplayer (0.2.7-1) unstable; urgency=low
+bomi (0.2.7-1) unstable; urgency=low
 
   * Released
 
  -- xylosper <darklin20@gmail.com>  Sun, 29 Mar 2009 14:50:38 +0100
 
-cmplayer (0.2.6-1) unstable; urgency=low
+bomi (0.2.6-1) unstable; urgency=low
 
   * Released
 

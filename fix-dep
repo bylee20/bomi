@@ -1,10 +1,10 @@
 #!/bin/bash
 
-dir=./build/CMPlayer.app/Contents
+dir=./build/bomi.app/Contents
 all=`find $dir/Frameworks -name 'Qt*' | grep -E '/Qt[^/.]+$'`
 all+=" "`find $dir/MacOS -name '*.dylib'`
 all+=" "`find $dir/PlugIns -name '*.dylib'`
-all+=" $dir/MacOS/CMPlayer"
+all+=" $dir/MacOS/bomi"
 
 for one in $all; do
 	echo $one

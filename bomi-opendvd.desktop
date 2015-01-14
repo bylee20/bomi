@@ -1,0 +1,12 @@
+[Desktop Entry]
+X-KDE-Solid-Predicate=[[ StorageVolume.ignored == false AND OpticalDisc.availableContent == 'Data|VideoDvd' ] OR [ StorageVolume.ignored == false AND OpticalDisc.availableContent == 'Data|VideoDvd' ]]
+Type=Service
+Actions=open;
+
+[Desktop Action open]
+Name=Open Video DVD with bomi
+Name[pl]=Otwórz Video DVD z bomi
+Name[es]=Abrir DVD de vídeo con bomi
+Name[de]=Öffne Video-DVD mit bomi
+Exec=bomi --wake dvd://%d
+Icon=bomi

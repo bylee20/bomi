@@ -5,7 +5,7 @@ install_dir := sh install_dir.sh
 pkg_config_path := @PKG_CONFIG_PATH@
 
 prefix := @prefix@
-qmake := @qmake@ DEFINES+=CMPLAYER_RELEASE
+qmake := @qmake@ DEFINES+=BOMI_RELEASE
 bin_dir := @bindir@
 DATADIR := @datadir@
 comp_dir := @compdir@
@@ -20,34 +20,34 @@ qt_sdk := @qtsdk@
 macdeployqt := @macdeployqt@
 
 ifeq ($(os),osx)
-	cmplayer_exec := CMPlayer
-	cmplayer_exec_dir := build/$(cmplayer_exec).app/Contents/MacOS
+	bomi_exec := bomi
+	bomi_exec_dir := build/$(bomi_exec).app/Contents/MacOS
 else
-	cmplayer_exec := cmplayer
-	cmplayer_exec_dir := build/$(cmplayer_exec)
+	bomi_exec := bomi
+	bomi_exec_dir := build/$(bomi_exec)
 endif
 
-cmplayer_exec_path := $(cmplayer_exec_dir)/$(cmplayer_exec)
+bomi_exec_path := $(bomi_exec_dir)/$(bomi_exec)
 
-cmplayer: build/$(cmplayer_exec_path)
+bomi: build/$(bomi_exec_path)
 
-build/$(cmplayer_exec_path): mpv skins imports
-	cd src/cmplayer && $(qmake) cmplayer.pro && $(MAKE) -j$(njobs) release
+build/$(bomi_exec_path): mpv skins imports
+	cd src/bomi && $(qmake) bomi.pro && $(MAKE) -j$(njobs) release
 ifeq ($(os),osx)
-	cp -r build/skins $(cmplayer_exec_dir)
-	cp -r build/imports $(cmplayer_exec_dir)
+	cp -r build/skins $(bomi_exec_dir)
+	cp -r build/imports $(bomi_exec_dir)
 endif
 
-cmplayer-bundle: cmplayer
-	cp -r $(qt_sdk)/qml/QtQuick.2 $(cmplayer_exec_dir)/imports
-	install -d $(cmplayer_exec_dir)/imports/QtQuick
-	cp -r $(qt_sdk)/qml/QtQuick/Controls $(cmplayer_exec_dir)/imports/QtQuick
-	cp -r $(qt_sdk)/qml/QtQuick/Layouts $(cmplayer_exec_dir)/imports/QtQuick
-	cp -r /usr/local/Cellar/libquvi/0.4.1/libquvi-scripts/share/libquvi-scripts/lua $(cmplayer_exec_dir)
-#	rm `find $(cmplayer_exec_dir) -name '*_debug.dylib'`
-#	cd build && $(macdeployqt) $(cmplayer_exec).app
+bomi-bundle: bomi
+	cp -r $(qt_sdk)/qml/QtQuick.2 $(bomi_exec_dir)/imports
+	install -d $(bomi_exec_dir)/imports/QtQuick
+	cp -r $(qt_sdk)/qml/QtQuick/Controls $(bomi_exec_dir)/imports/QtQuick
+	cp -r $(qt_sdk)/qml/QtQuick/Layouts $(bomi_exec_dir)/imports/QtQuick
+	cp -r /usr/local/Cellar/libquvi/0.4.1/libquvi-scripts/share/libquvi-scripts/lua $(bomi_exec_dir)
+#	rm `find $(bomi_exec_dir) -name '*_debug.dylib'`
+#	cd build && $(macdeployqt) $(bomi_exec).app
 #	./fix-dep
-	cd build && $(macdeployqt) $(cmplayer_exec).app -dmg
+	cd build && $(macdeployqt) $(bomi_exec).app -dmg
 
 build/lib/libmpv.a: build-mpv
 	@./build-mpv
@@ -55,10 +55,10 @@ build/lib/libmpv.a: build-mpv
 mpv: build/lib/libmpv.a
 
 build/skins: build
-	cp -r src/cmplayer/skins build
+	cp -r src/bomi/skins build
 
 build/imports: build
-	cp -r src/cmplayer/imports build
+	cp -r src/bomi/imports build
 
 skins: build/skins
 
@@ -71,15 +71,15 @@ clean:
 	-cd src/mpv && ./waf uninstall
 	-cd src/mpv && ./waf clean
 	-cd src/mpv && ./waf distclean
-	-cd src/cmplayer && make clean
-	-cd src/cmplayer && rm -rf Makefile* debug release
-	-rm -rf build/CMPlayer*
-	-rm -rf build/cmplayer*
+	-cd src/bomi && make clean
+	-cd src/bomi && rm -rf Makefile* debug release
+	-rm -rf build/bomi*
+	-rm -rf build/bomi*
 	-rm -rf build/skins
 	-rm -rf build/imports
-	-rm -f cmplayer.1.gz
+	-rm -f bomi.1.gz
 
-install: cmplayer
+install: bomi
 ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(bin_dir)
 	-install -d $(DEST_DIR)$(app_dir)
@@ -97,25 +97,25 @@ ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(skin_dir)
 	-install -d $(DEST_DIR)$(import_dir)
 #	-install -d $(DEST_DIR)$(icon_dir)/scalable/apps
-	$(install_exe) build/$(cmplayer_exec) $(DEST_DIR)$(bin_dir)
-	$(install_file) cmplayer.desktop $(DEST_DIR)$(app_dir)
-	$(install_file) cmplayer-opendvd.desktop $(DEST_DIR)$(action_dir)
-	$(install_file) cmplayer.completion $(DEST_DIR)$(comp_dir)/cmplayer
-	gzip -cf cmplayer.1 > cmplayer.1.gz
-	$(install_file) cmplayer.1.gz $(DEST_DIR)$(man_dir)/man1/cmplayer.1.gz
-	$(install_file) icons/cmplayer16.png $(DEST_DIR)$(icon_dir)/16x16/apps/cmplayer.png
-	$(install_file) icons/cmplayer22.png $(DEST_DIR)$(icon_dir)/22x22/apps/cmplayer.png
-	$(install_file) icons/cmplayer24.png $(DEST_DIR)$(icon_dir)/24x24/apps/cmplayer.png
-	$(install_file) icons/cmplayer32.png $(DEST_DIR)$(icon_dir)/32x32/apps/cmplayer.png
-	$(install_file) icons/cmplayer48.png $(DEST_DIR)$(icon_dir)/48x48/apps/cmplayer.png
-	$(install_file) icons/cmplayer64.png $(DEST_DIR)$(icon_dir)/64x64/apps/cmplayer.png
-	$(install_file) icons/cmplayer128.png $(DEST_DIR)$(icon_dir)/128x128/apps/cmplayer.png
-	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(icon_dir)/256x256/apps/cmplayer.png
-#	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(icon_dir)/scalable/apps/cmplayer.svg
+	$(install_exe) build/$(bomi_exec) $(DEST_DIR)$(bin_dir)
+	$(install_file) bomi.desktop $(DEST_DIR)$(app_dir)
+	$(install_file) bomi-opendvd.desktop $(DEST_DIR)$(action_dir)
+	$(install_file) bomi.completion $(DEST_DIR)$(comp_dir)/bomi
+	gzip -cf bomi.1 > bomi.1.gz
+	$(install_file) bomi.1.gz $(DEST_DIR)$(man_dir)/man1/bomi.1.gz
+	$(install_file) icons/bomi16.png $(DEST_DIR)$(icon_dir)/16x16/apps/bomi.png
+	$(install_file) icons/bomi22.png $(DEST_DIR)$(icon_dir)/22x22/apps/bomi.png
+	$(install_file) icons/bomi24.png $(DEST_DIR)$(icon_dir)/24x24/apps/bomi.png
+	$(install_file) icons/bomi32.png $(DEST_DIR)$(icon_dir)/32x32/apps/bomi.png
+	$(install_file) icons/bomi48.png $(DEST_DIR)$(icon_dir)/48x48/apps/bomi.png
+	$(install_file) icons/bomi64.png $(DEST_DIR)$(icon_dir)/64x64/apps/bomi.png
+	$(install_file) icons/bomi128.png $(DEST_DIR)$(icon_dir)/128x128/apps/bomi.png
+	$(install_file) icons/bomi256.png $(DEST_DIR)$(icon_dir)/256x256/apps/bomi.png
+#	$(install_file) icons/bomi.svg $(DEST_DIR)$(icon_dir)/scalable/apps/bomi.svg
 	-cp -r build/skins/* $(DEST_DIR)$(skin_dir)/
 	-cp -r build/imports/* $(DEST_DIR)$(import_dir)/
 else
-	mv build/$(cmplayer_exec).app $(DEST_DIR)$(prefix)
+	mv build/$(bomi_exec).app $(DEST_DIR)$(prefix)
 endif
 
-.PHONY: cmplayer mpv clean skins imports install
+.PHONY: bomi mpv clean skins imports install

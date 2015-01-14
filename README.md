@@ -1,16 +1,16 @@
-# CMPlayer
+# bomi
 
 
 ## Introduction
 
-CMPlayer is a multimedia player.
+bomi is a multimedia player.
 It is aimed for easy usage but also powerful features.
 It provides various features and convenience functions.
 Just install and enjoy it!
 There will be already what you expect.
 If you don't like, you can configure almost everything.
 
-For more details, please visit [CMPlayer Project Page](http://cmplayer.github.io).
+For more details, please visit [bomi Project Page](http://bomi.github.io).
 
 
 ## Requirements
@@ -53,19 +53,19 @@ In such cases, you can build them with in-tree source.
   1. Run `./download-libchardet` to download chardet source.
   2. Run `./build-libchardet` to build chardet package.
 
-In order to build and install CMPlayer, follow next:
+In order to build and install bomi, follow next:
 
 0. If you're trying latest source code from Git repository, run `./init-mpv` first.
 1. Run `./configure` with proper options. For details, run `./configure --help`.
-2. Run `make` to build CMPlayer
+2. Run `make` to build bomi
 
 You can find built executable in `./build` directory.
-If you want to install CMPlayer into specified directory by `--prefix` option, run `make install`.
+If you want to install bomi into specified directory by `--prefix` option, run `make install`.
 
 
 ## Contacts
 
-### [Issue Tracker](https://github.com/xylosper/cmplayer/issues)
+### [Issue Tracker](https://github.com/xylosper/bomi/issues)
 If you have problems or want some features, please report them in English, Korean, or Japanese.
 
 ### [E-mail](mailto:darklin20@gmail.com)
@@ -74,7 +74,7 @@ If you want to contact me privately, please send me an e-mail.
 
 ## License
 
-CMPlayer is distributed under GPLv2.
+bomi is distributed under GPLv2.
 
 Copyright (C) 2014 xylosper
 
