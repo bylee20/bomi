@@ -114,6 +114,7 @@ release=
 qmake=
 qtsdk=
 macdeployqt=
+defaultskin=
 
 mo() {
         local value=$(eval echo \$$1)
@@ -128,6 +129,7 @@ config_opts="""
 --parallel=JOBS|count of parallel jobs|autodetect:$njobs
 --release|optimize for release
 --developer|configure for developers
+--defaultskin=SKIN|set SKIN as default skin|
 """
 
 config=
@@ -244,7 +246,7 @@ heredoc
                         if [ -z $name ]; then continue; fi
                         if [ $key = $name ]; then
                                 var=$(echo "$key" | sed -E 's/^--(.+)$/\1/g')
-                                value=$(parse_for_value $arg)
+                                value=$(parse_for_value "$arg")
                                 local ph=$(parse_for_value $(get_option_field $f_key))
                                 if [ -n "$ph" ]; then
                                         if [ -z "$value" ]; then break; fi
@@ -261,7 +263,7 @@ heredoc
 heredoc
         fi
         if [ -n "$ok" ]; then
-                eval $var="$value"
+                declare -g "$var=$value"
                 true
         else
                 echo "'$arg' is not a vaild option."
@@ -270,8 +272,8 @@ heredoc
         fi
 }
 
-for arg in $@; do
-        check_valid_option $arg
+for arg in "$@"; do
+        check_valid_option "$arg"
 done
 
 
@@ -362,8 +364,13 @@ if [ $os = "linux" ]; then
         check_pkg_or_exit "alsa"
 fi
 
+confhpp="src/bomi/configure.hpp"
+rm -f "$confhpp"
+touch "$confhpp"
+
 add_defines() {
-        defines="$defines $1=$2"
+        local var=$(echo $1 | tr "[:lower:]" "[:upper:]")
+        echo "#define $var $2" >> "$confhpp"
 }
 
 check_feature_one() {
@@ -389,14 +396,13 @@ check_feature_one() {
 
 loop_options "$feature_opts" check_feature_one
 
-defines=$(echo "$defines" | tr "[:lower:]" "[:upper:]")
-
 setup_dirs
 setup_features
 setup_build
 
-add_defines BOMI_SKINS_PATH \\\\\\\\\\\\\\\"$skindir\\\\\\\\\\\\\\\"
-add_defines BOMI_IMPORTS_PATH \\\\\\\\\\\\\\\"$importdir\\\\\\\\\\\\\\\"
+add_defines BOMI_SKINS_PATH "\"$skindir\""
+add_defines BOMI_IMPORTS_PATH "\"$importdir\""
+add_defines BOMI_DEFAULT_SKIN "\"$defaultskin\""
 
 if has_arg release ; then defines="$defines BOMI_RELEASE"; fi
 

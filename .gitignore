@@ -59,6 +59,7 @@ src/libchardet-1.0.2/src/nsUniversalDetector.lo
 src/bomi/release
 src/bomi/debug
 src/bomi/configure.pro
+src/bomi/configure.hpp
 ui_*.h
 *.user
 src/bomi/Makefile
