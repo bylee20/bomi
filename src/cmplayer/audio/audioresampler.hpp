@@ -10,6 +10,7 @@ public:
     auto setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void;
     auto run(AudioBufferPtr in) -> AudioBufferPtr;
     auto delay() const -> double;
+    auto reset() -> void override;
 private:
     struct Data;
     Data *d;

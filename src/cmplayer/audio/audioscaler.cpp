@@ -141,10 +141,8 @@ auto AudioScaler::run(AudioBufferPtr in) -> AudioBufferPtr
 auto AudioScaler::setScale(bool on, double scale) -> void
 {
     m_scale = scale;
-    m_frames_stride_error = 0;
     m_frames_stride_scaled = m_scale * m_frames_stride;
-    m_frames_to_slide = m_frames_queued = 0;
-    std::fill_n(m_overlap.data(), m_overlap.frames, 0);
+    reset();
     m_enabled = on && scale != 1.0;
 }
 
@@ -175,3 +173,9 @@ auto AudioScaler::best_overlap_frames_offset() -> int
     return best_off;
 }
 
+auto AudioScaler::reset() -> void
+{
+    m_frames_stride_error = 0;
+    m_frames_to_slide = m_frames_queued = 0;
+    std::fill_n(m_overlap.data(), m_overlap.frames, 0);
+}

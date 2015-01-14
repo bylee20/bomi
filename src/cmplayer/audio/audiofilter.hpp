@@ -10,6 +10,7 @@ public:
     auto setPool(mp_audio_pool *pool) -> void { m_pool = pool; }
     auto newBuffer(const AudioBufferFormat &format, int frames) -> AudioBufferPtr
     { return AudioBuffer::fromMpAudio(mp_audio_pool_get(m_pool, &format.mpAudio(), frames)); }
+    virtual auto reset() -> void;
 private:
     mp_audio_pool *m_pool = nullptr;
 };

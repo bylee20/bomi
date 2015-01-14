@@ -62,3 +62,9 @@ auto AudioResampler::run(AudioBufferPtr in) -> AudioBufferPtr
     }
     return dst;
 }
+
+auto AudioResampler::reset() -> void
+{
+    if (d->swr)
+        while (swr_drop_output(d->swr, 1000) > 0) ;
+}

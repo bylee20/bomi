@@ -10,10 +10,7 @@
 #include "misc/log.hpp"
 #include "misc/speedmeasure.hpp"
 extern "C" {
-#include <libswresample/swresample.h>
-#include <libavutil/opt.h>
 #include <audio/filter/af.h>
-#include <audio/fmt-conversion.h>
 }
 
 DECLARE_LOG_CONTEXT(Audio)
@@ -56,7 +53,6 @@ enum FilterDirty : quint32 {
 
 struct AudioController::Data {
     quint32 dirty = 0;
-    SwrContext *swr = nullptr;
     int fmt_conv = AF_FORMAT_UNKNOWN, outrate = 0;
     SpeedMeasure<quint64> measure{10, 30};
     int srate = 0;
@@ -134,8 +130,6 @@ auto AudioController::uninit(af_instance *af) -> void
     auto ac = priv(af); auto d = ac->d;
     Q_ASSERT(ac != nullptr);
     d->af = nullptr;
-    if (d->swr)
-        swr_free(&d->swr);
     d->layout = ChannelLayoutInfo::default_();
     d->chain.clear();
 }
@@ -241,8 +235,8 @@ auto AudioController::control(af_instance *af, int cmd, void *arg) -> int
         d->layout = ChannelLayoutMap::toLayout(*(mp_chmap*)arg);
         return AF_OK;
     case AF_CONTROL_RESET:
-        if (d->swr)
-            while (swr_drop_output(d->swr, 1000) > 0) ;
+        for (auto filter : d->chain)
+            filter->reset();
         return AF_OK;
     default:
         return AF_UNKNOWN;

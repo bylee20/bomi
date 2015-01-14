@@ -10,6 +10,7 @@ public:
     auto setFormat(const AudioBufferFormat &format) -> void;
     auto run(AudioBufferPtr in) -> AudioBufferPtr;
     auto isActive() const -> bool { return m_enabled; }
+    auto reset() -> void override;
 private:
     struct Vector {
         auto data() -> float* { return buffer.data(); }
