@@ -22,7 +22,7 @@
 #include "pref_helper.hpp"
 
 using Shortcuts = QHash<QString, QList<QKeySequence>>;
-enum class KeyMapPreset {bomi, Movist};
+enum class KeyMapPreset {Bomi, Movist};
 
 class Pref : public QObject {
     Q_OBJECT

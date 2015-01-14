@@ -271,7 +271,7 @@ PrefDialog::PrefDialog(QWidget *parent)
         }
     });
 
-    static constexpr auto bomi = static_cast<int>(KeyMapPreset::bomi);
+    static constexpr auto bomi = static_cast<int>(KeyMapPreset::Bomi);
     static constexpr auto movist = static_cast<int>(KeyMapPreset::Movist);
     d->ui.shortcut_preset->addItem(tr("bomi"), bomi);
     d->ui.shortcut_preset->addItem(tr("Movist"), movist);
