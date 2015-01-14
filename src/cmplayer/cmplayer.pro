@@ -58,7 +58,6 @@ HEADERS += \
 	audio/audiocontroller.hpp \
 	audio/channelmanipulation.hpp \
 	audio/audiomixer.hpp \
-	audio/audio_helper.hpp \
 	audio/audionormalizeroption.hpp \
 	video/videoformat.hpp \
 	video/hwacc.hpp \
@@ -227,14 +226,18 @@ HEADERS += \
     video/videorenderer.hpp \
     misc/youtubedl.hpp \
     quick/playlistthemeobject.hpp \
-    misc/yledl.hpp
+    misc/yledl.hpp \
+    audio/audioscaler.hpp \
+    audio/audiobuffer.hpp \
+    audio/audioanalyzer.hpp \
+    audio/audioconverter.hpp \
+    audio/audioresampler.hpp
 
 SOURCES += \
 	stdafx.cpp \
 	audio/audiocontroller.cpp \
 	audio/channelmanipulation.cpp \
 	audio/audiomixer.cpp \
-	audio/audio_helper.cpp \
 	audio/audionormalizeroption.cpp \
 	video/hwacc.cpp \
 	video/videoformat.cpp \
@@ -394,7 +397,12 @@ SOURCES += \
     video/videorenderer.cpp \
     misc/youtubedl.cpp \
     quick/playlistthemeobject.cpp \
-    misc/yledl.cpp
+    misc/yledl.cpp \
+    audio/audioscaler.cpp \
+    audio/audiobuffer.cpp \
+    audio/audioanalyzer.cpp \
+    audio/audioconverter.cpp \
+    audio/audioresampler.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
