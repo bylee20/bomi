@@ -6,11 +6,23 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>541</width>
-    <height>392</height>
+    <width>501</width>
+    <height>346</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QGroupBox" name="groupBox_11">
      <property name="title">
