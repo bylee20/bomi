@@ -202,14 +202,6 @@ App::App(int &argc, char **argv)
     d->getCommandParser(&d->msgParser);
     d->execute(&d->cmdParser);
 
-#if defined(Q_OS_MAC) && defined(BOMI_RELEASE)
-    static const auto path = QApplication::applicationDirPath().toLocal8Bit();
-    _Debug("Set $LIBQUVI_SCRIPTSDIR=\"%%\"", path);
-    if (setenv("LIBQUVI_SCRIPTSDIR", path.data(), 1) < 0)
-        _Error("Cannot set $LIBQUVI_SCRIPTSDIR. "
-               "Some streaming functions won't work.");
-#endif
-
     setQuitOnLastWindowClosed(false);
 #ifndef Q_OS_MAC
     setWindowIcon(defaultIcon());
