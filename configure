@@ -395,10 +395,10 @@ setup_dirs
 setup_features
 setup_build
 
-add_defines CMPLAYER_SKINS_PATH \\\\\\\\\\\\\\\"$skindir\\\\\\\\\\\\\\\"
-add_defines CMPLAYER_IMPORTS_PATH \\\\\\\\\\\\\\\"$importdir\\\\\\\\\\\\\\\"
+add_defines BOMI_SKINS_PATH \\\\\\\\\\\\\\\"$skindir\\\\\\\\\\\\\\\"
+add_defines BOMI_IMPORTS_PATH \\\\\\\\\\\\\\\"$importdir\\\\\\\\\\\\\\\"
 
-if has_arg release ; then defines="$defines CMPLAYER_RELEASE"; fi
+if has_arg release ; then defines="$defines BOMI_RELEASE"; fi
 
 parse_file() {
         cp $1.in $1
