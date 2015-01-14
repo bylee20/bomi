@@ -1,8 +1,16 @@
 #include "skin.hpp"
+#include "misc/log.hpp"
+
+DECLARE_LOG_CONTEXT(Skin)
 
 Skin::Data::Data() {
     auto append = [] (const QString &dir, QStringList &dirs)
-        { if (!dirs.contains(dir)) dirs << dir; };
+    {
+        if (!dirs.contains(dir)) {
+            _Debug("Add directory to search skin in: %%", dir);
+            dirs.push_back(dir);
+        }
+    };
 
 #ifdef BOMI_SKINS_PATH
     append(QString::fromLocal8Bit(BOMI_SKINS_PATH), dirs);
@@ -31,13 +39,13 @@ auto Skin::names(bool reload/* = false*/) -> QStringList
     d->skins.clear();
     for (auto &dirName : d->dirs) {
         const QDir dir(dirName);
-        if (!dir.exists())
-            continue;
-        const auto names = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-        for (auto &name : names) {
-            const QFileInfo source(dir.filePath(name % "/bomi.qml"_a));
-            if (source.exists())
-                d->skins[name] = source;
+        if (dir.exists()) {
+            const auto names = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+            for (auto &name : names) {
+                const QFileInfo source(dir.filePath(name % "/bomi.qml"_a));
+                if (source.exists())
+                    d->skins[name] = source;
+            }
         }
     }
     return d->skins.keys();

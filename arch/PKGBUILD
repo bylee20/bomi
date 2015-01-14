@@ -8,6 +8,7 @@ pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="http://$pkgname.github.io"
 license=('GPL')
+provides=('cmplayer')
 install=$pkgname.install
 depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
          'libdvdread' 'libdvdnav' 'libcdio-paranoia' 'libcdio'
@@ -18,7 +19,7 @@ optdepends=('libaacs: AACS decryption for Blu-ray support'
             'libbdplus: BD+ decryption for Blu-ray support'
             'youtube-dl: streaming website support including YouTube')
 source=(https://github.com/xylosper/bomi/releases/download/v$pkgver/bomi-$pkgver-source.tar.gz)
-md5sums=('7158a294a41832198297ba4d95d3ba97')
+md5sums=('131b069f5ff7768a14cec6d17d41f5ad')
 options=(debug !strip)
 
 build() {
