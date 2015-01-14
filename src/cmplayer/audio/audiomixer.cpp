@@ -67,30 +67,46 @@ static auto hardclip(float p) -> float
     return p < -1.0 ? -1.0 : p > 1.0 ? 1.0 : p;
 }
 
-auto AudioMixer::run(AudioBuffer *in) -> AudioBuffer*
+auto AudioMixer::setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void
 {
-    auto &src = *in;
-    const int frames = src.frames();
-    m_dst.expand(frames);
-    if (m_dst.isEmpty())
-        return in;
-    const double gain = m_amp;
+    if (!(_Change(m_in, in) | _Change(m_out, out)))
+        return;
+    m_in = in; m_out = out;
+    for (int i=0; i<out.channels().num; ++i)
+        m_ch_index_dst[out.channels().speaker[i]] = i;
+    for (int i=0; i<in.channels().num; ++i)
+        m_ch_index_src[in.channels().speaker[i]] = i;
+    m_mix = !m_ch_man.isIdentity();
+    m_updateChmap = !mp_chmap_equals(&in.channels(), &out.channels());
+    m_updateFormat = in.type() != out.type();
+    setClippingMethod(m_clip);
+    setChannelLayoutMap(m_map);
+}
+
+auto AudioMixer::run(AudioBufferPtr src) -> AudioBufferPtr
+{
+    if (src->isEmpty())
+        return src;
+    const int frames = src->frames();
+    auto dest = newBuffer(m_out, frames);
+    auto dview = dest->view<float>();
+    auto sview = src->view<float>();
     auto clip = m_realClip == ClippingMethod::Soft ? softclip : hardclip;
     if (m_amp < 1e-8)
-        m_dst.fill(0);
+        std::fill(dview.begin(), dview.end(), 0);
     else if (!m_mix) {
-        auto iit = in->begin(), oit = m_dst.begin();
-        while (iit != in->end())
-            *oit++ = *iit++ * gain;
+        auto iit = sview.begin(), oit = dview.begin();
+        while (iit != sview.end())
+            *oit++ = *iit++ * m_amp;
     } else {
-        auto dit = m_dst.begin();
-        for (auto sit = in->begin(); sit != in->end(); sit += in->channels()) {
-            for (int dch = 0; dch < m_dst.channels(); ++dch) {
-                const auto spk = m_out.channels.speaker[dch];
+        auto dit = dview.begin();
+        for (auto sit = sview.begin(); sit != sview.end(); sit += src->channels()) {
+            for (int dch = 0; dch < dest->channels(); ++dch) {
+                const auto spk = m_out.channels().speaker[dch];
                 auto &map = m_ch_man.sources(spk);
                 double v = 0;
                 for (int i=0; i<map.size(); ++i)
-                    v += sit[m_ch_index_src[map[i]]]*gain;
+                    v += sit[m_ch_index_src[map[i]]]*m_amp;
                 if (map.size() > 1) {
                     // ref: http://www.voegler.eu/pub/audio/
                     //      digital-audio-mixing-and-normalization.html
@@ -104,24 +120,7 @@ auto AudioMixer::run(AudioBuffer *in) -> AudioBuffer*
             }
         }
     }
-    return &m_dst;
-}
-
-auto AudioMixer::setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void
-{
-    if (!(_Change(m_in, in) | _Change(m_out, out)))
-        return;
-    m_in = in; m_out = out;
-    for (int i=0; i<out.channels.num; ++i)
-        m_ch_index_dst[out.channels.speaker[i]] = i;
-    for (int i=0; i<in.channels.num; ++i)
-        m_ch_index_src[in.channels.speaker[i]] = i;
-    m_mix = !m_ch_man.isIdentity();
-    m_updateChmap = !mp_chmap_equals(&in.channels, &out.channels);
-    m_updateFormat = in.type != out.type;
-    setClippingMethod(m_clip);
-    setChannelLayoutMap(m_map);
-    m_dst = {out.channels.num};
+    return dest;
 }
 
 auto AudioMixer::setClippingMethod(ClippingMethod method) -> void

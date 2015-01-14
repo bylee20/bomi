@@ -33,7 +33,7 @@ private:
     auto reinitialize(mp_audio *data) -> int;
     static auto open(af_instance *af) -> int;
     static auto test(int fmt_in, int fmt_out) -> bool;
-    static auto filter(af_instance *af, mp_audio *data, int flags) -> int;
+    static auto filter(af_instance *af, mp_audio *data) -> int;
     static auto uninit(af_instance *af) -> void;
     static auto control(af_instance *af, int cmd, void *arg) -> int;
     struct Data;

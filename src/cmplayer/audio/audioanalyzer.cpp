@@ -2,17 +2,18 @@
 
 auto AudioAnalyzer::setFormat(const AudioBufferFormat &format) -> void
 {
-    m_fps = format.fps;
+    m_fps = format.fps();
     resetNormalizer();
 }
 
-auto AudioAnalyzer::run(AudioBuffer *in) -> AudioBuffer*
+auto AudioAnalyzer::run(AudioBufferPtr in) -> AudioBufferPtr
 {
     if (!m_normalizerActive)
         return in;
     const int frames = in->frames();
     LevelInfo input(frames);
-    for (auto it = in->begin(); it != in->end(); ++it)
+    auto sview = in->constView<float>();
+    for (auto it = sview.begin(); it != sview.end(); ++it)
         input.level += qAbs(*it);
     input.level /= in->samples();
     const auto avg = this->average(input);

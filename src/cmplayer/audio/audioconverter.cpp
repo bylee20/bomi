@@ -24,9 +24,8 @@ auto AudioConverter::setFormat(const AudioBufferFormat &format) -> void
 {
     if (!_Change(m_format, format))
         return;
-    m_dst.setForRawData(format.type, format.channels.num);
     m_convert = [=] () -> Convert {
-        switch (format.type) {
+        switch (format.type()) {
         case AF_FORMAT_S8:
             return convert<char>;
         case AF_FORMAT_S16:
@@ -48,32 +47,28 @@ auto AudioConverter::setFormat(const AudioBufferFormat &format) -> void
     Q_ASSERT(m_convert != nullptr);
 }
 
-auto AudioConverter::run(AudioBuffer *in) -> AudioBuffer*
+auto AudioConverter::run(AudioBufferPtr in) -> AudioBufferPtr
 {
-    if (m_format.type == AF_FORMAT_FLOAT)
+    if (m_format.type() == AF_FORMAT_FLOAT)
         return in;
-    const auto min_bytes = in->samples() * m_dst.bps();
-    if (min_bytes > (int)m_data.size())
-        m_data.resize(min_bytes * 1.2 + 1);
-    m_dst.setRawFrames(in->frames());
-    if (m_dst.planes() > 1) {
-        for (int ch = 0; ch < m_dst.channels(); ++ch) {
-            float *src = in->p() + ch;
-            uchar *dst = m_data.data() + ch * in->frames();
-            m_dst.setRawData(dst, ch);
+    auto dest = newBuffer(m_format, in->frames());
+    auto sview = in->constView<float>();
+    if (dest->isPlanar()) {
+        for (int ch = 0; ch < dest->channels(); ++ch) {
+            const float *src = sview.plane() + ch;
+            uchar *dst = dest->data()[ch];
             for (int i = 0; i < in->frames(); ++i) {
                 m_convert(dst, *src);
-                src += m_dst.channels();
-                dst += m_dst.bps();
+                src += dest->channels();
+                dst += dest->bps();
             }
         }
     } else {
-        uchar *dst = m_data.data();
-        m_dst.setRawData(dst);
-        for (auto it = in->begin(); it != in->end(); ++it) {
+        uchar *dst = dest->data()[0];
+        for (auto it = sview.begin(); it != sview.end(); ++it) {
             m_convert(dst, *it);
-            dst += m_dst.bps();
+            dst += dest->bps();
         }
     }
-    return &m_dst;
+    return dest;
 }

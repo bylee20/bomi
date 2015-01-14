@@ -65,7 +65,6 @@ struct AudioController::Data {
     bool resample = false;
     double scale = 1.0, amp = 1.0, gain = 1.0;
     mp_chmap chmap;
-    mp_audio *resampled = nullptr;
     af_instance *af = nullptr;
     AudioNormalizerOption normalizerOption;
     ClippingMethod clip = ClippingMethod::Auto;
@@ -81,7 +80,8 @@ struct AudioController::Data {
     AudioAnalyzer analyzer;
     AudioMixer mixer;
     AudioConverter converter;
-    AudioBuffer src;
+
+    QVector<AudioFilter*> chain;
 };
 
 AudioController::AudioController(QObject *parent)
@@ -123,7 +123,7 @@ auto AudioController::open(af_instance *af) -> int
 
     af->control = AudioController::control;
     af->uninit = AudioController::uninit;
-    af->filter = AudioController::filter;
+    af->filter_frame = AudioController::filter;
     af->delay = 0.0;
 
     return AF_OK;
@@ -136,9 +136,8 @@ auto AudioController::uninit(af_instance *af) -> void
     d->af = nullptr;
     if (d->swr)
         swr_free(&d->swr);
-    talloc_free(d->resampled);
     d->layout = ChannelLayoutInfo::default_();
-    d->resampled = nullptr;
+    d->chain.clear();
 }
 
 auto AudioController::reinitialize(mp_audio *from) -> int
@@ -203,7 +202,12 @@ auto AudioController::reinitialize(mp_audio *from) -> int
 
     d->fmt_to = (af_format)to->format;
     d->dirty = 0xffffffff;
-    d->src.setForRawData(buf_from.type, from->nch);
+
+    d->chain.clear();
+    d->chain << &d->resampler << &d->analyzer
+             << &d->scaler << &d->mixer << &d->converter;
+    for (auto filter : d->chain)
+        filter->setPool(d->af->out_pool);
     return true;
 }
 
@@ -245,14 +249,11 @@ auto AudioController::control(af_instance *af, int cmd, void *arg) -> int
     }
 }
 
-auto AudioController::filter(af_instance *af, mp_audio *data, int flags) -> int
+auto AudioController::filter(af_instance *af, mp_audio *data) -> int
 {
     auto ac = priv(af); AudioController::Data *d = ac->d;
-    if (data->samples <= 0 && flags & AF_FILTER_FLAG_EOF) {
-        d->af->data->samples = 0;
-        *data = *d->af->data;
+    if (!data)
         return 0;
-    }
 
     d->af->delay = 0.0;
 
@@ -270,23 +271,14 @@ auto AudioController::filter(af_instance *af, mp_audio *data, int flags) -> int
         d->dirty = 0;
     }
 
-    Q_ASSERT(data->num_planes == d->src.planes());
-
-    d->src.setRawFrames(data->samples);
-    for (int i = 0; i < data->num_planes; ++i)
-        d->src.setRawData((uchar*)data->planes[i], i);
-    auto buffer = d->resampler.run(&d->src);
+    auto buffer = AudioBuffer::fromMpAudio(data);
+    buffer = d->resampler.run(buffer);
     buffer = d->analyzer.run(buffer);
     buffer = d->scaler.run(buffer);
     d->mixer.setAmplifier(d->amp * d->analyzer.gain());
     buffer = d->mixer.run(buffer);
     buffer = d->converter.run(buffer);
-
-    *data = *d->af->data;
-    Q_ASSERT(data->num_planes == buffer->planes());
-    for (int i = 0; i < data->num_planes; ++i)
-        data->planes[i] = buffer->plane(i);
-    data->samples = buffer->frames();
+    af_add_output_frame(d->af, buffer->take());
     af->delay += d->scaler.delay();
     d->measure.push(d->samples += data->samples);
     return 0;

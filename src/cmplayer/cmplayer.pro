@@ -231,7 +231,8 @@ HEADERS += \
     audio/audiobuffer.hpp \
     audio/audioanalyzer.hpp \
     audio/audioconverter.hpp \
-    audio/audioresampler.hpp
+    audio/audioresampler.hpp \
+    audio/audiofilter.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -402,7 +403,8 @@ SOURCES += \
     audio/audiobuffer.cpp \
     audio/audioanalyzer.cpp \
     audio/audioconverter.cpp \
-    audio/audioresampler.cpp
+    audio/audioresampler.cpp \
+    audio/audiofilter.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

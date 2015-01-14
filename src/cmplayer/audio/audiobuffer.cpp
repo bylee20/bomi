@@ -1,34 +1,29 @@
 #include "audiobuffer.hpp"
 
-auto AudioBuffer::fill(float s) -> void
-{
-    for (auto it = m_begin; it != m_end; ++it)
-        *it++ = s;
-}
-
-auto AudioBuffer::fill(int frame, float s) -> void
-{
-    auto p = this->p(frame);
-    for (int ch = 0; ch < m_nch; ++ch)
-        *p++ = s;
-}
-
 auto AudioBuffer::expand(int frames) -> void
 {
-    m_frames = frames;
-    if (!m_allocated || !canPut(frames)) {
-        m_allocated = true;
-        m_data.resize(int(frames*1.2 + 0.5)*m_nch);
-        m_begin = m_data.data();
-        m_end = m_begin + samples();
-        m_raw.resize(1);
-        m_raw[0] = (uchar*)m_data.data();
-    }
+    if (this->frames() == frames)
+        return;
+    detach();
+    if (frames > m_audio->samples)
+        mp_audio_realloc_min(m_audio, frames);
+    m_audio->samples = frames;
+    makeEnds();
 }
 
-auto AudioBuffer::setForRawData(af_format format, int nch) -> void
+auto AudioBuffer::makeEnds() -> void
 {
-    m_nch = nch;
-    m_bps = af_fmt2bps(format);
-    m_raw.resize(af_fmt_is_planar(format) ? nch : 1);
+    const int bytes = pstride();
+    m_ends.resize(planes());
+    for (int i = 0; i < planes(); ++i)
+        m_ends[i] = (uchar*)m_audio->planes[i] + bytes;
+}
+
+auto AudioBuffer::fromMpAudio(mp_audio *mp) -> AudioBufferPtr
+{
+    auto buffer = new AudioBuffer;
+    buffer->m_audio = mp;
+    buffer->m_writable = mp_audio_is_writeable(mp);
+    buffer->makeEnds();
+    return AudioBufferPtr(buffer);
 }

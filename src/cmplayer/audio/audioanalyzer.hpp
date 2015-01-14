@@ -2,9 +2,9 @@
 #define AUDIOANALYZER_HPP
 
 #include "audionormalizeroption.hpp"
-#include "audiobuffer.hpp"
+#include "audiofilter.hpp"
 
-class AudioAnalyzer {
+class AudioAnalyzer : public AudioFilter {
     struct LevelInfo {
         LevelInfo(int frames = 0): frames(frames) { }
         int frames = 0; double level = 0.0;
@@ -17,7 +17,7 @@ public:
     auto setNormalizerOption(const AudioNormalizerOption &opt)
         { m_normalizerOption = opt; resetNormalizer(); }
     auto setFormat(const AudioBufferFormat &format) -> void;
-    auto run(AudioBuffer *in) -> AudioBuffer*;
+    auto run(AudioBufferPtr in) -> AudioBufferPtr;
     auto gain() const -> float { return m_gain; }
 private:
     auto average(const LevelInfo &add) const -> LevelInfo;

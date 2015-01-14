@@ -1,18 +1,15 @@
 #ifndef AUDIOCONVERTER_HPP
 #define AUDIOCONVERTER_HPP
 
-#include "audiobuffer.hpp"
+#include "audiofilter.hpp"
 
-class AudioConverter
-{
+class AudioConverter : public AudioFilter {
 public:
     auto setFormat(const AudioBufferFormat &format) -> void;
-    auto run(AudioBuffer *in) -> AudioBuffer*;
+    auto run(AudioBufferPtr in) -> AudioBufferPtr;
     auto format() const -> const AudioBufferFormat& { return m_format; }
 private:
     AudioBufferFormat m_format;
-    AudioBuffer m_dst;
-    std::vector<uchar> m_data;
     using Convert = auto (*)(uchar *dst, float src) -> void;
     Convert m_convert = nullptr;
 };
