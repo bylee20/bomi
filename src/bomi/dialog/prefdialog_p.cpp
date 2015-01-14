@@ -206,7 +206,7 @@ class MouseActionItem : public QTreeWidgetItem {
 public:
     MouseActionItem(MouseBehavior mb, const QVector<ActionInfo> *actions,
                     QTreeWidget *parent)
-        : QTreeWidgetItem(parent), m_mb(mb), m_actions(actions)
+        : QTreeWidgetItem(parent), m_actions(actions)
     {
         setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         setText(0, MouseBehaviorInfo::description(mb));
@@ -248,7 +248,6 @@ public:
         return map;
     }
 private:
-    MouseBehavior m_mb = MouseBehavior::DoubleClick;
     const QVector<ActionInfo> *m_actions = nullptr;
 };
 

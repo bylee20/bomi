@@ -21,7 +21,7 @@ public:
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 private:
-    friend class JsonIO<MatchString>;
+    friend struct JsonIO<MatchString>;
     QString m_text;
     bool m_regex = false;
     bool m_caseSensitive = false;
