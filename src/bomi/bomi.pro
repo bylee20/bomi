@@ -78,7 +78,6 @@ HEADERS += \
 	subtitle/richtextblock.hpp \
 	subtitle/richtextdocument.hpp \
 	subtitle/subtitlerendereritem.hpp \
-	misc/osdtheme.hpp \
 	subtitle/subtitledrawer.hpp \
 	subtitle/subtitlerenderingthread.hpp \
 	subtitle/submisc.hpp \
@@ -232,7 +231,8 @@ HEADERS += \
     audio/audioanalyzer.hpp \
     audio/audioconverter.hpp \
     audio/audioresampler.hpp \
-    audio/audiofilter.hpp
+    audio/audiofilter.hpp \
+    misc/osdstyle.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -259,7 +259,6 @@ SOURCES += \
 	subtitle/richtextblock.cpp \
 	subtitle/richtextdocument.cpp \
 	subtitle/subtitlerendereritem.cpp \
-	misc/osdtheme.cpp \
 	subtitle/subtitledrawer.cpp \
 	subtitle/subtitlerenderingthread.cpp \
 	subtitle/submisc.cpp \
@@ -404,7 +403,8 @@ SOURCES += \
     audio/audioanalyzer.cpp \
     audio/audioconverter.cpp \
     audio/audioresampler.cpp \
-    audio/audiofilter.cpp
+    audio/audiofilter.cpp \
+    misc/osdstyle.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -422,8 +422,8 @@ FORMS += \
     ui/prefdialog.ui \
     ui/openmediafolderdialog.ui \
     ui/subtitlefinddialog.ui \
-    ui/osdthemewidget.ui \
-    ui/audionormalizeroptionwidget.ui
+    ui/audionormalizeroptionwidget.ui \
+    ui/osdstylewidget.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \

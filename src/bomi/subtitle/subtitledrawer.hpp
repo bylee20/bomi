@@ -1,7 +1,7 @@
 #ifndef SUBTITLEDRAWER_HPP
 #define SUBTITLEDRAWER_HPP
 
-#include "misc/osdtheme.hpp"
+#include "misc/osdstyle.hpp"
 #include "subtitle.hpp"
 
 struct Margin {
@@ -133,7 +133,7 @@ private:
 
 class SubtitleDrawer {
 public:
-    auto setStyle(const OsdTheme &style) -> void;
+    auto setStyle(const OsdStyle &style) -> void;
     auto setAlignment(Qt::Alignment alignment) -> void;
     auto setMargin(const Margin &margin) -> void { m_margin = margin; }
     auto hasDrawn() const -> bool {return m_drawn;}
@@ -143,12 +143,12 @@ public:
     auto pos(const QSizeF &image, const QRectF &area) const -> QPointF;
     auto alignment() const -> Qt::Alignment { return m_alignment; }
     auto margin() const -> const Margin& { return m_margin; }
-    auto style() const -> const OsdTheme& {return m_style;}
+    auto style() const -> const OsdStyle& {return m_style;}
     auto scale(const QRectF &area) const -> double;
 private:
     static auto updateStyle(RichTextDocument &doc,
-                            const OsdTheme &style) -> void;
-    OsdTheme m_style;
+                            const OsdStyle &style) -> void;
+    OsdStyle m_style;
     RichTextDocument m_front, m_back;
     Margin m_margin;
     Qt::Alignment m_alignment;
@@ -179,9 +179,9 @@ SIA _Diagonal(const QSizeF &size) -> double
 inline auto SubtitleDrawer::scale(const QRectF &area) const -> double
 {
     double px = m_style.font.size;
-//    if (policy == OsdTheme::Font::Scale::Diagonal)
+//    if (policy == OsdStyle::Font::Scale::Diagonal)
 //        px *= _Diagonal(area.size());
-//    else if (policy == OsdTheme::Font::Scale::Width)
+//    else if (policy == OsdStyle::Font::Scale::Width)
 //        px *= area.width();
 //    else
         px *= area.height();
@@ -189,7 +189,7 @@ inline auto SubtitleDrawer::scale(const QRectF &area) const -> double
 }
 
 inline auto SubtitleDrawer::updateStyle(RichTextDocument &doc,
-                                        const OsdTheme &style) -> void {
+                                        const OsdStyle &style) -> void {
     doc.setFontPixelSize(style.font.height());
     doc.setWrapMode(style.wrapMode);
     doc.setFormat(QTextFormat::ForegroundBrush, QBrush(style.font.color));

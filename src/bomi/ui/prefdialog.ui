@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>15</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1832,7 +1832,7 @@
        <widget class="QWidget" name="sub_appearance">
         <layout class="QVBoxLayout" name="verticalLayout_17">
          <item>
-          <widget class="OsdThemeWidget" name="sub_style" native="true"/>
+          <widget class="OsdStyleWidget" name="sub_style" native="true"/>
          </item>
          <item>
           <spacer name="verticalSpacer_4">
@@ -2153,7 +2153,7 @@
        <widget class="QWidget" name="osd">
         <layout class="QVBoxLayout" name="verticalLayout_39">
          <item>
-          <widget class="OsdThemeWidget" name="osd_style" native="true"/>
+          <widget class="OsdStyleWidget" name="osd_style" native="true"/>
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox_29">
@@ -2820,6 +2820,12 @@ Regular expression is supported.</string>
  </widget>
  <customwidgets>
   <customwidget>
+   <class>ColorSelectWidget</class>
+   <extends>QWidget</extends>
+   <header>widget/colorselectwidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>BBox</class>
    <extends>QDialogButtonBox</extends>
    <header>dialog/bbox.hpp</header>
@@ -2833,12 +2839,6 @@ Regular expression is supported.</string>
    <class>StringListWidget</class>
    <extends>QWidget</extends>
    <header>widget/simplelistwidget.hpp</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>ColorSelectWidget</class>
-   <extends>QWidget</extends>
-   <header>widget/colorselectwidget.hpp</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -2895,9 +2895,9 @@ Regular expression is supported.</string>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>OsdThemeWidget</class>
+   <class>OsdStyleWidget</class>
    <extends>QWidget</extends>
-   <header>misc/osdtheme.hpp</header>
+   <header>misc/osdstyle.hpp</header>
    <container>1</container>
   </customwidget>
   <customwidget>

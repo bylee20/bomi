@@ -1,7 +1,8 @@
 #ifndef SUBTITLESTYLE_H
 #define SUBTITLESTYLE_H
 
-struct OsdTheme {
+struct OsdStyle {
+    virtual ~OsdStyle() { }
     struct Font {
         Font() { qfont.setPixelSize(height()); }
         auto family() const -> QString { return qfont.family(); }
@@ -48,27 +49,27 @@ struct OsdTheme {
     Font font;
     Spacing spacing;
     BBox bbox;
-    auto toJson() const -> QJsonObject;
-    auto setFromJson(const QJsonObject &json) -> bool;
+    virtual auto toJson() const -> QJsonObject;
+    virtual auto setFromJson(const QJsonObject &json) -> bool;
 };
 
-Q_DECLARE_METATYPE(OsdTheme);
+Q_DECLARE_METATYPE(OsdStyle);
 
 /******************************************************************************/
 
-class OsdThemeWidget : public QWidget {
+class OsdStyleWidget : public QWidget {
     Q_OBJECT
-    Q_PROPERTY(OsdTheme value READ value WRITE setValue)
+    Q_PROPERTY(OsdStyle value READ value WRITE setValue)
 public:
-    OsdThemeWidget(QWidget *parent = nullptr);
-    ~OsdThemeWidget();
+    OsdStyleWidget(QWidget *parent = nullptr);
+    ~OsdStyleWidget();
     auto setTextAlphaChannel(bool on) -> void;
     auto setShadowVsible(bool visible) -> void;
     auto setOutlineVisible(bool visible) -> void;
     auto setSpacingVisible(bool visible) -> void;
     auto setBBoxVisible(bool visible) -> void;
-    auto setValue(const OsdTheme &v) -> void;
-    auto value() const -> OsdTheme;
+    auto setValue(const OsdStyle &v) -> void;
+    auto value() const -> OsdStyle;
 private:
     struct Data;
     Data *d;

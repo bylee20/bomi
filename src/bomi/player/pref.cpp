@@ -22,7 +22,7 @@ auto Pref::initialize() -> void
     qRegisterMetaType<AudioNormalizerOption>();
     qRegisterMetaType<DeintCaps>();
     qRegisterMetaType<Shortcuts>();
-    qRegisterMetaType<OsdTheme>();
+    qRegisterMetaType<OsdStyle>();
     qRegisterMetaType<HwAcc::Type>();
     auto &mo = *this->metaObject();
     for (int i =  mo.methodOffset(); i < mo.methodCount(); ++i) {
@@ -277,9 +277,9 @@ auto Pref::defaultSubtitleEncodingDetectionAccuracy() -> int
     return ok ? qBound(0, accuracy, 100) : 70;
 }
 
-auto Pref::defaultOsdStyle() -> OsdTheme
+auto Pref::defaultOsdStyle() -> OsdStyle
 {
-    OsdTheme theme;
+    OsdStyle theme;
     theme.font.setUnderline(false);
     theme.font.setStrikeOut(false);
     theme.font.setItalic(false);

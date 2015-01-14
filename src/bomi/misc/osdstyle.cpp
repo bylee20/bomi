@@ -1,33 +1,33 @@
-#include "osdtheme.hpp"
-#include "misc/json.hpp"
+#include "osdstyle.hpp"
+#include "json.hpp"
 
-#define JSON_CLASS OsdTheme::Font
+#define JSON_CLASS OsdStyle::Font
 static const auto fontIO = JIO(JE(color), JE(size), JE(qfont));
 #undef JSON_CLASS
 
-#define JSON_CLASS OsdTheme::Outline
+#define JSON_CLASS OsdStyle::Outline
 static const auto outlineIO = JIO(JE(enabled), JE(color), JE(width));
 #undef JSON_CLASS
 
-#define JSON_CLASS OsdTheme::Shadow
+#define JSON_CLASS OsdStyle::Shadow
 static const auto shadowIO = JIO(JE(enabled), JE(color), JE(blur), JE(offset));
 #undef JSON_CLASS
 
-#define JSON_CLASS OsdTheme::Spacing
+#define JSON_CLASS OsdStyle::Spacing
 static const auto spacingIO = JIO(JE(line), JE(paragraph));
 #undef JSON_CLASS
 
-#define JSON_CLASS OsdTheme::BBox
+#define JSON_CLASS OsdStyle::BBox
 static const auto bboxIO = JIO(JE(enabled), JE(color), JE(padding));
 #undef JSON_CLASS
 
-auto json_io(OsdTheme::Font*) { return &fontIO; }
-auto json_io(OsdTheme::Outline*) { return &outlineIO; }
-auto json_io(OsdTheme::Shadow*) { return &shadowIO; }
-auto json_io(OsdTheme::Spacing*) { return &spacingIO; }
-auto json_io(OsdTheme::BBox*) { return &bboxIO; }
+auto json_io(OsdStyle::Font*) { return &fontIO; }
+auto json_io(OsdStyle::Outline*) { return &outlineIO; }
+auto json_io(OsdStyle::Shadow*) { return &shadowIO; }
+auto json_io(OsdStyle::Spacing*) { return &spacingIO; }
+auto json_io(OsdStyle::BBox*) { return &bboxIO; }
 
-#define JSON_CLASS OsdTheme
+#define JSON_CLASS OsdStyle
 static const auto jio = JIO(
     JE(font),
     JE(outline),
@@ -40,13 +40,13 @@ JSON_DECLARE_FROM_TO_FUNCTIONS
 
 /******************************************************************************/
 
-#include "ui_osdthemewidget.h"
+#include "ui_osdstylewidget.h"
 
-struct OsdThemeWidget::Data {
-    Ui::OsdThemeWidget ui;
+struct OsdStyleWidget::Data {
+    Ui::OsdStyleWidget ui;
 };
 
-OsdThemeWidget::OsdThemeWidget(QWidget *parent)
+OsdStyleWidget::OsdStyleWidget(QWidget *parent)
     : QWidget(parent), d(new Data)
 {
     d->ui.setupUi(this);
@@ -56,12 +56,12 @@ OsdThemeWidget::OsdThemeWidget(QWidget *parent)
     d->ui.bbox_color->setAlphaChannel(true);
 }
 
-OsdThemeWidget::~OsdThemeWidget()
+OsdStyleWidget::~OsdStyleWidget()
 {
     delete d;
 }
 
-auto OsdThemeWidget::setValue(const OsdTheme &v) -> void
+auto OsdStyleWidget::setValue(const OsdStyle &v) -> void
 {
     d->ui.font_family->setCurrentFont(v.font.family());
     d->ui.font_option->set(v.font.qfont);
@@ -84,9 +84,9 @@ auto OsdThemeWidget::setValue(const OsdTheme &v) -> void
     d->ui.spacing_paragraph->setValue(v.spacing.paragraph*100.0);
 }
 
-auto OsdThemeWidget::value() const -> OsdTheme
+auto OsdStyleWidget::value() const -> OsdStyle
 {
-    OsdTheme v;
+    OsdStyle v;
     v.font.setFamily(d->ui.font_family->currentFont().family());
     d->ui.font_option->apply(v.font.qfont);
     v.font.color = d->ui.font_color->color();
@@ -109,31 +109,31 @@ auto OsdThemeWidget::value() const -> OsdTheme
     return v;
 }
 
-auto OsdThemeWidget::setTextAlphaChannel(bool on) -> void
+auto OsdStyleWidget::setTextAlphaChannel(bool on) -> void
 {
     d->ui.font_color->setAlphaChannel(on);
     d->ui.outline_color->setAlphaChannel(on);
 }
 
-auto OsdThemeWidget::setShadowVsible(bool visible) -> void
+auto OsdStyleWidget::setShadowVsible(bool visible) -> void
 {
     d->ui.shadow->setVisible(visible);
     d->ui.shadow_widget->setVisible(visible);
 }
 
-auto OsdThemeWidget::setOutlineVisible(bool visible) -> void
+auto OsdStyleWidget::setOutlineVisible(bool visible) -> void
 {
     d->ui.outline->setVisible(visible);
     d->ui.outline_widget->setVisible(visible);
 }
 
-auto OsdThemeWidget::setSpacingVisible(bool visible) -> void
+auto OsdStyleWidget::setSpacingVisible(bool visible) -> void
 {
     d->ui.spacing->setVisible(visible);
     d->ui.spacing_widget->setVisible(visible);
 }
 
-auto OsdThemeWidget::setBBoxVisible(bool visible) -> void
+auto OsdStyleWidget::setBBoxVisible(bool visible) -> void
 {
     d->ui.bbox->setVisible(visible);
     d->ui.bbox_widget->setVisible(visible);

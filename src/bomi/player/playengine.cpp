@@ -305,7 +305,7 @@ auto PlayEngine::setSpeed(double speed) -> void
     }
 }
 
-auto PlayEngine::setSubtitleStyle(const OsdTheme &style) -> void
+auto PlayEngine::setSubtitleStyle(const OsdStyle &style) -> void
 {
     d->subStyle = style;
 }

@@ -8,7 +8,7 @@
 #include "video/hwacc.hpp"
 #include "video/deintcaps.hpp"
 #include "misc/keymodifieractionmap.hpp"
-#include "misc/osdtheme.hpp"
+#include "misc/osdstyle.hpp"
 #include "misc/matchstring.hpp"
 #include "enum/generateplaylist.hpp"
 #include "enum/subtitleautoload.hpp"
@@ -74,7 +74,7 @@ public:
     P0(bool, show_osd_on_action, true)
     P0(bool, show_osd_on_resized, true)
     P0(bool, show_osd_timeline, true)
-    P0(OsdTheme, osd_style, defaultOsdStyle())
+    P0(OsdStyle, osd_style, defaultOsdStyle())
     P0(PlaylistTheme, playlist_theme, {})
 
     P0(int, blur_kern_c, 1)
@@ -96,7 +96,7 @@ public:
     P1(QString, sub_ext, {}, "value")
     P0(int, sub_enc_accuracy, defaultSubtitleEncodingDetectionAccuracy())
     P0(int, ms_per_char, 500)
-    P0(OsdTheme, sub_style, {})
+    P0(OsdStyle, sub_style, {})
 
     P0(bool, enable_system_tray, true)
     P0(bool, hide_rather_close, true)
@@ -156,7 +156,7 @@ public:
 private:
     static auto defaultHwAccBackend() -> HwAcc::Type;
     static auto defaultRestoreProperties() -> QVector<QMetaProperty>;
-    static auto defaultOsdStyle() -> OsdTheme;
+    static auto defaultOsdStyle() -> OsdStyle;
     static auto defaultSkinName() -> QString;
     static auto defaultSubtitleEncoding() -> QString;
     static auto defaultSubtitleEncodingDetectionAccuracy() -> int;

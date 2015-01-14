@@ -1,8 +1,12 @@
 #ifndef OSDSTYLE_HPP
 #define OSDSTYLE_HPP
 
-#include "misc/osdtheme.hpp"
+#include "misc/osdstyle.hpp"
 #include "enum/textthemestyle.hpp"
+
+struct OsdTheme : public OsdStyle {
+
+};
 
 class OsdThemeObject : public QObject {
     Q_OBJECT
@@ -23,7 +27,7 @@ public:
         Raised  = static_cast<int>(TextThemeStyle::Raised),
         Sunked  = static_cast<int>(TextThemeStyle::Sunken)
     };
-    auto set(const OsdTheme &theme) -> void { m = theme; emit changed(); }
+    auto set(const OsdStyle &theme) -> void { m = theme; emit changed(); }
     auto font() const -> QString { return m.font.family(); }
     auto underline() const -> bool { return m.font.underline(); }
     auto strikeout() const -> bool { return m.font.strikeOut(); }
@@ -36,7 +40,7 @@ public:
 signals:
     void changed();
 private:
-    OsdTheme m;
+    OsdStyle m;
 };
 
 #endif // OSDSTYLE_HPP

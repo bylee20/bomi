@@ -19,7 +19,7 @@
 #include "video/videofilter.hpp"
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
-#include "misc/osdtheme.hpp"
+#include "misc/osdstyle.hpp"
 #include "misc/speedmeasure.hpp"
 #include "misc/yledl.hpp"
 #include "enum/deintmode.hpp"
@@ -248,7 +248,7 @@ struct PlayEngine::Data {
     YouTubeDL *youtube = nullptr;
     YleDL *yle = nullptr;
 
-    OsdTheme subStyle;
+    OsdStyle subStyle;
     VideoRenderer *video = nullptr;
     ChapterList chapters;
     EditionList editions;
