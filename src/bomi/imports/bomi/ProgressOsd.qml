@@ -3,13 +3,13 @@ import QtQuick 2.0
 Osd {
     id: osd
     property real value: 0.0
+    height: parent.height*0.06
+    width: parent.width*0.8
+    x: (parent.width - width)*0.5
+    y: (parent.height - height)*0.5
     Rectangle {
         id: border
-        height: parent.height*0.06
-        width: parent.width*0.8
-        x: (parent.width - width)*0.5
-        y: (parent.height - height)*0.5
-        anchors.centerIn: parent
+        anchors.fill: parent
         color: Qt.rgba(0, 0, 0, 0)
         border.color: Qt.rgba(0.0, 0.0, 0.0, 0.5)
         border.width: height*0.06

@@ -19,6 +19,7 @@
 #include "enum/quicksnapshotsave.hpp"
 #include "enum/mousebehavior.hpp"
 #include "quick/playlistthemeobject.hpp"
+#include "quick/osdthemeobject.hpp"
 #include "pref_helper.hpp"
 
 using Shortcuts = QHash<QString, QList<QKeySequence>>;
@@ -71,10 +72,11 @@ public:
     P0(QStringList, sub_priority, {})
     P0(QStringList, audio_priority, {})
 
-    P0(bool, show_osd_on_action, true)
-    P0(bool, show_osd_on_resized, true)
-    P0(bool, show_osd_timeline, true)
-    P0(OsdStyle, osd_style, defaultOsdStyle())
+//    P0(bool, show_osd_on_action, true)
+//    P0(bool, show_osd_on_resized, true)
+//    P0(bool, show_osd_timeline, true)
+//    P0(OsdStyle, osd_style, defaultOsdStyle())
+    P0(OsdTheme, osd_theme, defaultOsdTheme())
     P0(PlaylistTheme, playlist_theme, {})
 
     P0(int, blur_kern_c, 1)
@@ -156,7 +158,7 @@ public:
 private:
     static auto defaultHwAccBackend() -> HwAcc::Type;
     static auto defaultRestoreProperties() -> QVector<QMetaProperty>;
-    static auto defaultOsdStyle() -> OsdStyle;
+    static auto defaultOsdTheme() -> OsdTheme;
     static auto defaultSkinName() -> QString;
     static auto defaultSubtitleEncoding() -> QString;
     static auto defaultSubtitleEncodingDetectionAccuracy() -> int;

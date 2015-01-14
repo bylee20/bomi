@@ -2,7 +2,6 @@ import QtQuick 2.0
 
 Item {
     id: osd
-    anchors.fill: parent
     visible: false
     property int duration: 2500
     Timer {

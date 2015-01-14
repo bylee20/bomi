@@ -132,10 +132,6 @@ PrefDialog::PrefDialog(QWidget *parent)
             d->ui.quick_snapshot_folder->setText(dir);
     });
 
-    d->ui.osd_style->setShadowVsible(false);
-    d->ui.osd_style->setSpacingVisible(false);
-    d->ui.osd_style->setBBoxVisible(false);
-
     d->saveQuickSnapshot = new DataButtonGroup(this);
     d->saveQuickSnapshot->setObjectName(u"quick_snapshot_save"_q);
     d->saveQuickSnapshot->setExclusive(true);

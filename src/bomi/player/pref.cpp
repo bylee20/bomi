@@ -251,7 +251,13 @@ auto Pref::defaultSubtitleEncoding() -> QString
 
 auto Pref::defaultSkinName() -> QString
 {
-    return u"GaN"_q;
+    QString name;
+#ifdef BOMI_DEFAULT_SKIN
+    name = QString::fromLatin1(BOMI_DEFAULT_SKIN);
+#endif
+    if (name.isEmpty())
+        name = u"GaN"_q;
+    return name;
 }
 
 auto Pref::defaultRestoreProperties() -> QVector<QMetaProperty>
@@ -277,18 +283,19 @@ auto Pref::defaultSubtitleEncodingDetectionAccuracy() -> int
     return ok ? qBound(0, accuracy, 100) : 70;
 }
 
-auto Pref::defaultOsdStyle() -> OsdStyle
+auto Pref::defaultOsdTheme() -> OsdTheme
 {
-    OsdStyle theme;
-    theme.font.setUnderline(false);
-    theme.font.setStrikeOut(false);
-    theme.font.setItalic(false);
-    theme.font.setBold(false);
-    theme.font.setFamily(qApp->font().family());
-    theme.font.size = 0.03;
+    OsdTheme theme;
+    auto &style = theme.style;
+    style.font.setUnderline(false);
+    style.font.setStrikeOut(false);
+    style.font.setItalic(false);
+    style.font.setBold(false);
+    style.font.setFamily(qApp->font().family());
+    style.font.size = 0.03;
 //    theme.style = TextThemeStyle::Outline;
-    theme.font.color = Qt::white;
-    theme.outline.color = Qt::black;
+    style.font.color = Qt::white;
+    style.outline.color = Qt::black;
     return theme;
 }
 

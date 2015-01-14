@@ -1,14 +1,66 @@
 #ifndef OSDSTYLE_HPP
 #define OSDSTYLE_HPP
 
+#include "themeobject_helper.hpp"
 #include "misc/osdstyle.hpp"
 #include "enum/textthemestyle.hpp"
+#include "enum/verticalalignment.hpp"
 
-struct OsdTheme : public OsdStyle {
-
+struct TimelineTheme {
+    bool show_on_seeking = true;
+    VerticalAlignment position = VerticalAlignment::Center;
+    int duration = 2500;
 };
 
-class OsdThemeObject : public QObject {
+struct MessageTheme {
+    bool show_on_action = true;
+    bool show_on_resized = true;
+    int duration = 2500;
+};
+
+struct OsdTheme {
+    OsdStyle style;
+    TimelineTheme timeline;
+    MessageTheme message;
+    auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
+};
+
+Q_DECLARE_METATYPE(OsdTheme)
+
+class TimelineThemeObject : public QObject {
+    Q_OBJECT
+    Q_ENUMS(Position)
+    Q_PROPERTY(Position position READ position NOTIFY changed)
+    Q_PROPERTY(int duration READ duration NOTIFY changed)
+public:
+    enum Position {
+        Top = static_cast<int>(VerticalAlignment::Top),
+        Center = static_cast<int>(VerticalAlignment::Center),
+        Bottom = static_cast<int>(VerticalAlignment::Bottom)
+    };
+    auto set(const TimelineTheme &theme) -> void { m = theme; emit changed(); }
+    auto duration() const -> int { return m.duration; }
+    auto position() const -> Position { return (Position)m.position; }
+signals:
+    void changed();
+private:
+    TimelineTheme m;
+};
+
+class MessageThemeObject : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(int duration READ duration NOTIFY changed)
+public:
+    auto set(const MessageTheme &theme) -> void { m = theme; emit changed(); }
+    auto duration() const -> int { return m.duration; }
+signals:
+    void changed();
+private:
+    MessageTheme m;
+};
+
+class OsdStyleObject : public QObject {
     Q_OBJECT
     Q_ENUMS(Style)
     Q_PROPERTY(QString font READ font NOTIFY changed)
@@ -41,6 +93,33 @@ signals:
     void changed();
 private:
     OsdStyle m;
+};
+
+class OsdThemeObject : public QObject {
+    Q_OBJECT
+    THEME_P(OsdStyleObject, style)
+    THEME_P(TimelineThemeObject, timeline)
+    THEME_P(MessageThemeObject, message)
+public:
+    auto set(const OsdTheme &theme) -> void
+    {
+        m_style.set(theme.style);
+        m_timeline.set(theme.timeline);
+        m_message.set(theme.message);
+    }
+};
+
+class OsdThemeWidget : public QWidget {
+    Q_OBJECT
+    Q_PROPERTY(OsdTheme value READ value WRITE setValue)
+public:
+    OsdThemeWidget(QWidget *parent = nullptr);
+    ~OsdThemeWidget();
+    auto value() const -> OsdTheme;
+    auto setValue(const OsdTheme &theme) -> void;
+private:
+    struct Data;
+    Data *d;
 };
 
 #endif // OSDSTYLE_HPP

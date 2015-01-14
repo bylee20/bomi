@@ -2,7 +2,6 @@
 #define SUBTITLESTYLE_H
 
 struct OsdStyle {
-    virtual ~OsdStyle() { }
     struct Font {
         Font() { qfont.setPixelSize(height()); }
         auto family() const -> QString { return qfont.family(); }
@@ -49,8 +48,8 @@ struct OsdStyle {
     Font font;
     Spacing spacing;
     BBox bbox;
-    virtual auto toJson() const -> QJsonObject;
-    virtual auto setFromJson(const QJsonObject &json) -> bool;
+    auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
 };
 
 Q_DECLARE_METATYPE(OsdStyle);

@@ -2153,37 +2153,7 @@
        <widget class="QWidget" name="osd">
         <layout class="QVBoxLayout" name="verticalLayout_39">
          <item>
-          <widget class="OsdStyleWidget" name="osd_style" native="true"/>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_29">
-           <property name="title">
-            <string>Display</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_34">
-            <item>
-             <widget class="QCheckBox" name="show_osd_on_action">
-              <property name="text">
-               <string>Show OSD messages when actions are triggered</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="show_osd_on_resized">
-              <property name="text">
-               <string>Show OSD messages when the window is resized</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="show_osd_timeline">
-              <property name="text">
-               <string>Show OSD timeline when seeking</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
+          <widget class="OsdThemeWidget" name="osd_theme" native="true"/>
          </item>
          <item>
           <spacer name="verticalSpacer">
@@ -2915,6 +2885,12 @@ Regular expression is supported.</string>
    <class>PlaylistThemeWidget</class>
    <extends>QCheckBox</extends>
    <header>quick/playlistthemeobject.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>OsdThemeWidget</class>
+   <extends>QWidget</extends>
+   <header>quick/osdthemeobject.hpp</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

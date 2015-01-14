@@ -297,7 +297,7 @@ auto MainWindow::Data::initItems() -> void
     auto showSize = [this] {
         const auto num = [] (qreal n) { return _N(qRound(n)); };
         const auto w = num(vr.width()), h = num(vr.height());
-        showMessage(w % u'×'_q % h, &pref().show_osd_on_resized);
+        showMessage(w % u'×'_q % h, &pref().osd_theme.message.show_on_resized);
     };
     connect(&vr, &VideoRenderer::sizeChanged, p, showSize);
 }
@@ -672,7 +672,7 @@ auto MainWindow::Data::commitData() -> void
 
 auto MainWindow::Data::showTimeLine() -> void
 {
-    if (player && pref().show_osd_timeline)
+    if (player && pref().osd_theme.timeline.show_on_seeking)
         QMetaObject::invokeMethod(player, "showTimeLine");
 }
 auto MainWindow::Data::showMessageBox(const QVariant &msg) -> void
@@ -791,7 +791,7 @@ auto MainWindow::Data::showMessage(const QString &msg, const bool *force) -> voi
     if (force) {
         if (!*force)
             return;
-    } else if (!pref().show_osd_on_action)
+    } else if (!pref().osd_theme.message.show_on_action)
         return;
     if (!dontShowMsg)
         showOSD(msg);
@@ -902,7 +902,7 @@ auto MainWindow::Data::applyPref() -> void
     cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
                       p.heartbeat_interval);
 
-    theme.osd()->set(p.osd_style);
+    theme.osd()->set(p.osd_theme);
     theme.playlist()->set(p.playlist_theme);
     reloadSkin();
     engine.reload();

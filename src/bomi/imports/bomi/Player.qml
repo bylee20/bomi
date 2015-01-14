@@ -10,7 +10,7 @@ Item {
     property real bottomPadding: 0.0
     readonly property QtObject engine: Cp.App.engine
     Logo { anchors.fill: parent }
-    TextOsd { id: msgosd }
+    TextOsd { id: msgosd; duration: Cp.App.theme.osd.message.duration }
     Rectangle {
         id: msgbox
         color: Qt.rgba(0.86, 0.86, 0.86, 0.8)
@@ -31,7 +31,21 @@ Item {
         border.width: 1
     }
 
-    ProgressOsd { id: timeline; value: engine.rate }
+    ProgressOsd {
+        id: timeline; value: engine.rate
+        duration: Cp.App.theme.osd.timeline.duration
+        x: (parent.width - width)*0.5
+        y: {
+            switch (Cp.App.theme.osd.timeline.position) {
+            case Cp.TimelineTheme.Top:
+                return parent.height * 0.1;
+            case Cp.TimelineTheme.Bottom:
+                return parent.height * 0.9 - height;
+            default:
+                return (parent.height - height)*0.5;
+            }
+        }
+    }
     PlayInfoView { objectName: "playinfo" }
     Item {
         anchors.fill: parent; z: dockZ

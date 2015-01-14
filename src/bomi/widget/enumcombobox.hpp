@@ -9,6 +9,7 @@
 #include "enum/interpolator.hpp"
 #include "enum/textthemestyle.hpp"
 #include "enum/channellayout.hpp"
+#include "enum/verticalalignment.hpp"
 
 template<class Enum>
 class EnumComboBox : public DataComboBox {
@@ -47,5 +48,6 @@ using ClippingMethodComboBox = EnumComboBox<ClippingMethod>;
 using InterpolatorComboBox = EnumComboBox<Interpolator>;
 using TextThemeStyleComboBox = EnumComboBox<TextThemeStyle>;
 using ChannelComboBox = EnumComboBox<ChannelLayout>;
+using VerticalAlignmentComboBox = EnumComboBox<VerticalAlignment>;
 
 #endif // ENUMCOMBOBOX_HPP

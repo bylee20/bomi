@@ -232,7 +232,8 @@ HEADERS += \
     audio/audioconverter.hpp \
     audio/audioresampler.hpp \
     audio/audiofilter.hpp \
-    misc/osdstyle.hpp
+	misc/osdstyle.hpp \
+    quick/themeobject_helper.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -404,7 +405,7 @@ SOURCES += \
     audio/audioconverter.cpp \
     audio/audioresampler.cpp \
     audio/audiofilter.cpp \
-    misc/osdstyle.cpp
+	misc/osdstyle.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -423,7 +424,8 @@ FORMS += \
     ui/openmediafolderdialog.ui \
     ui/subtitlefinddialog.ui \
     ui/audionormalizeroptionwidget.ui \
-    ui/osdstylewidget.ui
+    ui/osdstylewidget.ui \
+    ui/osdthemewidget.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \

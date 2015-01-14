@@ -6,16 +6,8 @@
 
 class ThemeObject : public QObject {
     Q_OBJECT
-#define P_(type, name) \
-private: \
-    type m_##name; \
-    Q_PROPERTY(type *name READ name CONSTANT FINAL) \
-public: \
-    auto name() -> type* { return &m_##name; } \
-private:
-    P_(OsdThemeObject, osd)
-    P_(PlaylistThemeObject, playlist)
-#undef P_
+    THEME_P(OsdThemeObject, osd)
+    THEME_P(PlaylistThemeObject, playlist)
 };
 
 #endif // THEMEOBJECT_HPP
