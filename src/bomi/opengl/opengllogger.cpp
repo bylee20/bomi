@@ -1,6 +1,7 @@
 ﻿#include "opengllogger.hpp"
 #include "openglmisc.hpp"
 #include "misc/log.hpp"
+#include "configure.hpp"
 #ifdef Q_OS_LINUX
 #include <GL/glx.h>
 #endif
@@ -137,7 +138,7 @@ auto OpenGLLogger::initialize(QOpenGLContext *ctx, bool autolog) -> bool
                 this, &OpenGLLogger::print, Qt::DirectConnection);
     connect(d->logger, &QOpenGLDebugLogger::messageLogged,
             this, &OpenGLLogger::logged, Qt::DirectConnection);
-#ifdef BOMI_RELEASE
+#if BOMI_RELEASE
     d->logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
 #else
     d->logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
