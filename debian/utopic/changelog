@@ -1,4 +1,4 @@
-bomi (0.9.0-1~trusty1) trusty; urgency=low
+bomi (0.9.0-3~utopic1) utopic; urgency=low
 
   * New: new name for application 'bomi'
   * New: new logo (designed by Ivan from Kotus Works)
