@@ -18,6 +18,7 @@ build/*
 arch/pkg
 arch/src
 arch/*.tar.xz
+arch/*.tar.gz
 arch/bomi*
 src/build-interm*
 src/libchardet-1.0.2/Makefile
