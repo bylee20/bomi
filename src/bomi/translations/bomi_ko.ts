@@ -114,13 +114,13 @@
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="178"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The logo is designed by Ivan from &lt;a href=&quot;%1&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;Kotus Works&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <source>The logo is designed by Ivan from &lt;a href=&quot;%1&quot;&gt;Kotus Works&lt;/a&gt;.</source>
+        <translation>로고는 &lt;a href=&quot;%1&quot;&gt;Kotus Works&lt;/a&gt;의 Ivan이 디자인하였습니다.</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="194"/>
         <source>Special thanks to Mingyu Jo and Donghyun Ha for naming.</source>
-        <translation type="unfinished"></translation>
+        <translation>작명을 도와준 조민규씨와 하동현씨에게 감사드립니다.</translation>
     </message>
     <message>
         <source>Version: %1</source>
