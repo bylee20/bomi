@@ -293,7 +293,7 @@ auto App::setWindowTitle(QWidget *widget, const QString &title) -> void
     _Trace("Set window title of %% to '%%'.",
            widget->metaObject()->className(), title);
     const QString text = title % (title.isEmpty() ? u""_q : u" - "_q)
-                         % applicationName();
+                         % displayName();
     widget->setWindowTitle(text);
 #ifdef Q_OS_LINUX
     d->helper.setWmName(widget, text);

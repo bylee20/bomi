@@ -41,6 +41,7 @@ public:
     -> tmp::enable_if_t<tmp::is_one_of<T, QJsonObject, QJsonArray, QJsonValue>(), bool>;
     static constexpr auto version() -> const char* { return "0.8.90"; }
     static constexpr auto name() -> const char* { return "bomi"; }
+    static auto displayName() -> QString { return tr("bomi"); }
     static auto defaultIcon() -> QIcon;
 private:
     auto sendMessage(const QByteArray &message, int timeout = 5000) -> bool;

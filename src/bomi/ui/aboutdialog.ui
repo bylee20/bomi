@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>501</width>
-    <height>352</height>
+    <width>627</width>
+    <height>354</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,7 +21,7 @@
      </property>
      <widget class="QWidget" name="tab1">
       <attribute name="title">
-       <string notr="true">bomi</string>
+       <string>bomi</string>
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
@@ -66,7 +66,7 @@
             <enum>Qt::Vertical</enum>
            </property>
            <property name="sizeType">
-            <enum>QSizePolicy::Expanding</enum>
+            <enum>QSizePolicy::MinimumExpanding</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -81,7 +81,7 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="app_name">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -96,7 +96,7 @@
             </font>
            </property>
            <property name="text">
-            <string notr="true">bomi</string>
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:22pt;&quot;&gt;apllication name&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -129,20 +129,10 @@ p, li { white-space: pre-wrap; }
            <property name="sizeHint" stdset="0">
             <size>
              <width>13</width>
-             <height>15</height>
+             <height>5</height>
             </size>
            </property>
           </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>If you find a bug or have any idea for bomi, please contact by the following:</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
          </item>
          <item>
           <widget class="QLabel" name="contacts">
@@ -153,15 +143,55 @@ p, li { white-space: pre-wrap; }
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Developer's blog: %1
-Developer's E-mail: %2
-Project page: %3</string>
+            <string>Website: %1
+Twitter: %2
+Issue tracker: %3
+Developer's E-mail: %4</string>
            </property>
            <property name="openExternalLinks">
             <bool>true</bool>
            </property>
            <property name="textInteractionFlags">
             <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>5</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="ivan">
+           <property name="text">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The logo is designed by Ivan from &lt;a href=&quot;%1&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;Kotus Works&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="textFormat">
+            <enum>Qt::RichText</enum>
+           </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Special thanks to Mingyu Jo and Donghyun Ha for naming.</string>
            </property>
           </widget>
          </item>
@@ -194,6 +224,9 @@ Project page: %3</string>
         <widget class="QLabel" name="license">
          <property name="text">
           <string notr="true">license</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
@@ -254,19 +287,6 @@ Project page: %3</string>
          </item>
         </layout>
        </item>
-       <item>
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>149</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
       </layout>
      </widget>
     </widget>
@@ -292,7 +312,6 @@ Project page: %3</string>
  </customwidgets>
  <tabstops>
   <tabstop>buttonBox</tabstop>
-  <tabstop>tab</tabstop>
   <tabstop>view_gpl</tabstop>
   <tabstop>view_mpl</tabstop>
  </tabstops>
