@@ -45,5 +45,7 @@
         <file>img/media-optical.png</file>
         <file>img/view-multiple-objects.png</file>
         <file>img/preferences-desktop-locale.png</file>
+        <file>img/logo-center.png</file>
+        <file>img/logo-center.svg</file>
     </qresource>
 </RCC>

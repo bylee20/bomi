@@ -10,14 +10,14 @@ Rectangle {
     Image {
         visible: logo.show
         anchors.fill: parent
-        source: "qrc:/img/logo-background.png"
+        source: "qrc:/img/logo-background.svg"
         smooth: true
         Image {
             id: logoImage
             anchors.centerIn: parent
-            source: "qrc:/img/bomi-logo.png"
+            source: "qrc:/img/logo-center.png"
             smooth: true
-            width: Math.min(logo.width*0.7, logo.height*0.7, 512)
+            width: Math.min(logo.width*0.5, logo.height*0.5, 256)
             height:width
         }
     }

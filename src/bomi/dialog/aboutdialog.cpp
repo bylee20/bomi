@@ -1,4 +1,5 @@
 #include "aboutdialog.hpp"
+#include "player/app.hpp"
 #include "ui_aboutdialog.h"
 
 struct AboutDialog::Data {
@@ -8,16 +9,18 @@ struct AboutDialog::Data {
 AboutDialog::AboutDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->ui.setupUi(this);
+
+    auto link = [] (const char *url) -> QString
+        { return "<a href=\""_a % _L(url) % "\">"_a % _L(url) % "</a>"_a; };
+    d->ui.app_name->setText(cApp.displayName());
 #define UI_LABEL_ARG(label, arg) d->ui.label->setText(d->ui.label->text().arg)
-    UI_LABEL_ARG(version, arg(qApp->applicationVersion()));
+    UI_LABEL_ARG(version, arg(_L(cApp.version())));
     UI_LABEL_ARG(copyright, arg(QDate::currentDate().year()));
-    UI_LABEL_ARG(contacts,
-                 arg("<a href=\"http://xylosper.net\">"
-                     "http://xylosper.net</a><br>"_a).
-                 arg("<a href=\"mailto:darklin20@gmail.com\">"
-                     "darklin20@gmail.com</a><br>"_a).
-                 arg("<a href=\"http://bomi.github.com\">"
-                     "http://bomi.github.com</a>"_a));
+    UI_LABEL_ARG(contacts, arg(link("http://bomi-player.github.io") % "<br>"_a).
+                 arg(link("http://twitter.com/bomi_player") % "<br>"_a).
+                 arg(link("https://github.com/xylosper/bomi/issues") % "<br>"_a).
+                 arg("<a href=\"mailto:darklin20@gmail.com\">darklin20@gmail.com</a><br>"_a));
+    UI_LABEL_ARG(ivan, arg(_L("https://plus.google.com/u/1/117118228830713086299/posts")));
 #undef UI_LABEL_ARG
     d->ui.license->setText(
         "This program is free software; "
@@ -67,12 +70,9 @@ AboutDialog::AboutDialog(QWidget *parent)
     connect(d->ui.view_gpl, &QPushButton::clicked, this, show);
     connect(d->ui.view_mpl, &QPushButton::clicked, this, show);
 
-    setFixedHeight(420);
-    setFixedWidth(width());
+    adjustSize();
 }
 
 AboutDialog::~AboutDialog() {
     delete d;
 }
-
-

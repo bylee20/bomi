@@ -12,9 +12,9 @@ INCLUDEPATH += ../mpv ../mpv/build
 LIBS += -L$${LIB_DIR} -lbz2 -lz
 
 include(configure.pro)
-contains( DEFINES, BOMI_RELEASE ) {
+!isEmpty(BOMI_RELEASE) {
     CONFIG += release
-    macx:CONFIG += app_bundle
+	macx:CONFIG += app_bundle
 } else:CONFIG -= release
 
 QMAKE_CXXFLAGS_CXX11 = -std=c++1y
@@ -233,7 +233,8 @@ HEADERS += \
     audio/audioresampler.hpp \
     audio/audiofilter.hpp \
 	misc/osdstyle.hpp \
-    quick/themeobject_helper.hpp
+    quick/themeobject_helper.hpp \
+    configure.hpp
 
 SOURCES += \
 	stdafx.cpp \
