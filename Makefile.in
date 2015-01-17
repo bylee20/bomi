@@ -5,7 +5,7 @@ install_dir := sh install_dir.sh
 pkg_config_path := @PKG_CONFIG_PATH@
 
 prefix := @prefix@
-qmake := @qmake@ DEFINES+=BOMI_RELEASE
+qmake := @qmake@ BOMI_RELEASE=1
 bin_dir := @bindir@
 DATADIR := @datadir@
 comp_dir := @compdir@

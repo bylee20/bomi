@@ -1,8 +1,6 @@
 #ifndef STDAFX_HPP
 #define STDAFX_HPP
 
-#include "configure.hpp"
-
 #if defined(__cplusplus) && !defined(__OBJC__)
 
 #if __cplusplus > 201100L

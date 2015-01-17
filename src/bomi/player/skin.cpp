@@ -1,29 +1,26 @@
 #include "skin.hpp"
 #include "misc/log.hpp"
+#include "configure.hpp"
 
 DECLARE_LOG_CONTEXT(Skin)
 
 Skin::Data::Data() {
     auto append = [] (const QString &dir, QStringList &dirs)
     {
-        if (!dirs.contains(dir)) {
+        if (!dir.isEmpty() && !dirs.contains(dir)) {
             _Debug("Add directory to search skin in: %%", dir);
             dirs.push_back(dir);
         }
     };
 
-#ifdef BOMI_SKINS_PATH
     append(QString::fromLocal8Bit(BOMI_SKINS_PATH), dirs);
-#endif
     append(QDir::homePath() % "/.bomi/skins"_a, dirs);
     append(qApp->applicationDirPath() % "/skins"_a, dirs);
     auto path = qgetenv("BOMI_SKINS_PATH");
     if (!path.isEmpty())
         append(QString::fromLocal8Bit(path.data(), path.size()), dirs);
 
-#ifdef BOMI_IMPORTS_PATH
     append(QString::fromLocal8Bit(BOMI_IMPORTS_PATH), qmls);
-#endif
     append(QDir::homePath() % "/.bomi/imports"_a, qmls);
     append(qApp->applicationDirPath() % "/imports"_a, qmls);
     path = qgetenv("BOMI_IMPORTS_PATH");

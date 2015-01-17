@@ -4,6 +4,7 @@
 #include "video/hwacc.hpp"
 #include "misc/jsonstorage.hpp"
 #include "pref_helper.hpp"
+#include "configure.hpp"
 
 DECLARE_LOG_CONTEXT(Pref)
 
@@ -251,10 +252,7 @@ auto Pref::defaultSubtitleEncoding() -> QString
 
 auto Pref::defaultSkinName() -> QString
 {
-    QString name;
-#ifdef BOMI_DEFAULT_SKIN
-    name = QString::fromLatin1(BOMI_DEFAULT_SKIN);
-#endif
+    QString name = QString::fromLatin1(BOMI_DEFAULT_SKIN);
     if (name.isEmpty())
         name = u"GaN"_q;
     return name;
