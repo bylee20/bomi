@@ -9,7 +9,7 @@ Build-Depends: clang (>= 3.3), debhelper (>= 7), pkg-config
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
  , libasound2-dev, libva-dev, libvdpau-dev
  , libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
- , libpulse-dev, libxcb-icccm4-dev
+ , libpulse-dev, libxcb-icccm4-dev, libgnutls-dev
  , libxcb-util0-dev, qt5-default, libxrandr-dev
 
 Package: bomi

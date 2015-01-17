@@ -1,7 +1,7 @@
 #!/bin/sh
 
 args="--prefix=`pwd`/build --enable-gpl --disable-debug --disable-shared --enable-static \
-  --enable-runtime-cpudetect --disable-doc --disable-programs \
+  --enable-runtime-cpudetect --disable-doc --disable-programs --enable-gnutls \
   --disable-avdevice --enable-avfilter --enable-swresample \
   --disable-avresample --enable-pthreads --disable-dxva2 --enable-postproc \
   --disable-encoders --disable-muxers --disable-devices --enable-filters"
