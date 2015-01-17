@@ -1,3 +1,23 @@
+0.9.0
+
+  * New: new name for application 'bomi'
+  * New: new logo (designed by Ivan from Kotus Works)
+  * New: timeline position and duration of OSDs are configurable (#173)
+  * New: 'High Quality Scaling' menu in Video
+  * New: check qmake version in configure
+  * New: timeline position and duration of OSDs are configurable (#173)
+  * New: new configure flag to specify default skin: --defaultskin
+  * New: yle-dl script support (#166)
+  * New: new skin 'Breeze Dark' by varlesh (#170)
+  * New: new skin 'Breeze' written by varlesh (#169)
+  * Mod: make hardware acceleration enabled by default
+  * Mod: drop support to load settings for < 0.8.17
+  * Mod: use 32bit floating point format for audio if possible
+  * Fix: enable SSL support for in-tree FFmpeg
+  * Fix: regression disabled wmv3 for vaapi
+  * Fix: regression disabled resizing to fit video
+  * Fix: regression disabled dithering
+
 0.8.17
 
   * New: option to show/hide media location in playlist under Skin & Style tab

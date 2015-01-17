@@ -1,0 +1,23 @@
+Source: bomi
+Section: graphics
+Priority: optional
+Maintainer: xylosper <darklin20@gmail.com>
+Build-Depends: clang (>= 3.3), debhelper (>= 7), pkg-config
+ , qt5-qmake, qtbase5-dev (>= 5.2.0), qtdeclarative5-dev
+ , libqt5x11extras5-dev, python, libicu-dev, libbluray-dev
+ , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
+ , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
+ , libasound2-dev, libva-dev, libvdpau-dev
+ , libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
+ , libpulse-dev, libxcb-icccm4-dev, libgnutls-dev
+ , libxcb-util0-dev, qt5-default, libxrandr-dev
+
+Package: bomi
+Architecture: any
+Depends: ${shlibs:Depends}, qtdeclarative5-qtquick2-plugin
+ , qtdeclarative5-quicklayouts-plugin, qml-module-qtquick-controls
+ , libqt5sql5-sqlite
+Recommends: youtube-dl
+Conflicts: cmplayer
+Description: bomi - a multimedia player
+ bomi is a multimedia player.

@@ -18,5 +18,6 @@ Depends: ${shlibs:Depends}, qtdeclarative5-qtquick2-plugin
  , qtdeclarative5-quicklayouts-plugin, libqt5qml-quickcontrols
  , libqt5sql5-sqlite
 Recommends: youtube-dl
+Conflicts: cmplayer
 Description: bomi - a multimedia player
  bomi is a multimedia player.
