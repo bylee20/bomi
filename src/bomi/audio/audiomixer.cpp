@@ -85,10 +85,10 @@ auto AudioMixer::setFormat(const AudioBufferFormat &in, const AudioBufferFormat 
 
 auto AudioMixer::run(AudioBufferPtr src) -> AudioBufferPtr
 {
-    if (src->isEmpty())
-        return src;
     const int frames = src->frames();
     auto dest = newBuffer(m_out, frames);
+    if (dest->isEmpty())
+        return dest;
     auto dview = dest->view<float>();
     auto sview = src->view<float>();
     auto clip = m_realClip == ClippingMethod::Soft ? softclip : hardclip;
