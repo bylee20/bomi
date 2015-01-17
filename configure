@@ -400,11 +400,24 @@ setup_dirs
 setup_features
 setup_build
 
+# check qmake is valid
+printf "checking for qmake ... "
+if [ -z "$(LANG=en_US.UTF-8 $qmake -v | grep "version 5.")" ]; then
+    echo "no"
+    echo "'$qmake' is not a valid qmake executable."
+    exit
+else
+    echo "yes"
+fi
+
 add_defines BOMI_SKINS_PATH "\"$skindir\""
 add_defines BOMI_IMPORTS_PATH "\"$importdir\""
 add_defines BOMI_DEFAULT_SKIN "\"$defaultskin\""
-
-if has_arg release ; then defines="$defines BOMI_RELEASE"; fi
+if has_arg release ; then
+    add_defines BOMI_RELEASE 1
+else
+    add_defines BOMI_RELEASE 0
+fi
 
 parse_file() {
         cp $1.in $1
