@@ -9,6 +9,7 @@
 struct TimelineTheme {
     bool show_on_seeking = true;
     VerticalAlignment position = VerticalAlignment::Center;
+    double margin = 0.1;
     int duration = 2500;
 };
 
@@ -29,19 +30,20 @@ struct OsdTheme {
 Q_DECLARE_METATYPE(OsdTheme)
 
 class TimelineThemeObject : public QObject {
-    Q_OBJECT
-    Q_ENUMS(Position)
-    Q_PROPERTY(Position position READ position NOTIFY changed)
-    Q_PROPERTY(int duration READ duration NOTIFY changed)
 public:
     enum Position {
         Top = static_cast<int>(VerticalAlignment::Top),
         Center = static_cast<int>(VerticalAlignment::Center),
         Bottom = static_cast<int>(VerticalAlignment::Bottom)
     };
+private:
+    Q_OBJECT
+    Q_ENUMS(Position)
+    THEME_PV(Position, position, (Position)m.position)
+    THEME_P(qreal, margin)
+    THEME_P(int, duration)
+public:
     auto set(const TimelineTheme &theme) -> void { m = theme; emit changed(); }
-    auto duration() const -> int { return m.duration; }
-    auto position() const -> Position { return (Position)m.position; }
 signals:
     void changed();
 private:
@@ -50,10 +52,9 @@ private:
 
 class MessageThemeObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(int duration READ duration NOTIFY changed)
+    THEME_P(int, duration)
 public:
     auto set(const MessageTheme &theme) -> void { m = theme; emit changed(); }
-    auto duration() const -> int { return m.duration; }
 signals:
     void changed();
 private:
@@ -61,17 +62,6 @@ private:
 };
 
 class OsdStyleObject : public QObject {
-    Q_OBJECT
-    Q_ENUMS(Style)
-    Q_PROPERTY(QString font READ font NOTIFY changed)
-    Q_PROPERTY(qreal scale READ scale NOTIFY changed)
-    Q_PROPERTY(bool underline READ underline NOTIFY changed)
-    Q_PROPERTY(bool bold READ bold NOTIFY changed)
-    Q_PROPERTY(bool strikeout READ strikeout NOTIFY changed)
-    Q_PROPERTY(bool italic READ italic NOTIFY changed)
-    Q_PROPERTY(Style style READ style NOTIFY changed)
-    Q_PROPERTY(QColor color READ color NOTIFY changed)
-    Q_PROPERTY(QColor styleColor READ styleColor NOTIFY changed)
 public:
     enum Style {
         Normal  = static_cast<int>(TextThemeStyle::Normal),
@@ -79,16 +69,20 @@ public:
         Raised  = static_cast<int>(TextThemeStyle::Raised),
         Sunked  = static_cast<int>(TextThemeStyle::Sunken)
     };
+private:
+    Q_OBJECT
+    Q_ENUMS(Style)
+    THEME_PV(QString, font, m.font.family())
+    THEME_PV(qreal, scale, m.font.size)
+    THEME_PV(bool, underline, m.font.underline())
+    THEME_PV(bool, bold, m.font.bold())
+    THEME_PV(bool, strikeout, m.font.strikeOut())
+    THEME_PV(bool, italic, m.font.italic())
+    THEME_PV(Style, style, Outline)
+    THEME_PV(QColor, color, m.font.color)
+    THEME_PV(QColor, styleColor, m.outline.color)
+public:
     auto set(const OsdStyle &theme) -> void { m = theme; emit changed(); }
-    auto font() const -> QString { return m.font.family(); }
-    auto underline() const -> bool { return m.font.underline(); }
-    auto strikeout() const -> bool { return m.font.strikeOut(); }
-    auto bold() const -> bool { return m.font.bold(); }
-    auto italic() const -> bool { return m.font.italic(); }
-    auto color() const -> QColor { return m.font.color; }
-    auto styleColor() const -> QColor { return m.outline.color; }
-    auto style() const -> Style { return Outline; }
-    auto scale() const -> qreal { return m.font.size; }
 signals:
     void changed();
 private:
@@ -97,9 +91,9 @@ private:
 
 class OsdThemeObject : public QObject {
     Q_OBJECT
-    THEME_P(OsdStyleObject, style)
-    THEME_P(TimelineThemeObject, timeline)
-    THEME_P(MessageThemeObject, message)
+    THEME_C(OsdStyleObject, style)
+    THEME_C(TimelineThemeObject, timeline)
+    THEME_C(MessageThemeObject, message)
 public:
     auto set(const OsdTheme &theme) -> void
     {

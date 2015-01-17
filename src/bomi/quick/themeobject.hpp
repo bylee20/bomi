@@ -6,8 +6,8 @@
 
 class ThemeObject : public QObject {
     Q_OBJECT
-    THEME_P(OsdThemeObject, osd)
-    THEME_P(PlaylistThemeObject, playlist)
+    THEME_C(OsdThemeObject, osd)
+    THEME_C(PlaylistThemeObject, playlist)
 };
 
 #endif // THEMEOBJECT_HPP

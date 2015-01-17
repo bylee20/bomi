@@ -36,11 +36,12 @@ Item {
         duration: Cp.App.theme.osd.timeline.duration
         x: (parent.width - width)*0.5
         y: {
+            var m = Cp.App.theme.osd.timeline.margin
             switch (Cp.App.theme.osd.timeline.position) {
             case Cp.TimelineTheme.Top:
-                return parent.height * 0.1;
+                return parent.height * m;
             case Cp.TimelineTheme.Bottom:
-                return parent.height * 0.9 - height;
+                return parent.height * (1.0 - m) - height;
             default:
                 return (parent.height - height)*0.5;
             }
