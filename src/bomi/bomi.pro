@@ -41,7 +41,7 @@ macx {
 } else:unix {
     QT += dbus x11extras
 	TARGET = bomi
-	LIBS += -ldl -lXrandr
+	LIBS += -ldl
 	HEADERS += player/app_x11.hpp player/mpris.hpp
 	SOURCES += player/app_x11.cpp player/mpris.cpp
 }
