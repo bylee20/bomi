@@ -30,7 +30,7 @@ struct OpenSubtitlesFinder::Data {
             return;
         setState(Connecting);
         const auto args = _Args() << u""_q << u""_q << u""_q
-                                  << u"bomiXmlRpcClient v0.1"_q;
+                                  << u"CMPlayerXmlRpcClient v0.1"_q;
         client.call(u"LogIn"_q, args, [this] (const QVariantList &results) {
             if (!results.isEmpty()) {
                 const auto map = results[0].toMap();

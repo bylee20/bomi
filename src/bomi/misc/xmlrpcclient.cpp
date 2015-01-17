@@ -63,7 +63,7 @@ XmlRpcClient::XmlRpcClient(QObject *parent)
     , d(new Data)
 {
     d->request.setHeader(QNetworkRequest::UserAgentHeader,
-                         u"bomiXmlRpcClient/0.1"_q);
+                         u"CMPlayerXmlRpcClient/0.1"_q);
     d->request.setHeader(QNetworkRequest::ContentTypeHeader,
                          u"text/xml"_q);
 }
