@@ -877,3 +877,11 @@ auto PlayEngine::clearSnapshots() -> void
 {
     d->ssNoOsd = d->ssWithOsd = QImage();
 }
+
+auto PlayEngine::setHighQualityScaling(bool up, bool down) -> void
+{
+    if (_Change(d->hqUpscaling, up) | _Change(d->hqDownscaling, down)) {
+        d->updateVideoSubOptions();
+        emit highQualityScalingChanged(up, down);
+    }
+}

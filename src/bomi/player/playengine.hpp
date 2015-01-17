@@ -201,6 +201,7 @@ public:
     auto takeSnapshot(Snapshot mode) -> void;
     auto snapshot(bool withOsd = true) -> QImage;
     auto clearSnapshots() -> void;
+    auto setHighQualityScaling(bool up, bool down) -> void;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
 signals:
@@ -220,6 +221,7 @@ signals:
     void endChanged();
     void volumeChanged(int volume);
     void preampChanged(double amp);
+    void highQualityScalingChanged(bool up, bool down);
     void mutedChanged(bool muted);
     void avSyncChanged(int avSync);
     void audioStreamsChanged(const StreamList &streams);

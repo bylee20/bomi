@@ -111,15 +111,18 @@ auto PlayEngine::Data::videoSubOptions() const -> QByteArray
         cs.replace("__C_MATRIX__", mat);
         return '%' + QByteArray::number(cs.length()) + '%' + cs;
     };
-    OptionList opts(':');
 
+    OptionList opts(':');
     opts.add("lscale", _EnumData(lscale));
     opts.add("cscale", _EnumData(cscale));
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(dithering));
-    opts.add("custom-shader", customShader(c_matrix));
     opts.add("frame-queue-size", 3);
     opts.add("frame-drop-mode", "clear"_b);
+    opts.add("fancy-downscaling", hqDownscaling);
+    opts.add("sigmoid-upscaling", hqUpscaling);
+    opts.add("custom-shader", customShader(c_matrix));
+
     return opts.get();
 }
 

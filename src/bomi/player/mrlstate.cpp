@@ -51,6 +51,8 @@ static const auto jio = JIO(
     JE(video_space),
     JE(video_range),
     JE(video_effects),
+    JE(video_hq_upscaling),
+    JE(video_hq_downscaling),
     JE(audio_amplifier),
     JE(audio_volume),
     JE(audio_sync),
@@ -104,6 +106,8 @@ auto MrlState::restorableProperties() -> QVector<PropertyInfo>
     ADD(video_space, qApp->translate("MrlState", "Video Color Space"));
     ADD(video_range, qApp->translate("MrlState", "Video Color Range"));
     ADD(video_color, qApp->translate("MrlState", "Video Color Adjustment"));
+    ADD(video_hq_upscaling, qApp->translate("MrlState", "Video High Quality Upscaling"));
+    ADD(video_hq_downscaling, qApp->translate("MrlState", "Video High Quality Downscaling"));
 
     ADD(audio_volume, qApp->translate("MrlState", "Audio Volume"));
     ADD(audio_amplifier, qApp->translate("MrlState", "Audio Amp"));

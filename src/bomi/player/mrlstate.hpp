@@ -17,6 +17,10 @@
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
 
+#ifdef bool
+#undef bool
+#endif
+
 static inline bool operator == (const QMetaProperty &lhs, const QMetaProperty &rhs) {
     return lhs.enclosingMetaObject() == rhs.enclosingMetaObject() && lhs.propertyIndex() == rhs.propertyIndex();
 }
@@ -42,6 +46,8 @@ class MrlStateV2 : public QObject {
     Q_PROPERTY(VideoColor video_color MEMBER video_color NOTIFY videoColorChanged)
     Q_PROPERTY(ColorRange video_range MEMBER video_range NOTIFY videoRangeChanged)
     Q_PROPERTY(ColorSpace video_space MEMBER video_space NOTIFY videoSpaceChanged)
+    Q_PROPERTY(bool video_hq_upscaling MEMBER video_hq_upscaling NOTIFY videoHqUpscalingChanged)
+    Q_PROPERTY(bool video_hq_downscaling MEMBER video_hq_downscaling NOTIFY videoHqDownscalingChanged)
 
     Q_PROPERTY(int audio_volume MEMBER audio_volume NOTIFY audioVolumeChanged)
     Q_PROPERTY(int audio_amplifier MEMBER audio_amplifier NOTIFY audioAmpChanged)
@@ -81,6 +87,7 @@ public:
     ColorRange video_range = ColorRange::Auto;
     ColorSpace video_space = ColorSpace::Auto;
     VideoEffects video_effects = 0;
+    bool video_hq_upscaling = false, video_hq_downscaling = false;
 
 // audio state
     int audio_amplifier = 100;
@@ -120,6 +127,8 @@ signals:
     void videoHorizontalAlignmentChanged();
     void videoRangeChanged();
     void videoSpaceChanged();
+    void videoHqUpscalingChanged();
+    void videoHqDownscalingChanged();
 
     void audioVolumeChanged();
     void audioAmpChanged();

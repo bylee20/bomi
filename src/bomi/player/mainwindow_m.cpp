@@ -454,6 +454,15 @@ auto MainWindow::Data::connectMenus() -> void
              &MrlState::videoChromaUpscalerChanged, [this] () {
         engine.setChromaUpscaler(as.state.video_chroma_upscaler);
     });
+    auto updateHqScale = [this] () {
+        engine.setHighQualityScaling(as.state.video_hq_upscaling,
+                                     as.state.video_hq_downscaling);
+    };
+    plugPropertyCheckable(video(u"hq-scaling"_q)[u"up"_q], "video_hq_upscaling",
+            &MrlState::videoHqUpscalingChanged, updateHqScale);
+    plugPropertyCheckable(video(u"hq-scaling"_q)[u"down"_q], "video_hq_downscaling",
+            &MrlState::videoHqDownscalingChanged, updateHqScale);
+
     plugEnumMenu<Dithering>
             (video, "video_dithering",
              &MrlState::videoDitheringChanged, [this] () {

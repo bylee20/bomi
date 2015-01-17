@@ -165,6 +165,12 @@ auto MainWindow::Data::initEngine() -> void
         else
             subtitle.render(time);
     });
+    connect(&engine, &PlayEngine::highQualityScalingChanged, p,
+            [=] (bool up, bool down) {
+        auto &hq = menu(u"video"_q)(u"hq-scaling"_q);
+        hq[u"up"_q]->setChecked(up);
+        hq[u"down"_q]->setChecked(down);
+    });
     connect(&engine, &PlayEngine::volumeChanged,
             p, [this] (int volume) {
         _Change(as.state.audio_volume, volume);

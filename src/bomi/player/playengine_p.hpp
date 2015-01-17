@@ -35,6 +35,10 @@
 #include <functional>
 #include "avinfoobject.hpp"
 
+#ifdef bool
+#undef bool
+#endif
+
 DECLARE_LOG_CONTEXT(Engine)
 
 enum EventType {
@@ -263,7 +267,7 @@ struct PlayEngine::Data {
     ColorSpace colorSpace = ColorSpace::Auto;
     ColorRange colorRange = ColorRange::Auto;
     Dithering dithering = Dithering::None;
-
+    bool hqUpscaling = false, hqDownscaling = false;
     quint64 drawnFrames = 0, droppedFrames = 0, delayedFrames = 0;
     SpeedMeasure<quint64> fpsMeasure{5, 20};
 

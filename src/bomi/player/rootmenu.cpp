@@ -262,11 +262,17 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
 
     addEnumMenuCheckable<ColorSpace>(video, true);
     addEnumMenuCheckable<ColorRange>(video, true);
+    video.addSeparator();
+
     addEnumActionsCheckable<Interpolator>(*video.addMenu(u"chroma-upscaler"_q), true);
     addEnumActionsCheckable<Interpolator>(*video.addMenu(u"interpolator"_q), true);
-    addEnumMenuCheckable<Dithering>(video, true);
-    addEnumMenuCheckable<DeintMode>(video, true);
+    auto &scaler = *video.addMenu(u"hq-scaling"_q);
+    scaler.addAction(u"up"_q, true);
+    scaler.addAction(u"down"_q, true);
+    video.addSeparator();
 
+    addEnumMenuCheckable<DeintMode>(video, true);
+    addEnumMenuCheckable<Dithering>(video, true);
     auto &effect = *video.addMenu(u"filter"_q);
     effect.g()->setExclusive(false);
     addEnumAction(effect, VideoEffect::FlipV, u"flip-v"_q, true);
@@ -517,6 +523,9 @@ auto RootMenu::retranslate() -> void
     updateEnumMenu<ColorRange>(video);
     updateEnumActions<Interpolator>(video(u"chroma-upscaler"_q, tr("Chroma Upscaler")));
     updateEnumActions<Interpolator>(video(u"interpolator"_q, tr("Interpolator")));
+    auto &hqScaling = video(u"hq-scaling"_q, tr("High Quality Scaling"));
+    hqScaling.a(u"up"_q, tr("High Quality Upscaling"));
+    hqScaling.a(u"down"_q, tr("High Quality Downscaling"));
     updateEnumMenu<Dithering>(video);
     updateEnumMenu<DeintMode>(video);
 
@@ -589,7 +598,7 @@ auto RootMenu::retranslate() -> void
 
     auto &help = root(u"help"_q);
     help.setTitle(tr("Help"));
-    help.a(u"about"_q, tr("About %1").arg(u"bomi"_q));
+    help.a(u"about"_q, tr("About bomi"));
     root.a(u"exit"_q, tr("Exit"));
 }
 
