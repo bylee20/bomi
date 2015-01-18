@@ -84,6 +84,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"play/seek/backward3"_q] << Qt::Key_Home;
     keys[u"play/seek/prev-frame"_q] << Qt::ALT + Qt::Key_Left;
     keys[u"play/seek/next-frame"_q] << Qt::ALT + Qt::Key_Right;
+    keys[u"play/seek/black-frame"_q] << Qt::ALT + Qt::Key_B;
     keys[u"play/seek/prev-subtitle"_q] << Qt::Key_Comma;
     keys[u"play/seek/current-subtitle"_q] << Qt::Key_Period;
     keys[u"play/seek/next-subtitle"_q] << Qt::Key_Slash;

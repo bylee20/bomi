@@ -13,15 +13,20 @@ public:
     VideoFilter(const VideoFilter &) = delete;
     VideoFilter &operator = (const VideoFilter &) = delete;
     ~VideoFilter();
-    auto setHwAcc(HwAcc *acc) -> void;
     auto initializeGL(OpenGLOffscreenContext *ctx) -> void;
     auto finalizeGL() -> void;
     auto isInputInterlaced() const -> bool;
     auto isOutputInterlaced() const -> bool;
+    auto skipToNextBlackFrame() -> void;
+    auto stopSkipping() -> void;
+    auto isSkipping() const -> bool;
 signals:
     void inputInterlacedChanged();
     void outputInterlacedChanged();
     void deintMethodChanged(DeintMethod method);
+    void scanningStarted();
+    void scanningFinished();
+    void seekRequested(int msec);
 private:
     static auto open(vf_instance *vf) -> int;
     static auto uninit(vf_instance *vf) -> void;

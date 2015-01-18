@@ -35,6 +35,7 @@ PlayEngine::PlayEngine()
     mpv_request_log_messages(d->handle, loglv.constData());
 
     d->observe();
+    connect(d->filter, &VideoFilter::seekRequested, this, &PlayEngine::seek, Qt::QueuedConnection);
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::videoStreamsChanged, this, [=] () {
@@ -884,4 +885,9 @@ auto PlayEngine::setHighQualityScaling(bool up, bool down) -> void
         d->updateVideoSubOptions();
         emit highQualityScalingChanged(up, down);
     }
+}
+
+auto PlayEngine::seekToNextBlackFrame() -> void
+{
+    d->filter->skipToNextBlackFrame();
 }

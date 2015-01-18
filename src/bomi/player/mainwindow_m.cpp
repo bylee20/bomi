@@ -291,6 +291,10 @@ auto MainWindow::Data::connectMenus() -> void
             p, [this] (QAction *a) {
         engine.stepFrame(a->data().toInt());
     });
+    connect(play(u"seek"_q)[u"black-frame"_q], &QAction::triggered, p, [=] () {
+        engine.seekToNextBlackFrame();
+        showMessage(tr("Seek to Next Black Frame"));
+    });
     connect(play[u"disc-menu"_q], &QAction::triggered, p, [this] () {
         engine.setCurrentEdition(PlayEngine::DVDMenu);
     });

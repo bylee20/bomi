@@ -179,6 +179,8 @@ public:
     auto pause() -> void;
     auto unpause() -> void;
     auto relativeSeek(int pos) -> void;
+    auto seekToNextBlackFrame() -> void;
+
     auto setAudioPriority(const QStringList &ap) -> void;
     auto setSubtitlePriority(const QStringList &sp) -> void;
     auto initializeGL(QOpenGLContext *ctx) -> void;
@@ -202,8 +204,9 @@ public:
     auto snapshot(bool withOsd = true) -> QImage;
     auto clearSnapshots() -> void;
     auto setHighQualityScaling(bool up, bool down) -> void;
-    Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
+public slots:
+    void seek(int pos);
 signals:
     void subInfoChanged();
     void seeked(int time);

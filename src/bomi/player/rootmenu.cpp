@@ -209,6 +209,7 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     seek.addSeparator();
     seek.addActionToGroup(u"prev-frame"_q, false, u"frame"_q)->setData(-1);
     seek.addActionToGroup(u"next-frame"_q, false, u"frame"_q)->setData(1);
+    seek.addAction(u"black-frame"_q, false);
     seek.addSeparator();
     seek.addActionToGroup(u"prev-subtitle"_q, false, u"subtitle"_q)->setData(-1);
     seek.addActionToGroup(u"current-subtitle"_q, false, u"subtitle"_q)->setData(0);
@@ -478,6 +479,7 @@ auto RootMenu::retranslate() -> void
 
     seek.a(u"prev-frame"_q, tr("Previous Frame"));
     seek.a(u"next-frame"_q, tr("Next Frame"));
+    seek.a(u"black-frame"_q, tr("Next Black Frame"));
 
     seek.a(u"prev-subtitle"_q, tr("To Previous Subtitle"));
     seek.a(u"current-subtitle"_q, tr("To Beginning of Current Subtitle"));
