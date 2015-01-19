@@ -40,7 +40,7 @@ PlayEngine::PlayEngine()
             d->setmpv("mute", true);
             d->pauseAfterSkip = isPaused();
             d->setmpv("pause", false);
-            d->setmpv("speed", 10.0);
+            d->setmpv("speed", 100.0);
         } else {
             d->setmpv_async("speed", d->speed);
             d->setmpv_async("pause", d->pauseAfterSkip);
