@@ -11,7 +11,7 @@ static const QStringList videoExts = QStringList()
         << u"dat"_q << u"divx"_q << u"dv"_q
         << u"flac"_q << u"fli"_q << u"flv"_q
         << u"h264"_q
-        << u"i263"_q
+        << u"i263"_q << u"ifo"_q
         << u"m2t"_q << u"m2ts"_q << u"m4v"_q << u"mkv"_q << u"mov"_q
         << u"mp2"_q << u"mp4"_q << u"mpeg"_q << u"mpg"_q << u"mpg2"_q
         << u"mpg4"_q << u"mpl"_q << u"mpls"_q << u"mts"_q
