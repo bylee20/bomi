@@ -316,6 +316,7 @@ auto PlayEngine::seek(int pos) -> void
     d->chapter = -1;
     if (!d->hasImage)
         d->tellmpv("seek", (double)pos/1000.0, 2);
+    d->filter->stopSkipping();
 }
 
 auto PlayEngine::relativeSeek(int pos) -> void
@@ -324,6 +325,7 @@ auto PlayEngine::relativeSeek(int pos) -> void
         d->tellmpv("seek", (double)pos/1000.0, 0);
         emit sought();
     }
+    d->filter->stopSkipping();
 }
 
 auto PlayEngine::setClippingMethod(ClippingMethod method) -> void
