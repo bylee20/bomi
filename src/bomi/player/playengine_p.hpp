@@ -223,7 +223,7 @@ struct PlayEngine::Data {
     double fps = 1.0;
     bool hasImage = false, tempoScaler = false, seekable = false, hasVideo = false;
     bool subStreamsVisible = true, startPaused = false, disc = false;
-
+    bool pauseAfterSkip = false;
     AudioController *audio = nullptr;
     bool quit = false, muted = false, initialized = false;
     int volume = 100, avSync = 0;

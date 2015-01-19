@@ -35,9 +35,22 @@ PlayEngine::PlayEngine()
     mpv_request_log_messages(d->handle, loglv.constData());
 
     d->observe();
-    connect(d->filter, &VideoFilter::skippingChanged, this,
-            [=] (bool skipping) { d->post(Searching, skipping); }, Qt::DirectConnection);
-    connect(d->filter, &VideoFilter::seekRequested, this, &PlayEngine::seek, Qt::QueuedConnection);
+    connect(d->filter, &VideoFilter::skippingChanged, this, [=] (bool skipping) {
+        if (skipping) {
+            d->setmpv("mute", true);
+            d->pauseAfterSkip = isPaused();
+            d->setmpv("pause", false);
+            d->setmpv("speed", 10.0);
+        } else {
+            d->setmpv_async("speed", d->speed);
+            d->setmpv_async("pause", d->pauseAfterSkip);
+            d->setmpv_async("mute", d->muted);
+        }
+        d->updateVideoSubOptions();
+        d->post(Searching, skipping);
+    }, Qt::DirectConnection);
+    connect(d->filter, &VideoFilter::seekRequested, this,
+            &PlayEngine::seek, Qt::QueuedConnection);
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::videoStreamsChanged, this, [=] () {
@@ -623,6 +636,8 @@ auto PlayEngine::pause() -> void
         d->post(Paused);
     else
         d->setmpv("pause", true);
+    d->pauseAfterSkip = true;
+    d->filter->stopSkipping();
 }
 
 auto PlayEngine::unpause() -> void
@@ -886,7 +901,8 @@ auto PlayEngine::setHighQualityScaling(bool up, bool down) -> void
 
 auto PlayEngine::seekToNextBlackFrame() -> void
 {
-    d->filter->skipToNextBlackFrame();
+    if (!isStopped())
+        d->filter->skipToNextBlackFrame();
 }
 
 auto PlayEngine::waitingText() const -> QString

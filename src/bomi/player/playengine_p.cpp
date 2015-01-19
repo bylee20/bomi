@@ -117,7 +117,10 @@ auto PlayEngine::Data::videoSubOptions() const -> QByteArray
     opts.add("cscale", _EnumData(cscale));
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(dithering));
-    opts.add("frame-queue-size", 3);
+    if (filter->isSkipping())
+        opts.add("frame-queue-size", 1);
+    else
+        opts.add("frame-queue-size", 3);
     opts.add("frame-drop-mode", "clear"_b);
     opts.add("fancy-downscaling", hqDownscaling);
     opts.add("sigmoid-upscaling", hqUpscaling);

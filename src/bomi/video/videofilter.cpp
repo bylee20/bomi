@@ -60,6 +60,7 @@ public:
     {
         auto img = MpImage::wrap(mp_image_pool_get(m_pool, IMGFMT_420P,
                                                    src->w, src->h));
+        mp_image_copy_attributes(img.data(), (mp_image*)src.data());
         const VdpVideoSurface surface = (intptr_t)src->planes[3];
         if (m_ctx->vdp.video_surface_get_bits_y_cb_cr(
                     surface, VDP_YCBCR_FORMAT_YV12, (void* const*)img->planes,
@@ -77,6 +78,8 @@ public:
     auto download(const MpImage &src) -> MpImage
     {
         auto img = va_surface_download((mp_image*)src.data(), m_pool);
+        if (img)
+            mp_image_copy_attributes(img, (mp_image*)src.data());
         return img ? MpImage::wrap(img) : MpImage();
     }
 private:
@@ -308,9 +311,9 @@ auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
                 d->mutex.unlock();
             } else {
                 v->stopSkipping();
-                emit v->seekRequested(mpi->pts * 1000);
+                if (mpi->pts != MP_NOPTS_VALUE)
+                    emit v->seekRequested(mpi->pts * 1000);
             }
-            return 0;
         }
     }
     if (_Change(d->inter_i, mpi.isInterlaced()))
