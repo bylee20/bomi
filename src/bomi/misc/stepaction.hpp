@@ -18,6 +18,7 @@ public:
     auto isReset() const -> bool { return enum_() == ChangeValue::Reset; }
     auto default_() const -> int { return m_default; }
     auto setTextRate(qreal rate) -> void { m_textRate = rate; }
+    auto setSign(bool sign) -> void { m_sign = sign; }
     auto setFormat(const QString &format) -> void
         { if (_Change(m_format, format)) update(); }
     auto setStep(int step) -> void
@@ -29,11 +30,13 @@ public:
                            const QString &format) -> void;
     static auto setStep(const QList<QAction*> &actions, int step) -> void;
 private:
+    auto toString(bool sign, int value) const -> QString;
     auto update() -> void;
     int m_step = 0;
     qreal m_textRate = 0.0;
     QString m_format;
     int m_min = 0, m_max = 100, m_default = 0;
+    bool m_sign = false;
 };
 
 inline auto StepAction::setFormat(const QList<QAction*> &actions,

@@ -278,7 +278,11 @@ auto MainWindow::Data::connectMenus() -> void
             &playlist, &PlaylistModel::playPrevious);
     connect(play[u"next"_q], &QAction::triggered,
             &playlist, &PlaylistModel::playNext);
-    connect(play(u"seek"_q).g(u"relative"_q), &ActionGroup::triggered,
+    auto &seek = play(u"seek"_q);
+    connect(seek[u"begin"_q], &QAction::triggered, p, [=] () {
+        engine.seek(engine.begin());
+    });
+    connect(seek.g(u"relative"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         const int diff = static_cast<StepAction*>(a)->data();
         if (diff && !engine.isStopped() && engine.isSeekable()) {
@@ -287,18 +291,18 @@ auto MainWindow::Data::connectMenus() -> void
             showTimeLine();
         }
     });
-    connect(play(u"seek"_q).g(u"frame"_q), &ActionGroup::triggered,
+    connect(seek.g(u"frame"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         engine.stepFrame(a->data().toInt());
     });
-    connect(play(u"seek"_q)[u"black-frame"_q], &QAction::triggered, p, [=] () {
+    connect(seek[u"black-frame"_q], &QAction::triggered, p, [=] () {
         engine.seekToNextBlackFrame();
         showMessage(tr("Seek to Next Black Frame"));
     });
     connect(play[u"disc-menu"_q], &QAction::triggered, p, [this] () {
         engine.setCurrentEdition(PlayEngine::DVDMenu);
     });
-    connect(play(u"seek"_q).g(u"subtitle"_q), &ActionGroup::triggered,
+    connect(seek.g(u"subtitle"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         const int key = a->data().toInt();
         const int time = key < 0 ? subtitle.previous()

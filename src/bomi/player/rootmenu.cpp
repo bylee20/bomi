@@ -198,6 +198,7 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     play.addSeparator();
     play.addAction(u"disc-menu"_q);
     auto &seek = *play.addMenu(u"seek"_q);
+    seek.addAction(u"begin"_q, false);
     const QString forward(u"forward%1"_q), backward(u"backward%1"_q);
     const QString seekStep(u"seek%1"_q);
     for (int i = 1; i <= 3; ++i) {
@@ -205,6 +206,8 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
                                 seekStep.arg(i), u"relative"_q);
         pair->increase()->setTextRate(0.001);
         pair->decrease()->setTextRate(-0.001);
+        pair->increase()->setSign(false);
+        pair->decrease()->setSign(false);
     }
     seek.addSeparator();
     seek.addActionToGroup(u"prev-frame"_q, false, u"frame"_q)->setData(-1);
@@ -470,6 +473,7 @@ auto RootMenu::retranslate() -> void
     repeat.a(u"quit"_q, tr("Quit"));
 
     auto &seek = play(u"seek"_q, tr("Seek"));
+    seek.a(u"begin"_q, tr("To the Beginning"));
     auto translateSeekAction = [&] (const QString &prefix, const QString &format) {
         for (int i=1; i<=3; ++i)
             static_cast<StepAction*>(seek[prefix % _N(i)])->setFormat(format);

@@ -6,6 +6,13 @@ StepAction::StepAction(ChangeValue t, QObject *parent)
 
 }
 
+auto StepAction::toString(bool sign, int value) const -> QString
+{
+    if (m_textRate == 0.0)
+        return sign ? _NS(value) : _N(value);
+    return sign ? _NS(value*m_textRate) : _N(value*m_textRate);
+}
+
 auto StepAction::update() -> void
 {
     const int data = m_step*EnumInfo::data(enum_());
@@ -13,14 +20,10 @@ auto StepAction::update() -> void
     if (!data)
         setText(EnumInfo::description(enum_()));
     else
-        setText(m_format.arg(m_textRate == 0.0 ? _NS(data)
-                                               : _NS(data*m_textRate)));
+        setText(m_format.arg(toString(m_sign, data)));
 }
 
 auto StepAction::format(int value) const -> QString
 {
-    if (m_min < 0 && 0 < m_max)
-        return m_format.arg(m_textRate == 0.0 ? _NS(value) : _NS(value*m_textRate));
-    else
-        return m_format.arg(m_textRate == 0.0 ? _N(value) : _N(value*m_textRate));
+    return m_format.arg(toString(m_min < 0 && 0 < m_max, value));
 }

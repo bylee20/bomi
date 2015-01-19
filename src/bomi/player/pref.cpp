@@ -76,6 +76,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"play/repeat/range"_q] << Qt::Key_R;
     keys[u"play/repeat/subtitle"_q] << Qt::Key_E;
     keys[u"play/repeat/quit"_q] << Qt::Key_Escape;
+    keys[u"play/seek/begin"_q] << Qt::CTRL + Qt::Key_Home;
     keys[u"play/seek/forward1"_q] << Qt::Key_Right;
     keys[u"play/seek/forward2"_q] << Qt::Key_PageDown;
     keys[u"play/seek/forward3"_q] << Qt::Key_End;
