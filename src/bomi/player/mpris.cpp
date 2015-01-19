@@ -164,7 +164,6 @@ struct Player::Data {
         case PlayEngine::Playing:
             return u"Playing"_q;
         case PlayEngine::Paused:
-        case PlayEngine::Buffering:
             return u"Paused"_q;
         default:
             return u"Stopped"_q;

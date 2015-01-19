@@ -79,7 +79,7 @@ struct MainWindow::Data {
     bool moving = false, changingSub = false;
     bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
     bool stateChanging = false, loading = false, sgInit = false;
-    QTimer loadingTimer, hider, initializer;
+    QTimer waiter, hider, initializer;
     ABRepeatChecker ab;
     QMenu contextMenu;
     PrefDialog *prefDlg = nullptr;
@@ -163,6 +163,7 @@ struct MainWindow::Data {
     auto screenSize() const -> QSize;
     auto updateWindowPosState() -> void;
     auto checkWindowState(Qt::WindowStates prev) -> void;
+    auto updateWaitingMessage() -> void;
 
     template<class List>
     auto updateListMenu(Menu &menu, const List &list,

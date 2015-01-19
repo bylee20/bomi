@@ -192,7 +192,7 @@ auto VideoFilter::skipToNextBlackFrame() -> void
 {
     d->mutex.lock();
     if (_Change(d->skip, true))
-        emit scanningStarted();
+        emit skippingChanged(d->skip);
     d->mutex.unlock();
 }
 
@@ -200,7 +200,7 @@ auto VideoFilter::stopSkipping() -> void
 {
     d->mutex.lock();
     if (_Change(d->skip, false))
-        emit scanningFinished();
+        emit skippingChanged(d->skip);
     d->ptsLastSkip = d->ptsSkipStart = MP_NOPTS_VALUE;
     d->mutex.unlock();
 }

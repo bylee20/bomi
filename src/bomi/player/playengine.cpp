@@ -35,6 +35,8 @@ PlayEngine::PlayEngine()
     mpv_request_log_messages(d->handle, loglv.constData());
 
     d->observe();
+    connect(d->filter, &VideoFilter::skippingChanged, this,
+            [=] (bool skipping) { d->post(Searching, skipping); }, Qt::DirectConnection);
     connect(d->filter, &VideoFilter::seekRequested, this, &PlayEngine::seek, Qt::QueuedConnection);
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
@@ -340,7 +342,7 @@ auto PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) -> void
 
 auto PlayEngine::reload() -> void
 {
-    if (m_state == PlayEngine::Stopped)
+    if (d->state == PlayEngine::Stopped)
         return;
     auto info = d->startInfo;
     info.resume = d->position;
@@ -459,18 +461,29 @@ auto PlayEngine::setNextStartInfo(const StartInfo &startInfo) -> void
 
 auto PlayEngine::stepFrame(int direction) -> void
 {
-    if ((m_state & (Playing | Paused)) && d->seekable)
+    if ((d->state & (Playing | Paused)) && d->seekable)
         d->tellmpv_async(direction > 0 ? "frame_step" : "frame_back_step");
 }
 
-auto PlayEngine::updateState(State state) -> void
+auto PlayEngine::isWaiting() const -> bool
 {
-    const bool wasRunning = isRunning();
-    if (_Change(m_state, state)) {
-        emit stateChanged(m_state);
-        if (wasRunning != isRunning())
-            emit runningChanged();
-    }
+    return d->waitings;
+}
+
+auto PlayEngine::waiting() const -> Waiting
+{
+    if (d->waitings & Searching)
+        return Searching;
+    if (d->waitings & Buffering)
+        return Buffering;
+    if (d->waitings & Loading)
+        return Loading;
+    return NoWaiting;
+}
+
+auto PlayEngine::state() const -> State
+{
+    return d->state;
 }
 
 auto PlayEngine::customEvent(QEvent *event) -> void
@@ -607,7 +620,7 @@ auto PlayEngine::currentChapter() const -> int
 auto PlayEngine::pause() -> void
 {
     if (d->hasImage)
-        d->postState(PlayEngine::Paused);
+        d->post(Paused);
     else
         d->setmpv("pause", true);
 }
@@ -615,7 +628,7 @@ auto PlayEngine::pause() -> void
 auto PlayEngine::unpause() -> void
 {
     if (d->hasImage)
-        d->postState(PlayEngine::Playing);
+        d->post(Playing);
     else
         d->setmpv("pause", false);
 }
@@ -725,24 +738,6 @@ auto PlayEngine::setDeintMode(DeintMode mode) -> void
 auto PlayEngine::deintMode() const -> DeintMode
 {
     return d->deint;
-}
-
-auto PlayEngine::stateText(State state) -> QString
-{
-    switch (state) {
-    case Playing:
-        return tr("Playing");
-    case Stopped:
-        return tr("Stopped");
-    case Loading:
-        return tr("Loading");
-    case Buffering:
-        return tr("Buffering");
-    case Error:
-        return tr("Error");
-    default:
-        return tr("Paused");
-    }
 }
 
 auto PlayEngine::sendMouseClick(const QPointF &pos) -> void
@@ -892,4 +887,36 @@ auto PlayEngine::setHighQualityScaling(bool up, bool down) -> void
 auto PlayEngine::seekToNextBlackFrame() -> void
 {
     d->filter->skipToNextBlackFrame();
+}
+
+auto PlayEngine::waitingText() const -> QString
+{
+    switch (waiting()) {
+    case Loading:
+        return tr("Loading");
+    case Searching:
+        return tr("Searching");
+    case Buffering:
+        return tr("Buffering");
+    case Seeking:
+        return tr("Seeking");
+    default:
+        return QString();
+    }
+}
+
+auto PlayEngine::stateText() const -> QString
+{
+    switch (d->state) {
+    case Stopped:
+        return tr("Stopped");
+    case Playing:
+        return tr("Playing");
+    case Paused:
+        return tr("Paused");
+    case Error:
+        return tr("Error");
+    default:
+        return QString();
+    }
 }

@@ -136,17 +136,11 @@ auto MainWindow::Data::initEngine() -> void
     connect(&engine, &PlayEngine::stateChanged, p,
             [this] (PlayEngine::State state) {
         stateChanging = true;
-        showMessageBox(QString());
-        constexpr auto flags = PlayEngine::Loading | PlayEngine::Buffering;
-        if ((loading = state & flags))
-            loadingTimer.start();
-        else
-            loadingTimer.stop();
-        if (state == PlayEngine::Error)
+        if (state == PlayEngine::Error) {
+            waiter.stop();
             showMessageBox(tr("Error!\nCannot open the media."));
+        }
         switch (state) {
-        case PlayEngine::Loading:
-        case PlayEngine::Buffering:
         case PlayEngine::Playing:
             menu(u"play"_q)[u"pause"_q]->setText(tr("Pause"));
             break;
@@ -158,6 +152,14 @@ auto MainWindow::Data::initEngine() -> void
         cApp.setScreensaverDisabled(disable);
         updateStaysOnTop();
         stateChanging = false;
+    });
+    connect(&engine, &PlayEngine::waitingChanged, p, [=] (auto w) {
+        if (w) {
+            waiter.start();
+        } else {
+            waiter.stop();
+            this->showMessageBox(QString());
+        }
     });
     connect(&engine, &PlayEngine::tick, p, [this] (int time) {
         if (ab.check(time))
@@ -312,17 +314,22 @@ auto MainWindow::Data::initTimers() -> void
 {
     hider.setSingleShot(true);
 
-    loadingTimer.setInterval(500);
-    loadingTimer.setSingleShot(true);
-    connect(&loadingTimer, &QTimer::timeout, p, [this] () {
-        if (loading)
-            showMessageBox(tr("Loading ...\nPlease wait for a while."));
-    });
+    waiter.setInterval(500);
+    waiter.setSingleShot(true);
+    connect(&waiter, &QTimer::timeout, p, [=] () { updateWaitingMessage(); });
 
     initializer.setSingleShot(true);
     connect(&initializer, &QTimer::timeout,
             p, [=] () { applyPref(); cApp.runCommands(); });
     initializer.start(1);
+}
+
+auto MainWindow::Data::updateWaitingMessage() -> void
+{
+    QString message;
+    if (engine.isWaiting())
+        message = tr("%1 ...\nPlease wait for a while.").arg(engine.waitingText());
+    showMessageBox(message);
 }
 
 auto MainWindow::Data::resume(const Mrl &mrl, int *edition) -> int

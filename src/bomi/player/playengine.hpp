@@ -45,6 +45,7 @@ class PlayEngine : public QObject {
     Q_OBJECT
     Q_ENUMS(State)
     Q_ENUMS(ActivationState)
+    Q_ENUMS(Waiting)
     Q_PROPERTY(MediaInfoObject *media READ mediaInfo CONSTANT FINAL)
     Q_PROPERTY(AudioInfoObject *audio READ audioInfo CONSTANT FINAL)
     Q_PROPERTY(VideoInfoObject *video READ videoInfo CONSTANT FINAL)
@@ -59,8 +60,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
     Q_PROPERTY(int avSync READ avSync NOTIFY avSyncChanged)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
-    Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
+    Q_PROPERTY(bool running READ isPlaying NOTIFY runningChanged)
     Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
     Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
     Q_PROPERTY(double rate READ rate NOTIFY tick)
@@ -68,13 +68,13 @@ class PlayEngine : public QObject {
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
     Q_PROPERTY(SubtitleInfoObject* subtitle READ subInfo NOTIFY subInfoChanged)
+    Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
+    Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
+    Q_PROPERTY(Waiting waiting READ waiting NOTIFY waitingChanged)
 public:
-    enum State {
-        Stopped = 1, Playing = 2, Paused = 4,
-        Loading = 16, Error = 32, Buffering = 64
-//        Running = Playing | Loading | Buffering
-    };
-    static constexpr int Running = Playing | Loading | Buffering;
+    enum State { Stopped = 1, Playing = 2, Paused = 4, Error = 32 };
+    enum Waiting { NoWaiting = 0, Searching = 1, Loading = 2, Buffering = 4, Seeking = 8 };
+    Q_DECLARE_FLAGS(Waitings, Waiting)
     enum ActivationState { Unavailable, Deactivated, Activated };
     enum Snapshot {
         NoSnapshot = 0, VideoOnly = 1, VideoWidthOsd = 2,
@@ -84,6 +84,8 @@ public:
     PlayEngine();
     ~PlayEngine();
 
+    auto isWaiting() const -> bool;
+    auto waiting() const -> Waiting;
     auto time() const -> int;
     auto begin() const -> int;
     auto end() const -> int;
@@ -91,12 +93,11 @@ public:
     auto mrl() const -> Mrl;
     auto isSeekable() const -> bool;
     auto setHwAcc(bool use, const QStringList &codecs) -> void;
-    auto isRunning() const -> bool { return m_state & Running; }
-    auto isPlaying() const -> bool {return m_state & Playing;}
-    auto isPaused() const -> bool {return m_state & Paused;}
-    auto isStopped() const -> bool {return m_state & Stopped;}
+    auto isPlaying() const -> bool {return state() & Playing;}
+    auto isPaused() const -> bool {return state() & Paused;}
+    auto isStopped() const -> bool {return state() & Stopped;}
     auto speed() const -> double;
-    auto state() const -> State { return m_state; }
+    auto state() const -> State;
     auto load(const StartInfo &info) -> void;
     auto startInfo() const -> const StartInfo&;
     auto setSpeed(double speed) -> void;
@@ -152,7 +153,6 @@ public:
     auto audioInfo() const -> AudioInfoObject*;
     auto videoInfo() const -> VideoInfoObject*;
     auto avSync() const -> int;
-    auto stateText() const -> QString { return stateText(m_state); }
     auto rate() const -> double { return (double)(time()-begin())/duration(); }
     auto cacheSize() const -> int;
     auto cacheUsed() const -> int;
@@ -204,7 +204,8 @@ public:
     auto snapshot(bool withOsd = true) -> QImage;
     auto clearSnapshots() -> void;
     auto setHighQualityScaling(bool up, bool down) -> void;
-    static auto stateText(State state) -> QString;
+    auto waitingText() const -> QString;
+    auto stateText() const -> QString;
 public slots:
     void seek(int pos);
 signals:
@@ -245,19 +246,20 @@ signals:
     void subtitleTrackInfoChanged();
     void requestNextStartInfo();
     void metaDataChanged();
+    void waitingChanged(Waiting waiting);
 
     void deintOptionsChanged();
     void cacheSizeChanged();
     void messageRequested(const QString &message);
     void snapshotTaken();
 private:
-    auto updateState(State state) -> void;
     auto exec() -> void;
     auto customEvent(QEvent *event) -> void;
     class Thread; struct Data; Data *d;
     template<class T>
     friend class SimpleObservation;
-    PlayEngine::State m_state = PlayEngine::Stopped;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(PlayEngine::Waitings)
 
 #endif // PLAYENGINE_HPP

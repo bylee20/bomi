@@ -333,21 +333,6 @@ auto PlayEngine::Data::setStreamList(StreamType type, StreamList &&list) -> bool
     return true;
 }
 
-auto PlayEngine::Data::translateMpvStateToState() -> void
-{
-    State state = State::Stopped;
-    if (getmpv<bool>("pause"))
-        state = State::Paused;
-    else if (getmpv<bool>("paused-for-cache"))
-        state = State::Buffering;
-    else {
-        if (mpvState != MpvRunning || getmpv<bool>("seeking"))
-            return;
-        state = getmpv<bool>("core-idle") ? Loading : Playing;
-    }
-    postState(state);
-}
-
 auto PlayEngine::Data::hook() -> void
 {
     hook("on_load", [=] () {
@@ -370,11 +355,15 @@ auto PlayEngine::Data::hook() -> void
 
 auto PlayEngine::Data::observe() -> void
 {
-    auto getPausedState = [=] () { translateMpvStateToState(); };
-    observe("pause", getPausedState);
-    observe("core-idle", getPausedState);
-    observe("paused-for-cache", getPausedState);
-    observe("seeking", getPausedState);
+    observeType<bool>("pause", [=] (bool p) {
+        if (p)
+            post(Paused);
+        else if (!getmpv<bool>("idle"))
+            post(Playing);
+    });
+    observeType<bool>("core-idle", [=] (bool i) { if (!i) post(Playing); });
+    observeType<bool>("paused-for-cache", [=] (bool b) { post(Buffering, b); });
+    observeType<bool>("seeking", [=] (bool s) { post(Seeking, s); });
 
     observe("cache-used", cacheUsed, [=] () {
         return cacheEnabled ? getmpv<int>("cache-used") : 0;
@@ -562,13 +551,15 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
     case MPV_EVENT_START_FILE:
         mpvState = MpvLoading;
         mpvMrl = startInfo.mrl;
-        postState(Loading);
         _PostEvent(p, PreparePlayback);
+        post(getmpv<bool>("pause") ? Paused : Playing);
+        post(Loading, true);
         break;
     case MPV_EVENT_FILE_LOADED: {
+        post(getmpv<bool>("pause") ? Paused : Playing);
+        post(Loading, false);
         updateVideoSubOptions();
         mpvState = MpvRunning;
-        translateMpvStateToState();
         this->disc = mpvMrl.isDisc();
         if (this->initSeek > 0) {
             this->tellmpv("seek", this->initSeek, 2);
@@ -595,6 +586,7 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         _PostEvent(p, StartPlayback, editions);
         break;
     } case MPV_EVENT_END_FILE: {
+        post(Loading, false);
         disc = false;
         auto reason = static_cast<mpv_event_end_file*>(event->data)->reason;
         if (reason == MPV_END_FILE_REASON_EOF && mpvState != MpvRunning)
@@ -637,9 +629,14 @@ auto PlayEngine::Data::process(QEvent *event) -> void
     }
     switch ((int)event->type()) {
      case StateChange:
-        p->updateState(_GetData<PlayEngine::State>(event));
+        updateState(_GetData<PlayEngine::State>(event));
         break;
-    case PreparePlayback: {
+    case WaitingChange: {
+        bool set = false; Waitings waitings = NoWaiting;
+        _TakeData(event, waitings, set);
+        setWaitings(waitings, set);
+        break;
+    } case PreparePlayback: {
         this->subtitleFiles.clear();
         break;
     } case StartPlayback: {
@@ -664,10 +661,8 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         case MPV_END_FILE_REASON_EOF:
             _Info("Playback reached end-of-file");
             emit p->requestNextStartInfo();
-            if (nextInfo.isValid()) {
+            if (nextInfo.isValid())
                 mpvState = MpvLoading;
-                state = Loading;
-            }
             remain = 0;
             break;
         case MPV_END_FILE_REASON_QUIT:
@@ -679,7 +674,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
             state = Error;
             startInfo.reloaded = false;
         }
-        p->updateState(state);
+        updateState(state);
         if (state != Error && !mrl.isEmpty()) {
             FinishInfo info;
             info.mrl = mrl;
@@ -689,6 +684,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
                 info.streamIds[type] = this->currentTrack(type);
             emit p->finished(info);
         }
+//        updateWaiting();
         if (nextInfo.isValid())
             p->load(nextInfo);
         break;

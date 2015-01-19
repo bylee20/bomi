@@ -171,8 +171,6 @@ auto MainWindow::play() -> void
         switch (state) {
         case PlayEngine::Playing:
             break;
-        case PlayEngine::Loading:
-        case PlayEngine::Buffering:
         case PlayEngine::Paused:
             d->engine.unpause();
             break;
@@ -193,8 +191,6 @@ auto MainWindow::togglePlayPause() -> void
         const auto state = d->engine.state();
         switch (state) {
         case PlayEngine::Playing:
-        case PlayEngine::Loading:
-        case PlayEngine::Buffering:
             d->engine.pause();
             break;
         default:

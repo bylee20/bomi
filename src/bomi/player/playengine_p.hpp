@@ -42,7 +42,7 @@
 DECLARE_LOG_CONTEXT(Engine)
 
 enum EventType {
-    UserType = QEvent::User, StateChange,
+    UserType = QEvent::User, StateChange, WaitingChange,
     PreparePlayback,EndPlayback, StartPlayback, NotifySeek,
     EventTypeMax
 };
@@ -202,6 +202,8 @@ struct PlayEngine::Data {
     PlayEngine *p = nullptr;
     Thread thread{p};
     QTemporaryDir confDir;
+    Waitings waitings = NoWaiting;
+    State state = Stopped;
     QTemporaryFile customShader;
     QStringList audioPriorty;
     QVector<Observation> observations;
@@ -273,6 +275,28 @@ struct PlayEngine::Data {
 
     QImage ssNoOsd, ssWithOsd;
 
+    auto updateState(State state) -> void
+    {
+        const bool wasRunning = p->isPlaying();
+        if (_Change(this->state, state)) {
+            emit p->stateChanged(state);
+            if (wasRunning != p->isPlaying())
+                emit p->runningChanged();
+        }
+    }
+
+    auto setWaitings(Waitings w, bool set) -> void
+    {
+        auto old = p->waiting();
+        if (set)
+            waitings |= w;
+        else
+            waitings &= ~w;
+        auto new_ = p->waiting();
+        if (old != new_)
+            emit p->waitingChanged(new_);
+    }
+
     auto clearTimings()
     {
         fpsMeasure.reset();
@@ -290,7 +314,8 @@ struct PlayEngine::Data {
     auto updateColorMatrix() -> void;
     auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
     auto displaySize() const { return videoInfo.renderer()->size(); }
-    auto postState(State state) -> void { _PostEvent(p, StateChange, state); }
+    auto post(State state) -> void { _PostEvent(p, StateChange, state); }
+    auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
     auto exec() -> void;
 
     auto mpVolume() const -> double { return volume*amp/10.0; }
@@ -448,7 +473,6 @@ struct PlayEngine::Data {
     auto dispatch(mpv_event *event) -> void;
     auto process(QEvent *event) -> void;
     auto log(const QByteArray &prefix, const QByteArray &text) -> void;
-    auto translateMpvStateToState() -> void;
     int hookId = 0;
     template<class F>
     auto hook(const QByteArray &when, F &&handler) -> void

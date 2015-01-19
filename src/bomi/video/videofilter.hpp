@@ -24,8 +24,7 @@ signals:
     void inputInterlacedChanged();
     void outputInterlacedChanged();
     void deintMethodChanged(DeintMethod method);
-    void scanningStarted();
-    void scanningFinished();
+    void skippingChanged(bool skipping);
     void seekRequested(int msec);
 private:
     static auto open(vf_instance *vf) -> int;
