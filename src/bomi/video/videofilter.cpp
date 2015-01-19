@@ -210,47 +210,54 @@ auto VideoFilter::isSkipping() const -> bool
     return d->skip;
 }
 
-template<class T, int bits>
-static auto luma(const mp_image *mpi) -> double
+template<class F>
+static auto avgLuma(const mp_image *mpi, F &&addLine) -> double
 {
-    static_assert(sizeof(T)*8 >= bits, "!!!");
-    constexpr const T Max = (1 << bits) - 1;
-    static_assert(_Max<T>() == Max, "!!!");
-    uchar *data = mpi->planes[0];
+    const uchar *const data = mpi->planes[0];
     double avg = 0;
-    for (int y = 0; y < mpi->plane_h[0]; ++y) {
-        const T *p = (const T*)(data + y * mpi->stride[0]);
-        for (int x = 0; x < mpi->plane_w[0]; ++x)
-            avg += *p++;
-    }
+    for (int y = 0; y < mpi->plane_h[0]; ++y)
+         addLine(avg, data + y * mpi->stride[0], mpi->plane_w[0]);
+    const int bits = mpi->fmt.plane_bits;
     avg /= mpi->plane_h[0] * mpi->plane_w[0];
-    avg /= Max;
+    avg /= (1 << bits) - 1;
     if (mpi->params.colorlevels == MP_CSP_LEVELS_TV)
         avg = (avg - 16.0/255)*255.0/(235.0 - 16.0);
     return avg;
 }
 
+template<class T>
+static auto lumaYCbCrPlanar(const mp_image *mpi) -> double
+{
+    return avgLuma(mpi, [] (double &sum, const uchar *data, int w) {
+        const T *p = (const T*)data;
+        for (int x = 0; x < w; ++x)
+            sum += *p++;
+    });
+}
+
 static auto luminance(const mp_image *mpi) -> double
 {
-    uchar *data = mpi->planes[0];
     switch (mpi->imgfmt) {
-    case IMGFMT_420P: {
-        double avg = 0;
-        for (int y = 0; y < mpi->plane_h[0]; ++y) {
-            uchar *p = data + y * mpi->stride[0];
-            for (int x = 0; x < mpi->plane_w[0]; ++x)
-                avg += *p++;
-        }
-        avg /= mpi->plane_h[0] * mpi->plane_w[0];
-        avg = (avg - 16)/(235 - 16);
-        return avg;
-    } case IMGFMT_420P9:
-    case IMGFMT_420P10:
-    case IMGFMT_420P12:
-    case IMGFMT_420P14:
-    case IMGFMT_420P16:
-
-    default:
+    case IMGFMT_420P:   case IMGFMT_NV12:   case IMGFMT_NV21:
+    case IMGFMT_444P:   case IMGFMT_422P:   case IMGFMT_440P:
+    case IMGFMT_411P:   case IMGFMT_410P:   case IMGFMT_Y8:
+    case IMGFMT_444AP:  case IMGFMT_422AP:  case IMGFMT_420AP:
+        return lumaYCbCrPlanar<quint8>(mpi);
+    case IMGFMT_444P16: case IMGFMT_444P14: case IMGFMT_444P12:
+    case IMGFMT_444P10: case IMGFMT_444P9:  case IMGFMT_422P16:
+    case IMGFMT_422P14: case IMGFMT_422P12: case IMGFMT_422P10:
+    case IMGFMT_422P9:  case IMGFMT_420P16: case IMGFMT_420P14:
+    case IMGFMT_420P12: case IMGFMT_420P10: case IMGFMT_420P9:
+    case IMGFMT_Y16:
+        return lumaYCbCrPlanar<quint16>(mpi);
+    case IMGFMT_YUYV:   case IMGFMT_UYVY: {
+        const int offset = mpi->imgfmt == IMGFMT_UYVY;
+        return avgLuma(mpi, [&] (double &sum, const uchar *p, int w) {
+            p += offset;
+            for (int i = 0; i < w; ++i, p += 2)
+                sum += *p;
+        });
+    } default:
         return -1;
     }
 }
@@ -276,7 +283,7 @@ auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
                 else {
                     if (mpi->pts < start)
                         return false;
-                    if (mpi->pts - start > 10*60)// 10min
+                    if (mpi->pts - start > 5*60)// 5min
                         return false;
                 }
                 MpImage img;
