@@ -366,16 +366,41 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
         return;
     Playlist playlist;
     QStringList subList;
-    for (int i=0; i<urls.size(); ++i) {
-        const auto suffix = QFileInfo(urls[i].path()).suffix().toLower();
+
+    auto addPlaylist = [&] (const QUrl &url, const QString &suffix) -> bool {
         if (_IsSuffixOf(PlaylistExt, suffix)) {
             Playlist list;
-            list.load(urls[i]);
+            list.load(url);
             playlist += list;
-        } else if (_IsSuffixOf(SubtitleExt, suffix))
-            subList << urls[i].toLocalFile();
-        else if (_IsSuffixOf(VideoExt, suffix) || _IsSuffixOf(AudioExt, suffix))
-            playlist.append(urls[i]);
+        } else if (_IsSuffixOf(VideoExt, suffix)
+                   || _IsSuffixOf(AudioExt, suffix))
+            playlist.append(url);
+        else
+            return false;
+        return true;
+    };
+
+    for (auto &url : urls) {
+        if (url.isLocalFile()) {
+            const QFileInfo fileInfo(url.toLocalFile());
+            if (!fileInfo.exists())
+                continue;
+            auto path = fileInfo.absoluteFilePath();
+            if (fileInfo.isFile()) {
+                const auto suffix = fileInfo.suffix();
+                if (!addPlaylist(url, suffix) && _IsSuffixOf(SubtitleExt, suffix))
+                    subList << path;
+            } else if (fileInfo.isDir()) {
+                if (!fileInfo.fileName().compare("VIDEO_TS"_a, Qt::CaseInsensitive)
+                        && !QDir(path).entryList(QStringList(u"*.ifo"_q), QDir::Files).isEmpty()) {
+                    d->as.dvd_device = path;
+                    d->openMrl(Mrl::fromDisc(u"dvdnav"_q, d->as.dvd_device, -1, true));
+                } else
+                    d->openDir(path);
+                return;
+            }
+        } else
+            addPlaylist(url, QFileInfo(url.path()).suffix().toLower());
     }
     if (!playlist.isEmpty()) {
         d->openWith(d->pref().open_media_by_drag_and_drop, playlist);
