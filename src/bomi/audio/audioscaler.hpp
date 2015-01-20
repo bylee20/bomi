@@ -5,10 +5,11 @@
 
 class AudioScaler : public AudioFilter {
 public:
-    auto delay() const -> double { return m_delay; }
+    auto delay() const -> double override { return m_delay; }
     auto setScale(bool on, double scale) -> void;
     auto setFormat(const AudioBufferFormat &format) -> void;
-    auto run(AudioBufferPtr in) -> AudioBufferPtr;
+    auto run(AudioBufferPtr &in) -> AudioBufferPtr override;
+    auto passthrough(const AudioBufferPtr &in) const -> bool override;
     auto isActive() const -> bool { return m_enabled; }
     auto reset() -> void override;
 private:

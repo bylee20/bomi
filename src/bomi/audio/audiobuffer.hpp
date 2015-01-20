@@ -49,6 +49,7 @@ public:
     auto isWritable() const -> bool { return m_writable; }
     auto take() -> mp_audio* { auto p = m_audio; m_audio = nullptr; return p; }
     auto detach() -> void { if (!m_writable) mp_audio_make_writeable(m_audio); }
+    auto type() const -> af_format { return (af_format)m_audio->format; }
     auto samples() const -> int { return frames() * channels(); }
     auto frames() const -> int { return m_audio->samples; }
     auto channels() const -> int { return m_audio->channels.num; }

@@ -6,7 +6,12 @@ auto AudioAnalyzer::setFormat(const AudioBufferFormat &format) -> void
     resetNormalizer();
 }
 
-auto AudioAnalyzer::run(AudioBufferPtr in) -> AudioBufferPtr
+auto AudioAnalyzer::passthrough(const AudioBufferPtr &in) const -> bool
+{
+    return !m_normalizerActive || in->isEmpty();
+}
+
+auto AudioAnalyzer::run(AudioBufferPtr &in) -> AudioBufferPtr
 {
     if (!m_normalizerActive)
         return in;
@@ -38,6 +43,7 @@ auto AudioAnalyzer::run(AudioBufferPtr in) -> AudioBufferPtr
         m_history.push_back(input);
         m_historyIt = --m_history.end();
     }
+    emit gainCalculated(m_gain);
     return in;
 }
 

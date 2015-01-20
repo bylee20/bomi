@@ -4,11 +4,12 @@
 #include "audionormalizeroption.hpp"
 #include "audiofilter.hpp"
 
-class AudioAnalyzer : public AudioFilter {
+class AudioAnalyzer : public QObject, public AudioFilter {
     struct LevelInfo {
         LevelInfo(int frames = 0): frames(frames) { }
         int frames = 0; double level = 0.0;
     };
+    Q_OBJECT
 public:
     auto resetNormalizer() -> void
         { m_gain = 1.0; m_history.clear(); m_historyIt = m_history.end(); }
@@ -17,8 +18,11 @@ public:
     auto setNormalizerOption(const AudioNormalizerOption &opt)
         { m_normalizerOption = opt; resetNormalizer(); }
     auto setFormat(const AudioBufferFormat &format) -> void;
-    auto run(AudioBufferPtr in) -> AudioBufferPtr;
+    auto run(AudioBufferPtr &in) -> AudioBufferPtr override;
     auto gain() const -> float { return m_gain; }
+    auto passthrough(const AudioBufferPtr &in) const -> bool override;
+signals:
+    void gainCalculated(float gain);
 private:
     auto average(const LevelInfo &add) const -> LevelInfo;
     AudioNormalizerOption m_normalizerOption;

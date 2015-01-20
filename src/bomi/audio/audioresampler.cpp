@@ -27,6 +27,7 @@ AudioResampler::~AudioResampler()
 
 auto AudioResampler::setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void
 {
+    d->delay = 0.0;
     if (!(_Change(d->in, in) | _Change(d->out, out)))
         return;
     d->resample = d->in != d->out;
@@ -45,7 +46,17 @@ auto AudioResampler::setFormat(const AudioBufferFormat &in, const AudioBufferFor
     swr_init(d->swr);
 }
 
-auto AudioResampler::run(AudioBufferPtr in) -> AudioBufferPtr
+auto AudioResampler::delay() const -> double
+{
+    return d->delay;
+}
+
+auto AudioResampler::passthrough(const AudioBufferPtr &/*in*/) const -> bool
+{
+    return !d->resample;
+}
+
+auto AudioResampler::run(AudioBufferPtr &in) -> AudioBufferPtr
 {
     d->delay = 0;
     if (!d->resample)

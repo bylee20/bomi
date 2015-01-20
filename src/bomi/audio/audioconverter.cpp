@@ -47,7 +47,12 @@ auto AudioConverter::setFormat(const AudioBufferFormat &format) -> void
     Q_ASSERT(m_convert != nullptr);
 }
 
-auto AudioConverter::run(AudioBufferPtr in) -> AudioBufferPtr
+auto AudioConverter::passthrough(const AudioBufferPtr &/*in*/) const -> bool
+{
+    return m_format.type() == AF_FORMAT_FLOAT;
+}
+
+auto AudioConverter::run(AudioBufferPtr &in) -> AudioBufferPtr
 {
     if (m_format.type() == AF_FORMAT_FLOAT)
         return in;

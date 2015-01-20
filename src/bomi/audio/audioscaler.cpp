@@ -23,6 +23,7 @@ auto AudioScaler::move(float *dst, int to, int from, int frames) const -> void
 
 auto AudioScaler::setFormat(const AudioBufferFormat &format) -> void
 {
+    m_delay = 0.0;
     m_format = format;
     const double frames_per_ms = m_format.fps() / 1000.0;
     m_frames_stride = frames_per_ms * m_ms_stride;
@@ -54,7 +55,12 @@ auto AudioScaler::setFormat(const AudioBufferFormat &format) -> void
     expand(m_queue, m_frames_search + m_overlap.frames + m_frames_stride);
 }
 
-auto AudioScaler::run(AudioBufferPtr in) -> AudioBufferPtr
+auto AudioScaler::passthrough(const AudioBufferPtr &in) const -> bool
+{
+    return !m_enabled || in->isEmpty();
+}
+
+auto AudioScaler::run(AudioBufferPtr &in) -> AudioBufferPtr
 {
     m_delay = 0;
     const int frames_in = in->frames();

@@ -15,7 +15,8 @@ public:
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void
         { m_map = map; m_ch_man = map(m_in.channels(), m_out.channels()); }
     auto setClippingMethod(ClippingMethod method) -> void;
-    auto run(AudioBufferPtr in) -> AudioBufferPtr;
+    auto run(AudioBufferPtr &in) -> AudioBufferPtr override;
+    auto passthrough(const AudioBufferPtr &in) const -> bool override;
 protected:
     AudioBufferFormat m_in, m_out;
     float m_amp = 1.0;

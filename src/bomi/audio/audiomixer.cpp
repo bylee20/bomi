@@ -83,7 +83,12 @@ auto AudioMixer::setFormat(const AudioBufferFormat &in, const AudioBufferFormat 
     setChannelLayoutMap(m_map);
 }
 
-auto AudioMixer::run(AudioBufferPtr src) -> AudioBufferPtr
+auto AudioMixer::passthrough(const AudioBufferPtr &/*in*/) const -> bool
+{
+    return false;
+}
+
+auto AudioMixer::run(AudioBufferPtr &src) -> AudioBufferPtr
 {
     const int frames = src->frames();
     auto dest = newBuffer(m_out, frames);

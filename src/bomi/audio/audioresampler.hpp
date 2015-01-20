@@ -8,9 +8,10 @@ public:
     AudioResampler();
     ~AudioResampler();
     auto setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void;
-    auto run(AudioBufferPtr in) -> AudioBufferPtr;
-    auto delay() const -> double;
+    auto run(AudioBufferPtr &in) -> AudioBufferPtr override;
+    auto delay() const -> double override;
     auto reset() -> void override;
+    auto passthrough(const AudioBufferPtr &in) const -> bool override;
 private:
     struct Data;
     Data *d;

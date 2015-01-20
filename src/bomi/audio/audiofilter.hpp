@@ -11,6 +11,9 @@ public:
     auto newBuffer(const AudioBufferFormat &format, int frames) -> AudioBufferPtr
     { return AudioBuffer::fromMpAudio(mp_audio_pool_get(m_pool, &format.mpAudio(), frames)); }
     virtual auto reset() -> void;
+    virtual auto delay() const -> double;
+    virtual auto passthrough(const AudioBufferPtr &in) const -> bool = 0;
+    virtual auto run(AudioBufferPtr &in) -> AudioBufferPtr = 0;
 private:
     mp_audio_pool *m_pool = nullptr;
 };

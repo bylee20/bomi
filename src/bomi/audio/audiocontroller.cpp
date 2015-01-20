@@ -58,7 +58,6 @@ struct AudioController::Data {
     int srate = 0;
     quint64 samples = 0;
     bool normalizerActivated = false, tempoScalerActivated = false;
-    bool resample = false;
     double scale = 1.0, amp = 1.0, gain = 1.0;
     mp_chmap chmap;
     af_instance *af = nullptr;
@@ -90,6 +89,13 @@ AudioController::AudioController(QObject *parent)
         if (_Change<double>(d->gain, d->normalizerActivated ? d->analyzer.gain() : -1))
             emit gainChanged(d->gain);
     }, 100000);
+
+    d->chain << &d->resampler << &d->analyzer
+             << &d->scaler << &d->mixer << &d->converter;
+
+    connect(&d->analyzer, &AudioAnalyzer::gainCalculated, this,
+            [=] (double gain) { d->mixer.setAmplifier(d->amp * gain); },
+            Qt::DirectConnection);
 }
 
 AudioController::~AudioController()
@@ -131,7 +137,6 @@ auto AudioController::uninit(af_instance *af) -> void
     Q_ASSERT(ac != nullptr);
     d->af = nullptr;
     d->layout = ChannelLayoutInfo::default_();
-    d->chain.clear();
 }
 
 auto AudioController::reinitialize(mp_audio *from) -> int
@@ -197,11 +202,10 @@ auto AudioController::reinitialize(mp_audio *from) -> int
     d->fmt_to = (af_format)to->format;
     d->dirty = 0xffffffff;
 
-    d->chain.clear();
-    d->chain << &d->resampler << &d->analyzer
-             << &d->scaler << &d->mixer << &d->converter;
-    for (auto filter : d->chain)
+    for (auto filter : d->chain) {
         filter->setPool(d->af->out_pool);
+        filter->reset();
+    }
     return true;
 }
 
@@ -265,15 +269,18 @@ auto AudioController::filter(af_instance *af, mp_audio *data) -> int
         d->dirty = 0;
     }
 
+    d->mixer.setAmplifier(d->amp);
     auto buffer = AudioBuffer::fromMpAudio(data);
-    buffer = d->resampler.run(buffer);
-    buffer = d->analyzer.run(buffer);
-    buffer = d->scaler.run(buffer);
-    d->mixer.setAmplifier(d->amp * d->analyzer.gain());
-    buffer = d->mixer.run(buffer);
-    buffer = d->converter.run(buffer);
-    af_add_output_frame(d->af, buffer->take());
-    af->delay += d->scaler.delay();
+
+    for (auto filter : d->chain) {
+        if (filter->passthrough(buffer))
+            continue;
+        buffer = filter->run(buffer);
+        d->af->delay += filter->delay();
+    }
+    auto audio = buffer->take();
+    Q_ASSERT(mp_audio_config_equals(&af->fmt_out, audio));
+    af_add_output_frame(d->af, audio);
     d->measure.push(d->samples += data->samples);
     return 0;
 }
