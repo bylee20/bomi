@@ -1,6 +1,8 @@
 #ifndef APP_X11_HPP
 #define APP_X11_HPP
 
+#include <QObject>
+
 class AppX11 : public QObject {
     Q_OBJECT
 public:
