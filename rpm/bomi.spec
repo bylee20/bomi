@@ -62,9 +62,7 @@ BuildRequires:  libchardet-devel
 BuildRequires:  libdvdnav-devel
 BuildRequires:  libdvdread-devel
 BuildRequires:  libmpg123-devel
-BuildRequires:  libquvi-devel
 BuildRequires:  libva-devel
-BuildRequires:  portaudio-devel
 BuildRequires:  python
 BuildRequires:  xcb-util-devel
 BuildRequires:  xcb-util-wm-devel
@@ -87,7 +85,6 @@ bomi is a Qt-based multimedia player utilizing the MPV video back-end.
 ./build-libchardet
 ./configure --prefix=/usr \
  --enable-jack \ 
- --enable-portaudio \ 
  --enable-pulseaudio \
  --enable-cdda \
  --mandir=%{_mandir}
