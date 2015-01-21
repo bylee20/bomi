@@ -6,6 +6,10 @@ extern "C" {
 #include <audio/audio.h>
 }
 
+#ifdef bool
+#undef bool
+#endif
+
 class AudioBufferFormat {
 public:
     AudioBufferFormat() { memset(&m_audio, 0, sizeof(m_audio)); }

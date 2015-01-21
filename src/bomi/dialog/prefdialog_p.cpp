@@ -56,7 +56,7 @@ auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
     QList<QTreeWidgetItem*> children;
     for (int i=0; i<actions.size(); ++i) {
         const auto action = actions[i];
-        const auto id = root.longId(action);
+        const auto id = root.id(action);
         if (!id.isEmpty()) {
             if (action->menu()) {
                 auto menu = qobject_cast<Menu*>(action->menu());

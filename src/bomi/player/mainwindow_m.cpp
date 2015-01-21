@@ -25,8 +25,6 @@ auto MainWindow::Data::plugStreamActions(Menu *menu, F func,
         }
     };
     connect(menu, &QMenu::aboutToShow, p, checkCurrentStreamAction);
-    for (auto copy : menu->copies())
-        connect(copy, &QMenu::aboutToShow, p, checkCurrentStreamAction);
 }
 
 template<class T, class Func>
@@ -666,9 +664,9 @@ auto MainWindow::Data::connectMenus() -> void
             engine.setCurrentSubtitleStream(-1);
         setSubtitleTracksToEngine();
     });
-    connect(&strack, &Menu::actionsSynchronized, p, [this] () {
-        setSubtitleTracksToEngine();
-    });
+//    connect(&strack, &Menu::actionsSynchronized, p, [this] () {
+//        setSubtitleTracksToEngine();
+//    });
     plugEnumMenu<SubtitleDisplay>
             (sub, "sub_display", &MrlState::subDisplayChanged, [this] () {
         const auto on = as.state.sub_display == SubtitleDisplay::OnLetterbox;

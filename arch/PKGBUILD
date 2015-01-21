@@ -3,7 +3,7 @@
 
 pkgname=bomi
 pkgver=0.9.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="http://$pkgname-player.github.io"
@@ -24,7 +24,7 @@ options=(debug !strip)
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
-  ./configure --prefix=/usr --enable-jack --enable-cdda
+  ./configure --prefix=/usr --enable-jack --enable-cdda --enable-pulseaudio
   make
 }
 

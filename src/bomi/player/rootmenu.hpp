@@ -3,9 +3,7 @@
 
 #include "widget/menu.hpp"
 
-using Shortcuts = QHash<QString, QList<QKeySequence>>;
-
-class Pref;
+using Shortcuts = QMap<QString, QList<QKeySequence>>;
 
 class RootMenu : public Menu {
     Q_OBJECT
@@ -15,9 +13,9 @@ public:
     enum Preset {Current, bomi, Movist};
     RootMenu();
     RootMenu(const RootMenu &) = delete;
-    ~RootMenu() {obj = nullptr;}
+    ~RootMenu();
     auto retranslate() -> void;
-    auto longId(QAction *action) const -> QString {return m_ids.value(action);}
+    auto id(QAction *action) const -> QString;
     auto action(const QString &longId) const -> QAction*
         { return m_actions.value(longId).action; }
     auto action(const QKeySequence &shortcut) const -> QAction*
@@ -29,12 +27,12 @@ public:
     static auto execute(const QString &longId,
                         const QString &argument = QString()) -> bool;
 private:
-    auto fillId(Menu *menu, const QString &parent) -> void;
     auto fillKeyMap(Menu *menu) -> void;
     static RootMenu *obj;
-    QHash<QAction*, QString> m_ids;
-    QHash<QString, ArgAction> m_actions;
+    QMap<QString, ArgAction> m_actions;
     QMap<QKeySequence, QAction*> m_keymap;
+    struct Data;
+    Data *d;
 };
 
 #endif // ROOTMENU_HPP

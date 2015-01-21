@@ -22,7 +22,7 @@
 #include "quick/osdthemeobject.hpp"
 #include "pref_helper.hpp"
 
-using Shortcuts = QHash<QString, QList<QKeySequence>>;
+using Shortcuts = QMap<QString, QList<QKeySequence>>;
 enum class KeyMapPreset {Bomi, Movist};
 
 class Pref : public QObject {

@@ -17,10 +17,6 @@
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
 
-#ifdef bool
-#undef bool
-#endif
-
 static inline bool operator == (const QMetaProperty &lhs, const QMetaProperty &rhs) {
     return lhs.enclosingMetaObject() == rhs.enclosingMetaObject() && lhs.propertyIndex() == rhs.propertyIndex();
 }

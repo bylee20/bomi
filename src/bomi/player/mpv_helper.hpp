@@ -5,6 +5,10 @@ extern "C" {
 #include <options/m_option.h>
 }
 
+#ifdef bool
+#undef bool
+#endif
+
 template<class T>
 SIA address_cast(const char *address, int base = 10)
 -> typename std::enable_if<std::is_pointer<T>::value, T>::type

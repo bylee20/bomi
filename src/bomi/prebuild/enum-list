@@ -12,6 +12,9 @@
 !extern "C" {
 !#include <audio/chmap.h>
 !}
+!#ifdef bool
+!#undef bool
+!#endif
 -FrontLeft[=(1 << 0)=][:MP_SPEAKER_ID_FL:]
 -FrontRight[=(1 << 1)=][:MP_SPEAKER_ID_FR:]
 -FrontCenter[=(1 << 2)=][:MP_SPEAKER_ID_FC:]

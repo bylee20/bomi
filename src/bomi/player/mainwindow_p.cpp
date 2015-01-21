@@ -26,24 +26,22 @@ auto MainWindow::Data::updateListMenu(Menu &menu, const List &list,
                                       int current, const QString &group) -> void
 {
     if (group.isEmpty())
-        menu.setEnabledSync(!list.isEmpty());
+        menu.setEnabled(!list.isEmpty());
     if (!list.isEmpty()) {
         menu.g(group)->clear();
         for (auto it = list.begin(); it != list.end(); ++it) {
-            auto act = menu.addActionToGroupWithoutKey(it->name(), true, group);
+            auto act = menu.addActionNoKey(it->name(), true, group);
             act->setData(it->id());
             if (current == it->id())
                 act->setChecked(true);
         }
     } else if (!group.isEmpty()) // partial in menu
         menu.g(group)->clear();
-    menu.syncActions();
 }
 
 auto MainWindow::Data::initContextMenu() -> void
 {
-    auto addContextMenu = [this] (Menu &menu)
-        { contextMenu.addMenu(menu.copied(&contextMenu)); };
+    auto addContextMenu = [this] (Menu &menu) { contextMenu.addMenu(&menu); };
     addContextMenu(menu(u"open"_q));
     contextMenu.addSeparator();
     addContextMenu(menu(u"play"_q));
@@ -205,6 +203,7 @@ auto MainWindow::Data::initEngine() -> void
         auto &menu = this->menu(u"subtitle"_q)(u"track"_q);
         const auto stream = engine.currentSubtitleStream();
         updateListMenu(menu, streams, stream, u"internal"_q);
+        setSubtitleTracksToEngine();
     });
     connect(&engine, &PlayEngine::chaptersChanged,
             p, [this] (const ChapterList &chapters) {
@@ -214,25 +213,21 @@ auto MainWindow::Data::initEngine() -> void
     connect(&engine, &PlayEngine::currentAudioStreamChanged,
             p, [this] (int stream) {
         auto action = menu(u"audio"_q)(u"track"_q).g()->find(stream);
-        if (action && !action->isChecked()) {
+        if (action && !action->isChecked())
             action->setChecked(true);
-            menu(u"audio"_q)(u"track"_q).syncActions();
-        }
     });
     connect(&engine, &PlayEngine::currentVideoStreamChanged,
             p, [this] (int stream) {
         auto action = menu(u"video"_q)(u"track"_q).g()->find(stream);
-        if (action && !action->isChecked()) {
+        if (action && !action->isChecked())
             action->setChecked(true);
-            menu(u"video"_q)(u"track"_q).syncActions();
-        }
     });
     connect(&engine, &PlayEngine::currentSubtitleStreamChanged,
             p, [this] (int stream) {
         auto acts = menu(u"subtitle"_q)(u"track"_q).g(u"internal"_q)->actions();
         for (auto action : acts)
             action->setChecked(action->data().toInt() == stream);
-        menu(u"subtitle"_q)(u"track"_q).syncActions();
+        setSubtitleTracksToEngine();
     });
 
     connect(&engine, &PlayEngine::started, p, [this] (Mrl mrl, bool reloaded) {
@@ -623,7 +618,6 @@ auto MainWindow::Data::syncSubtitleFileMenu() -> void
         actions[i]->setData(i);
         actions[i]->setChecked(components[i]->selection());
     }
-    list.syncActions();
     changingSub = false;
 }
 
@@ -909,7 +903,6 @@ auto MainWindow::Data::applyPref() -> void
     menu(u"audio"_q)(u"sync"_q).s()->setStep(p.audio_sync_step_sec * 1000);
     menu(u"audio"_q)(u"volume"_q).s()->setStep(p.volume_step);
     menu(u"audio"_q)(u"amp"_q).s()->setStep(p.amp_step);
-    menu.syncTitle();
     menu.resetKeyMap();
 
     cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
@@ -1032,7 +1025,6 @@ auto MainWindow::Data::updateRecentActions(const QList<Mrl> &list) -> void
         act->setText(list[i].displayName());
         act->setVisible(!list[i].isEmpty());
     }
-    recent.syncActions();
 }
 
 auto MainWindow::Data::updateMrl(const Mrl &mrl) -> void

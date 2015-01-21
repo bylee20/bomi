@@ -6,6 +6,9 @@
 extern "C" {
 #include <audio/chmap.h>
 }
+#ifdef bool
+#undef bool
+#endif
 
 enum class SpeakerId : int {
     FrontLeft = (int)(1 << 0),

@@ -5,6 +5,10 @@ extern "C" {
 #include <video/mp_image.h>
 }
 
+#ifdef bool
+#undef bool
+#endif
+
 class MpImage {
 public:
     MpImage() { }

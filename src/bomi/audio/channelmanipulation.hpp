@@ -5,6 +5,10 @@ extern "C" {
 #include <audio/chmap.h>
 }
 
+#ifdef bool
+#undef bool
+#endif
+
 enum class ChannelLayout;               enum class SpeakerId;
 
 class ChannelManipulation {

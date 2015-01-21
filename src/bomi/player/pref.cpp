@@ -135,7 +135,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"audio/sync/decrease"_q] << Qt::Key_BracketLeft;
 
     keys[u"tool/playlist/toggle"_q] << Qt::Key_L;
-    keys[u"tool/history"_q] << Qt::Key_C;
+    keys[u"tool/history/toggle"_q] << Qt::Key_C;
     keys[u"tool/subtitle"_q] << Qt::SHIFT + Qt::Key_V;
     keys[u"tool/find-subtitle"_q] << Qt::SHIFT + Qt::CTRL + Qt::Key_F;
     keys[u"tool/pref"_q] << Qt::Key_P;

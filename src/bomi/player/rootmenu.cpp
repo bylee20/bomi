@@ -15,6 +15,7 @@
 #include "enum/interpolator.hpp"
 #include "enum/verticalalignment.hpp"
 #include "enum/horizontalalignment.hpp"
+#include <functional>
 
 DECLARE_LOG_CONTEXT(Menu)
 
@@ -23,361 +24,536 @@ auto root_menu_execute(const QString &longId, const QString &argument) -> bool
     return RootMenu::execute(longId, argument);
 }
 
-template<class T>
-auto addEnumAction(Menu &menu, T t, const QString &key, bool checkable = false,
-                   const QString &group = QString()) -> EnumAction<T>*
-{
-    auto action = _NewEnumAction<T>(t);
-    action->setCheckable(checkable);
-    menu.addActionToGroup(action, key, group);
-    return action;
-}
-
-template<class T>
-auto addEnumActions(Menu &menu, std::initializer_list<T> list,
-                    bool checkable = false) -> void
-{
-    static_assert(!std::is_same<T, ChangeValue>::value, "oops!");
-    const QString g = _L(EnumInfo<T>::typeKey());
-    for (const auto &item : list) {
-        const auto key = EnumInfo<T>::key(item);
-        auto action = menu.addActionToGroup(_NewEnumAction(item), key, g);
-        action->setCheckable(checkable);
-        if (key == u"reset"_q)
-            menu.addSeparator();
-    }
-}
-
-template<class T>
-auto addEnumActions(Menu &menu, bool checkable = false) -> void
-{
-    static_assert(!std::is_same<T, ChangeValue>::value, "oops!");
-    const QString g = _L(EnumInfo<T>::typeKey());
-    for (auto &item : EnumInfo<T>::items()) {
-        auto act = _NewEnumAction(item.value);
-        auto action = menu.addActionToGroup(act, item.key, g);
-        action->setCheckable(checkable);
-        if (item.key == u"reset"_q)
-            menu.addSeparator();
-    }
-}
-
-template<class T>
-auto addEnumActionsCheckable(Menu &menu, std::initializer_list<T> list,
-                             bool cycle, bool exclusive = true) -> void
-{
-    if (cycle) {
-        const int size = list.size();
-        menu.addAction(size > 2 ? u"next"_q : u"toggle"_q);
-        menu.addSeparator();
-    }
-    const QString g = _L(EnumInfo<T>::typeKey());
-    menu.addGroup(g)->setExclusive(exclusive);
-    for (const T &t : list) {
-        auto key = EnumInfo<T>::key(t);
-        auto action = menu.addActionToGroup(_NewEnumAction(t), key, g);
-        action->setCheckable(true);
-    }
-}
-
-template<class T>
-auto addEnumActionsCheckable(Menu &menu, bool cycle,
-                             bool exclusive = true) -> void
-{
-    if (cycle) {
-        const int size = EnumInfo<T>::size();
-        menu.addAction(size > 2 ? u"next"_q : u"toggle"_q);
-        menu.addSeparator();
-    }
-    const QString g = _L(EnumInfo<T>::typeKey());
-    menu.addGroup(g)->setExclusive(exclusive);
-    for (auto &item : EnumInfo<T>::items()) {
-        auto act = _NewEnumAction(item.value);
-        auto action = menu.addActionToGroup(act, item.key, g);
-        action->setCheckable(true);
-    }
-}
-
-template<class T>
-auto addEnumMenuCheckable(Menu &parent, bool cycle,
-                          bool exclusive = true) -> void
-{
-    auto menu = parent.addMenu(_L(EnumInfo<T>::typeKey()));
-    addEnumActionsCheckable<T>(*menu, cycle, exclusive);
-}
-
-template<class T>
-auto updateEnumActions(Menu &menu) -> void
-{
-    auto actions = menu.g(_L(EnumInfo<T>::typeKey()))->actions();
-    if (actions.size() > 2) {
-        auto next = _C(menu).a(u"next"_q);
-        if (next)
-            next->setText(qApp->translate("RootMenu", "Select Next"));
-    } else {
-        auto toggle = _C(menu).a(u"toggle"_q);
-        if (toggle)
-            toggle->setText(qApp->translate("RootMenu", "Toggle"));
-    }
-    for (auto a : actions) {
-        auto action = static_cast<EnumAction<T>*>(a);
-        action->setText(EnumInfo<T>::description(action->enum_()));
-    }
-}
-
-template<class T>
-auto updateEnumMenu(Menu &parent) -> void
-{
-    const auto desc = EnumInfo<T>::typeDescription();
-    updateEnumActions<T>(parent(_L(EnumInfo<T>::typeKey()), desc));
-}
-
 RootMenu *RootMenu::obj = nullptr;
 
-static auto addStepPair(Menu &menu, const QString &inc, const QString &dec,
-                        const QString &pair, int min, int def, int max,
-                        const QString &g = QString()) -> StepActionPair*
+using GetText = std::function<QString(void)>;
+using Translate = std::function<void(void)>;
+
+struct MenuActionInfo
 {
-    auto p = menu.addStepActionPair(inc, dec, pair, g);
-    p->setRange(min, def, max); return p;
-}
+    QString id; Translate trans;
+};
 
-static auto addStepPair(Menu &menu, const QString &inc,
-                        const QString &dec, const QString &pair,
-                        const QString &g = QString()) -> StepActionPair*
-{ return addStepPair(menu, inc, dec, pair, _Min<int>(), 0, _Max<int>(), g); }
+struct RootMenu::Data {
+    Menu *parent = nullptr;
+    QHash<QAction*, MenuActionInfo> infos;
 
-static auto addStepPair(Menu &menu, int min, int def, int max,
-                        const QString &g = QString()) -> StepActionPair*
-{ return addStepPair(menu, u"increase"_q, u"decrease"_q, QString(), min, def, max, g); }
+    auto toGetText(const char *trans) const -> GetText
+        { return [=] () { return tr(trans); }; }
 
-static auto addStepReset(Menu &menu, int min, int def, int max,
-                         const QString &g = u""_q) -> StepActionPair*
-{
-    auto reset = new StepAction(ChangeValue::Reset);
-    reset->setRange(min, def, max);
-    menu.addActionToGroup(reset, u"reset"_q, g);
-    menu.addSeparator();
-    return addStepPair(menu, min, def, max, g);
-}
+    auto newInfo(QAction *action, const QString &key) -> MenuActionInfo*
+    {
+        auto &info = infos[action];
+        const auto &prefix = infos[parent->menuAction()].id;
+        info.id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
+        obj->m_actions[info.id].action = action;
+        return &info;
+    }
+    auto newInfo(QMenu *menu, const QString &key) -> MenuActionInfo*
+    {
+        return newInfo(menu->menuAction(), key);
+    }
+    static auto translate(QAction *action, const QString &text) -> void
+    { action->setText(text); }
+    static auto translate(QMenu *menu, const QString &title) -> void
+    { menu->setTitle(title); }
 
-static auto addStepReset(Menu &menu,
-                         const QString &g = QString()) -> StepActionPair*
-{ return addStepReset(menu, _Min<int>(), 0, _Max<int>(), g); }
+    template<class T>
+    auto reg(T *o, const QString &id, GetText &&gt) -> T*
+    { newInfo(o, id)->trans = [=] () { translate(o, gt()); }; return o; }
+
+    template<class T>
+    auto reg(T *obj, const QString &id, const char *trans) -> T*
+    { return reg(obj, id, toGetText(trans)); }
+
+    template<class T>
+    auto reg(T *obj, const QString &id, Translate &&translate) -> T*
+    { newInfo(obj, id)->trans = std::move(translate); return obj; }
+
+    template<class Func>
+    auto menu(const QString &id, GetText &&gt, Func &&func) -> Menu*
+    {
+        Q_ASSERT(parent);
+        auto menu = parent->addMenu(id);
+        reg(menu, id, std::move(gt));
+        std::swap(parent, menu);
+        func();
+        std::swap(parent, menu);
+        return menu;
+    }
+
+    template<class Func>
+    auto menu(const QString &id, const char *tr, Func &&func) -> Menu*
+    {
+        return menu(id, toGetText(tr), std::move(func));
+    }
+
+    auto action(const QString &id, const char *tr, bool checkable = false) -> QAction*
+    { return reg(parent->addAction(id, checkable), id, tr); }
 
 
-RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
+    auto stepPair(const QString &inc, GetText &&itrans,
+                  const QString &dec, GetText &&dtrans,
+                  const QString &pair, int min, int def, int max,
+                  const QString &g = QString()) -> StepActionPair*
+    {
+        auto p = parent->addStepActionPair(inc, dec, pair, g);
+        reg(p->increase(), inc, [=] () { p->increase()->setFormat(itrans()); });
+        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(dtrans()); });
+        p->setRange(min, def, max);
+        return p;
+    }
+
+    auto stepPair(const QString &inc, const char *itrans,
+                  const QString &dec, const char *dtrans,
+                  const QString &pair, int min, int def, int max,
+                  const QString &g = QString()) -> StepActionPair*
+    {
+        auto p = parent->addStepActionPair(inc, dec, pair, g);
+        reg(p->increase(), inc, [=] () { p->increase()->setFormat(tr(itrans)); });
+        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(tr(dtrans)); });
+        p->setRange(min, def, max);
+        return p;
+    }
+
+    auto stepPair(const QString &inc, const char *itrans,
+                  const QString &dec, const char *dtrans, const QString &pair,
+                  const QString &g = QString()) -> StepActionPair*
+    { return stepPair(inc, itrans, dec, dtrans, pair, _Min<int>(), 0, _Max<int>(), g); }
+
+    auto stepPair(const char *f, int min, int def, int max,
+                  const QString &g = QString()) -> StepActionPair*
+    { return stepPair(u"increase"_q, f, u"decrease"_q, f, QString(), min, def, max, g); }
+
+    auto stepReset(const char *format, int min, int def, int max,
+                   const QString &g = u""_q) -> StepActionPair*
+    {
+        auto reset = new StepAction(ChangeValue::Reset);
+        reset->setRange(min, def, max);
+        parent->addActionToGroup(reset, u"reset"_q, g);
+        reg(reset, u"reset"_q, GetText([] () { return ChangeValueInfo::description(ChangeValue::Reset); }) );
+        separator();
+        return stepPair(format, min, def, max, g);
+    }
+
+    auto stepReset(const char *trans, const QString &g = QString()) -> StepActionPair*
+    { return stepReset(trans, _Min<int>(), 0, _Max<int>(), g); }
+
+    auto menuStepReset(const QString &key, const char *tr,
+                       const char *format, int min, int def, int max,
+                       const QString &g = u""_q) -> Menu*
+    { return menu(key, tr, [=] () { stepReset(format, min, def, max, g); }); }
+
+    auto menuStepReset(const QString &key, const char *tr, const char *format,
+                       qreal r = 0.0, const QString &g = QString()) -> Menu*
+    { return menu(key, tr, [=] () { stepReset(format, g)->setTextRate(r); }); }
+
+    template<class T>
+    using EnumItemVector = QVector<const typename EnumInfo<T>::Item*>;
+
+    template<class T>
+    auto toItemList(std::initializer_list<T> list) -> EnumItemVector<T>
+    {
+        EnumItemVector<T> ret; ret.reserve(list.size());
+        for (auto t : list)
+            ret.push_back(EnumInfo<T>::item(t));
+        return ret;
+    }
+
+    template<class T>
+    auto toItemList() -> EnumItemVector<T>
+    {
+        auto &items = EnumInfo<T>::items();
+        EnumItemVector<T> ret;
+        ret.reserve(items.size());
+        for (auto &t : items)
+            ret.push_back(&t);
+        return ret;
+    }
+
+    template<class T>
+    auto enumAction(T t, const QString &key, GetText &&gt, bool checkable = false,
+                    const QString &group = QString()) -> EnumAction<T>*
+    {
+        auto action = _NewEnumAction<T>(t);
+        action->setCheckable(checkable);
+        actionToGroup(action, key, std::move(gt), group);
+        return action;
+    }
+
+    template<class T>
+    auto enumAction(T t, const QString &id, bool ch = false,
+                    const QString &g = QString()) -> EnumAction<T>*
+    { return enumAction(t, id, [=] () { return EnumInfo<T>::description(t); }, ch, g); }
+
+    template<class T>
+    auto enumAction(T t, const QString &key, const char *trans, bool ch = false,
+                    const QString &g = QString()) -> EnumAction<T>*
+    { return enumAction<T>(t, key, toGetText(trans), ch, g); }
+
+    template<class T>
+    auto enumActions(const EnumItemVector<T> &items, bool checkable) -> void
+    {
+        static_assert(!std::is_same<T, ChangeValue>::value, "oops!");
+        const QString g = _L(EnumInfo<T>::typeKey());
+        for (auto &item : items) {
+            enumAction(item->value, item->key, checkable, g);
+            if (item->key == u"reset"_q)
+                separator();
+        }
+    }
+
+    template<class T>
+    auto enumActions(std::initializer_list<T> list, bool checkable = false) -> void
+    { enumActions<T>(toItemList(list), checkable); }
+
+    template<class T>
+    auto enumActions(bool checkable = false) -> void
+    { enumActions<T>(toItemList<T>(), checkable); }
+
+    template<class T>
+    auto enumActionsCheckable(const EnumItemVector<T> &items,
+                              bool cycle, bool exclusive = true) -> void
+    {
+        if (cycle) {
+            if (EnumInfo<T>::size() > 2)
+                action(u"next"_q, QT_TRANSLATE_NOOP(RootMenu, "Select Next"));
+            else
+                action(u"toggle"_q, QT_TRANSLATE_NOOP(RootMenu, "Toggle"));
+            separator();
+        }
+        const QString g = _L(EnumInfo<T>::typeKey());
+        group(g)->setExclusive(exclusive);
+        for (auto item: items)
+            enumAction(item->value, item->key, true, g);
+    }
+
+    template<class T>
+    auto enumActionsCheckable(std::initializer_list<T> list,
+                              bool cycle, bool exclusive = true) -> void
+    { enumActionsCheckable<T>(toItemList(list), cycle, exclusive); }
+
+    template<class T>
+    auto enumActionsCheckable(bool cycle, bool exclusive = true) -> void
+    { enumActionsCheckable<T>(toItemList<T>(), cycle, exclusive); }
+
+    template<class T>
+    auto enumMenuCheckable(bool cycle, bool exclusive = true) -> Menu*
+    { return menu(_L(EnumInfo<T>::typeKey()),
+                  [] () { return EnumInfo<T>::typeDescription(); },
+                  [=] () { enumActionsCheckable<T>(cycle, exclusive); }); }
+
+    template<class T>
+    auto enumMenuCheckable(const QString &key, const char *trans,
+                           bool cycle, bool exclusive = true) -> Menu*
+    { return menu(key, trans, [=] () { enumActionsCheckable<T>(cycle, exclusive); }); }
+
+    template<class T>
+    auto enumMenuCheckable(const QString &key, const char *trans,
+                           std::initializer_list<T> list, bool cycle, bool exclusive = true) -> Menu*
+    { return menu(key, trans, [=] () { enumActionsCheckable<T>(list, cycle, exclusive); }); }
+
+    auto actionToGroup(QAction *a, const QString &key, GetText &&getText, const QString &g) -> QAction*
+    { return reg(parent->addActionToGroup(a, key, g), key, std::move(getText)); }
+
+    auto actionToGroup(const QString &key, const char *trans,
+                       bool ch = false, const QString &g = u""_q) -> QAction*
+    { return reg(parent->addActionToGroup(key, ch, g), key, trans); }
+
+    auto actionToGroup(const QString &key, GetText &&getText,
+                       bool ch = false, const QString &g = u""_q) -> QAction*
+    { return reg(parent->addActionToGroup(key, ch, g), key, std::move(getText)); }
+
+    auto separator() -> QAction* { return parent->addSeparator(); }
+    auto group(const QString &g = u""_q) -> ActionGroup* { return parent->addGroup(g); }
+};
+
+RootMenu::RootMenu()
+    : Menu(u"menu"_q, 0), d(new Data) {
     Q_ASSERT(obj == nullptr);
     obj = this;
 
     setTitle(u"Root Menu"_q);
 
-    auto &open = *addMenu(u"open"_q);
-    open.addAction(u"file"_q);
-    open.addAction(u"folder"_q);
-    open.addAction(u"url"_q);
-    open.addAction(u"dvd"_q);
-    open.addAction(u"bluray"_q);
-    open.addSeparator();
-    auto &recent = *open.addMenu(u"recent"_q);
-    recent.addSeparator();
-    recent.addAction(u"clear"_q);
+    d->parent = this;
+    d->infos[menuAction()] = {QString(), [](){}};
 
-    auto &play = *addMenu(u"play"_q);
-    play.addAction(u"pause"_q);
-    play.addAction(u"stop"_q);
-    play.addSeparator();
-    play.addAction(u"prev"_q);
-    play.addAction(u"next"_q);
-    play.addSeparator();
-    addStepReset(*play.addMenu(u"speed"_q), 10, 100, 1000);
-    auto &repeat = *play.addMenu(u"repeat"_q);
-    repeat.addActionToGroup(u"range"_q, false)->setData(int('r'));
-    repeat.addActionToGroup(u"subtitle"_q, false)->setData(int('s'));
-    repeat.addActionToGroup(u"quit"_q, false)->setData(int('q'));
-    play.addSeparator();
-    play.addAction(u"disc-menu"_q);
-    auto &seek = *play.addMenu(u"seek"_q);
-    seek.addAction(u"begin"_q, false);
-    const QString forward(u"forward%1"_q), backward(u"backward%1"_q);
-    const QString seekStep(u"seek%1"_q);
-    for (int i = 1; i <= 3; ++i) {
-        auto pair = addStepPair(seek, forward.arg(i), backward.arg(i),
-                                seekStep.arg(i), u"relative"_q);
-        pair->increase()->setTextRate(0.001);
-        pair->decrease()->setTextRate(-0.001);
-        pair->increase()->setSign(false);
-        pair->decrease()->setSign(false);
-    }
-    seek.addSeparator();
-    seek.addActionToGroup(u"prev-frame"_q, false, u"frame"_q)->setData(-1);
-    seek.addActionToGroup(u"next-frame"_q, false, u"frame"_q)->setData(1);
-    seek.addAction(u"black-frame"_q, false);
-    seek.addSeparator();
-    seek.addActionToGroup(u"prev-subtitle"_q, false, u"subtitle"_q)->setData(-1);
-    seek.addActionToGroup(u"current-subtitle"_q, false, u"subtitle"_q)->setData(0);
-    seek.addActionToGroup(u"next-subtitle"_q, false, u"subtitle"_q)->setData(1);
-    play.addMenu(u"title"_q)->setEnabled(false);
-    auto &chapter = *play.addMenu(u"chapter"_q);
-    chapter.setEnabled(false);
-    chapter.g()->setExclusive(true);
-    chapter.addAction(u"prev"_q);
-    chapter.addAction(u"next"_q);
-    chapter.addSeparator();
+    d->menu(u"open"_q, QT_TR_NOOP("Open"), [=] () {
+        d->action(u"file"_q, QT_TR_NOOP("Open File"));
+        d->action(u"folder"_q, QT_TR_NOOP("Open Folder"));
+        d->action(u"url"_q, QT_TR_NOOP("Load URL"));
+        d->action(u"dvd"_q, QT_TR_NOOP("Open DVD"));
+        d->action(u"bluray"_q, QT_TR_NOOP("Open Blu-ray"));
 
-    auto &subtitle = *addMenu(u"subtitle"_q);
-    auto &spu = *subtitle.addMenu(u"track"_q);
-    spu.addGroup(u"internal"_q)->setExclusive(false);
-    spu.addGroup(u"external"_q)->setExclusive(false);
-    spu.addAction(u"open"_q);
-    spu.addAction(u"auto-load"_q);
-    spu.addAction(u"reload"_q);
-    spu.addAction(u"clear"_q);
-    spu.addSeparator();
-    spu.addAction(u"next"_q);
-    spu.addAction(u"all"_q);
-    spu.addAction(u"hide"_q, true);
-    spu.addSeparator();
-    subtitle.addSeparator();
-    addEnumMenuCheckable<SubtitleDisplay>(subtitle, true);
-    addEnumActionsCheckable(*subtitle.addMenu(u"align"_q),
-        {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
-    subtitle.addSeparator();
-    addStepReset(*subtitle.addMenu(u"position"_q), 0, 100, 100);
-    addStepReset(*subtitle.addMenu(u"sync"_q))->setTextRate(1e-3);
+        d->separator();
 
-    auto &video = *addMenu(u"video"_q);
-    video.addMenu(u"track"_q)->setEnabled(false);
-    video.addSeparator();
-    auto &snap = *video.addMenu(u"snapshot"_q);
-    snap.addAction(u"quick"_q);
-    snap.addAction(u"quick-nosub"_q);
-    snap.addAction(u"tool"_q);
-    video.addSeparator();
-    addEnumActionsCheckable<VideoRatio>(*video.addMenu(u"aspect"_q), true);
-    addEnumActionsCheckable<VideoRatio>(*video.addMenu(u"crop"_q), true);
-    auto &align = *video.addMenu(u"align"_q);
-    addEnumActionsCheckable<VerticalAlignment>(align, false);
-    align.addSeparator();
-    addEnumActionsCheckable<HorizontalAlignment>(align, false);
-    auto &move = *video.addMenu(u"move"_q);
-    addEnumActions<MoveToward>(move);
-    video.addSeparator();
-
-    addEnumMenuCheckable<ColorSpace>(video, true);
-    addEnumMenuCheckable<ColorRange>(video, true);
-    video.addSeparator();
-
-    addEnumActionsCheckable<Interpolator>(*video.addMenu(u"chroma-upscaler"_q), true);
-    addEnumActionsCheckable<Interpolator>(*video.addMenu(u"interpolator"_q), true);
-    auto &scaler = *video.addMenu(u"hq-scaling"_q);
-    scaler.addAction(u"up"_q, true);
-    scaler.addAction(u"down"_q, true);
-    video.addSeparator();
-
-    addEnumMenuCheckable<DeintMode>(video, true);
-    addEnumMenuCheckable<Dithering>(video, true);
-    auto &effect = *video.addMenu(u"filter"_q);
-    effect.g()->setExclusive(false);
-    addEnumAction(effect, VideoEffect::FlipV, u"flip-v"_q, true);
-    addEnumAction(effect, VideoEffect::FlipH, u"flip-h"_q, true);
-    effect.addSeparator();
-    addEnumAction(effect, VideoEffect::Remap, u"remap"_q, true);
-    addEnumAction(effect, VideoEffect::Gray, u"gray"_q, true);
-    addEnumAction(effect, VideoEffect::Invert, u"invert"_q, true);
-    effect.addSeparator();
-    addEnumAction(effect, VideoEffect::Disable, u"disable"_q, true);
-
-    auto &color = *video.addMenu(u"color"_q);
-    color.addActionToGroup(u"reset"_q);
-    color.addSeparator();
-    VideoColor::for_type([&] (VideoColor::Type type) {
-        const auto str = VideoColor::name(type);
-        addStepPair(color, str % '+'_q, str % '-'_q, str, -100, 0, 100, str);
+        d->menu(u"recent"_q, QT_TR_NOOP("Recently Opened"), [=] () {
+            d->separator();
+            d->action(u"clear"_q, QT_TR_NOOP("Clear"));
+        });
     });
 
-    auto &audio = *addMenu(u"audio"_q);
-    auto &track = *audio.addMenu(u"track"_q);
-    track.setEnabled(false);
-    track.g()->setExclusive(true);
-    track.addAction(u"next"_q);
-    track.addSeparator();
-    addStepReset(*audio.addMenu(u"sync"_q))->setTextRate(1e-3);
-    audio.addSeparator();
-    auto &volume = *audio.addMenu(u"volume"_q);
-    volume.addAction(u"mute"_q, true);
-    volume.addSeparator();
-    ::addStepPair(volume, 0, 100, 100);
-    addStepReset(*audio.addMenu(u"amp"_q), 10, 100, 1000);
-    addEnumMenuCheckable<ChannelLayout>(audio, true);
-    audio.addSeparator();
+    d->menu(u"play"_q, QT_TR_NOOP("Play"), [=] () {
+        d->action(u"pause"_q, QT_TR_NOOP("Play"));
+        d->action(u"stop"_q, QT_TR_NOOP("Stop"));
+        d->separator();
+        d->action(u"prev"_q, QT_TR_NOOP("Play Previous"));
+        d->action(u"next"_q, QT_TR_NOOP("Play Next"));
 
-    audio.addSeparator();
-    audio.addAction(u"normalizer"_q, true)->setShortcut(Qt::Key_N);
-    audio.addAction(u"tempo-scaler"_q, true)->setShortcut(Qt::Key_Z);
+        d->separator();
 
+        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"), "%1%", 10, 100, 1000);
+        d->menu(u"repeat"_q, QT_TR_NOOP("A-B Repeat"), [=] () {
+            d->actionToGroup(u"range"_q, QT_TR_NOOP("Set Range to Current Time"))->setData(int('r'));
+            d->actionToGroup(u"subtitle"_q, QT_TR_NOOP("Repeat Current Subtitle"))->setData(int('s'));
+            d->actionToGroup(u"quit"_q, QT_TR_NOOP("Quit"))->setData(int('q'));
+        });
 
-    auto &tool = *addMenu(u"tool"_q);
-    tool.addAction(u"undo"_q)->setShortcut(Qt::CTRL + Qt::Key_Z);
-    tool.addAction(u"redo"_q)->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
-    tool.addSeparator();
-    auto &playlist = *tool.addMenu(u"playlist"_q);
-    playlist.addAction(u"toggle"_q)->setShortcut(Qt::Key_L);
-    playlist.addSeparator();
-    playlist.addAction(u"open"_q);
-    playlist.addAction(u"save"_q);
-    playlist.addAction(u"clear"_q);
-    playlist.addSeparator();
-    playlist.addAction(u"append-file"_q);
-    playlist.addAction(u"append-url"_q);
-    playlist.addAction(u"remove"_q);
-    playlist.addSeparator();
-    playlist.addAction(u"move-up"_q);
-    playlist.addAction(u"move-down"_q);
-    playlist.addSeparator();
-    playlist.addAction(u"shuffle"_q, true);
-    playlist.addAction(u"repeat"_q, true);
+        d->separator();
 
-    tool.addAction(u"favorites"_q)->setVisible(false);
-    auto &history = *tool.addMenu(u"history"_q);
-    history.addAction(u"toggle"_q)->setShortcut(Qt::Key_C);
-    history.addAction(u"clear"_q);
+        d->action(u"disc-menu"_q, QT_TR_NOOP("Disc Menu"));
+        d->menu(u"seek"_q, QT_TR_NOOP("Seek"), [=] () {
+            d->action(u"begin"_q, QT_TR_NOOP("To the Beginning"));
 
-    tool.addAction(u"subtitle"_q)->setShortcut(Qt::Key_V);
-    tool.addAction(u"find-subtitle"_q);
-    tool.addAction(u"playinfo"_q);
-    tool.addSeparator();
-    tool.addAction(u"pref"_q)->setMenuRole(QAction::PreferencesRole);
-    tool.addAction(u"reload-skin"_q);
-    tool.addSeparator();
-    tool.addAction(u"auto-exit"_q, true);
-    tool.addAction(u"auto-shutdown"_q, true);
+            d->separator();
 
-    auto &window = *addMenu(u"window"_q);
-    addEnumMenuCheckable<StaysOnTop>(window, true);
-    window.addSeparator();
-    window.addActionToGroup(u"proper"_q, false, u"size"_q)->setData(0.0);
-    window.addActionToGroup(u"100%"_q, false, u"size"_q)->setData(1.0);
-    window.addActionToGroup(u"200%"_q, false, u"size"_q)->setData(2.0);
-    window.addActionToGroup(u"300%"_q, false, u"size"_q)->setData(3.0);
-    window.addActionToGroup(u"400%"_q, false, u"size"_q)->setData(4.0);
-    window.addActionToGroup(u"full"_q, false, u"size"_q)->setData(-1.0);
-    window.addSeparator();
-    window.addAction(u"minimize"_q);
-    window.addAction(u"maximize"_q);
-    window.addAction(u"close"_q);
+            const QString forward(u"forward%1"_q), backward(u"backward%1"_q);
+            const QString seekStep(u"seek%1"_q);
+            for (int i = 1; i <= 3; ++i) {
+                auto p = d->stepPair(forward.arg(i), QT_TR_NOOP("Forward %1sec"),
+                                     backward.arg(i), QT_TR_NOOP("Backward %1sec"),
+                                     seekStep.arg(i), u"relative"_q);
+                p->increase()->setTextRate(0.001);
+                p->decrease()->setTextRate(-0.001);
+                p->increase()->setSign(false);
+                p->decrease()->setSign(false);
+            }
 
-    auto &help = *addMenu(u"help"_q);
-    help.addAction(u"about"_q)->setMenuRole(QAction::AboutRole);
+            d->separator();
 
-    addAction(u"exit"_q)->setMenuRole(QAction::QuitRole);
+            d->actionToGroup(u"prev-frame"_q, QT_TR_NOOP("Previous Frame"), false, u"frame"_q)->setData(-1);
+            d->actionToGroup(u"next-frame"_q, QT_TR_NOOP("Next Frame"), false, u"frame"_q)->setData(1);
+            d->action(u"black-frame"_q, QT_TR_NOOP("Next Black Frame"));
 
-    play(u"title"_q).setEnabled(false);
-    play(u"chapter"_q).setEnabled(false);
-    video(u"track"_q).setEnabled(false);
-    audio(u"track"_q).setEnabled(false);
+            d->separator();
 
-    fillId(this, QString());
+            d->actionToGroup(u"prev-subtitle"_q, QT_TR_NOOP("To Previous Subtitle"), false, u"subtitle"_q)->setData(-1);
+            d->actionToGroup(u"current-subtitle"_q, QT_TR_NOOP("To Beginning of Current Subtitle"), false, u"subtitle"_q)->setData(0);
+            d->actionToGroup(u"next-subtitle"_q, QT_TR_NOOP("To Next Subtitle"), false, u"subtitle"_q)->setData(1);
+        });
+        d->menu(u"title"_q, QT_TR_NOOP("Title"), [=] () {
+
+        })->setEnabled(false);
+        d->menu(u"chapter"_q, QT_TR_NOOP("Chapter"), [=] () {
+            d->group()->setExclusive(true);
+            d->action(u"prev"_q, QT_TR_NOOP("Previous Chapter"));
+            d->action(u"next"_q, QT_TR_NOOP("Next Chapter"));
+            d->separator();
+        })->setEnabled(false);
+    });
+
+    d->menu(u"subtitle"_q, QT_TR_NOOP("Subtitle"), [=] () {
+        d->menu(u"track"_q, QT_TR_NOOP("Subtitle Track"), [=] () {
+            d->group(u"internal"_q)->setExclusive(false);
+            d->group(u"external"_q)->setExclusive(false);
+
+            d->action(u"open"_q, QT_TR_NOOP("Open File(s)"));
+            d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File(s)"));
+            d->action(u"reload"_q, QT_TR_NOOP("Reload File(s)"));
+            d->action(u"clear"_q, QT_TR_NOOP("Clear File(s)"));
+
+            d->separator();
+
+            d->action(u"next"_q, QT_TR_NOOP("Select Next"));
+            d->action(u"all"_q, QT_TR_NOOP("Select All"));
+            d->action(u"hide"_q, QT_TR_NOOP("Hide"), true);
+
+            d->separator();
+        });
+
+        d->separator();
+
+        d->enumMenuCheckable<SubtitleDisplay>(true);
+        d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Subtitle Alignment"),
+                             {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
+
+        d->separator();
+        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"), "%1%", 0, 100, 100);
+        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Subtitle Sync"), QT_TR_NOOP("%1sec"), 1e-3);
+    });
+
+    d->menu(u"video"_q, QT_TR_NOOP("Video"), [=] () {
+        d->menu(u"track"_q, QT_TR_NOOP("Video Track"), [=] () { })->setEnabled(false);
+
+        d->separator();
+
+        d->menu(u"snapshot"_q, QT_TR_NOOP("Take Snapshot"), [=] () {
+            d->action(u"quick"_q, QT_TR_NOOP("Quick Snapshot"));
+            d->action(u"quick-nosub"_q, QT_TR_NOOP("Quick Snapshot(No Subtitles)"));
+            d->action(u"tool"_q, QT_TR_NOOP("Snapshot Tool"));
+        });
+
+        d->separator();
+
+        d->enumMenuCheckable<VideoRatio>(u"aspect"_q, QT_TR_NOOP("Aspect Ratio"), true);
+        d->enumMenuCheckable<VideoRatio>(u"crop"_q, QT_TR_NOOP("Crop"), true);
+        d->menu(u"align"_q, QT_TR_NOOP("Screen Alignment"), [=] () {
+            d->enumActionsCheckable<VerticalAlignment>(false);
+            d->separator();
+            d->enumActionsCheckable<HorizontalAlignment>(false);
+        });
+        d->menu(u"move"_q, QT_TR_NOOP("Screen Position"), [=] () { d->enumActions<MoveToward>(); });
+
+        d->separator();
+
+        d->enumMenuCheckable<ColorSpace>(true);
+        d->enumMenuCheckable<ColorRange>(true);
+
+        d->separator();
+
+        d->enumMenuCheckable<Interpolator>(u"chroma-upscaler"_q, QT_TR_NOOP("Chroma Upscaler"), true);
+        d->enumMenuCheckable<Interpolator>(u"interpolator"_q, QT_TR_NOOP("Interpolator"), true);
+        d->menu(u"hq-scaling"_q, QT_TR_NOOP("High Quality Scaling"), [=] () {
+            d->action(u"up"_q, QT_TR_NOOP("High Quality Upscaling"), true);
+            d->action(u"down"_q, QT_TR_NOOP("High Quality Downscaling"), true);
+        });
+
+        d->separator();
+
+        d->enumMenuCheckable<DeintMode>(true);
+        d->enumMenuCheckable<Dithering>(true);
+        d->menu(u"filter"_q, QT_TR_NOOP("Filter"), [=] () {
+            d->group()->setExclusive(false);
+
+            d->enumAction(VideoEffect::FlipV, u"flip-v"_q, QT_TR_NOOP("Flip Vertically"), true);
+            d->enumAction(VideoEffect::FlipH, u"flip-h"_q, QT_TR_NOOP("Flip Horizontally"), true);
+
+            d->separator();
+
+            d->enumAction(VideoEffect::Remap, u"remap"_q, QT_TR_NOOP("Remap"), true);
+            d->enumAction(VideoEffect::Gray, u"gray"_q, QT_TR_NOOP("Grayscale"), true);
+            d->enumAction(VideoEffect::Invert, u"invert"_q, QT_TR_NOOP("Invert Color"), true);
+
+            d->separator();
+
+            d->enumAction(VideoEffect::Disable, u"disable"_q, QT_TR_NOOP("Disable Filters"), true);
+        });
+        d->menu(u"color"_q, QT_TR_NOOP("Adjust Color"), [=] () {
+            auto format = [] (VideoColor::Type type) -> GetText
+                { return [=] () { return VideoColor::formatText(type); }; };
+            d->actionToGroup(u"reset"_q, format(VideoColor::TypeMax));
+            d->separator();
+            VideoColor::for_type([&] (VideoColor::Type type) {
+                const auto str = VideoColor::name(type);
+                d->stepPair(str % '+'_q, format(type), str % '-'_q, format(type),
+                            str, -100, 0, 100, str);
+            });
+        });
+    });
+
+    d->menu(u"audio"_q, QT_TR_NOOP("Audio"), [=] () {
+        d->menu(u"track"_q, QT_TR_NOOP("Audio Track"), [=] () {
+            d->group()->setExclusive(true);
+            d->action(u"next"_q, QT_TR_NOOP("Select Next"));
+            d->separator();
+        })->setEnabled(false);
+        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Audio Sync"), QT_TR_NOOP("%1sec"), 1e-3);
+
+        d->separator();
+
+        d->menu(u"volume"_q, QT_TR_NOOP("Volume"), [=] () {
+            d->action(u"mute"_q, QT_TR_NOOP("Mute"), true);
+            d->separator();
+            d->stepPair("%1%", 0, 100, 100);
+        });
+        d->menuStepReset(u"amp"_q, QT_TR_NOOP("Amp"), "%1%", 10, 100, 1000);
+        d->enumMenuCheckable<ChannelLayout>(true);
+
+        d->separator();
+
+        d->action(u"normalizer"_q, QT_TR_NOOP("Volume Normalizer"), true);
+        d->action(u"tempo-scaler"_q, QT_TR_NOOP("Tempo Scaler"), true);
+    });
+
+    d->menu(u"tool"_q, QT_TR_NOOP("Tools"), [=] () {
+        d->action(u"undo"_q, QT_TR_NOOP("Undo"));
+        d->action(u"redo"_q, QT_TR_NOOP("Redo"));
+
+        d->separator();
+
+        d->menu(u"playlist"_q, QT_TR_NOOP("Playlist"), [=] () {
+            d->action(u"toggle"_q, QT_TR_NOOP("Show/Hide"));
+            d->separator();
+            d->action(u"open"_q, QT_TR_NOOP("Open"));
+            d->action(u"save"_q, QT_TR_NOOP("Save"));
+            d->action(u"clear"_q, QT_TR_NOOP("Clear"));
+            d->separator();
+            d->action(u"append-file"_q, QT_TR_NOOP("Append File"));
+            d->action(u"append-url"_q, QT_TR_NOOP("Append URL"));
+            d->action(u"remove"_q, QT_TR_NOOP("Remove"));
+            d->separator();
+            d->action(u"move-up"_q, QT_TR_NOOP("Move Up"));
+            d->action(u"move-down"_q, QT_TR_NOOP("Move Down"));
+            d->separator();
+            d->action(u"shuffle"_q, QT_TR_NOOP("Shuffle"));
+            d->action(u"repeat"_q, QT_TR_NOOP("Repeat"));
+        });
+        d->menu(u"history"_q, QT_TR_NOOP("History"), [=] () {
+            d->action(u"toggle"_q, QT_TR_NOOP("Show/Hide"));
+            d->action(u"clear"_q, QT_TR_NOOP("Clear"));
+        });
+        d->action(u"find-subtitle"_q, QT_TR_NOOP("Find Subtitle"));
+        d->action(u"subtitle"_q, QT_TR_NOOP("Subtitle View"));
+        d->action(u"playinfo"_q, QT_TR_NOOP("Playback Information"));
+
+        d->separator();
+
+        d->action(u"pref"_q, QT_TR_NOOP("Preferences"))->setMenuRole(QAction::PreferencesRole);
+        d->action(u"reload-skin"_q, QT_TR_NOOP("Reload Skin"));
+
+        d->separator();
+
+        d->action(u"auto-exit"_q, QT_TR_NOOP("Auto-exit"), true);
+        d->action(u"auto-shutdown"_q, QT_TR_NOOP("Auto-shutdown"), true);
+    });
+
+    d->menu(u"window"_q, QT_TR_NOOP("Window"), [=] () {
+        d->enumMenuCheckable<StaysOnTop>(true);
+
+        d->separator();
+
+        d->actionToGroup(u"proper"_q, QT_TR_NOOP("Proper Size"), false, u"size"_q)->setData(0.0);
+        d->actionToGroup(u"100%"_q, "100%", false, u"size"_q)->setData(1.0);
+        d->actionToGroup(u"200%"_q, "200%", false, u"size"_q)->setData(2.0);
+        d->actionToGroup(u"300%"_q, "300%", false, u"size"_q)->setData(3.0);
+        d->actionToGroup(u"400%"_q, "400%", false, u"size"_q)->setData(4.0);
+        d->actionToGroup(u"full"_q, QT_TR_NOOP("Fullscreen"), false, u"size"_q)->setData(-1.0);
+
+        d->separator();
+
+        d->action(u"minimize"_q, QT_TR_NOOP("Minimize"));
+        d->action(u"maximize"_q, QT_TR_NOOP("Maximize"));
+        d->action(u"close"_q, QT_TR_NOOP("Close"));
+    });
+
+    d->menu(u"help"_q, QT_TR_NOOP("Help"), [=] () {
+        d->action(u"about"_q, QT_TR_NOOP("About bomi"))->setMenuRole(QAction::AboutRole);
+    });
+
+    d->action(u"exit"_q, QT_TR_NOOP("Exit"))->setMenuRole(QAction::QuitRole);
+
+    Q_ASSERT(d->parent == this);
+}
+
+RootMenu::~RootMenu()
+{
+    delete d;
+    obj = nullptr;
+}
+
+auto RootMenu::id(QAction *action) const -> QString
+{
+    return d->infos.value(action).id;
 }
 
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
@@ -415,17 +591,6 @@ auto RootMenu::setShortcuts(const Shortcuts &shortcuts) -> void
 #endif
 }
 
-auto RootMenu::fillId(Menu *menu, const QString &id) -> void
-{
-    const auto ids = menu->ids();
-    for (auto it = ids.cbegin(); it != ids.cend(); ++it) {
-        const QString key = id % it.key();
-        m_ids[m_actions[key].action = it.value()] = key;
-        if (auto menu = qobject_cast<Menu*>(it.value()->menu()))
-            fillId(menu, key % '/'_q);
-    }
-}
-
 auto RootMenu::shortcuts() const -> Shortcuts
 {
     Shortcuts keys;
@@ -439,173 +604,8 @@ auto RootMenu::shortcuts() const -> Shortcuts
 
 auto RootMenu::retranslate() -> void
 {
-    auto &root = *this;
-
-    auto &open = root(u"open"_q, tr("Open"));
-    open.a(u"file"_q, tr("Open File"));
-    open.a(u"folder"_q, tr("Open Folder"));
-    open.a(u"url"_q, tr("Load URL"));
-    open.a(u"dvd"_q, tr("Open DVD"));
-    open.a(u"bluray"_q, tr("Open Blu-ray"));
-
-    auto &recent = open(u"recent"_q);
-    recent.setTitle(tr("Recently Opened"));
-    recent.a(u"clear"_q, tr("Clear"));
-
-    auto &play = root(u"play"_q, tr("Play"));
-    play.a(u"pause"_q, tr("Play"));
-    play.a(u"stop"_q, tr("Stop"));
-    play.a(u"prev"_q, tr("Play Previous"));
-    play.a(u"next"_q, tr("Play Next"));
-    play.a(u"disc-menu"_q, tr("Disc Menu"));
-
-    auto translateStepMenu = [] (Menu &menu, const QString &format) -> void
-    {
-        const auto g = menu.g(_L(EnumInfo<ChangeValue>::typeKey()));
-        StepAction::setFormat(g->actions(), format);
-    };
-
-    translateStepMenu(play(u"speed"_q, tr("Playback Speed")), u"%1%"_q);
-
-    auto &repeat = play(u"repeat"_q, tr("A-B Repeat"));
-    repeat.a(u"range"_q, tr("Set Range to Current Time"));
-    repeat.a(u"subtitle"_q, tr("Repeat Current Subtitle"));
-    repeat.a(u"quit"_q, tr("Quit"));
-
-    auto &seek = play(u"seek"_q, tr("Seek"));
-    seek.a(u"begin"_q, tr("To the Beginning"));
-    auto translateSeekAction = [&] (const QString &prefix, const QString &format) {
-        for (int i=1; i<=3; ++i)
-            static_cast<StepAction*>(seek[prefix % _N(i)])->setFormat(format);
-    };
-    translateSeekAction(u"forward"_q,  tr("Forward %1sec"));
-    translateSeekAction(u"backward"_q, tr("Backward %1sec"));
-
-    seek.a(u"prev-frame"_q, tr("Previous Frame"));
-    seek.a(u"next-frame"_q, tr("Next Frame"));
-    seek.a(u"black-frame"_q, tr("Next Black Frame"));
-
-    seek.a(u"prev-subtitle"_q, tr("To Previous Subtitle"));
-    seek.a(u"current-subtitle"_q, tr("To Beginning of Current Subtitle"));
-    seek.a(u"next-subtitle"_q, tr("To Next Subtitle"));
-
-    play(u"title"_q, tr("Title"));
-    auto &chapter = play(u"chapter"_q, tr("Chapter"));
-    chapter.a(u"prev"_q, tr("Previous Chapter"));
-    chapter.a(u"next"_q, tr("Next Chapter"));
-
-    auto &sub = root(u"subtitle"_q, tr("Subtitle"));
-
-    auto &spu = sub(u"track"_q, tr("Subtitle Track"));
-    spu.a(u"open"_q, tr("Open File(s)"));
-    spu.a(u"auto-load"_q, tr("Auto-load File(s)"));
-    spu.a(u"reload"_q, tr("Reload File(s)"));
-    spu.a(u"clear"_q, tr("Clear File(s)"));
-    spu.a(u"next"_q, tr("Select Next"));
-    spu.a(u"all"_q, tr("Select All"));
-    spu.a(u"hide"_q, tr("Hide"));
-
-    updateEnumMenu<SubtitleDisplay>(sub);
-    updateEnumActions<VerticalAlignment>(sub(u"align"_q, tr("Subtitle Alignment")));
-    translateStepMenu(sub(u"position"_q, tr("Subtitle Position")), u"%1%"_q);
-    translateStepMenu(sub(u"sync"_q, tr("Subtitle Sync")), tr("%1sec"));
-
-    auto &video = root(u"video"_q, tr("Video"));
-    video(u"track"_q, tr("Video Track"));
-    auto &snap = video(u"snapshot"_q, tr("Take Snapshot"));
-    snap.a(u"quick"_q, tr("Quick Snapshot"));
-    snap.a(u"quick-nosub"_q, tr("Quick Snapshot(No Subtitles)"));
-    snap.a(u"tool"_q, tr("Snapshot Tool"));
-
-    updateEnumActions<VideoRatio>(video(u"aspect"_q, tr("Aspect Ratio")));
-    updateEnumActions<VideoRatio>(video(u"crop"_q, tr("Crop")));
-
-    auto &align = video(u"align"_q, tr("Screen Alignment"));
-    updateEnumActions<VerticalAlignment>(align);
-    updateEnumActions<HorizontalAlignment>(align);
-    updateEnumActions<MoveToward>(video(u"move"_q, tr("Screen Position")));
-
-    updateEnumMenu<ColorSpace>(video);
-    updateEnumMenu<ColorRange>(video);
-    updateEnumActions<Interpolator>(video(u"chroma-upscaler"_q, tr("Chroma Upscaler")));
-    updateEnumActions<Interpolator>(video(u"interpolator"_q, tr("Interpolator")));
-    auto &hqScaling = video(u"hq-scaling"_q, tr("High Quality Scaling"));
-    hqScaling.a(u"up"_q, tr("High Quality Upscaling"));
-    hqScaling.a(u"down"_q, tr("High Quality Downscaling"));
-    updateEnumMenu<Dithering>(video);
-    updateEnumMenu<DeintMode>(video);
-
-    auto &effect = video(u"filter"_q, tr("Filter"));
-    effect.a(u"flip-v"_q, tr("Flip Vertically"));
-    effect.a(u"flip-h"_q, tr("Flip Horizontally"));
-    effect.a(u"remap"_q, tr("Remap"));
-    effect.a(u"gray"_q, tr("Grayscale"));
-    effect.a(u"invert"_q, tr("Invert Color"));
-    effect.a(u"disable"_q, tr("Disable Filters"));
-
-    auto &color = video(u"color"_q, tr("Adjust Color"));
-    color.a(u"reset"_q, VideoColor::formatText(VideoColor::TypeMax));
-    VideoColor::for_type([&] (VideoColor::Type type) {
-        const auto prefix = VideoColor::name(type);
-        const auto format = VideoColor::formatText(type);
-        StepAction::setFormat(color.g(prefix)->actions(), format);
-    });
-
-    auto &audio = root(u"audio"_q, tr("Audio"));
-    audio(u"track"_q, tr("Audio Track")).a(u"next"_q, tr("Select Next"));
-    translateStepMenu(audio(u"sync"_q, tr("Audio Sync")), tr("%1sec"));
-    audio(u"volume"_q).a(u"mute"_q, tr("Mute"));
-    translateStepMenu(audio(u"volume"_q, tr("Volume")), u"%1%"_q);
-    translateStepMenu(audio(u"amp"_q, tr("Amp")), u"%1%"_q);
-    updateEnumMenu<ChannelLayout>(audio);
-    audio.a(u"normalizer"_q, tr("Volume Normalizer"));
-    audio.a(u"tempo-scaler"_q, tr("Tempo Scaler"));
-
-    auto &tool = root(u"tool"_q);
-    tool.a(u"undo"_q, tr("Undo"));
-    tool.a(u"redo"_q, tr("Redo"));
-    tool.setTitle(tr("Tools"));
-
-    auto &playlist = tool(u"playlist"_q);
-    playlist.setTitle(tr("Playlist"));
-    playlist.a(u"toggle"_q, tr("Show/Hide"));
-    playlist.a(u"open"_q, tr("Open"));
-    playlist.a(u"save"_q, tr("Save"));
-    playlist.a(u"clear"_q, tr("Clear"));
-    playlist.a(u"append-file"_q, tr("Append File"));
-    playlist.a(u"append-url"_q, tr("Append URL"));
-    playlist.a(u"remove"_q, tr("Remove"));
-    playlist.a(u"move-up"_q, tr("Move Up"));
-    playlist.a(u"move-down"_q, tr("Move Down"));
-    playlist.a(u"shuffle"_q, tr("Shuffle"));
-    playlist.a(u"repeat"_q, tr("Repeat"));
-
-    tool.a(u"favorites"_q, tr("Favorites"));
-    auto &history = tool(u"history"_q);
-    history.setTitle(tr("History"));
-    history.a(u"toggle"_q, tr("Show/Hide"));
-    history.a(u"clear"_q, tr("Clear"));
-
-    tool.a(u"find-subtitle"_q, tr("Find Subtitle"));
-    tool.a(u"subtitle"_q, tr("Subtitle View"));
-    tool.a(u"pref"_q, tr("Preferences"));
-    tool.a(u"reload-skin"_q, tr("Reload Skin"));
-    tool.a(u"playinfo"_q, tr("Playback Information"));
-    tool.a(u"auto-exit"_q, tr("Auto-exit"));
-    tool.a(u"auto-shutdown"_q, tr("Auto-shutdown"));
-
-    auto &window = root(u"window"_q, tr("Window"));
-    updateEnumMenu<StaysOnTop>(window);
-    window.a(u"proper"_q, tr("Proper Size"));
-    window.a(u"full"_q, tr("Fullscreen"));
-    window.a(u"minimize"_q, tr("Minimize"));
-    window.a(u"maximize"_q, tr("Maximize"));
-    window.a(u"close"_q, tr("Close"));
-
-    auto &help = root(u"help"_q);
-    help.setTitle(tr("Help"));
-    help.a(u"about"_q, tr("About bomi"));
-    root.a(u"exit"_q, tr("Exit"));
+    for (auto &info : d->infos)
+        info.trans();
 }
 
 auto RootMenu::fillKeyMap(Menu *menu) -> void

@@ -1,10 +1,6 @@
 #ifndef COLORPROPERTY_HPP
 #define COLORPROPERTY_HPP
 
-extern "C" {
-#include <video/csputils.h>
-}
-
 enum class ColorRange;                  enum class ColorSpace;
 
 class VideoColor {

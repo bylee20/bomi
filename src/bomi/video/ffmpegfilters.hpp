@@ -9,6 +9,10 @@ extern "C" {
 }
 #include "mpimage.hpp"
 
+#ifdef bool
+#undef bool
+#endif
+
 class FFmpegFilterGraph {
 public:
     ~FFmpegFilterGraph() { release(); }
