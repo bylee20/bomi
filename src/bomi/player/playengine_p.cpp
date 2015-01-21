@@ -342,17 +342,18 @@ auto PlayEngine::Data::hook() -> void
         auto file = getmpv<QString>("stream-open-filename");
         if (!file.startsWith("http://"_a) && !file.startsWith("https://"_a))
             return;
+        file = QUrl(file).toString(QUrl::FullyEncoded);
         if (yle && yle->supports(file)) {
             if (!yle->run(file))
                 return;
             setmpv("stream-open-filename", yle->url().toLocal8Bit());
-
         } else if (youtube && youtube->run(file)) {
             setmpv("options/cookies", true);
             setmpv("options/cookies-file", youtube->cookies().toLocal8Bit());
             setmpv("options/user-agent", youtube->userAgent().toLocal8Bit());
             setmpv("stream-open-filename", youtube->url().toLocal8Bit());
-        }
+        } else
+            setmpv("stream-open-filename", file.toLocal8Bit());
     });
 }
 

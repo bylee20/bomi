@@ -94,8 +94,7 @@ auto YouTubeDL::run(const QString &url) -> bool
         d->error = UnknownError;
     if (d->error)
         return false;
-    const auto address = proc.readAllStandardOutput().trimmed();
-    d->output = QUrl::fromPercentEncoding(address);
+    d->output = QString::fromLocal8Bit(proc.readAllStandardOutput().trimmed());
     return true;
 }
 
