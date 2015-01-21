@@ -54,8 +54,6 @@ auto YouTubeDL::cancel() -> void
 
 auto YouTubeDL::run(const QString &url) -> bool
 {
-
-
     QProcess proc;
     d->input = url;
     d->output.clear();
