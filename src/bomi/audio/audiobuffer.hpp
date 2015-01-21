@@ -112,14 +112,10 @@ private:
 
 template<class T>
 auto AudioBuffer::view() -> AudioBufferView<T>
-{
-    return AudioBufferView<T>(this);
-}
+{ detach(); return AudioBufferView<T>(this); }
 
 template<class T>
 auto AudioBuffer::constView() const -> AudioBufferConstView<T>
-{
-    return AudioBufferConstView<T>(this);
-}
+{ return AudioBufferConstView<T>(this); }
 
 #endif // AUDIOBUFFER_HPP
