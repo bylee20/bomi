@@ -11,7 +11,7 @@
     <message>
         <location filename="../ui/aboutdialog.ui" line="24"/>
         <source>bomi</source>
-        <translation type="unfinished">bomi</translation>
+        <translation>bomi</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="106"/>
@@ -29,7 +29,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../ui/aboutdialog.ui" line="194"/>
         <source>Special thanks to Mingyu Jo and Donghyun Ha for naming.</source>
-        <translation type="unfinished"></translation>
+        <translation>Mención especial a Mingyu Jo y Donghyun Ha por el nombre.</translation>
     </message>
     <message>
         <source>If you find a bug or have any idea for bomi, please contact by the following:</source>
@@ -49,12 +49,15 @@ Página del proyecto:%3</translation>
 Twitter: %2
 Issue tracker: %3
 Developer&apos;s E-mail: %4</source>
-        <translation type="unfinished"></translation>
+        <translation>Sitio oficial: %1
+Twitter: %2
+Seguimiento de errores: %3
+E-mail del desarrollador: %4</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="178"/>
         <source>The logo is designed by Ivan from &lt;a href=&quot;%1&quot;&gt;Kotus Works&lt;/a&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Logo diseñado por Ivan desde  &lt;a href=&quot;%1&quot;&gt;Kotus Works&lt;/a&gt;.</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="220"/>
@@ -117,7 +120,7 @@ Developer&apos;s E-mail: %4</source>
     <message>
         <location filename="../player/app.hpp" line="44"/>
         <source>bomi</source>
-        <translation type="unfinished">bomi</translation>
+        <translation>bomi</translation>
     </message>
 </context>
 <context>
@@ -1672,12 +1675,12 @@ Parado en la posición: %2
     <message>
         <location filename="../player/mrlstate.cpp" line="109"/>
         <source>Video High Quality Upscaling</source>
-        <translation type="unfinished"></translation>
+        <translation>Agrandador de video de alta calidad</translation>
     </message>
     <message>
         <location filename="../player/mrlstate.cpp" line="110"/>
         <source>Video High Quality Downscaling</source>
-        <translation type="unfinished"></translation>
+        <translation>Empequeñecedor de video de alta calidad</translation>
     </message>
     <message>
         <location filename="../player/mrlstate.cpp" line="112"/>
@@ -1828,87 +1831,87 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/osdstylewidget.ui" line="29"/>
         <source>Text</source>
-        <translation type="unfinished">Texto</translation>
+        <translation>Texto</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="35"/>
         <source>Font</source>
-        <translation type="unfinished">Fuente</translation>
+        <translation>Fuente</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="47"/>
         <source>Size</source>
-        <translation type="unfinished">Tamaño</translation>
+        <translation>Tamaño</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="108"/>
         <source>Spacing</source>
-        <translation type="unfinished">Interlineado</translation>
+        <translation>Interlineado</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="130"/>
         <source>New line</source>
-        <translation type="unfinished">Nueva linea</translation>
+        <translation>Nueva linea</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="162"/>
         <source>New paragraph</source>
-        <translation type="unfinished">Nuevo párrafo</translation>
+        <translation>Nuevo párrafo</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="213"/>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Estilo</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="219"/>
         <source>Text Color</source>
-        <translation type="unfinished">Color del Texto</translation>
+        <translation>Color del Texto</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="253"/>
         <source>Outline</source>
-        <translation type="unfinished"></translation>
+        <translation>Borde</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="288"/>
         <source>Width</source>
-        <translation type="unfinished">Ancho</translation>
+        <translation>Ancho</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="330"/>
         <source>Shadow</source>
-        <translation type="unfinished">Sombra</translation>
+        <translation>Sombra</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="373"/>
         <source>Blur</source>
-        <translation type="unfinished"></translation>
+        <translation>Desenfoque</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="397"/>
         <source>X-offset</source>
-        <translation type="unfinished">Compensar-X</translation>
+        <translation>Compensar-X</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="426"/>
         <source>Y-offset</source>
-        <translation type="unfinished">Compensar-Y</translation>
+        <translation>Compensar-Y</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="473"/>
         <source>Bounding box</source>
-        <translation type="unfinished">Cuadro delimitador</translation>
+        <translation>Cuadro delimitador</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="533"/>
         <source>Horizontal padding</source>
-        <translation type="unfinished">Relleno horizontal</translation>
+        <translation>Relleno horizontal</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="562"/>
         <source>Vertical padding</source>
-        <translation type="unfinished">Relleno vertical</translation>
+        <translation>Relleno vertical</translation>
     </message>
 </context>
 <context>
@@ -1984,49 +1987,49 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/osdthemewidget.ui" line="35"/>
         <source>Message</source>
-        <translation type="unfinished"></translation>
+        <translation>Mensaje</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="41"/>
         <source>Show messages when actions are triggered</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar mensaje cuando la acción se haya desencadenado</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="48"/>
         <source>Show messages when the window is resized</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar mensaje cuando la ventana se haya redimensionado</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="57"/>
         <location filename="../ui/osdthemewidget.ui" line="148"/>
         <source>Duration</source>
-        <translation type="unfinished">Duración</translation>
+        <translation>Duración</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="64"/>
         <location filename="../ui/osdthemewidget.ui" line="157"/>
         <source>sec</source>
-        <translation type="unfinished">seg</translation>
+        <translation>seg</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="98"/>
         <source>Timeline</source>
-        <translation type="unfinished"></translation>
+        <translation>Linea de tiempo</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="104"/>
         <source>Show timeline when seeking</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar linea de tiempo cuando se desplace</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="111"/>
         <source>Position</source>
-        <translation type="unfinished">Posición</translation>
+        <translation>Posición</translation>
     </message>
     <message>
         <location filename="../ui/osdthemewidget.ui" line="123"/>
         <source>% of height</source>
-        <translation type="unfinished">% de altura</translation>
+        <translation>% de altura</translation>
     </message>
 </context>
 <context>
@@ -3858,17 +3861,17 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="526"/>
         <source>High Quality Scaling</source>
-        <translation type="unfinished"></translation>
+        <translation>Escalador de alta calidad</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="527"/>
         <source>High Quality Upscaling</source>
-        <translation type="unfinished"></translation>
+        <translation>Agrandador dealta calidad</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="528"/>
         <source>High Quality Downscaling</source>
-        <translation type="unfinished"></translation>
+        <translation>Empequeñecedor de alta calidad</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="535"/>
@@ -4019,7 +4022,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="601"/>
         <source>About bomi</source>
-        <translation type="unfinished">Acerca de bomi</translation>
+        <translation>Acerca de bomi</translation>
     </message>
     <message>
         <source>About %1</source>
