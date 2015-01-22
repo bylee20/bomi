@@ -15,6 +15,7 @@ public:
         { return m_map[toLayout(src)][toLayout(dest)]; }
     auto toString() const -> QString;
     auto isEmpty() const -> bool { return m_map.isEmpty(); }
+    auto isIdentity(const mp_chmap &src, const mp_chmap &dest) const -> bool;
     static auto toLayout(const mp_chmap &chmap) -> ChannelLayout;
     static auto fromString(const QString &text) -> ChannelLayoutMap;
     static auto default_() -> ChannelLayoutMap;

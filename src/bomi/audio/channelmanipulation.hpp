@@ -20,7 +20,6 @@ public:
     auto hasSources(mp_speaker_id dest) const -> bool
         { return !m_mix[dest].isEmpty(); }
     auto toString() const -> QString;
-    auto isIdentity() const -> bool;
     static auto fromString(const QString &text) -> ChannelManipulation;
     auto toJson() const -> QJsonArray;
     auto setFromJson(const QJsonArray &json) -> bool;

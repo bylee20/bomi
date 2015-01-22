@@ -46,6 +46,26 @@ static auto speakersInLayout(ChannelLayout layout) -> QVector<SpeakerId>
     return list;
 }
 
+auto ChannelLayoutMap::isIdentity(const mp_chmap &src, const mp_chmap &dest) const -> bool
+{
+    const auto ls = toLayout(src);
+    const auto ld = toLayout(dest);
+    if (ls != ld)
+        return false;
+    auto man = m_map[ls][ld];
+    for (int i = 0; i < dest.num; ++i) {
+        const auto out = (mp_speaker_id)dest.speaker[i];
+        if (!man.hasSources(out))
+            return false;
+        const auto &s = man.sources(out);
+        if (s.size() != 1)
+            return false;
+        if (s.first() != out)
+            return false;
+    }
+    return true;
+}
+
 auto ChannelLayoutMap::default_() -> ChannelLayoutMap
 {
     ChannelLayoutMap map;

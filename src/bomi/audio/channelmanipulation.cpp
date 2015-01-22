@@ -26,17 +26,6 @@ struct JsonIO<mp_speaker_id> {
     }
 };
 
-auto ChannelManipulation::isIdentity() const -> bool
-{
-    for (int i=0; i<m_mix.size(); ++i) {
-        const auto speaker_out = (mp_speaker_id)i;
-        auto &sources = this->sources(speaker_out);
-        if (sources.size() != 1 || sources.first() == speaker_out)
-            return false;
-    }
-    return true;
-}
-
 auto ChannelManipulation::toJson() const -> QJsonArray
 {
     auto obj = json_io(&m_mix)->toJson(m_mix);
