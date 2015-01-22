@@ -449,6 +449,7 @@ auto MainWindow::changeEvent(QEvent *ev) -> void
 
 auto MainWindow::closeEvent(QCloseEvent *event) -> void
 {
+    setFullScreen(false);
     QWidget::closeEvent(event);
 #ifndef Q_OS_MAC
     if (d->tray && d->pref().enable_system_tray
