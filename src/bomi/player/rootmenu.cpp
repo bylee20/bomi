@@ -467,6 +467,7 @@ RootMenu::RootMenu()
             d->stepPair("%1%", 0, 100, 100);
         });
         d->menuStepReset(u"amp"_q, QT_TR_NOOP("Amp"), "%1%", 10, 100, 1000);
+        d->action(u"equalizer"_q, QT_TR_NOOP("Equalizer"));
         d->enumMenuCheckable<ChannelLayout>(true);
 
         d->separator();

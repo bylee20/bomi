@@ -57,6 +57,7 @@ static const auto jio = JIO(
     JE(audio_volume),
     JE(audio_sync),
     JE(audio_muted),
+    JE(audio_equalizer),
     JE(audio_volume_normalizer),
     JE(audio_tempo_scaler),
     JE(audio_channel_layout),
@@ -111,6 +112,7 @@ auto MrlState::restorableProperties() -> QVector<PropertyInfo>
 
     ADD(audio_volume, qApp->translate("MrlState", "Audio Volume"));
     ADD(audio_amplifier, qApp->translate("MrlState", "Audio Amp"));
+    ADD(audio_equalizer, qApp->translate("MrlState", "Audio Equalizer"));
     ADD(audio_sync, qApp->translate("MrlState", "Audio Sync"));
     ADD(audio_track, qApp->translate("MrlState", "Audio Track"));
     ADD(audio_muted, qApp->translate("MrlState", "Audio Mute"));

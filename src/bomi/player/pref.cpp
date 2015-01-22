@@ -129,6 +129,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"audio/tempo-scaler"_q] << Qt::Key_Z;
     keys[u"audio/amp/increase"_q] << Qt::CTRL + Qt::Key_Up;
     keys[u"audio/amp/decrease"_q] << Qt::CTRL + Qt::Key_Down;
+    keys[u"audio/equalizer"_q] << Qt::ALT + Qt::Key_E;
     keys[u"audio/channel/next"_q] << Qt::ALT + Qt::Key_C;
     keys[u"audio/sync/reset"_q] << Qt::Key_Backslash;
     keys[u"audio/sync/increase"_q] << Qt::Key_BracketRight;

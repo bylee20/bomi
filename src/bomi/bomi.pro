@@ -234,7 +234,9 @@ HEADERS += \
     audio/audiofilter.hpp \
 	misc/osdstyle.hpp \
     quick/themeobject_helper.hpp \
-    configure.hpp
+    configure.hpp \
+    audio/audioequalizer.hpp \
+	dialog/audioequalizerdialog.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -406,7 +408,9 @@ SOURCES += \
     audio/audioconverter.cpp \
     audio/audioresampler.cpp \
     audio/audiofilter.cpp \
-	misc/osdstyle.cpp
+	misc/osdstyle.cpp \
+	audio/audioequalizer.cpp \
+	dialog/audioequalizerdialog.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

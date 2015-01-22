@@ -50,7 +50,7 @@ using MSig = Signal<MrlState>;
 
 class SubtitleFindDialog;               class SnapshotDialog;
 class PrefDialog;                       class SubtitleView;
-class TrayIcon;
+class TrayIcon;                         class AudioEqualizerDialog;
 
 struct MainWindow::Data {
     Data(MainWindow *p);
@@ -101,6 +101,7 @@ struct MainWindow::Data {
     QList<QAction*> unblockedActions;
     HistoryModel history;
     SnapshotMode snapshotMode = NoSnapshot;
+    AudioEqualizerDialog *eq = nullptr;
 
     auto pref() const -> const Pref& {return preferences;}
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString

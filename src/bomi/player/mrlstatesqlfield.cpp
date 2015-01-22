@@ -3,6 +3,7 @@
 #include "misc/json.hpp"
 #include "enum/enums.hpp"
 #include "video/videocolor.hpp"
+#include "audio/audioequalizer.hpp"
 #include "subtitle/submisc.hpp"
 
 template<class T>
@@ -79,7 +80,9 @@ MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
             m_d2v = _SqlDataToValueUsingJson<T>; \
             break;\
         }
-        JSON_CASE(VideoColor);        JSON_CASE(SubtitleStateInfo);
+        JSON_CASE(VideoColor);
+        JSON_CASE(SubtitleStateInfo);
+        JSON_CASE(AudioEqualizer);
         if (_Is<Mrl>(type)) {
             m_sqlType = u"TEXT PRIMARY KEY NOT NULL"_q;
             m_v2d = [] (const QVariant &value)

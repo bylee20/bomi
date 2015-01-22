@@ -936,3 +936,8 @@ auto PlayEngine::stateText() const -> QString
         return QString();
     }
 }
+
+auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
+{
+    d->audio->setEqualizer(eq);
+}

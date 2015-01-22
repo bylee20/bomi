@@ -15,6 +15,7 @@
 #include "enum/subtitledisplay.hpp"
 #include "enum/videoeffect.hpp"
 #include "video/videocolor.hpp"
+#include "audio/audioequalizer.hpp"
 #include "subtitle/submisc.hpp"
 
 static inline bool operator == (const QMetaProperty &lhs, const QMetaProperty &rhs) {
@@ -47,6 +48,7 @@ class MrlStateV2 : public QObject {
 
     Q_PROPERTY(int audio_volume MEMBER audio_volume NOTIFY audioVolumeChanged)
     Q_PROPERTY(int audio_amplifier MEMBER audio_amplifier NOTIFY audioAmpChanged)
+    Q_PROPERTY(AudioEqualizer audio_equalizer MEMBER audio_equalizer NOTIFY audioEqualizerChanged)
     Q_PROPERTY(int audio_sync MEMBER audio_sync NOTIFY audioSyncChanged REVISION 1)
     Q_PROPERTY(int audio_track MEMBER audio_track REVISION 1)
     Q_PROPERTY(bool audio_muted MEMBER audio_muted NOTIFY audioMutedChanged)
@@ -89,6 +91,7 @@ public:
     int audio_amplifier = 100;
     int audio_volume = 100, audio_sync = 0;
     bool audio_muted = false, audio_volume_normalizer = false, audio_tempo_scaler = true;
+    AudioEqualizer audio_equalizer;
     ChannelLayout audio_channel_layout = ChannelLayoutInfo::default_();
     int audio_track = -1;
 
@@ -128,6 +131,7 @@ signals:
 
     void audioVolumeChanged();
     void audioAmpChanged();
+    void audioEqualizerChanged(const AudioEqualizer &eq);
     void audioMutedChanged();
     void audioSyncChanged();
     void audioVolumeNormalizerChanged();

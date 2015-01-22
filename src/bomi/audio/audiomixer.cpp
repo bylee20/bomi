@@ -51,12 +51,6 @@ struct CompressInfo {
     }
 };
 
-static const auto compressInfo = CompressInfo::create();
-
-AudioMixer::AudioMixer()
-{
-}
-
 static auto softclip(float p) -> float
 {
     return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p));
@@ -67,20 +61,101 @@ static auto hardclip(float p) -> float
     return p < -1.0 ? -1.0 : p > 1.0 ? 1.0 : p;
 }
 
+static constexpr int Bands = AudioEqualizer::bands();
+
+struct AudioMixer::Data {
+    AudioBufferFormat in, out;
+    float amp = 1.0;
+    ClippingMethod clip = ClippingMethod::Auto;
+    ClippingMethod realClip = ClippingMethod::Hard;
+    bool mix = true;
+    bool updateChmap = false, updateFormat = false;
+    std::array<int, MP_SPEAKER_ID_COUNT> ch_index_src, ch_index_dst;
+    ChannelManipulation ch_man;
+    ChannelLayoutMap map;
+    AudioEqualizer eq;
+    bool eq_zero = true;
+
+    const std::vector<CompressInfo> compressInfo = CompressInfo::create();
+
+    struct { float a = 0, b = 0, c = 0, amp = 0; } coefs[Bands];
+    struct { float x[2], y[Bands][2]; } xys[MP_NUM_CHANNELS];
+};
+
+auto AudioMixer::delay() const -> double
+{
+    // follow the estimation in af_equalizer.c of mpv
+    return d->eq_zero ? 0.0 : 2.0 / d->out.fps();
+}
+
+AudioMixer::AudioMixer()
+    : d(new Data)
+{
+}
+
+AudioMixer::~AudioMixer()
+{
+    delete d;
+}
+
+auto AudioMixer::setAmplifier(float level) -> void
+{
+    d->amp = level;
+}
+
+auto AudioMixer::setChannelLayoutMap(const ChannelLayoutMap &map) -> void
+{
+    d->map = map;
+    d->ch_man = map(d->in.channels(), d->out.channels());
+    d->mix = !d->map.isIdentity(d->in.channels(), d->out.channels());
+}
+
+auto AudioMixer::setEqualizer(const AudioEqualizer &eq) -> void
+{
+    d->eq = eq;
+    d->eq_zero = eq.isZero();
+    if (d->eq_zero) {
+        for (auto &c : d->coefs)
+            c.amp = 0.0;
+    } else {
+        for (int i = 0; i < eq.size(); ++i) {
+            const auto db = qBound(eq.min(), eq[i], eq.max());
+            d->coefs[i].amp = std::pow(10., db / 20.) - 1.;
+        }
+    }
+}
+
 auto AudioMixer::setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void
 {
-    if (!(_Change(m_in, in) | _Change(m_out, out)))
+    if (!(_Change(d->in, in) | _Change(d->out, out)))
         return;
-    m_in = in; m_out = out;
+    d->in = in; d->out = out;
     for (int i=0; i<out.channels().num; ++i)
-        m_ch_index_dst[out.channels().speaker[i]] = i;
+        d->ch_index_dst[out.channels().speaker[i]] = i;
     for (int i=0; i<in.channels().num; ++i)
-        m_ch_index_src[in.channels().speaker[i]] = i;
-    m_mix = !m_ch_man.isIdentity();
-    m_updateChmap = !mp_chmap_equals(&in.channels(), &out.channels());
-    m_updateFormat = in.type() != out.type();
-    setClippingMethod(m_clip);
-    setChannelLayoutMap(m_map);
+        d->ch_index_src[in.channels().speaker[i]] = i;
+    d->updateChmap = !mp_chmap_equals(&in.channels(), &out.channels());
+    d->updateFormat = in.type() != out.type();
+    setClippingMethod(d->clip);
+    setChannelLayoutMap(d->map);
+
+    const float fps = out.fps();
+    const float f_max = 0.5f * fps;
+    const float w_band = 1; // bandwidth in octave
+    for (int i = 0; i < Bands; ++i) {
+        const float f_center = AudioEqualizer::freqeuncy(i);
+        auto &c = d->coefs[i];
+        if (f_center < f_max) {
+            const float theta = 2.0f * M_PI * f_center / fps;
+            const float alpha = sin(theta) * sinh(log(2.0)*0.5 * w_band * theta/sin(theta));
+            c.a = alpha / (alpha + 1.f);
+            c.b = 2.0 * cos(theta) / (alpha + 1.f);
+            c.c = (alpha - 1.f) / (alpha + 1.f);
+        } else
+            c.a = c.b = c.c = 0.f;
+    }
+    memset(d->xys, 0, sizeof(d->xys));
+    setEqualizer(d->eq);
 }
 
 auto AudioMixer::passthrough(const AudioBufferPtr &/*in*/) const -> bool
@@ -91,37 +166,61 @@ auto AudioMixer::passthrough(const AudioBufferPtr &/*in*/) const -> bool
 auto AudioMixer::run(AudioBufferPtr &src) -> AudioBufferPtr
 {
     const int frames = src->frames();
-    auto dest = newBuffer(m_out, frames);
-    if (dest->isEmpty())
-        return dest;
+    if (src->isEmpty())
+        return newBuffer(d->out, frames);
+    AudioBufferPtr dest;
+    if (d->mix)
+        dest = newBuffer(d->out, frames);
+    else
+        dest = src;
     auto dview = dest->view<float>();
-    auto sview = src->view<float>();
-    auto clip = m_realClip == ClippingMethod::Soft ? softclip : hardclip;
-    if (m_amp < 1e-8)
+    auto sview = src->constView<float>();
+    auto clip = d->realClip == ClippingMethod::Soft ? softclip : hardclip;
+    auto equalize = [=] (float v, int ch) {
+        if (!d->eq_zero) {
+            const float x = v;
+            auto &h = d->xys[ch];
+            for(int b = 0; b < Bands; ++b) {
+                const auto &c = d->coefs[b];
+                const float y = c.a * (x - h.x[1])
+                        + c.b * h.y[b][0] + c.c * h.y[b][1];
+                h.y[b][1] = h.y[b][0];
+                h.y[b][0] = y;
+                v += y * c.amp;
+            }
+            h.x[1] = h.x[0];
+            h.x[0] = x;
+        }
+        return v;
+    };
+
+    if (d->amp < 1e-8)
         std::fill(dview.begin(), dview.end(), 0);
-    else if (!m_mix) {
-        auto iit = sview.begin(), oit = dview.begin();
-        while (iit != sview.end())
-            *oit++ = *iit++ * m_amp;
+    else if (!d->mix) {
+        auto it = dview.begin();
+        while (it != dview.end()) {
+            for (int ch = 0; ch < src->channels(); ++ch, ++it)
+                *it = clip(equalize(*it * d->amp, ch));
+        }
     } else {
         auto dit = dview.begin();
         for (auto sit = sview.begin(); sit != sview.end(); sit += src->channels()) {
             for (int dch = 0; dch < dest->channels(); ++dch) {
-                const auto spk = m_out.channels().speaker[dch];
-                auto &map = m_ch_man.sources(spk);
+                const auto spk = d->out.channels().speaker[dch];
+                auto &map = d->ch_man.sources(spk);
                 double v = 0;
                 for (int i=0; i<map.size(); ++i)
-                    v += sit[m_ch_index_src[map[i]]]*m_amp;
+                    v += sit[d->ch_index_src[map[i]]]*d->amp;
                 if (map.size() > 1) {
                     // ref: http://www.voegler.eu/pub/audio/
                     //      digital-audio-mixing-and-normalization.html
-                    const auto &info = compressInfo[map.size()];
+                    const auto &info = d->compressInfo[map.size()];
                     if (v < 0)
                         v = -log(1.0 - info.c1*v)*info.c2;
                     else
                         v = +log(1.0 + info.c1*v)*info.c2;
                 }
-                *dit++ = clip(v);
+                *dit++ = clip(equalize(v, dch));
             }
         }
     }
@@ -130,7 +229,7 @@ auto AudioMixer::run(AudioBufferPtr &src) -> AudioBufferPtr
 
 auto AudioMixer::setClippingMethod(ClippingMethod method) -> void
 {
-    m_realClip = m_clip = method;
-    if (m_realClip == ClippingMethod::Auto)
-        m_realClip = ClippingMethod::Soft;
+    d->realClip = d->clip = method;
+    if (d->realClip == ClippingMethod::Auto)
+        d->realClip = ClippingMethod::Soft;
 }

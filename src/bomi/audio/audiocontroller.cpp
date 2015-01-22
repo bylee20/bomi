@@ -5,6 +5,7 @@
 #include "audioanalyzer.hpp"
 #include "audioconverter.hpp"
 #include "audioresampler.hpp"
+#include "audioequalizer.hpp"
 #include "player/mpv_helper.hpp"
 #include "enum/channellayout.hpp"
 #include "misc/log.hpp"
@@ -48,7 +49,8 @@ enum FilterDirty : quint32 {
     Format = 16,
     Scale = 32,
     Resample = 64,
-    Clip = 128
+    Clip = 128,
+    Equalizer = 256
 };
 
 struct AudioController::Data {
@@ -65,6 +67,7 @@ struct AudioController::Data {
     ClippingMethod clip = ClippingMethod::Auto;
     ChannelLayoutMap map = ChannelLayoutMap::default_();
     ChannelLayout layout = ChannelLayoutInfo::default_();
+    AudioEqualizer eq;
     AudioFormat from, to;
 
     static constexpr af_format fmt_interm = AF_FORMAT_FLOAT;
@@ -77,6 +80,8 @@ struct AudioController::Data {
     AudioConverter converter;
 
     QVector<AudioFilter*> chain;
+
+    QMutex mutex;
 };
 
 AudioController::AudioController(QObject *parent)
@@ -91,7 +96,7 @@ AudioController::AudioController(QObject *parent)
     }, 100000);
 
     d->chain << &d->resampler << &d->analyzer
-             << &d->scaler << &d->mixer << &d->converter;
+             << &d->scaler    << &d->mixer << &d->converter;
 
     connect(&d->analyzer, &AudioAnalyzer::gainCalculated, this,
             [=] (double gain) { d->mixer.setAmplifier(d->amp * gain); },
@@ -256,6 +261,7 @@ auto AudioController::filter(af_instance *af, mp_audio *data) -> int
     d->af->delay = 0.0;
 
     if (d->dirty) {
+        d->mutex.lock();
         if (d->dirty & Normalizer) {
             d->analyzer.setNormalizerActive(d->normalizerActivated);
             d->analyzer.setNormalizerOption(d->normalizerOption);
@@ -266,7 +272,10 @@ auto AudioController::filter(af_instance *af, mp_audio *data) -> int
             d->mixer.setChannelLayoutMap(d->map);
         if (d->dirty & Clip)
             d->mixer.setClippingMethod(d->clip);
+        if (d->dirty & Equalizer)
+            d->mixer.setEqualizer(d->eq);
         d->dirty = 0;
+        d->mutex.unlock();
     }
 
     d->mixer.setAmplifier(d->amp);
@@ -360,3 +369,12 @@ af_info create_info() {
     };
     return info;
 }
+
+auto AudioController::setEqualizer(const AudioEqualizer &eq) -> void
+{
+    d->mutex.lock();
+    d->eq = eq;
+    d->dirty |= Equalizer;
+    d->mutex.unlock();
+}
+

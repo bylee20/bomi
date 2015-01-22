@@ -3,6 +3,7 @@
 #include "enum/movetoward.hpp"
 #include "subtitle/subtitleview.hpp"
 #include "dialog/mbox.hpp"
+#include "dialog/audioequalizerdialog.hpp"
 #include "dialog/urldialog.hpp"
 #include "dialog/prefdialog.hpp"
 #include "dialog/aboutdialog.hpp"
@@ -532,6 +533,16 @@ auto MainWindow::Data::connectMenus() -> void
     plugPropertyCheckable(audio(u"volume"_q)[u"mute"_q], "audio_muted",
                                 &MrlState::audioMutedChanged, [this] () {
         engine.setMuted(as.state.audio_muted);
+    });
+    connect(&as.state, &MrlState::audioEqualizerChanged, &engine, &PlayEngine::setAudioEqualizer);
+    connect(audio[u"equalizer"_q], &QAction::triggered, p, [=] () {
+        if (!eq) {
+            eq = new AudioEqualizerDialog(p);
+            connect(eq, &AudioEqualizerDialog::equalizerChanged, p, [=] (const AudioEqualizer &eq)
+                    { as.state.setProperty("audio_equalizer", QVariant::fromValue(eq)); });
+        }
+        eq->setEqualizer(as.state.audio_equalizer);
+        eq->show();
     });
     plugStepActions(audio(u"sync"_q), "audio_sync",
                           &MrlState::audioSyncChanged, [this] () {

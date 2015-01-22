@@ -51,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
         resize(d->as.win_size);
     }
 
+    d->engine.setAudioEqualizer(d->as.state.audio_equalizer);
     d->engine.setVideoEqualizer(d->as.state.video_color);
     d->engine.setVideoEffects(d->as.state.video_effects);
     auto effectGroup = d->menu(u"video"_q)(u"filter"_q).g();

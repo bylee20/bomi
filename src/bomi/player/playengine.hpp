@@ -17,7 +17,7 @@ enum class ColorRange;                  enum class ColorSpace;
 enum class Dithering;
 class AudioInfoObject;                  class VideoInfoObject;
 class YouTubeDL;                        struct AudioDevice;
-class YleDL;
+class YleDL;                            class AudioEqualizer;
 class StreamTrack;                      class SubtitleInfoObject;
 class OpenGLFramebufferObject;
 using StreamList = QMap<int, StreamTrack>;
@@ -173,6 +173,7 @@ public:
     auto setVolume(int volume) -> void;
     auto setAmp(double amp) -> void;
     auto setMuted(bool muted) -> void;
+    auto setAudioEqualizer(const AudioEqualizer &eq) -> void;
     auto audioDeviceList() const -> QList<AudioDevice>;
     auto stop() -> void;
     auto reload() -> void;
