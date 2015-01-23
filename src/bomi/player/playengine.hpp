@@ -52,7 +52,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
-    Q_PROPERTY(int time READ time NOTIFY tick)
+    Q_PROPERTY(int time READ time WRITE seek NOTIFY tick)
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
     Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)
@@ -63,7 +63,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(bool running READ isPlaying NOTIFY runningChanged)
     Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
     Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
-    Q_PROPERTY(double rate READ rate NOTIFY tick)
+    Q_PROPERTY(double rate READ rate WRITE setRate NOTIFY tick)
     Q_PROPERTY(QQuickItem *screen READ screen)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
@@ -154,6 +154,7 @@ public:
     auto videoInfo() const -> VideoInfoObject*;
     auto avSync() const -> int;
     auto rate() const -> double { return (double)(time()-begin())/duration(); }
+    auto setRate(qreal r) -> void { seek(begin() + r * duration()); }
     auto cacheSize() const -> int;
     auto cacheUsed() const -> int;
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
