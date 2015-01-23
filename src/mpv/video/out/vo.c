@@ -127,6 +127,8 @@ struct vo_internal {
     bool want_redraw;               // redraw request from VO to player
     bool send_reset;                // send VOCTRL_RESET
     bool paused;
+    bool vsync_timed;               // the VO redraws itself as fast as possible
+                                    // at every vsync
     int queued_events;
 
     int64_t flip_queue_offset; // queue flip events at most this much in advance
@@ -144,6 +146,7 @@ struct vo_internal {
 
     // --- The following fields can be accessed from the VO thread only
     int64_t vsync_interval;
+    int64_t vsync_interval_approx;
     int64_t last_flip;
     char *window_title;
 };
@@ -486,7 +489,7 @@ bool vo_is_ready_for_frame(struct vo *vo, int64_t next_pts)
         if (next_pts > now)
             r = false;
         if (!in->wakeup_pts || next_pts < in->wakeup_pts) {
-            in->wakeup_pts = next_pts;
+            in->wakeup_pts = in->vsync_timed ? 0 : next_pts;
             wakeup_locked(vo);
         }
     }
@@ -507,7 +510,7 @@ void vo_queue_frame(struct vo *vo, struct mp_image *image,
     in->frame_queued = image;
     in->frame_pts = pts_us;
     in->frame_duration = duration;
-    in->wakeup_pts = in->frame_pts + MPMAX(duration, 0);
+    in->wakeup_pts = in->vsync_timed ? 0 : in->frame_pts + MPMAX(duration, 0);
     wakeup_locked(vo);
     pthread_mutex_unlock(&in->lock);
 }
@@ -545,10 +548,12 @@ static bool render_frame(struct vo *vo)
     int64_t pts = in->frame_pts;
     int64_t duration = in->frame_duration;
     struct mp_image *img = in->frame_queued;
-    if (!img) {
-        pthread_mutex_unlock(&in->lock);
-        return false;
-    }
+
+    if (!img && (!in->vsync_timed || in->paused || pts <= 0))
+        goto nothing_done;
+
+    if (in->vsync_timed && !in->hasframe)
+        goto nothing_done;
 
     mp_image_unrefp(&in->dropped_image);
 
@@ -556,8 +561,12 @@ static bool render_frame(struct vo *vo)
     in->frame_queued = NULL;
 
     // The next time a flip (probably) happens.
-    int64_t next_vsync = prev_sync(vo, mp_time_us()) + in->vsync_interval;
+    int64_t prev_vsync = prev_sync(vo, mp_time_us());
+    int64_t next_vsync = prev_vsync + in->vsync_interval;
     int64_t end_time = pts + duration;
+
+    // Time at which we should flip_page on the VO.
+    int64_t target = pts - in->flip_queue_offset;
 
     if (!in->hasframe_rendered)
         duration = -1; // disable framedrop
@@ -569,6 +578,25 @@ static bool render_frame(struct vo *vo)
     // instead of just freezing the display forever.
     in->dropped_frame &= mp_time_us() - in->last_flip < 100 * 1000;
 
+    if (in->vsync_timed) {
+        // this is a heuristic that wakes the thread up some
+        // time before the next vsync
+        target = next_vsync - MPMIN(in->vsync_interval / 3, 4e3);
+
+        // We are very late with the frame and using vsync timing: probably
+        // no new frames are coming in. This must be done whether or not
+        // framedrop is enabled. Also, if the frame is to be dropped, even
+        // though it's an interpolated frame (img==NULL), exit early.
+        if (!img && ((in->hasframe_rendered &&
+                      prev_vsync > pts + in->vsync_interval_approx)
+                     || in->dropped_frame))
+        {
+            in->dropped_frame = false;
+            in->rendering = false;
+            goto nothing_done;
+        }
+    }
+
     if (in->dropped_frame) {
         in->dropped_image = img;
     } else {
@@ -578,9 +606,16 @@ static bool render_frame(struct vo *vo)
 
         MP_STATS(vo, "start video");
 
-        vo->driver->draw_image(vo, img);
+        if (in->vsync_timed) {
+            struct frame_timing t = (struct frame_timing) {
+                .pts        = pts,
+                .next_vsync = next_vsync,
+            };
+            vo->driver->draw_image_timed(vo, img, &t);
+        } else {
+            vo->driver->draw_image(vo, img);
+        }
 
-        int64_t target = pts - in->flip_queue_offset;
         while (1) {
             int64_t now = mp_time_us();
             if (target <= now)
@@ -594,12 +629,16 @@ static bool render_frame(struct vo *vo)
         else
             vo->driver->flip_page(vo);
 
+        int64_t prev_flip = in->last_flip;
+
         in->last_flip = -1;
 
         vo->driver->control(vo, VOCTRL_GET_RECENT_FLIP_TIME, &in->last_flip);
 
         if (in->last_flip < 0)
             in->last_flip = mp_time_us();
+
+        in->vsync_interval_approx = in->last_flip - prev_flip;
 
         long phase = in->last_flip % in->vsync_interval;
         MP_DBG(vo, "phase: %ld\n", phase);
@@ -624,8 +663,11 @@ static bool render_frame(struct vo *vo)
     mp_input_wakeup(vo->input_ctx);
 
     pthread_mutex_unlock(&in->lock);
-
     return true;
+
+nothing_done:
+    pthread_mutex_unlock(&in->lock);
+    return false;
 }
 
 static void do_redraw(struct vo *vo)
@@ -669,6 +711,7 @@ static void *vo_thread(void *ptr)
     mpthread_set_name("vo");
 
     int r = vo->driver->preinit(vo) ? -1 : 0;
+    vo->driver->control(vo, VOCTRL_GET_VSYNC_TIMED, &in->vsync_timed);
     mp_rendezvous(vo, r); // init barrier
     if (r < 0)
         return NULL;

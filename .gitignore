@@ -1,5 +1,6 @@
 *.conf.bk
 *.directory
+src/mpv/.git
 src/libchardet*
 src/ffmpeg*
 src/build-*
