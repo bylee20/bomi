@@ -1548,6 +1548,10 @@ Window
     Play video with window border and decorations. Since this is on by
     default, use ``--no-border`` to disable the standard window decorations.
 
+``--on-all-workspaces``
+    (X11 only)
+    Show the video window on all virtual desktops.
+
 ``--geometry=<[W[xH]][+-x+-y]>``, ``--geometry=<x:y>``
     Adjust the initial window position or size. ``W`` and ``H`` set the window
     size in pixels. ``x`` and ``y`` set the window position, measured in pixels
@@ -1649,6 +1653,17 @@ Window
             If the video is larger than 90% of the screen width or 80% of the
             screen height, make the window smaller until either its width is 90%
             of the screen, or its height is 80% of the screen.
+
+``--autofit-smaller=<[W[xH]]>``
+    This option behaves exactly like ``--autofit``, except that it sets the
+    minimum size of the window (just as ``--autofit-larger`` sets the maximum).
+
+    .. admonition:: Example
+
+        ``500x500``
+            Make the window at least 500 pixels wide and 500 pixels high
+            (depending on the video aspect ratio, the width or height will be
+            larger than 500 in order to keep the aspect ratio the same).
 
 ``--autosync=<factor>``
     Gradually adjusts the A/V sync based on audio delay measurements.

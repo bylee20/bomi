@@ -40,7 +40,6 @@
 #include "common/msg.h"
 #include "options/m_config.h"
 #include "vo.h"
-#include "video/vfcap.h"
 #include "video/mp_image.h"
 #include "sub/osd.h"
 
@@ -113,7 +112,7 @@ static void check_pattern(struct vo *vo, int item)
         p->matches++;
     } else {
         p->mismatches++;
-        MP_WARN(vo, "wrong pattern, exptected %d got %d (hit: %d, mis: %d)\n",
+        MP_WARN(vo, "wrong pattern, expected %d got %d (hit: %d, mis: %d)\n",
                 expected, item, p->matches, p->mismatches);
     }
 }
@@ -179,13 +178,12 @@ static void draw_image(struct vo *vo, mp_image_t *mpi)
     mpgl_unlock(p->glctx);
 }
 
-static int query_format(struct vo *vo, uint32_t format)
+static int query_format(struct vo *vo, int format)
 {
     struct gl_priv *p = vo->priv;
-    int caps = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
     if (!gl_video_check_format(p->renderer, format))
         return 0;
-    return caps;
+    return 1;
 }
 
 static void video_resize_redraw_callback(struct vo *vo, int w, int h)
@@ -226,8 +224,10 @@ static void request_hwdec_api(struct gl_priv *p, const char *api_name)
     if (p->hwdec)
         return;
     mpgl_lock(p->glctx);
-    p->hwdec = gl_hwdec_load_api(p->vo->log, p->gl, api_name, &p->hwdec_info);
+    p->hwdec = gl_hwdec_load_api(p->vo->log, p->gl, api_name);
     gl_video_set_hwdec(p->renderer, p->hwdec);
+    if (p->hwdec)
+        p->hwdec_info.hwctx = p->hwdec->hwctx;
     mpgl_unlock(p->glctx);
 }
 
@@ -412,7 +412,7 @@ static int preinit(struct vo *vo)
     if (p->allow_sw)
         vo->probing = false;
 
-    p->glctx = mpgl_init(vo, p->backend, 210, vo_flags);
+    p->glctx = mpgl_init(vo, p->backend, vo_flags);
     if (!p->glctx)
         goto err_out;
     p->gl = p->glctx->gl;

@@ -66,7 +66,7 @@ static const char av_desync_help_text[] =
 "This means either the audio or the video is played too slowly.\n"
 "Possible reasons, problems, workarounds:\n"
 "- Your system is simply too slow for this file.\n"
-"     Transcode it to a lower bitrate file with tools like HandBrake.\n"
+"     Transcode it to a lower bitrate file with e.g. mpv encoding support.\n"
 "- Slow video output.\n"
 "     Try a different --vo driver (--vo=help for a list). Make sure framedrop\n"
 "     is not disabled, or experiment with different values for --framedrop.\n"
@@ -824,6 +824,8 @@ void write_video(struct MPContext *mpctx, double endpts)
         diff = vpts1 - vpts0;
     if (diff < 0 && mpctx->d_video->fps > 0)
         diff = 1.0 / mpctx->d_video->fps; // fallback to demuxer-reported fps
+    if (opts->untimed || vo->driver->untimed)
+        diff = -1; // disable frame dropping and aspects of frame timing
     if (diff >= 0) {
         // expected A/V sync correction is ignored
         diff /= opts->playback_speed;

@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <locale.h>
 #include <assert.h>
 
 #include "common/common.h"
@@ -107,7 +108,6 @@ struct mpv_handle {
 
     uint64_t event_mask;
     bool queued_wakeup;
-    bool choke_warning;
     int suspend_count;
 
     mpv_event *events;      // ringbuffer of max_events entries
@@ -115,6 +115,7 @@ struct mpv_handle {
     int first_event;        // events[first_event] is the first readable event
     int num_events;         // number of readable events
     int reserved_events;    // number of entries reserved for replies
+    bool choked;            // recovering from queue overflow
 
     struct observe_property **properties;
     int num_properties;
@@ -126,6 +127,7 @@ struct mpv_handle {
     struct mp_log_buffer *messages;
 };
 
+static bool gen_log_message_event(struct mpv_handle *ctx);
 static bool gen_property_change_event(struct mpv_handle *ctx);
 static void notify_property_events(struct mpv_handle *ctx, uint64_t event_mask);
 
@@ -438,8 +440,23 @@ void mpv_terminate_destroy(mpv_handle *ctx)
     pthread_join(playthread, NULL);
 }
 
+// We mostly care about LC_NUMERIC, and how "." vs. "," is treated,
+// Other locale stuff might break too, but probably isn't too bad.
+static bool check_locale(void)
+{
+    char *name = setlocale(LC_NUMERIC, NULL);
+    return strcmp(name, "C") == 0;
+}
+
 mpv_handle *mpv_create(void)
 {
+    if (!check_locale()) {
+        // Normally, we never print anything (except if the "terminal" option
+        // is enabled), so this is an exception.
+        fprintf(stderr, "Non-C locale detected. This is not supported.\n"
+                        "Call 'setlocale(LC_NUMERIC, \"C\");' in your code.\n");
+        return NULL;
+    }
     struct MPContext *mpctx = mp_create();
     mpv_handle *ctx = mp_new_client(mpctx->clients, "main");
     if (ctx) {
@@ -541,7 +558,8 @@ static int reserve_reply(struct mpv_handle *ctx)
 {
     int res = MPV_ERROR_EVENT_QUEUE_FULL;
     pthread_mutex_lock(&ctx->lock);
-    if (ctx->reserved_events + ctx->num_events < ctx->max_events) {
+    if (ctx->reserved_events + ctx->num_events < ctx->max_events && !ctx->choked)
+    {
         ctx->reserved_events++;
         res = 0;
     }
@@ -567,14 +585,17 @@ static int send_event(struct mpv_handle *ctx, struct mpv_event *event, bool copy
     uint64_t mask = 1ULL << event->event_id;
     if (ctx->property_event_masks & mask)
         notify_property_events(ctx, mask);
+    int r;
     if (!(ctx->event_mask & mask)) {
-        pthread_mutex_unlock(&ctx->lock);
-        return 0;
-    }
-    int r = append_event(ctx, *event, copy);
-    if (r < 0 && !ctx->choke_warning) {
-        mp_err(ctx->log, "Too many events queued.\n");
-        ctx->choke_warning = true;
+        r = 0;
+    } else if (ctx->choked) {
+        r = -1;
+    } else {
+        r = append_event(ctx, *event, copy);
+        if (r < 0) {
+            MP_ERR(ctx, "Too many events queued.\n");
+            ctx->choked = true;
+        }
     }
     pthread_mutex_unlock(&ctx->lock);
     return r;
@@ -729,6 +750,12 @@ mpv_event *mpv_wait_event(mpv_handle *ctx, double timeout)
     while (1) {
         if (ctx->queued_wakeup)
             deadline = 0;
+        // Recover from overflow.
+        if (ctx->choked && !ctx->num_events) {
+            ctx->choked = false;
+            event->event_id = MPV_EVENT_QUEUE_OVERFLOW;
+            break;
+        }
         // This will almost surely lead to a deadlock. (Polling is still ok.)
         if (ctx->suspend_count && timeout > 0) {
             MP_ERR(ctx, "attempting to wait while core is suspended");
@@ -741,26 +768,12 @@ mpv_event *mpv_wait_event(mpv_handle *ctx, double timeout)
             talloc_steal(event, event->data);
             break;
         }
+        // If there's a changed property, generate change event (never queued).
         if (gen_property_change_event(ctx))
             break;
-        if (ctx->messages) {
-            // Poll the log message queue. Currently we can't/don't do better.
-            struct mp_log_buffer_entry *msg =
-                mp_msg_log_buffer_read(ctx->messages);
-            if (msg) {
-                event->event_id = MPV_EVENT_LOG_MESSAGE;
-                struct mpv_event_log_message *cmsg = talloc_ptrtype(event, cmsg);
-                *cmsg = (struct mpv_event_log_message){
-                    .prefix = msg->prefix,
-                    .level = mp_log_levels[msg->level],
-                    .log_level = mp_mpv_log_levels[msg->level],
-                    .text = msg->text,
-                };
-                talloc_steal(event, msg);
-                event->data = cmsg;
-                break;
-            }
-        }
+        // Pop item from message queue, and return as event.
+        if (gen_log_message_event(ctx))
+            break;
         int r = wait_wakeup(ctx, deadline);
         if (r == ETIMEDOUT)
             break;
@@ -1532,6 +1545,31 @@ int mpv_request_log_messages(mpv_handle *ctx, const char *min_level)
     return 0;
 }
 
+// Set ctx->cur_event to a generated log message event, if any available.
+static bool gen_log_message_event(struct mpv_handle *ctx)
+{
+    if (ctx->messages) {
+        struct mp_log_buffer_entry *msg =
+            mp_msg_log_buffer_read(ctx->messages);
+        if (msg) {
+            struct mpv_event_log_message *cmsg =
+                talloc_ptrtype(ctx->cur_event, cmsg);
+            *cmsg = (struct mpv_event_log_message){
+                .prefix = msg->prefix,
+                .level = mp_log_levels[msg->level],
+                .log_level = mp_mpv_log_levels[msg->level],
+                .text = msg->text,
+            };
+            *ctx->cur_event = (struct mpv_event){
+                .event_id = MPV_EVENT_LOG_MESSAGE,
+                .data = cmsg,
+            };
+            return true;
+        }
+    }
+    return false;
+}
+
 int mpv_get_wakeup_pipe(mpv_handle *ctx)
 {
     pthread_mutex_lock(&ctx->wakeup_lock);
@@ -1608,6 +1646,7 @@ static const char *const event_table[] = {
     [MPV_EVENT_PLAYBACK_RESTART] = "playback-restart",
     [MPV_EVENT_PROPERTY_CHANGE] = "property-change",
     [MPV_EVENT_CHAPTER_CHANGE] = "chapter-change",
+    [MPV_EVENT_QUEUE_OVERFLOW] = "event-queue-overflow",
 };
 
 const char *mpv_event_name(mpv_event_id event)

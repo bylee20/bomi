@@ -163,10 +163,12 @@ uniform VIDEO_SAMPLER texture3;
 uniform vec2 textures_size[4];
 uniform vec2 chroma_center_offset;
 uniform vec2 chroma_div;
-uniform sampler2D lut_c;
-uniform sampler2D lut_l;
-uniform sampler1D lut_polar_c;
-uniform sampler1D lut_polar_l;
+uniform sampler2D lut_2d_c;
+uniform sampler2D lut_2d_l;
+#if HAVE_1DTEX
+uniform sampler1D lut_1d_c;
+uniform sampler1D lut_1d_l;
+#endif
 #if HAVE_3DTEX
 uniform sampler3D lut_3d;
 #endif
@@ -186,6 +188,7 @@ uniform float dither_quantization;
 uniform float dither_center;
 uniform float filter_param1_l;
 uniform float filter_param1_c;
+uniform float antiring_factor;
 uniform vec2 dither_size;
 
 in vec2 texcoord;
@@ -198,7 +201,7 @@ vec4 sample_bilinear(VIDEO_SAMPLER tex, vec2 texsize, vec2 texcoord, float param
     return texture(tex, texcoord);
 }
 
-#define SAMPLE_BILINEAR(p0, p1, p2) sample_bilinear(p0, p1, p2, 0.0)
+#define SAMPLE_TRIVIAL(tex, texsize, texcoord) texture(tex, texcoord)
 
 // Explanation how bicubic scaling with only 4 texel fetches is done:
 //   http://www.mate.tue.nl/mate/pdfs/10318.pdf
@@ -296,23 +299,31 @@ float[6] weights6(sampler2D lookup, float f) {
         return res;                                                         \
     }
 
+#define SAMPLE_POLAR_HELPER(LUT, R, X, Y)                                   \
+        w = texture1D(LUT, length(vec2(X, Y) - fcoord)/R).r;                \
+        c = texture(tex, base + pt * vec2(X, Y));                           \
+        wsum += w;                                                          \
+        res  += w * c;                                                      \
 
-#define SAMPLE_CONVOLUTION_POLAR_R(NAME, R, LUT)                            \
+#define SAMPLE_POLAR_PRIMARY(LUT, R, X, Y)                                  \
+        SAMPLE_POLAR_HELPER(LUT, R, X, Y)                                   \
+        lo = min(lo, c);                                                    \
+        hi = max(hi, c);                                                    \
+
+#define SAMPLE_CONVOLUTION_POLAR_R(NAME, R, LUT, WEIGHTS_FN, ANTIRING)      \
     vec4 NAME(VIDEO_SAMPLER tex, vec2 texsize, vec2 texcoord) {             \
         vec2 pt = vec2(1.0) / texsize;                                      \
         vec2 fcoord = fract(texcoord * texsize - vec2(0.5));                \
         vec2 base = texcoord - fcoord * pt;                                 \
-        vec4 res = vec4(0);                                                 \
-        float wsum = 0;                                                     \
-        for (int y = 1-R; y <= R; y++) {                                    \
-            for (int x = 1-R; x <= R; x++) {                                \
-                vec2 d = vec2(x,y) - fcoord;                                \
-                float w = texture1D(LUT, sqrt(d.x*d.x + d.y*d.y)/R).r;      \
-                wsum += w;                                                  \
-                res += w * texture(tex, base + pt * vec2(x, y));            \
-            }                                                               \
-        }                                                                   \
-        return res / wsum;                                                  \
+        vec4 res = vec4(0.0);                                               \
+        vec4 lo = vec4(1.0);                                                \
+        vec4 hi = vec4(0.0);                                                \
+        float wsum = 0.0;                                                   \
+        float w;                                                            \
+        vec4 c;                                                             \
+        WEIGHTS_FN(LUT);                                                    \
+        res /= wsum;                                                        \
+        return mix(res, clamp(res, lo, hi), ANTIRING);                      \
     }
 
 #ifdef DEF_SCALER0
@@ -364,30 +375,25 @@ void main() {
 #define USE_CONV 0
 #endif
 #if USE_CONV == CONV_PLANAR
-    vec4 acolor = vec4(SAMPLE_L(texture0, textures_size[0], texcoord).r,
+    vec4 acolor = vec4(SAMPLE(texture0, textures_size[0], texcoord).r,
                        SAMPLE_C(texture1, textures_size[1], chr_texcoord).r,
                        SAMPLE_C(texture2, textures_size[2], chr_texcoord).r,
                        1.0);
 #elif USE_CONV == CONV_NV12
-    vec4 acolor = vec4(SAMPLE_L(texture0, textures_size[0], texcoord).r,
+    vec4 acolor = vec4(SAMPLE(texture0, textures_size[0], texcoord).r,
                        SAMPLE_C(texture1, textures_size[1], chr_texcoord).RG,
                        1.0);
 #else
-    vec4 acolor = SAMPLE_L(texture0, textures_size[0], texcoord);
+    vec4 acolor = SAMPLE(texture0, textures_size[0], texcoord);
 #endif
 #ifdef USE_COLOR_SWIZZLE
     acolor = acolor. USE_COLOR_SWIZZLE ;
 #endif
 #ifdef USE_ALPHA_PLANE
-    acolor.a = SAMPLE_L(texture3, textures_size[3], texcoord).r;
+    acolor.a = SAMPLE(texture3, textures_size[3], texcoord).r;
 #endif
     vec3 color = acolor.rgb;
     float alpha = acolor.a;
-#ifdef USE_YGRAY
-    // NOTE: actually slightly wrong for 16 bit input video, and completely
-    //       wrong for 9/10 bit input
-    color.gb = vec2(128.0/255.0);
-#endif
 #ifdef USE_INPUT_GAMMA
     // Pre-colormatrix input gamma correction (eg. for MP_IMGFLAG_XYZ)
     color = pow(color, vec3(input_gamma));

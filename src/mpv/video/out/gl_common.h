@@ -38,11 +38,9 @@
 #include "video/mp_image.h"
 
 #if HAVE_GL_COCOA
-#ifdef GL_VERSION_3_0
-#include <OpenGL/gl3.h>
-#else
+#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED 1
 #include <OpenGL/gl.h>
-#endif
+#include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
 #else
 #include <GL/gl.h>
@@ -55,21 +53,16 @@
 struct GL;
 typedef struct GL GL;
 
-void glAdjustAlignment(GL *gl, int stride);
 int glFmt2bpp(GLenum format, GLenum type);
 void glUploadTex(GL *gl, GLenum target, GLenum format, GLenum type,
                  const void *dataptr, int stride,
                  int x, int y, int w, int h, int slice);
 void glClearTex(GL *gl, GLenum target, GLenum format, GLenum type,
                 int x, int y, int w, int h, uint8_t val, void **scratch);
-void glDownloadTex(GL *gl, GLenum target, GLenum format, GLenum type,
-                   void *dataptr, int stride);
 void glCheckError(GL *gl, struct mp_log *log, const char *info);
 mp_image_t *glGetWindowScreenshot(GL *gl);
 
 enum {
-    MPGL_CAP_GL_LEGACY          = (1 << 1),     // GL 1.1 (excluding 3.x)
-    MPGL_CAP_GL21               = (1 << 3),     // GL 2.1+ (excluding legacy)
     MPGL_CAP_ROW_LENGTH         = (1 << 4),     // GL_[UN]PACK_ROW_LENGTH
     MPGL_CAP_FB                 = (1 << 5),
     MPGL_CAP_VAO                = (1 << 6),
@@ -80,8 +73,9 @@ enum {
     MPGL_CAP_VDPAU              = (1 << 11),    // GL_NV_vdpau_interop
     MPGL_CAP_APPLE_RGB_422      = (1 << 12),    // GL_APPLE_rgb_422
     MPGL_CAP_1ST_CLASS_ARRAYS   = (1 << 13),
-    MPGL_CAP_3D_TEX             = (1 << 14),
-    MPGL_CAP_DEBUG              = (1 << 15),
+    MPGL_CAP_1D_TEX             = (1 << 14),
+    MPGL_CAP_3D_TEX             = (1 << 15),
+    MPGL_CAP_DEBUG              = (1 << 16),
     MPGL_CAP_SW                 = (1 << 30),    // indirect or sw renderer
 };
 
@@ -142,8 +136,7 @@ bool mpgl_is_thread_safe(MPGLContext *ctx);
 // gl_flavor: 110 for legacy GL, 210 for GL 2.1 or 3.x core
 // flags: passed to the backend's create window function
 // Returns success.
-MPGLContext *mpgl_init(struct vo *vo, const char *backend_name,
-                       int gl_flavor, int vo_flags);
+MPGLContext *mpgl_init(struct vo *vo, const char *backend_name, int vo_flags);
 void mpgl_uninit(MPGLContext *ctx);
 
 // flags: passed to the backend function
@@ -184,26 +177,10 @@ struct GL {
     int mpgl_caps;              // Bitfield of MPGL_CAP_* constants
     bool debug_context;         // use of e.g. GLX_CONTEXT_DEBUG_BIT_ARB
 
-    void (GLAPIENTRY *Begin)(GLenum);
-    void (GLAPIENTRY *End)(void);
     void (GLAPIENTRY *Viewport)(GLint, GLint, GLsizei, GLsizei);
-    void (GLAPIENTRY *MatrixMode)(GLenum);
-    void (GLAPIENTRY *LoadIdentity)(void);
-    void (GLAPIENTRY *Translated)(double, double, double);
-    void (GLAPIENTRY *Scaled)(double, double, double);
-    void (GLAPIENTRY *Ortho)(double, double, double, double, double,double);
-    void (GLAPIENTRY *PushMatrix)(void);
-    void (GLAPIENTRY *PopMatrix)(void);
     void (GLAPIENTRY *Clear)(GLbitfield);
-    GLuint (GLAPIENTRY *GenLists)(GLsizei);
-    void (GLAPIENTRY *DeleteLists)(GLuint, GLsizei);
-    void (GLAPIENTRY *NewList)(GLuint, GLenum);
-    void (GLAPIENTRY *EndList)(void);
-    void (GLAPIENTRY *CallList)(GLuint);
-    void (GLAPIENTRY *CallLists)(GLsizei, GLenum, const GLvoid *);
     void (GLAPIENTRY *GenTextures)(GLsizei, GLuint *);
     void (GLAPIENTRY *DeleteTextures)(GLsizei, const GLuint *);
-    void (GLAPIENTRY *TexEnvi)(GLenum, GLenum, GLint);
     void (GLAPIENTRY *Color4ub)(GLubyte, GLubyte, GLubyte, GLubyte);
     void (GLAPIENTRY *Color4f)(GLfloat, GLfloat, GLfloat, GLfloat);
     void (GLAPIENTRY *ClearColor)(GLclampf, GLclampf, GLclampf, GLclampf);
@@ -211,8 +188,6 @@ struct GL {
     void (GLAPIENTRY *Disable)(GLenum);
     const GLubyte *(GLAPIENTRY * GetString)(GLenum);
     void (GLAPIENTRY *DrawBuffer)(GLenum);
-    void (GLAPIENTRY *DepthMask)(GLboolean);
-    void (GLAPIENTRY *BlendFunc)(GLenum, GLenum);
     void (GLAPIENTRY *BlendFuncSeparate)(GLenum, GLenum, GLenum, GLenum);
     void (GLAPIENTRY *Flush)(void);
     void (GLAPIENTRY *Finish)(void);
@@ -224,28 +199,15 @@ struct GL {
     void (GLAPIENTRY *TexSubImage2D)(GLenum, GLint, GLint, GLint,
                                      GLsizei, GLsizei, GLenum, GLenum,
                                      const GLvoid *);
-    void (GLAPIENTRY *GetTexImage)(GLenum, GLint, GLenum, GLenum, GLvoid *);
     void (GLAPIENTRY *TexParameteri)(GLenum, GLenum, GLint);
-    void (GLAPIENTRY *TexParameterf)(GLenum, GLenum, GLfloat);
-    void (GLAPIENTRY *TexParameterfv)(GLenum, GLenum, const GLfloat *);
-    void (GLAPIENTRY *TexCoord2f)(GLfloat, GLfloat);
-    void (GLAPIENTRY *TexCoord2fv)(const GLfloat *);
-    void (GLAPIENTRY *Vertex2f)(GLfloat, GLfloat);
     void (GLAPIENTRY *GetIntegerv)(GLenum, GLint *);
     void (GLAPIENTRY *GetBooleanv)(GLenum, GLboolean *);
-    void (GLAPIENTRY *ColorMask)(GLboolean, GLboolean, GLboolean, GLboolean);
     void (GLAPIENTRY *ReadPixels)(GLint, GLint, GLsizei, GLsizei, GLenum,
                                   GLenum, GLvoid *);
     void (GLAPIENTRY *ReadBuffer)(GLenum);
-    void (GLAPIENTRY *VertexPointer)(GLint, GLenum, GLsizei, const GLvoid *);
-    void (GLAPIENTRY *ColorPointer)(GLint, GLenum, GLsizei, const GLvoid *);
-    void (GLAPIENTRY *TexCoordPointer)(GLint, GLenum, GLsizei, const GLvoid *);
     void (GLAPIENTRY *DrawArrays)(GLenum, GLint, GLsizei);
-    void (GLAPIENTRY *EnableClientState)(GLenum);
-    void (GLAPIENTRY *DisableClientState)(GLenum);
     GLenum (GLAPIENTRY *GetError)(void);
     void (GLAPIENTRY *GetTexLevelParameteriv)(GLenum, GLint, GLenum, GLint *);
-
 
     void (GLAPIENTRY *GenBuffers)(GLsizei, GLuint *);
     void (GLAPIENTRY *DeleteBuffers)(GLsizei, const GLuint *);
@@ -255,14 +217,6 @@ struct GL {
     void (GLAPIENTRY *BufferData)(GLenum, intptr_t, const GLvoid *, GLenum);
     void (GLAPIENTRY *ActiveTexture)(GLenum);
     void (GLAPIENTRY *BindTexture)(GLenum, GLuint);
-    void (GLAPIENTRY *MultiTexCoord2f)(GLenum, GLfloat, GLfloat);
-    void (GLAPIENTRY *GenPrograms)(GLsizei, GLuint *);
-    void (GLAPIENTRY *DeletePrograms)(GLsizei, const GLuint *);
-    void (GLAPIENTRY *BindProgram)(GLenum, GLuint);
-    void (GLAPIENTRY *ProgramString)(GLenum, GLenum, GLsizei, const GLvoid *);
-    void (GLAPIENTRY *GetProgramivARB)(GLenum, GLenum, GLint *);
-    void (GLAPIENTRY *ProgramEnvParameter4f)(GLenum, GLuint, GLfloat, GLfloat,
-                                             GLfloat, GLfloat);
     int (GLAPIENTRY *SwapInterval)(int);
     void (GLAPIENTRY *TexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei,
                                   GLsizei, GLint, GLenum, GLenum,

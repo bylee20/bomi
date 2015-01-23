@@ -57,10 +57,10 @@ bool mp_init_filter(struct filter_kernel *filter, const int *sizes,
                     double inv_scale)
 {
     if (filter->radius < 0)
-        filter->radius = 2.0;
-    // polar filters can be of any radius, and nothing special is needed
+        filter->radius = 3.0;
+    // polar filters are dependent only on the radius
     if (filter->polar) {
-        filter->size = filter->radius;
+        filter->size = 1;
         return true;
     }
     // only downscaling requires widening the filter
@@ -110,21 +110,19 @@ void mp_compute_weights(struct filter_kernel *filter, double f, float *out_w)
 // interpreted as rectangular array of count * filter->size items.
 void mp_compute_lut(struct filter_kernel *filter, int count, float *out_array)
 {
-    for (int n = 0; n < count; n++) {
-        mp_compute_weights(filter, n / (double)(count - 1),
-                           out_array + filter->size * n);
-    }
-}
-
-// Fill the given array with weights for the range [0, R], where R is the
-// radius of hte filter. The array is interpreted as a one-dimensional array
-// of count items.
-void mp_compute_lut_polar(struct filter_kernel *filter, int count, float *out_array)
-{
-    assert(filter->radius > 0);
-    for (int x = 0; x < count; x++) {
-        double r = x * filter->radius / (count - 1);
-        out_array[x] = r <= filter->radius ? filter->weight(filter, r) : 0;
+    if (filter->polar) {
+        // Compute a 1D array indexed by radius
+        assert(filter->radius > 0);
+        for (int x = 0; x < count; x++) {
+            double r = x * filter->radius / (count - 1);
+            out_array[x] = r <= filter->radius ? filter->weight(filter, r) : 0;
+        }
+    } else {
+        // Compute a 2D array indexed by subpixel position
+        for (int n = 0; n < count; n++) {
+            mp_compute_weights(filter, n / (double)(count - 1),
+                               out_array + filter->size * n);
+        }
     }
 }
 
@@ -366,21 +364,9 @@ const struct filter_kernel mp_filter_kernels[] = {
     {"spline36",       3,   spline36},
     {"spline64",       4,   spline64},
     {"gaussian",       -1,  gaussian, .params = {28.85390081777927, NAN} },
-    {"sinc2",          2,   sinc},
-    {"sinc3",          3,   sinc},
-    {"sinc4",          4,   sinc},
     {"sinc",           -1,  sinc},
-    {"ewa_lanczos2",   2,   ewa_lanczos, .polar = true},
-    {"ewa_lanczos3",   3,   ewa_lanczos, .polar = true},
-    {"ewa_lanczos4",   4,   ewa_lanczos, .polar = true},
     {"ewa_lanczos",    -1,  ewa_lanczos, .polar = true},
-    {"lanczos2",       2,   lanczos},
-    {"lanczos3",       3,   lanczos},
-    {"lanczos4",       4,   lanczos},
     {"lanczos",        -1,  lanczos},
-    {"blackman2",      2,   blackman},
-    {"blackman3",      3,   blackman},
-    {"blackman4",      4,   blackman},
     {"blackman",       -1,  blackman},
     {0}
 };

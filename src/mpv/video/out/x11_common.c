@@ -1315,6 +1315,12 @@ static void vo_x11_map_window(struct vo *vo, struct mp_rect rc)
         x11_send_ewmh_msg(x11, "_NET_WM_FULLSCREEN_MONITORS", params);
     }
 
+    if (vo->opts->all_workspaces) {
+        long v = 0xFFFFFFFF;
+        XChangeProperty(x11->display, x11->window, XA(x11, _NET_WM_DESKTOP),
+                        XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&v, 1);
+    }
+
     // map window
     int events = StructureNotifyMask | ExposureMask | PropertyChangeMask |
                  LeaveWindowMask;
@@ -1599,38 +1605,36 @@ static void vo_x11_fullscreen(struct vo *vo)
     x11->pos_changed_during_fs = false;
 }
 
-static void vo_x11_ontop(struct vo *vo)
-{
-    struct mp_vo_opts *opts = vo->opts;
-    opts->ontop = !opts->ontop;
-
-    vo_x11_setlayer(vo, opts->ontop);
-}
-
-static void vo_x11_border(struct vo *vo)
-{
-    vo->opts->border = !vo->opts->border;
-    vo_x11_decoration(vo, vo->opts->border);
-}
-
 int vo_x11_control(struct vo *vo, int *events, int request, void *arg)
 {
+    struct mp_vo_opts *opts = vo->opts;
     struct vo_x11_state *x11 = vo->x11;
     switch (request) {
     case VOCTRL_CHECK_EVENTS:
         *events |= vo_x11_check_events(vo);
         return VO_TRUE;
     case VOCTRL_FULLSCREEN:
+        opts->fullscreen = !opts->fullscreen;
         vo_x11_fullscreen(vo);
-        *events |= VO_EVENT_RESIZE;
         return VO_TRUE;
     case VOCTRL_ONTOP:
-        vo_x11_ontop(vo);
+        opts->ontop = !opts->ontop;
+        vo_x11_setlayer(vo, opts->ontop);
         return VO_TRUE;
     case VOCTRL_BORDER:
-        vo_x11_border(vo);
-        *events |= VO_EVENT_RESIZE;
+        opts->border = !opts->border;
+        vo_x11_decoration(vo, vo->opts->border);
         return VO_TRUE;
+    case VOCTRL_ALL_WORKSPACES: {
+        opts->all_workspaces = !opts->all_workspaces;
+        long params[5] = {0xFFFFFFFF, 1};
+        if (!opts->all_workspaces) {
+            x11_get_property_copy(x11, x11->rootwin, XA(x11, _NET_CURRENT_DESKTOP),
+                                  XA_CARDINAL, 32, &params[0], sizeof(params[0]));
+        }
+        x11_send_ewmh_msg(x11, "_NET_WM_DESKTOP", params);
+        return VO_TRUE;
+    }
     case VOCTRL_GET_UNFS_WINDOW_SIZE: {
         int *s = arg;
         if (!x11->window)

@@ -29,7 +29,7 @@
 
 #include "config.h"
 
-#if HAVE_PRIORITY
+#ifdef _WIN32
 #include <windows.h>
 #endif
 
@@ -111,7 +111,7 @@ const m_option_t mp_opts[] = {
     OPT_FLAG("msg-color", msg_color, CONF_GLOBAL | CONF_PRE_PARSE),
     OPT_FLAG("msg-module", msg_module, CONF_GLOBAL),
     OPT_FLAG("msg-time", msg_time, CONF_GLOBAL),
-#if HAVE_PRIORITY
+#ifdef _WIN32
     OPT_CHOICE("priority", w32_priority, 0,
                ({"no",          0},
                 {"realtime",    REALTIME_PRIORITY_CLASS},
@@ -370,6 +370,7 @@ const m_option_t mp_opts[] = {
     OPT_FLAG("force-window", force_vo, CONF_GLOBAL),
     OPT_FLAG("ontop", vo.ontop, M_OPT_FIXED),
     OPT_FLAG("border", vo.border, M_OPT_FIXED),
+    OPT_FLAG("on-all-workspaces", vo.all_workspaces, M_OPT_FIXED),
 
     OPT_FLAG("window-dragging", allow_win_drag, CONF_GLOBAL),
 
@@ -394,6 +395,7 @@ const m_option_t mp_opts[] = {
     OPT_GEOMETRY("geometry", vo.geometry, 0),
     OPT_SIZE_BOX("autofit", vo.autofit, 0),
     OPT_SIZE_BOX("autofit-larger", vo.autofit_larger, 0),
+    OPT_SIZE_BOX("autofit-smaller", vo.autofit_smaller, 0),
     OPT_FLAG("force-window-position", vo.force_window_position, 0),
     // vo name (X classname) and window title strings
     OPT_STRING("x11-name", vo.winname, 0),

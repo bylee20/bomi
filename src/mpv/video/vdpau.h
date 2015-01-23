@@ -10,14 +10,18 @@
 #include <vdpau/vdpau_x11.h>
 
 #include "common/msg.h"
+#include "hwdec.h"
 
-#define CHECK_VDP_ERROR(ctx, message) \
+#define CHECK_VDP_ERROR_ST(ctx, message, statement) \
     do { \
         if (vdp_st != VDP_STATUS_OK) { \
             MP_ERR(ctx, "%s: %s\n", message, vdp->get_error_string(vdp_st)); \
-            return -1; \
+            statement \
         } \
     } while (0)
+
+#define CHECK_VDP_ERROR(ctx, message) \
+    CHECK_VDP_ERROR_ST(ctx, message, return -1;)
 
 #define CHECK_VDP_WARNING(ctx, message) \
     do { \
@@ -39,6 +43,8 @@ struct vdp_functions {
 struct mp_vdpau_ctx {
     struct mp_log *log;
     Display *x11;
+
+    struct mp_hwdec_ctx hwctx;
 
     // These are mostly immutable, except on preemption. We don't really care
     // to synchronize the preemption case fully correctly, because it's an
@@ -68,6 +74,9 @@ struct mp_vdpau_ctx {
         bool in_use;
         int64_t age;
     } video_surfaces[MAX_VIDEO_SURFACES];
+    struct mp_vdpau_mixer *getimg_mixer;
+    VdpOutputSurface getimg_surface;
+    int getimg_w, getimg_h;
 };
 
 struct mp_vdpau_ctx *mp_vdpau_create_device_x11(struct mp_log *log, Display *x11);

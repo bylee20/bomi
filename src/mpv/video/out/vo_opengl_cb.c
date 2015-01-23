@@ -17,7 +17,6 @@
 #include "options/options.h"
 #include "aspect.h"
 #include "vo.h"
-#include "video/vfcap.h"
 #include "video/mp_image.h"
 #include "sub/osd.h"
 #include "input/input.h"
@@ -229,9 +228,10 @@ int mpv_opengl_cb_init_gl(struct mpv_opengl_cb_context *ctx, const char *exts,
     if (!ctx->renderer)
         return MPV_ERROR_UNSUPPORTED;
 
-    ctx->hwdec = gl_hwdec_load_api(ctx->log, ctx->gl, ctx->hwapi, &ctx->hwdec_info);
+    ctx->hwdec = gl_hwdec_load_api(ctx->log, ctx->gl, ctx->hwapi);
     gl_video_set_hwdec(ctx->renderer, ctx->hwdec);
-
+    if (ctx->hwdec)
+        ctx->hwdec_info.hwctx = ctx->hwdec->hwctx;
 
     pthread_mutex_lock(&ctx->lock);
     ctx->eq = *gl_video_eq_ptr(ctx->renderer);
@@ -394,7 +394,7 @@ static void flip_page(struct vo *vo)
     pthread_mutex_unlock(&p->ctx->lock);
 }
 
-static int query_format(struct vo *vo, uint32_t format)
+static int query_format(struct vo *vo, int format)
 {
     struct vo_priv *p = vo->priv;
 
@@ -403,7 +403,7 @@ static int query_format(struct vo *vo, uint32_t format)
     if (format >= IMGFMT_START && format < IMGFMT_END)
         ok = p->ctx->imgfmt_supported[format - IMGFMT_START];
     pthread_mutex_unlock(&p->ctx->lock);
-    return ok ? VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW : 0;
+    return ok;
 }
 
 static int reconfig(struct vo *vo, struct mp_image_params *params, int flags)

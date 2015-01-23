@@ -37,7 +37,6 @@
 #include "sub/img_convert.h"
 #include "x11_common.h"
 
-#include "video/vfcap.h"
 #include "video/mp_image.h"
 #include "video/vaapi.h"
 #include "video/hwdec.h"
@@ -175,11 +174,11 @@ static int reconfig(struct vo *vo, struct mp_image_params *params, int flags)
     return 0;
 }
 
-static int query_format(struct vo *vo, uint32_t imgfmt)
+static int query_format(struct vo *vo, int imgfmt)
 {
     struct priv *p = vo->priv;
-    if (imgfmt == IMGFMT_VAAPI || va_image_format_from_imgfmt(p->va_image_formats, imgfmt))
-        return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
+    if (imgfmt == IMGFMT_VAAPI || va_image_format_from_imgfmt(p->mpvaapi, imgfmt))
+        return 1;
 
     return 0;
 }
@@ -304,14 +303,7 @@ static struct mp_image *get_screenshot(struct priv *p)
     struct mp_image *hwimg = p->output_surfaces[p->visible_surface];
     if (!hwimg)
         return NULL;
-    struct mp_image *img = va_surface_download(hwimg, NULL);
-    if (!img)
-        return NULL;
-    struct mp_image_params params = p->image_params;
-    params.imgfmt = img->imgfmt;
-    mp_image_params_guess_csp(&params); // ensure colorspace consistency
-    mp_image_set_params(img, &params);
-    return img;
+    return mp_image_new_ref(hwimg);
 }
 
 static void free_subpicture(struct priv *p, struct vaapi_osd_image *img)
@@ -610,7 +602,7 @@ static int preinit(struct vo *vo)
         goto fail;
     }
 
-    p->hwdec_info.vaapi_ctx = p->mpvaapi;
+    p->hwdec_info.hwctx = &p->mpvaapi->hwctx;
 
     if (va_guess_if_emulated(p->mpvaapi)) {
         MP_WARN(vo, "VA-API is most likely emulated via VDPAU.\n"

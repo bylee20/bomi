@@ -10,7 +10,7 @@ struct gl_hwdec {
     const struct gl_hwdec_driver *driver;
     struct mp_log *log;
     GL *gl;
-    struct mp_hwdec_info *info;
+    struct mp_hwdec_ctx *hwctx;
     // For free use by hwdec driver
     void *priv;
     // For working around the vdpau vs. vaapi mess.
@@ -43,15 +43,12 @@ struct gl_hwdec_driver {
     // Undo map_image(). The user of map_image() calls this when the textures
     // are not needed anymore.
     void (*unmap_image)(struct gl_hwdec *hw);
-    // Return a mp_image downloaded from the GPU (optional)
-    struct mp_image *(*download_image)(struct gl_hwdec *hw,
-                                       struct mp_image *hw_image);
+
     void (*destroy)(struct gl_hwdec *hw);
 };
 
 struct gl_hwdec *gl_hwdec_load_api(struct mp_log *log, GL *gl,
-                                   const char *api_name,
-                                   struct mp_hwdec_info *info);
+                                   const char *api_name);
 
 void gl_hwdec_uninit(struct gl_hwdec *hwdec);
 

@@ -84,6 +84,13 @@ uint32_t va_fourcc_from_imgfmt(int imgfmt)
     return 0;
 }
 
+static struct mp_image *ctx_download_image(struct mp_hwdec_ctx *ctx,
+                                           struct mp_image *mpi,
+                                           struct mp_image_pool *swpool)
+{
+    return va_surface_download(mpi, swpool);
+}
+
 struct va_image_formats {
     VAImageFormat *entries;
     int num;
@@ -122,6 +129,11 @@ struct mp_vaapi_ctx *va_initialize(VADisplay *display, struct mp_log *plog)
     *res = (struct mp_vaapi_ctx) {
         .log = talloc_steal(res, log),
         .display = display,
+        .hwctx = {
+            .priv = res,
+            .vaapi_ctx = res,
+            .download_image = ctx_download_image,
+        },
     };
     mpthread_mutex_init_recursive(&res->lock);
 
@@ -149,9 +161,9 @@ void va_destroy(struct mp_vaapi_ctx *ctx)
     }
 }
 
-VAImageFormat *va_image_format_from_imgfmt(const struct va_image_formats *formats,
-                                           int imgfmt)
+VAImageFormat *va_image_format_from_imgfmt(struct mp_vaapi_ctx *ctx,  int imgfmt)
 {
+    struct va_image_formats *formats = ctx->image_formats;
     const int fourcc = va_fourcc_from_imgfmt(imgfmt);
     if (!formats || !formats->num || !fourcc)
         return NULL;
@@ -299,8 +311,7 @@ int va_surface_alloc_imgfmt(struct mp_image *img, int imgfmt)
     if (p->image.image_id != VA_INVALID_ID &&
         va_fourcc_to_imgfmt(p->image.format.fourcc) == imgfmt)
         return 0;
-    VAImageFormat *format =
-        va_image_format_from_imgfmt(p->ctx->image_formats, imgfmt);
+    VAImageFormat *format = va_image_format_from_imgfmt(p->ctx, imgfmt);
     if (!format)
         return -1;
     if (va_surface_image_alloc(img, format) < 0)
@@ -402,12 +413,12 @@ static struct mp_image *try_download(struct mp_image *src,
     struct mp_image *dst = NULL;
     struct mp_image tmp;
     if (va_image_map(p->ctx, image, &tmp)) {
-        dst = pool ? mp_image_pool_get(pool, tmp.imgfmt, tmp.w, tmp.h)
-                   : mp_image_alloc(tmp.imgfmt, tmp.w, tmp.h);
+        dst = mp_image_pool_get(pool, tmp.imgfmt, tmp.w, tmp.h);
         if (dst)
             mp_image_copy(dst, &tmp);
         va_image_unmap(p->ctx, image);
     }
+    mp_image_copy_attributes(dst, src);
     return dst;
 }
 

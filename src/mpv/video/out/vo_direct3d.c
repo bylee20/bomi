@@ -32,7 +32,6 @@
 #include "options/m_option.h"
 #include "talloc.h"
 #include "vo.h"
-#include "video/vfcap.h"
 #include "video/csputils.h"
 #include "video/mp_image.h"
 #include "video/img_format.h"
@@ -152,7 +151,6 @@ typedef struct d3d_priv {
     struct texplane planes[3];
 
     IDirect3DPixelShader9 *pixel_shader;
-    const BYTE *pixel_shader_data;
 
     D3DFORMAT movie_src_fmt;        /**< Movie colorspace format (depends on
                                     the movie's codec) */
@@ -230,6 +228,7 @@ static void flip_page(struct vo *vo);
 static mp_image_t *get_screenshot(d3d_priv *priv);
 static mp_image_t *get_window_screenshot(d3d_priv *priv);
 static void draw_osd(struct vo *vo);
+static bool change_d3d_backbuffer(d3d_priv *priv);
 
 static void d3d_matrix_identity(D3DMATRIX *m)
 {
@@ -432,10 +431,6 @@ static void d3d_destroy_video_objects(d3d_priv *priv)
     for (int n = 0; n < priv->plane_count; n++) {
         d3dtex_release(priv, &priv->planes[n].texture);
     }
-
-    if (priv->pixel_shader)
-        IDirect3DPixelShader9_Release(priv->pixel_shader);
-    priv->pixel_shader = NULL;
 }
 
 /** @brief Destroy D3D Offscreen and Backbuffer surfaces.
@@ -496,17 +491,6 @@ static bool d3d_configure_video_objects(d3d_priv *priv)
 
         if (need_clear)
             d3d_clear_video_textures(priv);
-
-        if (priv->pixel_shader_data) {
-            if (!priv->pixel_shader &&
-                FAILED(IDirect3DDevice9_CreatePixelShader(priv->d3d_device,
-                    (DWORD *)priv->pixel_shader_data, &priv->pixel_shader)))
-            {
-                MP_ERR(priv, "Failed to create "
-                       "YUV conversion pixel shader.\n");
-                return false;
-            }
-        }
 
     } else {
 
@@ -672,6 +656,9 @@ static bool init_d3d(d3d_priv *priv)
     if (!priv->osd_fmt_table[SUBBITMAP_RGBA])
         MP_WARN(priv, "GPU too old - no OSD support.\n");
 
+    if (!change_d3d_backbuffer(priv))
+        return false;
+
     MP_VERBOSE(priv, "device_caps_power2_only %d, device_caps_square_only %d\n"
                "device_texture_sys %d\n"
                "max_texture_width %d, max_texture_height %d\n",
@@ -707,7 +694,9 @@ static void fill_d3d_presentparams(d3d_priv *priv,
 // Create a new backbuffer. Create or Reset the D3D device.
 static bool change_d3d_backbuffer(d3d_priv *priv)
 {
-    D3DPRESENT_PARAMETERS present_params;
+    if (priv->pixel_shader)
+        IDirect3DPixelShader9_Release(priv->pixel_shader);
+    priv->pixel_shader = NULL;
 
     int window_w = priv->vo->dwidth;
     int window_h = priv->vo->dheight;
@@ -727,6 +716,7 @@ static bool change_d3d_backbuffer(d3d_priv *priv)
     /* The grown backbuffer dimensions are ready and fill_d3d_presentparams
      * will use them, so we can reset the device.
      */
+    D3DPRESENT_PARAMETERS present_params;
     fill_d3d_presentparams(priv, &present_params);
 
     if (!priv->d3d_device) {
@@ -751,7 +741,34 @@ static bool change_d3d_backbuffer(d3d_priv *priv)
                present_params.BackBufferWidth, present_params.BackBufferHeight,
                window_w, window_h);
 
+    if (FAILED(IDirect3DDevice9_CreatePixelShader(priv->d3d_device,
+               (DWORD *)d3d_shader_yuv, &priv->pixel_shader)))
+    {
+        priv->pixel_shader = NULL;
+        if (!priv->opt_disable_shaders)
+            MP_WARN(priv, "Shader could not be created - disabling shaders.\n");
+    }
+
     return 1;
+}
+
+static void destroy_d3d(d3d_priv *priv)
+{
+    destroy_d3d_surfaces(priv);
+
+    if (priv->pixel_shader)
+        IDirect3DPixelShader9_Release(priv->pixel_shader);
+    priv->pixel_shader = NULL;
+
+    if (priv->d3d_device)
+        IDirect3DDevice9_Release(priv->d3d_device);
+    priv->d3d_device = NULL;
+
+    if (priv->d3d_handle) {
+        MP_VERBOSE(priv, "Stopping Direct3D.\n");
+        IDirect3D9_Release(priv->d3d_handle);
+    }
+    priv->d3d_handle = NULL;
 }
 
 /** @brief Reconfigure the whole Direct3D. Called only
@@ -762,19 +779,11 @@ static int reconfigure_d3d(d3d_priv *priv)
 {
     MP_VERBOSE(priv, "reconfigure_d3d called.\n");
 
-    destroy_d3d_surfaces(priv);
-
-    if (priv->d3d_device)
-        IDirect3DDevice9_Release(priv->d3d_device);
-    priv->d3d_device = NULL;
-
     // Force complete destruction of the D3D state.
     // Note: this step could be omitted. The resize_d3d call below would detect
     // that d3d_device is NULL, and would properly recreate it. I'm not sure why
     // the following code to release and recreate the d3d_handle exists.
-    if (priv->d3d_handle)
-        IDirect3D9_Release(priv->d3d_handle);
-    priv->d3d_handle = NULL;
+    destroy_d3d(priv);
     if (!init_d3d(priv))
         return 0;
 
@@ -840,17 +849,7 @@ static void uninit_d3d(d3d_priv *priv)
 {
     MP_VERBOSE(priv, "uninit_d3d called.\n");
 
-    destroy_d3d_surfaces(priv);
-
-    if (priv->d3d_device)
-        IDirect3DDevice9_Release(priv->d3d_device);
-    priv->d3d_device = NULL;
-
-    if (priv->d3d_handle) {
-        MP_VERBOSE(priv, "Stopping Direct3D.\n");
-        IDirect3D9_Release(priv->d3d_handle);
-    }
-    priv->d3d_handle = NULL;
+    destroy_d3d(priv);
 }
 
 static uint32_t d3d_draw_frame(d3d_priv *priv)
@@ -1046,7 +1045,7 @@ static bool init_rendering_mode(d3d_priv *priv, uint32_t fmt, bool initialize)
 
     if (priv->opt_disable_textures)
         texture_d3dfmt = 0;
-    if (priv->opt_disable_shaders)
+    if (priv->opt_disable_shaders || !priv->pixel_shader)
         shader_d3dfmt = 0;
     if (priv->opt_disable_stretchrect)
         blit_d3dfmt = 0;
@@ -1066,7 +1065,6 @@ static bool init_rendering_mode(d3d_priv *priv, uint32_t fmt, bool initialize)
     priv->use_shaders = false;
     priv->use_textures = false;
     priv->movie_src_fmt = 0;
-    priv->pixel_shader_data = NULL;
     priv->plane_count = 0;
     priv->image_format = fmt;
 
@@ -1107,7 +1105,6 @@ static bool init_rendering_mode(d3d_priv *priv, uint32_t fmt, bool initialize)
                 if (n > 0)
                     planes[n].clearval = get_chroma_clear_val(desc.plane_bits);
             }
-            priv->pixel_shader_data = d3d_shader_yuv;
         }
 
         for (n = 0; n < priv->plane_count; n++) {
@@ -1129,13 +1126,13 @@ static bool init_rendering_mode(d3d_priv *priv, uint32_t fmt, bool initialize)
  *  @return 0 on failure, device capabilities (not probed
  *          currently) on success.
  */
-static int query_format(struct vo *vo, uint32_t movie_fmt)
+static int query_format(struct vo *vo, int movie_fmt)
 {
     d3d_priv *priv = vo->priv;
     if (!init_rendering_mode(priv, movie_fmt, false))
         return 0;
 
-    return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
+    return 1;
 }
 
 /****************************************************************************
@@ -1202,9 +1199,6 @@ static int preinit(struct vo *vo)
         goto err_out;
     }
 
-    if (!init_d3d(priv))
-        goto err_out;
-
     /* w32_common framework call. Configures window on the screen, gets
      * fullscreen dimensions and does other useful stuff.
      */
@@ -1212,6 +1206,9 @@ static int preinit(struct vo *vo)
         MP_VERBOSE(priv, "Configuring onscreen window failed.\n");
         goto err_out;
     }
+
+    if (!init_d3d(priv))
+        goto err_out;
 
     return 0;
 

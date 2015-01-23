@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include <libavcodec/avcodec.h>
 #include <libavutil/pixfmt.h>
 #include <libavutil/pixdesc.h>
 
@@ -141,6 +142,7 @@ struct mp_imgfmt_desc mp_imgfmt_get_desc(int mpfmt)
         .avformat = fmt,
         .chroma_xs = pd->log2_chroma_w,
         .chroma_ys = pd->log2_chroma_h,
+        .component_bits = pd->comp[0].depth_minus1 + 1,
     };
 
     int planedepth[4] = {0};
@@ -153,6 +155,8 @@ struct mp_imgfmt_desc mp_imgfmt_get_desc(int mpfmt)
             desc.bpp[d.plane] = (d.step_minus1 + 1) * el_size;
         planedepth[d.plane] += d.depth_minus1 + 1;
         need_endian |= (d.depth_minus1 + 1 + d.shift) > 8;
+        if (d.depth_minus1 + 1 != desc.component_bits)
+            desc.component_bits = 0;
     }
 
     for (int p = 0; p < 4; p++) {
@@ -263,6 +267,23 @@ int mp_imgfmt_find_yuv_planar(int xs, int ys, int planes, int component_bits)
     return 0;
 }
 
+#if LIBAVUTIL_VERSION_MICRO < 100
+#define avcodec_find_best_pix_fmt_of_list avcodec_find_best_pix_fmt2
+#endif
+
+// Compare the dst image formats, and return the one which can carry more data
+// (e.g. higher depth, more color components, lower chroma subsampling, etc.),
+// with respect to what is required to keep most of the src format.
+// Returns the imgfmt, or 0 on error.
+int mp_imgfmt_select_best(int dst1, int dst2, int src)
+{
+    enum AVPixelFormat dst1pxf = imgfmt2pixfmt(dst1);
+    enum AVPixelFormat dst2pxf = imgfmt2pixfmt(dst2);
+    enum AVPixelFormat srcpxf = imgfmt2pixfmt(src);
+    enum AVPixelFormat dstlist[] = {dst1pxf, dst2pxf, AV_PIX_FMT_NONE};
+    return pixfmt2imgfmt(avcodec_find_best_pix_fmt_of_list(dstlist, srcpxf, 1, 0));
+}
+
 #if 0
 
 #include <libavutil/frame.h>
@@ -297,8 +318,9 @@ int main(int argc, char **argv)
         FLAG(MP_IMGFLAG_PAL, "pal")
         FLAG(MP_IMGFLAG_HWACCEL, "hw")
         printf("\n");
-        printf("  planes=%d, chroma=%d:%d align=%d:%d bits=%d\n", d.num_planes,
-               d.chroma_xs, d.chroma_ys, d.align_x, d.align_y, d.plane_bits);
+        printf("  planes=%d, chroma=%d:%d align=%d:%d bits=%d cbits=%d\n",
+               d.num_planes, d.chroma_xs, d.chroma_ys, d.align_x, d.align_y,
+               d.plane_bits, d.component_bits);
         printf("  {");
         for (int n = 0; n < MP_MAX_PLANES; n++)
             printf("%d/%d/[%d:%d] ", d.bytes[n], d.bpp[n], d.xs[n], d.ys[n]);

@@ -480,8 +480,10 @@ int vo_cocoa_config_window(struct vo *vo, uint32_t flags, void *gl_ctx)
         s->pending_events |= VO_EVENT_RESIZE;
     });
 
-    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-    set_application_icon(NSApp);
+    if (!s->embedded) {
+        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+        set_application_icon(NSApp);
+    }
     return 0;
 }
 
@@ -604,11 +606,14 @@ static void vo_cocoa_control_get_icc_profile(struct vo *vo, void *arg)
 
 int vo_cocoa_control(struct vo *vo, int *events, int request, void *arg)
 {
+    struct mp_vo_opts *opts  = vo->opts;
+
     switch (request) {
     case VOCTRL_CHECK_EVENTS:
         *events |= vo_cocoa_check_events(vo);
         return VO_TRUE;
     case VOCTRL_FULLSCREEN:
+        opts->fullscreen = !opts->fullscreen;
         return vo_cocoa_fullscreen_sync(vo);
     case VOCTRL_ONTOP:
         return vo_cocoa_ontop(vo);

@@ -576,7 +576,7 @@ int demux_read_packet_async(struct sh_stream *sh, struct demux_packet **out_pkt)
         if (ds->in->threading) {
             pthread_mutex_lock(&ds->in->lock);
             *out_pkt = dequeue_packet(ds);
-            r = *out_pkt ? 1 : (ds->eof ? -1 : 0);
+            r = *out_pkt ? 1 : ((ds->eof || !ds->selected) ? -1 : 0);
             ds->active = ds->selected; // enable readahead
             ds->in->eof = false; // force retry
             pthread_cond_signal(&ds->in->wakeup); // possibly read more
@@ -760,6 +760,7 @@ static void demux_copy(struct demuxer *dst, struct demuxer *src)
         dst->seekable = src->seekable;
         dst->filetype = src->filetype;
         dst->ts_resets_possible = src->ts_resets_possible;
+        dst->rel_seeks = src->rel_seeks;
         dst->start_time = src->start_time;
     }
     if (src->events & DEMUX_EVENT_STREAMS) {

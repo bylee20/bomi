@@ -44,7 +44,6 @@
 #include "common/msg.h"
 #include "common/global.h"
 #include "video/mp_image.h"
-#include "video/vfcap.h"
 #include "sub/osd.h"
 #include "osdep/io.h"
 #include "osdep/threads.h"
@@ -54,7 +53,6 @@ extern const struct vo_driver video_out_vdpau;
 extern const struct vo_driver video_out_xv;
 extern const struct vo_driver video_out_opengl;
 extern const struct vo_driver video_out_opengl_hq;
-extern const struct vo_driver video_out_opengl_old;
 extern const struct vo_driver video_out_opengl_cb;
 extern const struct vo_driver video_out_null;
 extern const struct vo_driver video_out_image;
@@ -83,9 +81,6 @@ const struct vo_driver *const video_out_drivers[] =
 #endif
 #if HAVE_SDL2
         &video_out_sdl,
-#endif
-#if HAVE_GL
-        &video_out_opengl_old,
 #endif
 #if HAVE_VAAPI
         &video_out_vaapi,
@@ -280,8 +275,10 @@ struct vo *init_best_video_out(struct mpv_global *global, struct vo_extra *ex)
 autoprobe:
     // now try the rest...
     for (int i = 0; video_out_drivers[i]; i++) {
-        char *name = (char *)video_out_drivers[i]->name;
-        struct vo *vo = vo_create(true, global, ex, name, NULL);
+        const struct vo_driver *driver = video_out_drivers[i];
+        if (driver == &video_out_null)
+            break;
+        struct vo *vo = vo_create(true, global, ex, (char *)driver->name, NULL);
         if (vo)
             return vo;
     }
@@ -562,12 +559,12 @@ static bool render_frame(struct vo *vo)
     int64_t next_vsync = prev_sync(vo, mp_time_us()) + in->vsync_interval;
     int64_t end_time = pts + duration;
 
-    if (!(vo->global->opts->frame_dropping & 1) || !in->hasframe_rendered ||
-        vo->driver->untimed || vo->driver->encode)
+    if (!in->hasframe_rendered)
         duration = -1; // disable framedrop
 
     in->dropped_frame = duration >= 0 && end_time < next_vsync;
     in->dropped_frame &= !(vo->driver->caps & VO_CAP_FRAMEDROP);
+    in->dropped_frame &= (vo->global->opts->frame_dropping & 1);
     // Even if we're hopelessly behind, rather degrade to 10 FPS playback,
     // instead of just freezing the display forever.
     in->dropped_frame &= mp_time_us() - in->last_flip < 100 * 1000;

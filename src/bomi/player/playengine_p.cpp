@@ -113,8 +113,30 @@ auto PlayEngine::Data::videoSubOptions() const -> QByteArray
     };
 
     OptionList opts(':');
-    opts.add("lscale", _EnumData(lscale));
-    opts.add("cscale", _EnumData(cscale));
+
+    auto addScale = [&] (const char *opt, Interpolator scale) {
+        int lanczos = 0;
+        switch (scale) {
+        case Interpolator::Lanczos2:
+            lanczos = 2;
+            break;
+        case Interpolator::Lanczos3:
+            lanczos = 3;
+            break;
+        case Interpolator::Lanczos4:
+            lanczos = 4;
+            break;
+        default:
+            break;
+        }
+        if (lanczos) {
+            opts.add(opt, "lanczos"_b);
+            opts.add("scale-radius", lanczos);
+        } else
+            opts.add(opt, _EnumData(scale));
+    };
+    addScale("scale", lscale);
+    addScale("cscale", cscale);
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(dithering));
     if (filter->isSkipping())

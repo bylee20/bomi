@@ -54,7 +54,7 @@ static const char vo_opengl_shaders[] =
 #define TEXUNIT_3DLUT 6
 #define TEXUNIT_DITHER 7
 
-// lscale/cscale arguments that map directly to shader filter routines.
+// scale/cscale arguments that map directly to shader filter routines.
 // Note that the convolution filters are not included in this list.
 static const char *const fixed_scale_filters[] = {
     "bilinear",
@@ -98,13 +98,14 @@ struct texplane {
 struct video_image {
     struct texplane planes[4];
     bool image_flipped;
-    struct mp_image *hwimage;   // if hw decoding is active
+    struct mp_image *mpi;       // original input image
 };
 
 struct scaler {
     int index;
     const char *name;
     float params[2];
+    float antiring;
     struct filter_kernel *kernel;
     GLuint gl_lut;
     const char *lut_name;
@@ -168,12 +169,10 @@ struct gl_video {
 
     float input_gamma, conv_gamma;
 
-    // per pixel (full pixel when packed, each component when planar)
-    int plane_bits;
+    int component_bits; // color bit depth for all components; 0 if unknown
     int plane_count;
 
     struct video_image image;
-    bool have_image;
 
     struct fbotex indirect_fbo;         // RGB target
     struct fbotex scale_sep_fbo;        // first pass when doing 2 pass scaling
@@ -291,10 +290,11 @@ struct packed_fmt_entry {
 };
 
 static const struct packed_fmt_entry mp_packed_formats[] = {
-    //                      R  G  B  A
+    //                  w   R  G  B  A
     {IMGFMT_Y8,         1, {1, 0, 0, 0}},
     {IMGFMT_Y16,        2, {1, 0, 0, 0}},
     {IMGFMT_YA8,        1, {1, 0, 0, 2}},
+    {IMGFMT_YA16,       2, {1, 0, 0, 2}},
     {IMGFMT_ARGB,       1, {2, 3, 4, 1}},
     {IMGFMT_0RGB,       1, {2, 3, 4, 0}},
     {IMGFMT_BGRA,       1, {3, 2, 1, 4}},
@@ -321,7 +321,6 @@ const struct gl_video_opts gl_video_opts_def = {
     .dither_depth = -1,
     .dither_size = 6,
     .fbo_format = GL_RGBA,
-    .scale_sep = 1,
     .sigmoid_center = 0.75,
     .sigmoid_slope = 6.5,
     .scalers = { "bilinear", "bilinear" },
@@ -336,7 +335,6 @@ const struct gl_video_opts gl_video_opts_hq_def = {
     .dither_depth = 0,
     .dither_size = 6,
     .fbo_format = GL_RGBA16,
-    .scale_sep = 1,
     .fancy_downscaling = 1,
     .sigmoid_center = 0.75,
     .sigmoid_slope = 6.5,
@@ -359,23 +357,22 @@ const struct m_sub_options gl_video_conf = {
         OPT_FLAG("srgb", srgb, 0),
         OPT_FLAG("npot", npot, 0),
         OPT_FLAG("pbo", pbo, 0),
-        OPT_STRING_VALIDATE("lscale", scalers[0], 0, validate_scaler_opt),
+        OPT_STRING_VALIDATE("scale", scalers[0], 0, validate_scaler_opt),
         OPT_STRING_VALIDATE("cscale", scalers[1], 0, validate_scaler_opt),
-        OPT_STRING_VALIDATE("lscale-down", dscalers[0], 0, validate_scaler_opt),
-        OPT_STRING_VALIDATE("cscale-down", dscalers[1], 0, validate_scaler_opt),
-        OPT_FLOAT("lparam1", scaler_params[0][0], 0),
-        OPT_FLOAT("lparam2", scaler_params[0][1], 0),
-        OPT_FLOAT("cparam1", scaler_params[1][0], 0),
-        OPT_FLOAT("cparam2", scaler_params[1][1], 0),
-        OPT_FLOATRANGE("lradius", scaler_radius[0], 0, 1.0, 32.0),
-        OPT_FLOATRANGE("cradius", scaler_radius[1], 0, 1.0, 32.0),
+        OPT_STRING_VALIDATE("scale-down", dscaler, 0, validate_scaler_opt),
+        OPT_FLOAT("scale-param1", scaler_params[0][0], 0),
+        OPT_FLOAT("scale-param2", scaler_params[0][1], 0),
+        OPT_FLOAT("cscale-param1", scaler_params[1][0], 0),
+        OPT_FLOAT("cscale-param2", scaler_params[1][1], 0),
+        OPT_FLOATRANGE("scale-radius", scaler_radius[0], 0, 1.0, 16.0),
+        OPT_FLOATRANGE("cscale-radius", scaler_radius[1], 0, 1.0, 16.0),
+        OPT_FLOATRANGE("scale-antiring", scaler_antiring[0], 0, 0.0, 1.0),
+        OPT_FLOATRANGE("cscale-antiring", scaler_antiring[1], 0, 0.0, 1.0),
         OPT_FLAG("scaler-resizes-only", scaler_resizes_only, 0),
         OPT_FLAG("fancy-downscaling", fancy_downscaling, 0),
         OPT_FLAG("sigmoid-upscaling", sigmoid_upscaling, 0),
         OPT_FLOATRANGE("sigmoid-center", sigmoid_center, 0, 0.0, 1.0),
         OPT_FLOATRANGE("sigmoid-slope", sigmoid_slope, 0, 1.0, 20.0),
-        OPT_FLAG("indirect", indirect, 0),
-        OPT_FLAG("scale-sep", scale_sep, 0),
         OPT_CHOICE("fbo-format", fbo_format, 0,
                    ({"rgb",    GL_RGB},
                     {"rgba",   GL_RGBA},
@@ -407,6 +404,20 @@ const struct m_sub_options gl_video_conf = {
         OPT_COLOR("background", background, 0),
         OPT_REMOVED("approx-gamma", "this is always enabled now"),
         OPT_STRING("custom-shader", custom_shader, 0),
+        OPT_REMOVED("cscale-down", "chroma is never downscaled"),
+        OPT_REMOVED("scale-sep", "this is set automatically whenever sane"),
+        OPT_REMOVED("indirect", "this is set automatically whenever sane"),
+
+        OPT_REPLACED("lscale", "scale"),
+        OPT_REPLACED("lscale-down", "scale-down"),
+        OPT_REPLACED("lparam1", "scale-param1"),
+        OPT_REPLACED("lparam2", "scale-param2"),
+        OPT_REPLACED("lradius", "scale-radius"),
+        OPT_REPLACED("lantiring", "scale-antiring"),
+        OPT_REPLACED("cparam1", "cscale-param1"),
+        OPT_REPLACED("cparam2", "cscale-param2"),
+        OPT_REPLACED("cradius", "cscale-radius"),
+        OPT_REPLACED("cantiring", "cscale-antiring"),
         {0}
     },
     .size = sizeof(struct gl_video_opts),
@@ -599,6 +610,13 @@ static bool fbotex_init(struct gl_video *p, struct fbotex *fbo, int w, int h,
                    GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     default_tex_params(gl, p->gl_target);
 
+    // Convolution filters don't need linear sampling, so using nearest is
+    // often faster.
+    if (p->scalers[0].kernel) {
+        gl->TexParameteri(p->gl_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        gl->TexParameteri(p->gl_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+
     debug_check_gl(p, "after creating framebuffer texture");
 
     gl->BindFramebuffer(GL_FRAMEBUFFER, fbo->fbo);
@@ -652,8 +670,9 @@ static void update_uniforms(struct gl_video *p, GLuint program)
     gl->UseProgram(program);
 
     struct mp_csp_params cparams = MP_CSP_PARAMS_DEFAULTS;
-    cparams.input_bits = p->plane_bits;
-    cparams.texture_bits = (p->plane_bits + 7) & ~7;
+    cparams.gray = p->is_yuv && !p->is_packed_yuv && p->plane_count == 1;
+    cparams.input_bits = p->component_bits;
+    cparams.texture_bits = (cparams.input_bits + 7) & ~7;
     mp_csp_set_image_params(&cparams, &p->image_params);
     mp_csp_copy_equalizer_values(&cparams, &p->video_eq);
     if (p->image_desc.flags & MP_IMGFLAG_XYZ) {
@@ -941,7 +960,7 @@ static void shader_def_opt(char **shader, const char *name, bool b)
 static void shader_setup_scaler(char **shader, struct scaler *scaler, int pass)
 {
     int unit = scaler->index;
-    const char *target = unit == 0 ? "SAMPLE_L" : "SAMPLE_C";
+    const char *target = unit == 0 ? "SAMPLE" : "SAMPLE_C";
     if (!scaler->kernel) {
         APPENDF(shader, "#define %s(p0, p1, p2) "
                 "sample_%s(p0, p1, p2, filter_param1_%c)\n",
@@ -954,9 +973,34 @@ static void shader_setup_scaler(char **shader, struct scaler *scaler, int pass)
         APPENDF(shader, "#define DEF_SCALER%d \\\n    ", unit);
         char lut_fn[40];
         if (scaler->kernel->polar) {
-            // SAMPLE_CONVOLUTION_POLAR_R(NAME, R, LUT)
-            APPENDF(shader, "SAMPLE_CONVOLUTION_POLAR_R(%s, %d, %s)\n",
-                    name, (int)scaler->kernel->radius, lut_tex);
+            int radius = (int)scaler->kernel->radius;
+            // SAMPLE_CONVOLUTION_POLAR_R(NAME, R, LUT, WEIGHTS_FN, ANTIRING)
+            APPENDF(shader, "SAMPLE_CONVOLUTION_POLAR_R(%s, %d, %s, WEIGHTS%d, %f)\n",
+                    name, radius, lut_tex, unit, scaler->antiring);
+
+            // Pre-compute unrolled weights matrix
+            APPENDF(shader, "#define WEIGHTS%d(LUT) \\\n    ", unit);
+            for (int y = 1-radius; y <= radius; y++) {
+                for (int x = 1-radius; x <= radius; x++) {
+                    // Since we can't know the subpixel position in advance,
+                    // assume a worst case scenario.
+                    int yy = y > 0 ? y-1 : y;
+                    int xx = x > 0 ? x-1 : x;
+                    double d = sqrt(xx*xx + yy*yy);
+
+                    // Samples outside the radius are unnecessary
+                    if (d < radius) {
+                        APPENDF(shader, "SAMPLE_POLAR_%s(LUT, %f, %d, %d) \\\n    ",
+                                // The center 4 coefficients are the primary
+                                // contributors, used to clamp the result for
+                                // anti-ringing
+                                (x >= 0 && y >= 0 && x <= 1 && y <= 1)
+                                  ? "PRIMARY" : "HELPER",
+                                (double)radius, x, y);
+                    }
+                }
+            }
+            APPENDF(shader, "\n");
         } else {
             if (size == 2 || size == 6) {
                 snprintf(lut_fn, sizeof(lut_fn), "weights%d", size);
@@ -1006,16 +1050,18 @@ static void compile_shaders(struct gl_video *p)
     char *s_video = get_section(tmp, src, "frag_video");
 
     bool rg = gl->mpgl_caps & MPGL_CAP_TEX_RG;
+    bool tex1d = gl->mpgl_caps & MPGL_CAP_1D_TEX;
     bool tex3d = gl->mpgl_caps & MPGL_CAP_3D_TEX;
     bool arrays = gl->mpgl_caps & MPGL_CAP_1ST_CLASS_ARRAYS;
     char *header =
         talloc_asprintf(tmp, "#version %d%s\n"
                              "#define HAVE_RG %d\n"
+                             "#define HAVE_1DTEX %d\n"
                              "#define HAVE_3DTEX %d\n"
                              "#define HAVE_ARRAYS %d\n"
                              "%s%s",
                              gl->glsl_version, gl->es >= 300 ? " es" : "",
-                             rg, tex3d, arrays, shader_prelude, PRELUDE_END);
+                             rg, tex1d, tex3d, arrays, shader_prelude, PRELUDE_END);
 
     bool use_cms = p->opts.srgb || p->use_lut_3d;
 
@@ -1132,8 +1178,6 @@ static void compile_shaders(struct gl_video *p)
 
     if (p->color_swizzle[0])
         shader_def(&header_conv, "USE_COLOR_SWIZZLE", p->color_swizzle);
-    shader_def_opt(&header_conv, "USE_YGRAY", p->is_yuv && !p->is_packed_yuv
-                                              && p->plane_count == 1);
     shader_def_opt(&header_conv, "USE_INPUT_GAMMA", use_input_gamma);
     shader_def_opt(&header_conv, "USE_COLORMATRIX", !p->is_rgb);
     shader_def_opt(&header_conv, "USE_CONV_GAMMA", use_conv_gamma);
@@ -1161,7 +1205,7 @@ static void compile_shaders(struct gl_video *p)
     shader_def_opt(&header_final, "USE_DITHER", p->dither_texture != 0);
     shader_def_opt(&header_final, "USE_TEMPORAL_DITHER", p->opts.temporal_dither);
 
-    if (p->opts.scale_sep && p->scalers[0].kernel && !p->scalers[0].kernel->polar) {
+    if (p->scalers[0].kernel && !p->scalers[0].kernel->polar) {
         header_sep = talloc_strdup(tmp, "");
         shader_def_opt(&header_sep, "FIXED_SCALE", true);
         shader_setup_scaler(&header_sep, &p->scalers[0], 0);
@@ -1170,43 +1214,40 @@ static void compile_shaders(struct gl_video *p)
         shader_setup_scaler(&header_final, &p->scalers[0], -1);
     }
 
-    // We want to do scaling in linear light. Scaling is closely connected to
-    // texture sampling due to how the shader is structured (or if GL bilinear
-    // scaling is used). The purpose of the "indirect" pass is to convert the
-    // input video to linear RGB.
-    // Another purpose is reducing input to a single texture for scaling.
-    bool use_indirect = p->opts.indirect;
+    // The indirect pass is used to preprocess the image before scaling.
+    bool use_indirect = false;
 
     // Don't sample from input video textures before converting the input to
     // its proper gamma.
     if (use_input_gamma || use_conv_gamma || use_linear_light || use_const_luma)
         use_indirect = true;
 
-    // It doesn't make sense to scale the chroma with cscale in the 1. scale
-    // step and with lscale in the 2. step. If the chroma is subsampled, a
-    // convolution filter wouldn't even work entirely correctly, because the
-    // luma scaler would sample two texels instead of one per tap for chroma.
-    // Also, even with 4:4:4 YUV or planar RGB, the indirection might be faster,
-    // because the shader can't use one scaler for sampling from 3 textures. It
-    // has to fetch the coefficients for each texture separately, even though
-    // they're the same (this is not an inherent restriction, but would require
-    // to restructure the shader).
-    if (header_sep && p->plane_count > 1)
+    // Trivial scalers are implemented directly and efficiently by the GPU.
+    // This only includes bilinear and nearest neighbour in OpenGL, but we
+    // don't support nearest neighbour upsampling.
+    bool trivial_scaling = strcmp(p->scalers[0].name, "bilinear") == 0 &&
+                           strcmp(p->scalers[1].name, "bilinear") == 0;
+
+    // If the video is subsampled, chroma information needs to be pulled up to
+    // the input size before scaling can be done. Even for 4:4:4 or planar RGB
+    // this is also faster because it means the scalers can operate on all
+    // channels simultaneously. This is unnecessary for trivial scaling.
+    if (p->plane_count > 1 && !trivial_scaling)
         use_indirect = true;
 
     if (input_is_subsampled(p)) {
         shader_setup_scaler(&header_conv, &p->scalers[1], -1);
     } else {
-        // Force using the luma scaler on chroma. If the "indirect" stage is
+        // Force using the normal scaler on chroma. If the "indirect" stage is
         // used, the actual scaling will happen in the next stage.
         shader_def(&header_conv, "SAMPLE_C",
-                   use_indirect ? "SAMPLE_BILINEAR" : "SAMPLE_L");
+                   use_indirect ? "SAMPLE_TRIVIAL" : "SAMPLE");
     }
 
     if (use_indirect) {
         // We don't use filtering for the Y-plane (luma), because it's never
         // scaled in this scenario.
-        shader_def(&header_conv, "SAMPLE_L", "SAMPLE_BILINEAR");
+        shader_def(&header_conv, "SAMPLE", "SAMPLE_TRIVIAL");
         shader_def_opt(&header_conv, "FIXED_SCALE", true);
         header_conv = t_concat(tmp, header, header_conv);
         p->indirect_program =
@@ -1300,6 +1341,8 @@ static void init_scaler(struct gl_video *p, struct scaler *scaler)
             scaler->kernel->params[n] = p->opts.scaler_params[scaler->index][n];
     }
 
+    scaler->antiring = p->opts.scaler_antiring[scaler->index];
+
     if (scaler->kernel->radius < 0) {
         float radius = p->opts.scaler_radius[scaler->index];
         if (!isnan(radius))
@@ -1310,7 +1353,7 @@ static void init_scaler(struct gl_video *p, struct scaler *scaler)
 
     int size = scaler->kernel->size;
     int elems_per_pixel = 4;
-    if (scaler->kernel->polar) {
+    if (size == 1) {
         elems_per_pixel = 1;
     } else if (size == 2) {
         elems_per_pixel = 2;
@@ -1318,11 +1361,16 @@ static void init_scaler(struct gl_video *p, struct scaler *scaler)
         elems_per_pixel = 3;
     }
     int width = size / elems_per_pixel;
+    assert(size == width * elems_per_pixel);
     const struct fmt_entry *fmt = &gl_float16_formats[elems_per_pixel - 1];
+    int target;
+
     if (scaler->kernel->polar) {
-        scaler->lut_name = scaler->index == 0 ? "lut_polar_l" : "lut_polar_c";
+        target = GL_TEXTURE_1D;
+        scaler->lut_name = scaler->index == 0 ? "lut_1d_l" : "lut_1d_c";
     } else {
-        scaler->lut_name = scaler->index == 0 ? "lut_l" : "lut_c";
+        target = GL_TEXTURE_2D;
+        scaler->lut_name = scaler->index == 0 ? "lut_2d_l" : "lut_2d_c";
     }
 
     gl->ActiveTexture(GL_TEXTURE0 + TEXUNIT_SCALERS + scaler->index);
@@ -1330,33 +1378,26 @@ static void init_scaler(struct gl_video *p, struct scaler *scaler)
     if (!scaler->gl_lut)
         gl->GenTextures(1, &scaler->gl_lut);
 
-    if (scaler->kernel->polar) {
-        gl->BindTexture(GL_TEXTURE_1D, scaler->gl_lut);
+    gl->BindTexture(target, scaler->gl_lut);
 
-        float *weights = talloc_array(NULL, float, LOOKUP_TEXTURE_SIZE);
-        mp_compute_lut_polar(scaler->kernel, LOOKUP_TEXTURE_SIZE, weights);
-        gl->TexImage1D(GL_TEXTURE_1D, 0, fmt->internal_format, LOOKUP_TEXTURE_SIZE,
+    float *weights = talloc_array(NULL, float, LOOKUP_TEXTURE_SIZE * size);
+    mp_compute_lut(scaler->kernel, LOOKUP_TEXTURE_SIZE, weights);
+
+    if (target == GL_TEXTURE_1D) {
+        gl->TexImage1D(target, 0, fmt->internal_format, LOOKUP_TEXTURE_SIZE,
                        0, fmt->format, GL_FLOAT, weights);
-        talloc_free(weights);
-
-        gl->TexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        gl->TexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        gl->TexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     } else {
-        gl->BindTexture(GL_TEXTURE_2D, scaler->gl_lut);
-
-        float *weights = talloc_array(NULL, float, LOOKUP_TEXTURE_SIZE * size);
-        mp_compute_lut(scaler->kernel, LOOKUP_TEXTURE_SIZE, weights);
-        gl->TexImage2D(GL_TEXTURE_2D, 0, fmt->internal_format, width,
-                       LOOKUP_TEXTURE_SIZE, 0, fmt->format, GL_FLOAT, weights);
-        talloc_free(weights);
-
-        gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        gl->TexImage2D(target, 0, fmt->internal_format, width, LOOKUP_TEXTURE_SIZE,
+                       0, fmt->format, GL_FLOAT, weights);
     }
 
+    talloc_free(weights);
+
+    gl->TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->TexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl->TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    if (target != GL_TEXTURE_1D)
+        gl->TexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     gl->ActiveTexture(GL_TEXTURE0);
 
@@ -1440,7 +1481,7 @@ static void recreate_osd(struct gl_video *p)
 {
     if (p->osd)
         mpgl_osd_destroy(p->osd);
-    p->osd = mpgl_osd_init(p->gl, p->log, p->osd_state, false);
+    p->osd = mpgl_osd_init(p->gl, p->log, p->osd_state);
     p->osd->use_pbo = p->opts.pbo;
 }
 
@@ -1457,8 +1498,8 @@ static const char *expected_scaler(struct gl_video *p, int unit)
     {
         return "bilinear";
     }
-    if (p->opts.dscalers[unit] && get_scale_factor(p) < 1.0)
-        return p->opts.dscalers[unit];
+    if (unit == 0 && p->opts.dscaler && get_scale_factor(p) < 1.0)
+        return p->opts.dscaler;
     return p->opts.scalers[unit];
 }
 
@@ -1508,6 +1549,8 @@ static void uninit_rendering(struct gl_video *p)
 
     gl->DeleteTextures(1, &p->dither_texture);
     p->dither_texture = 0;
+
+    fbotex_uninit(p, &p->indirect_fbo);
 }
 
 void gl_video_set_lut3d(struct gl_video *p, struct lut3d *lut3d)
@@ -1555,9 +1598,10 @@ static void set_image_textures(struct gl_video *p, struct video_image *vimg,
     if (!imgtex)
         imgtex = dummy;
 
+    assert(vimg->mpi);
+
     if (p->hwdec_active) {
-        assert(vimg->hwimage);
-        p->hwdec->driver->map_image(p->hwdec, vimg->hwimage, imgtex);
+        p->hwdec->driver->map_image(p->hwdec, vimg->mpi, imgtex);
     } else {
         for (int n = 0; n < p->plane_count; n++)
             imgtex[n] = vimg->planes[n].gl_texture;
@@ -1690,11 +1734,11 @@ static void uninit_video(struct gl_video *p)
         plane->buffer_ptr = NULL;
         plane->buffer_size = 0;
     }
-    mp_image_unrefp(&vimg->hwimage);
+    mp_image_unrefp(&vimg->mpi);
 
     fbotex_uninit(p, &p->indirect_fbo);
     fbotex_uninit(p, &p->scale_sep_fbo);
-    
+
     // Invalidate image_params to ensure that gl_video_config() will call
     // init_video() on uninitialized gl_video.
     p->image_params = (struct mp_image_params){0};
@@ -1797,7 +1841,7 @@ void gl_video_render_frame(struct gl_video *p, int fbo)
         gl->Clear(GL_COLOR_BUFFER_BIT);
     }
 
-    if (!p->have_image) {
+    if (!vimg->mpi) {
         gl->Clear(GL_COLOR_BUFFER_BIT);
         goto draw_osd;
     }
@@ -1990,12 +2034,11 @@ void gl_video_upload_image(struct gl_video *p, struct mp_image *mpi)
 
     p->osd_pts = mpi->pts;
 
-    if (p->hwdec_active) {
-        talloc_free(vimg->hwimage);
-        vimg->hwimage = mpi;
-        p->have_image = true;
+    talloc_free(vimg->mpi);
+    vimg->mpi = mpi;
+
+    if (p->hwdec_active)
         return;
-    }
 
     assert(mpi->num_planes == p->plane_count);
 
@@ -2029,48 +2072,12 @@ void gl_video_upload_image(struct gl_video *p, struct mp_image *mpi)
     gl->ActiveTexture(GL_TEXTURE0);
     if (pbo)
         gl->BindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-    p->have_image = true;
-    talloc_free(mpi);
 }
 
 struct mp_image *gl_video_download_image(struct gl_video *p)
 {
-    GL *gl = p->gl;
-
     struct video_image *vimg = &p->image;
-
-    if (!p->have_image || !gl->GetTexImage)
-        return NULL;
-
-    if (p->hwdec_active && p->hwdec->driver->download_image) {
-        struct mp_image *dlimage =
-            p->hwdec->driver->download_image(p->hwdec, vimg->hwimage);
-        if (dlimage)
-            mp_image_set_attributes(dlimage, &p->image_params);
-        return dlimage;
-    }
-
-    set_image_textures(p, vimg, NULL);
-
-    assert(p->texture_w >= p->image_params.w);
-    assert(p->texture_h >= p->image_params.h);
-
-    mp_image_t *image = mp_image_alloc(p->image_format, p->texture_w,
-                                                        p->texture_h);
-    if (image) {
-        for (int n = 0; n < p->plane_count; n++) {
-            struct texplane *plane = &vimg->planes[n];
-            gl->ActiveTexture(GL_TEXTURE0 + n);
-            glDownloadTex(gl, p->gl_target, plane->gl_format, plane->gl_type,
-                          image->planes[n], image->stride[n]);
-        }
-        mp_image_set_attributes(image, &p->image_params);
-    }
-
-    unset_image_textures(p);
-
-    return image;
+    return vimg->mpi ? mp_image_new_ref(vimg->mpi) : NULL;
 }
 
 static void draw_osd_cb(void *ctx, struct sub_bitmaps *imgs)
@@ -2186,6 +2193,7 @@ static void check_gl_features(struct gl_video *p)
     bool have_fbo = gl->mpgl_caps & MPGL_CAP_FB;
     bool have_srgb = gl->mpgl_caps & MPGL_CAP_SRGB_TEX;
     bool have_arrays = gl->mpgl_caps & MPGL_CAP_1ST_CLASS_ARRAYS;
+    bool have_1d_tex = gl->mpgl_caps & MPGL_CAP_1D_TEX;
     bool have_3d_tex = gl->mpgl_caps & MPGL_CAP_3D_TEX;
     bool have_mix = gl->glsl_version >= 130;
 
@@ -2198,22 +2206,27 @@ static void check_gl_features(struct gl_video *p)
         have_fbo = test_fbo(p, p->opts.fbo_format);
     }
 
-    // Disable these only if the user didn't disable scale-sep on the command
-    // line, so convolution filter can still be forced to be run.
     // Normally, we want to disable them by default if FBOs are unavailable,
     // because they will be slow (not critically slow, but still slower).
     // Without FP textures, we must always disable them.
     // I don't know if luminance alpha float textures exist, so disregard them.
-    if (!have_float_tex || !have_arrays || (!have_fbo && p->opts.scale_sep)) {
+    if (!have_float_tex || !have_arrays || !have_fbo || !have_1d_tex) {
         for (int n = 0; n < 2; n++) {
-            if (mp_find_filter_kernel(p->opts.scalers[n])) {
-                p->opts.scalers[n] = "bilinear";
-                char *reason = "scaler (FBO)";
+            const struct filter_kernel *kernel = mp_find_filter_kernel(p->opts.scalers[n]);
+            if (kernel) {
+                char *reason = "";
+                if (!have_fbo)
+                    reason = "scaler (FBO)";
                 if (!have_float_tex)
                     reason = "scaler (float tex.)";
                 if (!have_arrays)
                     reason = "scaler (no GLSL support)";
-                disabled[n_disabled++] = reason;
+                if (!have_1d_tex && kernel->polar)
+                    reason = "scaler (1D tex.)";
+                if (*reason) {
+                    p->opts.scalers[n] = "bilinear";
+                    disabled[n_disabled++] = reason;
+                }
             }
         }
     }
@@ -2256,10 +2269,6 @@ static void check_gl_features(struct gl_video *p)
             p->use_lut_3d = false;
             disabled[n_disabled++] = "color management (GLSL version)";
         }
-    }
-    if (!have_fbo) {
-        p->opts.scale_sep = false;
-        p->opts.indirect = false;
     }
     if (gl->es && p->opts.pbo) {
         p->opts.pbo = 0;
@@ -2375,11 +2384,8 @@ void gl_video_set_gl_state(struct gl_video *p)
     struct m_color c = p->opts.background;
     gl->ClearColor(c.r / 255.0, c.g / 255.0, c.b / 255.0, c.a / 255.0);
     gl->ActiveTexture(GL_TEXTURE0);
-    if (gl->mpgl_caps & MPGL_CAP_ROW_LENGTH) {
-        gl->PixelStorei(GL_PACK_ROW_LENGTH, 0);
+    if (gl->mpgl_caps & MPGL_CAP_ROW_LENGTH)
         gl->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    }
-    gl->PixelStorei(GL_PACK_ALIGNMENT, 4);
     gl->PixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
     if (!gl->BindVertexArray) {
@@ -2435,15 +2441,14 @@ static bool init_format(int fmt, struct gl_video *init)
     const struct fmt_entry *plane_format[4] = {0};
 
     init->image_format = fmt;
-    init->plane_bits = desc.bpp[0];
+    init->component_bits = desc.component_bits;
     init->color_swizzle[0] = '\0';
     init->has_alpha = false;
 
     // YUV/planar formats
     if (desc.flags & MP_IMGFLAG_YUV_P) {
-        int bits = desc.plane_bits;
+        int bits = desc.component_bits;
         if ((desc.flags & MP_IMGFLAG_NE) && bits >= 8 && bits <= 16) {
-            init->plane_bits = bits;
             init->has_alpha = desc.num_planes > 3;
             plane_format[0] = find_tex_format(gl, (bits + 7) / 8, 1);
             for (int p = 1; p < desc.num_planes; p++)
@@ -2516,10 +2521,10 @@ static bool init_format(int fmt, struct gl_video *init)
 supported:
 
     // Stuff like IMGFMT_420AP10. Untested, most likely insane.
-    if (desc.num_planes == 4 && (init->plane_bits % 8) != 0)
+    if (desc.num_planes == 4 && (init->component_bits % 8) != 0)
         return false;
 
-    if (init->plane_bits > 8 && init->plane_bits < 16) {
+    if (init->component_bits > 8 && init->component_bits < 16) {
         if (init->texture_16bit_depth < 16)
             return false;
     }
@@ -2555,8 +2560,7 @@ bool gl_video_check_format(struct gl_video *p, int mp_format)
 
 void gl_video_config(struct gl_video *p, struct mp_image_params *params)
 {
-    p->have_image = false;
-    mp_image_unrefp(&p->image.hwimage);
+    mp_image_unrefp(&p->image.mpi);
 
     if (!mp_image_params_equal(&p->image_params, params)) {
         uninit_video(p);
@@ -2575,7 +2579,7 @@ void gl_video_set_output_depth(struct gl_video *p, int r, int g, int b)
 
 struct gl_video *gl_video_init(GL *gl, struct mp_log *log, struct osd_state *osd)
 {
-    if (!(gl->mpgl_caps & MPGL_CAP_GL21)) {
+    if (gl->version < 210 && gl->es < 200) {
         mp_err(log, "At least OpenGL 2.1 or OpenGL ES 2.0 required.\n");
         return NULL;
     }
@@ -2609,7 +2613,7 @@ static bool can_use_filter_kernel(const struct filter_kernel *kernel)
 }
 
 // Get static string for scaler shader.
-static const char* handle_scaler_opt(const char *name)
+static const char *handle_scaler_opt(const char *name)
 {
     if (name) {
         const struct filter_kernel *kernel = mp_find_filter_kernel(name);
@@ -2631,7 +2635,7 @@ void gl_video_set_options(struct gl_video *p, struct gl_video_opts *opts)
     p->opts = *opts;
     for (int n = 0; n < 2; n++) {
         p->opts.scalers[n] = (char *)handle_scaler_opt(p->opts.scalers[n]);
-        p->opts.dscalers[n] = (char *)handle_scaler_opt(p->opts.dscalers[n]);
+        p->opts.dscaler = (char *)handle_scaler_opt(p->opts.dscaler);
     }
 
     if (!p->opts.gamma && p->video_eq.values[MP_CSP_EQ_GAMMA] != 0)
@@ -2640,6 +2644,7 @@ void gl_video_set_options(struct gl_video *p, struct gl_video_opts *opts)
     check_gl_features(p);
     gl_video_set_gl_state(p);
     reinit_rendering(p);
+    check_resize(p);
 }
 
 void gl_video_get_colorspace(struct gl_video *p, struct mp_image_params *params)
@@ -2666,17 +2671,25 @@ void gl_video_eq_update(struct gl_video *p)
 static int validate_scaler_opt(struct mp_log *log, const m_option_t *opt,
                                struct bstr name, struct bstr param)
 {
+    char s[20] = {0};
+    int r = 1;
     if (bstr_equals0(param, "help")) {
+        r = M_OPT_EXIT - 1;
+    } else {
+        snprintf(s, sizeof(s), "%.*s", BSTR_P(param));
+        if (!handle_scaler_opt(s))
+            r = M_OPT_INVALID;
+    }
+    if (r < 1) {
         mp_info(log, "Available scalers:\n");
         for (const char *const *filter = fixed_scale_filters; *filter; filter++)
             mp_info(log, "    %s\n", *filter);
         for (int n = 0; mp_filter_kernels[n].name; n++)
             mp_info(log, "    %s\n", mp_filter_kernels[n].name);
-        return M_OPT_EXIT - 1;
+        if (s[0])
+            mp_fatal(log, "No scaler named '%s' found!\n", s);
     }
-    char s[20];
-    snprintf(s, sizeof(s), "%.*s", BSTR_P(param));
-    return handle_scaler_opt(s) ? 1 : M_OPT_INVALID;
+    return r;
 }
 
 // Resize and redraw the contents of the window without further configuration.
@@ -2693,5 +2706,5 @@ void gl_video_resize_redraw(struct gl_video *p, int w, int h)
 void gl_video_set_hwdec(struct gl_video *p, struct gl_hwdec *hwdec)
 {
     p->hwdec = hwdec;
-    mp_image_unrefp(&p->image.hwimage);
+    mp_image_unrefp(&p->image.mpi);
 }

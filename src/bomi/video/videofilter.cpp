@@ -159,11 +159,11 @@ auto VideoFilter::open(vf_instance *vf) -> int
 
     _Delete(d->hwdec);
     hwdec_request_api(vf->hwdec, HwAcc::name().toLatin1());
-    if (vf->hwdec) {
-        if (vf->hwdec->vdpau_ctx)
-            d->hwdec = new VdpauTool(vf->hwdec->vdpau_ctx);
+    if (vf->hwdec && vf->hwdec->hwctx) {
+        if (vf->hwdec->hwctx->vdpau_ctx)
+            d->hwdec = new VdpauTool(vf->hwdec->hwctx->vdpau_ctx);
         else
-            d->hwacc = new VaApiTool(vf->hwdec->vaapi_ctx);
+            d->hwacc = new VaApiTool(vf->hwdec->hwctx->vaapi_ctx);
     }
     mp_image_pool_clear(d->pool);
     priv->vf->stopSkipping();
@@ -372,9 +372,9 @@ auto query_video_format(quint32 format) -> int
     case IMGFMT_ARGB:      case IMGFMT_ABGR:
     case IMGFMT_BGR0:      case IMGFMT_RGB0:
     case IMGFMT_0RGB:      case IMGFMT_0BGR:
-        return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
+        return true;
     default:
-        return 0;
+        return false;
     }
 }
 
