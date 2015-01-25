@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="40"
+   height="40"
+   id="svg3985"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="button-play-filled.svg"
+   inkscape:export-filename="/home/xylosper/dev/bomi/src/bomi/skins/one/play-filled.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <defs
+     id="defs3987" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#636363"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="31.678384"
+     inkscape:cx="8.2882317"
+     inkscape:cy="25.415262"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1025"
+     inkscape:window-x="-2"
+     inkscape:window-y="-3"
+     inkscape:window-maximized="1"
+     inkscape:snap-grids="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4006"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata3990">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1012.3622)">
+    <path
+       inkscape:connector-curvature="0"
+       style="color:#000000;fill:#cccccc;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 11.922273,1014.3653 a 2.0804945,2.4275882 0 0 0 -1.92226,2.4291 l 0,15.5703 0,15.5703 a 2.0804945,2.4275882 0 0 0 3.12802,2.097 l 11.551031,-7.7765 11.56858,-7.7764 a 2.0804945,2.4275882 0 0 0 0,-4.2114 l -11.56858,-7.7764 -11.551031,-7.8114 a 2.0804945,2.4275882 0 0 0 -0.99604,-0.3146 2.0804945,2.4275882 0 0 0 -0.20972,0 z"
+       id="path3841" />
+    <g
+       id="g3888"
+       transform="matrix(0.59706027,0,0,0.60278809,-96.4302,735.24374)">
+      <rect
+         style="color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         id="rect4985"
+         width="18.268141"
+         height="59.722481"
+         x="168.20781"
+         y="537.69885"
+         rx="4.9794002"
+         ry="4.9794002" />
+      <rect
+         ry="4.9794002"
+         rx="4.9794002"
+         y="537.69885"
+         x="200.18585"
+         height="59.722481"
+         width="18.268141"
+         id="rect3854"
+         style="color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    </g>
+  </g>
+</svg>

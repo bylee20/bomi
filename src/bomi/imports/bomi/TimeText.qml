@@ -1,7 +1,7 @@
 import QtQuick 2.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
-Button {
+B.Button {
     width: textWidth; height: parent.height; textColor: "white"
     property int msecs: 0
     property int __secs: (msecs/1000.0) | 0

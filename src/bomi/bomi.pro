@@ -236,7 +236,9 @@ HEADERS += \
     quick/themeobject_helper.hpp \
     configure.hpp \
     audio/audioequalizer.hpp \
-	dialog/audioequalizerdialog.hpp
+	dialog/audioequalizerdialog.hpp \
+    quick/circularimageitem.hpp \
+    quick/maskareaitem.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -410,7 +412,9 @@ SOURCES += \
     audio/audiofilter.cpp \
 	misc/osdstyle.cpp \
 	audio/audioequalizer.cpp \
-	dialog/audioequalizerdialog.cpp
+	dialog/audioequalizerdialog.cpp \
+    quick/circularimageitem.cpp \
+    quick/maskareaitem.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -466,7 +470,8 @@ OTHER_FILES += \
 	imports/bomi/PlayInfoVideoOutput.qml \
 	imports/bomi/PlayInfoAudioOutput.qml \
 	imports/bomi/PlayInfoTrack.qml \
-	imports/bomi/PlayInfoSubtitleList.qml
+	imports/bomi/PlayInfoSubtitleList.qml \
+	skins/one/bomi.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}
@@ -475,4 +480,6 @@ SOURCES += $${OTHER_FILES}
 OBJECTIVE_SOURCES +=
 
 DISTFILES += \
-	imports/bomi/Slider.qml
+	imports/bomi/Slider.qml \
+    imports/bomi/Circle.qml \
+    skins/one/IconButton.qml

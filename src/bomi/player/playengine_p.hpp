@@ -275,12 +275,20 @@ struct PlayEngine::Data {
 
     QImage ssNoOsd, ssWithOsd;
 
-    auto updateState(State state) -> void
+    auto updateState(State s) -> void
     {
-        const bool wasRunning = p->isPlaying();
-        if (_Change(this->state, state)) {
+        const auto prev = state;
+        if (_Change(state, s)) {
             emit p->stateChanged(state);
-            if (wasRunning != p->isPlaying())
+            auto check = [&] (State s)
+                { return !!(state & s) != !!(prev & s); };
+            if (check(Paused))
+                emit p->pausedChanged();
+            if (check(Playing))
+                emit p->playingChanged();
+            if (check(Stopped))
+                emit p->stoppedChanged();
+            if (check(Running))
                 emit p->runningChanged();
         }
     }
@@ -488,7 +496,8 @@ struct PlayEngine::Data {
     {
         if (!_Change(mouse, video->mapToVideo(pos).toPoint()))
             return false;
-        mpv_opengl_cb_set_mouse_pos(glMpv, mouse.x(), mouse.y());
+        tellmpv("mouse"_b, mouse.x(), mouse.y());
+//        mpv_opengl_cb_set_mouse_pos(glMpv, mouse.x(), mouse.y());
         return true;
     }
     auto render(OpenGLFramebufferObject *fbo) -> int

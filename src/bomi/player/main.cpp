@@ -4,6 +4,8 @@
 #include "video/hwacc.hpp"
 #include "misc/log.hpp"
 #include "misc/json.hpp"
+#include "quick/circularimageitem.hpp"
+#include "quick/maskareaitem.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
 
@@ -35,6 +37,9 @@ int main(int argc, char **argv) {
 #endif
     QApplication::setAttribute(Qt::AA_X11InitThreads);
 
+    qmlRegisterType<CircularImageItem>("bomi", 1, 0, "CircularImage");
+    qmlRegisterType<MaskAreaItem>("bomi", 1, 0, "MaskArea");
+    qmlRegisterType<MouseEventObject>();
     reg_theme_object();
     reg_downloader();
     reg_history_model();

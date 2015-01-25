@@ -73,6 +73,12 @@ auto SimpleTextureItem::updateData(ShaderData *data) -> void
     updateTexture(m_texture);
 }
 
+auto SimpleTextureItem::updateVertex(Vertex *vertex) -> void
+{
+    OGL::CoordAttr::fillTriangleStrip(vertex, &Vertex::position,
+                                      {0, 0}, {width(), height()});
+}
+
 auto SimpleTextureItem::setTexture(const OpenGLTexture2D &texture) -> void
 {
     *m_texture = texture;

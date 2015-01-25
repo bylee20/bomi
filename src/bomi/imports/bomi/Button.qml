@@ -1,11 +1,12 @@
 import QtQuick 2.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
 Item {
     id: item
     property var bind: undefined
     property alias color: box.color
     property alias icon: icon.source
+    property alias mask: mouseArea.source
     property alias smooth: icon.smooth
     property string action: ""
     property string action2: ""
@@ -28,8 +29,10 @@ Item {
     property alias pressed: mouseArea.pressed
     property real paddings: 0
     property alias gradient: box.gradient
+    property bool useMask: false
+    property alias acceptedButtons: mouseArea.acceptedButtons
     signal clicked
-    onPaddingsChanged: icon.anchors.margins = paddings
+
     function makeToolTip(left, right) {
         return qsTr("Left click: %1\nRight click: %2").arg(left).arg(right)
     }
@@ -42,6 +45,10 @@ Item {
     function getStateIconName(prefix, hovered, pressed) {
         if (!prefix || !prefix.length)
             return ""
+        if (hovered === undefined)
+            hovered = item.hovered
+        if (pressed === undefined)
+            pressed = item.pressed
         if (checked)
             prefix += "-checked";
         prefix += pressed ? "-pressed.png" : ( hovered ? "-hovered.png" : ".png")
@@ -49,20 +56,27 @@ Item {
     }
     Rectangle {
         id: box; anchors.fill: parent; color: "transparent"
-        Text { id: _text; anchors.fill: parent }
-        Image { id: icon; anchors.fill: parent; smooth: true }
-        MouseArea {
-            id: mouseArea; anchors.fill: parent; hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | (item._action2 ? Qt.RightButton : 0)
-            onReleased: {
-                var action = mouse.button & Qt.RightButton ? item.action2 : item.action
-                if (containsMouse && action.length) Util.execute(action)
-            }
-            onClicked: item.clicked(); onExited: Util.hideToolTip(); onCanceled: Util.hideToolTip()
-            Timer {
-                id: tooltipTimer; interval: 1000
-                running: parent.containsMouse && !pressed && tooltip.length
-                onTriggered: Util.showToolTip(parent, Qt.point(parent.mouseX, parent.mouseY), tooltip)
+        Item {
+            anchors.fill: parent; anchors.margins: item.paddings
+            Text { id: _text; anchors.fill: parent }
+            Image { id: icon; anchors.fill: parent; smooth: true }
+            B.MaskArea {
+                id: mouseArea; anchors.fill: parent;
+                alpha: item.useMask ? 0 : -1
+                hoverEnabled: true
+                acceptedButtons: (item._action ? Qt.LeftButton : 0)
+                               | (item._action2 ? Qt.RightButton : 0)
+                onReleased: {
+                    console.log(containsMouse, contains(mouse.x, mouse.y))
+                    var action = mouse.button & Qt.RightButton ? item.action2 : item.action
+                    if (containsMouse && action.length) Util.execute(action)
+                }
+                onClicked: item.clicked(); onExited: Util.hideToolTip(); onCanceled: Util.hideToolTip()
+                Timer {
+                    id: tooltipTimer; interval: 1000
+                    running: parent.containsMouse && !pressed && tooltip.length
+                    onTriggered: Util.showToolTip(parent, Qt.point(parent.mouseX, parent.mouseY), tooltip)
+                }
             }
         }
     }

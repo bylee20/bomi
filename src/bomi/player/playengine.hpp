@@ -60,7 +60,10 @@ class PlayEngine : public QObject {
     Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
     Q_PROPERTY(int avSync READ avSync NOTIFY avSyncChanged)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(bool running READ isPlaying NOTIFY runningChanged)
+    Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
+    Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
+    Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
+    Q_PROPERTY(bool stopped READ isStopped NOTIFY stoppedChanged)
     Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
     Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
     Q_PROPERTY(double rate READ rate WRITE setRate NOTIFY tick)
@@ -72,7 +75,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
     Q_PROPERTY(Waiting waiting READ waiting NOTIFY waitingChanged)
 public:
-    enum State { Stopped = 1, Playing = 2, Paused = 4, Error = 32 };
+    enum State { Stopped = 1, Playing = 2, Paused = 4, Error = 32, Running = Playing | Paused };
     enum Waiting { NoWaiting = 0, Searching = 1, Loading = 2, Buffering = 4, Seeking = 8 };
     Q_DECLARE_FLAGS(Waitings, Waiting)
     enum ActivationState { Unavailable, Deactivated, Activated };
@@ -96,6 +99,7 @@ public:
     auto isPlaying() const -> bool {return state() & Playing;}
     auto isPaused() const -> bool {return state() & Paused;}
     auto isStopped() const -> bool {return state() & Stopped;}
+    auto isRunning() const -> bool { return state() & Running; }
     auto speed() const -> double;
     auto state() const -> State;
     auto load(const StartInfo &info) -> void;
@@ -237,7 +241,6 @@ signals:
     void editionsChanged(const EditionList &editions);
     void dvdInfoChanged();
     void speedChanged(double speed);
-    void runningChanged();
     void hwaccChanged();
     void cacheUsedChanged();
     void hasVideoChanged();
@@ -249,7 +252,10 @@ signals:
     void requestNextStartInfo();
     void metaDataChanged();
     void waitingChanged(Waiting waiting);
-
+    void pausedChanged();
+    void playingChanged();
+    void stoppedChanged();
+    void runningChanged();
     void deintOptionsChanged();
     void cacheSizeChanged();
     void messageRequested(const QString &message);

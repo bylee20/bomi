@@ -19,6 +19,7 @@ public:
     auto vertexCount() const -> int override { return 4; }
 protected:
     virtual auto updateTexture(OpenGLTexture2D *texture) -> void { Q_UNUSED(texture); }
+    auto updateVertex(Vertex *vertex) -> void override;
 private:
     auto initializeVertex(Vertex *vertex) const -> void override {
         if (drawingMode() == GL_TRIANGLES)
