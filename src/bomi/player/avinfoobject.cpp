@@ -45,19 +45,9 @@ auto AvTrackInfoObject::set(const AvTrackInfoObject *track) -> void
         set(StreamTrack());
 }
 
-template<class L, class T = typename std::remove_pointer<typename L::value_type>::type>
-auto makeQmlList(const QObject *o, const L *list) -> QQmlListProperty<T>
-{
-    auto at = [] (QQmlListProperty<T> *p, int index) -> T*
-        { return static_cast<const L*>(p->data)->value(index); };
-    auto count = [] (QQmlListProperty<T> *p) -> int
-        { return static_cast<const L*>(p->data)->size(); };
-    return QQmlListProperty<T>(const_cast<QObject*>(o), const_cast<L*>(list), count, at);
-}
-
 auto AvCommonInfoObject::tracks() const -> QQmlListProperty<AvTrackInfoObject>
 {
-    return makeQmlList(this, &m_tracks);
+    return _MakeQmlList(this, &m_tracks);
 }
 
 auto AvCommonInfoObject::setTracks(const StreamList &tracks) -> void
@@ -204,7 +194,7 @@ SubtitleInfoObject::SubtitleInfoObject()
 
 auto SubtitleInfoObject::files() const -> QQmlListProperty<AvTrackInfoObject>
 {
-    return makeQmlList(this, &m_files);
+    return _MakeQmlList(this, &m_files);
 }
 
 auto SubtitleInfoObject::setFiles(const StreamList &files) -> void

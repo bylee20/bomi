@@ -53,6 +53,10 @@ class PlayEngine : public QObject {
     Q_PROPERTY(int end READ end NOTIFY endChanged)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(int time READ time WRITE seek NOTIFY tick)
+    Q_PROPERTY(int begin_s READ begin_s NOTIFY begin_sChanged)
+    Q_PROPERTY(int end_s READ end_s NOTIFY end_sChanged)
+    Q_PROPERTY(int duration_s READ duration_s NOTIFY duration_sChanged)
+    Q_PROPERTY(int time_s READ time_s NOTIFY time_sChanged)
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
     Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)
@@ -69,7 +73,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(double rate READ rate WRITE setRate NOTIFY tick)
     Q_PROPERTY(QQuickItem *screen READ screen)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
-    Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
+    Q_PROPERTY(QQmlListProperty<ChapterInfoObject> chapters READ chapterInfoList NOTIFY chaptersChanged)
     Q_PROPERTY(SubtitleInfoObject* subtitle READ subInfo NOTIFY subInfoChanged)
     Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
     Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
@@ -157,13 +161,14 @@ public:
     auto audioInfo() const -> AudioInfoObject*;
     auto videoInfo() const -> VideoInfoObject*;
     auto avSync() const -> int;
-    auto rate() const -> double { return (double)(time()-begin())/duration(); }
+    auto rate(int time) const -> double { return (double)(time-begin())/duration(); }
+    auto rate() const -> double { return rate(time()); }
     auto setRate(qreal r) -> void { seek(begin() + r * duration()); }
     auto cacheSize() const -> int;
     auto cacheUsed() const -> int;
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
     auto setChannelLayout(ChannelLayout layout) -> void;
-    auto chapterInfo() const -> ChapterInfoObject*;
+    auto chapterInfoList() const -> QQmlListProperty<ChapterInfoObject>;
     auto setSubtitleFiles(const StreamList &files) -> void;
     auto setYle(YleDL *yle) -> void;
     auto setYouTube(YouTubeDL *yt) -> void;
@@ -212,9 +217,18 @@ public:
     auto setHighQualityScaling(bool up, bool down) -> void;
     auto waitingText() const -> QString;
     auto stateText() const -> QString;
+
+    auto time_s() const -> int;
+    auto duration_s() const -> int;
+    auto begin_s() const -> int;
+    auto end_s() const -> int;
 public slots:
     void seek(int pos);
 signals:
+    void time_sChanged();
+    void duration_sChanged();
+    void begin_sChanged();
+    void end_sChanged();
     void subInfoChanged();
     void seeked(int time);
     void sought();

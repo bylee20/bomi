@@ -416,7 +416,20 @@ auto PlayEngine::Data::observe() -> void
         }
         return chapters;
     }, [=] () {
-        chapterInfo->setCount(chapters.size());
+        while (chapterInfoList.size() > chapters.size())
+            delete chapterInfoList.takeLast();
+        while (chapterInfoList.size() < chapters.size())
+            chapterInfoList.push_back(new ChapterInfoObject);
+        for (int i = 0; i < chapterInfoList.size(); ++i) {
+            auto info = chapterInfoList[i];
+            info->m_id = chapters[i].id();
+            info->m_time = chapters[i].time();
+            info->m_rate = p->rate(chapters[i].time());
+            info->m_name = chapters[i].name();
+            auto sr = [=] () { info->setRate(p->rate(info->time())); };
+            connect(p, &PlayEngine::durationChanged, info, sr);
+            connect(p, &PlayEngine::beginChanged, info, sr);
+        }
         emit p->chaptersChanged(chapters);
     });
     observe("chapter", chapter, &PlayEngine::currentChapterChanged);

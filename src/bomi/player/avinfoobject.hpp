@@ -340,4 +340,15 @@ private:
     int m_total = 0, m_id = -1;
 };
 
+
+template<class L, class T = typename std::remove_pointer<typename L::value_type>::type>
+static inline auto _MakeQmlList(const QObject *o, const L *list) -> QQmlListProperty<T>
+{
+    auto at = [] (QQmlListProperty<T> *p, int index) -> T*
+        { return static_cast<const L*>(p->data)->value(index); };
+    auto count = [] (QQmlListProperty<T> *p) -> int
+        { return static_cast<const L*>(p->data)->size(); };
+    return QQmlListProperty<T>(const_cast<QObject*>(o), const_cast<L*>(list), count, at);
+}
+
 #endif // AVINFOOBJECT_HPP

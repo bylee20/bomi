@@ -211,7 +211,7 @@ struct PlayEngine::Data {
     VideoInfoObject videoInfo;
     AudioInfoObject audioInfo;
     SubtitleInfoObject subInfo;
-    ChapterInfoObject *chapterInfo = nullptr;
+    QVector<ChapterInfoObject*> chapterInfoList;
 
     MediaInfoObject mediaInfo;
     ActivationState hwacc = Unavailable;
@@ -232,6 +232,7 @@ struct PlayEngine::Data {
     bool cacheEnabled = false;
     int cacheSize = 0, cacheUsed = 0, initSeek = -1;
     int updateEventMax = UpdateEventBegin;
+    int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;
 
     mpv_handle *handle = nullptr;
     QByteArray client;

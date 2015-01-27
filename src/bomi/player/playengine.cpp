@@ -16,7 +16,23 @@ PlayEngine::PlayEngine()
     d->video->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
         { d->renderVideoFrame(fbo); });
 
-    d->chapterInfo = new ChapterInfoObject(this, this);
+    connect(this, &PlayEngine::tick, this, [=] () {
+        if (_Change(d->time_s, d->position/1000))
+            emit time_sChanged();
+    });
+    connect(this, &PlayEngine::durationChanged, this, [=] () {
+        if (_Change(d->duration_s, d->duration/1000))
+            emit duration_sChanged();
+    });
+    connect(this, &PlayEngine::beginChanged, this, [=] () {
+        if (_Change(d->begin_s, d->begin/1000))
+            emit begin_sChanged();
+    });
+    connect(this, &PlayEngine::endChanged, this, [=] () {
+        if (_Change(d->end_s, end()/1000))
+            emit end_sChanged();
+    });
+
     d->updateMediaName();
 
     _Debug("Make registrations and connections");
@@ -155,7 +171,7 @@ PlayEngine::~PlayEngine()
 {
     d->initialized = false;
     mpv_terminate_destroy(d->handle);
-    delete d->chapterInfo;
+    qDeleteAll(d->chapterInfoList);
     delete d->audio;
     delete d->video;
     delete d->filter;
@@ -194,11 +210,6 @@ auto PlayEngine::setSubtitleDelay(int ms) -> void
 auto PlayEngine::setSubtitleFiles(const StreamList &files) -> void
 {
     d->subInfo.setFiles(files);
-}
-
-auto PlayEngine::chapterInfo() const -> ChapterInfoObject*
-{
-    return d->chapterInfo;
 }
 
 auto PlayEngine::mediaName() const -> QString
@@ -940,4 +951,29 @@ auto PlayEngine::stateText() const -> QString
 auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
 {
     d->audio->setEqualizer(eq);
+}
+
+auto PlayEngine::chapterInfoList() const -> QQmlListProperty<ChapterInfoObject>
+{
+    return _MakeQmlList(this, &d->chapterInfoList);
+}
+
+auto PlayEngine::time_s() const -> int
+{
+    return d->time_s;
+}
+
+auto PlayEngine::duration_s() const -> int
+{
+    return d->duration_s;
+}
+
+auto PlayEngine::begin_s() const -> int
+{
+    return d->begin_s;
+}
+
+auto PlayEngine::end_s() const -> int
+{
+    return d->end_s;
 }

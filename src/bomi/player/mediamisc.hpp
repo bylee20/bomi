@@ -73,41 +73,64 @@ private:
 
 using EditionList = QVector<Edition>;
 
-class TrackInfoObject : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(int current READ current NOTIFY currentChanged)
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(int length READ count NOTIFY countChanged)
-    Q_PROPERTY(QString currentText READ currentText NOTIFY currentChanged)
-    Q_PROPERTY(QString countText READ countText NOTIFY countChanged)
-public:
-    TrackInfoObject(QObject *parent = nullptr): QObject(parent) {}
-    auto current() const -> int { return m_current; }
-    auto count() const -> int { return m_count; }
-    auto setCount(int count) -> void
-    { if (_Change(m_count, count)) emit countChanged(); }
-    auto setCurrent(int current) -> void
-    { if (_Change(m_current, current)) emit currentChanged(); }
-    auto currentText() const -> QString { return toString(m_current); }
-    auto countText() const -> QString { return toString(m_count); }
-signals:
-    void currentChanged();
-    void countChanged();
-private:
-    static auto toString(int i) -> QString
-    { return i < 1 ? u"-"_q : QString::number(i); }
-    int m_current = -2;
-    int m_count = 0;
-};
+//class TrackInfoObject : public QObject {
+//    Q_OBJECT
+//    Q_PROPERTY(int current READ current NOTIFY currentChanged)
+//    Q_PROPERTY(int count READ count NOTIFY countChanged)
+//    Q_PROPERTY(int length READ count NOTIFY countChanged)
+//    Q_PROPERTY(QString currentText READ currentText NOTIFY currentChanged)
+//    Q_PROPERTY(QString countText READ countText NOTIFY countChanged)
+//public:
+//    TrackInfoObject(QObject *parent = nullptr): QObject(parent) {}
+//    auto current() const -> int { return m_current; }
+//    auto count() const -> int { return m_count; }
+//    auto setCount(int count) -> void
+//    { if (_Change(m_count, count)) emit countChanged(); }
+//    auto setCurrent(int current) -> void
+//    { if (_Change(m_current, current)) emit currentChanged(); }
+//    auto currentText() const -> QString { return toString(m_current); }
+//    auto countText() const -> QString { return toString(m_count); }
+//signals:
+//    void currentChanged();
+//    void countChanged();
+//private:
+//    static auto toString(int i) -> QString
+//    { return i < 1 ? u"-"_q : QString::number(i); }
+//    int m_current = -2;
+//    int m_count = 0;
+//};
 
-class ChapterInfoObject : public TrackInfoObject {
+class ChapterInfoObject : public QObject {
     Q_OBJECT
+    Q_PROPERTY(int id READ id NOTIFY idChanged)
+    Q_PROPERTY(int time READ time NOTIFY timeChanged)
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(qreal rate READ rate NOTIFY rateChanged)
 public:
-    ChapterInfoObject(const PlayEngine *engine, QObject *parent = nullptr);
-    Q_INVOKABLE int time(int i) const;
-    Q_INVOKABLE QString name(int i) const;
+    ChapterInfoObject(QObject *parent = nullptr): QObject(parent) { }
+    auto id() const -> int { return m_id; }
+    auto time() const -> int { return m_time; }
+    auto name() const -> QString { return m_name; }
+    auto rate() const -> qreal { return m_rate; }
+signals:
+    void idChanged();
+    void timeChanged();
+    void nameChanged();
+    void rateChanged();
 private:
-    const PlayEngine *m_engine = nullptr;
+    auto setRate(qreal rate) -> void
+        { if (_Change(m_rate, rate)) emit rateChanged(); }
+    auto update() -> void
+    {
+        emit idChanged();
+        emit timeChanged();
+        emit nameChanged();
+    }
+    friend class PlayEngine;
+    int m_id = -1;
+    int m_time = 0;
+    qreal m_rate = 0.0;
+    QString m_name;
 };
 
 #endif // MEDIAMISC_HPP
