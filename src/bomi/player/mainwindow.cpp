@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     AppObject::setPlaylist(&d->playlist);
     AppObject::setDownloader(&d->downloader);
     AppObject::setTheme(&d->theme);
+    AppObject::setWindow(this);
     d->playlist.setDownloader(&d->downloader);
 
     d->engine.setYouTube(&d->youtube);

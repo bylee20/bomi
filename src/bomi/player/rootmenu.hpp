@@ -16,6 +16,7 @@ public:
     ~RootMenu();
     auto retranslate() -> void;
     auto id(QAction *action) const -> QString;
+    auto description(const QString &longId) const -> QString;
     auto action(const QString &longId) const -> QAction*
         { return m_actions.value(longId).action; }
     auto action(const QKeySequence &shortcut) const -> QAction*

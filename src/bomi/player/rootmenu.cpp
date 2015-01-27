@@ -31,15 +31,26 @@ using Translate = std::function<void(void)>;
 
 struct MenuActionInfo
 {
-    QString id; Translate trans;
+    MenuActionInfo() = default;
+    MenuActionInfo(const QString &id): id(id) { }
+    QString id; Translate trans; const char *desc = nullptr;
 };
 
 struct RootMenu::Data {
     Menu *parent = nullptr;
     QHash<QAction*, MenuActionInfo> infos;
+    MenuActionInfo *info = nullptr;
 
     auto toGetText(const char *trans) const -> GetText
         { return [=] () { return tr(trans); }; }
+
+    auto desc(QAction *act, const char *description) -> void
+    {
+        Q_ASSERT(act && infos.contains(act));
+        infos[act].desc = description;
+    }
+    auto desc(Menu *m, const char *description) -> void
+        { desc(m->menuAction(), description); }
 
     auto newInfo(QAction *action, const QString &key) -> MenuActionInfo*
     {
@@ -47,16 +58,15 @@ struct RootMenu::Data {
         const auto &prefix = infos[parent->menuAction()].id;
         info.id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
         obj->m_actions[info.id].action = action;
+        this->info = &info;
         return &info;
     }
     auto newInfo(QMenu *menu, const QString &key) -> MenuActionInfo*
-    {
-        return newInfo(menu->menuAction(), key);
-    }
+        { return newInfo(menu->menuAction(), key); }
     static auto translate(QAction *action, const QString &text) -> void
-    { action->setText(text); }
+        { action->setText(text); }
     static auto translate(QMenu *menu, const QString &title) -> void
-    { menu->setTitle(title); }
+        { menu->setTitle(title); }
 
     template<class T>
     auto reg(T *o, const QString &id, GetText &&gt) -> T*
@@ -92,38 +102,35 @@ struct RootMenu::Data {
     { return reg(parent->addAction(id, checkable), id, tr); }
 
 
-    auto stepPair(const QString &inc, GetText &&itrans,
-                  const QString &dec, GetText &&dtrans,
+    auto stepPair(const QString &inc, const QString &dec, GetText &&trans,
                   const QString &pair, int min, int def, int max,
                   const QString &g = QString()) -> StepActionPair*
     {
         auto p = parent->addStepActionPair(inc, dec, pair, g);
-        reg(p->increase(), inc, [=] () { p->increase()->setFormat(itrans()); });
-        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(dtrans()); });
+        reg(p->increase(), inc, [=] () { p->increase()->setFormat(trans()); });
+        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(trans()); });
         p->setRange(min, def, max);
         return p;
     }
 
-    auto stepPair(const QString &inc, const char *itrans,
-                  const QString &dec, const char *dtrans,
+    auto stepPair(const QString &inc, const QString &dec, const char *trans,
                   const QString &pair, int min, int def, int max,
                   const QString &g = QString()) -> StepActionPair*
     {
         auto p = parent->addStepActionPair(inc, dec, pair, g);
-        reg(p->increase(), inc, [=] () { p->increase()->setFormat(tr(itrans)); });
-        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(tr(dtrans)); });
+        reg(p->increase(), inc, [=] () { p->increase()->setFormat(tr(trans)); });
+        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(tr(trans)); });
         p->setRange(min, def, max);
         return p;
     }
 
-    auto stepPair(const QString &inc, const char *itrans,
-                  const QString &dec, const char *dtrans, const QString &pair,
+    auto stepPair(const QString &inc, const QString &dec, const char *trans, const QString &pair,
                   const QString &g = QString()) -> StepActionPair*
-    { return stepPair(inc, itrans, dec, dtrans, pair, _Min<int>(), 0, _Max<int>(), g); }
+    { return stepPair(inc, dec, trans, pair, _Min<int>(), 0, _Max<int>(), g); }
 
     auto stepPair(const char *f, int min, int def, int max,
                   const QString &g = QString()) -> StepActionPair*
-    { return stepPair(u"increase"_q, f, u"decrease"_q, f, QString(), min, def, max, g); }
+    { return stepPair(u"increase"_q, u"decrease"_q, f, QString(), min, def, max, g); }
 
     auto stepReset(const char *format, int min, int def, int max,
                    const QString &g = u""_q) -> StepActionPair*
@@ -268,6 +275,9 @@ struct RootMenu::Data {
     auto group(const QString &g = u""_q) -> ActionGroup* { return parent->addGroup(g); }
 };
 
+template<class E>
+SIA _EnumKey(E e) -> QString { return EnumInfo<E>::key(e); }
+
 RootMenu::RootMenu()
     : Menu(u"menu"_q, 0), d(new Data) {
     Q_ASSERT(obj == nullptr);
@@ -276,7 +286,7 @@ RootMenu::RootMenu()
     setTitle(u"Root Menu"_q);
 
     d->parent = this;
-    d->infos[menuAction()] = {QString(), [](){}};
+    d->infos[menuAction()] = { };
 
     d->menu(u"open"_q, QT_TR_NOOP("Open"), [=] () {
         d->action(u"file"_q, QT_TR_NOOP("Open File"));
@@ -302,11 +312,12 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"), "%1%", 10, 100, 1000);
+        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"), QT_TR_NOOP("%1%"), 10, 100, 1000);
+
         d->menu(u"repeat"_q, QT_TR_NOOP("A-B Repeat"), [=] () {
             d->actionToGroup(u"range"_q, QT_TR_NOOP("Set Range to Current Time"))->setData(int('r'));
             d->actionToGroup(u"subtitle"_q, QT_TR_NOOP("Repeat Current Subtitle"))->setData(int('s'));
-            d->actionToGroup(u"quit"_q, QT_TR_NOOP("Quit"))->setData(int('q'));
+            d->actionToGroup(u"quit"_q, QT_TR_NOOP("Quit Repetition"))->setData(int('q'));
         });
 
         d->separator();
@@ -320,13 +331,10 @@ RootMenu::RootMenu()
             const QString forward(u"forward%1"_q), backward(u"backward%1"_q);
             const QString seekStep(u"seek%1"_q);
             for (int i = 1; i <= 3; ++i) {
-                auto p = d->stepPair(forward.arg(i), QT_TR_NOOP("Forward %1sec"),
-                                     backward.arg(i), QT_TR_NOOP("Backward %1sec"),
+                auto p = d->stepPair(forward.arg(i), backward.arg(i), QT_TR_NOOP("%1sec"),
                                      seekStep.arg(i), u"relative"_q);
                 p->increase()->setTextRate(0.001);
-                p->decrease()->setTextRate(-0.001);
-                p->increase()->setSign(false);
-                p->decrease()->setSign(false);
+                p->decrease()->setTextRate(0.001);
             }
 
             d->separator();
@@ -357,16 +365,23 @@ RootMenu::RootMenu()
             d->group(u"internal"_q)->setExclusive(false);
             d->group(u"external"_q)->setExclusive(false);
 
-            d->action(u"open"_q, QT_TR_NOOP("Open File(s)"));
-            d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File(s)"));
-            d->action(u"reload"_q, QT_TR_NOOP("Reload File(s)"));
-            d->action(u"clear"_q, QT_TR_NOOP("Clear File(s)"));
+            d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
+                    QT_TR_NOOP("Open Subtitle File"));
+            d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
+                    QT_TR_NOOP("Auto-load Subtitle File"));
+            d->desc(d->action(u"reload"_q, QT_TR_NOOP("Reload File")),
+                    QT_TR_NOOP("Reload Subtitle File"));
+            d->desc(d->action(u"clear"_q, QT_TR_NOOP("Clear File")),
+                    QT_TR_NOOP("Clear Subtitle File"));
 
             d->separator();
 
-            d->action(u"next"_q, QT_TR_NOOP("Select Next"));
-            d->action(u"all"_q, QT_TR_NOOP("Select All"));
-            d->action(u"hide"_q, QT_TR_NOOP("Hide"), true);
+            d->desc(d->action(u"next"_q, QT_TR_NOOP("Select Next")),
+                    QT_TR_NOOP("Select Next Subtitle"));
+            d->desc(d->action(u"all"_q, QT_TR_NOOP("Select All")),
+                    QT_TR_NOOP("Select All Subtitles"));
+            d->desc(d->action(u"hide"_q, QT_TR_NOOP("Hide"), true),
+                    QT_TR_NOOP("Hide Subtitles"));
 
             d->separator();
         });
@@ -443,10 +458,9 @@ RootMenu::RootMenu()
                 { return [=] () { return VideoColor::formatText(type); }; };
             d->actionToGroup(u"reset"_q, format(VideoColor::TypeMax));
             d->separator();
-            VideoColor::for_type([&] (VideoColor::Type type) {
+            VideoColor::for_type([=] (VideoColor::Type type) {
                 const auto str = VideoColor::name(type);
-                d->stepPair(str % '+'_q, format(type), str % '-'_q, format(type),
-                            str, -100, 0, 100, str);
+                d->stepPair(str % '+'_q, str % '-'_q, format(type), str, -100, 0, 100, str);
             });
         });
     });
@@ -496,8 +510,8 @@ RootMenu::RootMenu()
             d->action(u"move-up"_q, QT_TR_NOOP("Move Up"));
             d->action(u"move-down"_q, QT_TR_NOOP("Move Down"));
             d->separator();
-            d->action(u"shuffle"_q, QT_TR_NOOP("Shuffle"));
-            d->action(u"repeat"_q, QT_TR_NOOP("Repeat"));
+            d->action(u"shuffle"_q, QT_TR_NOOP("Shuffle"), true);
+            d->action(u"repeat"_q, QT_TR_NOOP("Repeat"), true);
         });
         d->menu(u"history"_q, QT_TR_NOOP("History"), [=] () {
             d->action(u"toggle"_q, QT_TR_NOOP("Show/Hide"));
@@ -605,8 +619,14 @@ auto RootMenu::shortcuts() const -> Shortcuts
 
 auto RootMenu::retranslate() -> void
 {
-    for (auto &info : d->infos)
-        info.trans();
+    for (auto &info : d->infos) {
+        if (info.id.isEmpty())
+            continue;
+        if (!info.trans)
+            _Error("'%%' is not tranlsatable.", info.id);
+        else
+            info.trans();
+    }
 }
 
 auto RootMenu::fillKeyMap(Menu *menu) -> void
@@ -619,4 +639,27 @@ auto RootMenu::fillKeyMap(Menu *menu) -> void
                 m_keymap[key] = action;
         }
     }
+}
+
+auto RootMenu::description(const QString &longId) const -> QString
+{
+    auto action = this->action(longId);
+    if (!action)
+        return QString();
+    auto it = d->infos.find(action);
+    if (it == d->infos.end())
+        return QString();
+    if (it->desc)
+        return tr(it->desc);
+    if (action->menu())
+        return tr("%1 Menu").arg(action->menu()->title());
+    if (qobject_cast<BaseEnumAction*>(action)) {
+        const auto idx = longId.lastIndexOf('/'_q);
+        if (idx != -1) {
+            auto menuAction = this->action(longId.left(idx));
+            if (menuAction && menuAction->menu())
+                return menuAction->menu()->title() % ": "_a % action->text();
+        }
+    }
+    return action->text();
 }
