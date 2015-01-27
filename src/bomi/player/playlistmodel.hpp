@@ -13,6 +13,8 @@ class PlaylistModel : public SimpleListModel<Mrl, Playlist> {
     Q_PROPERTY(QChar fillChar READ fillChar WRITE setFillChar)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
     Q_PROPERTY(int selected READ selected WRITE select NOTIFY selectedChanged)
+    Q_PROPERTY(bool shuffled READ isShuffled NOTIFY shuffledChanged)
+    Q_PROPERTY(bool repetitive READ repeat NOTIFY repeatChanged)
     Q_ENUMS(Role)
 public:
     enum Role {NameRole = Qt::UserRole + 1, LocationRole, LoadedRole};
