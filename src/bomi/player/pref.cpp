@@ -224,6 +224,12 @@ auto Pref::load() -> void
     }
     if (!res)
         _Error("Error: Cannot convert JSON object to preferences");
+
+    if (json.contains(u"sub_enable_autoload"_q)) {
+        sub_autoload_v2.enabled = json[u"sub_enable_autoload"_q].toBool();
+        sub_autoload_v2.search_paths = _FromJson<QList<MatchString>>(json[u"sub_search_paths_v2"_q]);
+        sub_autoload_v2.mode = _FromJson<AutoloadMode>(json[u"sub_autoload"_q]);
+    }
 }
 
 auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>
@@ -317,4 +323,21 @@ auto Pref::defaultMouseActionMap() -> MouseActionMap
 auto Pref::defaultHwAccBackend() -> HwAcc::Type
 {
     return HwAcc::VaApiGLX;
+}
+
+auto Pref::defaultSubtitleAutoload() -> Autoloader
+{
+    Autoloader al;
+    al.enabled = true;
+    al.mode = AutoloadMode::Contain;
+    return al;
+}
+
+auto Pref::defaultAutioAutoload() -> Autoloader
+{
+    Autoloader al;
+    al.enabled = true;
+    al.mode = AutoloadMode::Matched;
+    al.search_paths << MatchString(u".*"_q, true);
+    return al;
 }

@@ -18,7 +18,7 @@
 #include "seekingstep.hpp"
 #include "generateplaylist.hpp"
 #include "openmediabehavior.hpp"
-#include "subtitleautoload.hpp"
+#include "autoloadmode.hpp"
 #include "subtitleautoselect.hpp"
 #include "keymodifier.hpp"
 #include "verticalalignment.hpp"
@@ -88,9 +88,9 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<OpenMediaBehavior>()) {
         conv.variantToName = _EnumVariantToEnumName<OpenMediaBehavior>;
         conv.nameToVariant = _EnumNameToEnumVariant<OpenMediaBehavior>;
-    } else    if (metaType == qMetaTypeId<SubtitleAutoload>()) {
-        conv.variantToName = _EnumVariantToEnumName<SubtitleAutoload>;
-        conv.nameToVariant = _EnumNameToEnumVariant<SubtitleAutoload>;
+    } else    if (metaType == qMetaTypeId<AutoloadMode>()) {
+        conv.variantToName = _EnumVariantToEnumName<AutoloadMode>;
+        conv.nameToVariant = _EnumNameToEnumVariant<AutoloadMode>;
     } else    if (metaType == qMetaTypeId<SubtitleAutoselect>()) {
         conv.variantToName = _EnumVariantToEnumName<SubtitleAutoselect>;
         conv.nameToVariant = _EnumNameToEnumVariant<SubtitleAutoselect>;

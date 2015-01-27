@@ -146,7 +146,7 @@ HEADERS += \
 	enum/seekingstep.hpp \
 	enum/speakerid.hpp \
 	enum/staysontop.hpp \
-	enum/subtitleautoload.hpp \
+	enum/autoloadmode.hpp \
 	enum/subtitleautoselect.hpp \
 	enum/subtitledisplay.hpp \
 	enum/textthemestyle.hpp \
@@ -239,7 +239,8 @@ HEADERS += \
 	dialog/audioequalizerdialog.hpp \
     quick/circularimageitem.hpp \
     quick/maskareaitem.hpp \
-	quick/windowobject.hpp
+	quick/windowobject.hpp \
+    misc/autoloader.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -334,7 +335,7 @@ SOURCES += \
 	enum/seekingstep.cpp \
 	enum/speakerid.cpp \
 	enum/staysontop.cpp \
-	enum/subtitleautoload.cpp \
+	enum/autoloadmode.cpp \
 	enum/subtitleautoselect.cpp \
 	enum/subtitledisplay.cpp \
 	enum/textthemestyle.cpp \
@@ -416,7 +417,8 @@ SOURCES += \
 	dialog/audioequalizerdialog.cpp \
     quick/circularimageitem.cpp \
     quick/maskareaitem.cpp \
-	quick/windowobject.cpp
+	quick/windowobject.cpp \
+    misc/autoloader.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -436,7 +438,8 @@ FORMS += \
     ui/subtitlefinddialog.ui \
     ui/audionormalizeroptionwidget.ui \
     ui/osdstylewidget.ui \
-    ui/osdthemewidget.ui
+    ui/osdthemewidget.ui \
+    ui/autoloaderwidget.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \

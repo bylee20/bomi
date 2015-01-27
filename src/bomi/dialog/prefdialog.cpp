@@ -24,7 +24,6 @@ struct PrefDialog::Data {
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     QStringList imports;
-    SubSearchPathModel *subSearchPaths = nullptr;
     DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
     MrlStatePropertyListModel *properties = nullptr;
     QVector<QObject*> editors;
@@ -40,8 +39,6 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->p = this;
     d->properties = new MrlStatePropertyListModel(this);
     d->properties->setObjectName(u"restore_properties"_q);
-    d->subSearchPaths = new SubSearchPathModel(this);
-    d->subSearchPaths->setObjectName(u"sub_search_paths"_q);
     d->ui.setupUi(this);
     d->ui.tree->setItemDelegate(new PrefDelegate(d->ui.tree));
     d->ui.tree->setIconSize(QSize(16, 16));
@@ -172,7 +169,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->ui.network_folders->setAddingAndErasingEnabled(true);
 
-    auto checkSubAutoselect = [this] (const QVariant &data) {
+    auto checkSubSubtitleAutoselect = [this] (const QVariant &data) {
         const bool enabled = data.toInt() == SubtitleAutoselect::Matched;
         d->ui.sub_ext_label->setEnabled(enabled);
         d->ui.sub_ext->setEnabled(enabled);
@@ -180,7 +177,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->ui.sub_priority->setAddingAndErasingEnabled(true);
     d->ui.sub_priority->setChangingOrderEnabled(true);
-    checkSubAutoselect(d->ui.sub_autoselect->currentData());
+    checkSubSubtitleAutoselect(d->ui.sub_autoselect->currentData());
     d->ui.audio_priority->setAddingAndErasingEnabled(true);
     d->ui.audio_priority->setChangingOrderEnabled(true);
 
@@ -198,8 +195,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     connect(d->ui.skin_name, curIdxChanged, this, updateSkinPath);
 
     auto currentDataChanged = &DataComboBox::currentDataChanged;
-    connect(d->ui.sub_autoselect, currentDataChanged, checkSubAutoselect);
-    connect(d->ui.sub_autoload, currentDataChanged, checkSubAutoselect);
+    connect(d->ui.sub_autoselect, currentDataChanged, checkSubSubtitleAutoselect);
     void(QButtonGroup::*buttonClicked)(int) = &QButtonGroup::buttonClicked;
     connect(d->shortcutGroup, buttonClicked, [this] (int idx) {
         auto treeItem = d->ui.shortcuts->currentItem();
@@ -278,33 +274,6 @@ PrefDialog::PrefDialog(QWidget *parent)
             const auto data = d->ui.shortcut_preset->itemData(idx).toInt();
             d->ui.shortcuts->set(Pref::preset(static_cast<KeyMapPreset>(data)));
         }
-    });
-
-    d->ui.sub_search_paths->setModel(d->subSearchPaths);
-    d->ui.sub_search_paths->setItemDelegate(new SubSearchPathDelegate(this));
-    d->ui.sub_search_path_edit->setValidator(new SubSearchPathValidator(this));
-    connect(d->ui.sub_search_path_edit, &QLineEdit::textChanged,
-            [this] (const QString &text) {
-        d->ui.sub_search_path_add->setEnabled(!text.isEmpty());
-    });
-    connect(d->ui.sub_search_path_add, &QPushButton::clicked, [this] () {
-        const auto text = d->ui.sub_search_path_edit->text();
-        if (text.isEmpty() || text.contains(u'/'_q))
-            return;
-        MatchString str(text);
-        str.setCaseSensitive(d->ui.sub_search_case_sensitive->isChecked());
-        str.setRegEx(d->ui.sub_search_regex->isChecked());
-        d->subSearchPaths->append(str);
-    });
-    connect(d->ui.sub_search_path_browse, &QPushButton::clicked, [this] () {
-        const auto dir = _GetOpenDir(this, tr("Browse for Folder"),
-                                     u"sub-search-paths"_q);
-        if (!dir.isEmpty())
-            d->subSearchPaths->append(dir);
-    });
-    connect(d->ui.sub_search_path_remove, &QPushButton::clicked, [this] () {
-        const int idx = d->ui.sub_search_paths->currentIndex().row();
-        d->subSearchPaths->remove(idx);
     });
 
     d->retranslate();

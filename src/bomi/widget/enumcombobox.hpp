@@ -3,7 +3,7 @@
 
 #include "datacombobox.hpp"
 #include "enum/generateplaylist.hpp"
-#include "enum/subtitleautoload.hpp"
+#include "enum/autoloadmode.hpp"
 #include "enum/subtitleautoselect.hpp"
 #include "enum/clippingmethod.hpp"
 #include "enum/interpolator.hpp"
@@ -42,7 +42,7 @@ private:
 };
 
 using GeneratePlaylistComboBox = EnumComboBox<GeneratePlaylist>;
-using SubtitleAutoloadComboBox = EnumComboBox<SubtitleAutoload>;
+using AutoloadModeComboBox = EnumComboBox<AutoloadMode>;
 using SubtitleAutoselectComboBox = EnumComboBox<SubtitleAutoselect>;
 using ClippingMethodComboBox = EnumComboBox<ClippingMethod>;
 using InterpolatorComboBox = EnumComboBox<Interpolator>;

@@ -9,9 +9,8 @@
 #include "video/deintcaps.hpp"
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/osdstyle.hpp"
-#include "misc/matchstring.hpp"
+#include "misc/autoloader.hpp"
 #include "enum/generateplaylist.hpp"
-#include "enum/subtitleautoload.hpp"
 #include "enum/subtitleautoselect.hpp"
 #include "enum/audiodriver.hpp"
 #include "enum/clippingmethod.hpp"
@@ -88,11 +87,10 @@ public:
 
     P0(ChannelLayoutMap, channel_manipulation, ChannelLayoutMap::default_())
 
-    P2(QList<MatchString>, sub_search_paths_v2, {}, "sub_search_paths")
-    P0(bool, sub_enable_autoload, true)
+    P0(Autoloader, sub_autoload_v2, defaultSubtitleAutoload())
+    P0(Autoloader, audio_autoload, defaultAutioAutoload())
     P0(bool, sub_enable_autoselect, true)
     P0(bool, sub_enc_autodetection, true)
-    P0(SubtitleAutoload, sub_autoload, SubtitleAutoload::Contain)
     P0(SubtitleAutoselect, sub_autoselect, SubtitleAutoselect::Matched)
     P1(QString, sub_enc, defaultSubtitleEncoding(), "encoding")
     P1(QString, sub_ext, {}, "value")
@@ -156,6 +154,8 @@ public:
 
     static auto fields() -> const QVector<const PrefFieldInfo*>&;
 private:
+    static auto defaultSubtitleAutoload() -> Autoloader;
+    static auto defaultAutioAutoload() -> Autoloader;
     static auto defaultHwAccBackend() -> HwAcc::Type;
     static auto defaultRestoreProperties() -> QVector<QMetaProperty>;
     static auto defaultOsdTheme() -> OsdTheme;

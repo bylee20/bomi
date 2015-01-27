@@ -371,7 +371,7 @@ auto MainWindow::Data::cache(const Mrl &mrl) -> int
     return pref().cache_network;
 }
 
-auto MainWindow::Data::tryToAutoselect(const QVector<SubComp> &loaded,
+auto MainWindow::Data::tryToSubtitleAutoselect(const QVector<SubComp> &loaded,
                                        const Mrl &mrl) -> QVector<int>
 {
     QVector<int> selected;
@@ -419,59 +419,24 @@ auto MainWindow::Data::tryToAutoselect(const QVector<SubComp> &loaded,
     return selected;
 }
 
-auto MainWindow::Data::tryToAutoload(const Mrl &mrl,
-                                     const QDir &dir) -> QVector<SubComp>
-{
-    QVector<SubComp> loaded;
-    const auto &p = pref();
-    if (!p.sub_enable_autoload)
-        return loaded;
-    const QFileInfo fileInfo(mrl.toLocalFile());
-    if (!dir.exists())
-        return loaded;
-    static const auto filter = _ToNameFilter(SubtitleExt);
-    const auto all = dir.entryInfoList(filter, QDir::Files, QDir::Name);
-    const auto base = fileInfo.completeBaseName();
-    for (int i=0; i<all.size(); ++i) {
-        if (p.sub_autoload != SubtitleAutoload::Folder) {
-            if (p.sub_autoload == SubtitleAutoload::Matched) {
-                if (base != all[i].completeBaseName())
-                    continue;
-            } else if (!all[i].fileName().contains(base))
-                continue;
-        }
-        Subtitle sub;
-        if (load(sub, all[i].absoluteFilePath(), p.sub_enc)) {
-            for (int i=0; i<sub.size(); ++i)
-                loaded.push_back(sub[i]);
-        }
-    }
-    return loaded;
-}
-
 auto MainWindow::Data::updateSubtitleState() -> void
 {
     const auto &mrl = as.state.mrl;
-    if (mrl.isLocalFile()) {
-        const QFileInfo fileInfo(mrl.toLocalFile());
-        auto root = fileInfo.dir();
-        auto loaded = tryToAutoload(mrl, root);
-        auto list = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-        for (auto &path : pref().sub_search_paths_v2) {
-            for (auto &one : list) {
-                if (path.match(one)) {
-                    auto dir = root;
-                    if (dir.cd(one))
-                        loaded += tryToAutoload(mrl, dir);
-                }
-            }
+    auto files = pref().sub_autoload_v2.autoload(mrl, ExtType::SubtitleExt);
+    if (files.isEmpty())
+        clearSubtitleFiles();
+    else {
+        QVector<SubComp> loaded;
+        for (auto &file : files) {
+            Subtitle sub; if (!load(sub, file, pref().sub_enc)) continue;
+            for (int i=0; i<sub.size(); ++i)
+                loaded.push_back(sub[i]);
         }
-        const auto selected = tryToAutoselect(loaded, mrl);
+        const auto selected = tryToSubtitleAutoselect(loaded, mrl);
         for (int i=0; i<selected.size(); ++i)
             loaded[selected[i]].selection() = true;
         subtitle.setComponents(loaded);
-    } else
-        clearSubtitleFiles();
+    }
     syncSubtitleFileMenu();
 }
 

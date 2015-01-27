@@ -6,7 +6,8 @@ template<class T> struct JsonIO;
 class MatchString {
 public:
     MatchString() { }
-    MatchString(const QString &text): m_text(text) { }
+    MatchString(const QString &text, bool regex = false)
+        : m_text(text), m_regex(regex) { }
     auto caseSensitivity() const
         { return m_caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive; }
     auto isCaseInsensitive() const { return !m_caseSensitive; }

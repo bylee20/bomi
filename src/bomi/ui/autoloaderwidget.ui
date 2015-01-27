@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AutoloaderWidget</class>
+ <widget class="QGroupBox" name="AutoloaderWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>372</width>
+    <height>236</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QCheckBox" name="enabled">
+     <property name="text">
+      <string>Load files when a local media file is open</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="AutoloadModeComboBox" name="mode">
+     <property name="toolTip">
+      <string>Load next subtitles when starting to play a file.</string>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToContents</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_31">
+     <item>
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Search Path</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="search_path_edit"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="search_path_add">
+       <property name="text">
+        <string>Add</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="search_path_browse">
+       <property name="text">
+        <string>Browse...</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="search_path_remove">
+       <property name="text">
+        <string>Remove</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_34">
+     <item>
+      <widget class="QCheckBox" name="search_regex">
+       <property name="text">
+        <string>Regular expression</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="search_case_sensitive">
+       <property name="text">
+        <string>Case-sensitive</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTreeView" name="search_paths">
+     <property name="rootIsDecorated">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>AutoloadModeComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widget/enumcombobox.hpp</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

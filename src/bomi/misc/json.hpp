@@ -430,6 +430,6 @@ auto _ToJson(const T &t) { return json_io<T>()->toJson(t); }
 
 template<class T>
 auto _FromJson(const QJsonValue &json) -> T
-{ T t; json_io<T>()->fromJson(t, json); return t; }
+{ T t = T(); json_io<T>()->fromJson(t, json); return t; }
 
 #endif // JSON_HPP
