@@ -2,15 +2,14 @@ import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
-Cp.AppWithDock {
+B.AppWithDock {
     id: app
-    readonly property QtObject engine: Cp.App.engine
+    readonly property QtObject engine: B.App.engine
     Component {
         id: sliders
         SliderStyle {
-            readonly property real ratio: (control.value - control.minimumValue)/(control.maximumValue - control.minimumValue)
             groove: Item {
                 implicitHeight: 12;
                 implicitWidth: 100;
@@ -25,7 +24,7 @@ Cp.AppWithDock {
                 Rectangle {
                     border { color: "#999"; width: 1 }
                     anchors {top: parent.top; bottom: parent.bottom; left: parent.left; }
-                    width: parent.width*ratio
+                    width: parent.width*control.rate
                     gradient: Gradient {
                         GradientStop {position: 0.0; color: "#fff"}
                         GradientStop {position: 1.0; color: "#ccc"}
@@ -45,19 +44,16 @@ Cp.AppWithDock {
         }
         RowLayout {
             anchors { fill: parent; margins: 4 } spacing: 3;
-            Cp.Button {
-                id: playPause; width: height; height: parent.height
-                action: "play/pause"; icon: (player.state === Cp.Engine.Playing) ? "pause.png" : "play.png"
+            B.Button {
+                id: playPause; size: parent.height
+                action: "play/pause";
+                adjustIconSize: true
+                icon.source: engine.playing ? "pause.png" : "play.png"
                 paddings: pressed ? 2 : (hovered ? 0 : 1)
             }
-            Cp.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
-            Row {
-                width: childrenRect.width; height: parent.height
-                Cp.TimeText { textColor: "black"; msecs: engine.time }
-                Cp.TimeText { textColor: "black"; text: "/" }
-                Cp.TimeText { textColor: "black"; msecs: engine.end }
-            }
-            Cp.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
+            B.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
+            B.TimeDuration { height: parent.height }
+            B.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
         }
     }
 }

@@ -238,7 +238,8 @@ HEADERS += \
     audio/audioequalizer.hpp \
 	dialog/audioequalizerdialog.hpp \
     quick/circularimageitem.hpp \
-    quick/maskareaitem.hpp
+    quick/maskareaitem.hpp \
+	quick/windowobject.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -414,7 +415,8 @@ SOURCES += \
 	audio/audioequalizer.cpp \
 	dialog/audioequalizerdialog.cpp \
     quick/circularimageitem.cpp \
-    quick/maskareaitem.cpp
+    quick/maskareaitem.cpp \
+	quick/windowobject.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -459,7 +461,6 @@ OTHER_FILES += \
 	imports/bomi/VolumeSlider.qml \
 	imports/bomi/PlayInfoText.qml \
 	skins/GaN/bomi.qml \
-    skins/GaN/TimeText.qml \
     skins/GaN/Button.qml \
 	imports/bomi/ItemColumn.qml \
 	imports/bomi/ModelView.qml \
@@ -482,4 +483,15 @@ OBJECTIVE_SOURCES +=
 DISTFILES += \
 	imports/bomi/Slider.qml \
     imports/bomi/Circle.qml \
-    skins/one/IconButton.qml
+    skins/one/IconButton.qml \
+    skins/Kotus-floating/bomi.qml \
+    imports/bomi/TimeDuration.qml \
+    skins/Kotus-floating/SmallButton.qml \
+    imports/bomi/ChapterMarkerStyle.qml \
+    imports/bomi/Text.qml \
+    skins/Breeze/bomi.qml \
+    skins/Breeze Dark/bomi.qml \
+    skins/GaN/TextButton.qml \
+    imports/bomi/ButtonIcon.qml \
+    skins/GaN/TimeText.qml \
+    skins/Kotus-floating/MediaButton.qml

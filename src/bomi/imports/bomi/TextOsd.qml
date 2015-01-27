@@ -1,5 +1,5 @@
 import QtQuick 2.2
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
 Osd {
     id: osd
@@ -7,28 +7,28 @@ Osd {
     anchors.fill: parent
     Text {
         id: text
-        color: Cp.App.theme.osd.style.color
+        color: B.App.theme.osd.style.color
         font {
-            family: Cp.App.theme.osd.style.font
-            bold: Cp.App.theme.osd.style.bold
-            underline: Cp.App.theme.osd.style.underline
-            italic: Cp.App.theme.osd.style.italic
-            strikeout: Cp.App.theme.osd.style.strikeout
-            pixelSize: height*Cp.App.theme.osd.style.scale
+            family: B.App.theme.osd.style.font
+            bold: B.App.theme.osd.style.bold
+            underline: B.App.theme.osd.style.underline
+            italic: B.App.theme.osd.style.italic
+            strikeout: B.App.theme.osd.style.strikeout
+            pixelSize: height*B.App.theme.osd.style.scale
         }
         style: {
-            switch (Cp.App.theme.osd.style.style) {
-            case Cp.OsdStyleTheme.Outline:
+            switch (B.App.theme.osd.style.style) {
+            case B.OsdStyleTheme.Outline:
                 return Text.Outline;
-            case Cp.OsdStyleTheme.Raised:
+            case B.OsdStyleTheme.Raised:
                 return Text.Raised;
-            case Cp.OsdStyleTheme.Sunked:
+            case B.OsdStyleTheme.Sunked:
                 return Text.Sunken;
             default:
                 return Text.Normal;
             }
         }
-        styleColor: Cp.App.theme.osd.style.styleColor
+        styleColor: B.App.theme.osd.style.styleColor
         anchors.fill: parent
     }
 }

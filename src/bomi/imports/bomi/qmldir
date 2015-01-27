@@ -5,7 +5,7 @@ Logo                1.0 Logo.qml
 PlayInfoView        1.0 PlayInfoView.qml
 PlaylistDock        1.0 PlaylistDock.qml
 HistoryDock         1.0 HistoryDock.qml
-Button              1.0 Button.qml
+Button				1.0 Button.qml
 Player              1.0 Player.qml
 TimeText            1.0 TimeText.qml
 AppWithFloating     1.0 AppWithFloating.qml
@@ -21,3 +21,7 @@ PlayInfoVideoOutput 1.0 PlayInfoVideoOutput.qml
 PlayInfoAudioOutput 1.0 PlayInfoAudioOutput.qml
 Slider				1.0 Slider.qml
 Circle				1.0 Circle.qml
+TimeDuration		1.0 TimeDuration.qml
+ChapterMarkerStyle	1.0 ChapterMarkerStyle.qml
+Text				1.0 Text.qml
+ButtonIcon			1.0	ButtonIcon.qml

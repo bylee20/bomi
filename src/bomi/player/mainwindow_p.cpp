@@ -985,6 +985,14 @@ auto MainWindow::Data::reloadSkin() -> void
     auto root = view->rootObject();
     if (!root)
         return;
+    auto min = root->property("minimumSize").toSize();
+    if (min.width() < 400)
+        min.rwidth() = 400;
+    if (min.height() < 300)
+        min.rheight() = 300;
+    p->setMinimumSize(min);
+    if (p->width() < min.width() || p->height() < min.height())
+        p->resize(min);
     if (root->objectName() == "player"_a)
         player = qobject_cast<QQuickItem*>(root);
     if (!player)

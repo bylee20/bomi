@@ -1,12 +1,12 @@
 import QtQuick 2.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
 
 Item {
     id: dock
     readonly property real widthHint: 500
-    readonly property QtObject playlist: Cp.App.playlist
+    readonly property QtObject playlist: B.App.playlist
     property alias selectedIndex: table.selectedIndex
     property real dest: 0
     property bool show: false
@@ -34,14 +34,14 @@ Item {
         onWheel: wheel.accepted = true
     }
 
-    Cp.ModelView {
+    B.ModelView {
         id: table
 
         model: playlist
         headerVisible: false
         rowHeight: showLocation ? 40 : 25
         readonly property int nameFontSize: 15
-        readonly property bool showLocation: Cp.App.theme.playlist.showLocation
+        readonly property bool showLocation: B.App.theme.playlist.showLocation
         readonly property int locationFontSize: 10
         readonly property string nameFontFamily: Util.monospace
         readonly property string locationFontFamily: Util.monospace
@@ -67,7 +67,7 @@ Item {
         onSelectedIndexChanged: playlist.selected = table.selectedIndex
 
         onCountChanged: column.width = contentWidth()
-        columns: Cp.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
+        columns: B.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
 
         onActivated: playlist.play(index)
         itemDelegate: Item {

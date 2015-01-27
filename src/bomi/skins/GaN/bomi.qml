@@ -1,12 +1,12 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
-Cp.AppWithFloating {
+B.AppWithFloating {
     id: skin; name: "net.xylosper.bomi.GaN"
     onWidthChanged: controls.width = width < 550 ? 400 : 550
-    readonly property QtObject engine: Cp.App.engine
+    readonly property QtObject engine: B.App.engine
     controls: Item {
         width: 550; height: topBox.height + timeslide.height + bottomBox.height + 5
         Rectangle {
@@ -15,43 +15,31 @@ Cp.AppWithFloating {
                 clip: true; anchors { fill: parent; margins: 1 }
                 Item {
                     id: topBox; width: parent.width; height: 26
-                    function formatTrack(i) { return i <= 0 ? "-" : i; }
-                    function formatTrackNumber(info) {
-                        return formatTrack(info.track.id) + "/" + formatTrack(info.tracks.length)
-                    }
-                    RowLayout {
-                        anchors { fill: parent; topMargin: 4.5; leftMargin: 10; rightMargin: 10 } spacing: 2
-
-                        Button {
-                            id: audioTrackIcon; bind: audioTrackText; width: 20; height: 12; iconName: "audios"
+                    Item {
+                        anchors { fill: parent; topMargin: 4.5; leftMargin: 10; rightMargin: 10 }
+                        TextButton {
+                            id: audio
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            icon.prefix: "audios"
                             action: "audio/track/next"; action2: "audio/track"
-                            tooltip: makeToolTip(qsTr("Next Audio Track"), qsTr("Show Audio tracks"))
+                            text.content: text.formatTrackInfo(engine.audio)
+                        }
+                        TextButton {
+                            anchors.left: audio.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.leftMargin: 5
+                            icon.prefix: "subs"
+                            action: "subtitle/track/next"; action2: "subtitle/track"
+                            text.content: text.formatTrackInfo(engine.subtitle)
                         }
 
-                        TimeText {
-                            id: audioTrackText; bind: audioTrackIcon; width: textWidth; height: 12
-                            text: topBox.formatTrackNumber(engine.audio)
-                        }
-                        Item { width: 2; height: 1 }
-                        Button {
-                            id: subTrackIcon; bind: subTrackText; width: 20; height: 12; iconName: "subs"
-                            action: "subtitle/track/next"; action2: "subtitle/track"
-                            tooltip: makeToolTip(qsTr("Next Subtitle"), qsTr("Show Subtitles"))
-                        }
-                        TimeText {
-                            readonly property var sub: engine.subtitle
-                            id: subTrackText; bind: subTrackIcon; width: textWidth; height: 12
-                            text: topBox.formatTrack(sub.currentNumber) + "/" + topBox.formatTrack(sub.totalLength)
-                        }
-                        Item { Layout.fillWidth: true }
-                        Button {
-                            id: playlistIcon; bind: playlistText; width: 20; height: 12; iconName: "playlist"
+                        TextButton {
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            icon.prefix: "playlist"
                             action: "tool/playlist/toggle"; action2: "tool/playlist"
-                            tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
-                        }
-                        TimeText {
-                            id: playlistText; bind: playlistIcon; width: textWidth; height: 12
-                            text: (Cp.App.playlist.loaded+1).toString() + "/" + Cp.App.playlist.count
+                            text.content: text.formatFraction(B.App.playlist.loaded+1, B.App.playlist.count)
                         }
                     }
                     Item {
@@ -65,40 +53,27 @@ Cp.AppWithFloating {
                     }
                 }
 
-                Cp.TimeSlider {
+                B.TimeSlider {
                     id: timeslide; width: parent.width; height: 10
                     style: SliderStyle {
                         groove: Rectangle {
                             height: 1; anchors.verticalCenter: parent.verticalCenter; color: "white"
                             Image {
                                 anchors.verticalCenter: parent.verticalCenter
-                                readonly property real ratio: control.range > 0 ? (control.value - control.min)/control.range : 0.0
-                                width: parent.width*ratio; height: 10
+                                width: parent.width*control.rate; height: 10
                                 source: "timeslide-fill.png"; fillMode: Image.TileHorizontally
                             }
                         }
                         handle: Item { Image { anchors { centerIn: parent; verticalCenter: parent.verticalCenter } source: "timeslide-handle.png" } }
                     }
-                    Component {
-                        id: chapterMarker
-                        Button {
-                            property int chapter: -2
-                            size: 6; y: (timeslide.height*0.5-6-1)
-                            x: timeslide.width*(engine.chapter.time(chapter) - engine.begin)/(engine.duration)-3
-                            iconName: "marker"; tooltip: engine.chapter.name(chapter); tooltipDelay: 0
-                            onClicked: engine.seek(engine.chapter.time(chapter))
+                    markerStyle: B.ChapterMarkerStyle {
+                        marker: Button {
+                            readonly property var chapter: parent.chapter
+                            size: 6; x: -3; y: 0
+                            iconName: "marker"; tooltip: parent.chapter.name; delay: 0
+                            acceptedButtons: Qt.LeftButton
+                            onClicked: control.time = parent.chapter.time
                         }
-                    }
-                    property var markers: []
-                    Connections { target: engine; onChapterChanged: timeslide.generateChapters() }
-                    function generateChapters() {
-                        var i;
-                        for (i=0; i<markers.length; ++i)
-                            markers[i].destroy()
-                        markers = []
-                        var chapter = engine.chapter
-                        for (i=0; i<chapter.count; ++i)
-                            markers.push(chapterMarker.createObject(timeslide, { "chapter": i }));
                     }
                 }
                 Item {
@@ -106,28 +81,30 @@ Cp.AppWithFloating {
                     Column {
                         anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 10 }
                         TimeText {
-                            id: timetext; msecs: engine.time; showMSecs: checked
+                            id: timetext; time: engine.time
                             tooltip: qsTr("Show/Hide milliseconds")
+                            msec: checked
                         }
                         TimeText {
-                            id: endtext; msecs: checked ? (engine.end - engine.time) : engine.end
-                            showMSecs: timetext.checked; tooltip: qsTr("Toggle end time/left time")
+                            id: endtext; time: checked ? (engine.end - engine.time) : engine.end
+                            tooltip: qsTr("Toggle end time/left time")
+                            msec: timetext.msec
                         }
                     }
 
                     Row {
                         spacing: 5; anchors.centerIn: parent; property real size: 24
-                        Button { size: parent.size; iconName: "prev"; action: "play/prev"; action2: "play/chapter/prev"}
-                        Button { size: parent.size; iconName: "backward"; action: "play/seek/backward1"; action2: "play/seek/backward2" }
-                        Button { size: parent.size; iconName: engine.running ? "pause" : "play"; action: "play/pause" }
-                        Button { size: parent.size; iconName: "forward"; action: "play/seek/forward1"; action2: "play/seek/forward2" }
-                        Button { size: parent.size; iconName: "next"; action: "play/next";  action2: "play/chapter/next" }
+                        B.Button { size: parent.size; icon.prefix: "prev"; action: "play/prev"; action2: "play/chapter/prev"}
+                        B.Button { size: parent.size; icon.prefix: "backward"; action: "play/seek/backward1"; action2: "play/seek/backward2" }
+                        B.Button { size: parent.size; icon.prefix: engine.running ? "pause" : "play"; action: "play/pause" }
+                        B.Button { size: parent.size; icon.prefix: "forward"; action: "play/seek/forward1"; action2: "play/seek/forward2" }
+                        B.Button { size: parent.size; icon.prefix: "next"; action: "play/next";  action2: "play/chapter/next" }
                     }
 
                     Item {
                         width: 48; height: 22
                         anchors { verticalCenter: parent.verticalCenter; right: parent.right; rightMargin: 10 }
-                        Cp.VolumeSlider {
+                        B.VolumeSlider {
                             id: volume; anchors.fill: parent
                             style: SliderStyle {
                                 groove: Image {
@@ -141,7 +118,7 @@ Cp.AppWithFloating {
                             }
                             Button {
                                 width: 12; height: 12; checked: engine.muted; action: "audio/volume/mute"
-                                icon: pressed ? "mute-pressed.png" : (hovered || checked ? "mute-checked.png" : "mute.png")
+                                icon.source: pressed ? "mute-pressed.png" : (hovered || checked ? "mute-checked.png" : "mute.png")
                             }
                         }
                     }
@@ -150,22 +127,15 @@ Cp.AppWithFloating {
         }
     }
     Component.onCompleted: {
-        Cp.Settings.open(name)
-        timetext.checked = Cp.Settings.getBool("time-checked", false)
-        endtext.checked = Cp.Settings.getBool("end-checked", false)
-        Cp.Settings.close()
-        timeslide.generateChapters()
+        B.Settings.open(name)
+        timetext.checked = B.Settings.getBool("time-checked", false)
+        endtext.checked = B.Settings.getBool("end-checked", false)
+        B.Settings.close()
     }
     Component.onDestruction: {
-        Cp.Settings.open(name)
-        Cp.Settings.set("time-checked", timetext.checked)
-        Cp.Settings.set("end-checked", endtext.checked)
-        Cp.Settings.close()
+        B.Settings.open(name)
+        B.Settings.set("time-checked", timetext.checked)
+        B.Settings.set("end-checked", endtext.checked)
+        B.Settings.close()
     }
-//    Cp.Dialog {
-//        width: 100
-//        height: 100
-//        anchors.centerIn: parent
-//        opacity: 0.75
-//    }
 }

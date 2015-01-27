@@ -1,0 +1,162 @@
+import QtQuick 2.0
+import QtQuick.Layouts 1.0
+import QtQuick.Controls.Styles 1.0
+import bomi 1.0 as B
+
+B.AppWithFloating {
+    id: skin;
+    name: "net.xylosper.bomi.Kotus-floating"
+    readonly property QtObject engine: B.App.engine
+    readonly property size minimumSize: Qt.size(560, 130)
+
+    Component {
+        id: sliderstyle
+        SliderStyle {
+            groove: Rectangle {
+                width: control.width; height: control.height; color: "#282629"
+                Rectangle {
+                    width: control.width * control.rate; height: control.height
+                    color: "#0078ad"
+                }
+            }
+            handle: Item { }
+        }
+    }
+
+    controls: Item {
+        width: 560; height: panel.height + 40;
+        opacity: 0.7
+        Rectangle {
+            id: panel
+            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+            color: "#efefef"; height: 90; radius: 2
+
+            Item {
+                id: mbuttons
+                anchors.verticalCenter: panel.top; width: parent.width
+                readonly property real gap: 74
+                MediaButton {
+                    id: prev; offset: -2
+                    icon.source: "prev.png"; action: "play/prev"
+                }
+                MediaButton {
+                    id: backward; offset: -1
+                    icon.source: "backward.png"; action: "play/seek/backward1"
+                }
+                MediaButton {
+                    id: play; size: 82
+                    icon.source: checked ? "pause.png" : "play.png"
+                    action: "play/pause"; checked: engine.playing
+                }
+                MediaButton {
+                    id: forward; offset: 1
+                    icon.source: "forward.png"; action: "play/seek/forward1"
+                }
+                MediaButton {
+                    id: next; offset: 2
+                    icon.source: "next.png"; action: "play/next"
+                }
+            }
+
+            Item {
+                anchors {
+                    fill: parent
+                    leftMargin: 15; rightMargin:  anchors.leftMargin
+                    topMargin:  8;  bottomMargin: anchors.topMargin
+                }
+                SmallButton {
+                    id: shuffle
+                    anchors { top: parent.top; left: parent.left }
+                    icon.source: "shuffle.png"; action: "tool/playlist/shuffle"
+                    checked: B.App.playlist.shuffled
+                }
+
+                SmallButton {
+                    id: repeat
+                    anchors { top: parent.top; left: shuffle.right; leftMargin: 7 }
+                    icon.source: "repeat.png"; action: "tool/playlist/repeat"
+                    checked: B.App.playlist.repetitive
+                }
+
+                SmallButton {
+                    id: speaker
+                    anchors { left: parent.left; bottom: parent.bottom }
+                    icon.source: "volume.png"; action: "audio/volume/mute"
+                    checked: B.App.engine.muted
+                }
+
+                SmallButton {
+                    id: playlist
+                    anchors { top: parent.top; right: fs.left; rightMargin: 7 }
+                    icon.source: "playlist.png"; action: "tool/playlist/toggle"
+                    checked: B.App.playlist.visible
+                }
+
+                SmallButton {
+                    id: fs
+                    anchors { right: parent.right; top: parent.top }
+                    icon.source: "fullscreen.png"; action: "window/full"
+                    checked: B.App.window.fullscreen
+                }
+
+
+                SmallButton {
+                    id: audio
+                    anchors { bottom: parent.bottom; right: fs.left; rightMargin: 7 }
+                    icon.source: "audio.png";
+                    action: "audio/track/next"; action2: "audio/track"
+                    text.content: text.formatTrackInfo(engine.audio)
+                }
+
+                SmallButton {
+                    id: sub
+                    anchors { right: parent.right; bottom: parent.bottom }
+                    icon.source: "sub.png"
+                    action: "subtitle/track/next"; action2: "subtitle/track"
+                    text.content: text.formatTrackInfo(engine.subtitle)
+                }
+
+                B.VolumeSlider {
+                    width: 65; height: 5; style: sliderstyle
+                    anchors {
+                        left: speaker.right; leftMargin: 15
+                        verticalCenter: speaker.verticalCenter
+                    }
+                }
+
+                B.TimeSlider {
+                    id: seeker
+                    width: 300; height: 5; style: sliderstyle
+                    anchors {
+                        verticalCenter: speaker.verticalCenter
+                        horizontalCenter: parent.horizontalCenter
+                        horizontalCenterOffset: 22
+                    }
+
+                    markerStyle: B.ChapterMarkerStyle {
+                        marker: B.Button {
+                            readonly property var chapter: parent.chapter
+                            readonly property bool emph: hovered || pressed
+                            width: 8; height: 10
+                            x: -width * 0.5; z: emph ? 2 : -1
+                            y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0)
+                            icon.source: emph ? "marker-filled.png" : "marker.png"
+                            tooltip: chapter.name; delay: 0
+                            acceptedButtons: Qt.LeftButton
+                            onClicked: control.time = chapter.time
+                        }
+                    }
+                }
+
+                B.TimeDuration {
+                    height: 13; spacing: 2; msec: true
+                    font.pixelSize: height; monospace: false; color: "black"
+                    anchors {
+                        horizontalCenter: parent.horizontalCenter
+                        bottom: seeker.top; bottomMargin: 8
+                    }
+                }
+            }
+        }
+    }
+}

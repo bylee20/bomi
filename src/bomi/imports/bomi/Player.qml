@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
 
@@ -8,9 +8,9 @@ Item {
     objectName: "player"
     property real dockZ: 0.0
     property real bottomPadding: 0.0
-    readonly property QtObject engine: Cp.App.engine
+    readonly property QtObject engine: B.App.engine
     Logo { anchors.fill: parent }
-    TextOsd { id: msgosd; duration: Cp.App.theme.osd.message.duration }
+    TextOsd { id: msgosd; duration: B.App.theme.osd.message.duration }
     Rectangle {
         id: msgbox
         color: Qt.rgba(0.86, 0.86, 0.86, 0.8)
@@ -33,14 +33,14 @@ Item {
 
     ProgressOsd {
         id: timeline; value: engine.rate
-        duration: Cp.App.theme.osd.timeline.duration
+        duration: B.App.theme.osd.timeline.duration
         x: (parent.width - width)*0.5
         y: {
-            var m = Cp.App.theme.osd.timeline.margin
-            switch (Cp.App.theme.osd.timeline.position) {
-            case Cp.TimelineTheme.Top:
+            var m = B.App.theme.osd.timeline.margin
+            switch (B.App.theme.osd.timeline.position) {
+            case B.TimelineTheme.Top:
                 return parent.height * m;
-            case Cp.TimelineTheme.Bottom:
+            case B.TimelineTheme.Bottom:
                 return parent.height * (1.0 - m) - height;
             default:
                 return (parent.height - height)*0.5;
@@ -52,13 +52,13 @@ Item {
         anchors.fill: parent; z: dockZ
         PlaylistDock {
             id: right
-            show: Cp.App.playlist.visible
+            show: B.App.playlist.visible
             width: Math.min(widthHint, player.width-(left.x+left.width)-20)
             height: parent.height-2*y - bottomPadding
         }
         HistoryDock {
             id: left
-            show: Cp.App.history.visible
+            show: B.App.history.visible
             width: Math.min(widthHint, player.width*0.4)
             height: parent.height-2*y - bottomPadding
         }
@@ -75,38 +75,38 @@ Item {
     function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
     function showTimeLine() { timeline.show(); }
 
-    Cp.MessageBox {
+    B.MessageBox {
         id: downloadMBox
-        parent: Cp.App.topLevelItem
+        parent: B.App.topLevelItem
         width: 300
         height: 100
         anchors.centerIn: parent
         title.text: qsTr("Download")
-        message.text: Cp.App.download.url
+        message.text: B.App.download.url
         message.elide: Text.ElideMiddle
         message.verticalAlignment: Text.AlignVCenter
         visible: false
         Connections {
-            target: Cp.App.download
+            target: B.App.download
             onRunningChanged: {
-                downloadMBox.visible = Cp.App.download.running
-                if (Cp.App.download.running)
-                    Cp.App.topLevelItem.visible = true
+                downloadMBox.visible = B.App.download.running
+                if (B.App.download.running)
+                    B.App.topLevelItem.visible = true
                 else
-                    Cp.App.topLevelItem.check()
+                    B.App.topLevelItem.check()
             }
         }
-        buttonBox.buttons: [Cp.ButtonBox.Cancel]
+        buttonBox.buttons: [B.ButtonBox.Cancel]
         buttonBox.onClicked: {
-            if (button == Cp.ButtonBox.Cancel)
-                Cp.App.download.cancel()
+            if (button == B.ButtonBox.Cancel)
+                B.App.download.cancel()
         }
 
-        readonly property QtObject download: Cp.App.download
-        customItem: Cp.ProgressBar {
+        readonly property QtObject download: B.App.download
+        customItem: B.ProgressBar {
             id: prog
-            value: Cp.App.download.rate
-            property bool writing: Cp.App.download.writtenSize >= 0
+            value: B.App.download.rate
+            property bool writing: B.App.download.writtenSize >= 0
             function sizeText(size) {
                 if (size < 0)
                     return "??"
@@ -122,7 +122,7 @@ Item {
                 horizontalAlignment: Text.AlignRight
                 color: "black"
                 visible: prog.writing
-                text: prog.sizeText(Cp.App.download.writtenSize)
+                text: prog.sizeText(B.App.download.writtenSize)
             }
             Text {
                 id: progSlash
@@ -141,7 +141,7 @@ Item {
                 horizontalAlignment: Text.AlignLeft
                 color: "black"
                 visible: prog.writing
-                text: prog.sizeText(Cp.App.download.totalSize)
+                text: prog.sizeText(B.App.download.totalSize)
             }
         }
 

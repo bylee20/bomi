@@ -3,12 +3,12 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
-Cp.AppWithDock {
+B.AppWithDock {
     id: app
 
-    readonly property QtObject engine: Cp.App.engine
+    readonly property QtObject engine: B.App.engine
     Component {
         id: sliders
         SliderStyle {
@@ -52,54 +52,49 @@ Cp.AppWithDock {
         RowLayout {
             anchors { fill: parent; margins: 4 } spacing: 3;
 
-            Cp.Button {
+            B.Button {
                 id: playPrev; width: 24; height: 24
-                action: "play/prev"; icon: getStateIconName("previous", hovered, pressed)
+                action: "play/prev"; icon.prefix: "previous"
             }
 
-            Cp.Button {
+            B.Button {
                 id: playPause; width: 24; height: 24
-                action: "play/pause"; icon: getStateIconName(engine.running ? "pause" : "play", hovered, pressed)
+                action: "play/pause"; icon.prefix: engine.running ? "pause" : "play"
             }
-            Cp.Button {
+            B.Button {
                 id: playStop; width: 24; height: 24
-                action: "play/stop"; icon: getStateIconName("stop", hovered, pressed)
+                action: "play/stop"; icon.prefix: "stop"
             }
 
-            Cp.Button {
+            B.Button {
                 id: playNext; width: 24; height: 24
-                action: "play/next"; icon: getStateIconName("next", hovered, pressed)
+                action: "play/next"; icon.prefix: "next"
             }
 
-            Cp.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
+            B.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 
-            Row {
-                width: childrenRect.width; height: parent.height
-                Cp.TimeText { textColor: "#1e1e1e"; msecs: engine.time; height: 12 }
-                Cp.TimeText { textColor: "#1e1e1e"; text: "/"; height: 12 }
-                Cp.TimeText { textColor: "#1e1e1e"; msecs: engine.end; height: 12 }
-            }
+            B.TimeDuration { color: "#1e1e1e"; height: parent.height }
 
             Row {
-                Cp.Button {
-                id: playlistIcon; width: 24; height: 24
-                action: "tool/playlist/toggle"; icon: getStateIconName("playlist", hovered, pressed); action2: "tool/playlist"
-                            tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
-                    }
-                Cp.Button {
-                id: fullscreen; width: 24; height: 24
-                action: "window/full"; icon: getStateIconName("fullscreen", hovered, pressed)
-                    }
-                Cp.Button {
-                id: openFolder; width: 24; height: 24
-                action: "open/folder"; icon: getStateIconName("open-folder", hovered, pressed)
-                    }
-                Cp.Button {
-                id: mute; width: 24; height: 24
-                action: "audio/volume/mute"; icon: engine.muted ? getStateIconName("speaker-off", hovered, pressed) : getStateIconName("speaker-on", hovered, pressed)
-                    }
+                B.Button {
+                    id: playlistIcon; width: 24; height: 24
+                    action: "tool/playlist/toggle"; icon.prefix: "playlist"; action2: "tool/playlist"
+                    tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
+                }
+                B.Button {
+                    id: fullscreen; width: 24; height: 24
+                    action: "window/full"; icon.prefix: "fullscreen"
+                }
+                B.Button {
+                    id: openFolder; width: 24; height: 24
+                    action: "open/folder"; icon.prefix: "open-folder"
+                }
+                B.Button {
+                    id: mute; width: 24; height: 24
+                    action: "audio/volume/mute"; icon.prefix: engine.muted ? "speaker-off" : "speaker-on"
+                }
             }
-            Cp.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
+            B.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
         }
     }
 }

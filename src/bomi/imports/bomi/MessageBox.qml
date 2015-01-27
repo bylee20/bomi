@@ -1,6 +1,6 @@
 import QtQuick 2.2
 import QtQuick.Layouts 1.1
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
 Rectangle {
     id: box
@@ -79,9 +79,9 @@ Rectangle {
             width: parent.width
             height: childrenRect.height
         }
-        Cp.ButtonBox {
+        B.ButtonBox {
             id: bboxItem
-            buttons: [Cp.ButtonBox.Cancel, Cp.ButtonBox.Ok]
+            buttons: [B.ButtonBox.Cancel, B.ButtonBox.Ok]
             visible: buttons.length > 0
             width: 150; height: 25
             anchors.horizontalCenter: parent.horizontalCenter

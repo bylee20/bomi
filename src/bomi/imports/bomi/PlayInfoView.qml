@@ -8,7 +8,6 @@ Item {
     width: parent.width-fontSize*2;
     height: parent.height-fontSize*2;
     anchors.centerIn: parent
-    property string fontFamily: Util.monospace
     property alias show: wrapper.visible
     readonly property Engine engine: App.engine
     readonly property var audio: engine.audio
@@ -39,12 +38,10 @@ Item {
         readonly property alias fontSize: wrapper.fontSize
         PlayInfoText { text: engine.media.name }
         PlayInfoText {
-            readonly property int time: engine.time/1000
-            readonly property int end: engine.end/1000
-            readonly property int pos10: engine.rate*1000
+            readonly property int rate: engine.rate*1000
             text: qsTr("State: %2/%3(%4%) ×%5 [%1]").arg(engine.stateText)
-                .arg(Util.secToString(time)).arg(Util.secToString(end))
-                .arg(time > 0 && end > 0 ? (pos10/10.0).toFixed(1) : 0)
+                .arg(formatTime(engine.time_s*1000)).arg(formatTime(engine.end_s*1000))
+                .arg(engine.time_s > 0 && engine.end_s > 0 ? (rate/10) : 0)
                 .arg(engine.speed.toFixed(2))
         }
         PlayInfoText {
@@ -101,16 +98,13 @@ Item {
 
         PlayInfoText {
             readonly property var hw: video.hwacc
-            function driverText(d) { return (d === "" || d === "no") ? "--" : d }
             text: qsTr("Hardware Acceleration: %1[%2]")
-                .arg(box.activationText(hw.state)).arg(driverText(hw.driver))
+                .arg(box.activationText(hw.state)).arg(formatNA(hw.driver))
         }
 
         PlayInfoText {
             readonly property var hw: video.hwacc
-            function driverText(d) { return (d === "" || d === "no") ? "--" : d }
-            text: qsTr("Deinterlacer: %3")
-                .arg(box.activationText(video.deinterlacer))
+            text: qsTr("Deinterlacer: %3").arg(box.activationText(video.deinterlacer))
         }
 
         PlayInfoText { }

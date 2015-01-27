@@ -54,46 +54,41 @@ Cp.AppWithDock {
 
             Cp.Button {
                 id: playPrev; width: 24; height: 24
-                action: "play/prev"; icon: getStateIconName("previous", hovered, pressed)
+                action: "play/prev"; icon.prefix: "previous"
             }
 
             Cp.Button {
                 id: playPause; width: 24; height: 24
-                action: "play/pause"; icon: getStateIconName(engine.running ? "pause" : "play", hovered, pressed)
+                action: "play/pause"; icon.prefix: engine.running ? "pause" : "play"
             }
             Cp.Button {
                 id: playStop; width: 24; height: 24
-                action: "play/stop"; icon: getStateIconName("stop", hovered, pressed)
+                action: "play/stop"; icon.prefix: "stop"
             }
 
             Cp.Button {
                 id: playNext; width: 24; height: 24
-                action: "play/next"; icon: getStateIconName("next", hovered, pressed)
+                action: "play/next"; icon.prefix: "next"
             }
 
             Cp.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 
-            Row {
-                width: childrenRect.width; height: parent.height
-                Cp.TimeText { textColor: "#fff"; msecs: engine.time; height: 12 }
-                Cp.TimeText { textColor: "#fff"; text: "/"; height: 12 }
-                Cp.TimeText { textColor: "#fff"; msecs: engine.end; height: 12 }
-            }
+            Cp.TimeDuration { height: parent.height; color: "#fff" }
 
             Row {
                 Cp.Button {
-                id: playlistIcon; width: 24; height: 24
-                action: "tool/playlist/toggle"; icon: getStateIconName("playlist", hovered, pressed); action2: "tool/playlist"
-                            tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
-                    }
+                    id: playlistIcon; width: 24; height: 24
+                    action: "tool/playlist/toggle"; icon.prefix: "playlist"; action2: "tool/playlist"
+                    tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
+                }
                 Cp.Button {
-                id: fullscreen; width: 24; height: 24
-                action: "window/full"; icon: getStateIconName("fullscreen", hovered, pressed)
-                    }
+                    id: fullscreen; width: 24; height: 24
+                    action: "window/full"; icon.prefix: "fullscreen"
+                }
                 Cp.Button {
-                id: mute; width: 24; height: 24
-                action: "audio/volume/mute"; icon: engine.muted ? getStateIconName("speaker-off", hovered, pressed) : getStateIconName("speaker-on", hovered, pressed)
-                    }
+                    id: mute; width: 24; height: 24
+                    action: "audio/volume/mute"; icon.prefix: engine.muted ? "speaker-off" : "speaker-on"
+                }
             }
             Cp.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
         }
