@@ -20,7 +20,7 @@ auto StepAction::update() -> void
     if (!data)
         setText(EnumInfo::description(enum_()));
     else
-        setText(m_format.arg(toString(m_sign, data)));
+        setText(m_format.arg(toString(true, data)));
 }
 
 auto StepAction::format(int value) const -> QString
