@@ -14,6 +14,7 @@ public:
     auto clearAnchor(AnchorLine line) -> void;
     auto clearAnchors() -> void;
     auto anchor(AnchorLine line, QQuickItem *target, AnchorLine to) -> void;
+    auto anchor(AnchorLine line, QQuickItem *target) -> void;
     auto anchorCenterIn(QQuickItem *target) -> void;
     auto anchorFill(QQuickItem *target) -> void;
     auto setMargin(AnchorLine line, qreal margin) -> void;
@@ -26,6 +27,8 @@ public:
     auto setHeight(qreal h) -> void { m_item->setHeight(h); }
     auto width() const -> qreal { return m_item->width(); }
     auto height() const -> qreal { return m_item->height(); }
+    auto implicitWidth() const -> qreal { return m_item->implicitWidth(); }
+    auto implicitHeight() const -> qreal { return m_item->implicitHeight(); }
     auto size() const -> QSizeF { return QSizeF(width(), height()); }
     auto resize(const QSizeF &s) -> void { resize(s.width(), s.height()); }
     auto resize(qreal w, qreal h) -> void { setWidth(w); setHeight(h); }
@@ -38,10 +41,19 @@ public:
     auto x() const -> qreal { return m_item->x(); }
     auto y() const -> qreal { return m_item->y(); }
     auto z() const -> qreal { return m_item->z(); }
+    auto set(const QByteArray &prop, const QVariant &var) -> void;
+    auto get(const QByteArray &property) const -> QVariant;
+    auto notify(const QByteArray &property, QObject *dest, const char *slot) -> void;
+    static auto wrap(QQuickItem *item) -> QtItem*;
 protected:
     auto qmlProperty(const char *name) const -> QQmlProperty
     { return QQmlProperty(m_item, _L(name)); }
+    auto qmlProperty(const QByteArray &name) const -> QQmlProperty
+    { return QQmlProperty(m_item, QString::fromLatin1(name)); }
 private:
+    QtItem(QObject *parent = nullptr)
+        : QObject(parent) { m_anchors.resize(6); m_margins.resize(6); }
+    auto setItem(QQuickItem *item) -> void;
     static auto anchorName(AnchorLine line) -> QString;
     QQuickItem *m_item = nullptr;
     QVector<QQmlProperty> m_anchors, m_margins;
@@ -56,6 +68,10 @@ inline auto QtItem::clearAnchors() -> void
 inline auto QtItem::anchor(AnchorLine line,
                            QQuickItem *target, AnchorLine to) -> void
 { m_anchors[line].write(QQmlProperty(target, anchorName(to)).read()); }
+
+
+inline auto QtItem::anchor(AnchorLine line, QQuickItem *target) -> void
+{ anchor(line, target, line); }
 
 inline auto QtItem::anchorCenterIn(QQuickItem *target) -> void
 {
