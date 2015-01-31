@@ -506,6 +506,7 @@ RootMenu::RootMenu()
         d->action(u"find-subtitle"_q, QT_TR_NOOP("Find Subtitle"));
         d->action(u"subtitle"_q, QT_TR_NOOP("Subtitle View"));
         d->action(u"playinfo"_q, QT_TR_NOOP("Playback Information"));
+        d->action(u"status"_q, QT_TR_NOOP("Status"));
 
         d->separator();
 
