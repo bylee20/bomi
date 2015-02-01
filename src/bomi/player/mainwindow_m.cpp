@@ -117,7 +117,7 @@ auto MainWindow::Data::connectMenus() -> void
     Menu &play = menu(u"play"_q);
     connect(play[u"stop"_q], &QAction::triggered,
             p, [this] () {e.stop();});
-    PLUG_STEP(play.g(), play_speed, setSpeedPercent);
+    PLUG_STEP(play(u"speed"_q).g(), play_speed, setSpeedPercent);
 
     connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
     connect(play(u"repeat"_q).g(), &ActionGroup::triggered,
@@ -380,6 +380,7 @@ auto MainWindow::Data::connectMenus() -> void
     PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);
 
 
+//    PLUG_STEP(play)
 
     Menu &sub = menu(u"subtitle"_q);
     auto &atrack = audio(u"track"_q);
