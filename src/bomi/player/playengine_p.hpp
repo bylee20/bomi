@@ -215,7 +215,7 @@ struct PlayEngine::Data {
     auto exec() -> void;
 
     auto mpVolume() const -> double
-        { return params.audio_volume() * params.audio_amplifier() * 10.0; }
+        { return params.audio_volume() * params.audio_amplifier() * 1e-3; }
     template<class T>
     SIA qbytearray_from(const T &t) -> tmp::enable_if_t<tmp::is_arithmetic<T>(),
         QByteArray> { return QByteArray::number(t); }
