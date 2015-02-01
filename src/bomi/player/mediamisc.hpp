@@ -73,33 +73,6 @@ private:
 
 using EditionList = QVector<Edition>;
 
-//class TrackInfoObject : public QObject {
-//    Q_OBJECT
-//    Q_PROPERTY(int current READ current NOTIFY currentChanged)
-//    Q_PROPERTY(int count READ count NOTIFY countChanged)
-//    Q_PROPERTY(int length READ count NOTIFY countChanged)
-//    Q_PROPERTY(QString currentText READ currentText NOTIFY currentChanged)
-//    Q_PROPERTY(QString countText READ countText NOTIFY countChanged)
-//public:
-//    TrackInfoObject(QObject *parent = nullptr): QObject(parent) {}
-//    auto current() const -> int { return m_current; }
-//    auto count() const -> int { return m_count; }
-//    auto setCount(int count) -> void
-//    { if (_Change(m_count, count)) emit countChanged(); }
-//    auto setCurrent(int current) -> void
-//    { if (_Change(m_current, current)) emit currentChanged(); }
-//    auto currentText() const -> QString { return toString(m_current); }
-//    auto countText() const -> QString { return toString(m_count); }
-//signals:
-//    void currentChanged();
-//    void countChanged();
-//private:
-//    static auto toString(int i) -> QString
-//    { return i < 1 ? u"-"_q : QString::number(i); }
-//    int m_current = -2;
-//    int m_count = 0;
-//};
-
 class ChapterInfoObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(int id READ id NOTIFY idChanged)

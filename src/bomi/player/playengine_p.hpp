@@ -107,13 +107,15 @@ struct PlayEngine::Data {
     VideoRenderer *vr = nullptr;
     AudioController *ac = nullptr;
     SubtitleRenderer *sr = nullptr;
+    VideoFilter *vfilter = nullptr;
 
     PlayEngine::Waitings waitings = PlayEngine::NoWaiting;
     PlayEngine::State state = PlayEngine::Stopped;
     PlayEngine::ActivationState hwacc = PlayEngine::Unavailable;
     PlayEngine::Snapshot snapshot = PlayEngine::NoSnapshot;
 
-    MrlState params, local;
+    Mrl mrl;
+    MrlState params;
 
     QTemporaryDir confDir;
     QTemporaryFile customShader;
@@ -130,31 +132,25 @@ struct PlayEngine::Data {
 
     HistoryModel *history = nullptr;
 
-    double fps = 1.0;
-    bool hasImage = false, seekable = false, hasVideo = false;
-    bool pauseAfterSkip = false, resume = false;
-    bool quit = false, initialized = false;
-    int avSync = 0;
-
-    bool hwdec = false;
-    QByteArray hwcdc;
-
     struct {
         bool caching = false;
         int start = -1;
         QSharedPointer<MrlState> local;
-    } t;
+    } t; // thread local
 
-    int cacheSize = 0, cacheUsed = 0;
+    double fps = 1.0;
+    bool hasImage = false, seekable = false, hasVideo = false;
+    bool pauseAfterSkip = false, resume = false, hwdec = false;
+    bool quit = false, initialized = false;
+
+    QByteArray hwcdc;
+
+    int avSync = 0, cacheSize = 0, cacheUsed = 0;
     int updateEventMax = ::UpdateEventBegin;
     int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;
+    int duration = 0, begin = 0, position = 0, chapter = -2, edition = -1;
 
     mpv_handle *handle = nullptr;
-    VideoFilter *filter = nullptr;
-
-    Mrl mrl;
-
-    int duration = 0, begin = 0, position = 0, chapter = -2, edition = -1;
     mpv_opengl_cb_context *gl = nullptr;
     QMatrix4x4 c_matrix;
 
@@ -179,166 +175,28 @@ struct PlayEngine::Data {
     SpeedMeasure<quint64> fpsMeasure{5, 20};
 
     QImage ssNoOsd, ssWithOsd;
+    int hookId = 0;
+    QMap<QByteArray, std::function<void(void)>> hooks;
+    QPoint mouse;
+    QMutex mutex;
 
-    auto updateState(State s) -> void
-    {
-        const auto prev = state;
-        if (_Change(state, s)) {
-            emit p->stateChanged(state);
-            auto check = [&] (State s)
-                { return !!(state & s) != !!(prev & s); };
-            if (check(Paused))
-                emit p->pausedChanged();
-            if (check(Playing))
-                emit p->playingChanged();
-            if (check(Stopped))
-                emit p->stoppedChanged();
-            if (check(Running))
-                emit p->runningChanged();
-        }
-    }
-
-    auto setWaitings(Waitings w, bool set) -> void
-    {
-        auto old = p->waiting();
-        if (set)
-            waitings |= w;
-        else
-            waitings &= ~w;
-        auto new_ = p->waiting();
-        if (old != new_)
-            emit p->waitingChanged(new_);
-    }
-
-    auto clearTimings()
-    {
-        fpsMeasure.reset();
-        videoInfo.setDroppedFrames(0);
-        videoInfo.setDelayedFrames(0);
-        videoInfo.renderer()->setFps(0);
-        drawnFrames = 0;
-    }
+    auto updateState(State s) -> void;
+    auto setWaitings(Waitings w, bool set) -> void;
+    auto clearTimings() -> void;
 
     auto setInclusiveSubtitles(const QVector<SubComp> &loaded) -> void
         { setInclusiveSubtitles(&params, loaded); }
-
     auto setInclusiveSubtitles(MrlState *s, const QVector<SubComp> &loaded) -> void
-    {
-        sr->setComponents(loaded);
-        s->set_sub_tracks_inclusive(sr->toTrackList());
-    }
+        { sr->setComponents(loaded); s->set_sub_tracks_inclusive(sr->toTrackList()); }
     auto syncInclusiveSubtitles() -> void
         { params.set_sub_tracks_inclusive(sr->toTrackList()); }
-
-    static auto restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>
-    {
-        Q_ASSERT(tracks.type() == StreamInclusiveSubtitle);
-        QVector<SubComp> ret;
-        QMap<QString, QMap<QString, SubComp>> subMap;
-        for (auto &track : tracks) {
-            auto it = subMap.find(track.file());
-            if (it == subMap.end()) {
-                it = subMap.insert(track.file(), QMap<QString, SubComp>());
-                Subtitle sub;
-                if (!sub.load(track.file(), track.encoding(), -1))
-                    continue;
-                for (int i = 0; i < sub.size(); ++i)
-                    it->insert(sub[i].language(), sub[i]);
-            }
-            auto iit = it->find(track.language());
-            if (iit != it->end()) {
-                iit->selection() = track.isSelected();
-                ret.push_back(*iit);
-            }
-        }
-        return ret;
-    }
-
+    static auto restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>;
     auto audio_add(const QString &file, bool select) -> void
-    { tellmpv_async("audio_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b); }
-
-    auto sub_add(const QString &file, const QString &enc, bool select) -> void
-    {
-        setmpv_async("options/subcp", enc.toLatin1());
-        tellmpv_async("sub_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b);
-        mutex.lock();
-        assEncodings[file] = enc;
-        mutex.unlock();
-    }
-
-    auto autoloadFiles(StreamType type) -> QStringList
-    {
-        auto &a = streams[type].autoloader;
-        if (a.enabled)
-            return a.autoload(mrl, streams[type].ext);
-        return QStringList();
-    }
-
-    auto autoselect(const MrlState *s, QVector<SubComp> &loads) -> void
-    {
-        QVector<int> selected;
-        QSet<QString> langSet;
-        const QFileInfo file(mrl.toLocalFile());
-        const QString base = file.completeBaseName();
-
-        for (int i = 0; i<loads.size(); ++i) {
-            bool select = false;
-            switch (s->d->autoselectMode) {
-            case AutoselectMode::Matched: {
-                const QFileInfo info(loads[i].fileName());
-                select = info.completeBaseName() == base;
-                break;
-            } case AutoselectMode::EachLanguage: {
-                //                  const QString lang = loaded[i].m_comp.language().id();
-                const auto lang = loads[i].language();
-                if ((select = (!langSet.contains(lang))))
-                    langSet.insert(lang);
-                break;
-            }  case AutoselectMode::All:
-                select = true;
-                break;
-            default:
-                break;
-            }
-            if (select)
-                selected.append(i);
-        }
-        if (s->d->autoselectMode == AutoselectMode::Matched
-                && !selected.isEmpty() && !s->d->autoselectExt.isEmpty()) {
-            for (int i=0; i<selected.size(); ++i) {
-                const auto fileName = loads[selected[i]].fileName();
-                const auto suffix = QFileInfo(fileName).suffix();
-                if (s->d->autoselectExt == suffix.toLower()) {
-                    const int idx = selected[i];
-                    selected.clear();
-                    selected.append(idx);
-                    break;
-                }
-            }
-        }
-        for (int i=0; i<selected.size(); ++i)
-            loads[selected[i]].selection() = true;
-    }
-
-    auto autoloadSubtitle(const MrlState *s)
-    {
-        const auto subs = autoloadFiles(StreamSubtitle);
-        QStringList files;
-        QVector<SubComp> loads;
-        for (auto &file : subs) {
-            const auto enc = s->d->detect(file);
-            Subtitle sub;
-            if (sub.load(file, enc, -1)) {
-                for (int i = 0; i < sub.size(); ++i)
-                    loads.push_back(sub[i]);
-            } else {
-                files.push_back(file);
-                assEncodings[file] = enc;
-            }
-        }
-        autoselect(s, loads);
-        return _T(files, loads);
-    }
+        { tellmpv_async("audio_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b); }
+    auto sub_add(const QString &file, const QString &enc, bool select) -> void;
+    auto autoselect(const MrlState *s, QVector<SubComp> &loads) -> void;
+    auto autoloadFiles(StreamType type) -> QStringList;
+    auto autoloadSubtitle(const MrlState *s) -> T<QStringList, QVector<SubComp>>;
 
     auto af(const MrlState *s) const -> QByteArray;
     auto vf(const MrlState *s) const -> QByteArray;
@@ -352,9 +210,8 @@ struct PlayEngine::Data {
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
     auto exec() -> void;
 
-    auto mpVolume() const -> double {
-        return params.audio_volume() * params.audio_amplifier() * 1e-2 / 10.0;
-    }
+    auto mpVolume() const -> double
+        { return params.audio_volume() * params.audio_amplifier() * 10.0; }
     template<class T>
     SIA qbytearray_from(const T &t) -> tmp::enable_if_t<tmp::is_arithmetic<T>(),
         QByteArray> { return QByteArray::number(t); }
@@ -381,27 +238,7 @@ struct PlayEngine::Data {
     auto setmpv(const char *name, const T &value) -> void;
     auto setmpv(const char *name, const QString &value) -> void
         { setmpv(name, value.toLocal8Bit()); }
-    auto toTracks(const QVariant &var) -> QVector<StreamList>
-    {
-        QVector<StreamList> streams(3);
-        streams[StreamVideo] = { StreamVideo };
-        streams[StreamAudio] = { StreamAudio };
-        streams[StreamSubtitle] = { StreamSubtitle };
-        auto list = var.toList();
-        for (auto &var : list) {
-            auto track = StreamTrack::fromMpvData(var);
-            streams[track.type()].insert(track);
-        }
-        auto &subs = streams[StreamSubtitle];
-        if (!subs.isEmpty()) {
-            QMutexLocker locker(&mutex);
-            for (auto &track : subs) {
-                if (track.isExternal())
-                    track.m_encoding = assEncodings.take(track.file());
-            }
-        }
-        return streams;
-    }
+    auto toTracks(const QVariant &var) -> QVector<StreamList>;
     template<class T>
     auto getmpv(const char *name) -> T;
     template<class T>
@@ -492,7 +329,6 @@ struct PlayEngine::Data {
     auto dispatch(mpv_event *event) -> void;
     auto process(QEvent *event) -> void;
     auto log(const QByteArray &prefix, const QByteArray &text) -> void;
-    int hookId = 0;
     template<class F>
     auto hook(const QByteArray &when, F &&handler) -> void
     {
@@ -501,8 +337,6 @@ struct PlayEngine::Data {
         hooks[when] = std::move(handler);
     }
     auto hook() -> void;
-    QMap<QByteArray, std::function<void(void)>> hooks;
-    QPoint mouse;
     auto setMousePos(const QPointF &pos)
     {
         if (!handle || !params.d->disc)
@@ -518,19 +352,10 @@ struct PlayEngine::Data {
         return mpv_opengl_cb_render(gl, fbo->id(), vp);
     }
     auto takeSnapshot() -> void;
-    QMutex mutex;
+    auto localCopy() -> QSharedPointer<MrlState>;
     auto onLoad() -> void;
     auto onFinish() -> void;
 
-    auto localCopy() -> QSharedPointer<MrlState>
-    {
-        auto s = new MrlState;
-        s->blockSignals(true);
-        mutex.lock();
-        s->copyFrom(&params);
-        mutex.unlock();
-        return QSharedPointer<MrlState>(s);
-    }
 };
 
 template<class T>

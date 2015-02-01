@@ -10,7 +10,7 @@ PlayEngine::PlayEngine()
     _Debug("Create audio/video plugins");
     d->ac = new AudioController(this);
     d->vr = new VideoRenderer;
-    d->filter = new VideoFilter;
+    d->vfilter = new VideoFilter;
     d->sr = new SubtitleRenderer;
     d->vr->setOverlay(d->sr);
     d->vr->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
@@ -37,6 +37,22 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::sub_sync_changed,
             this, [=] (int ms) { d->sr->setDelay(ms); });
 
+    connect(&d->params, &MrlState::video_tracks_changed, this, [=] (StreamList list) {
+        if (_Change(d->hasVideo, !list.isEmpty()))
+            emit hasVideoChanged();
+        d->videoInfo.setTracks(list);
+    });
+    connect(&d->params, &MrlState::audio_tracks_changed, this,
+            [=] (StreamList list) { d->audioInfo.setTracks(list); });
+    auto set_subs = [=] () {
+        d->subInfo.setTracks(d->params.sub_tracks(),
+                             d->params.sub_tracks_inclusive());
+    };
+    connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
+    connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
+    connect(&d->params, &MrlState::audio_volume_changed, this, &PlayEngine::volumeChanged);
+    connect(&d->params, &MrlState::play_speed_changed, this, &PlayEngine::speedChanged);
+
     connect(d->sr, &SubtitleRenderer::modelsChanged,
             this, &PlayEngine::subtitleModelsChanged);
 
@@ -57,7 +73,7 @@ PlayEngine::PlayEngine()
     mpv_request_log_messages(d->handle, loglv.constData());
 
     d->observe();
-    connect(d->filter, &VideoFilter::skippingChanged, this, [=] (bool skipping) {
+    connect(d->vfilter, &VideoFilter::skippingChanged, this, [=] (bool skipping) {
         if (skipping) {
             d->pauseAfterSkip = isPaused();
             d->setmpv_async("mute", true);
@@ -71,35 +87,21 @@ PlayEngine::PlayEngine()
         d->updateVideoSubOptions();
         d->post(Searching, skipping);
     }, Qt::DirectConnection);
-    connect(d->filter, &VideoFilter::seekRequested, this,
+    connect(d->vfilter, &VideoFilter::seekRequested, this,
             &PlayEngine::seek);
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
 
 
-    connect(&d->params, &MrlState::video_tracks_changed, this, [=] (StreamList list) {
-        if (_Change(d->hasVideo, !list.isEmpty()))
-            emit hasVideoChanged();
-        d->videoInfo.setTracks(list);
-    });
-    connect(&d->params, &MrlState::audio_tracks_changed, this,
-            [=] (StreamList list) { d->audioInfo.setTracks(list); });
-    auto set_subs = [=] () {
-        d->subInfo.setTracks(d->params.sub_tracks(),
-                             d->params.sub_tracks_inclusive());
-    };
-    connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
-    connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
-
     auto checkDeint = [=] () {
         auto act = Unavailable;
-        if (d->filter->isInputInterlaced())
-            act = d->filter->isOutputInterlaced() ? Deactivated : Activated;
+        if (d->vfilter->isInputInterlaced())
+            act = d->vfilter->isOutputInterlaced() ? Deactivated : Activated;
         d->videoInfo.setDeinterlacer(act);
     };
-    connect(d->filter, &VideoFilter::inputInterlacedChanged,
+    connect(d->vfilter, &VideoFilter::inputInterlacedChanged,
             this, checkDeint);
-    connect(d->filter, &VideoFilter::outputInterlacedChanged,
+    connect(d->vfilter, &VideoFilter::outputInterlacedChanged,
             this, checkDeint);
     connect(d->ac, &AudioController::inputFormatChanged, this, [=] () {
         d->audioInfo.output()->setFormat(d->ac->inputFormat());
@@ -188,7 +190,7 @@ PlayEngine::~PlayEngine()
     d->vr->setOverlay(nullptr);
     delete d->sr;
     delete d->vr;
-    delete d->filter;
+    delete d->vfilter;
     delete d;
     _Debug("Finalized");
 }
@@ -448,7 +450,7 @@ auto PlayEngine::seek(int pos) -> void
     d->chapter = -1;
     if (!d->hasImage)
         d->tellmpv("seek", (double)pos/1000.0, 2);
-    d->filter->stopSkipping();
+    d->vfilter->stopSkipping();
 }
 
 auto PlayEngine::relativeSeek(int pos) -> void
@@ -457,7 +459,7 @@ auto PlayEngine::relativeSeek(int pos) -> void
         d->tellmpv("seek", (double)pos/1000.0, 0);
         emit sought();
     }
-    d->filter->stopSkipping();
+    d->vfilter->stopSkipping();
 }
 
 auto PlayEngine::setClippingMethod_locked(ClippingMethod method) -> void
@@ -698,7 +700,7 @@ auto PlayEngine::pause() -> void
     else
         d->setmpv("pause", true);
     d->pauseAfterSkip = true;
-    d->filter->stopSkipping();
+    d->vfilter->stopSkipping();
 }
 
 auto PlayEngine::unpause() -> void
@@ -938,7 +940,7 @@ auto PlayEngine::setVideoHighQualityUpscaling(bool on) -> void
 auto PlayEngine::seekToNextBlackFrame() -> void
 {
     if (!isStopped())
-        d->filter->skipToNextBlackFrame();
+        d->vfilter->skipToNextBlackFrame();
 }
 
 auto PlayEngine::waitingText() const -> QString

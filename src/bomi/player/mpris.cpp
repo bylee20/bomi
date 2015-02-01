@@ -211,8 +211,8 @@ Player::Player(QObject *parent)
         map[u"CanPause"_q] = map[u"CanPlay"_q] = state != PlayEngine::Error;
         sendPropertiesChanged(this, map);
     });
-    connect(d->engine, &PlayEngine::speedChanged, this, [this] (double speed) {
-        sendPropertiesChanged(this, "Rate", speed);
+    connect(d->engine, &PlayEngine::speedChanged, this, [this] () {
+        sendPropertiesChanged(this, "Rate", d->engine->speed());
     });
     auto checkNextPrevious = [this] () {
         QVariantMap map;

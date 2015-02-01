@@ -411,13 +411,11 @@ auto MainWindow::Data::connectMenus() -> void
     connect(atrack[u"reload"_q], &QAction::triggered, &e, &PlayEngine::reloadAudioFiles);
     connect(atrack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearAudioFiles);
 
-    connect(&e, &PlayEngine::editionsChanged,
-            p, [this] (const EditionList &editions) {
+    connect(&e, &PlayEngine::editionsChanged, p, [=] (const EditionList &editions) {
         const auto edition = e.currentEdition();
 //        updateListMenu(menu(u"play"_q)(u"title"_q), editions, edition);
     });
-    connect(&e, &PlayEngine::chaptersChanged,
-            p, [this] (const ChapterList &chapters) {
+    connect(&e, &PlayEngine::chaptersChanged, p, [=] (const ChapterList &chapters) {
         const auto chapter = e.currentChapter();
 //        updateListMenu(menu(u"play"_q)(u"chapter"_q), chapters, chapter);
     });

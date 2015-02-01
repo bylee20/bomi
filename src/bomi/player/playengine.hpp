@@ -35,6 +35,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(MediaInfoObject *media READ mediaInfo CONSTANT FINAL)
     Q_PROPERTY(AudioInfoObject *audio READ audioInfo CONSTANT FINAL)
     Q_PROPERTY(VideoInfoObject *video READ videoInfo CONSTANT FINAL)
+    Q_PROPERTY(SubtitleInfoObject* subtitle READ subInfo CONSTANT FINAL)
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
@@ -58,7 +59,6 @@ class PlayEngine : public QObject {
     Q_PROPERTY(QQuickItem *screen READ screen)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(QQmlListProperty<ChapterInfoObject> chapters READ chapterInfoList NOTIFY chaptersChanged)
-    Q_PROPERTY(SubtitleInfoObject* subtitle READ subInfo NOTIFY subInfoChanged)
     Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
     Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
     Q_PROPERTY(Waiting waiting READ waiting NOTIFY waitingChanged)
@@ -241,7 +241,6 @@ signals:
     void begin_sChanged();
     void end_sChanged();
 
-    void subInfoChanged();
     void seeked(int time);
     void sought();
     void started(Mrl mrl);
@@ -253,13 +252,13 @@ signals:
     void durationChanged(int duration);
     void beginChanged(int begin);
     void endChanged();
-    void volumeChanged(int volume);
-    void mutedChanged(bool muted);
+    void volumeChanged();
+    void mutedChanged();
     void avSyncChanged(int avSync);
     void chaptersChanged(const ChapterList &chapters);
     void editionsChanged(const EditionList &editions);
     void dvdInfoChanged();
-    void speedChanged(double speed);
+    void speedChanged();
     void hwaccChanged();
     void cacheUsedChanged();
     void hasVideoChanged();

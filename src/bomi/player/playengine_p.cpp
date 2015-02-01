@@ -78,7 +78,7 @@ auto PlayEngine::Data::af(const MrlState *s) const -> QByteArray
 auto PlayEngine::Data::vf(const MrlState *s) const -> QByteArray
 {
     OptionList vf(':');
-    vf.add("noformat:address"_b, filter);
+    vf.add("noformat:address"_b, vfilter);
     vf.add("swdec_deint"_b, s->d->deint_swdec.toString().toLatin1());
     vf.add("hwdec_deint"_b, s->d->deint_hwdec.toString().toLatin1());
     return vf.get();
@@ -138,7 +138,7 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     addScale("cscale", s->video_chroma_upscaler());
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(s->video_dithering()));
-    if (filter->isSkipping())
+    if (vfilter->isSkipping())
         opts.add("frame-queue-size", 1);
     else
         opts.add("frame-queue-size", 3);
@@ -242,6 +242,9 @@ auto PlayEngine::Data::onLoad() -> void
     Mrl mrl(file);
     local->set_mrl(mrl.toUnique());
     local->d->disc = mrl.isDisc();
+    local->set_resume_position(-1);
+    local->set_edition(-1);
+    local->set_device(QString());
     local->set_video_tracks(StreamList());
     local->set_audio_tracks(StreamList());
     local->set_sub_tracks(StreamList());
@@ -779,4 +782,182 @@ auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
         this->takeSnapshot();
         snapshot = NoSnapshot;
     }
+}
+
+auto PlayEngine::Data::toTracks(const QVariant &var) -> QVector<StreamList>
+{
+    QVector<StreamList> streams(3);
+    streams[StreamVideo] = { StreamVideo };
+    streams[StreamAudio] = { StreamAudio };
+    streams[StreamSubtitle] = { StreamSubtitle };
+    auto list = var.toList();
+    for (auto &var : list) {
+        auto track = StreamTrack::fromMpvData(var);
+        streams[track.type()].insert(track);
+    }
+    auto &subs = streams[StreamSubtitle];
+    if (!subs.isEmpty()) {
+        QMutexLocker locker(&mutex);
+        for (auto &track : subs) {
+            if (track.isExternal())
+                track.m_encoding = assEncodings.take(track.file());
+        }
+    }
+    return streams;
+}
+
+auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>
+{
+    Q_ASSERT(tracks.type() == StreamInclusiveSubtitle);
+    QVector<SubComp> ret;
+    QMap<QString, QMap<QString, SubComp>> subMap;
+    for (auto &track : tracks) {
+        auto it = subMap.find(track.file());
+        if (it == subMap.end()) {
+            it = subMap.insert(track.file(), QMap<QString, SubComp>());
+            Subtitle sub;
+            if (!sub.load(track.file(), track.encoding(), -1))
+                continue;
+            for (int i = 0; i < sub.size(); ++i)
+                it->insert(sub[i].language(), sub[i]);
+        }
+        auto iit = it->find(track.language());
+        if (iit != it->end()) {
+            iit->selection() = track.isSelected();
+            ret.push_back(*iit);
+        }
+    }
+    return ret;
+}
+
+auto PlayEngine::Data::autoloadFiles(StreamType type) -> QStringList
+{
+    auto &a = streams[type].autoloader;
+    if (a.enabled)
+        return a.autoload(mrl, streams[type].ext);
+    return QStringList();
+}
+
+auto PlayEngine::Data::autoselect(const MrlState *s, QVector<SubComp> &loads) -> void
+{
+    QVector<int> selected;
+    QSet<QString> langSet;
+    const QFileInfo file(mrl.toLocalFile());
+    const QString base = file.completeBaseName();
+
+    for (int i = 0; i<loads.size(); ++i) {
+        bool select = false;
+        switch (s->d->autoselectMode) {
+        case AutoselectMode::Matched: {
+            const QFileInfo info(loads[i].fileName());
+            select = info.completeBaseName() == base;
+            break;
+        } case AutoselectMode::EachLanguage: {
+            //                  const QString lang = loaded[i].m_comp.language().id();
+            const auto lang = loads[i].language();
+            if ((select = (!langSet.contains(lang))))
+                langSet.insert(lang);
+            break;
+        }  case AutoselectMode::All:
+            select = true;
+            break;
+        default:
+            break;
+        }
+        if (select)
+            selected.append(i);
+    }
+    if (s->d->autoselectMode == AutoselectMode::Matched
+            && !selected.isEmpty() && !s->d->autoselectExt.isEmpty()) {
+        for (int i=0; i<selected.size(); ++i) {
+            const auto fileName = loads[selected[i]].fileName();
+            const auto suffix = QFileInfo(fileName).suffix();
+            if (s->d->autoselectExt == suffix.toLower()) {
+                const int idx = selected[i];
+                selected.clear();
+                selected.append(idx);
+                break;
+            }
+        }
+    }
+    for (int i=0; i<selected.size(); ++i)
+        loads[selected[i]].selection() = true;
+}
+
+auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<QStringList, QVector<SubComp>>
+{
+    const auto subs = autoloadFiles(StreamSubtitle);
+    QStringList files;
+    QVector<SubComp> loads;
+    for (auto &file : subs) {
+        const auto enc = s->d->detect(file);
+        Subtitle sub;
+        if (sub.load(file, enc, -1)) {
+            for (int i = 0; i < sub.size(); ++i)
+                loads.push_back(sub[i]);
+        } else {
+            files.push_back(file);
+            assEncodings[file] = enc;
+        }
+    }
+    autoselect(s, loads);
+    return _T(files, loads);
+}
+
+auto PlayEngine::Data::localCopy() -> QSharedPointer<MrlState>
+{
+    auto s = new MrlState;
+    s->blockSignals(true);
+    mutex.lock();
+    s->copyFrom(&params);
+    mutex.unlock();
+    return QSharedPointer<MrlState>(s);
+}
+
+auto PlayEngine::Data::updateState(State s) -> void
+{
+    const auto prev = state;
+    if (_Change(state, s)) {
+        emit p->stateChanged(state);
+        auto check = [&] (State s)
+            { return !!(state & s) != !!(prev & s); };
+        if (check(Paused))
+            emit p->pausedChanged();
+        if (check(Playing))
+            emit p->playingChanged();
+        if (check(Stopped))
+            emit p->stoppedChanged();
+        if (check(Running))
+            emit p->runningChanged();
+    }
+}
+
+auto PlayEngine::Data::setWaitings(Waitings w, bool set) -> void
+{
+    auto old = p->waiting();
+    if (set)
+        waitings |= w;
+    else
+        waitings &= ~w;
+    auto new_ = p->waiting();
+    if (old != new_)
+        emit p->waitingChanged(new_);
+}
+
+auto PlayEngine::Data::clearTimings() -> void
+{
+    fpsMeasure.reset();
+    videoInfo.setDroppedFrames(0);
+    videoInfo.setDelayedFrames(0);
+    videoInfo.renderer()->setFps(0);
+    drawnFrames = 0;
+}
+
+auto PlayEngine::Data::sub_add(const QString &file, const QString &enc, bool select) -> void
+{
+    setmpv_async("options/subcp", enc.toLatin1());
+    tellmpv_async("sub_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b);
+    mutex.lock();
+    assEncodings[file] = enc;
+    mutex.unlock();
 }
