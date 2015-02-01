@@ -3679,7 +3679,7 @@ Je podporován regulární výraz.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="491"/>
         <source>Subtitle</source>
-        <translation>Podnázev</translation>
+        <translation>Titulky</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="116"/>
