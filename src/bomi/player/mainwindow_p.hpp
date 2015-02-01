@@ -258,9 +258,6 @@ struct MainWindow::Data {
     auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
                    void(PlayEngine::*set)(int,bool), const QString &gkey = QString(),
                    QAction *sep = nullptr) -> void;
-
-    template<class F>
-    auto plugStreamActions(Menu *m, F f, const QString &g = QString()) -> void;
 };
 
 #endif // MAINWINDOW_P_HPP

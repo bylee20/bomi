@@ -349,8 +349,8 @@ RootMenu::RootMenu()
             d->actionToGroup(u"current-subtitle"_q, QT_TR_NOOP("To Beginning of Current Subtitle"), false, u"subtitle"_q)->setData(0);
             d->actionToGroup(u"next-subtitle"_q, QT_TR_NOOP("To Next Subtitle"), false, u"subtitle"_q)->setData(1);
         });
-        d->menu(u"title"_q, QT_TR_NOOP("Title"), [=] () {
-
+        d->menu(u"title"_q, QT_TR_NOOP("Title/Edition"), [=] () {
+            d->group()->setExclusive(true);
         })->setEnabled(false);
         d->menu(u"chapter"_q, QT_TR_NOOP("Chapter"), [=] () {
             d->group()->setExclusive(true);
@@ -384,7 +384,7 @@ RootMenu::RootMenu()
                     QT_TR_NOOP("Hide Subtitles"));
 
             d->separator();
-        });
+        })->setEnabled(false);
 
         d->separator();
 
@@ -398,7 +398,7 @@ RootMenu::RootMenu()
     });
 
     d->menu(u"video"_q, QT_TR_NOOP("Video"), [=] () {
-        d->menu(u"track"_q, QT_TR_NOOP("Video Track"), [=] () { });
+        d->menu(u"track"_q, QT_TR_NOOP("Video Track"), [=] () { })->setEnabled(false);
 
         d->separator();
 
@@ -480,7 +480,7 @@ RootMenu::RootMenu()
             d->desc(d->action(u"next"_q, QT_TR_NOOP("Select Next")),
                     QT_TR_NOOP("Select Next Audio Track"));
             d->separator();
-        });
+        })->setEnabled(false);
         d->menuStepReset(u"sync"_q, QT_TR_NOOP("Audio Sync"), QT_TR_NOOP("%1sec"), 1e-3);
 
         d->separator();

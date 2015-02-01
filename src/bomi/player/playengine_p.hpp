@@ -121,12 +121,15 @@ struct PlayEngine::Data {
     QTemporaryFile customShader;
     QVector<Observation> observations;
 
-    VideoInfoObject videoInfo;
-    AudioInfoObject audioInfo;
-    SubtitleInfoObject subInfo;
-    QVector<ChapterInfoObject*> chapterInfoList;
+    struct {
+        MediaInfoObject media;
+        VideoInfoObject video;
+        AudioInfoObject audio;
+        SubtitleInfoObject subtitle;
+        QVector<EditionChapterObject*> chapters, editions;
+        EditionChapterObject chapter, edition;
+    } info;
 
-    MediaInfoObject mediaInfo;
     MetaData metaData;
     QString mediaName;
 
@@ -145,10 +148,12 @@ struct PlayEngine::Data {
 
     QByteArray hwcdc;
 
-    int avSync = 0, cacheSize = 0, cacheUsed = 0;
+    struct { int size = 0, used = 0; } cache;
+
+    int avSync = 0;
     int updateEventMax = ::UpdateEventBegin;
     int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;
-    int duration = 0, begin = 0, position = 0, chapter = -2, edition = -1;
+    int duration = 0, begin = 0, position = 0, edition = -1;
 
     mpv_handle *handle = nullptr;
     mpv_opengl_cb_context *gl = nullptr;
@@ -159,9 +164,6 @@ struct PlayEngine::Data {
 
     QMap<QString, QString> assEncodings;
 
-    ChapterList chapters;
-    EditionList editions;
-
     std::array<StreamData, StreamUnknown> streams = []() {
         std::array<StreamData, StreamUnknown> strs;
         strs[StreamVideo] = { "vid", VideoExt };
@@ -171,10 +173,12 @@ struct PlayEngine::Data {
     }();
 
 
-    quint64 drawnFrames = 0, droppedFrames = 0, delayedFrames = 0;
-    SpeedMeasure<quint64> fpsMeasure{5, 20};
+    struct {
+        quint64 drawn = 0, dropped = 0, delayed = 0;
+        SpeedMeasure<quint64> measure{5, 20};
+    } frames;
 
-    QImage ssNoOsd, ssWithOsd;
+    struct { QImage screen, video; } ss;
     int hookId = 0;
     QMap<QByteArray, std::function<void(void)>> hooks;
     QPoint mouse;
@@ -205,7 +209,7 @@ struct PlayEngine::Data {
     auto updateVideoSubOptions() -> void;
     auto updateColorMatrix() -> void;
     auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
-    auto displaySize() const { return videoInfo.renderer()->size(); }
+    auto displaySize() const { return info.video.renderer()->size(); }
     auto post(State state) -> void { _PostEvent(p, StateChange, state); }
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
     auto exec() -> void;

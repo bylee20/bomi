@@ -32,10 +32,10 @@ class PlayEngine : public QObject {
     Q_ENUMS(State)
     Q_ENUMS(ActivationState)
     Q_ENUMS(Waiting)
-    Q_PROPERTY(MediaInfoObject *media READ mediaInfo CONSTANT FINAL)
-    Q_PROPERTY(AudioInfoObject *audio READ audioInfo CONSTANT FINAL)
-    Q_PROPERTY(VideoInfoObject *video READ videoInfo CONSTANT FINAL)
-    Q_PROPERTY(SubtitleInfoObject* subtitle READ subInfo CONSTANT FINAL)
+    Q_PROPERTY(MediaInfoObject *media READ media CONSTANT FINAL)
+    Q_PROPERTY(AudioInfoObject *audio READ audio CONSTANT FINAL)
+    Q_PROPERTY(VideoInfoObject *video READ video CONSTANT FINAL)
+    Q_PROPERTY(SubtitleInfoObject* subtitle READ subtitle CONSTANT FINAL)
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
@@ -58,7 +58,10 @@ class PlayEngine : public QObject {
     Q_PROPERTY(double rate READ rate WRITE setRate NOTIFY tick)
     Q_PROPERTY(QQuickItem *screen READ screen)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
-    Q_PROPERTY(QQmlListProperty<ChapterInfoObject> chapters READ chapterInfoList NOTIFY chaptersChanged)
+    Q_PROPERTY(QQmlListProperty<EditionChapterObject> chapters READ chapterList NOTIFY chaptersChanged)
+    Q_PROPERTY(EditionChapterObject* chapter READ chapter NOTIFY chapterChanged)
+    Q_PROPERTY(QQmlListProperty<EditionChapterObject> editions READ editionList NOTIFY editionsChanged)
+    Q_PROPERTY(EditionChapterObject* edition READ edition NOTIFY editionChanged)
     Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
     Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
     Q_PROPERTY(Waiting waiting READ waiting NOTIFY waitingChanged)
@@ -91,12 +94,12 @@ public:
     auto state() const -> State;
     auto load(const Mrl &mrl) -> void;
     auto setMrl(const Mrl &mrl) -> void;
-    auto currentEdition() const -> int;
-    auto editions() const -> const EditionList&;
-    auto currentChapter() const -> int;
-    auto chapters() const -> const ChapterList&;
-    auto setCurrentEdition(int id, int from = 0) -> void;
-    auto setCurrentChapter(int id) -> void;
+    auto editions() const -> const QVector<EditionChapterObject*>&;
+    auto edition() const -> EditionChapterObject*;
+    auto chapter() const -> EditionChapterObject*;
+    auto chapters() const -> const QVector<EditionChapterObject*>&;
+    auto seekEdition(int number, int from = 0) -> void;
+    auto seekChapter(int number) -> void;
 
     auto setAudioFiles(const QStringList &files) -> void;
     auto addAudioFiles(const QStringList &files) -> void;
@@ -172,9 +175,9 @@ public:
     auto waitUntilTerminated() -> void;
     auto thread() const -> QThread*;
     auto screen() const -> QQuickItem*;
-    auto mediaInfo() const -> MediaInfoObject*;
-    auto audioInfo() const -> AudioInfoObject*;
-    auto videoInfo() const -> VideoInfoObject*;
+    auto media() const -> MediaInfoObject*;
+    auto audio() const -> AudioInfoObject*;
+    auto video() const -> VideoInfoObject*;
     auto avSync() const -> int;
     auto rate(int time) const -> double { return (double)(time-begin())/duration(); }
     auto rate() const -> double { return rate(time()); }
@@ -182,12 +185,13 @@ public:
     auto cacheSize() const -> int;
     auto cacheUsed() const -> int;
     auto setChannelLayout(ChannelLayout layout) -> void;
-    auto chapterInfoList() const -> QQmlListProperty<ChapterInfoObject>;
+    auto chapterList() const -> QQmlListProperty<EditionChapterObject>;
+    auto editionList() const -> QQmlListProperty<EditionChapterObject>;
     auto setYle(YleDL *yle) -> void;
     auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
-    auto subInfo() const -> SubtitleInfoObject*;
+    auto subtitle() const -> SubtitleInfoObject*;
     auto setSubtitleDelay(int ms) -> void;
     auto setNextMrl(const Mrl &Mrl) -> void;
     auto shutdown() -> void;
@@ -255,14 +259,15 @@ signals:
     void volumeChanged();
     void mutedChanged();
     void avSyncChanged(int avSync);
-    void chaptersChanged(const ChapterList &chapters);
-    void editionsChanged(const EditionList &editions);
+    void chaptersChanged();
+    void editionsChanged();
+    void editionChanged();
     void dvdInfoChanged();
     void speedChanged();
     void hwaccChanged();
     void cacheUsedChanged();
     void hasVideoChanged();
-    void currentChapterChanged(int chapter);
+    void chapterChanged();
     void subtitleTrackInfoChanged();
     void metaDataChanged();
     void waitingChanged(Waiting waiting);

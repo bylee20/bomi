@@ -168,7 +168,7 @@ auto MainWindow::Data::initEngine() -> void
                 load(next, true);
         }
     });
-    connect(e.videoInfo()->renderer(), &VideoFormatInfoObject::sizeChanged,
+    connect(e.video()->renderer(), &VideoFormatInfoObject::sizeChanged,
             p, [this] (const QSize &size) {
         if (pref().fit_to_video && !size.isEmpty())
             setVideoSize(size);

@@ -24,15 +24,14 @@ PlayEngine::PlayEngine()
     connect(this, &PlayEngine::durationChanged, this, [=] () {
         if (_Change(d->duration_s, d->duration/1000))
             emit duration_sChanged();
+        for (auto chapter : d->info.chapters)
+            chapter->setRate(rate(chapter->time()));
+        d->info.chapter.setRate(rate(d->info.chapter.time()));
     });
-    connect(this, &PlayEngine::beginChanged, this, [=] () {
-        if (_Change(d->begin_s, d->begin/1000))
-            emit begin_sChanged();
-    });
-    connect(this, &PlayEngine::endChanged, this, [=] () {
-        if (_Change(d->end_s, end()/1000))
-            emit end_sChanged();
-    });
+    connect(this, &PlayEngine::beginChanged, this,
+            [=] () { if (_Change(d->begin_s, d->begin/1000)) emit begin_sChanged(); });
+    connect(this, &PlayEngine::endChanged, this,
+            [=] () { if (_Change(d->end_s, end()/1000)) emit end_sChanged(); });
 
     connect(&d->params, &MrlState::sub_sync_changed,
             this, [=] (int ms) { d->sr->setDelay(ms); });
@@ -40,13 +39,13 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::video_tracks_changed, this, [=] (StreamList list) {
         if (_Change(d->hasVideo, !list.isEmpty()))
             emit hasVideoChanged();
-        d->videoInfo.setTracks(list);
+        d->info.video.setTracks(list);
     });
     connect(&d->params, &MrlState::audio_tracks_changed, this,
-            [=] (StreamList list) { d->audioInfo.setTracks(list); });
+            [=] (StreamList list) { d->info.audio.setTracks(list); });
     auto set_subs = [=] () {
-        d->subInfo.setTracks(d->params.sub_tracks(),
-                             d->params.sub_tracks_inclusive());
+        d->info.subtitle.setTracks(d->params.sub_tracks(),
+                                   d->params.sub_tracks_inclusive());
     };
     connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
     connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
@@ -87,33 +86,31 @@ PlayEngine::PlayEngine()
         d->updateVideoSubOptions();
         d->post(Searching, skipping);
     }, Qt::DirectConnection);
-    connect(d->vfilter, &VideoFilter::seekRequested, this,
-            &PlayEngine::seek);
+    connect(d->vfilter, &VideoFilter::seekRequested, this, &PlayEngine::seek);
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
-
 
     auto checkDeint = [=] () {
         auto act = Unavailable;
         if (d->vfilter->isInputInterlaced())
             act = d->vfilter->isOutputInterlaced() ? Deactivated : Activated;
-        d->videoInfo.setDeinterlacer(act);
+        d->info.video.setDeinterlacer(act);
     };
     connect(d->vfilter, &VideoFilter::inputInterlacedChanged,
             this, checkDeint);
     connect(d->vfilter, &VideoFilter::outputInterlacedChanged,
             this, checkDeint);
     connect(d->ac, &AudioController::inputFormatChanged, this, [=] () {
-        d->audioInfo.output()->setFormat(d->ac->inputFormat());
+        d->info.audio.output()->setFormat(d->ac->inputFormat());
     });
     connect(d->ac, &AudioController::outputFormatChanged, this, [=] () {
-        d->audioInfo.renderer()->setFormat(d->ac->outputFormat());
+        d->info.audio.renderer()->setFormat(d->ac->outputFormat());
     });
     connect(d->ac, &AudioController::samplerateChanged, this, [=] (int sr) {
-        d->audioInfo.renderer()->setSampleRate(sr, true);
+        d->info.audio.renderer()->setSampleRate(sr, true);
     });
     connect(d->ac, &AudioController::gainChanged,
-            &d->audioInfo, &AudioInfoObject::setNormalizer);
+            &d->info.audio, &AudioInfoObject::setNormalizer);
     auto setOption = [this] (const char *name, const char *data) {
         const auto err = mpv_set_option_string(d->handle, name, data);
         d->fatal(err, "Couldn't set option %%=%%.", name, data);
@@ -170,12 +167,12 @@ PlayEngine::PlayEngine()
     auto cbUpdate = [] (void *priv) {
         auto p = static_cast<PlayEngine*>(priv);
         if (p->d->vr)
-            p->d->vr->updateForNewFrame(p->d->videoInfo.renderer()->size());
+            p->d->vr->updateForNewFrame(p->d->info.video.renderer()->size());
     };
     mpv_opengl_cb_set_update_callback(d->gl, cbUpdate, this);
 
-    d->fpsMeasure.setTimer([=]()
-        { d->videoInfo.renderer()->setFps(d->fpsMeasure.get()); }, 100000);
+    d->frames.measure.setTimer([=]()
+        { d->info.video.renderer()->setFps(d->frames.measure.get()); }, 100000);
 
     d->params.m_mutex = &d->mutex;
 }
@@ -185,7 +182,8 @@ PlayEngine::~PlayEngine()
     d->params.m_mutex = nullptr;
     d->initialized = false;
     mpv_terminate_destroy(d->handle);
-    qDeleteAll(d->chapterInfoList);
+    qDeleteAll(d->info.chapters);
+    qDeleteAll(d->info.editions);
     delete d->ac;
     d->vr->setOverlay(nullptr);
     delete d->sr;
@@ -230,12 +228,12 @@ auto PlayEngine::mediaName() const -> QString
 
 auto PlayEngine::cacheSize() const -> int
 {
-    return d->cacheSize;
+    return d->cache.size;
 }
 
 auto PlayEngine::cacheUsed() const -> int
 {
-    return d->cacheUsed;
+    return d->cache.used;
 }
 
 auto PlayEngine::begin() const -> int
@@ -253,19 +251,19 @@ auto PlayEngine::duration() const -> int
     return d->duration;
 }
 
-auto PlayEngine::currentEdition() const -> int
+auto PlayEngine::edition() const -> EditionChapterObject*
 {
-    return d->edition;
+    return &d->info.edition;
 }
 
-auto PlayEngine::editions() const -> const EditionList&
+auto PlayEngine::editions() const -> const QVector<EditionChapterObject*>&
 {
-    return d->editions;
+    return d->info.editions;
 }
 
-auto PlayEngine::chapters() const -> const ChapterList&
+auto PlayEngine::chapters() const -> const QVector<EditionChapterObject*>&
 {
-    return d->chapters;
+    return d->info.chapters;
 }
 
 auto PlayEngine::setPriority_locked(const QStringList &audio, const QStringList &sub) -> void
@@ -447,7 +445,6 @@ auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
 
 auto PlayEngine::seek(int pos) -> void
 {
-    d->chapter = -1;
     if (!d->hasImage)
         d->tellmpv("seek", (double)pos/1000.0, 2);
     d->vfilter->stopSkipping();
@@ -564,40 +561,40 @@ auto PlayEngine::customEvent(QEvent *event) -> void
     d->process(event);
 }
 
-auto PlayEngine::mediaInfo() const -> MediaInfoObject*
+auto PlayEngine::media() const -> MediaInfoObject*
 {
-    return &d->mediaInfo;
+    return &d->info.media;
 }
 
-auto PlayEngine::audioInfo() const -> AudioInfoObject*
+auto PlayEngine::audio() const -> AudioInfoObject*
 {
-    return &d->audioInfo;
+    return &d->info.audio;
 }
 
-auto PlayEngine::videoInfo() const -> VideoInfoObject*
+auto PlayEngine::video() const -> VideoInfoObject*
 {
-    return &d->videoInfo;
+    return &d->info.video;
 }
 
-auto PlayEngine::subInfo() const -> SubtitleInfoObject*
+auto PlayEngine::subtitle() const -> SubtitleInfoObject*
 {
-    return &d->subInfo;
+    return &d->info.subtitle;
 }
 
-auto PlayEngine::setCurrentChapter(int id) -> void
+auto PlayEngine::seekChapter(int number) -> void
 {
-    d->setmpv_async("chapter", id);
+    d->setmpv_async("chapter", number);
 }
 
-auto PlayEngine::setCurrentEdition(int id, int from) -> void
+auto PlayEngine::seekEdition(int number, int from) -> void
 {
     const auto mrl = d->mrl;
-    if (id == DVDMenu && mrl.isDisc()) {
+    if (number == DVDMenu && mrl.isDisc()) {
         static const char *cmds[] = {"discnav", "menu", nullptr};
         d->check(mpv_command_async(d->handle, 0, cmds),
                  "Couldn't send 'discnav menu'.");
-    } else if (0 <= id && id < d->editions.size()) {
-        d->setmpv_async(mrl.isDisc() ? "disc-title" : "edition", id);
+    } else if (0 <= number && number < d->info.editions.size()) {
+        d->setmpv_async(mrl.isDisc() ? "disc-title" : "edition", number);
         seek(from);
     }
 }
@@ -688,9 +685,9 @@ auto PlayEngine::hasVideo() const -> bool
     return d->hasVideo;
 }
 
-auto PlayEngine::currentChapter() const -> int
+auto PlayEngine::chapter() const -> EditionChapterObject*
 {
-    return d->chapter;
+    return &d->info.chapter;
 }
 
 auto PlayEngine::pause() -> void
@@ -917,12 +914,12 @@ auto PlayEngine::takeSnapshot(Snapshot mode) -> void
 
 auto PlayEngine::snapshot(bool withOsd) -> QImage
 {
-    return withOsd ? d->ssWithOsd : d->ssNoOsd;
+    return withOsd ? d->ss.screen : d->ss.video;
 }
 
 auto PlayEngine::clearSnapshots() -> void
 {
-    d->ssNoOsd = d->ssWithOsd = QImage();
+    d->ss.screen = d->ss.video = QImage();
 }
 
 auto PlayEngine::setVideoHighQualityDownscaling(bool on) -> void
@@ -980,9 +977,14 @@ auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
     d->ac->setEqualizer(eq);
 }
 
-auto PlayEngine::chapterInfoList() const -> QQmlListProperty<ChapterInfoObject>
+auto PlayEngine::editionList() const -> QQmlListProperty<EditionChapterObject>
 {
-    return _MakeQmlList(this, &d->chapterInfoList);
+    return _MakeQmlList(this, &d->info.editions);
+}
+
+auto PlayEngine::chapterList() const -> QQmlListProperty<EditionChapterObject>
+{
+    return _MakeQmlList(this, &d->info.chapters);
 }
 
 auto PlayEngine::time_s() const -> int

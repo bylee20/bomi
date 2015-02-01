@@ -177,7 +177,7 @@ struct Player::Data {
         map[u"mpris:length"_q] = 1000LL*(qint64)md.duration();
         map[u"xesam:url"_q] = md.mrl().toString();
         map[u"xesam:title"_q] = md.title().isEmpty()
-                ? engine->mediaInfo()->name() : md.title();
+                ? engine->media()->name() : md.title();
         if (!md.album().isEmpty())
             map[u"xesam:album"_q] = md.album();
         if (!md.artist().isEmpty())

@@ -55,22 +55,6 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
         { (e.*set)(a->data().toInt(), a->isChecked()); });
 }
 
-template<class F>
-auto MainWindow::Data::plugStreamActions(Menu *menu, F func,
-                                         const QString &group) -> void
-{
-    auto checkCurrentStreamAction = [=] () {
-        const auto current = (e.*func)();
-        for (auto action : menu->g(group)->actions()) {
-            if (action->data().toInt() == current) {
-                action->setChecked(true);
-                break;
-            }
-        }
-    };
-    connect(menu, &QMenu::aboutToShow, p, checkCurrentStreamAction);
-}
-
 auto MainWindow::Data::connectMenus() -> void
 {
     Menu &open = menu(u"open"_q);
@@ -178,35 +162,21 @@ auto MainWindow::Data::connectMenus() -> void
         }
     });
     connect(seek.g(u"frame"_q), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        e.stepFrame(a->data().toInt());
-    });
+            p, [this] (QAction *a) { e.stepFrame(a->data().toInt()); });
     connect(seek[u"black-frame"_q], &QAction::triggered, p, [=] () {
         e.seekToNextBlackFrame();
         showMessage(tr("Seek to Next Black Frame"));
     });
-    connect(play[u"disc-menu"_q], &QAction::triggered, p, [this] () {
-        e.setCurrentEdition(PlayEngine::DVDMenu);
-    });
+    connect(play[u"disc-menu"_q], &QAction::triggered,
+            p, [=] () { e.seekEdition(PlayEngine::DVDMenu); });
     connect(seek.g(u"subtitle"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) { e.seekCaption(a->data().toInt()); });
-    connect(play(u"title"_q).g(), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        a->setChecked(true);
-        e.setCurrentEdition(a->data().toInt());
-        showMessage(tr("Current Title"), a->text());
-    });
-    connect(play(u"chapter"_q).g(), &ActionGroup::triggered, p,
-            [this] (QAction *a) {
-        a->setChecked(true);
-        e.setCurrentChapter(a->data().toInt());
-        showMessage(tr("Current Chapter"), a->text());
-    });
+
     auto seekChapter = [this] (int offset) {
         if (!e.chapters().isEmpty()) {
-            auto target = e.currentChapter() + offset;
+            auto target = e.chapter()->number() + offset;
             if (target > -2)
-                e.setCurrentChapter(target);
+                e.seekChapter(target);
         }
     };
     connect(play(u"chapter"_q)[u"prev"_q], &QAction::triggered,
@@ -411,14 +381,8 @@ auto MainWindow::Data::connectMenus() -> void
     connect(atrack[u"reload"_q], &QAction::triggered, &e, &PlayEngine::reloadAudioFiles);
     connect(atrack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearAudioFiles);
 
-    connect(&e, &PlayEngine::editionsChanged, p, [=] (const EditionList &editions) {
-        const auto edition = e.currentEdition();
-//        updateListMenu(menu(u"play"_q)(u"title"_q), editions, edition);
-    });
-    connect(&e, &PlayEngine::chaptersChanged, p, [=] (const ChapterList &chapters) {
-        const auto chapter = e.currentChapter();
-//        updateListMenu(menu(u"play"_q)(u"chapter"_q), chapters, chapter);
-    });
+
+
 
     connect(strack[u"all"_q], &QAction::triggered, p, [=, &strack] () {
         e.setSubtitleInclusiveTrackSelected(-1, true);
@@ -601,6 +565,26 @@ auto MainWindow::Data::connectMenus() -> void
             p, [=] () { AboutDialog dlg(p); dlg.exec(); });
     connect(menu[u"exit"_q], &QAction::triggered, p, &MainWindow::exit);
 
-    plugStreamActions(&menu(u"play"_q)(u"title"_q), &PlayEngine::currentEdition);
-    plugStreamActions(&menu(u"play"_q)(u"chapter"_q), &PlayEngine::currentChapter);
+#define PLUG_EC(mm, ec, EC, msg) \
+    { \
+        auto &m = mm; \
+        connect(&e, &PlayEngine::ec##sChanged, p, [=, &m] () { \
+            const auto items = e.ec##s(); \
+            m.setEnabled(!items.isEmpty()); \
+            m.g()->clear(); \
+            for (auto item : items) { \
+                auto act = m.addActionNoKey(item->name(), true); \
+                act->setData(item->number()); \
+            } \
+        }); \
+        connect(m.g(), &ActionGroup::triggered, p, [=] (QAction *a) { \
+            a->setChecked(true); \
+            e.seek##EC(a->data().toInt()); \
+            showMessage(msg, a->text()); \
+        }); \
+        connect(&e, &PlayEngine::ec##Changed, p, \
+                [=, &m] () { m.g()->setChecked(e.ec()->number()); }); \
+    }
+    PLUG_EC(play(u"title"_q), edition, Edition, tr("Current Title/Edition"));
+    PLUG_EC(play(u"chapter"_q), chapter, Chapter, tr("Current Chapter"));
 }

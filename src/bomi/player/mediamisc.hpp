@@ -44,66 +44,31 @@ private:
     QString m_name;
 };
 
-struct Chapter {
-    auto time() const -> int { return m_time; }
-    auto name() const -> QString {return m_name;}
-    auto id() const -> int {return m_id;}
-    auto operator == (const Chapter &rhs) const -> bool
-        { return m_id == rhs.m_id && m_name == rhs.m_name; }
-private:
-    friend class PlayEngine;
-    QString m_name;
-    int m_id = -2, m_time = 0;
-};
-
-using ChapterList = QVector<Chapter>;
-
-struct Edition {
-    auto name() const -> QString { return m_name; }
-    auto id() const -> int { return m_id; }
-    auto isSelected() const -> bool { return m_selected; }
-    auto operator == (const Edition &rhs) const -> bool
-    { return m_id == rhs.m_id && m_selected == rhs.m_selected; }
-private:
-    friend class PlayEngine;
-    int m_id = 0;
-    QString m_name;
-    bool m_selected = false;
-};
-
-using EditionList = QVector<Edition>;
-
-class ChapterInfoObject : public QObject {
+class EditionChapterObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(int id READ id NOTIFY idChanged)
-    Q_PROPERTY(int time READ time NOTIFY timeChanged)
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(int number READ number CONSTANT FINAL)
+    Q_PROPERTY(int time READ time CONSTANT FINAL)
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
     Q_PROPERTY(qreal rate READ rate NOTIFY rateChanged)
 public:
-    ChapterInfoObject(QObject *parent = nullptr): QObject(parent) { }
-    auto id() const -> int { return m_id; }
-    auto time() const -> int { return m_time; }
-    auto name() const -> QString { return m_name; }
-    auto rate() const -> qreal { return m_rate; }
+    auto number() const -> int { return m.number; }
+    auto time() const -> int { return m.time; }
+    auto name() const -> QString { return m.name; }
+    auto rate() const -> qreal { return m.rate; }
+    auto isValid() const -> bool { return m.number > -2; }
 signals:
-    void idChanged();
-    void timeChanged();
-    void nameChanged();
     void rateChanged();
 private:
     auto setRate(qreal rate) -> void
-        { if (_Change(m_rate, rate)) emit rateChanged(); }
-    auto update() -> void
-    {
-        emit idChanged();
-        emit timeChanged();
-        emit nameChanged();
-    }
+        { if (_Change(m.rate, rate)) emit rateChanged(); }
+    auto copyFrom(const EditionChapterObject *rhs) -> void { m = rhs->m; }
+    auto invalidate() -> void { setRate(0); m = M(); }
     friend class PlayEngine;
-    int m_id = -1;
-    int m_time = 0;
-    qreal m_rate = 0.0;
-    QString m_name;
+    struct M {
+        int number = -2, time = 0;
+        qreal rate = 0.0;
+        QString name;
+    }; M m;
 };
 
 #endif // MEDIAMISC_HPP
