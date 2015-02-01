@@ -19,7 +19,7 @@
 #include "generateplaylist.hpp"
 #include "openmediabehavior.hpp"
 #include "autoloadmode.hpp"
-#include "subtitleautoselect.hpp"
+#include "autoselectmode.hpp"
 #include "keymodifier.hpp"
 #include "verticalalignment.hpp"
 #include "horizontalalignment.hpp"
@@ -91,9 +91,9 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<AutoloadMode>()) {
         conv.variantToName = _EnumVariantToEnumName<AutoloadMode>;
         conv.nameToVariant = _EnumNameToEnumVariant<AutoloadMode>;
-    } else    if (metaType == qMetaTypeId<SubtitleAutoselect>()) {
-        conv.variantToName = _EnumVariantToEnumName<SubtitleAutoselect>;
-        conv.nameToVariant = _EnumNameToEnumVariant<SubtitleAutoselect>;
+    } else    if (metaType == qMetaTypeId<AutoselectMode>()) {
+        conv.variantToName = _EnumVariantToEnumName<AutoselectMode>;
+        conv.nameToVariant = _EnumNameToEnumVariant<AutoselectMode>;
     } else    if (metaType == qMetaTypeId<KeyModifier>()) {
         conv.variantToName = _EnumVariantToEnumName<KeyModifier>;
         conv.nameToVariant = _EnumNameToEnumVariant<KeyModifier>;

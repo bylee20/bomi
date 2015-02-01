@@ -256,17 +256,17 @@ auto Player::rate() const -> double
 
 auto Player::setRate(double rate) -> void
 {
-    d->engine->setSpeed(rate);
+    d->engine->setSpeedPercent(rate * 100 + 0.5);
 }
 
 auto Player::isShuffled() const -> bool
 {
-    return false;
+    return d->playlist->isShuffled();
 }
 
-auto Player::setShuffled(bool /*s*/) -> void
+auto Player::setShuffled(bool s) -> void
 {
-
+    d->playlist->setShuffled(s);
 }
 
 auto Player::metaData() const -> QVariantMap
@@ -282,7 +282,7 @@ auto Player::volume() const -> double
 auto Player::setVolume(double volume) -> void
 {
     if (_Change(d->volume, qBound(0.0, volume, 1.0))) {
-        d->engine->setVolume(d->volume*100 + 0.5);
+        d->engine->setAudioVolume(d->volume*100 + 0.5);
         sendPropertiesChanged(this, "Volume", d->volume);
     }
 }

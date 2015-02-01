@@ -222,14 +222,14 @@ struct RootMenu::Data {
     auto enumActionsCheckable(const EnumItemVector<T> &items,
                               bool cycle, bool exclusive = true) -> void
     {
+        const QString g = _L(EnumInfo<T>::typeKey());
         if (cycle) {
             if (EnumInfo<T>::size() > 2)
-                action(u"next"_q, QT_TRANSLATE_NOOP(RootMenu, "Select Next"));
+                actionToGroup(u"next"_q, QT_TRANSLATE_NOOP(RootMenu, "Select Next"), false, g);
             else
-                action(u"toggle"_q, QT_TRANSLATE_NOOP(RootMenu, "Toggle"));
+                actionToGroup(u"toggle"_q, QT_TRANSLATE_NOOP(RootMenu, "Toggle"), false, g);
             separator();
         }
-        const QString g = _L(EnumInfo<T>::typeKey());
         group(g)->setExclusive(exclusive);
         for (auto item: items)
             enumAction(item->value, item->key, true, g);
@@ -362,8 +362,8 @@ RootMenu::RootMenu()
 
     d->menu(u"subtitle"_q, QT_TR_NOOP("Subtitle"), [=] () {
         d->menu(u"track"_q, QT_TR_NOOP("Subtitle Track"), [=] () {
-            d->group(u"internal"_q)->setExclusive(false);
-            d->group(u"external"_q)->setExclusive(false);
+            d->group(u"exclusive"_q)->setExclusive(false);
+            d->group(u"inclusive"_q)->setExclusive(false);
 
             d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
                     QT_TR_NOOP("Open Subtitle File"));
@@ -398,7 +398,7 @@ RootMenu::RootMenu()
     });
 
     d->menu(u"video"_q, QT_TR_NOOP("Video"), [=] () {
-        d->menu(u"track"_q, QT_TR_NOOP("Video Track"), [=] () { })->setEnabled(false);
+        d->menu(u"track"_q, QT_TR_NOOP("Video Track"), [=] () { });
 
         d->separator();
 
@@ -467,10 +467,20 @@ RootMenu::RootMenu()
 
     d->menu(u"audio"_q, QT_TR_NOOP("Audio"), [=] () {
         d->menu(u"track"_q, QT_TR_NOOP("Audio Track"), [=] () {
+            d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
+                    QT_TR_NOOP("Open Audio Track File"));
+            d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
+                    QT_TR_NOOP("Auto-load Audio Track File"));
+            d->desc(d->action(u"reload"_q, QT_TR_NOOP("Reload File")),
+                    QT_TR_NOOP("Reload Audio Track File"));
+            d->desc(d->action(u"clear"_q, QT_TR_NOOP("Clear File")),
+                    QT_TR_NOOP("Clear Audio Track File"));
             d->group()->setExclusive(true);
-            d->action(u"next"_q, QT_TR_NOOP("Select Next"));
             d->separator();
-        })->setEnabled(false);
+            d->desc(d->action(u"next"_q, QT_TR_NOOP("Select Next")),
+                    QT_TR_NOOP("Select Next Audio Track"));
+            d->separator();
+        });
         d->menuStepReset(u"sync"_q, QT_TR_NOOP("Audio Sync"), QT_TR_NOOP("%1sec"), 1e-3);
 
         d->separator();

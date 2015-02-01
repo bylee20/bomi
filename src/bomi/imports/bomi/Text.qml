@@ -40,7 +40,7 @@ Q.Text {
         return i <= 0 ? "-" : ("" + i);
     }
     function formatTrackInfo(info) {
-        return formatFraction(info.track.id, info.tracks.length)
+        return formatFraction(info.track.number, info.tracks.length)
     }
     function formatFraction(num, den) {
         return formatTrackNumber(num) + "/" + formatTrackNumber(den)

@@ -2,6 +2,13 @@
 
 int SubtitleParser::msPerChar = -1;
 
+auto SubtitleParser::append(Subtitle &s, SubComp::SyncType b) -> SubComp&
+{
+    static int id = 0;
+    s.m_comp.append(SubComp(type(), m_file, m_encoding, id++, b));
+    return s.m_comp.last();
+}
+
 auto SubtitleParser::parse(const QString &fileName,
                            const QString &enc) -> Subtitle
 {

@@ -13,32 +13,32 @@ auto Autoloader::autoload(const Mrl &mrl, ExtType type) const -> QStringList
         return QStringList();
     const QFileInfo fileInfo(mrl.toLocalFile());
     auto root = fileInfo.dir();
-    auto loaded = tryDir(mrl, type, root);
+    auto loaded = tryDir(fileInfo, type, root);
     auto list = root.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
     for (auto &path : search_paths) {
         for (auto &one : list) {
             if (path.match(one)) {
                 auto dir = root;
                 if (dir.cd(one))
-                    loaded += tryDir(mrl, type, dir);
+                    loaded += tryDir(fileInfo, type, dir);
             }
         }
     }
     return loaded;
 }
 
-auto Autoloader::tryDir(const Mrl &mrl, ExtType type, const QDir &dir) const -> QStringList
+auto Autoloader::tryDir(const QFileInfo &fileInfo, ExtType type,
+                        const QDir &dir) const -> QStringList
 {
     Q_ASSERT(enabled);
-    const QFileInfo fileInfo(mrl.toLocalFile());
     if (!dir.exists())
         return QStringList();
     QStringList files;
-    static const auto filter = _ToNameFilter(type);
+    const auto filter = _ToNameFilter(type);
     const auto all = dir.entryInfoList(filter, QDir::Files, QDir::Name);
     const auto base = fileInfo.completeBaseName();
     for (int i = 0; i < all.size(); ++i) {
-        if (all[i].fileName() == mrl.fileName())
+        if (all[i].fileName() == fileInfo.fileName())
             continue;
         if (mode != AutoloadMode::Folder) {
             if (mode == AutoloadMode::Matched) {

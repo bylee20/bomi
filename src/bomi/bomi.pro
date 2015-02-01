@@ -77,7 +77,6 @@ HEADERS += \
 	subtitle/richtexthelper.hpp \
 	subtitle/richtextblock.hpp \
 	subtitle/richtextdocument.hpp \
-	subtitle/subtitlerendereritem.hpp \
 	subtitle/subtitledrawer.hpp \
 	subtitle/subtitlerenderingthread.hpp \
 	subtitle/submisc.hpp \
@@ -147,7 +146,6 @@ HEADERS += \
 	enum/speakerid.hpp \
 	enum/staysontop.hpp \
 	enum/autoloadmode.hpp \
-	enum/subtitleautoselect.hpp \
 	enum/subtitledisplay.hpp \
 	enum/textthemestyle.hpp \
 	enum/verticalalignment.hpp \
@@ -240,7 +238,11 @@ HEADERS += \
     quick/circularimageitem.hpp \
     quick/maskareaitem.hpp \
 	quick/windowobject.hpp \
-    misc/autoloader.hpp
+    misc/autoloader.hpp \
+    player/mpv_property.hpp \
+    enum/autoselectmode.hpp \
+    player/mrlstate_p.hpp \
+    subtitle/subtitlerenderer.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -266,7 +268,6 @@ SOURCES += \
 	subtitle/richtexthelper.cpp \
 	subtitle/richtextblock.cpp \
 	subtitle/richtextdocument.cpp \
-	subtitle/subtitlerendereritem.cpp \
 	subtitle/subtitledrawer.cpp \
 	subtitle/subtitlerenderingthread.cpp \
 	subtitle/submisc.cpp \
@@ -336,7 +337,6 @@ SOURCES += \
 	enum/speakerid.cpp \
 	enum/staysontop.cpp \
 	enum/autoloadmode.cpp \
-	enum/subtitleautoselect.cpp \
 	enum/subtitledisplay.cpp \
 	enum/textthemestyle.cpp \
 	enum/verticalalignment.cpp \
@@ -418,7 +418,9 @@ SOURCES += \
     quick/circularimageitem.cpp \
     quick/maskareaitem.cpp \
 	quick/windowobject.cpp \
-    misc/autoloader.cpp
+    misc/autoloader.cpp \
+    enum/autoselectmode.cpp \
+    subtitle/subtitlerenderer.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

@@ -94,6 +94,33 @@ public:
         this->m = m;
         return true;
     }
+    auto toString() -> QString
+    {
+        QString ret;
+        for (auto &item : EnumInfo<T>::items()) {
+            if (contains(item.value))
+                ret += item.name % '|'_q;
+        }
+        ret.chop(1);
+        return ret;
+    }
+    static auto fromString(const QString &str) -> EnumFlags<T>
+    {
+        const auto list = str.split('|'_q);
+        EnumFlags<T> flags = 0;
+        for (auto &s : list)
+            flags |= _EnumFrom<T>(s);
+        return flags;
+    }
+    auto description() const -> QString
+    {
+        QString ret;
+        for (auto &item : EnumInfo<T>::items()) {
+            if (contains(item.value))
+                ret += EnumInfo<T>::description(item.value) % ','_q;
+        }
+        ret.chop(1); return ret;
+    }
 private:
     IntType m = 0;
 };
@@ -118,5 +145,12 @@ inline QDebug operator << (QDebug dbg, EnumFlags<T> flags)
     dbg << ')';
     return dbg.space();
 }
+
+template<class T>
+auto _EnumFlagsDescription(EnumFlags<T> flags) -> QString
+{
+    return flags.description();
+}
+
 
 #endif // ENUMFLAGS_HPP

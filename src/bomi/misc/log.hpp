@@ -33,6 +33,17 @@ SIA _ToLog(const QPoint &p) -> QByteArray
 { return '(' + _ToLog(p.x()) + ", "_b + _ToLog(p.y()) + ')'; }
 SIA _ToLog(const QPointF &p) -> QByteArray
 { return '(' + _ToLog(p.x()) + ", "_b + _ToLog(p.y()) + ')'; }
+template<class T>
+SIA _ToLog(const QList<T> &list) -> QByteArray
+{
+    QByteArray log = "QList(";
+    for (auto &t : list) {
+        log += _ToLog(t);
+        log += ',';
+    }
+    log[log.size() - 1] = ')';
+    return log;
+}
 
 class Log {
 public:

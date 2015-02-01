@@ -203,9 +203,7 @@ auto Pref::preset(KeyMapPreset id) -> Shortcuts
 auto Pref::save() const -> void
 {
     JsonStorage storage(PREF_FILE_PATH);
-    QJsonObject json;
-    for (auto field : fields())
-        json.insert(QString::fromLatin1(field->propertyName()), field->toJson(this));
+    QJsonObject json = _JsonFromQObject(this);
     storage.write(json);
 }
 
@@ -215,13 +213,7 @@ auto Pref::load() -> void
     auto json = storage.read();
     if (storage.hasError())
         return;
-    bool res = true;
-    for (auto field : fields()) {
-        auto it = json.constFind(QString::fromLatin1(field->propertyName()));
-        if (it == json.constEnd())
-            continue;
-        res = field->setFromJson(this, *it) && res;
-    }
+    bool res = _JsonToQObject(json, this);
     if (!res)
         _Error("Error: Cannot convert JSON object to preferences");
 
@@ -229,6 +221,14 @@ auto Pref::load() -> void
         sub_autoload_v2.enabled = json[u"sub_enable_autoload"_q].toBool();
         sub_autoload_v2.search_paths = _FromJson<QList<MatchString>>(json[u"sub_search_paths_v2"_q]);
         sub_autoload_v2.mode = _FromJson<AutoloadMode>(json[u"sub_autoload"_q]);
+    }
+    int idx = restore_properties.indexOf(u"audio_track"_q);
+    if (idx != -1)
+        restore_properties[idx] = u"audio_tracks"_q;
+    idx = restore_properties.indexOf(u"sub_track"_q);
+    if (idx != -1) {
+        restore_properties[idx] = u"sub_tracks"_q;
+        restore_properties.append(u"sub_tracks_inclusive"_q);
     }
 }
 
@@ -267,15 +267,15 @@ auto Pref::defaultSkinName() -> QString
     return name;
 }
 
-auto Pref::defaultRestoreProperties() -> QVector<QMetaProperty>
+auto Pref::defaultRestoreProperties() -> QStringList
 {
-    QVector<QMetaProperty> list;
+    QStringList list;
     auto &mo = MrlState::staticMetaObject;
     const int count = mo.propertyCount();
     for (int i=mo.propertyOffset(); i<count; ++i) {
         const auto property = mo.property(i);
         if (property.revision())
-            list.append(property);
+            list.append(_L(property.name()));
     }
     return list;
 }

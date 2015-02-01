@@ -287,8 +287,12 @@ struct Jsonkey<T, false, true>  {
 
 template<class T>
 SIA json_key_from(const T &t) -> QString { return detail::Jsonkey<T>::from(t); }
+template<>
+auto json_key_from<int>(const int &t) -> QString { return QString::number(t); }
 template<class T>
 SIA json_key_to(const QString &json) -> T { return detail::Jsonkey<T>::to(json); }
+template<>
+auto json_key_to<int>(const QString &json) -> int { return json.toInt(); }
 
 template<class Key, class T, class Container = QMap<Key, T>>
 struct JsonMapIO {
@@ -423,6 +427,20 @@ struct JsonIO<QKeySequence> : JsonQStringType {
         val = QKeySequence::fromString(json.toString());
         return true;
     }
+};
+
+template<>
+struct JsonIO<QDateTime> {
+    static auto toJson(const QDateTime &dt) -> QJsonValue
+        { return (double)dt.toMSecsSinceEpoch(); }
+    static auto fromJson(QDateTime &dt, const QJsonValue &json) -> bool
+    {
+        if (!json.isDouble())
+            return false;
+        dt.setMSecsSinceEpoch(std::llround(json.toDouble()));
+        return true;
+    }
+    SCA qt_type = QJsonValue::Double;
 };
 
 template<class T>

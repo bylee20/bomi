@@ -14,7 +14,7 @@ struct Autoloader {
     bool enabled = false;
     AutoloadMode mode = AutoloadMode::Matched;
 private:
-    auto tryDir(const Mrl &mrl, ExtType type, const QDir &dir) const -> QStringList;
+    auto tryDir(const QFileInfo &fileInfo, ExtType type, const QDir &dir) const -> QStringList;
 };
 
 Q_DECLARE_METATYPE(Autoloader)

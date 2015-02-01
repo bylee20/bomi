@@ -46,6 +46,8 @@ public:
     auto addStepActionPair(const QString &pair,
                            const QString &group = QString()) -> StepActionPair*
         { return addStepActionPair(u"increase"_q, u"decrease"_q, pair, group); }
+    auto beginGroup() const { return m_g.cbegin(); }
+    auto endGroup() const { return m_g.cend(); }
 protected:
     Menu(const QString &key, QWidget *parent);
 private:

@@ -20,10 +20,12 @@ public:
     auto getState(MrlState *state) const -> bool;
     auto update(const MrlState *state, bool reload) -> void;
     auto setRememberImage(bool on) -> void;
-    auto setPropertiesToRestore(const QVector<QMetaProperty> &properties) -> void;
+    auto setPropertiesToRestore(const QStringList &properties) -> void;
+    auto isRestorable(const char *name) const -> bool;
     auto clear() -> void;
     auto isVisible() const -> bool;
     auto setVisible(bool visible) -> void;
+    auto update() -> void;
     auto toggle() -> void { setVisible(!isVisible()); }
     Q_INVOKABLE void play(int row);
 signals:

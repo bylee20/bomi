@@ -9,12 +9,10 @@ auto reg_playlist_model() -> void {
 
 PlaylistModel::PlaylistModel(QObject *parent)
 : Super(parent) {
-    connect(this, &PlaylistModel::modelReset,
-            this, &PlaylistModel::contentWidthChanged);
-    connect(this, &PlaylistModel::rowsChanged,
-            this, &PlaylistModel::countChanged);
-    connect(this, &PlaylistModel::specialRowChanged,
-            this, &PlaylistModel::loadedChanged);
+    connect(this, &PlaylistModel::modelReset, this, &PlaylistModel::contentWidthChanged);
+    connect(this, &PlaylistModel::rowsChanged, this, &PlaylistModel::countChanged);
+    connect(this, &PlaylistModel::specialRowChanged, this, &PlaylistModel::loadedChanged);
+    connect(this, &PlaylistModel::loadedChanged, this, &PlaylistModel::nextChanged);
 }
 
 PlaylistModel::~PlaylistModel() {}

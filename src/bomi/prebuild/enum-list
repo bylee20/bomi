@@ -204,7 +204,7 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Folder[-All files in the matched folders-]
 #-None-Do not load any other subtitles
 
-+SubtitleAutoselect
++AutoselectMode
 -Matched[-Subtitle which has the same name as that of playing file-]
 -First[-First subtitle from loaded ones-]
 -All[-All loaded subtitles-]

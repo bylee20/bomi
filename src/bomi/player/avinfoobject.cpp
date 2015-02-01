@@ -3,15 +3,6 @@
 #include "video/videoformat.hpp"
 #include "audio/audioformat.hpp"
 
-SIA updateTracks(QVector<AvTrackInfoObject*> &objs, const StreamList &tracks) -> StreamTrack
-{
-    qDeleteAll(objs); objs.clear(); objs.reserve(tracks.size());
-    for (auto &track : tracks)
-        objs.push_back(new AvTrackInfoObject(track));
-    auto it = _FindSelectedTrack(tracks);
-    return it != tracks.end() ? *it : StreamTrack();
-}
-
 auto CodecInfoObject::parse(const QString &info) -> void
 {
     QRegEx regex(uR"(^([^\[\]]+) \[([^:]+):([^\]]+)\]$)"_q);
@@ -24,25 +15,40 @@ auto CodecInfoObject::parse(const QString &info) -> void
     }
 }
 
-auto AvTrackInfoObject::set(const StreamTrack &track) -> void
+auto AvTrackInfoObject::fromTrack(int n, const StreamTrack &track) -> AvTrackInfoObject*
 {
-    setId(track.id());
-    setCodec(track.codec());
-    setTitle(track.title());
-    setLanguage(track.language());
-    setSelected(track.isSelected());
+    AvTrackInfoObject *info = new AvTrackInfoObject;
+    info->m_id = track.id();
+    info->m_number = n;
+    info->m_codec = track.codec();
+    info->m_title = track.title();
+    info->m_lang = track.language();
+    info->m_selected = track.isSelected();
+    return info;
 }
 
-auto AvTrackInfoObject::set(const AvTrackInfoObject *track) -> void
+auto AvCommonInfoObject::track() const -> AvTrackInfoObject*
 {
-    if (track) {
-        setId(track->m_id);
-        setCodec(track->m_codec);
-        setTitle(track->m_title);
-        setLanguage(track->m_lang);
-        setSelected(track->m_selected);
-    } else
-        set(StreamTrack());
+    if (m_track)
+        return m_track;
+    static AvTrackInfoObject dummy;
+    return &dummy;
+}
+
+auto AvCommonInfoObject::update(const StreamList &tracks, bool clear) -> AvTrackInfoObject*
+{
+    if (clear) {
+        qDeleteAll(m_tracks);
+        m_tracks.clear();
+    }
+    m_tracks.reserve(m_tracks.size() + tracks.size());
+    AvTrackInfoObject *sel = nullptr;
+    for (auto track : tracks) {
+        m_tracks.push_back(AvTrackInfoObject::fromTrack(m_tracks.size() + 1, track));
+        if (track.isSelected())
+            sel = m_tracks.back();
+    }
+    return sel;
 }
 
 auto AvCommonInfoObject::tracks() const -> QQmlListProperty<AvTrackInfoObject>
@@ -52,13 +58,19 @@ auto AvCommonInfoObject::tracks() const -> QQmlListProperty<AvTrackInfoObject>
 
 auto AvCommonInfoObject::setTracks(const StreamList &tracks) -> void
 {
-    m_track.set(updateTracks(m_tracks, tracks));
+    m_track = update(tracks);
     emit tracksChanged();
+    emit trackChanged();
 }
 
-auto AvCommonInfoObject::setTrack(const StreamTrack &track) -> void
+auto AvCommonInfoObject::setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void
 {
-    m_track.set(track);
+    auto sel = update(tracks1);
+    if (auto sel2 = update(tracks2, false))
+        sel = sel2;
+    m_track = sel;
+    emit tracksChanged();
+    emit trackChanged();
 }
 
 /******************************************************************************/
@@ -167,38 +179,4 @@ void VideoInfoObject::setDroppedFrames(int f)
 
 SubtitleInfoObject::SubtitleInfoObject()
 {
-    auto find = [] (const QVector<AvTrackInfoObject*> &list) -> int {
-        for (int i = list.size() - 1; i >= 0; --i)
-            if (list[i]->isSelected())
-                return i;
-        return -1;
-    };
-    auto updateTrack = [=] () {
-        int idx = find(getTracks());
-        if (idx != -1) {
-            track()->set(getTracks()[idx]);
-            idx += m_files.size();
-        } else {
-            idx = find(m_files);
-            if (idx != -1)
-                track()->set(m_files[idx]);
-        }
-        if (_Change(m_total, getTracks().size() + m_files.size()))
-            emit totalLengthChanged();
-        if (_Change(m_id, idx + 1))
-            emit currentNumberChanged();
-    };
-    connect(this, &SubtitleInfoObject::tracksChanged, this, updateTrack);
-    connect(this, &SubtitleInfoObject::filesChanged, this, updateTrack);
-}
-
-auto SubtitleInfoObject::files() const -> QQmlListProperty<AvTrackInfoObject>
-{
-    return _MakeQmlList(this, &m_files);
-}
-
-auto SubtitleInfoObject::setFiles(const StreamList &files) -> void
-{
-    updateTracks(m_files, files);
-    emit filesChanged();
 }

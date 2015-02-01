@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>7</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -571,19 +571,15 @@
         </layout>
        </widget>
        <widget class="QWidget" name="audio_load">
-        <widget class="QRadioButton" name="radioButton">
-         <property name="geometry">
-          <rect>
-           <x>210</x>
-           <y>210</y>
-           <width>94</width>
-           <height>23</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>RadioButton</string>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout_11">
+         <item>
+          <widget class="AutoloaderWidget" name="audio_autoload">
+           <property name="title">
+            <string>Load</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="cache">
         <layout class="QVBoxLayout" name="verticalLayout_36">
@@ -763,7 +759,7 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <item>
-               <widget class="SubtitleAutoselectComboBox" name="sub_autoselect">
+               <widget class="AutoselectModeComboBox" name="sub_autoselect">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -2809,7 +2805,7 @@ Regular expression is supported.</string>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>SubtitleAutoselectComboBox</class>
+   <class>AutoselectModeComboBox</class>
    <extends>QComboBox</extends>
    <header>widget/enumcombobox.hpp</header>
   </customwidget>

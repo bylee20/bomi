@@ -92,15 +92,16 @@ PrefDialog::PrefDialog(QWidget *parent)
     addCategory(tr("Video"));
     addPage(tr("Hardware acceleration"), d->ui.video_hwacc, u":/img/apps-hardware-icon.png"_q);
     addPage(tr("Deinterlace"), d->ui.video_deint, u":/img/format-line-spacing-double.png"_q);
-    addPage(tr("Video filter"), d->ui.video_filter, u":/img/draw-brush.png"_q);
+//    addPage(tr("Video filter"), d->ui.video_filter, u":/img/draw-brush.png"_q);
 
     addCategory(tr("Audio"));
     addPage(tr("Sound"), d->ui.audio_sound, u":/img/audio-volume-high.png"_q);
     addPage(tr("Audio filter"), d->ui.audio_filter, u":/img/applications-multimedia.png"_q);
+    addPage(tr("Load"), d->ui.audio_load, u":/img/audio-x-generic.png"_q);
 
     addCategory(tr("Subtitle"));
     addPage(tr("Load"), d->ui.sub_load, u":/img/application-x-subrip-32.png"_q);
-    addPage(tr("Appearance"), d->ui.sub_appearance, u":/img/format-text-color-32.png"_q);
+    addPage(tr("Display"), d->ui.sub_appearance, u":/img/format-text-color-32.png"_q);
 
     addCategory(tr("User interface"));
     addPage(tr("Keyboard shortcuts"), d->ui.ui_shortcut, u":/img/preferences-desktop-keyboard-32.png"_q);
@@ -169,15 +170,15 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->ui.network_folders->setAddingAndErasingEnabled(true);
 
-    auto checkSubSubtitleAutoselect = [this] (const QVariant &data) {
-        const bool enabled = data.toInt() == SubtitleAutoselect::Matched;
+    auto checkSubAutoselectMode = [this] (const QVariant &data) {
+        const bool enabled = data.toInt() == AutoselectMode::Matched;
         d->ui.sub_ext_label->setEnabled(enabled);
         d->ui.sub_ext->setEnabled(enabled);
     };
 
     d->ui.sub_priority->setAddingAndErasingEnabled(true);
     d->ui.sub_priority->setChangingOrderEnabled(true);
-    checkSubSubtitleAutoselect(d->ui.sub_autoselect->currentData());
+    checkSubAutoselectMode(d->ui.sub_autoselect->currentData());
     d->ui.audio_priority->setAddingAndErasingEnabled(true);
     d->ui.audio_priority->setChangingOrderEnabled(true);
 
@@ -195,7 +196,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     connect(d->ui.skin_name, curIdxChanged, this, updateSkinPath);
 
     auto currentDataChanged = &DataComboBox::currentDataChanged;
-    connect(d->ui.sub_autoselect, currentDataChanged, checkSubSubtitleAutoselect);
+    connect(d->ui.sub_autoselect, currentDataChanged, checkSubAutoselectMode);
     void(QButtonGroup::*buttonClicked)(int) = &QButtonGroup::buttonClicked;
     connect(d->shortcutGroup, buttonClicked, [this] (int idx) {
         auto treeItem = d->ui.shortcuts->currentItem();

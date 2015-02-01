@@ -4,6 +4,8 @@
 #include "richtextdocument.hpp"
 #include "submisc.hpp"
 
+class StreamTrack;
+
 enum class SubType {
     Unknown,
     SAMI,
@@ -31,9 +33,8 @@ public:
     using const_iterator = Map::const_iterator;
     enum SyncType {Time, Frame};
     SubComp();
-    SubComp(SubType type, const QFileInfo &file, const QString &enc, int id, SyncType base);
     auto operator == (const SubComp &rhs) const -> bool
-        {return m_info.path == rhs.m_info.path && m_klass == rhs.m_klass;}
+        {return m_path == rhs.m_path && m_klass == rhs.m_klass;}
     auto operator != (const SubComp &rhs) const -> bool {return !operator==(rhs);}
     auto operator[] (int key) -> SubCapt& { return m_capts[key]; }
     auto operator[] (int key) const -> SubCapt { return m_capts[key]; }
@@ -56,8 +57,7 @@ public:
 
     auto name() const -> QString;
     auto fileName() const -> const QString& {return m_file;}
-    auto path() const -> const QString& { return m_info.path; }
-    auto fileInfo() const -> const SubtitleFileInfo& { return m_info; }
+    auto path() const -> const QString& { return m_path; }
     auto base() const -> SyncType {return m_base;}
     auto isBasedOnFrame() const -> bool {return m_base == Frame;}
 //    const Language &language() const {return m_lang;}
@@ -73,10 +73,12 @@ public:
     bool &selection() { return m_selection; }
     auto id() const -> int { return m_id; }
     auto type() const -> SubType { return m_type; }
+    auto toTrack() const -> StreamTrack;
+    auto encoding() const -> QString { return m_enc; }
 private:
-    friend class Parser;
-    QString m_file, m_klass;
-    SubtitleFileInfo m_info;
+    SubComp(SubType type, const QFileInfo &file, const QString &enc, int id, SyncType base);
+    friend class SubtitleParser;
+    QString m_file, m_klass, m_path, m_enc;
     SyncType m_base = Time;
     Map m_capts;
     bool m_selection = false;

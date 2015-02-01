@@ -126,7 +126,6 @@ Item {
         }
 
         PlayInfoText { }
-        PlayInfoSubtitleList { list: sub.files; name: qsTr("Subtitle File") }
         PlayInfoSubtitleList { list: sub.tracks; name: qsTr("Subtitle Track") }
     }
 }

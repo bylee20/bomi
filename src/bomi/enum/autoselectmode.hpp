@@ -1,47 +1,47 @@
-#ifndef SUBTITLEAUTOSELECT_HPP
-#define SUBTITLEAUTOSELECT_HPP
+#ifndef AUTOSELECTMODE_HPP
+#define AUTOSELECTMODE_HPP
 
 #include "enums.hpp"
-#define SUBTITLEAUTOSELECT_IS_FLAG 0
+#define AUTOSELECTMODE_IS_FLAG 0
 
-enum class SubtitleAutoselect : int {
+enum class AutoselectMode : int {
     Matched = (int)0,
     First = (int)1,
     All = (int)2,
     EachLanguage = (int)3
 };
 
-Q_DECLARE_METATYPE(SubtitleAutoselect)
+Q_DECLARE_METATYPE(AutoselectMode)
 
-constexpr inline auto operator == (SubtitleAutoselect e, int i) -> bool { return (int)e == i; }
-constexpr inline auto operator != (SubtitleAutoselect e, int i) -> bool { return (int)e != i; }
-constexpr inline auto operator == (int i, SubtitleAutoselect e) -> bool { return (int)e == i; }
-constexpr inline auto operator != (int i, SubtitleAutoselect e) -> bool { return (int)e != i; }
-constexpr inline auto operator > (SubtitleAutoselect e, int i) -> bool { return (int)e > i; }
-constexpr inline auto operator < (SubtitleAutoselect e, int i) -> bool { return (int)e < i; }
-constexpr inline auto operator >= (SubtitleAutoselect e, int i) -> bool { return (int)e >= i; }
-constexpr inline auto operator <= (SubtitleAutoselect e, int i) -> bool { return (int)e <= i; }
-constexpr inline auto operator > (int i, SubtitleAutoselect e) -> bool { return i > (int)e; }
-constexpr inline auto operator < (int i, SubtitleAutoselect e) -> bool { return i < (int)e; }
-constexpr inline auto operator >= (int i, SubtitleAutoselect e) -> bool { return i >= (int)e; }
-constexpr inline auto operator <= (int i, SubtitleAutoselect e) -> bool { return i <= (int)e; }
-#if SUBTITLEAUTOSELECT_IS_FLAG
+constexpr inline auto operator == (AutoselectMode e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (AutoselectMode e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, AutoselectMode e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, AutoselectMode e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (AutoselectMode e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (AutoselectMode e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (AutoselectMode e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (AutoselectMode e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, AutoselectMode e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, AutoselectMode e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, AutoselectMode e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, AutoselectMode e) -> bool { return i <= (int)e; }
+#if AUTOSELECTMODE_IS_FLAG
 #include "enumflags.hpp"
-using  = EnumFlags<SubtitleAutoselect>;
-constexpr inline auto operator | (SubtitleAutoselect e1, SubtitleAutoselect e2) -> 
+using  = EnumFlags<AutoselectMode>;
+constexpr inline auto operator | (AutoselectMode e1, AutoselectMode e2) -> 
 { return (::IntType(e1) | ::IntType(e2)); }
-constexpr inline auto operator ~ (SubtitleAutoselect e) -> EnumNot<SubtitleAutoselect>
-{ return EnumNot<SubtitleAutoselect>(e); }
-constexpr inline auto operator & (SubtitleAutoselect lhs,  rhs) -> EnumAnd<SubtitleAutoselect>
+constexpr inline auto operator ~ (AutoselectMode e) -> EnumNot<AutoselectMode>
+{ return EnumNot<AutoselectMode>(e); }
+constexpr inline auto operator & (AutoselectMode lhs,  rhs) -> EnumAnd<AutoselectMode>
 { return rhs & lhs; }
 Q_DECLARE_METATYPE()
 #endif
 
 template<>
-class EnumInfo<SubtitleAutoselect> {
-    typedef SubtitleAutoselect Enum;
+class EnumInfo<AutoselectMode> {
+    typedef AutoselectMode Enum;
 public:
-    typedef SubtitleAutoselect type;
+    typedef AutoselectMode type;
     using Data =  QVariant;
     struct Item {
         Enum value;
@@ -52,7 +52,7 @@ public:
     static constexpr auto size() -> int
     { return 4; }
     static constexpr auto typeName() -> const char*
-    { return "SubtitleAutoselect"; }
+    { return "AutoselectMode"; }
     static constexpr auto typeKey() -> const char*
     { return ""; }
     static auto typeDescription() -> QString
@@ -112,11 +112,11 @@ public:
         return it != info.cend() ? it->value : def;
     }
     static constexpr auto default_() -> Enum
-    { return SubtitleAutoselect::Matched; }
+    { return AutoselectMode::Matched; }
 private:
     static const ItemList info;
 };
 
-using SubtitleAutoselectInfo = EnumInfo<SubtitleAutoselect>;
+using AutoselectModeInfo = EnumInfo<AutoselectMode>;
 
 #endif

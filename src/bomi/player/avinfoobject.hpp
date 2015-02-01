@@ -5,7 +5,7 @@
 #include "enum/colorspace.hpp"
 
 class AudioFormat;                      class StreamTrack;
-using StreamList = QMap<int, StreamTrack>;
+class StreamList;
 
 struct CodecInfo {
     auto operator == (const CodecInfo &rhs) const -> bool
@@ -63,77 +63,48 @@ private:
 
 class AvTrackInfoObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(int id READ id NOTIFY idChanged)
-    Q_PROPERTY(QString title READ title NOTIFY titleChanged)
-    Q_PROPERTY(QString language READ language NOTIFY languageChanged)
-    Q_PROPERTY(bool valid READ isValid NOTIFY validChanged)
-    Q_PROPERTY(bool selected READ isSelected NOTIFY selectedChanged)
-    Q_PROPERTY(QString codec READ codec NOTIFY codecChanged)
+    Q_PROPERTY(int number READ number CONSTANT FINAL)
+    Q_PROPERTY(QString title READ title CONSTANT FINAL)
+    Q_PROPERTY(QString language READ language CONSTANT FINAL)
+    Q_PROPERTY(bool valid READ isValid CONSTANT FINAL)
+    Q_PROPERTY(bool selected READ isSelected CONSTANT FINAL)
+    Q_PROPERTY(QString codec READ codec CONSTANT FINAL)
 public:
     AvTrackInfoObject() = default;
-    AvTrackInfoObject(const StreamTrack &track) { set(track); }
     auto id() const -> int {return m_id;}
+    auto number() const -> int { return m_number; }
     auto language() const -> QString { return m_lang; }
     auto title() const -> QString { return m_title; }
     auto isValid() const -> bool { return m_id > 0; }
     auto codec() const -> QString { return m_codec; }
     auto isSelected() const -> bool { return m_selected; }
-    auto set(const AvTrackInfoObject *track) -> void;
-signals:
-    void codecChanged();
-    void idChanged();
-    void titleChanged();
-    void languageChanged();
-    void validChanged();
-    void selectedChanged();
-private slots:
-    void setId(int i) {
-        const bool was = isValid();
-        if (_Change(m_id, i)) {
-            emit idChanged();
-            const bool is = isValid();
-            if (was != is)
-                emit validChanged();
-        }
-    }
+    static auto fromTrack(int n, const StreamTrack &track) -> AvTrackInfoObject*;
 private:
-    auto set(const StreamTrack &track) -> void;
-    auto setTitle(const QString &title) -> void
-        { if (_Change(m_title, title)) emit titleChanged(); }
-    auto setLanguage(const QString &lang) -> void
-        { if (_Change(m_lang, lang)) emit languageChanged(); }
-    auto setCodec(const QString &codec) -> void
-        { if (_Change(m_codec, codec.toUpper())) emit codecChanged(); }
-    auto setSelected(bool s) -> void
-        { if (_Change(m_selected, s)) emit selectedChanged(); }
-    friend class PlayEngine;
-    friend class AvCommonInfoObject;
-    int m_id = -1; QString m_title, m_lang, m_codec;
+    int m_id = -1, m_number = -1; QString m_title, m_lang, m_codec;
     bool m_selected = false;
 };
 
 class AvCommonInfoObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(CodecInfoObject *codec READ codec CONSTANT FINAL)
+    Q_PROPERTY(AvTrackInfoObject *track READ track NOTIFY trackChanged)
     Q_PROPERTY(QQmlListProperty<AvTrackInfoObject> tracks READ tracks NOTIFY tracksChanged)
-    Q_PROPERTY(AvTrackInfoObject *track READ track CONSTANT FINAL)
 public:
     auto tracks() const -> QQmlListProperty<AvTrackInfoObject>;
-    auto track() const -> const AvTrackInfoObject* { return &m_track; }
-    auto track() -> AvTrackInfoObject* { return &m_track; }
+    auto track() const -> AvTrackInfoObject*;
     auto codec() const -> const CodecInfoObject* { return &m_codec; }
     auto codec() -> CodecInfoObject* { return &m_codec; }
 signals:
     void tracksChanged();
-protected:
-    auto getTracks() const -> const QVector<AvTrackInfoObject*>& { return m_tracks; }
+    void trackChanged();
 private:
-    auto setTrack(const StreamTrack &track) -> void;
+    auto update(const StreamList &tracks, bool clear = true) -> AvTrackInfoObject*;
     auto setTracks(const StreamList &tracks) -> void;
+    auto setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void;
     friend class PlayEngine;
     CodecInfoObject m_codec;
     QVector<AvTrackInfoObject*> m_tracks;
-    AvTrackInfoObject m_track;
+    AvTrackInfoObject *m_track = nullptr;
 };
 
 /******************************************************************************/
@@ -321,25 +292,9 @@ private:
 
 class SubtitleInfoObject : public AvCommonInfoObject {
     Q_OBJECT
-    Q_PROPERTY(QQmlListProperty<AvTrackInfoObject> files READ files NOTIFY filesChanged)
-    Q_PROPERTY(int totalLength READ totalLength NOTIFY totalLengthChanged)
-    Q_PROPERTY(int currentNumber READ currentNumber NOTIFY currentNumberChanged)
 public:
     SubtitleInfoObject();
-    auto currentNumber() const -> int { return m_id; }
-    auto files() const -> QQmlListProperty<AvTrackInfoObject>;
-    auto totalLength() const -> int { return m_total; }
-signals:
-    void filesChanged();
-    void totalLengthChanged();
-    void currentNumberChanged();
-private:
-    auto setFiles(const StreamList &files) -> void;
-    friend class PlayEngine;
-    QVector<AvTrackInfoObject*> m_files;
-    int m_total = 0, m_id = -1;
 };
-
 
 template<class L, class T = typename std::remove_pointer<typename L::value_type>::type>
 static inline auto _MakeQmlList(const QObject *o, const L *list) -> QQmlListProperty<T>

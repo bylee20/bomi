@@ -2,9 +2,11 @@
 #include "mrl.hpp"
 #include "misc/json.hpp"
 #include "enum/enums.hpp"
+#include "enum/videoeffect.hpp"
 #include "video/videocolor.hpp"
 #include "audio/audioequalizer.hpp"
 #include "subtitle/submisc.hpp"
+#include "player/streamtrack.hpp"
 
 template<class T>
 SIA _Is(int type) -> bool { return qMetaTypeId<T>() == type; }
@@ -81,8 +83,16 @@ MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
             break;\
         }
         JSON_CASE(VideoColor);
-        JSON_CASE(SubtitleStateInfo);
+        JSON_CASE(StreamList);
         JSON_CASE(AudioEqualizer);
+        if (_Is<VideoEffects>(type)) {
+            m_sqlType = u"TEXT"_q;
+            m_v2d = [] (const QVariant &value) -> QVariant
+                { return value.value<VideoEffects>().toString(); };
+            m_d2v = [] (const QVariant &sql) -> QVariant
+                { return QVariant::fromValue(VideoEffects::fromString(sql.toString())); };
+            break;
+        }
         if (_Is<Mrl>(type)) {
             m_sqlType = u"TEXT PRIMARY KEY NOT NULL"_q;
             m_v2d = [] (const QVariant &value)
@@ -94,6 +104,7 @@ MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
             };
             break;
         }
+        qDebug() << m_property.typeName();
         Q_ASSERT(false);
     }}
 }
@@ -142,8 +153,7 @@ auto MrlStateSqlFieldList::prepareSelect(const QString &table,
     if (m_fields.isEmpty() || !where.isValid())
         return QString();
     m_where = where;
-    const auto columns = _ToStringList(m_fields,
-                                       [&] (const MrlStateSqlField &field) {
+    const auto columns = _ToStringList(m_fields, [&] (const auto &field) {
         return QString::fromLatin1(field.property().name());
     }).join(','_q);
     select = u"SELECT %1 FROM %2 WHERE %3 = ?"_q
@@ -176,7 +186,9 @@ auto MrlStateSqlFieldList::insert(QSqlQuery &query, const QObject *o) -> bool
         return false;
     if (!query.prepare(m_queries[Insert]))
         return false;
-    for (int i=0; i<m_fields.size(); ++i)
-        query.bindValue(i, m_fields[i].sqlData(o));
+    for (int i=0; i<m_fields.size(); ++i) {
+        auto &f = m_fields[i];
+        query.bindValue(i, f.sqlData(f.property().read(o)));
+    }
     return query.exec();
 }

@@ -52,6 +52,7 @@ struct HistoryModel::Data {
     const QString table = "state"_a % _N(currentVersion);
     bool rememberImage = false, reload = true, visible = false;
     int idx_mrl, idx_last, idx_device, rows = 0;
+    QMutex mutex;
     auto check(const QSqlQuery &query) -> bool
     {
         if (!query.lastError().isValid())
@@ -62,8 +63,8 @@ struct HistoryModel::Data {
     }
     auto insert(const MrlState *state) -> bool
     {
-        if (state->mrl == cached.mrl)
-            cached.mrl = Mrl();
+        if (state->mrl() == cached.mrl())
+            cached.set_mrl(Mrl());
         fields.insert(finder, state);
         return check(finder);
     }
@@ -129,6 +130,7 @@ HistoryModel::HistoryModel(QObject *parent)
     }
     d->fields.prepareInsert(d->table);
     d->fields.prepareSelect(d->table, d->fields.field(u"mrl"_q));
+    setPropertiesToRestore(QStringList());
 
     d->db = QSqlDatabase::addDatabase(u"QSQLITE"_q, u"history-model"_q);
     d->db.setDatabaseName(_WritablePath(Location::Config) % "/history.db"_a);
@@ -185,12 +187,13 @@ auto HistoryModel::columnCount(const QModelIndex &index) const -> int
 
 auto HistoryModel::getState(MrlState *state) const -> bool
 {
-    if (!state->mrl.isUnique())
+    QMutexLocker locker(&d->mutex);
+    if (!state->mrl().isUnique())
         return false;
     if (d->restores.isEmpty())
         return true;
     Q_ASSERT(d->restores.isSelectPrepared());
-    if (d->cached.mrl != state->mrl)
+    if (d->cached.mrl() != state->mrl())
         return d->restores.select(d->finder, state);
     for (auto &f : d->restores)
         f.property().write(state, f.property().read(&d->cached));
@@ -199,25 +202,28 @@ auto HistoryModel::getState(MrlState *state) const -> bool
 
 auto HistoryModel::find(const Mrl &mrl) const -> const MrlState*
 {
+    QMutexLocker locker(&d->mutex);
     if (!mrl.isUnique())
         return nullptr;
-    if (d->cached.mrl == mrl)
+    if (d->cached.mrl() == mrl)
         return &d->cached;
     Q_ASSERT(d->fields.isSelectPrepared());
     if (!d->fields.select(d->finder, &d->cached, mrl))
         return nullptr;
-    d->cached.mrl = mrl;
+    d->cached.set_mrl(mrl);
     return &d->cached;
 }
 
 auto HistoryModel::play(int row) -> void
 {
+    QMutexLocker locker(&d->mutex);
     if (_InRange0(row, d->rows) && d->loader.seek(row))
         emit playRequested(d->getMrl());
 }
 
 auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
 {
+//    QMutexLocker locker(&d->mutex);
     if (d->reload) {
         d->load();
         d->reload = false;
@@ -263,18 +269,23 @@ auto HistoryModel::error() const -> QSqlError
     return d->error;
 }
 
+auto HistoryModel::update() -> void
+{
+    d->load();
+}
 
 auto HistoryModel::update(const MrlState *state, bool reload) -> void
 {
-    if (!d->rememberImage && state->mrl.isImage())
+    QMutexLocker locker(&d->mutex);
+    if (!d->rememberImage && state->mrl().isImage())
         return;
-    if (!state->mrl.isUnique())
+    if (!state->mrl().isUnique())
         return;
     Transactor t(&d->db);
     d->insert(state);
     t.done();
     if (reload)
-        d->load();
+        update();
 }
 
 auto HistoryModel::setRememberImage(bool on) -> void
@@ -282,12 +293,27 @@ auto HistoryModel::setRememberImage(bool on) -> void
     d->rememberImage = on;
 }
 
-auto HistoryModel::setPropertiesToRestore(const QVector<QMetaProperty> &properties) -> void
+auto HistoryModel::isRestorable(const char *name) const -> bool
 {
-    d->restores.clear();
-    d->restores.reserve(properties.size());
+    QMutexLocker locker(&d->mutex);
     for (auto &f : d->fields) {
-        if (properties.contains(f.property()))
+        if (!qstrcmp(f.property().name(), name))
+            return true;
+    }
+    return false;
+}
+
+auto HistoryModel::setPropertiesToRestore(const QStringList &list) -> void
+{
+    QMutexLocker locker(&d->mutex);
+    auto props = MrlState::defaultProperties();
+    props += list;
+    if (list.contains("sub_tracks"_a))
+        props.push_back("sub_tracks_inclusive"_a);
+    d->restores.clear();
+    d->restores.reserve(props.size());
+    for (auto &f : d->fields) {
+        if (props.contains(_L(f.property().name())))
             d->restores.push_back(f);
     }
     d->restores.prepareSelect(d->table, d->fields.field(u"mrl"_q));
@@ -296,6 +322,7 @@ auto HistoryModel::setPropertiesToRestore(const QVector<QMetaProperty> &properti
 
 auto HistoryModel::clear() -> void
 {
+    QMutexLocker locker(&d->mutex);
     Transactor t(&d->db);
     d->loader.exec("DELETE FROM "_a % d->table);
     t.done();

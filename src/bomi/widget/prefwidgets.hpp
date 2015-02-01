@@ -37,7 +37,7 @@ class MrlStatePropertyListModel
         : public SimpleListModel<MrlState::PropertyInfo,
                                  QVector<MrlState::PropertyInfo>> {
     Q_OBJECT
-    Q_PROPERTY(QVector<QMetaProperty> value READ value WRITE setValue)
+    Q_PROPERTY(QStringList value READ value WRITE setValue)
 public:
     MrlStatePropertyListModel(QObject *parent)
         : SimpleListModel<MrlState::PropertyInfo,
@@ -50,21 +50,21 @@ public:
         { return Super::flags(row, column) | Qt::ItemIsUserCheckable; }
     auto displayData(int row, int /*column*/) const -> QVariant
         { return at(row).description; }
-    auto value() const -> QVector<QMetaProperty>
+    auto value() const -> QStringList
     {
         auto restores = checkedList(0);
-        QVector<QMetaProperty> list;
+        QStringList list;
         for (int i=0; i<restores.size(); ++i) {
             if (restores[i])
-                list.append(at(i).property);
+                list.append(_L(at(i).property.name()));
         }
         return list;
     }
-    auto setValue(const QVector<QMetaProperty> &list) -> void
+    auto setValue(const QStringList &list) -> void
     {
         QVector<bool> restores(size(), false);
         for (int i=0; i<size(); ++i)
-            restores[i] = list.contains(at(i).property);
+            restores[i] = list.contains(_L(at(i).property.name()));
         setChecked(0, restores);
     }
 };

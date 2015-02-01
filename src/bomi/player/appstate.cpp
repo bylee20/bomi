@@ -23,8 +23,7 @@ static const auto jio = JIO(
     JE(ask_system_tray),
     JE(dvd_device),
     JE(bluray_device),
-    JE(sub_find_lang_code),
-    JE(state)
+    JE(sub_find_lang_code)
 );
 
 #define APP_STATE_FILE QString(_WritablePath(Location::Config) % "/appstate.json"_a)

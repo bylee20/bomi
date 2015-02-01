@@ -3,13 +3,22 @@
 
 #include "playengine.hpp"
 #include "mpv_helper.hpp"
+#include "mpv_property.hpp"
+#include "mrlstate_p.hpp"
+#include "avinfoobject.hpp"
 #include "streamtrack.hpp"
+#include "historymodel.hpp"
 #include "tmp/type_test.hpp"
 #include "tmp/type_info.hpp"
+#include "misc/autoloader.hpp"
 #include "misc/log.hpp"
 #include "misc/tmp.hpp"
 #include "misc/dataevent.hpp"
 #include "misc/youtubedl.hpp"
+#include "misc/osdstyle.hpp"
+#include "misc/speedmeasure.hpp"
+#include "misc/yledl.hpp"
+#include "misc/charsetdetector.hpp"
 #include "audio/audiocontroller.hpp"
 #include "audio/audioformat.hpp"
 #include "video/hwacc.hpp"
@@ -19,21 +28,20 @@
 #include "video/videofilter.hpp"
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
-#include "misc/osdstyle.hpp"
-#include "misc/speedmeasure.hpp"
-#include "misc/yledl.hpp"
+#include "subtitle/subtitle.hpp"
+#include "subtitle/subtitlerenderer.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/colorspace.hpp"
 #include "enum/colorrange.hpp"
 #include "enum/audiodriver.hpp"
 #include "enum/channellayout.hpp"
 #include "enum/interpolator.hpp"
+#include "enum/autoselectmode.hpp"
 #include "enum/dithering.hpp"
 #include "opengl/openglframebufferobject.hpp"
 #include <libmpv/client.h>
 #include <libmpv/opengl_cb.h>
 #include <functional>
-#include "avinfoobject.hpp"
 
 #ifdef bool
 #undef bool
@@ -44,6 +52,7 @@ DECLARE_LOG_CONTEXT(Engine)
 enum EventType {
     UserType = QEvent::User, StateChange, WaitingChange,
     PreparePlayback,EndPlayback, StartPlayback, NotifySeek,
+    SyncMrlState,
     EventTypeMax
 };
 
@@ -52,33 +61,6 @@ enum MpvState {
 };
 
 static constexpr const int UpdateEventBegin = QEvent::User + 1000;
-
-struct StreamTypeInfo {
-    StreamType type;
-    const char *mpvName;
-    void (PlayEngine::*notifyList)(const StreamList&);
-    void (PlayEngine::*notifyTrack)(int);
-};
-
-static const QVector<StreamTypeInfo> streamTypeInfo = [] () {
-    QVector<StreamTypeInfo> info(3);
-    info[StreamVideo] = {
-        StreamVideo, "vid",
-        &PlayEngine::videoStreamsChanged,
-        &PlayEngine::currentVideoStreamChanged
-    };
-    info[StreamAudio] = {
-        StreamAudio, "aid",
-        &PlayEngine::audioStreamsChanged,
-        &PlayEngine::currentAudioStreamChanged
-    };
-    info[StreamSubtitle] = {
-        StreamSubtitle, "sid",
-        &PlayEngine::subtitleStreamsChanged,
-        &PlayEngine::currentSubtitleStreamChanged
-    };
-    return info;
-}();
 
 static const QVector<StreamType> streamTypes
     = { StreamAudio, StreamVideo, StreamSubtitle };
@@ -103,96 +85,16 @@ private:
     auto run() -> void { engine->exec(); }
 };
 
-namespace detail {
-struct mpv_format_string {
-    using mpv_type = const char*;
-    static constexpr mpv_format format = MPV_FORMAT_STRING;
-    static constexpr bool use_free = true;
-    static auto userdata(mpv_type v) -> QByteArray { return v; }
-    static auto free(mpv_type &data) -> void { mpv_free((void*)data); }
-};
-}
-
-template<class T, bool number = tmp::is_arithmetic<T>()>
-struct mpv_format_trait { };
-
-template<class T>
-struct mpv_format_trait<T, true> {
-    SCA IsBool = tmp::is_same<T, bool>();
-    SCA IsInt = tmp::is_integral<T>();
-    SCA use_free = false;
-    using mpv_type = tmp::conditional_t<IsBool, int,
-                     tmp::conditional_t<IsInt, qint64, double>>;
-    static constexpr mpv_format format = IsBool ? MPV_FORMAT_FLAG
-                                       : IsInt ? MPV_FORMAT_INT64
-                                               : MPV_FORMAT_DOUBLE;
-    static constexpr auto cast(mpv_type from) -> T { return from; }
-    static auto userdata(T v) -> QByteArray { return QByteArray::number(v); }
-    static auto free(mpv_type&) -> void { }
-};
-
-template<>
-struct mpv_format_trait<QString> : detail::mpv_format_string {
-    static auto cast(const char *from) -> QString
-        { return QString::fromLocal8Bit(from); }
-};
-
-template<>
-struct mpv_format_trait<QByteArray> : detail::mpv_format_string {
-    static auto cast(const char *from) -> QByteArray
-        { return QByteArray(from); }
-};
-
-template<>
-struct mpv_format_trait<const char *> : detail::mpv_format_string {
-    static auto cast(const char *from) -> const char* { return from; }
-};
-
-template<>
-struct mpv_format_trait<QVariant> {
-    using mpv_type = mpv_node;
-    static constexpr mpv_format format = MPV_FORMAT_NODE;
-    static constexpr bool use_free = true;
-    static auto userdata(mpv_type) -> QByteArray { return "mpv-node"; }
-    static auto cast(mpv_type v) -> QVariant { return parse(v); }
-    static auto free(mpv_type &node) -> void { mpv_free_node_contents(&node); }
-private:
-    static QVariant parse(const mpv_node &node) {
-        switch (node.format) {
-        case MPV_FORMAT_DOUBLE:
-            return node.u.double_;
-        case MPV_FORMAT_FLAG:
-            return !!node.u.flag;
-        case MPV_FORMAT_INT64:
-            return QVariant::fromValue<int>(node.u.int64);
-        case MPV_FORMAT_STRING:
-            return QString::fromLocal8Bit(node.u.string);
-        case MPV_FORMAT_NODE_ARRAY: {
-            auto array = node.u.list;
-            QVariantList list; list.reserve(array->num);
-            for (int i=0; i<array->num; ++i)
-                list.append(parse(array->values[i]));
-            return list;
-        } case MPV_FORMAT_NODE_MAP: {
-            auto list = node.u.list; QVariantMap map;
-            for (int i=0; i<list->num; ++i) {
-                auto data = parse(list->values[i]);
-                map.insert(QString::fromLocal8Bit(list->keys[i]), data);
-            }
-            return map;
-        } default:
-            return QVariant();
-        }
-    }
-};
-
-template<class T>
-using mpv_type = typename mpv_format_trait<T>::mpv_type;
 
 struct StreamData {
-    StreamList tracks;
-    QStringList priority;
+    StreamData() = default;
+    StreamData(const char *pid, ExtType ext)
+        : pid(pid), ext(ext) { }
+    const char *pid = nullptr;
+    ExtType ext;
     int reserved = -1;
+    QStringList priority;
+    Autoloader autoloader;
 };
 
 SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
@@ -200,12 +102,21 @@ SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
 struct PlayEngine::Data {
     Data(PlayEngine *engine);
     PlayEngine *p = nullptr;
-    Thread thread{p};
+    PlayEngine::Thread thread{p};
+
+    VideoRenderer *vr = nullptr;
+    AudioController *ac = nullptr;
+    SubtitleRenderer *sr = nullptr;
+
+    PlayEngine::Waitings waitings = PlayEngine::NoWaiting;
+    PlayEngine::State state = PlayEngine::Stopped;
+    PlayEngine::ActivationState hwacc = PlayEngine::Unavailable;
+    PlayEngine::Snapshot snapshot = PlayEngine::NoSnapshot;
+
+    MrlState params, local;
+
     QTemporaryDir confDir;
-    Waitings waitings = NoWaiting;
-    State state = Stopped;
     QTemporaryFile customShader;
-    QStringList audioPriorty;
     QVector<Observation> observations;
 
     VideoInfoObject videoInfo;
@@ -214,63 +125,56 @@ struct PlayEngine::Data {
     QVector<ChapterInfoObject*> chapterInfoList;
 
     MediaInfoObject mediaInfo;
-    ActivationState hwacc = Unavailable;
     MetaData metaData;
     QString mediaName;
 
-    MpvState mpvState = MpvStopped;
+    HistoryModel *history = nullptr;
 
     double fps = 1.0;
-    bool hasImage = false, tempoScaler = false, seekable = false, hasVideo = false;
-    bool subStreamsVisible = true, startPaused = false, disc = false;
-    bool pauseAfterSkip = false;
-    AudioController *audio = nullptr;
-    bool quit = false, muted = false, initialized = false;
-    int volume = 100, avSync = 0;
-    double amp = 1.0, speed = 1.0;
-    qreal cacheForPlayback = 0.02, cacheForSeeking = 0.05;
-    bool cacheEnabled = false;
-    int cacheSize = 0, cacheUsed = 0, initSeek = -1;
-    int updateEventMax = UpdateEventBegin;
+    bool hasImage = false, seekable = false, hasVideo = false;
+    bool pauseAfterSkip = false, resume = false;
+    bool quit = false, initialized = false;
+    int avSync = 0;
+
+    bool hwdec = false;
+    QByteArray hwcdc;
+
+    struct {
+        bool caching = false;
+        int start = -1;
+        QSharedPointer<MrlState> local;
+    } t;
+
+    int cacheSize = 0, cacheUsed = 0;
+    int updateEventMax = ::UpdateEventBegin;
     int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;
 
     mpv_handle *handle = nullptr;
-    QByteArray client;
-
-//    VideoOutput *video = nullptr;
     VideoFilter *filter = nullptr;
-    bool useHwAcc = false;
-    QByteArray hwCodecs;
-    QVector<SubtitleFileInfo> subtitleFiles;
-    ChannelLayout layout = ChannelLayoutInfo::default_();
-    int duration = 0, audioSync = 0, begin = 0, position = 0;
-    int subDelay = 0, chapter = -2, edition = -1;
-    QVector<StreamData> streams = {StreamData(), StreamData(), StreamData()};
-    Mrl mpvMrl;
-    mpv_opengl_cb_context *glMpv = nullptr;
+
+    Mrl mrl;
+
+    int duration = 0, begin = 0, position = 0, chapter = -2, edition = -1;
+    mpv_opengl_cb_context *gl = nullptr;
     QMatrix4x4 c_matrix;
-    VideoColor videoEq;
-    VideoEffects videoEffects = 0;
-    Snapshot snapshot = NoSnapshot;
+
     YouTubeDL *youtube = nullptr;
     YleDL *yle = nullptr;
 
-    OsdStyle subStyle;
-    VideoRenderer *video = nullptr;
+    QMap<QString, QString> assEncodings;
+
     ChapterList chapters;
     EditionList editions;
 
-    DeintOption deint_swdec, deint_hwdec;
-    DeintMode deint = DeintMode::Auto;
-    QString audioDevice = u"auto"_q;
+    std::array<StreamData, StreamUnknown> streams = []() {
+        std::array<StreamData, StreamUnknown> strs;
+        strs[StreamVideo] = { "vid", VideoExt };
+        strs[StreamAudio] = { "aid", AudioExt };
+        strs[StreamSubtitle] = { "sid", SubtitleExt };
+        return strs;
+    }();
 
-    StartInfo startInfo, nextInfo;
 
-    Interpolator lscale = Interpolator::Bilinear, cscale = Interpolator::Bilinear;
-    ColorSpace colorSpace = ColorSpace::Auto;
-    ColorRange colorRange = ColorRange::Auto;
-    Dithering dithering = Dithering::None;
-    bool hqUpscaling = false, hqDownscaling = false;
     quint64 drawnFrames = 0, droppedFrames = 0, delayedFrames = 0;
     SpeedMeasure<quint64> fpsMeasure{5, 20};
 
@@ -315,10 +219,131 @@ struct PlayEngine::Data {
         drawnFrames = 0;
     }
 
-    auto af() const -> QByteArray;
-    auto vf() const -> QByteArray;
-    auto vo() const -> QByteArray;
-    auto videoSubOptions() const -> QByteArray;
+    auto setInclusiveSubtitles(const QVector<SubComp> &loaded) -> void
+        { setInclusiveSubtitles(&params, loaded); }
+
+    auto setInclusiveSubtitles(MrlState *s, const QVector<SubComp> &loaded) -> void
+    {
+        sr->setComponents(loaded);
+        s->set_sub_tracks_inclusive(sr->toTrackList());
+    }
+    auto syncInclusiveSubtitles() -> void
+        { params.set_sub_tracks_inclusive(sr->toTrackList()); }
+
+    static auto restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>
+    {
+        Q_ASSERT(tracks.type() == StreamInclusiveSubtitle);
+        QVector<SubComp> ret;
+        QMap<QString, QMap<QString, SubComp>> subMap;
+        for (auto &track : tracks) {
+            auto it = subMap.find(track.file());
+            if (it == subMap.end()) {
+                it = subMap.insert(track.file(), QMap<QString, SubComp>());
+                Subtitle sub;
+                if (!sub.load(track.file(), track.encoding(), -1))
+                    continue;
+                for (int i = 0; i < sub.size(); ++i)
+                    it->insert(sub[i].language(), sub[i]);
+            }
+            auto iit = it->find(track.language());
+            if (iit != it->end()) {
+                iit->selection() = track.isSelected();
+                ret.push_back(*iit);
+            }
+        }
+        return ret;
+    }
+
+    auto audio_add(const QString &file, bool select) -> void
+    { tellmpv_async("audio_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b); }
+
+    auto sub_add(const QString &file, const QString &enc, bool select) -> void
+    {
+        setmpv_async("options/subcp", enc.toLatin1());
+        tellmpv_async("sub_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b);
+        mutex.lock();
+        assEncodings[file] = enc;
+        mutex.unlock();
+    }
+
+    auto autoloadFiles(StreamType type) -> QStringList
+    {
+        auto &a = streams[type].autoloader;
+        if (a.enabled)
+            return a.autoload(mrl, streams[type].ext);
+        return QStringList();
+    }
+
+    auto autoselect(const MrlState *s, QVector<SubComp> &loads) -> void
+    {
+        QVector<int> selected;
+        QSet<QString> langSet;
+        const QFileInfo file(mrl.toLocalFile());
+        const QString base = file.completeBaseName();
+
+        for (int i = 0; i<loads.size(); ++i) {
+            bool select = false;
+            switch (s->d->autoselectMode) {
+            case AutoselectMode::Matched: {
+                const QFileInfo info(loads[i].fileName());
+                select = info.completeBaseName() == base;
+                break;
+            } case AutoselectMode::EachLanguage: {
+                //                  const QString lang = loaded[i].m_comp.language().id();
+                const auto lang = loads[i].language();
+                if ((select = (!langSet.contains(lang))))
+                    langSet.insert(lang);
+                break;
+            }  case AutoselectMode::All:
+                select = true;
+                break;
+            default:
+                break;
+            }
+            if (select)
+                selected.append(i);
+        }
+        if (s->d->autoselectMode == AutoselectMode::Matched
+                && !selected.isEmpty() && !s->d->autoselectExt.isEmpty()) {
+            for (int i=0; i<selected.size(); ++i) {
+                const auto fileName = loads[selected[i]].fileName();
+                const auto suffix = QFileInfo(fileName).suffix();
+                if (s->d->autoselectExt == suffix.toLower()) {
+                    const int idx = selected[i];
+                    selected.clear();
+                    selected.append(idx);
+                    break;
+                }
+            }
+        }
+        for (int i=0; i<selected.size(); ++i)
+            loads[selected[i]].selection() = true;
+    }
+
+    auto autoloadSubtitle(const MrlState *s)
+    {
+        const auto subs = autoloadFiles(StreamSubtitle);
+        QStringList files;
+        QVector<SubComp> loads;
+        for (auto &file : subs) {
+            const auto enc = s->d->detect(file);
+            Subtitle sub;
+            if (sub.load(file, enc, -1)) {
+                for (int i = 0; i < sub.size(); ++i)
+                    loads.push_back(sub[i]);
+            } else {
+                files.push_back(file);
+                assEncodings[file] = enc;
+            }
+        }
+        autoselect(s, loads);
+        return _T(files, loads);
+    }
+
+    auto af(const MrlState *s) const -> QByteArray;
+    auto vf(const MrlState *s) const -> QByteArray;
+    auto vo(const MrlState *s) const -> QByteArray;
+    auto videoSubOptions(const MrlState *s) const -> QByteArray;
     auto updateVideoSubOptions() -> void;
     auto updateColorMatrix() -> void;
     auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
@@ -327,7 +352,9 @@ struct PlayEngine::Data {
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
     auto exec() -> void;
 
-    auto mpVolume() const -> double { return volume*amp/10.0; }
+    auto mpVolume() const -> double {
+        return params.audio_volume() * params.audio_amplifier() * 1e-2 / 10.0;
+    }
     template<class T>
     SIA qbytearray_from(const T &t) -> tmp::enable_if_t<tmp::is_arithmetic<T>(),
         QByteArray> { return QByteArray::number(t); }
@@ -346,21 +373,40 @@ struct PlayEngine::Data {
     auto tellmpv_async(const QByteArray &cmd, const Args &... args) -> void
         { tellmpv_async(cmd, {qbytearray_from(args)...}); }
 
-    auto updateMrl() -> void;
-    auto loadfile(int resume) -> void;
-
-    auto loadfile(const Mrl &mrl, int resume, int cachePercent, int edition) -> void;
-    auto loadfile() -> void { loadfile(startInfo.resume); }
+    auto loadfile(const Mrl &mrl) -> void;
     auto updateMediaName(const QString &name = QString()) -> void;
     template <class T>
     auto setmpv_async(const char *name, const T &value) -> void;
     template <class T>
     auto setmpv(const char *name, const T &value) -> void;
+    auto setmpv(const char *name, const QString &value) -> void
+        { setmpv(name, value.toLocal8Bit()); }
+    auto toTracks(const QVariant &var) -> QVector<StreamList>
+    {
+        QVector<StreamList> streams(3);
+        streams[StreamVideo] = { StreamVideo };
+        streams[StreamAudio] = { StreamAudio };
+        streams[StreamSubtitle] = { StreamSubtitle };
+        auto list = var.toList();
+        for (auto &var : list) {
+            auto track = StreamTrack::fromMpvData(var);
+            streams[track.type()].insert(track);
+        }
+        auto &subs = streams[StreamSubtitle];
+        if (!subs.isEmpty()) {
+            QMutexLocker locker(&mutex);
+            for (auto &track : subs) {
+                if (track.isExternal())
+                    track.m_encoding = assEncodings.take(track.file());
+            }
+        }
+        return streams;
+    }
     template<class T>
     auto getmpv(const char *name) -> T;
     template<class T>
     auto getmpv(const char *name, T &val) -> bool;
-    auto refresh() -> void {tellmpv("frame_step"); tellmpv("frame_back_step");}
+    auto refresh() -> void {tellmpv_async("frame_step"); tellmpv("frame_back_step");}
     static auto error(int err) -> const char* { return mpv_error_string(err); }
     auto isSuccess(int error) -> bool { return error == MPV_ERROR_SUCCESS; }
     template<class T>
@@ -411,10 +457,7 @@ struct PlayEngine::Data {
     }
     template<class T, class Set>
     auto observeType(const char *name, Set set) -> int
-    {
-        return observe(name, [=] () { return getmpv<T>(name); },
-                       [=] (QEvent *e) { set(_MoveData<T>(e)); });
-    }
+        { return observe(name, [=] () { return getmpv<T>(name); }, [=] (QEvent *e) { set(_MoveData<T>(e)); }); }
 
     template<class T, class Get, class Notify>
     auto observe(const char *name, T &t, Get get, Notify notify) -> int
@@ -438,46 +481,13 @@ struct PlayEngine::Data {
 
     template<class T>
     auto observe(const char *name, T &t, void(PlayEngine::*sig)()) -> int
-    {
-        return observe(name, t, [=, &t] () {
-            T val = t; return getmpv<T>(name, val) ? val : T();
-        }, sig);
-    }
-
+        { return observe(name, t, [=, &t] () { T val = t; return getmpv<T>(name, val) ? val : T(); }, sig); }
     template<class T, class S>
     auto observe(const char *name, T &t, void(PlayEngine::*sig)(S)) -> int
-    {
-        return observe(name, t, [=, &t] () {
-            T val = t; return getmpv<T>(name, val) ? val : T();
-        }, sig);
-    }
+        { return observe(name, t, [=, &t] () { T val = t; return getmpv<T>(name, val) ? val : T(); }, sig); }
     auto observeTime(const char *name, int &t, void(PlayEngine::*sig)(int)) -> int
-    {
-        return observe<int>(name, t, [=, &t] { return s2ms(getmpv<double>(name)); }, sig);
-    }
+        { return observe<int>(name, t, [=, &t] { return s2ms(getmpv<double>(name)); }, sig); }
 
-    auto observeTrack(StreamType type) -> int
-    {
-        const auto &info = streamTypeInfo[type];
-        return observe(info.mpvName, [=, &info] () {
-            int track = 0; return getmpv<int>(info.mpvName, track) ? track : 1;
-        }, [=] (QEvent *event) { setCurrentTrack(type, _GetData<int>(event)); });
-    }
-    auto setStreamList(StreamType type, StreamList &&list) -> bool;
-    auto setCurrentTrack(StreamType type, int id) -> void
-    {
-        Q_ASSERT(type != StreamUnknown);
-        if (id == currentTrack(type))
-            return;
-        for (auto &track : streams[type].tracks)
-            track.m_selected = track.id() == id;
-        emit (p->*(streamTypeInfo[type].notifyTrack))(id);
-    }
-    auto currentTrack(StreamType type) -> int
-    {
-        Q_ASSERT(type != StreamUnknown);
-        return _FindSelectedTrackId(streams[type].tracks);
-    }
     auto observe() -> void;
     auto dispatch(mpv_event *event) -> void;
     auto process(QEvent *event) -> void;
@@ -495,18 +505,32 @@ struct PlayEngine::Data {
     QPoint mouse;
     auto setMousePos(const QPointF &pos)
     {
-        if (!_Change(mouse, video->mapToVideo(pos).toPoint()))
+        if (!handle || !params.d->disc)
+            return false;
+        if (!_Change(mouse, vr->mapToVideo(pos).toPoint()))
             return false;
         tellmpv("mouse"_b, mouse.x(), mouse.y());
-//        mpv_opengl_cb_set_mouse_pos(glMpv, mouse.x(), mouse.y());
         return true;
     }
     auto render(OpenGLFramebufferObject *fbo) -> int
     {
         int vp[4] = {0, 0, fbo->width(), fbo->height()};
-        return mpv_opengl_cb_render(glMpv, fbo->id(), vp);
+        return mpv_opengl_cb_render(gl, fbo->id(), vp);
     }
     auto takeSnapshot() -> void;
+    QMutex mutex;
+    auto onLoad() -> void;
+    auto onFinish() -> void;
+
+    auto localCopy() -> QSharedPointer<MrlState>
+    {
+        auto s = new MrlState;
+        s->blockSignals(true);
+        mutex.lock();
+        s->copyFrom(&params);
+        mutex.unlock();
+        return QSharedPointer<MrlState>(s);
+    }
 };
 
 template<class T>
@@ -525,23 +549,24 @@ template <class T>
 auto PlayEngine::Data::setmpv_async(const char *name, const T &value) -> void
 {
     if (handle) {
-        mpv_type<T> data = value;
-        auto userdata = new QByteArray(name);
-        *userdata += "=" + mpv_format_trait<T>::userdata(value);
-        check(mpv_set_property_async(handle, (quint64)(void*)userdata, name,
-                                     mpv_format_trait<T>::format, &data),
-              "Error on %%", *userdata);
+        auto async = mpv_format_trait<T>::set_async(value);
+        async->name = QByteArray(name);
+        check(mpv_set_property_async(handle, (quint64)async, name,
+                                     mpv_format_trait<T>::format, async->data_ptr),
+              "Error on set_async %%", async->name);
     }
 }
 
 template <class T>
 auto PlayEngine::Data::setmpv(const char *name, const T &value) -> void
 {
+    using trait = mpv_format_trait<T>;
     if (handle) {
-        mpv_type<T> data = value;
-        check(mpv_set_property(handle, name, mpv_format_trait<T>::format,
-                               &data),
+        mpv_t<T> data;
+        trait::set(data, value);
+        check(mpv_set_property(handle, name, trait::format, &data),
               "Error on %%=%%", name, value);
+        trait::set_free(data);
     }
 }
 
@@ -549,14 +574,12 @@ template<class T>
 auto PlayEngine::Data::getmpv(const char *name, T &def) -> bool
 {
     using trait = mpv_format_trait<T>;
-    mpv_type<T> data;
-    if (!handle || !check(mpv_get_property(handle, name,
-                                           trait::format, &data),
+    mpv_t<T> data;
+    if (!handle || !check(mpv_get_property(handle, name, trait::format, &data),
                           "Couldn't get property '%%'.", name))
         return false;
-    def = trait::cast(data);
-    if (trait::use_free)
-        trait::free(data);
+    trait::get(def, data);
+    trait::get_free(data);
     return true;
 }
 

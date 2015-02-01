@@ -43,10 +43,4 @@ private:
     mutable int m_pos = 0;
 };
 
-inline auto SubtitleParser::append(Subtitle &s, SubComp::SyncType b) -> SubComp&
-{
-    s.m_comp.append(SubComp(type(), m_file, m_encoding, s.m_comp.size() + 1, b));
-    return s.m_comp.last();
-}
-
 #endif // SUBTITLE_PARSER_HPP

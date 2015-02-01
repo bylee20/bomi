@@ -7,15 +7,14 @@ struct MrlStateSqlField;
 
 struct MrlStateSqlField {
     MrlStateSqlField() noexcept { }
-    MrlStateSqlField(const QMetaProperty &property,
-                     const QVariant &def = QVariant()) noexcept;
+    MrlStateSqlField(const QMetaProperty &property, const QVariant &def) noexcept;
     auto type() const -> QString { return m_sqlType; }
     const QMetaProperty &property() const { return m_property; }
     const QVariant &default_() const { return m_defaultValue; }
-    auto sqlData(const QObject *state) const noexcept -> QVariant
-        { return sqlData(m_property.read(state)); }
+    template<class T>
+    auto sqlData(T*) const -> void; // error
     auto sqlData(const QVariant &value) const noexcept -> QVariant
-        { return m_v2d(value); }
+    { return m_v2d(value); }
     auto exportTo(QObject *state, const QVariant &sqlData) const -> bool
     {
         const auto var = m_d2v(sqlData);
@@ -28,6 +27,7 @@ private:
     QString m_sqlType;
     QVariant m_defaultValue;
     ConvertVariant m_v2d = nullptr, m_d2v = nullptr;
+    friend class MrlStateSqlFieldList;
 };
 
 class MrlStateSqlFieldList {
@@ -52,7 +52,7 @@ public:
     auto field(const QString &name) const -> Field;
     auto insert(QSqlQuery &query, const QObject *object) -> bool;
     auto select(QSqlQuery &query, QObject *object) const -> bool
-        { return select(query, object, m_where.sqlData(object)); }
+        { return select(query, object, m_where.property().read(object)); }
     auto select(QSqlQuery &q, QObject *o, const QVariant &where) const -> bool;
     template<class T>
     auto select(QSqlQuery &query, QObject *object, const T &t) const -> bool

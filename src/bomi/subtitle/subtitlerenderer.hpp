@@ -2,16 +2,18 @@
 #define SUBTITLERENDERERITEM_HPP
 
 #include "quick/simpletextureitem.hpp"
+#include "player/streamtrack.hpp"
 
-class SubComp;                         class Subtitle;
-class RichTextDocument;                class SubCompModel;
-struct OsdStyle;                  class SubtitleDrawer;
+class SubComp;                          class Subtitle;
+class RichTextDocument;                 class SubCompModel;
+struct OsdStyle;                        class SubtitleDrawer;
+enum class AutoselectMode;
 
-class SubtitleRendererItem : public SimpleTextureItem  {
+class SubtitleRenderer : public SimpleTextureItem  {
     Q_OBJECT
 public:
-    SubtitleRendererItem(QQuickItem *parent = nullptr);
-    ~SubtitleRendererItem();
+    SubtitleRenderer(QQuickItem *parent = nullptr);
+    ~SubtitleRenderer();
     auto previous() const -> int;
     auto next() const -> int;
     auto current() const -> int;
@@ -23,16 +25,17 @@ public:
     auto isTopAligned() const -> bool;
     auto models() const -> QVector<SubCompModel*>;
     auto components() const -> QVector<const SubComp *>;
+    auto addComponents(const QVector<SubComp> &components) -> void;
     auto setComponents(const QVector<SubComp> &components) -> void;
     auto componentsCount() const -> int;
     auto setPriority(const QStringList &priority) -> void;
     auto setPos(double pos) -> void;
     auto isHidden() const -> bool;
     auto setDelay(int delay) -> void;
-    auto load(const Subtitle &subtitle, bool select) -> bool;
+//    auto load(const Subtitle &subtitle, bool select) -> bool;
     auto unload() -> void;
-    auto select(int idx) -> void;
-    auto deselect(int idx = -1) -> void;
+    auto select(int id) -> void;
+    auto deselect(int id = -1) -> void;
     auto style() const -> const OsdStyle&;
     auto setStyle(const OsdStyle &style) -> void;
     auto text() const -> const RichTextDocument&;
@@ -42,6 +45,8 @@ public:
     auto render(int ms) -> void;
     auto setTopAligned(bool top) -> void;
     auto setFPS(double fps) -> void;
+    auto toTrackList() const -> StreamList;
+//    auto load(const QVector<StreamTrack> &tracks) -> void;
 signals:
     void modelsChanged(const QVector<SubCompModel*> &models);
 private:
