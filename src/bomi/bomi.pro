@@ -242,7 +242,8 @@ HEADERS += \
     enum/autoselectmode.hpp \
     player/mrlstate_p.hpp \
     subtitle/subtitlerenderer.hpp \
-    video/videoprocessor.hpp
+    video/videoprocessor.hpp \
+    player/mpv.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -420,7 +421,8 @@ SOURCES += \
     misc/autoloader.cpp \
     enum/autoselectmode.cpp \
     subtitle/subtitlerenderer.cpp \
-    video/videoprocessor.cpp
+    video/videoprocessor.cpp \
+    player/mpv.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

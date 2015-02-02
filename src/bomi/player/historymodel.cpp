@@ -276,6 +276,7 @@ auto HistoryModel::update() -> void
 
 auto HistoryModel::update(const MrlState *state, bool reload) -> void
 {
+    Q_ASSERT(state);
     QMutexLocker locker(&d->mutex);
     if (!d->rememberImage && state->mrl().isImage())
         return;

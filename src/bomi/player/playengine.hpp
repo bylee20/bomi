@@ -173,7 +173,6 @@ public:
     auto deintMode() const -> DeintMode;
     auto run() -> void;
     auto waitUntilTerminated() -> void;
-    auto thread() const -> QThread*;
     auto screen() const -> QQuickItem*;
     auto media() const -> MediaInfoObject*;
     auto audio() const -> AudioInfoObject*;
@@ -282,11 +281,8 @@ signals:
     void snapshotTaken();
     void subtitleModelsChanged(const QVector<SubCompModel*> &models);
 private:
-    auto exec() -> void;
     auto customEvent(QEvent *event) -> void;
-    class Thread; struct Data; Data *d;
-    template<class T>
-    friend class SimpleObservation;
+    struct Data; Data *d;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(PlayEngine::Waitings)
