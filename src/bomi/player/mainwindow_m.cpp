@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "enum/movetoward.hpp"
 #include "subtitle/subtitleview.hpp"
+#include "subtitle/subtitlemodel.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/audioequalizerdialog.hpp"
 #include "dialog/urldialog.hpp"
@@ -497,8 +498,14 @@ auto MainWindow::Data::connectMenus() -> void
         toggleTool("playinfo", as.playinfo_visible);
     });
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
-        subtitleView->setVisible(!subtitleView->isVisible());
+        if (!sview)
+            sview = new SubtitleView(p);
+        if (!sview->isVisible())
+            sview->setModels(e.subtitleModels());
+        sview->setVisible(!sview->isVisible());
     });
+    connect(&e, &PlayEngine::subtitleModelsChanged, p, [=] (auto &m)
+        { if (sview && sview->isVisible()) sview->setModels(m); });
     connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
         if (!prefDlg) {
             prefDlg = new PrefDialog(p);

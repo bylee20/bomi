@@ -55,7 +55,6 @@ public:
     auto setRepeat(bool repeat) -> void;
     Q_INVOKABLE void play(int row);
 signals:
-    void finished();
     void loadedChanged(int row);
     void contentWidthChanged();
     void playRequested(int row);
