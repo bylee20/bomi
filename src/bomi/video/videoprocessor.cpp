@@ -1,4 +1,4 @@
-#include "videofilter.hpp"
+#include "videoprocessor.hpp"
 #include "hwacc.hpp"
 #include "mpimage.hpp"
 #include "softwaredeinterlacer.hpp"
@@ -15,11 +15,11 @@ extern vf_info vf_info_noformat;
 }
 
 struct bomi_vf_priv {
-    VideoFilter *vf;
+    VideoProcessor *vf;
     char *address, *swdec_deint, *hwdec_deint;
 };
 
-static auto priv(vf_instance *vf) -> VideoFilter*
+static auto priv(vf_instance *vf) -> VideoProcessor*
 {
     return reinterpret_cast<bomi_vf_priv*>(vf->priv)->vf;
 }
@@ -37,7 +37,7 @@ auto create_vf_info() -> vf_info
     static vf_info info;
     info.description = "bomi video filter";
     info.name = "noformat";
-    info.open = VideoFilter::open;
+    info.open = VideoProcessor::open;
     info.options = options;
     info.priv_size = sizeof(bomi_vf_priv);
 
@@ -88,8 +88,8 @@ private:
 
 vf_info vf_info_noformat = create_vf_info();
 
-struct VideoFilter::Data {
-    VideoFilter *p = nullptr;
+struct VideoProcessor::Data {
+    VideoProcessor *p = nullptr;
     vf_instance *vf = nullptr;
     DeintOption deint_swdec, deint_hwdec;
     SoftwareDeinterlacer deinterlacer;
@@ -114,34 +114,34 @@ struct VideoFilter::Data {
     }
 };
 
-VideoFilter::VideoFilter()
+VideoProcessor::VideoProcessor()
     : d(new Data)
 {
     d->p = this;
     d->pool = mp_image_pool_new(1);
 }
 
-VideoFilter::~VideoFilter()
+VideoProcessor::~VideoProcessor()
 {
     talloc_free(d->pool);
     delete d->hwdec;
     delete d;
 }
 
-auto VideoFilter::initializeGL(OpenGLOffscreenContext *ctx) -> void
+auto VideoProcessor::initializeGL(OpenGLOffscreenContext *ctx) -> void
 {
     d->gl = ctx;
 }
 
-auto VideoFilter::finalizeGL() -> void
+auto VideoProcessor::finalizeGL() -> void
 {
     d->gl = nullptr;
 }
 
-auto VideoFilter::open(vf_instance *vf) -> int
+auto VideoProcessor::open(vf_instance *vf) -> int
 {
     auto priv = reinterpret_cast<bomi_vf_priv*>(vf->priv);
-    priv->vf = address_cast<VideoFilter*>(priv->address);
+    priv->vf = address_cast<VideoProcessor*>(priv->address);
     priv->vf->d->vf = vf;
     auto d = priv->vf->d;
     if (priv->swdec_deint)
@@ -170,17 +170,17 @@ auto VideoFilter::open(vf_instance *vf) -> int
     return true;
 }
 
-auto VideoFilter::isInputInterlaced() const -> bool
+auto VideoProcessor::isInputInterlaced() const -> bool
 {
     return d->inter_i;
 }
 
-auto VideoFilter::isOutputInterlaced() const -> bool
+auto VideoProcessor::isOutputInterlaced() const -> bool
 {
     return d->inter_o;
 }
 
-auto VideoFilter::reconfig(vf_instance *vf,
+auto VideoProcessor::reconfig(vf_instance *vf,
                            mp_image_params *in, mp_image_params *out) -> int
 {
     auto v = priv(vf); auto d = v->d;
@@ -191,7 +191,7 @@ auto VideoFilter::reconfig(vf_instance *vf,
     return 0;
 }
 
-auto VideoFilter::skipToNextBlackFrame() -> void
+auto VideoProcessor::skipToNextBlackFrame() -> void
 {
     d->mutex.lock();
     if (_Change(d->skip, true))
@@ -199,7 +199,7 @@ auto VideoFilter::skipToNextBlackFrame() -> void
     d->mutex.unlock();
 }
 
-auto VideoFilter::stopSkipping() -> void
+auto VideoProcessor::stopSkipping() -> void
 {
     d->mutex.lock();
     if (_Change(d->skip, false))
@@ -208,7 +208,7 @@ auto VideoFilter::stopSkipping() -> void
     d->mutex.unlock();
 }
 
-auto VideoFilter::isSkipping() const -> bool
+auto VideoProcessor::isSkipping() const -> bool
 {
     return d->skip;
 }
@@ -265,7 +265,7 @@ static auto luminance(const mp_image *mpi) -> double
     }
 }
 
-auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
+auto VideoProcessor::filterIn(vf_instance *vf, mp_image *_mpi) -> int
 {
     if (!_mpi)
         return 0;
@@ -322,7 +322,7 @@ auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
     return 0;
 }
 
-auto VideoFilter::filterOut(vf_instance *vf) -> int
+auto VideoProcessor::filterOut(vf_instance *vf) -> int
 {
     auto v = priv(vf); auto d = v->d;
     auto mpi = std::move(d->deinterlacer.pop());
@@ -335,7 +335,7 @@ auto VideoFilter::filterOut(vf_instance *vf) -> int
     return 0;
 }
 
-auto VideoFilter::control(vf_instance *vf, int request, void* data) -> int
+auto VideoProcessor::control(vf_instance *vf, int request, void* data) -> int
 {
     auto v = priv(vf); auto d = v->d;
     switch (request){
@@ -351,7 +351,7 @@ auto VideoFilter::control(vf_instance *vf, int request, void* data) -> int
     }
 }
 
-auto VideoFilter::uninit(vf_instance *vf) -> void {
+auto VideoProcessor::uninit(vf_instance *vf) -> void {
     auto v = priv(vf); auto d = v->d;
     d->deinterlacer.clear();
 }
@@ -378,7 +378,7 @@ auto query_video_format(quint32 format) -> int
     }
 }
 
-auto VideoFilter::queryFormat(vf_instance *vf, uint fmt) -> int
+auto VideoProcessor::queryFormat(vf_instance *vf, uint fmt) -> int
 {
     if (query_video_format(fmt))
         return vf_next_query_format(vf, fmt);

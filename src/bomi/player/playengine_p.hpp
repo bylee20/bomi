@@ -25,7 +25,7 @@
 #include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
 #include "video/videorenderer.hpp"
-#include "video/videofilter.hpp"
+#include "video/videoprocessor.hpp"
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
 #include "subtitle/subtitle.hpp"
@@ -107,7 +107,7 @@ struct PlayEngine::Data {
     VideoRenderer *vr = nullptr;
     AudioController *ac = nullptr;
     SubtitleRenderer *sr = nullptr;
-    VideoFilter *vfilter = nullptr;
+    VideoProcessor *vfilter = nullptr;
 
     PlayEngine::Waitings waitings = PlayEngine::NoWaiting;
     PlayEngine::State state = PlayEngine::Stopped;

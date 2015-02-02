@@ -9,7 +9,7 @@ PlayEngine::PlayEngine()
 
     _Debug("Create audio/video plugins");
     d->ac = new AudioController(this);
-    d->vfilter = new VideoFilter;
+    d->vfilter = new VideoProcessor;
 
 
     d->sr = new SubtitleRenderer;
@@ -76,7 +76,7 @@ PlayEngine::PlayEngine()
     mpv_request_log_messages(d->handle, loglv.constData());
 
     d->observe();
-    connect(d->vfilter, &VideoFilter::skippingChanged, this, [=] (bool skipping) {
+    connect(d->vfilter, &VideoProcessor::skippingChanged, this, [=] (bool skipping) {
         if (skipping) {
             d->pauseAfterSkip = isPaused();
             d->setmpv_async("mute", true);
@@ -90,7 +90,7 @@ PlayEngine::PlayEngine()
         d->updateVideoSubOptions();
         d->post(Searching, skipping);
     }, Qt::DirectConnection);
-    connect(d->vfilter, &VideoFilter::seekRequested, this, &PlayEngine::seek);
+    connect(d->vfilter, &VideoProcessor::seekRequested, this, &PlayEngine::seek);
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
 
@@ -100,9 +100,9 @@ PlayEngine::PlayEngine()
             act = d->vfilter->isOutputInterlaced() ? Deactivated : Activated;
         d->info.video.setDeinterlacer(act);
     };
-    connect(d->vfilter, &VideoFilter::inputInterlacedChanged,
+    connect(d->vfilter, &VideoProcessor::inputInterlacedChanged,
             this, checkDeint);
-    connect(d->vfilter, &VideoFilter::outputInterlacedChanged,
+    connect(d->vfilter, &VideoProcessor::outputInterlacedChanged,
             this, checkDeint);
     connect(d->ac, &AudioController::inputFormatChanged, this, [=] () {
         d->info.audio.output()->setFormat(d->ac->inputFormat());

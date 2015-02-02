@@ -61,7 +61,6 @@ HEADERS += \
 	audio/audionormalizeroption.hpp \
 	video/videoformat.hpp \
 	video/hwacc.hpp \
-	video/videofilter.hpp \
 	video/deintoption.hpp \
 	video/letterboxitem.hpp \
 	video/ffmpegfilters.hpp \
@@ -242,7 +241,8 @@ HEADERS += \
     player/mpv_property.hpp \
     enum/autoselectmode.hpp \
     player/mrlstate_p.hpp \
-    subtitle/subtitlerenderer.hpp
+    subtitle/subtitlerenderer.hpp \
+    video/videoprocessor.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -252,7 +252,6 @@ SOURCES += \
 	audio/audionormalizeroption.cpp \
 	video/hwacc.cpp \
 	video/videoformat.cpp \
-	video/videofilter.cpp \
 	video/deintoption.cpp \
 	video/letterboxitem.cpp \
 	video/ffmpegfilters.cpp \
@@ -420,7 +419,8 @@ SOURCES += \
 	quick/windowobject.cpp \
     misc/autoloader.cpp \
     enum/autoselectmode.cpp \
-    subtitle/subtitlerenderer.cpp
+    subtitle/subtitlerenderer.cpp \
+    video/videoprocessor.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
