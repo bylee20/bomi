@@ -25,7 +25,7 @@ B.AppWithFloating {
 
     controls: Item {
         width: 560; height: panel.height + 40;
-        opacity: 0.7
+        opacity: 0.85
         Rectangle {
             id: panel
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
@@ -138,7 +138,7 @@ B.AppWithFloating {
                             readonly property var chapter: parent.chapter
                             readonly property bool emph: hovered || pressed
                             width: 8; height: 10
-                            x: -width * 0.5; z: emph ? 2 : -1
+                            x: -width * 0.5; z: emph ? 1e10 : -1
                             y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0)
                             icon.source: emph ? "marker-filled.png" : "marker.png"
                             tooltip: chapter.name; delay: 0

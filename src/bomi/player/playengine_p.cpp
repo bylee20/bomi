@@ -386,38 +386,31 @@ auto PlayEngine::Data::observe() -> void
     observeTime("avsync", avSync, &PlayEngine::avSyncChanged);
     observe("seekable", seekable, &PlayEngine::seekableChanged);
 
-    auto updateChapter = [=] (int n) {
-        info.chapter.invalidate();
-        for (auto chapter : info.chapters) {
-            if (chapter->number() == n) {
-                info.chapter.copyFrom(chapter);
-                break;
-            }
-        }
-        emit p->chapterChanged();
-    };
+
     observe("chapter-list", [=] () {
         const auto array = getmpv<QVariant>("chapter-list").toList();
-        QVector<EditionChapterObject*> chapters(array.size());
+        QVector<ChapterData> data(array.size());
         for (int i=0; i<array.size(); ++i) {
             const auto map = array[i].toMap();
-            auto chapter = chapters[i] = new EditionChapterObject;
-            chapter->moveToThread(qApp->thread());
-            chapter->m.number = i;
-            chapter->m.time = s2ms(map[u"time"_q].toDouble());
-            chapter->m.name = map[u"title"_q].toString();
-            chapter->m.rate = p->rate(chapter->m.time);
-            if (chapter->m.name.isEmpty())
-                chapter->m.name = _MSecToString(chapter->m.time, u"hh:mm:ss.zzz"_q);
+            data[i].number = i;
+            data[i].time = s2ms(map[u"time"_q].toDouble());
+            data[i].name = map[u"title"_q].toString();
+            if (data[i].name.isEmpty())
+                data[i].name = _MSecToString(data[i].time, u"hh:mm:ss.zzz"_q);
         }
-        return chapters;
+        return data;
     }, [=] (QEvent *event) {
-        qDeleteAll(info.chapters);
-        info.chapters = _MoveData<QVector<EditionChapterObject*>>(event);
+        auto data = _MoveData<QVector<ChapterData>>(event);
+        info.chapters.resize(data.size());
+        for (int i = 0; i < data.size(); ++i) {
+            if (!info.chapters[i].data())
+                info.chapters[i]  = ChapterPtr::create();
+            info.chapters[i]->set(data[i]);
+        }
         emit p->chaptersChanged();
         updateChapter(getmpv<int>("chapter"));
     });
-    observeType<int>("chapter", updateChapter);
+    observeType<int>("chapter", [=] (int n) { updateChapter(n); });
     observe("track-list", [=] () {
         return toTracks(getmpv<QVariant>("track-list"));
     }, [=] (QEvent *event) {
@@ -585,22 +578,17 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         const char *listprop = disc ? "disc-titles" : "editions";
         const char *itemprop = disc ? "disc-title"  : "edition";
         const int list = getmpv<int>(listprop);
-        QVector<EditionChapterObject*> editions(list);
+        QVector<EditionData> editions(list);
         auto name = disc ? tr("Title %1") : tr("Edition %1");
         for (int i = 0; i < list; ++i) {
-            auto edition = editions[i] = new EditionChapterObject;
-            edition->moveToThread(qApp->thread());
-            edition->m.number = i;
-            edition->m.name = name.arg(i+1);
+            editions[i].number = i;
+            editions[i].name = name.arg(i+1);
         }
-        EditionChapterObject *edition = nullptr;
+        EditionData edition;
         if (list > 0) {
             const int item = getmpv<int>(itemprop);
-            if (0 <= item && item < list) {
-                edition = new EditionChapterObject;
-                edition->moveToThread(qApp->thread());
-                edition->copyFrom(editions[item]);
-            }
+            if (0 <= item && item < list)
+                edition = editions[item];
         }
 
         auto strs = toTracks(getmpv<QVariant>("track-list"));
@@ -672,13 +660,15 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         break;
     } case StartPlayback: {
         clearTimings();
-        EditionChapterObject *edition;
-        _TakeData(event, info.editions, edition);
-        if (edition) {
-            info.edition.copyFrom(edition);
-            delete edition;
-        } else
-            info.edition.invalidate();
+        QVector<EditionData> editions; EditionData edition;
+        _TakeData(event, editions, edition);
+        info.editions.resize(editions.size());
+        for (int i = 0; i < info.editions.size(); ++i) {
+            if (!info.editions[i])
+                info.editions[i] = EditionPtr::create();
+            info.editions[i]->set(editions[i]);
+        }
+        info.edition.set(edition);
         emit p->editionsChanged();
         emit p->editionChanged();
         emit p->started(params.mrl());

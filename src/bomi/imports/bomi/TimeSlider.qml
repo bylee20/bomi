@@ -11,7 +11,9 @@ Slider {
         id: dummy;
         Item {
             property var marker
-            property QtObject chapter
+            property int idx: -1
+            property var chapter: d.engine.chapters[idx]
+            x: chapter ? seeker.width * chapter.rate : 0
         }
     }
 
@@ -35,8 +37,7 @@ Slider {
             var chapters = engine.chapters
             for (i=0; i<chapters.length; ++i) {
                 var chapter = chapters[i]
-                var wrap = dummy.createObject(seeker, { "chapter": chapter })
-                wrap.x = Qt.binding(function () { return seeker.width * chapter.rate; });
+                var wrap = dummy.createObject(seeker, { "idx" : i })
                 wrap.marker = style.marker.createObject(wrap, { "parent" : wrap })
                 markers.push(wrap)
             }

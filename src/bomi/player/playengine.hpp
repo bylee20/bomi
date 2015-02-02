@@ -94,10 +94,10 @@ public:
     auto state() const -> State;
     auto load(const Mrl &mrl) -> void;
     auto setMrl(const Mrl &mrl) -> void;
-    auto editions() const -> const QVector<EditionChapterObject*>&;
-    auto edition() const -> EditionChapterObject*;
-    auto chapter() const -> EditionChapterObject*;
-    auto chapters() const -> const QVector<EditionChapterObject*>&;
+    auto editions() const -> const QVector<EditionPtr>&;
+    auto edition() const -> EditionObject*;
+    auto chapter() const -> ChapterObject*;
+    auto chapters() const -> const QVector<ChapterPtr>&;
     auto seekEdition(int number, int from = 0) -> void;
     auto seekChapter(int number) -> void;
 
@@ -187,6 +187,7 @@ public:
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterList() const -> QQmlListProperty<EditionChapterObject>;
     auto editionList() const -> QQmlListProperty<EditionChapterObject>;
+    Q_INVOKABLE EditionChapterObject* getChapter(int idx) const;
     auto setYle(YleDL *yle) -> void;
     auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;

@@ -9,9 +9,11 @@ PlayEngine::PlayEngine()
 
     _Debug("Create audio/video plugins");
     d->ac = new AudioController(this);
-    d->vr = new VideoRenderer;
     d->vfilter = new VideoFilter;
+
+
     d->sr = new SubtitleRenderer;
+    d->vr = new VideoRenderer;
     d->vr->setOverlay(d->sr);
     d->vr->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
         { d->renderVideoFrame(fbo); });
@@ -24,18 +26,20 @@ PlayEngine::PlayEngine()
     connect(this, &PlayEngine::durationChanged, this, [=] () {
         if (_Change(d->duration_s, d->duration/1000))
             emit duration_sChanged();
-        for (auto chapter : d->info.chapters)
-            chapter->setRate(rate(chapter->time()));
-        d->info.chapter.setRate(rate(d->info.chapter.time()));
+        d->updateChapter(d->getmpv<int>("chapter"));
     });
-    connect(this, &PlayEngine::beginChanged, this,
-            [=] () { if (_Change(d->begin_s, d->begin/1000)) emit begin_sChanged(); });
+    connect(this, &PlayEngine::beginChanged, this, [=] () {
+        if (_Change(d->begin_s, d->begin/1000))
+            emit begin_sChanged();
+        d->updateChapter(d->getmpv<int>("chapter"));
+    });
     connect(this, &PlayEngine::endChanged, this,
             [=] () { if (_Change(d->end_s, end()/1000)) emit end_sChanged(); });
 
+
+
     connect(&d->params, &MrlState::sub_sync_changed,
             this, [=] (int ms) { d->sr->setDelay(ms); });
-
     connect(&d->params, &MrlState::video_tracks_changed, this, [=] (StreamList list) {
         if (_Change(d->hasVideo, !list.isEmpty()))
             emit hasVideoChanged();
@@ -182,8 +186,6 @@ PlayEngine::~PlayEngine()
     d->params.m_mutex = nullptr;
     d->initialized = false;
     mpv_terminate_destroy(d->handle);
-    qDeleteAll(d->info.chapters);
-    qDeleteAll(d->info.editions);
     delete d->ac;
     d->vr->setOverlay(nullptr);
     delete d->sr;
@@ -256,12 +258,12 @@ auto PlayEngine::edition() const -> EditionChapterObject*
     return &d->info.edition;
 }
 
-auto PlayEngine::editions() const -> const QVector<EditionChapterObject*>&
+auto PlayEngine::editions() const -> const QVector<EditionPtr>&
 {
     return d->info.editions;
 }
 
-auto PlayEngine::chapters() const -> const QVector<EditionChapterObject*>&
+auto PlayEngine::chapters() const -> const QVector<ChapterPtr>&
 {
     return d->info.chapters;
 }
@@ -977,14 +979,32 @@ auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
     d->ac->setEqualizer(eq);
 }
 
+auto PlayEngine::getChapter(int idx) const -> EditionChapterObject*
+{
+    Q_ASSERT(d->info.chapters.value(idx));
+    if (_InRange0(idx, d->info.chapters.size()))
+        return d->info.chapters[idx].data();
+    return chapter();
+}
+
+template<class L, class T = EditionChapterObject>
+SIA makePtrList(const QObject *o, const L *list) -> QQmlListProperty<T>
+{
+    auto at = [] (QQmlListProperty<T> *p, int index) -> T*
+        { return static_cast<const L*>(p->data)->value(index).data(); };
+    auto count = [] (QQmlListProperty<T> *p) -> int
+        { return static_cast<const L*>(p->data)->size(); };
+    return QQmlListProperty<T>(const_cast<QObject*>(o), const_cast<L*>(list), count, at);
+}
+
 auto PlayEngine::editionList() const -> QQmlListProperty<EditionChapterObject>
 {
-    return _MakeQmlList(this, &d->info.editions);
+    return makePtrList(this, &d->info.editions);
 }
 
 auto PlayEngine::chapterList() const -> QQmlListProperty<EditionChapterObject>
 {
-    return _MakeQmlList(this, &d->info.chapters);
+    return makePtrList(this, &d->info.chapters);
 }
 
 auto PlayEngine::time_s() const -> int

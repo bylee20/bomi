@@ -51,6 +51,10 @@ class EditionChapterObject : public QObject {
     Q_PROPERTY(QString name READ name CONSTANT FINAL)
     Q_PROPERTY(qreal rate READ rate NOTIFY rateChanged)
 public:
+    struct Data { int number = -2, time = 0; qreal rate = 0.0; QString name; };
+    EditionChapterObject() = default;
+    EditionChapterObject(const Data &d): m(d) { }
+    EditionChapterObject(Data &&d): m(std::move(d)) { }
     auto number() const -> int { return m.number; }
     auto time() const -> int { return m.time; }
     auto name() const -> QString { return m.name; }
@@ -59,16 +63,20 @@ public:
 signals:
     void rateChanged();
 private:
-    auto setRate(qreal rate) -> void
-        { if (_Change(m.rate, rate)) emit rateChanged(); }
-    auto copyFrom(const EditionChapterObject *rhs) -> void { m = rhs->m; }
-    auto invalidate() -> void { setRate(0); m = M(); }
+    auto set(const Data &d) -> void { m = d; emit rateChanged(); }
+    auto setRate(qreal rate) -> void;
+    auto invalidate() -> void { setRate(0); m = Data(); }
     friend class PlayEngine;
-    struct M {
-        int number = -2, time = 0;
-        qreal rate = 0.0;
-        QString name;
-    }; M m;
+    Data m;
 };
+
+using EditionObject = EditionChapterObject;
+using ChapterObject = EditionChapterObject;
+using EditionData = EditionObject::Data;
+using ChapterData = ChapterObject::Data;
+using EditionChapterData = EditionChapterObject::Data;
+using EditionPtr = QSharedPointer<EditionObject>;
+using ChapterPtr = QSharedPointer<ChapterObject>;
+using EditionChapterPtr = QSharedPointer<EditionChapterObject>;
 
 #endif // MEDIAMISC_HPP

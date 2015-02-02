@@ -69,10 +69,10 @@ B.AppWithFloating {
                     markerStyle: B.ChapterMarkerStyle {
                         marker: Button {
                             readonly property var chapter: parent.chapter
-                            size: 6; x: -3; y: 0
-                            iconName: "marker"; tooltip: parent.chapter.name; delay: 0
+                            size: 6; x: -3; y: 0; z: hovered ? 1e10 : -1
+                            iconName: "marker"; tooltip: chapter.name; delay: 0
                             acceptedButtons: Qt.LeftButton
-                            onClicked: control.time = parent.chapter.time
+                            onClicked: control.time = chapter.time
                         }
                     }
                 }

@@ -126,7 +126,7 @@ struct PlayEngine::Data {
         VideoInfoObject video;
         AudioInfoObject audio;
         SubtitleInfoObject subtitle;
-        QVector<EditionChapterObject*> chapters, editions;
+        QVector<EditionChapterPtr> chapters, editions;
         EditionChapterObject chapter, edition;
     } info;
 
@@ -187,6 +187,16 @@ struct PlayEngine::Data {
     auto updateState(State s) -> void;
     auto setWaitings(Waitings w, bool set) -> void;
     auto clearTimings() -> void;
+
+    auto updateChapter(int n) {
+        info.chapter.invalidate();
+        for (auto chapter : info.chapters) {
+            chapter->setRate(p->rate(chapter->time()));
+            if (chapter->number() == n)
+                info.chapter.set(chapter->m);
+        }
+        emit p->chapterChanged();
+    }
 
     auto setInclusiveSubtitles(const QVector<SubComp> &loaded) -> void
         { setInclusiveSubtitles(&params, loaded); }
