@@ -111,6 +111,7 @@ auto _JsonToQObject(const QJsonObject &json, QObject *obj) -> bool
         QT_CASE(QSizeF)
         QT_CASE(QColor)
         QT_CASE(QStringList)
+        QT_CASE(QDateTime)
 #undef QT_CASE
         case QVariant::UserType: {
             const auto user = p.userType();
@@ -134,6 +135,12 @@ auto _JsonToQObject(const QJsonObject &json, QObject *obj) -> bool
             USER_CASE(AudioNormalizerOption)
             USER_CASE(Shortcuts)
             USER_CASE(Mrl)
+            USER_CASE(VideoEffects)
+            USER_CASE(StreamList)
+            USER_CASE(AudioEqualizer)
+            USER_CASE(StreamList)
+            USER_CASE(StreamList)
+            USER_CASE(StreamList)
 #undef USER_CASE
             else {
                 qDebug("USER_CASE(%s)", p.typeName());
@@ -174,12 +181,13 @@ auto _JsonFromQObject(const QObject *obj) -> QJsonObject
 #define QT_CASE(type) \
         case QMetaType::type: { value = _ToJson(var.value<type>()); break; }
         QT_CASE(QString)
-            QT_CASE(QPoint)
-            QT_CASE(QPointF)
-            QT_CASE(QSize)
-            QT_CASE(QSizeF)
-            QT_CASE(QColor)
-            QT_CASE(QStringList)
+        QT_CASE(QPoint)
+        QT_CASE(QPointF)
+        QT_CASE(QSize)
+        QT_CASE(QSizeF)
+        QT_CASE(QColor)
+        QT_CASE(QStringList)
+        QT_CASE(QDateTime)
 #undef QT_CASE
         case QVariant::UserType: {
             const auto user = var.userType();
@@ -202,6 +210,12 @@ auto _JsonFromQObject(const QObject *obj) -> QJsonObject
             USER_CASE(AudioNormalizerOption)
             USER_CASE(Shortcuts)
             USER_CASE(Mrl)
+            USER_CASE(VideoEffects)
+            USER_CASE(StreamList)
+            USER_CASE(AudioEqualizer)
+            USER_CASE(StreamList)
+            USER_CASE(StreamList)
+            USER_CASE(StreamList)
             else {
                 qDebug("USER_CASE(%s)", var.typeName());
                 continue;

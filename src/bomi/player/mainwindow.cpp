@@ -85,8 +85,8 @@ MainWindow::MainWindow(QWidget *parent)
         d->setOpen(d->recent.lastMrl());
     }
     d->updateRecentActions(d->recent.openList());
-
     d->winState = d->prevWinState = windowState();
+    d->e.restore(&d->as.state);
 
     connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
     connect(&cApp, &App::saveStateRequest, [this] (QSessionManager &session) {

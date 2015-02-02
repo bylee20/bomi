@@ -10,6 +10,8 @@ class AppState : public QObject {
 public:
     AppState();
 
+    MrlState state;
+
     QPointF win_pos;
     QSize win_size;
     // tool state

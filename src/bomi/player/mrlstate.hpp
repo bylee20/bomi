@@ -118,10 +118,10 @@ public:
     auto select(StreamType type, int id) -> void;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
+    auto copyFrom(const MrlState *state) -> void;
     static auto defaultProperties() -> QStringList;
     static auto restorableProperties() -> QVector<PropertyInfo>;
 private:
-    auto copyFrom(const MrlState *state) -> void;
     auto notifyAll() const -> void;
     template<class T>
     auto __set_dummy(const T &) { }

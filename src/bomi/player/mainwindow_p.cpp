@@ -261,6 +261,7 @@ auto MainWindow::Data::commitData() -> void
         as.history_visible = history.isVisible();
         if (subFindDlg)
             as.sub_find_lang_code = subFindDlg->selectedLangCode();
+        as.state.copyFrom(e.params());
         as.save();
         e.waitUntilTerminated();
         cApp.processEvents();
