@@ -43,7 +43,6 @@ class PrefDialog;                       class SubtitleView;
 class TrayIcon;                         class AudioEqualizerDialog;
 
 struct MainWindow::Data {
-    Data(MainWindow *p);
     template<class T>
     SIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
 
@@ -66,14 +65,14 @@ struct MainWindow::Data {
     bool moving = false, changingSub = false;
     bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
     bool stateChanging = false, loading = false, sgInit = false;
-    QTimer waiter, hider, initializer;
+    QTimer waiter, hider;
     ABRepeatChecker ab;
     QMenu contextMenu;
     PrefDialog *prefDlg = nullptr;
     SubtitleFindDialog *subFindDlg = nullptr;
     SnapshotDialog *snapshot = nullptr;
     OpenGLLogger glLogger{"SG"};
-    SubtitleView *subtitleView = nullptr;
+    SubtitleView *sview = nullptr;
     PlaylistModel playlist;
     QUndoStack *undo = nullptr;
     Downloader downloader;
@@ -123,7 +122,6 @@ struct MainWindow::Data {
     auto cache(const Mrl &mrl) -> int;
     auto initEngine() -> void;
     auto initItems() -> void;
-    auto initTimers() -> void;
     auto connectMenus() -> void;
     auto setVideoSize(const QSize &video) -> void;
     auto load(const Mrl &mrl, bool play = true) -> void;
@@ -144,11 +142,6 @@ struct MainWindow::Data {
     auto checkWindowState(Qt::WindowStates prev) -> void;
     auto updateWaitingMessage() -> void;
 
-    template<class List>
-    auto updateListMenu(Menu &menu, const List &list,
-                        int current, const QString &group = QString()) -> void;
-    template<class F>
-    auto plugCurrentStreamActions(Menu *menu, F f, QString g = QString()) -> void;
     template<class T, class Func>
     auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*
     {

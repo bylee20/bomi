@@ -12,24 +12,47 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWidget *parent)
-    : QWidget(parent, Qt::Window)
-    , d(new Data(this))
+    : QWidget(parent, Qt::Window), d(new Data)
 {
+    d->p = this;
+    d->view = new MainQuickView(this);
+    d->desktop = cApp.desktop();
+    d->preferences.initialize();
+    d->preferences.load();
+
     AppObject::setEngine(&d->e);
     AppObject::setHistory(&d->history);
     AppObject::setPlaylist(&d->playlist);
     AppObject::setDownloader(&d->downloader);
     AppObject::setTheme(&d->theme);
     AppObject::setWindow(this);
-    d->playlist.setDownloader(&d->downloader);
 
+    d->playlist.setDownloader(&d->downloader);
     d->e.setHistory(&d->history);
     d->e.setYouTube(&d->youtube);
     d->e.setYle(&d->yle);
     d->e.run();
+
+    auto format = d->view->requestedFormat();
+    if (OpenGLLogger::isAvailable())
+        format.setOption(QSurfaceFormat::DebugContext);
+    d->view->setFormat(format);
+    d->view->setPersistentOpenGLContext(true);
+    d->view->setPersistentSceneGraph(true);
+
+    auto widget = createWindowContainer(d->view, this);
+    auto layout = new QVBoxLayout;
+    layout->addWidget(widget);
+    layout->setMargin(0);
+    setLayout(layout);
+    setFocusProxy(widget);
+    setFocus();
+    setAcceptDrops(true);
+    resize(400, 300);
+    setMinimumSize(QSize(400, 300));
+
     d->initWidget();
     d->initContextMenu();
-    d->initTimers();
     d->initItems();
     d->initEngine();
 
@@ -95,6 +118,8 @@ MainWindow::MainWindow(QWidget *parent)
         });
         d->tray->setVisible(d->preferences.enable_system_tray);
     }
+
+    QTimer::singleShot(1, this, [=] () { d->applyPref(); cApp.runCommands(); });
 }
 
 MainWindow::~MainWindow() {

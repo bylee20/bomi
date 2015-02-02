@@ -78,6 +78,8 @@ public:
     PlayEngine();
     ~PlayEngine();
 
+    auto restore(const MrlState *params) -> void;
+
     auto isWaiting() const -> bool;
     auto waiting() const -> Waiting;
     auto time() const -> int;
@@ -105,6 +107,7 @@ public:
     auto addAudioFiles(const QStringList &files) -> void;
     auto clearAudioFiles() -> void;
 
+    auto subtitleModels() const -> QVector<SubCompModel*>;
     auto setSubtitleDisplay(SubtitleDisplay sd) -> void;
     auto setSubtitlePosition(int pos) -> void;
     auto setSubtitleAlignment(VerticalAlignment a) -> void;

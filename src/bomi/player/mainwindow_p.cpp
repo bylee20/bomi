@@ -14,31 +14,6 @@
 #include "dialog/subtitlefinddialog.hpp"
 #include "avinfoobject.hpp"
 
-MainWindow::Data::Data(MainWindow *p)
-    : p(p)
-{
-    preferences.initialize();
-    preferences.load();
-}
-
-template<class List>
-auto MainWindow::Data::updateListMenu(Menu &menu, const List &list,
-                                      int current, const QString &group) -> void
-{
-    if (group.isEmpty())
-        menu.setEnabled(!list.isEmpty());
-    if (!list.isEmpty()) {
-        menu.g(group)->clear();
-        for (auto it = list.begin(); it != list.end(); ++it) {
-            auto act = menu.addActionNoKey(it->name(), true, group);
-            act->setData(it->id());
-            if (current == it->id())
-                act->setChecked(true);
-        }
-    } else if (!group.isEmpty()) // partial in menu
-        menu.g(group)->clear();
-}
-
 auto MainWindow::Data::initContextMenu() -> void
 {
     auto addContextMenu = [this] (Menu &menu) { contextMenu.addMenu(&menu); };
@@ -73,28 +48,6 @@ auto MainWindow::Data::initContextMenu() -> void
 
 auto MainWindow::Data::initWidget() -> void
 {
-    view = new MainQuickView(p);
-    auto format = view->requestedFormat();
-    if (OpenGLLogger::isAvailable())
-        format.setOption(QSurfaceFormat::DebugContext);
-    view->setFormat(format);
-    view->setPersistentOpenGLContext(true);
-    view->setPersistentSceneGraph(true);
-
-    auto widget = createWindowContainer(view, p);
-    auto l = new QVBoxLayout;
-    l->addWidget(widget);
-    l->setMargin(0);
-    p->setLayout(l);
-    p->setFocusProxy(widget);
-    p->setFocus();
-//        widget->setFocus();
-
-    subtitleView = new SubtitleView(p);
-    p->setAcceptDrops(true);
-    p->resize(400, 300);
-    p->setMinimumSize(QSize(400, 300));
-
     connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
         auto context = view->openglContext();
         if (cApp.isOpenGLDebugLoggerRequested())
@@ -109,7 +62,7 @@ auto MainWindow::Data::initWidget() -> void
         glLogger.finalize(context);
         e.finalizeGL(context);
     }, Qt::DirectConnection);
-    desktop = cApp.desktop();
+
     auto reset = [this] () {
         if (!desktop->isVirtualDesktop())
             virtualDesktopSize = QSize();
@@ -121,18 +74,16 @@ auto MainWindow::Data::initWidget() -> void
             virtualDesktopSize = rect.size();
         }
     };
-    connect(desktop, &QDesktopWidget::resized, reset);
-    connect(desktop, &QDesktopWidget::screenCountChanged, reset);
-    connect(desktop, &QDesktopWidget::workAreaResized, reset);
+    connect(desktop, &QDesktopWidget::resized, p, reset);
+    connect(desktop, &QDesktopWidget::screenCountChanged, p, reset);
+    connect(desktop, &QDesktopWidget::workAreaResized, p, reset);
     reset();
 }
 
 auto MainWindow::Data::initEngine() -> void
 {
-    connect(&e, &PlayEngine::mrlChanged,
-            p, [=] (const Mrl &mrl) { updateMrl(mrl); });
-    connect(&e, &PlayEngine::stateChanged, p,
-            [this] (PlayEngine::State state) {
+    connect(&e, &PlayEngine::mrlChanged, p, [=] (const Mrl &mrl) { updateMrl(mrl); });
+    connect(&e, &PlayEngine::stateChanged, p, [this] (PlayEngine::State state) {
         stateChanging = true;
         if (state == PlayEngine::Error) {
             waiter.stop();
@@ -149,49 +100,29 @@ auto MainWindow::Data::initEngine() -> void
         updateStaysOnTop();
         stateChanging = false;
     });
-    connect(&e, &PlayEngine::waitingChanged, p, [=] (auto w) {
-        if (w) {
-            waiter.start();
-        } else {
-            waiter.stop();
-            this->showMessageBox(QString());
-        }
+    connect(&e, &PlayEngine::waitingChanged, p, [=] (auto waiting) {
+        if (waiting) { waiter.start(); }
+        else { waiter.stop(); this->showMessageBox(QString()); }
     });
-    connect(&e, &PlayEngine::tick,
-            p, [=] (int time) { if (ab.check(time)) e.seek(ab.a()); });
-
+    connect(&e, &PlayEngine::tick, p, [=] (int time) { if (ab.check(time)) e.seek(ab.a()); });
     connect(&e, &PlayEngine::started, p, [=] (const Mrl &mrl) { setOpen(mrl); });
     connect(&e, &PlayEngine::finished, p, [=] (const Mrl &/*mrl*/, bool eof) {
-        if (eof) {
-            const auto next = playlist.nextMrl();
-            if (!next.isEmpty())
-                load(next, true);
-        }
+        if (!eof)
+            return;
+        const auto next = playlist.nextMrl();
+        if (next.isEmpty()) {
+            if (menu(u"tool"_q)[u"auto-exit"_q]->isChecked())
+                p->exit();
+            if (menu(u"tool"_q)[u"auto-shutdown"_q]->isChecked())
+                cApp.shutdown();
+        } else
+            load(next, true);
     });
     connect(e.video()->renderer(), &VideoFormatInfoObject::sizeChanged,
             p, [this] (const QSize &size) {
         if (pref().fit_to_video && !size.isEmpty())
             setVideoSize(size);
     });
-}
-
-auto MainWindow::Data::initItems() -> void
-{
-    connect(&recent, &RecentInfo::openListChanged,
-            p, [=] (const QList<Mrl> &list) { updateRecentActions(list); });
-    connect(&hider, &QTimer::timeout,
-            p, [this] () { view->setCursorVisible(false); });
-    connect(&history, &HistoryModel::playRequested,
-            p, [this] (const Mrl &mrl) { openMrl(mrl); });
-    connect(&playlist, &PlaylistModel::playRequested,
-            p, [this] (int row) { openMrl(playlist.at(row)); });
-    connect(&playlist, &PlaylistModel::finished, p, [this] () {
-        if (menu(u"tool"_q)[u"auto-exit"_q]->isChecked()) p->exit();
-        if (menu(u"tool"_q)[u"auto-shutdown"_q]->isChecked()) cApp.shutdown();
-    });
-    connect(&e, &PlayEngine::subtitleModelsChanged,
-            subtitleView, &SubtitleView::setModels);
-
     auto showSize = [this] {
         const auto num = [] (qreal n) { return _N(qRound(n)); };
         const auto w = num(e.screen()->width()), h = num(e.screen()->height());
@@ -201,18 +132,21 @@ auto MainWindow::Data::initItems() -> void
     connect(e.screen(), &QQuickItem::heightChanged, p, showSize);
 }
 
-auto MainWindow::Data::initTimers() -> void
+auto MainWindow::Data::initItems() -> void
 {
+    connect(&recent, &RecentInfo::openListChanged,
+            p, [=] (const QList<Mrl> &list) { updateRecentActions(list); });
+    connect(&history, &HistoryModel::playRequested,
+            p, [this] (const Mrl &mrl) { openMrl(mrl); });
+    connect(&playlist, &PlaylistModel::playRequested,
+            p, [this] (int row) { openMrl(playlist.at(row)); });
+
     hider.setSingleShot(true);
+    connect(&hider, &QTimer::timeout, p, [this] () { view->setCursorVisible(false); });
 
     waiter.setInterval(500);
     waiter.setSingleShot(true);
     connect(&waiter, &QTimer::timeout, p, [=] () { updateWaitingMessage(); });
-
-    initializer.setSingleShot(true);
-    connect(&initializer, &QTimer::timeout,
-            p, [=] () { applyPref(); cApp.runCommands(); });
-    initializer.start(1);
 }
 
 auto MainWindow::Data::updateWaitingMessage() -> void
@@ -339,11 +273,13 @@ auto MainWindow::Data::showTimeLine() -> void
     if (player && pref().osd_theme.timeline.show_on_seeking)
         QMetaObject::invokeMethod(player, "showTimeLine");
 }
+
 auto MainWindow::Data::showMessageBox(const QVariant &msg) -> void
 {
     if (player)
         QMetaObject::invokeMethod(player, "showMessageBox", Q_ARG(QVariant, msg));
 }
+
 auto MainWindow::Data::showOSD(const QVariant &msg) -> void
 {
     if (player)

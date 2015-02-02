@@ -1098,3 +1098,16 @@ auto PlayEngine::clearSubtitleFiles() -> void
     }
     d->setInclusiveSubtitles(QVector<SubComp>());
 }
+
+auto PlayEngine::restore(const MrlState *params) -> void
+{
+    QMutexLocker l(&d->mutex);
+    d->params.m_mutex = nullptr;
+    d->params.copyFrom(params);
+    d->params.m_mutex = &d->mutex;
+}
+
+auto PlayEngine::subtitleModels() const -> QVector<SubCompModel*>
+{
+    return d->sr->models();
+}
