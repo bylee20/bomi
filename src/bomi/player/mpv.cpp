@@ -211,6 +211,8 @@ auto Mpv::run() -> void
             d->quit = true;
             break;
         default: {
+            if (ev->event_id >= d->events.size())
+                break;
             if (auto &proc = d->events[ev->event_id])
                 proc(ev);
         }}
