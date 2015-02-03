@@ -40,6 +40,8 @@ public:
     auto toString() const -> QString;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
+    static auto fromJson(const QJsonObject &json) -> VideoColor
+        { VideoColor c; c.setFromJson(json); return c; }
     static auto fromString(const QString &str) -> VideoColor;
     static auto fromPacked(qint64 packed) -> VideoColor;
     static auto getType(const char *name) -> Type;

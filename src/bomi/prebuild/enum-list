@@ -198,13 +198,13 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -ClearAndAppend[-Clear the playlist and append the open media to the playlist-]
 -NewPlaylist[-Clear the playlist and generate new playlist-]
 
-+SubtitleAutoload
--Matched[-Subtitles which have the same name as that of playing file-]
--Contain[-Subtitles whose names contain the name of playing file-]
--Folder[-All subtitles in the folder where the playing file is located-]
++AutoloadMode
+-Matched[-Files of which names match playing file name-]
+-Contain[-Files of which names contain playing file name-]
+-Folder[-All files in the matched folders-]
 #-None-Do not load any other subtitles
 
-+SubtitleAutoselect
++AutoselectMode
 -Matched[-Subtitle which has the same name as that of playing file-]
 -First[-First subtitle from loaded ones-]
 -All[-All loaded subtitles-]

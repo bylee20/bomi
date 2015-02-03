@@ -4,6 +4,7 @@
 class PlayEngine;                       class HistoryModel;
 class PlaylistModel;                    class TopLevelItem;
 class Downloader;                       class ThemeObject;
+class WindowObject;                     class MainWindow;
 
 class AppObject : public QObject {
     Q_OBJECT
@@ -13,6 +14,7 @@ class AppObject : public QObject {
     Q_PROPERTY(TopLevelItem *topLevelItem READ topLevelItem CONSTANT FINAL)
     Q_PROPERTY(Downloader *download READ downloader CONSTANT FINAL)
     Q_PROPERTY(ThemeObject *theme READ theme CONSTANT FINAL)
+    Q_PROPERTY(WindowObject *window READ window CONSTANT FINAL)
 public:
     PlayEngine *engine() const { return s.engine; }
     HistoryModel *history() const { return s.history; }
@@ -20,12 +22,15 @@ public:
     TopLevelItem *topLevelItem() const { return s.top; }
     Downloader *downloader() const { return s.down; }
     ThemeObject *theme() const { return s.theme; }
+    WindowObject *window() { return s.window; }
+    Q_INVOKABLE QString description(const QString &actionId);
     static auto setTheme(ThemeObject *theme) -> void { s.theme = theme; }
     static auto setEngine(PlayEngine *engine) -> void { s.engine = engine; }
     static auto setHistory(HistoryModel *history) -> void { s.history = history; }
     static auto setPlaylist(PlaylistModel *pl) -> void { s.playlist = pl; }
     static auto setTopLevelItem(TopLevelItem *top) -> void { s.top = top; }
     static auto setDownloader(Downloader *down) -> void { s.down = down; }
+    static auto setWindow(MainWindow *window) -> void;
 private:
     struct StaticData {
         PlayEngine *engine = nullptr;
@@ -34,6 +39,7 @@ private:
         TopLevelItem *top = nullptr;
         Downloader *down = nullptr;
         ThemeObject *theme = nullptr;
+        WindowObject *window = nullptr;
     };
     static StaticData s;
 };

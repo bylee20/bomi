@@ -9,12 +9,10 @@ auto reg_playlist_model() -> void {
 
 PlaylistModel::PlaylistModel(QObject *parent)
 : Super(parent) {
-    connect(this, &PlaylistModel::modelReset,
-            this, &PlaylistModel::contentWidthChanged);
-    connect(this, &PlaylistModel::rowsChanged,
-            this, &PlaylistModel::countChanged);
-    connect(this, &PlaylistModel::specialRowChanged,
-            this, &PlaylistModel::loadedChanged);
+    connect(this, &PlaylistModel::modelReset, this, &PlaylistModel::contentWidthChanged);
+    connect(this, &PlaylistModel::rowsChanged, this, &PlaylistModel::countChanged);
+    connect(this, &PlaylistModel::specialRowChanged, this, &PlaylistModel::loadedChanged);
+    connect(this, &PlaylistModel::loadedChanged, this, &PlaylistModel::nextChanged);
 }
 
 PlaylistModel::~PlaylistModel() {}
@@ -179,4 +177,12 @@ auto PlaylistModel::open(const Mrl &mrl, const QString &enc) -> void
         m_enc = enc;
         m_downloader->start(mrl.toString());
     }
+}
+
+auto PlaylistModel::checkNextMrl() const -> Mrl
+{
+    auto mrl = nextMrl();
+    if (mrl.isEmpty())
+        emit finished();
+    return mrl;
 }

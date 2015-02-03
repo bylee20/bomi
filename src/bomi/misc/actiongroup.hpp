@@ -10,6 +10,8 @@ public:
     auto trigger(const QVariant &data) -> void;
     template<class T>
     auto trigger(const T &t) -> void { trigger(QVariant::fromValue<T>(t)); }
+    template<class T>
+    auto setChecked(const T &t) -> void { setChecked(QVariant::fromValue<T>(t), true); }
     auto data() const -> QVariant;
     auto clear() -> void;
     auto find(const QVariant &data) const -> QAction*;

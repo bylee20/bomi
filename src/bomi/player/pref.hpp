@@ -9,10 +9,9 @@
 #include "video/deintcaps.hpp"
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/osdstyle.hpp"
-#include "misc/matchstring.hpp"
+#include "misc/autoloader.hpp"
 #include "enum/generateplaylist.hpp"
-#include "enum/subtitleautoload.hpp"
-#include "enum/subtitleautoselect.hpp"
+#include "enum/autoselectmode.hpp"
 #include "enum/audiodriver.hpp"
 #include "enum/clippingmethod.hpp"
 #include "enum/verticalalignment.hpp"
@@ -34,7 +33,7 @@ public: \
 private: \
     Q_PROPERTY(type name MEMBER name WRITE set_##name) \
     auto set_##name(const type &t) { name = t; }\
-    Q_INVOKABLE void init_##name##_info() { static const info_type info{this, PrefFieldIO<type>::toJson, PrefFieldIO<type>::fromJson, __VA_ARGS__}; } \
+    Q_INVOKABLE void init_##name##_info() { static const info_type info{this, __VA_ARGS__}; } \
 public:
 #define P0(type, var, def) P_(type, var, def, PrefFieldInfo, #var, PrefEditorProperty<type>::name)
 #define P1(type, var, def, editorProp) P_(type, var, def, PrefFieldInfo, #var, editorProp) // same editor name, custom editor property
@@ -53,10 +52,10 @@ public:
     P0(bool, pause_minimized, true)
     P0(bool, pause_video_only, true)
     P0(bool, remember_stopped, true)
-    P0(bool, ask_record_found, true)
+    P0(bool, resume_ignore_in_playlist, false)
     P0(bool, remember_image, false)
     P0(bool, enable_generate_playlist, true)
-    P0(QVector<QMetaProperty>, restore_properties, defaultRestoreProperties())
+    P0(QStringList, restore_properties, defaultRestoreProperties())
     P0(GeneratePlaylist, generate_playlist, GeneratePlaylist::Folder)
     P0(bool, hide_cursor, true)
     P0(bool, disable_screensaver, true)
@@ -72,10 +71,6 @@ public:
     P0(QStringList, sub_priority, {})
     P0(QStringList, audio_priority, {})
 
-//    P0(bool, show_osd_on_action, true)
-//    P0(bool, show_osd_on_resized, true)
-//    P0(bool, show_osd_timeline, true)
-//    P0(OsdStyle, osd_style, defaultOsdStyle())
     P0(OsdTheme, osd_theme, defaultOsdTheme())
     P0(PlaylistTheme, playlist_theme, {})
 
@@ -88,12 +83,11 @@ public:
 
     P0(ChannelLayoutMap, channel_manipulation, ChannelLayoutMap::default_())
 
-    P2(QList<MatchString>, sub_search_paths_v2, {}, "sub_search_paths")
-    P0(bool, sub_enable_autoload, true)
+    P0(Autoloader, sub_autoload_v2, defaultSubtitleAutoload())
+    P0(Autoloader, audio_autoload, defaultAutioAutoload())
     P0(bool, sub_enable_autoselect, true)
     P0(bool, sub_enc_autodetection, true)
-    P0(SubtitleAutoload, sub_autoload, SubtitleAutoload::Contain)
-    P0(SubtitleAutoselect, sub_autoselect, SubtitleAutoselect::Matched)
+    P0(AutoselectMode, sub_autoselect, AutoselectMode::Matched)
     P1(QString, sub_enc, defaultSubtitleEncoding(), "encoding")
     P1(QString, sub_ext, {}, "value")
     P0(int, sub_enc_accuracy, defaultSubtitleEncodingDetectionAccuracy())
@@ -156,8 +150,10 @@ public:
 
     static auto fields() -> const QVector<const PrefFieldInfo*>&;
 private:
+    static auto defaultSubtitleAutoload() -> Autoloader;
+    static auto defaultAutioAutoload() -> Autoloader;
     static auto defaultHwAccBackend() -> HwAcc::Type;
-    static auto defaultRestoreProperties() -> QVector<QMetaProperty>;
+    static auto defaultRestoreProperties() -> QStringList;
     static auto defaultOsdTheme() -> OsdTheme;
     static auto defaultSkinName() -> QString;
     static auto defaultSubtitleEncoding() -> QString;

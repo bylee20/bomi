@@ -177,7 +177,7 @@ struct Player::Data {
         map[u"mpris:length"_q] = 1000LL*(qint64)md.duration();
         map[u"xesam:url"_q] = md.mrl().toString();
         map[u"xesam:title"_q] = md.title().isEmpty()
-                ? engine->mediaInfo()->name() : md.title();
+                ? engine->media()->name() : md.title();
         if (!md.album().isEmpty())
             map[u"xesam:album"_q] = md.album();
         if (!md.artist().isEmpty())
@@ -211,8 +211,8 @@ Player::Player(QObject *parent)
         map[u"CanPause"_q] = map[u"CanPlay"_q] = state != PlayEngine::Error;
         sendPropertiesChanged(this, map);
     });
-    connect(d->engine, &PlayEngine::speedChanged, this, [this] (double speed) {
-        sendPropertiesChanged(this, "Rate", speed);
+    connect(d->engine, &PlayEngine::speedChanged, this, [this] () {
+        sendPropertiesChanged(this, "Rate", d->engine->speed());
     });
     auto checkNextPrevious = [this] () {
         QVariantMap map;
@@ -256,17 +256,17 @@ auto Player::rate() const -> double
 
 auto Player::setRate(double rate) -> void
 {
-    d->engine->setSpeed(rate);
+    d->engine->setSpeedPercent(rate * 100 + 0.5);
 }
 
 auto Player::isShuffled() const -> bool
 {
-    return false;
+    return d->playlist->isShuffled();
 }
 
-auto Player::setShuffled(bool /*s*/) -> void
+auto Player::setShuffled(bool s) -> void
 {
-
+    d->playlist->setShuffled(s);
 }
 
 auto Player::metaData() const -> QVariantMap
@@ -282,7 +282,7 @@ auto Player::volume() const -> double
 auto Player::setVolume(double volume) -> void
 {
     if (_Change(d->volume, qBound(0.0, volume, 1.0))) {
-        d->engine->setVolume(d->volume*100 + 0.5);
+        d->engine->setAudioVolume(d->volume*100 + 0.5);
         sendPropertiesChanged(this, "Volume", d->volume);
     }
 }

@@ -1,12 +1,12 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
-Cp.AppWithFloating {
+B.AppWithFloating {
     id: app
     name: "net.xylosper.bomi.skin.modern"
-    readonly property QtObject engine: Cp.App.engine
+    readonly property QtObject engine: B.App.engine
     Component {
         id: slider
         SliderStyle {
@@ -45,7 +45,7 @@ Cp.AppWithFloating {
             id: inner; width: parent.width-50; anchors.centerIn: parent; spacing: 5
             RowLayout {
                 id: texts; width: parent.width; height: 15; spacing: 5
-                Cp.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
+                B.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom; text.verticalAlignment: Text.AlignBottom }
                 Text {
                     id: name
                     Layout.alignment: Qt.AlignBottom; Layout.fillWidth: true
@@ -53,19 +53,19 @@ Cp.AppWithFloating {
                     color: "white"; font { bold: true; pixelSize: 12 }
                     horizontalAlignment: Text.AlignHCenter
                 }
-                Cp.TimeText { id: duration; msecs: engine.end; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
+                B.TimeText { id: duration; msecs: engine.end; Layout.alignment: Qt.AlignBottom; text.verticalAlignment: Text.AlignBottom }
             }
             RowLayout {
                 id: seekbarwrapper; width: parent.width; height: 10; spacing: 10
-                Cp.TimeSlider { id: seekbar; style: slider; Layout.fillWidth: true }
+                B.TimeSlider { id: seekbar; style: slider; Layout.fillWidth: true }
             }
             Item {
                 id: buttons; width: parent.width; height: 22
                 RowLayout {
                     height: parent.height*0.75; anchors.verticalCenter: parent.verticalCenter; spacing: 3
-                    Cp.Button {
+                    B.Button {
                         id: mute; checked: engine.muted; width: parent.height; height: parent.height
-                        icon: getStateIconName("volume"); action: "audio/volume/mute"
+                        icon.prefix: "volume"; action: "audio/volume/mute"
                         Item {
                             id: volume; anchors.fill: parent
                             visible: (!mute.checked && !(mute.hovered && mute.pressed))
@@ -84,28 +84,28 @@ Cp.AppWithFloating {
                             }
                         }
                     }
-                    Cp.VolumeSlider { id: volumebar; width: 70; style: slider }
+                    B.VolumeSlider { id: volumebar; width: 70; style: slider }
                 }
                 Row {
                     height: parent.height; spacing: 10; anchors.horizontalCenter: parent.horizontalCenter;
-                    Cp.Button {
+                    B.Button {
                         width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
-                        icon: getStateIconName("seek-backward"); action: "play/seek/backward2"
+                        icon.prefix: "seek-backward"; action: "play/seek/backward2"
                     }
-                    Cp.Button {
+                    B.Button {
                         id: pause; width: parent.height; height: width
-                        icon: getStateIconName(engine.running ? "pause" : "play"); action: "play/pause"
+                        icon.prefix: (engine.playing ? "pause" : "play"); action: "play/pause"
                     }
 
-                    Cp.Button {
+                    B.Button {
                         id: faster; width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
-                        icon: getStateIconName("seek-forward"); action: "play/seek/forward2"
+                        icon.prefix: "seek-forward"; action: "play/seek/forward2"
                     }
                 }
             }
         }
-        Cp.Button {
-            id: toggler; parent: checked ? seekbarwrapper : buttons; icon: getStateIconName("toggle")
+        B.Button {
+            id: toggler; parent: checked ? seekbarwrapper : buttons; icon.prefix: "toggle"
             width: 20; height: 10; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
             onClicked: checked = !checked
             states: State {
@@ -129,13 +129,13 @@ Cp.AppWithFloating {
         }
     }
     Component.onCompleted: {
-        Cp.Settings.open(app.name)
-        toggler.checked = Cp.Settings.getBool("toggled", false)
-        Cp.Settings.close()
+        B.Settings.open(app.name)
+        toggler.checked = B.Settings.getBool("toggled", false)
+        B.Settings.close()
     }
     Component.onDestruction: {
-        Cp.Settings.open(app.name)
-        Cp.Settings.set("toggled", toggler.checked)
-        Cp.Settings.close()
+        B.Settings.open(app.name)
+        B.Settings.set("toggled", toggler.checked)
+        B.Settings.close()
     }
 }

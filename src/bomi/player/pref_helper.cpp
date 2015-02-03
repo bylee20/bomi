@@ -3,8 +3,8 @@
 
 static QVector<const PrefFieldInfo*> s_list;
 
-PrefFieldInfo::PrefFieldInfo(QObject *p, ToJson toJson, SetFromJson setFromJson, const char *property, const char *editor, const char *editorProperty)
-    : m_propertyName(property), m_editor(editor), m_editorProperty(editorProperty), m_toJson(toJson), m_setFromJson(setFromJson)
+PrefFieldInfo::PrefFieldInfo(QObject *p, const char *property, const char *editor, const char *editorProperty)
+    : m_propertyName(property), m_editor(editor), m_editorProperty(editorProperty)
 {
     auto mo = p->metaObject();
     const auto idx = mo->indexOfProperty(property);
@@ -14,8 +14,8 @@ PrefFieldInfo::PrefFieldInfo(QObject *p, ToJson toJson, SetFromJson setFromJson,
     s_list.push_back(this);
 }
 
-PrefFieldInfo::PrefFieldInfo(QObject *p, ToJson toJson, SetFromJson setFromJson, const char *property, const char *editorProperty)
-    : PrefFieldInfo(p, toJson, setFromJson, property, property, editorProperty)
+PrefFieldInfo::PrefFieldInfo(QObject *p, const char *property, const char *editorProperty)
+    : PrefFieldInfo(p, property, property, editorProperty)
 {
 
 }
@@ -38,16 +38,4 @@ auto PrefFieldInfo::setToEditor(const QObject *p, QObject *e) const -> void
     if (!e->property(m_editorProperty).isValid())
         qDebug() << "setToEditor" << e->objectName() << m_editorProperty;
     e->setProperty(m_editorProperty, m_property.read(p));
-}
-
-auto PrefFieldInfo::toJson(const QObject *p) const -> QJsonValue
-{
-    return (*m_toJson)(m_property.read(p));
-}
-
-auto PrefFieldInfo::setFromJson(QObject *p, const QJsonValue &json) const -> bool
-{
-    QVariant var = m_property.read(p);
-    auto ret = (*m_setFromJson)(var, json);
-    return m_property.write(p, var) && ret;
 }

@@ -5,6 +5,39 @@
 
 namespace tmp {
 
+namespace detail {
+template<typename T, typename = void>
+struct is_callable : std::is_function<T> { };
+
+template<typename T>
+struct is_callable<T, typename std::enable_if<
+    std::is_same<decltype(void(&T::operator())), void>::value
+    >::type> : std::true_type { };
+
+template <typename T>
+struct func_traits
+    : public func_traits<decltype(&T::operator())>
+{};
+
+template <typename T, typename R, typename... Args>
+struct func_traits<R(T::*)(Args...) const> {
+    SCA args = sizeof...(Args);
+    using result_type = R;
+    template <size_t n> struct arg
+    { using type = typename std::tuple_element<n, std::tuple<Args...>>::type; };
+};
+
+}
+
+template<class T, int n>
+using func_arg_t = typename detail::func_traits<T>::template arg<n>::type;
+
+template<class T>
+SCIA func_args() { return detail::func_traits<T>::args; }
+
+template<class T>
+SCIA is_callable() -> bool { return detail::is_callable<T>::value; }
+
 template<class T>
 SCIA is_integral() -> bool { return std::is_integral<T>::value; }
 
@@ -13,6 +46,9 @@ SCIA is_floating_point() -> bool { return std::is_floating_point<T>::value; }
 
 template<class T>
 SCIA is_arithmetic() -> bool { return std::is_arithmetic<T>::value; }
+
+template<class T>
+SCIA is_class() -> bool { return std::is_class<T>::value; }
 
 template<class T, class S>
 SCIA is_same() -> bool { return std::is_same<T, S>::value; }

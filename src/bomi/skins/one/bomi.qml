@@ -63,23 +63,23 @@ B.AppWithFloating {
 
             IconButton {
                 anchors { top: parent.top; left: parent.left }
-                icon: "cb-audio.png";
+                icon.source: "cb-audio.png";
                 action: "audio/track/next"; action2: "audio/track"
             }
 
             IconButton {
                 anchors { top: parent.top; right: parent.right }
-                icon: "cb-sub.png"
+                icon.source: "cb-sub.png"
                 action: "subtitle/track/next"; action2: "subtitle/track"
             }
             IconButton {
                 anchors { bottom: parent.bottom; right: parent.right }
-                icon: "cb-pl.png"
+                icon.source: "cb-pl.png"
                 action: "tool/playlist/toggle"; action2: "tool/playlist"
             }
             IconButton {
                 anchors { bottom: parent.bottom; left: parent.left }
-                icon: "cb-hl.png"
+                icon.source: "cb-hl.png"
                 action: "tool/history/toggle"; action2: "tool/history"
             }
         }
@@ -150,8 +150,8 @@ B.AppWithFloating {
                 id: play;
                 anchors.centerIn: parent; width: 40; height: 40
                 readonly property string prefix: engine.playing ? "pause" : "play"
-                action: "play/pause"; icon: getStateIconName(prefix)
-                mask: prefix + ".png"; useMask: true
+                action: "play/pause"; icon.prefix: prefix
+                mask: prefix + ".png"
                 Item {
                     readonly property real gap: engine.playing ? 4 : 2
                     width: parent.width
@@ -164,7 +164,5 @@ B.AppWithFloating {
                 }
             }
         }
-
-
     }
 }

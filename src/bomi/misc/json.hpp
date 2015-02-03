@@ -15,14 +15,13 @@ struct JsonQStringType { SCA qt_type = QJsonValue::String; };
 
 namespace detail {
 
-enum class JsonValueType { Integer, Double, Enum, Convertible, None };
+enum class JsonValueType { Number, Enum, Convertible, None };
 
 template<class T>
 SCIA jsonValueType() -> JsonValueType
 {
     return tmp::is_enum_class<T>() ? JsonValueType::Enum
-         : tmp::is_integral<T>() ? JsonValueType::Integer
-         : tmp::is_floating_point<T>() ? JsonValueType::Double
+         : tmp::is_arithmetic<T>() ? JsonValueType::Number
          : tmp::is_convertible_to_json<T>() ? JsonValueType::Convertible
                                             : JsonValueType::None;
 }
@@ -31,21 +30,8 @@ template<class T, detail::JsonValueType type = detail::jsonValueType<T>()>
 struct JsonValueIO;
 
 template<class T>
-struct JsonValueIO<T, detail::JsonValueType::Integer>  {
+struct JsonValueIO<T, detail::JsonValueType::Number>  {
     static_assert(!tmp::is_enum<T>() && !tmp::is_enum_class<T>(), "!!!");
-    auto toJson(T t) const -> QJsonValue { return (double)t; }
-    auto fromJson(T &val, const QJsonValue &json) const -> bool
-    {
-        if (!json.isDouble())
-            return false;
-        val = (T)std::llround(json.toDouble(val));
-        return true;
-    }
-    SCA qt_type = QJsonValue::Double;
-};
-
-template<class T>
-struct JsonValueIO<T, detail::JsonValueType::Double> {
     auto toJson(T t) const -> QJsonValue { return (double)t; }
     auto fromJson(T &val, const QJsonValue &json) const -> bool
     {
@@ -287,8 +273,12 @@ struct Jsonkey<T, false, true>  {
 
 template<class T>
 SIA json_key_from(const T &t) -> QString { return detail::Jsonkey<T>::from(t); }
+template<>
+auto json_key_from<int>(const int &t) -> QString { return QString::number(t); }
 template<class T>
 SIA json_key_to(const QString &json) -> T { return detail::Jsonkey<T>::to(json); }
+template<>
+auto json_key_to<int>(const QString &json) -> int { return json.toInt(); }
 
 template<class Key, class T, class Container = QMap<Key, T>>
 struct JsonMapIO {
@@ -425,11 +415,28 @@ struct JsonIO<QKeySequence> : JsonQStringType {
     }
 };
 
+template<>
+struct JsonIO<QDateTime> {
+    static auto toJson(const QDateTime &dt) -> QJsonValue
+        { return (double)dt.toMSecsSinceEpoch(); }
+    static auto fromJson(QDateTime &dt, const QJsonValue &json) -> bool
+    {
+        if (!json.isDouble())
+            return false;
+        dt.setMSecsSinceEpoch(std::llround(json.toDouble()));
+        return true;
+    }
+    SCA qt_type = QJsonValue::Double;
+};
+
 template<class T>
 auto _ToJson(const T &t) { return json_io<T>()->toJson(t); }
 
 template<class T>
 auto _FromJson(const QJsonValue &json) -> T
-{ T t; json_io<T>()->fromJson(t, json); return t; }
+{ T t = T(); json_io<T>()->fromJson(t, json); return t; }
+
+template<class T>
+auto _JsonType() -> QJsonValue::Type { return json_io<T>()->qt_type; }
 
 #endif // JSON_HPP

@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
 Item {
     id: dock
@@ -26,16 +26,16 @@ Item {
         onWheel: wheel.accepted = true
     }
 
-    Cp.ModelView {
+    B.ModelView {
         id: view
-        model: Cp.App.history
+        model: B.App.history
         columns: [
             ItemColumn { width: 200; title: qsTr("Name"); role: "name" },
             ItemColumn { width: 150; title: qsTr("Latest Playback"); role: "latestplay" },
             ItemColumn { width: 400; title: qsTr("Location"); role: "location" }
         ]
         itemDelegate: Text { text: value; color: "white"; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
-        onActivated: Cp.App.history.play(index)
+        onActivated: B.App.history.play(index)
     }
 
     MouseArea {

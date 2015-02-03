@@ -10,9 +10,10 @@ class AppState : public QObject {
 public:
     AppState();
 
+    MrlState state;
+
     QPointF win_pos;
     QSize win_size;
-    MrlState state;
     // tool state
     bool auto_exit = false;
     bool playlist_visible = false;
@@ -29,7 +30,7 @@ public:
     QString dvd_device, bluray_device, sub_find_lang_code;
     auto save() const -> void;
 signals:
-    void winStaysOnTopChanged();
+    void winStaysOnTopChanged(StaysOnTop top);
 };
 
 #endif // APPSTATE_HPP

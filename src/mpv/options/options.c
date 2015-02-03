@@ -267,11 +267,11 @@ const m_option_t mp_opts[] = {
 // ------------------------- codec/vfilter options --------------------
 
     OPT_SETTINGSLIST("af-defaults", af_defs, 0, &af_obj_list),
-    OPT_SETTINGSLIST("af*", af_settings, M_OPT_FIXED, &af_obj_list),
+    OPT_SETTINGSLIST("af*", af_settings, 0, &af_obj_list),
     OPT_SETTINGSLIST("vf-defaults", vf_defs, 0, &vf_obj_list),
-    OPT_SETTINGSLIST("vf*", vf_settings, M_OPT_FIXED, &vf_obj_list),
+    OPT_SETTINGSLIST("vf*", vf_settings, 0, &vf_obj_list),
 
-    OPT_CHOICE("deinterlace", deinterlace, M_OPT_OPTIONAL_PARAM | M_OPT_FIXED,
+    OPT_CHOICE("deinterlace", deinterlace, M_OPT_OPTIONAL_PARAM,
                ({"auto", -1},
                 {"no", 0},
                 {"yes", 1}, {"", 1})),

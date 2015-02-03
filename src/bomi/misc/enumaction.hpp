@@ -1,11 +1,17 @@
 #ifndef ENUMACTION_HPP
 #define ENUMACTION_HPP
 
+class BaseEnumAction : public QAction {
+    Q_OBJECT
+public:
+    BaseEnumAction(QObject *parent = nullptr): QAction(parent) { }
+};
+
 template<class T>
 class EnumInfo;
 
 template<class T>
-class EnumAction : public QAction {
+class EnumAction : public BaseEnumAction {
 public:
     using Data = typename EnumInfo<T>::Data;
     using EnumInfo = ::EnumInfo<T>;
@@ -21,7 +27,7 @@ private:
 
 template<class T>
 inline EnumAction<T>::EnumAction(T t, QObject *parent)
-    : QAction(parent)
+    : BaseEnumAction(parent)
     , m_enum(t)
     , m_data(EnumInfo::data(m_enum))
 {

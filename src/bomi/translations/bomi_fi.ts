@@ -2691,7 +2691,7 @@ e.g.: English, Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="356"/>
+        <location filename="../player/rootmenu.cpp" line="387"/>
         <source>Show state</source>
         <translation type="unfinished"></translation>
     </message>

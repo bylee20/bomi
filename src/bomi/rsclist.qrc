@@ -47,5 +47,6 @@
         <file>img/preferences-desktop-locale.png</file>
         <file>img/logo-center.png</file>
         <file>img/logo-center.svg</file>
+        <file>img/audio-x-generic.png</file>
     </qresource>
 </RCC>

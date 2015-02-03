@@ -2,7 +2,7 @@ import QtQuick 2.0
 import bomi 1.0 as B
 
 B.Button {
-    width: textWidth; height: parent.height; textColor: "white"
+    width: text.contentWidth; height: parent.height; text.color: "white"
     property int msecs: 0
     property int __secs: (msecs/1000.0) | 0
     property bool showMSecs: false
@@ -24,6 +24,6 @@ B.Button {
         text += point ? secs.toFixed(3) : (secs | 0);
         return text;
     }
-    text: getText(msecs, showMSecs)
-    font { pixelSize: 10; family: Util.monospace }
+    text.content: getText(msecs, showMSecs)
+    text.font { pixelSize: 10; family: Util.monospace }
 }

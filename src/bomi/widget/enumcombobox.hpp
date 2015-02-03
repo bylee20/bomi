@@ -3,8 +3,8 @@
 
 #include "datacombobox.hpp"
 #include "enum/generateplaylist.hpp"
-#include "enum/subtitleautoload.hpp"
-#include "enum/subtitleautoselect.hpp"
+#include "enum/autoloadmode.hpp"
+#include "enum/autoselectmode.hpp"
 #include "enum/clippingmethod.hpp"
 #include "enum/interpolator.hpp"
 #include "enum/textthemestyle.hpp"
@@ -42,8 +42,8 @@ private:
 };
 
 using GeneratePlaylistComboBox = EnumComboBox<GeneratePlaylist>;
-using SubtitleAutoloadComboBox = EnumComboBox<SubtitleAutoload>;
-using SubtitleAutoselectComboBox = EnumComboBox<SubtitleAutoselect>;
+using AutoloadModeComboBox = EnumComboBox<AutoloadMode>;
+using AutoselectModeComboBox = EnumComboBox<AutoselectMode>;
 using ClippingMethodComboBox = EnumComboBox<ClippingMethod>;
 using InterpolatorComboBox = EnumComboBox<Interpolator>;
 using TextThemeStyleComboBox = EnumComboBox<TextThemeStyle>;

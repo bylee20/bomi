@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>713</width>
-    <height>666</height>
+    <width>668</width>
+    <height>504</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -393,12 +393,12 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="ask_record_found">
+             <widget class="QCheckBox" name="resume_ignore_in_playlist">
               <property name="enabled">
                <bool>false</bool>
               </property>
               <property name="text">
-               <string>Confirm resume playback</string>
+               <string>Ignore when switching to next item in playlist</string>
               </property>
              </widget>
             </item>
@@ -570,6 +570,17 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="audio_load">
+        <layout class="QVBoxLayout" name="verticalLayout_11">
+         <item>
+          <widget class="AutoloaderWidget" name="audio_autoload">
+           <property name="title">
+            <string>Load</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="cache">
         <layout class="QVBoxLayout" name="verticalLayout_36">
          <item>
@@ -726,99 +737,10 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_18">
          <item>
-          <widget class="QGroupBox" name="groupBox_8">
+          <widget class="AutoloaderWidget" name="sub_autoload_v2">
            <property name="title">
             <string>Load</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_11">
-            <item>
-             <widget class="QCheckBox" name="sub_enable_autoload">
-              <property name="text">
-               <string>Load subtitle files when a local media file is open</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="SubtitleAutoloadComboBox" name="sub_autoload">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="toolTip">
-               <string>Load next subtitles when starting to play a file.</string>
-              </property>
-              <property name="sizeAdjustPolicy">
-               <enum>QComboBox::AdjustToContents</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="Line" name="line_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_30">
-              <item>
-               <widget class="QLabel" name="label_4">
-                <property name="text">
-                 <string>Search Path</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="sub_search_path_edit"/>
-              </item>
-              <item>
-               <widget class="QPushButton" name="sub_search_path_add">
-                <property name="text">
-                 <string>Add</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="sub_search_path_browse">
-                <property name="text">
-                 <string>Browse...</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="sub_search_path_remove">
-                <property name="text">
-                 <string>Remove</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_33">
-              <item>
-               <widget class="QCheckBox" name="sub_search_regex">
-                <property name="text">
-                 <string>Regular expression</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="sub_search_case_sensitive">
-                <property name="text">
-                 <string>Case-sensitive</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <widget class="QTreeView" name="sub_search_paths">
-              <property name="rootIsDecorated">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </widget>
          </item>
          <item>
@@ -837,7 +759,7 @@
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <item>
-               <widget class="SubtitleAutoselectComboBox" name="sub_autoselect">
+               <widget class="AutoselectModeComboBox" name="sub_autoselect">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -944,60 +866,6 @@
                </spacer>
               </item>
              </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_13">
-           <property name="title">
-            <string>Display Time</string>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_11">
-            <item>
-             <widget class="QLabel" name="aLabel_6">
-              <property name="text">
-               <string>Calculate display time when not specified</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="ms_per_char">
-              <property name="toolTip">
-               <string>When display time is not specifid in subtitle, caculate interval wih this value.</string>
-              </property>
-              <property name="accelerated">
-               <bool>true</bool>
-              </property>
-              <property name="suffix">
-               <string>msec/character</string>
-              </property>
-              <property name="minimum">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <number>99999</number>
-              </property>
-              <property name="singleStep">
-               <number>100</number>
-              </property>
-              <property name="value">
-               <number>500</number>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_12">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>5</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </widget>
@@ -1833,6 +1701,60 @@
         <layout class="QVBoxLayout" name="verticalLayout_17">
          <item>
           <widget class="OsdStyleWidget" name="sub_style" native="true"/>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_13">
+           <property name="title">
+            <string>Display Time</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
+            <item>
+             <widget class="QLabel" name="aLabel_6">
+              <property name="text">
+               <string>Calculate display time when not specified</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="ms_per_char">
+              <property name="toolTip">
+               <string>When display time is not specifid in subtitle, caculate interval wih this value.</string>
+              </property>
+              <property name="accelerated">
+               <bool>true</bool>
+              </property>
+              <property name="suffix">
+               <string>msec/character</string>
+              </property>
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>99999</number>
+              </property>
+              <property name="singleStep">
+               <number>100</number>
+              </property>
+              <property name="value">
+               <number>500</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_12">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>5</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
          </item>
          <item>
           <spacer name="verticalSpacer_4">
@@ -2823,16 +2745,6 @@ Regular expression is supported.</string>
    <header>widget/enumcombobox.hpp</header>
   </customwidget>
   <customwidget>
-   <class>SubtitleAutoloadComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widget/enumcombobox.hpp</header>
-  </customwidget>
-  <customwidget>
-   <class>SubtitleAutoselectComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widget/enumcombobox.hpp</header>
-  </customwidget>
-  <customwidget>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>widget/datacombobox.hpp</header>
@@ -2892,6 +2804,17 @@ Regular expression is supported.</string>
    <header>quick/osdthemeobject.hpp</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>AutoselectModeComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widget/enumcombobox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>AutoloaderWidget</class>
+   <extends>QGroupBox</extends>
+   <header>misc/autoloader.hpp</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <resources>
   <include location="../rsclist.qrc"/>
@@ -2932,7 +2855,7 @@ Regular expression is supported.</string>
   <connection>
    <sender>remember_stopped</sender>
    <signal>toggled(bool)</signal>
-   <receiver>ask_record_found</receiver>
+   <receiver>resume_ignore_in_playlist</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -2958,22 +2881,6 @@ Regular expression is supported.</string>
     <hint type="destinationlabel">
      <x>539</x>
      <y>220</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>sub_enable_autoload</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>sub_autoload</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>539</x>
-     <y>98</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>684</x>
-     <y>130</y>
     </hint>
    </hints>
   </connection>

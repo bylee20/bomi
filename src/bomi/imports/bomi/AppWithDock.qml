@@ -3,6 +3,7 @@ import bomi 1.0
 
 Item {
     id: root
+    property string name
     property Player player: Player {}
     property Item controls: Item {}
     Binding { target: player; property: "width"; value: root.width }

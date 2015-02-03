@@ -3,45 +3,51 @@ import bomi 1.0 as B
 
 Item {
     id: item
-    property var bind: undefined
-    property alias color: box.color
-    property alias icon: icon.source
-    property alias mask: mouseArea.source
-    property alias smooth: icon.smooth
+    property alias icon: icon
+    property alias text: _text
+    property alias background: bg
+    property url mask
+
+    onMaskChanged: {
+        if (mask.length > 0) {
+            area.alpha = 0.01;
+            area.source = mask
+        } else
+            area.alpha = -1.0;
+    }
+
     property string action: ""
     property string action2: ""
-    property var _action: Util.action(action)
-    property var _action2: Util.action(action2)
-    property string tooltip: __makeToolTip(_action, _action2)
-    property alias text: _text.text
-    property alias textElide: _text.elide
-    property alias textColor: _text.color
-    property alias textAlignmentV: _text.verticalAlignment
-    property alias textAlignmentH: _text.horizontalAlignment
-    property alias textWidth: _text.contentWidth
-    property alias textHeight: _text.contentHeight
-    property alias font: _text.font
-    property alias tooltipDelay: tooltipTimer.interval
+    property string tooltip: {
+        var left = B.App.description(action);
+        var right = B.App.description(action2);
+        if (action && action2)
+            return makeToolTip(left, right)
+        else
+            return action ? left : (action2 ? right : "")
+    }
+    property alias delay: tooltipTimer.interval
     property bool checked: false
-    property alias border: box.border
-    property alias radius: box.radius
-    property alias hovered: mouseArea.containsMouse
-    property alias pressed: mouseArea.pressed
+    property alias hovered: area.containsMouse
+    property alias pressed: area.pressed
     property real paddings: 0
-    property alias gradient: box.gradient
-    property bool useMask: false
-    property alias acceptedButtons: mouseArea.acceptedButtons
+    property alias acceptedButtons: area.acceptedButtons
+    property real size: 0
+    readonly property int topIcon: 0
+    readonly property int leftIcon: 1
+    readonly property int centerIcon: 2
+    property bool adjustIconSize: true
+    property int layout: centerIcon
+    property real spacing: 0
+
     signal clicked
+
+    width: size; height: size
 
     function makeToolTip(left, right) {
         return qsTr("Left click: %1\nRight click: %2").arg(left).arg(right)
     }
-    function __makeToolTip(action, action2) {
-        if (action && action2)
-            return makeToolTip(action.text, action2.text)
-        else
-            return action ? action.text : (action2 ? action2.text : "")
-    }
+
     function getStateIconName(prefix, hovered, pressed) {
         if (!prefix || !prefix.length)
             return ""
@@ -54,24 +60,75 @@ Item {
         prefix += pressed ? "-pressed.png" : ( hovered ? "-hovered.png" : ".png")
         return prefix;
     }
+
+
     Rectangle {
-        id: box; anchors.fill: parent; color: "transparent"
+        id: bg; anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0)
         Item {
+            id: box
             anchors.fill: parent; anchors.margins: item.paddings
-            Text { id: _text; anchors.fill: parent }
-            Image { id: icon; anchors.fill: parent; smooth: true }
+            readonly property real sp: icon.visible && text.visible ? item.spacing : 0
+            B.ButtonIcon {
+                id: icon; smooth: sourceSize != Qt.size(width, height)
+                source: getStateIconName(prefix.toString(), hovered, pressed)
+                visible: sourceSize.width > 0
+                anchors {
+                    top:  layout === topIcon  ? parent.top  : undefined
+                    left: layout === leftIcon ? parent.left : undefined
+                    horizontalCenter: layout === leftIcon ? undefined : parent.horizontalCenter
+                    verticalCenter:   layout === topIcon  ? undefined : parent.verticalCenter
+                }
+                width: {
+                    if (!adjustIconSize)
+                        return sourceSize.width
+                    if (layout === leftIcon)
+                        return parent.width - box.sp - text.contentWidth
+                    return parent.width
+                }
+                height: {
+                    if (!adjustIconSize)
+                        return sourceSize.height
+                    if (layout === topIcon)
+                        return parent.height - box.sp - text.contentHeight
+                    return parent.height
+                }
+            }
+
+            B.Text {
+                id: _text
+                anchors {
+                    top:  layout === topIcon  ? parent.bottom : undefined
+                    right: layout === leftIcon ? parent.right  : undefined
+                    horizontalCenter: layout === leftIcon ? undefined : parent.horizontalCenter
+                    verticalCenter:   layout === topIcon  ? undefined : parent.verticalCenter
+                }
+                width: {
+                    if (layout === leftIcon)
+                        return (parent.width - icon.width - box.sp)
+                    return parent.width
+                }
+                height: {
+                    if (layout === topIcon)
+                        return parent.height - icon.height - box.sp
+                    return parent.height
+                }
+                horizontalAlignment: layout === leftIcon ? Text.AlignLeft : Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
             B.MaskArea {
-                id: mouseArea; anchors.fill: parent;
+                id: area; anchors.fill: parent;
                 alpha: item.useMask ? 0 : -1
                 hoverEnabled: true
-                acceptedButtons: (item._action ? Qt.LeftButton : 0)
-                               | (item._action2 ? Qt.RightButton : 0)
+                acceptedButtons: (action ? Qt.LeftButton : 0)
+                               | (action2 ? Qt.RightButton : 0)
                 onReleased: {
-                    console.log(containsMouse, contains(mouse.x, mouse.y))
                     var action = mouse.button & Qt.RightButton ? item.action2 : item.action
-                    if (containsMouse && action.length) Util.execute(action)
+                    if (containsMouse && action)
+                        Util.execute(action)
                 }
-                onClicked: item.clicked(); onExited: Util.hideToolTip(); onCanceled: Util.hideToolTip()
+                onClicked: item.clicked();
+                onExited: Util.hideToolTip();
+                onCanceled: Util.hideToolTip()
                 Timer {
                     id: tooltipTimer; interval: 1000
                     running: parent.containsMouse && !pressed && tooltip.length

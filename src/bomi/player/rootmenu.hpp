@@ -7,8 +7,6 @@ using Shortcuts = QMap<QString, QList<QKeySequence>>;
 
 class RootMenu : public Menu {
     Q_OBJECT
-private:
-    struct ArgAction { QString argument; QAction *action = nullptr; };
 public:
     enum Preset {Current, bomi, Movist};
     RootMenu();
@@ -16,8 +14,8 @@ public:
     ~RootMenu();
     auto retranslate() -> void;
     auto id(QAction *action) const -> QString;
-    auto action(const QString &longId) const -> QAction*
-        { return m_actions.value(longId).action; }
+    auto description(const QString &longId) const -> QString;
+    auto action(const QString &longId) const -> QAction*;
     auto action(const QKeySequence &shortcut) const -> QAction*
         { return m_keymap.value(shortcut); }
     auto resetKeyMap() -> void { m_keymap.clear(); fillKeyMap(this); }
@@ -29,7 +27,6 @@ public:
 private:
     auto fillKeyMap(Menu *menu) -> void;
     static RootMenu *obj;
-    QMap<QString, ArgAction> m_actions;
     QMap<QKeySequence, QAction*> m_keymap;
     struct Data;
     Data *d;

@@ -14,10 +14,10 @@ PlayInfoText {
                 txt += "\n";
             txt += qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5")
             .arg(name)
-            .arg(formatNumber(track.id))
-            .arg(formatText(track.codec))
-            .arg(formatText(track.title))
-            .arg(formatText(track.language))
+            .arg(formatNumberNA(track.number))
+            .arg(formatNA(track.codec))
+            .arg(formatNA(track.title))
+            .arg(formatNA(track.language))
             ++count;
         }
         text = txt
@@ -25,5 +25,4 @@ PlayInfoText {
     onListChanged: subs.update()
     Component.onCompleted: update()
     visible: text.length > 0
-    PlayInfoTrack { id: ti; font.pixelSize: subs.parent.fontSize }
 }

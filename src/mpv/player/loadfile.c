@@ -742,6 +742,22 @@ static void open_audiofiles_from_options(struct MPContext *mpctx)
     }
 }
 
+struct track *mp_add_track_file(struct MPContext *mpctx, char *filename, int type)
+{
+    if (type == STREAM_AUDIO)
+        return mp_add_audio(mpctx, filename);
+    if (type == STREAM_SUB)
+        return mp_add_subtitles(mpctx, filename);
+    return NULL;
+}
+
+struct track *mp_add_audio(struct MPContext *mpctx, char *filename)
+{
+    struct MPOpts *opts = mpctx->opts;
+    return open_external_file(mpctx, filename, opts->audio_demuxer_name,
+                              STREAM_AUDIO);
+}
+
 struct track *mp_add_subtitles(struct MPContext *mpctx, char *filename)
 {
     struct MPOpts *opts = mpctx->opts;
@@ -784,12 +800,11 @@ static void transfer_playlist(struct MPContext *mpctx, struct playlist *pl)
     }
 }
 
-static int process_open_hooks(struct MPContext *mpctx)
+static int process_hooks(struct MPContext *mpctx, char *hook)
 {
+    mp_hook_run(mpctx, NULL, hook);
 
-    mp_hook_run(mpctx, NULL, "on_load");
-
-    while (!mp_hook_test_completion(mpctx, "on_load")) {
+    while (!mp_hook_test_completion(mpctx, hook)) {
         mp_idle(mpctx);
         if (mpctx->stop_play) {
             // Can't exit immediately, the script would interfere with the
@@ -800,6 +815,12 @@ static int process_open_hooks(struct MPContext *mpctx)
     }
 
     return 0;
+}
+
+
+static int process_open_hooks(struct MPContext *mpctx)
+{
+    return process_hooks(mpctx, "on_load");
 }
 
 static void print_timeline(struct MPContext *mpctx)
@@ -1206,6 +1227,8 @@ terminate_playback:
         goto goto_reopen_demuxer;
     }
 
+    process_hooks(mpctx, "on_finish");
+    
     mp_nav_destroy(mpctx);
 
     if (mpctx->stop_play == KEEP_PLAYING)

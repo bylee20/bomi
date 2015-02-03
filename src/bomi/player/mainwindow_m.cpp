@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "enum/movetoward.hpp"
 #include "subtitle/subtitleview.hpp"
+#include "subtitle/subtitlemodel.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/audioequalizerdialog.hpp"
 #include "dialog/urldialog.hpp"
@@ -12,25 +13,8 @@
 #include "dialog/subtitlefinddialog.hpp"
 #include "dialog/encodingfiledialog.hpp"
 
-template<class F>
-auto MainWindow::Data::plugStreamActions(Menu *menu, F func,
-                                         const QString &group) -> void
-{
-    auto checkCurrentStreamAction = [=] () {
-        const auto current = (engine.*func)();
-        for (auto action : menu->g(group)->actions()) {
-            if (action->data().toInt() == current) {
-                action->setChecked(true);
-                break;
-            }
-        }
-    };
-    connect(menu, &QMenu::aboutToShow, p, checkCurrentStreamAction);
-}
-
 template<class T, class Func>
-auto MainWindow::Data::push(const T &to, const T &from,
-                            const Func &func) -> QUndoCommand*
+auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUndoCommand*
 {
     if (undo) {
         auto cmd = new ValueCmd<Func, T>(to, from, func);
@@ -41,144 +25,122 @@ auto MainWindow::Data::push(const T &to, const T &from,
         return nullptr;
     }
 }
-
-template<class T, class F, class Handler, class State>
-auto MainWindow::Data::plugEnumActions(Menu &menu, State &state,
-                                       Handler handler, const char *asprop,
-                                       Signal<State> sig, F f) -> void
+template<class T, class S, class ToString>
+auto MainWindow::Data::push(const T &to, const char *p, T(MrlState::*get)() const,
+          void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*
 {
-    Q_ASSERT(state.property(asprop).isValid());
-    const int size = EnumInfo<T>::size();
-    auto cycle = _C(menu)[size > 2 ? u"next"_q : u"toggle"_q];
-    auto group = menu.g(typeKey<T>());
-    if (cycle) {
-        connect(cycle, &QAction::triggered, p, [this, group] () {
-            auto actions = group->actions();
-            int i = 0;
-            for (; i<actions.size(); ++i)
-                if (actions[i]->isChecked())
-                    break;
-            const int prev = i++;
-            forever {
-                if (i >= actions.size())
-                    i = 0;
-                if (i == prev)
-                    break;
-                if (actions[i]->isEnabled())
-                    break;
-                ++i;
-            }
-            if (i != prev)
-                actions[i]->trigger();
-        });
-    }
-    connect(group, &QActionGroup::triggered, p, handler);
-    connect(&state, sig, p, f);
-    group->trigger(state.property(asprop));
-    emit (state.*sig)();
-    if (std::is_same<State, MrlState>::value)
-        enumGroups.append(EnumGroup{asprop, group});
+    const auto old = (e.params()->*get)();
+    showProperty(p, ts(to));
+    if (to == old)
+        return nullptr;
+    return push(to, old, [=] (const T &s) { (e.*set)(s); showProperty(p, ts(s)); });
 }
 
-template<class T, class F, class S>
-auto MainWindow::Data::plugEnumActions(Menu &menu, S &s, const char *asprop,
-                                       Signal<S> sig, F f) -> void
+auto MainWindow::Data::plugFlag(QAction *action, const char *property,
+                                bool(MrlState::*get)() const, void(MrlState::*sig)(bool),
+                                void(PlayEngine::*set)(bool)) -> void
 {
-    auto group = menu.g(typeKey<T>());
-    auto ps = &s; auto pm = &menu;
-    auto push = [=] (T t) {
-        if (auto action = group->find(t)) {
-            action->setChecked(true);
-            showMessage(pm->title(), action->text());
-            ps->setProperty(asprop, action->data());
-        }
-    };
-    auto handler = [=] (QAction *a) {
-        auto action = static_cast<EnumAction<T>*>(a);
-        auto t = action->enum_();
-        auto current = ps->property(asprop).template value<T>();
-        if (current != t)
-            this->push<T>(t, current, push);
-    };
-    plugEnumActions<T, F>(menu, s, handler, asprop, sig, f);
+    connect(e.params(), sig, action, &QAction::setChecked);
+    connect(action, &QAction::triggered, &e, [=] (bool on)
+        { push(on, property, get, set, toMessage); });
 }
 
-template<class T, class F, class GetNew, class S>
-auto MainWindow::Data::plugEnumDataActions(Menu &menu, S &s, const char *prop,
-                                           GetNew getNew, Signal<S> sig, F f) -> void
+auto MainWindow::Data::plugStep(ActionGroup *g, const char *prop,
+                                int(MrlState::*get)() const,
+                                void(PlayEngine::*set)(int)) -> void
 {
-    using EData = typename EnumInfo<T>::Data;
-    plugEnumActions<T, F>(menu, s, [=, &s, &menu] (QAction *a) {
-        auto action = static_cast<EnumAction<T>*>(a);
-        auto old = s.property(prop).template value<EData>();
-        auto new_ = getNew(action->data());
-        auto step = dynamic_cast<StepAction*>(action);
-        if (step)
-            new_ = step->clamp(new_);
-        if (old != new_)
-            this->push<EData>(new_, old, [=, &s, &menu] (const EData &data) {
-                s.setProperty(prop, QVariant::fromValue<EData>(data));
-                if (step)
-                    showMessage(menu.title(), step->format(data));
-            });
-    }, prop, sig, f);
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *action) {
+        auto step = qobject_cast<StepAction*>(action);
+        Q_ASSERT(step);
+        const auto old = (e.params()->*get)();
+        auto value = old;
+        if (step->isReset())
+            value = step->default_();
+        else
+            value += step->data();
+        push(step->clamp(value), prop, get, set,
+             [=] (int v) { return step->format(v); });
+    });
 }
 
-template<class F>
-auto MainWindow::Data::plugStepActions(Menu &menu, const char *asprop,
-                                       MSig sig, F f) -> void
+template<class T>
+auto MainWindow::Data::plugAppEnumChild(Menu &parent, const char *prop,
+                                        void(AppState::*sig)(T)) -> void
 {
-    plugEnumDataActions<ChangeValue, F>(menu, asprop, [=] (int diff) {
-        return diff ? (as.state.property(asprop).toInt() + diff) : 0;
-    }, sig, f);
-}
-
-template<class T, class F, class GetNew>
-auto MainWindow::Data::plugPropertyDiff(ActionGroup *g, const char *asprop,
-                                        GetNew getNew, MSig sig, F f) -> void
-{
-    Q_ASSERT(as.state.property(asprop).isValid());
+    auto m = &parent(_L(EnumInfo<T>::typeKey()));
+    auto g = m->g(_L(EnumInfo<T>::typeKey()));
+    connect(&as, sig, g, &ActionGroup::setChecked<T>);
     connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-        const auto old = as.state.property(asprop).value<T>();
-        const auto new_ = getNew(a, old);
-        if (old != new_) {
-            push(new_, old, [=] (const T &t) {
-                as.state.setProperty(asprop, QVariant::fromValue<T>(t));
-            });
+        if (a->data().userType() != qMetaTypeId<T>()) { // cycle
+            triggerNextAction(g->actions());
+        } else {
+            const auto old = as.property(prop).value<T>();
+            const auto to = a->data().template value<T>();
+            showMessage(m->title(), EnumInfo<T>::description(to));
+            if (to != old)
+                push(to, old, [=] (T t) {
+                    as.setProperty(prop, QVariant::fromValue<T>(t));
+                    showMessage(m->title(), EnumInfo<T>::description(t));
+                });
         }
     });
-    connect(&as.state, sig, f);
-    emit (as.state.*sig)();
 }
 
-template<class T, class F>
-auto MainWindow::Data::plugPropertyDiff(ActionGroup *g, const char *asprop,
-                                        T min, T max, MSig sig, F f) -> void
+template<class T>
+auto MainWindow::Data::plugEnum(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
+                                void(MrlState::*sig)(T), void(PlayEngine::*set)(T), QAction *cycle) -> void
 {
-    plugPropertyDiff<T, F>(g, asprop, [=] (QAction *a, const T &old) {
-        return qBound<T>(min, a->data().value<T>() + old, max);
-    }, sig, f);
+    connect(e.params(), sig, g, &ActionGroup::setChecked<T>);
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+        push(a->data().template value<T>(), prop, get, set,
+             [=] (T t) { return EnumInfo<T>::description(t); });
+    });
+    if (cycle)
+        connect(cycle, &QAction::triggered, p,
+                [=] () { triggerNextAction(g->actions()); });
 }
 
-template<class F>
-auto MainWindow::Data::plugPropertyCheckable(QAction *a, const char *asprop,
-                                             MSig sig, F f) -> void
+auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
 {
-    Q_ASSERT(as.state.property(asprop).isValid()
-             && as.state.property(asprop).type() == QVariant::Bool);
-    Q_ASSERT(a->isCheckable());
-    connect(a, &QAction::triggered, p, [=] (bool new_) {
-        const bool old = as.state.property(asprop).toBool();
-        if (new_ != old) {
-            push(new_, old, [=](bool checked) {
-                as.state.setProperty(asprop, checked);
-                a->setChecked(checked);
-                showMessage(a->text(), checked);
-            });
+    int i = 0;
+    for (; i<actions.size(); ++i)
+        if (actions[i]->isChecked())
+            break;
+    const int prev = i++;
+    forever {
+        if (i >= actions.size())
+            i = 0;
+        if (i == prev)
+            break;
+        if (actions[i]->isEnabled())
+            break;
+        ++i;
+    }
+    if (i != prev)
+        actions[i]->trigger();
+}
+
+auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
+                                 void(PlayEngine::*set)(int,bool),
+                                 const QString &gkey, QAction *sep) -> void
+{
+    auto *m = &parent(u"track"_q);
+    const auto g = m->g(gkey);
+    connect(e.params(), sig, p, [=] (StreamList list) {
+        g->clear();
+        if (!list.isEmpty()) {
+            for (auto it = list.begin(); it != list.end(); ++it) {
+                auto act = new QAction(it->name(), m);
+                m->insertAction(sep, act);
+                g->addAction(act);
+                act->setCheckable(true);
+                act->setData(it->id());
+                act->setChecked(it->isSelected());
+            }
         }
     });
-    connect(&as.state, sig, f);
-    emit (as.state.*sig)();
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a)
+        { (e.*set)(a->data().toInt(), a->isChecked()); });
 }
 
 auto MainWindow::Data::connectMenus() -> void
@@ -226,11 +188,9 @@ auto MainWindow::Data::connectMenus() -> void
 
     Menu &play = menu(u"play"_q);
     connect(play[u"stop"_q], &QAction::triggered,
-            p, [this] () {engine.stop();});
-    plugStepActions(play(u"speed"_q), "play_speed",
-                          &MrlState::playSpeedChanged, [this]() {
-        engine.setSpeed(1e-2*as.state.play_speed);
-    });
+            p, [this] () {e.stop();});
+    PLUG_STEP(play(u"speed"_q).g(), play_speed, setSpeedPercent);
+
     connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
     connect(play(u"repeat"_q).g(), &ActionGroup::triggered,
             p, [this] (QAction *a) {
@@ -243,9 +203,9 @@ auto MainWindow::Data::connectMenus() -> void
         };
         switch (key) {
         case 'r': {
-            if (engine.isStopped())
+            if (e.isStopped())
                 break;
-            const auto t = engine.time();
+            const auto t = e.time();
             if (!ab.hasA()) {
                 msg(tr("Set A to %1").arg(time(ab.setA(t))));
             } else if (!ab.hasB()) {
@@ -260,9 +220,8 @@ auto MainWindow::Data::connectMenus() -> void
             }
             break;
         } case 's': {
-            const auto time = engine.time();
-            ab.setA(subtitle.start(time));
-            ab.setB(subtitle.finish(time));
+            ab.setA(e.captionBeginTime());
+            ab.setB(e.captionEndTime());
             ab.start();
             msg(tr("Repeat current subtitle"));
             break;
@@ -273,60 +232,36 @@ auto MainWindow::Data::connectMenus() -> void
             msg(tr("Quit repeating"));
         }
     });
-    connect(play[u"prev"_q], &QAction::triggered,
-            &playlist, &PlaylistModel::playPrevious);
-    connect(play[u"next"_q], &QAction::triggered,
-            &playlist, &PlaylistModel::playNext);
+    connect(play[u"prev"_q], &QAction::triggered, &playlist, &PlaylistModel::playPrevious);
+    connect(play[u"next"_q], &QAction::triggered, &playlist, &PlaylistModel::playNext);
+
     auto &seek = play(u"seek"_q);
-    connect(seek[u"begin"_q], &QAction::triggered, p, [=] () {
-        engine.seek(engine.begin());
-    });
+    connect(seek[u"begin"_q], &QAction::triggered, p, [=] () { e.seek(e.begin()); });
     connect(seek.g(u"relative"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         const int diff = static_cast<StepAction*>(a)->data();
-        if (diff && !engine.isStopped() && engine.isSeekable()) {
-            engine.relativeSeek(diff);
+        if (diff && !e.isStopped() && e.isSeekable()) {
+            e.relativeSeek(diff);
             showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
             showTimeLine();
         }
     });
     connect(seek.g(u"frame"_q), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        engine.stepFrame(a->data().toInt());
-    });
+            p, [this] (QAction *a) { e.stepFrame(a->data().toInt()); });
     connect(seek[u"black-frame"_q], &QAction::triggered, p, [=] () {
-        engine.seekToNextBlackFrame();
+        e.seekToNextBlackFrame();
         showMessage(tr("Seek to Next Black Frame"));
     });
-    connect(play[u"disc-menu"_q], &QAction::triggered, p, [this] () {
-        engine.setCurrentEdition(PlayEngine::DVDMenu);
-    });
+    connect(play[u"disc-menu"_q], &QAction::triggered,
+            p, [=] () { e.seekEdition(PlayEngine::DVDMenu); });
     connect(seek.g(u"subtitle"_q), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        const int key = a->data().toInt();
-        const int time = key < 0 ? subtitle.previous()
-                       : key > 0 ? subtitle.next()
-                                 : subtitle.current();
-        if (time >= 0)
-            engine.seek(time-100);
-    });
-    connect(play(u"title"_q).g(), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        a->setChecked(true);
-        engine.setCurrentEdition(a->data().toInt());
-        showMessage(tr("Current Title"), a->text());
-    });
-    connect(play(u"chapter"_q).g(), &ActionGroup::triggered, p,
-            [this] (QAction *a) {
-        a->setChecked(true);
-        engine.setCurrentChapter(a->data().toInt());
-        showMessage(tr("Current Chapter"), a->text());
-    });
+            p, [this] (QAction *a) { e.seekCaption(a->data().toInt()); });
+
     auto seekChapter = [this] (int offset) {
-        if (!engine.chapters().isEmpty()) {
-            auto target = engine.currentChapter() + offset;
+        if (!e.chapters().isEmpty()) {
+            auto target = e.chapter()->number() + offset;
             if (target > -2)
-                engine.setCurrentChapter(target);
+                e.seekChapter(target);
         }
     };
     connect(play(u"chapter"_q)[u"prev"_q], &QAction::triggered,
@@ -336,30 +271,21 @@ auto MainWindow::Data::connectMenus() -> void
 
     connect(play[u"state"_q], &QAction::triggered, p, [=] () {
         QString str;
-        str.append(_MSecToString(engine.time()));
+        str.append(_MSecToString(e.time()));
         str.append(u"/"_q);
-        str.append(_MSecToString(engine.end()));
+        str.append(_MSecToString(e.end()));
         str.append(u" ("_q);
-        str.append(QString::number(engine.time() * 100L / engine.end()));
+        str.append(QString::number(e.time() * 100L / e.end()));
         str.append(u"%), "_q);
-        str.append(QString::number(engine.speed()));
+        str.append(QString::number(e.speed()));
         str.append(u"x"_q);
         showMessage(str);
     });
 
     Menu &video = menu(u"video"_q);
-    connect(video(u"track"_q).g(), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        a->setChecked(true);
-        engine.setCurrentVideoStream(a->data().toInt());
-        showMessage(tr("Current Video Track"), a->text());
-    });
-    plugEnumActions<VideoRatio>(video(u"aspect"_q), "video_aspect_ratio",
-                                &MrlState::videoAspectRatioChanged, [this] ()
-        { vr.setAspectRatio(_EnumData(as.state.video_aspect_ratio)); });
-    plugEnumActions<VideoRatio>(video(u"crop"_q), "video_crop_ratio",
-                                &MrlState::videoCropRatioChanged, [this] ()
-        { vr.setCropRatio(_EnumData(as.state.video_crop_ratio)); });
+
+    PLUG_ENUM(video(u"aspect"_q), video_aspect_ratio, setVideoAspectRatio);
+    PLUG_ENUM(video(u"crop"_q), video_crop_ratio, setVideoCropRatio);
 
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
@@ -370,21 +296,21 @@ auto MainWindow::Data::connectMenus() -> void
             PlayEngine::Snapshot snapshot = PlayEngine::VideoOnly;
             if (snapshotMode == QuickSnapshot || snapshotMode == SnapshotTool)
                 snapshot = PlayEngine::VideoAndOsd;
-            engine.takeSnapshot(snapshot);
+            e.takeSnapshot(snapshot);
         });
     };
     connectSnapshot(u"quick"_q, QuickSnapshot);
     connectSnapshot(u"quick-nosub"_q, QuickSnapshotNoSub);
     connectSnapshot(u"tool"_q, SnapshotTool);
-    connect(&engine, &PlayEngine::snapshotTaken, p, [this] () {
-        auto video = engine.snapshot(false);
-        auto osd = engine.snapshot(true);
-        engine.clearSnapshots();
+    connect(&e, &PlayEngine::snapshotTaken, p, [this] () {
+        auto video = e.snapshot(false);
+        auto osd = e.snapshot(true);
+        e.clearSnapshots();
         if (video.isNull() && osd.isNull())
             return;
         if (snapshotMode == QuickSnapshot || snapshotMode == SnapshotTool) {
             QRectF subRect;
-            auto sub = subtitle.draw(osd.rect(), &subRect);
+            auto sub = e.subtitleImage(osd.rect(), &subRect);
             if (!sub.isNull()) {
                 QPainter painter(&osd);
                 painter.drawImage(subRect, sub);
@@ -395,9 +321,9 @@ auto MainWindow::Data::connectMenus() -> void
             if (!snapshot) {
                 snapshot = new SnapshotDialog(p);
                 connect(snapshot, &SnapshotDialog::request, p, [=] () {
-                    if (vr.hasFrame()) {
+                    if (e.hasVideoFrame()) {
                         snapshotMode = SnapshotTool;
-                        engine.takeSnapshot(PlayEngine::VideoAndOsd);
+                        e.takeSnapshot(PlayEngine::VideoAndOsd);
                     } else
                         snapshot->clear();
                 });
@@ -418,8 +344,8 @@ auto MainWindow::Data::connectMenus() -> void
             QString file;
             switch (pref().quick_snapshot_save) {
             case QuickSnapshotSave::Current:
-                if (engine.mrl().isLocalFile()) {
-                    file = _ToAbsPath(engine.mrl().toLocalFile())
+                if (e.mrl().isLocalFile()) {
+                    file = _ToAbsPath(e.mrl().toLocalFile())
                            % '/'_q % fileName;
                     break;
                 }
@@ -441,61 +367,27 @@ auto MainWindow::Data::connectMenus() -> void
         }
     }, Qt::QueuedConnection);
 
-    auto setVideoAlignment = [this] () {
-        const auto v = _EnumData(as.state.video_vertical_alignment);
-        const auto h = _EnumData(as.state.video_horizontal_alignment);
-        vr.setAlignment(v | h);
-    };
-    plugEnumActions<VerticalAlignment>
-            (video(u"align"_q), "video_vertical_alignment",
-             &MrlState::videoVerticalAlignmentChanged, setVideoAlignment);
-    plugEnumActions<HorizontalAlignment>
-            (video(u"align"_q), "video_horizontal_alignment",
-             &MrlState::videoHorizontalAlignmentChanged, setVideoAlignment);
-    plugEnumDataActions<MoveToward>
-            (video(u"move"_q), "video_offset",
-             [this] (const QPoint &diff) {
-        return diff.isNull() ? diff : as.state.video_offset + diff;
-    }, &MrlState::videoOffsetChanged, [this] () {
-        vr.setOffset(as.state.video_offset);
-    });
-    plugEnumMenu<DeintMode>
-            (video, "video_deinterlacing",
-             &MrlState::videoDeinterlacingChanged, [this] () {
-        engine.setDeintMode(as.state.video_deinterlacing);
-    });
-    plugEnumActions<Interpolator>
-            (video(u"interpolator"_q), "video_interpolator",
-             &MrlState::videoInterpolatorChanged, [this] () {
-        engine.setInterpolator(as.state.video_interpolator);
-    });
-    plugEnumActions<Interpolator>
-            (video(u"chroma-upscaler"_q), "video_chroma_upscaler",
-             &MrlState::videoChromaUpscalerChanged, [this] () {
-        engine.setChromaUpscaler(as.state.video_chroma_upscaler);
-    });
-    auto updateHqScale = [this] () {
-        engine.setHighQualityScaling(as.state.video_hq_upscaling,
-                                     as.state.video_hq_downscaling);
-    };
-    plugPropertyCheckable(video(u"hq-scaling"_q)[u"up"_q], "video_hq_upscaling",
-            &MrlState::videoHqUpscalingChanged, updateHqScale);
-    plugPropertyCheckable(video(u"hq-scaling"_q)[u"down"_q], "video_hq_downscaling",
-            &MrlState::videoHqDownscalingChanged, updateHqScale);
+    PLUG_ENUM(video(u"align"_q), video_vertical_alignment, setVideoVerticalAlignment);
+    PLUG_ENUM(video(u"align"_q), video_horizontal_alignment, setVideoHorizontalAlignment);
 
-    plugEnumMenu<Dithering>
-            (video, "video_dithering",
-             &MrlState::videoDitheringChanged, [this] () {
-        engine.setDithering(as.state.video_dithering);
+    connect(&video(u"move"_q), &Menu::triggered, p, [=] (QAction *a) {
+        const auto diff = static_cast<EnumAction<MoveToward>*>(a)->data();
+        if (diff.isNull())
+            e.setVideoOffset(diff);
+        else
+            e.setVideoOffset(e.params()->video_offset() + diff);
     });
-    plugEnumMenu<ColorSpace>(video, "video_space",
-                                   &MrlState::videoSpaceChanged, [this] () {
-        engine.setColorSpace(as.state.video_space);
-    });
-    plugEnumMenu<ColorRange>(video, "video_range",
-                                   &MrlState::videoRangeChanged, [this] () {
-        engine.setColorRange(as.state.video_range);
-    });
+
+    PLUG_ENUM_CHILD(video, video_deinterlacing, setDeintMode);
+    PLUG_ENUM(video(u"interpolator"_q), video_interpolator, setInterpolator);
+    PLUG_ENUM(video(u"chroma-upscaler"_q), video_chroma_upscaler, setChromaUpscaler);
+
+    PLUG_FLAG(video(u"hq-scaling"_q)[u"down"_q], video_hq_downscaling, setVideoHighQualityDownscaling);
+    PLUG_FLAG(video(u"hq-scaling"_q)[u"up"_q], video_hq_upscaling, setVideoHighQualityUpscaling);
+
+    PLUG_ENUM_CHILD(video, video_dithering, setVideoDithering);
+    PLUG_ENUM_CHILD(video, video_space, setColorSpace);
+    PLUG_ENUM_CHILD(video, video_range, setColorRange);
 
     connect(&video(u"filter"_q), &Menu::triggered, p, [this] () {
         VideoEffects effects = 0;
@@ -503,214 +395,108 @@ auto MainWindow::Data::connectMenus() -> void
             if (act->isChecked())
                 effects |= act->data().value<VideoEffect>();
         }
-        if (engine.videoEffects() != effects)
-            push(effects, engine.videoEffects(),
-                    [this] (VideoEffects effects) {
-                engine.setVideoEffects(effects);
-                as.state.video_effects = effects;
-                for (auto a : menu(u"video"_q)(u"filter"_q).actions())
-                    a->setChecked(a->data().value<VideoEffect>() & effects);
-            });
+        push(effects, "video_effects", &MrlState::video_effects,
+             &PlayEngine::setVideoEffects, _EnumFlagsDescription<VideoEffect>);
+    });
+    connect(e.params(), &MrlState::video_effects_changed, &e,
+            [=] (VideoEffects effects) {
+        for (auto a : menu(u"video"_q)(u"filter"_q).actions())
+            a->setChecked(a->data().value<VideoEffect>() & effects);
     });
     VideoColor::for_type([=, &video] (VideoColor::Type type) {
         const auto name = VideoColor::name(type);
         connect(video(u"color"_q).g(name), &ActionGroup::triggered, p,
                 [=] (QAction *a) {
             const int diff = static_cast<StepAction*>(a)->data();
-            auto color = as.state.video_color;
+            auto color = e.params()->video_color();
             color.add(type, diff);
-            const auto text = color.formatText(type).arg(color.get(type));
-            showMessage(tr("Adjust Video Color"), text);
-            as.state.setProperty("video_color", QVariant::fromValue(color));
+            push(color, "video_color", &MrlState::video_color,
+                 &PlayEngine::setVideoEqualizer, [=] (const VideoColor &eq)
+                 { return eq.formatText(type).arg(eq.get(type)); });
         });
     });
     connect(video(u"color"_q)[u"reset"_q], &QAction::triggered, p, [this] () {
-        showMessage(tr("Reset Video Color"));
-        const auto var = QVariant::fromValue(VideoColor());
-        as.state.setProperty("video_color", var);
+        const VideoColor eq, old = e.params()->video_color();
+        if (old != eq)
+            push(VideoColor(), e.params()->video_color(), [=] (const VideoColor &eq) {
+                e.setVideoEqualizer(eq);
+                showProperty("video_color", eq.isZero() ? tr("Reset") : tr("Restore"));
+            });
+        showProperty("video_color", tr("Reset"));
     });
-    connect(&as.state, &MrlState::videoColorChanged,
-            &engine, &PlayEngine::setVideoEqualizer);
+    plugTrack(video, &MrlState::video_tracks_changed, &PlayEngine::setVideoTrackSelected);
 
     Menu &audio = menu(u"audio"_q);
-    connect(audio(u"track"_q).g(), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        a->setChecked(true);
-        engine.setCurrentAudioStream(a->data().toInt());
-        showMessage(tr("Current Audio Track"), a->text());
-    });
-    plugStepActions(audio(u"volume"_q), "audio_volume",
-                          &MrlState::audioVolumeChanged, [this] () {
-        engine.setVolume(as.state.audio_volume);
-    });
-    plugPropertyCheckable(audio(u"volume"_q)[u"mute"_q], "audio_muted",
-                                &MrlState::audioMutedChanged, [this] () {
-        engine.setMuted(as.state.audio_muted);
-    });
-    connect(&as.state, &MrlState::audioEqualizerChanged, &engine, &PlayEngine::setAudioEqualizer);
+
+    PLUG_STEP(audio(u"volume"_q).g(), audio_volume, setAudioVolume);
+    PLUG_FLAG(audio(u"volume"_q)[u"mute"_q], audio_muted, setAudioMuted);
+    connect(e.params(), &MrlState::audio_equalizer_changed, p, [=] (auto aeq)
+        { if (eq) { QSignalBlocker bl(eq); eq->setEqualizer(aeq); } });
+
     connect(audio[u"equalizer"_q], &QAction::triggered, p, [=] () {
         if (!eq) {
             eq = new AudioEqualizerDialog(p);
-            connect(eq, &AudioEqualizerDialog::equalizerChanged, p, [=] (const AudioEqualizer &eq)
-                    { as.state.setProperty("audio_equalizer", QVariant::fromValue(eq)); });
+            connect(eq, &AudioEqualizerDialog::equalizerChanged, p,
+                    [=] (const AudioEqualizer &eq) { e.setAudioEqualizer(eq); });
         }
-        eq->setEqualizer(as.state.audio_equalizer);
+        eq->setEqualizer(e.params()->audio_equalizer());
         eq->show();
     });
-    plugStepActions(audio(u"sync"_q), "audio_sync",
-                          &MrlState::audioSyncChanged, [this] () {
-        engine.setAudioSync(as.state.audio_sync);
+    PLUG_STEP(audio(u"sync"_q).g(), audio_sync, setAudioSync);
+    PLUG_STEP(audio(u"amp"_q).g(), audio_amplifier, setAudioAmpPercent);
+    PLUG_ENUM_CHILD(audio, audio_channel_layout, setChannelLayout);
+    PLUG_FLAG(audio[u"normalizer"_q], audio_volume_normalizer, setAudioVolumeNormalizer);
+    PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);
+
+    auto &atrack = audio(u"track"_q);
+    plugTrack(audio, &MrlState::audio_tracks_changed, &PlayEngine::setAudioTrackSelected);
+    connect(atrack[u"cycle"_q], &QAction::triggered, p, [=] ()
+        { triggerNextAction(menu(u"audio"_q)(u"track"_q).g()->actions()); });
+    connect(atrack[u"open"_q], &QAction::triggered, p, [this] () {
+        const auto files = _GetOpenFiles(p, tr("Open Audio File"), AudioExt);
+        if (!files.isEmpty()) e.addAudioFiles(files);
     });
-    plugStepActions(audio(u"amp"_q), "audio_amplifier",
-                          &MrlState::audioAmpChanged, [this] () {
-        engine.setAmp(as.state.audio_amplifier*1e-2);
-    });
-    plugEnumMenu<ChannelLayout>
-            (audio, "audio_channel_layout",
-             &MrlState::audioChannelLayoutChanged, [this] () {
-        engine.setChannelLayout(as.state.audio_channel_layout);
-    });
-    plugPropertyCheckable
-            (audio[u"normalizer"_q], "audio_volume_normalizer",
-             &MrlState::audioVolumeNormalizerChanged, [this] () {
-        const auto activate = as.state.audio_volume_normalizer;
-        engine.setVolumeNormalizerActivated(activate);
-    });
-    plugPropertyCheckable
-            (audio[u"tempo-scaler"_q], "audio_tempo_scaler",
-             &MrlState::audioTempoScalerChanged, [this] () {
-        engine.setTempoScalerActivated(as.state.audio_tempo_scaler);
-    });
-    auto  selectNext = [this] (const QList<QAction*> &actions) {
-        if (!actions.isEmpty()) {
-            auto it = actions.begin();
-            while (it != actions.end() && !(*it++)->isChecked()) ;
-            if (it == actions.end())
-                it = actions.begin();
-            (*it)->trigger();
-        }
-    };
-    connect(audio(u"track"_q)[u"next"_q], &QAction::triggered, p, [=] ()
-        { selectNext(menu(u"audio"_q)(u"track"_q).g()->actions()); });
+    connect(atrack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadAudioFiles);
+    connect(atrack[u"reload"_q], &QAction::triggered, &e, &PlayEngine::reloadAudioFiles);
+    connect(atrack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearAudioFiles);
 
     Menu &sub = menu(u"subtitle"_q);
     auto &strack = sub(u"track"_q);
-    subtrackSep = strack.addSeparator();
-    connect(strack[u"next"_q], &QAction::triggered, p, [this, &strack] () {
-        int checked = -1;
-        auto list = strack.g(u"external"_q)->actions();
-        list += strack.g(u"internal"_q)->actions();
-        if (list.isEmpty() || (list.size() == 1 && list.first()->isChecked()))
-            return;
-        changingSub = true;
-        for (int i=0; i<list.size(); ++i) {
-            if (list[i]->isChecked()) {
-                checked = i;
-                list[i]->setChecked(false);
-            }
-        }
-        changingSub = false;
-        subtitle.deselect(-1);
-        if (++checked >= list.size())
-            checked = 0;
-        list[checked]->trigger();
-        if (!strack.g(u"internal"_q)->checkedAction())
-            engine.setCurrentSubtitleStream(-2);
+    auto ssep = strack.addSeparator();
+    plugTrack(sub, &MrlState::sub_tracks_changed,
+              &PlayEngine::setSubtitleTrackSelected, "exclusive"_a);
+    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed,
+              &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
+    connect(sub(u"track"_q)[u"cycle"_q], &QAction::triggered, p, [=] () {
+        auto &m = menu(u"subtitle"_q)(u"track"_q);
+        auto actions = m.g(u"exclusive"_q)->actions();
+        actions += m.g(u"inclusive"_q)->actions();
+        triggerNextAction(actions);
     });
     connect(strack[u"all"_q], &QAction::triggered, p, [=, &strack] () {
-        subtitle.select(-1);
-        const auto acts = strack.g(u"external"_q)->actions();
-        for (auto action : acts)
-            action->setChecked(true);
-        const int count = subtitle.componentsCount();
-        const auto text = tr("%1 Subtitle(s)").arg(count);
+        e.setSubtitleInclusiveTrackSelected(-1, true);
+        const auto size = e.params()->sub_tracks_inclusive().size();
+        const auto text = tr("%1 Subtitle(s)").arg(size);
         showMessage(tr("Select All Subtitles"), text);
-        setSubtitleTracksToEngine();
     });
-    connect(strack[u"hide"_q], &QAction::triggered,
-            p, [this, &strack] (bool hide) {
-        if (hide != subtitle.isHidden()) {
-            push(hide, subtitle.isHidden(), [this, &strack] (bool hide) {
-                subtitle.setHidden(hide);
-                engine.setSubtitleStreamsVisible(!hide);
-                if (hide)
-                    showMessage(tr("Hide Subtitles"));
-                else
-                    showMessage(tr("Show Subtitles"));
-                strack[u"hide"_q]->setChecked(hide);
-            });
-        }
-    });
+    PLUG_FLAG(strack[u"hide"_q], sub_hidden, setSubtitleHidden);
     connect(strack[u"open"_q], &QAction::triggered, p, [this] () {
         QString dir;
-        if (engine.mrl().isLocalFile())
-            dir = _ToAbsPath(engine.mrl().toLocalFile());
+        if (e.mrl().isLocalFile())
+            dir = _ToAbsPath(e.mrl().toLocalFile());
         QString enc = pref().sub_enc;
-        const auto files = EncodingFileDialog::getOpenFileNames
-                                    (p, tr("Open Subtitle"), dir,
-                                     _ToFilter(SubtitleExt), &enc);
-        if (!files.isEmpty())
-            appendSubFiles(files, true, enc);
+        const auto files = EncodingFileDialog::getOpenFileNames(
+            p, tr("Open Subtitle"), dir, _ToFilter(SubtitleExt), &enc);
+        e.addSubtitleFiles(files, enc);
     });
-    connect(strack[u"auto-load"_q], &QAction::triggered, p, [this] () {
-        clearSubtitleFiles();
-        updateSubtitleState();
-    });
-    connect(strack[u"reload"_q], &QAction::triggered, p, [this] () {
-        auto state = subtitleState();
-        clearSubtitleFiles();
-        setSubtitleState(state);
-    });
-    connect(strack[u"clear"_q], &QAction::triggered,
-            p, [=] () { clearSubtitleFiles(); });
-    connect(strack.g(u"external"_q), &ActionGroup::triggered,
-            p, [this] (QAction *a) {
-        if (!changingSub) {
-            if (a->isChecked())
-                subtitle.select(a->data().toInt());
-            else
-                subtitle.deselect(a->data().toInt());
-        }
-        showMessage(tr("Selected Subtitle"), a->text());
-        setSubtitleTracksToEngine();
-    });
-    connect(strack.g(u"internal"_q), &ActionGroup::triggered,
-            p, [this, &strack] (QAction *a) {
-        const bool checked = a->isChecked();
-        auto actions = strack.g(u"internal"_q)->actions();
-        for (auto action : actions)
-            action->setChecked(false);
-        a->setChecked(checked);
-        if (checked) {
-            engine.setCurrentSubtitleStream(a->data().toInt());
-            showMessage(tr("Selected Subtitle"), a->text());
-        } else
-            engine.setCurrentSubtitleStream(-1);
-        setSubtitleTracksToEngine();
-    });
-//    connect(&strack, &Menu::actionsSynchronized, p, [this] () {
-//        setSubtitleTracksToEngine();
-//    });
-    plugEnumMenu<SubtitleDisplay>
-            (sub, "sub_display", &MrlState::subDisplayChanged, [this] () {
-        const auto on = as.state.sub_display == SubtitleDisplay::OnLetterbox;
-        vr.setOverlayOnLetterbox(on);
-    });
-    plugEnumActions<VerticalAlignment>
-            (sub(u"align"_q), "sub_alignment",
-             &MrlState::subAlignmentChanged, [this] () {
-        const auto top = as.state.sub_alignment == VerticalAlignment::Top;
-        subtitle.setTopAligned(top);
-    });
-    plugStepActions(sub(u"position"_q), "sub_position",
-                          &MrlState::subPositionChanged, [this] () {
-        subtitle.setPos(as.state.sub_position*1e-2);
-    });
-    plugStepActions(sub(u"sync"_q), "sub_sync",
-                          &MrlState::subSyncChanged, [this] () {
-        subtitle.setDelay(as.state.sub_sync);
-        engine.setSubtitleDelay(as.state.sub_sync);
-    });
+    connect(strack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadSubtitleFiles);
+    connect(strack[u"reload"_q], &QAction::triggered, &e, &PlayEngine::reloadSubtitleFiles);
+    connect(strack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearSubtitleFiles);
+
+    PLUG_ENUM_CHILD(sub, sub_display, setSubtitleDisplay);
+    PLUG_ENUM(sub(u"align"_q), sub_alignment, setSubtitleAlignment);
+    PLUG_STEP(sub(u"position"_q).g(), sub_position, setSubtitlePosition);
+    PLUG_STEP(sub(u"sync"_q).g(), sub_sync, setSubtitleDelay);
 
     Menu &tool = menu(u"tool"_q);
     auto &pl = tool(u"playlist"_q);
@@ -800,12 +586,18 @@ auto MainWindow::Data::connectMenus() -> void
         toggleTool("playinfo", as.playinfo_visible);
     });
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
-        subtitleView->setVisible(!subtitleView->isVisible());
+        if (!sview)
+            sview = new SubtitleView(p);
+        if (!sview->isVisible())
+            sview->setModels(e.subtitleModels());
+        sview->setVisible(!sview->isVisible());
     });
+    connect(&e, &PlayEngine::subtitleModelsChanged, p, [=] (auto &m)
+        { if (sview && sview->isVisible()) sview->setModels(m); });
     connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
         if (!prefDlg) {
             prefDlg = new PrefDialog(p);
-            prefDlg->setAudioDeviceList(engine.audioDeviceList());
+            prefDlg->setAudioDeviceList(e.audioDeviceList());
             connect(prefDlg, &PrefDialog::applyRequested, p, [this] {
                 prefDlg->get(preferences); applyPref();
             });
@@ -822,11 +614,11 @@ auto MainWindow::Data::connectMenus() -> void
             subFindDlg->setSelectedLangCode(as.sub_find_lang_code);
             connect(subFindDlg, &SubtitleFindDialog::loadRequested,
                     p, [this] (const QString &fileName) {
-                appendSubFiles(QStringList(fileName), true, pref().sub_enc);
+                e.addSubtitleFiles(QStringList(fileName), pref().sub_enc);
                 showMessage(tr("Downloaded"), QFileInfo(fileName).fileName());
             });
         }
-        subFindDlg->find(engine.mrl());
+        subFindDlg->find(e.mrl());
         subFindDlg->show();
     });
     connect(tool[u"reload-skin"_q], &QAction::triggered,
@@ -835,8 +627,7 @@ auto MainWindow::Data::connectMenus() -> void
         if (on != as.auto_exit)
             push(on, as.auto_exit, [this] (bool on) {
                 as.auto_exit = on;
-                showMessage(on ? tr("Exit bomi when "
-                                    "the playlist has finished.")
+                showMessage(on ? tr("Exit bomi when the playlist has finished.")
                                : tr("Auto-exit is canceled."));
                 menu(u"tool"_q)[u"auto-exit"_q]->setChecked(on);
             });
@@ -854,23 +645,45 @@ auto MainWindow::Data::connectMenus() -> void
         } else
             showMessage(tr("Auto-shutdown is canceled."));
     });
+    connect(&playlist, &PlaylistModel::finished, p, [=, &tool] () {
+        if (tool[u"auto-exit"_q]->isChecked())     p->exit();
+        if (tool[u"auto-shutdown"_q]->isChecked()) cApp.shutdown();
+    });
 
     Menu &win = menu(u"window"_q);
-    plugEnumMenu<StaysOnTop>
-            (win, as, "win_stays_on_top", &AppState::winStaysOnTopChanged,
-             [this] () { updateStaysOnTop(); });
+    plugAppEnumChild(win, "win_stays_on_top", &AppState::winStaysOnTopChanged);
+    connect(&as, &AppState::winStaysOnTopChanged, p, [=] () { updateStaysOnTop(); });
     connect(win.g(u"size"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
     connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);
     connect(win[u"maximize"_q], &QAction::triggered, p, &MainWindow::showMaximized);
-    connect(win[u"close"_q], &QAction::triggered, p,
-            [=] () { menu.hide(); p->close(); });
+    connect(win[u"close"_q], &QAction::triggered, p, [=] () { menu.hide(); p->close(); });
 
     Menu &help = menu(u"help"_q);
     connect(help[u"about"_q], &QAction::triggered,
             p, [=] () { AboutDialog dlg(p); dlg.exec(); });
     connect(menu[u"exit"_q], &QAction::triggered, p, &MainWindow::exit);
 
-    plugStreamActions(&menu(u"play"_q)(u"title"_q), &PlayEngine::currentEdition);
-    plugStreamActions(&menu(u"play"_q)(u"chapter"_q), &PlayEngine::currentChapter);
+#define PLUG_EC(mm, ec, EC, msg) \
+    { \
+        auto &m = mm; \
+        connect(&e, &PlayEngine::ec##sChanged, p, [=, &m] () { \
+            const auto items = e.ec##s(); \
+            m.setEnabled(!items.isEmpty()); \
+            m.g()->clear(); \
+            for (auto item : items) { \
+                auto act = m.addActionNoKey(item->name(), true); \
+                act->setData(item->number()); \
+            } \
+        }); \
+        connect(m.g(), &ActionGroup::triggered, p, [=] (QAction *a) { \
+            a->setChecked(true); \
+            e.seek##EC(a->data().toInt()); \
+            showMessage(msg, a->text()); \
+        }); \
+        connect(&e, &PlayEngine::ec##Changed, p, \
+                [=, &m] () { m.g()->setChecked(e.ec()->number()); }); \
+    }
+    PLUG_EC(play(u"title"_q), edition, Edition, tr("Current Title/Edition"));
+    PLUG_EC(play(u"chapter"_q), chapter, Chapter, tr("Current Chapter"));
 }

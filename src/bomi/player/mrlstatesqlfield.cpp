@@ -1,36 +1,20 @@
 #include "mrlstatesqlfield.hpp"
 #include "mrl.hpp"
-#include "misc/json.hpp"
-#include "enum/enums.hpp"
-#include "video/videocolor.hpp"
-#include "audio/audioequalizer.hpp"
-#include "subtitle/submisc.hpp"
+#include "misc/jsonstorage.hpp"
 
 template<class T>
 SIA _Is(int type) -> bool { return qMetaTypeId<T>() == type; }
 
-template<class T>
-static auto _ValueToSqlDataUsingJson(const QVariant &value) -> QVariant
-    { return _JsonToString(json_io<T>()->toJson(value.value<T>())); }
-
-template<class T>
-static auto _SqlDataToValueUsingJson(const QVariant &sqlData) -> QVariant
-{
-    T t;
-    if (json_io<T>()->fromJson(t, _JsonFromString(sqlData.toString())))
-        return QVariant::fromValue<T>(t);
-    return QVariant();
-}
-
 MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
                                    const QVariant &def) noexcept
     : m_property(property)
-    , m_sqlType(u"INTEGER"_q)
+    , m_sqlType(_L("INTEGER"))
     , m_defaultValue(def)
 {
-    static const auto passthrough = [] (const QVariant &var) { return var; };
-    m_d2v = m_v2d = std::cref(passthrough);
-    switch (m_property.userType()) {
+    m_v2d = [] (const QVariant &var) { return var; };
+    m_d2v = [] (const QVariant &var, int) { return var; };
+    const int userType = m_property.userType();
+    switch (userType) {
     case QMetaType::Int:         case QMetaType::UInt:
     case QMetaType::LongLong:    case QMetaType::ULongLong:
         break;
@@ -43,58 +27,62 @@ MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
     case QMetaType::Bool:
         m_v2d = [] (const QVariant &value)
             { return QVariant((int)value.toBool()); };
-        m_d2v = [] (const QVariant &sqlData)
+        m_d2v = [] (const QVariant &sqlData,int)
             { return QVariant((bool)sqlData.toInt()); };
         break;
     case QMetaType::QDateTime:
         m_v2d = [] (const QVariant &value)
             { return QVariant(value.toDateTime().toMSecsSinceEpoch()); };
-        m_d2v = [] (const QVariant &sqlData)
+        m_d2v = [] (const QVariant &sqlData,int) -> QVariant
             { return QDateTime::fromMSecsSinceEpoch(sqlData.toLongLong()); };
         break;
-#define JSON_CASE_QT(type) \
-    {case QMetaType::type: \
-        m_v2d = _ValueToSqlDataUsingJson<type>; \
-        m_d2v = _SqlDataToValueUsingJson<type>; \
-        break;}
-    JSON_CASE_QT(QPoint);    JSON_CASE_QT(QPointF);
-    JSON_CASE_QT(QSize);     JSON_CASE_QT(QSizeF);
-#undef JSON_CASE
     default: {
-        const auto type = m_property.userType();
-        const auto enumConv = _EnumNameVariantConverter(type);
-        if (!enumConv.isNull()) {
-            m_sqlType = u"TEXT"_q;
-            const auto n2v = enumConv.nameToVariant;
-            const auto v2n = enumConv.variantToName;
-            m_v2d = [v2n] (const QVariant &value)
-                { return QVariant(v2n(value)); };
-            m_d2v = [n2v] (const QVariant &sqlData)
-                { return n2v(sqlData.toString()); };
-            break;
-        }
-#define JSON_CASE(T) \
-        if (_Is<T>(type)) { \
-            m_sqlType = u"TEXT"_q; \
-            m_v2d = _ValueToSqlDataUsingJson<T>; \
-            m_d2v = _SqlDataToValueUsingJson<T>; \
-            break;\
-        }
-        JSON_CASE(VideoColor);
-        JSON_CASE(SubtitleStateInfo);
-        JSON_CASE(AudioEqualizer);
-        if (_Is<Mrl>(type)) {
+        if (_Is<Mrl>(userType)) {
             m_sqlType = u"TEXT PRIMARY KEY NOT NULL"_q;
             m_v2d = [] (const QVariant &value)
                 { return QVariant(value.value<Mrl>().toString()); };
-            m_d2v = [] (const QVariant &sqlData) {
-                if (sqlData.isNull() || !sqlData.isValid())
+            m_d2v = [] (const QVariant &sqlData,int type) {
+                if (sqlData.isNull() || !sqlData.isValid() || !_Is<Mrl>(type))
                     return QVariant();
                 return QVariant::fromValue(Mrl::fromString(sqlData.toString()));
             };
             break;
         }
-        Q_ASSERT(false);
+        m_sqlType = u"TEXT"_q;
+        switch (_JsonType(userType)) {
+        case QJsonValue::String:
+            m_v2d = [] (const QVariant &value) -> QVariant
+                { return _JsonFromQVariant(value).toString(); };
+            m_d2v = [] (const QVariant &data, int type) -> QVariant {
+                if (data.userType() != QMetaType::QString) return QVariant();
+                return _JsonToQVariant(data.toString(), type);
+            };
+            break;
+        case QJsonValue::Array:
+            m_v2d = [] (const QVariant &value) -> QVariant
+                { return QString::fromUtf8(QJsonDocument(_JsonFromQVariant(value).toArray()).toJson()); };
+            m_d2v = [] (const QVariant &data, int type) -> QVariant {
+                QJsonParseError e;
+                const auto doc = QJsonDocument::fromJson(data.toString().toUtf8(), &e);
+                if (e.error || !doc.isArray())
+                    return QVariant();
+                return _JsonToQVariant(doc.array(), type);
+            };
+            break;
+        case QJsonValue::Object:
+            m_v2d = [] (const QVariant &value) -> QVariant
+                { return QString::fromUtf8(QJsonDocument(_JsonFromQVariant(value).toObject()).toJson()); };
+            m_d2v = [] (const QVariant &data, int type) -> QVariant {
+                QJsonParseError e;
+                const auto doc = QJsonDocument::fromJson(data.toString().toUtf8(), &e);
+                if (e.error || !doc.isObject())
+                    return QVariant();
+                return _JsonToQVariant(doc.object(), type);
+            };
+            break;
+        default:
+            Q_ASSERT(false);
+        }
     }}
 }
 
@@ -142,8 +130,7 @@ auto MrlStateSqlFieldList::prepareSelect(const QString &table,
     if (m_fields.isEmpty() || !where.isValid())
         return QString();
     m_where = where;
-    const auto columns = _ToStringList(m_fields,
-                                       [&] (const MrlStateSqlField &field) {
+    const auto columns = _ToStringList(m_fields, [&] (const auto &field) {
         return QString::fromLatin1(field.property().name());
     }).join(','_q);
     select = u"SELECT %1 FROM %2 WHERE %3 = ?"_q
@@ -176,7 +163,9 @@ auto MrlStateSqlFieldList::insert(QSqlQuery &query, const QObject *o) -> bool
         return false;
     if (!query.prepare(m_queries[Insert]))
         return false;
-    for (int i=0; i<m_fields.size(); ++i)
-        query.bindValue(i, m_fields[i].sqlData(o));
+    for (int i=0; i<m_fields.size(); ++i) {
+        auto &f = m_fields[i];
+        query.bindValue(i, f.sqlData(f.property().read(o)));
+    }
     return query.exec();
 }

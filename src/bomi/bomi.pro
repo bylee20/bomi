@@ -61,7 +61,6 @@ HEADERS += \
 	audio/audionormalizeroption.hpp \
 	video/videoformat.hpp \
 	video/hwacc.hpp \
-	video/videofilter.hpp \
 	video/deintoption.hpp \
 	video/letterboxitem.hpp \
 	video/ffmpegfilters.hpp \
@@ -77,10 +76,8 @@ HEADERS += \
 	subtitle/richtexthelper.hpp \
 	subtitle/richtextblock.hpp \
 	subtitle/richtextdocument.hpp \
-	subtitle/subtitlerendereritem.hpp \
 	subtitle/subtitledrawer.hpp \
 	subtitle/subtitlerenderingthread.hpp \
-	subtitle/submisc.hpp \
 	subtitle/opensubtitlesfinder.hpp \
 	quick/busyiconitem.hpp \
 	quick/toplevelitem.hpp \
@@ -146,8 +143,7 @@ HEADERS += \
 	enum/seekingstep.hpp \
 	enum/speakerid.hpp \
 	enum/staysontop.hpp \
-	enum/subtitleautoload.hpp \
-	enum/subtitleautoselect.hpp \
+	enum/autoloadmode.hpp \
 	enum/subtitledisplay.hpp \
 	enum/textthemestyle.hpp \
 	enum/verticalalignment.hpp \
@@ -238,7 +234,15 @@ HEADERS += \
     audio/audioequalizer.hpp \
 	dialog/audioequalizerdialog.hpp \
     quick/circularimageitem.hpp \
-    quick/maskareaitem.hpp
+    quick/maskareaitem.hpp \
+	quick/windowobject.hpp \
+    misc/autoloader.hpp \
+    player/mpv_property.hpp \
+    enum/autoselectmode.hpp \
+    player/mrlstate_p.hpp \
+    subtitle/subtitlerenderer.hpp \
+    video/videoprocessor.hpp \
+    player/mpv.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -248,7 +252,6 @@ SOURCES += \
 	audio/audionormalizeroption.cpp \
 	video/hwacc.cpp \
 	video/videoformat.cpp \
-	video/videofilter.cpp \
 	video/deintoption.cpp \
 	video/letterboxitem.cpp \
 	video/ffmpegfilters.cpp \
@@ -264,10 +267,8 @@ SOURCES += \
 	subtitle/richtexthelper.cpp \
 	subtitle/richtextblock.cpp \
 	subtitle/richtextdocument.cpp \
-	subtitle/subtitlerendereritem.cpp \
 	subtitle/subtitledrawer.cpp \
 	subtitle/subtitlerenderingthread.cpp \
-	subtitle/submisc.cpp \
 	subtitle/opensubtitlesfinder.cpp \
 	quick/geometryitem.cpp \
 	quick/busyiconitem.cpp \
@@ -333,8 +334,7 @@ SOURCES += \
 	enum/seekingstep.cpp \
 	enum/speakerid.cpp \
 	enum/staysontop.cpp \
-	enum/subtitleautoload.cpp \
-	enum/subtitleautoselect.cpp \
+	enum/autoloadmode.cpp \
 	enum/subtitledisplay.cpp \
 	enum/textthemestyle.cpp \
 	enum/verticalalignment.cpp \
@@ -414,7 +414,13 @@ SOURCES += \
 	audio/audioequalizer.cpp \
 	dialog/audioequalizerdialog.cpp \
     quick/circularimageitem.cpp \
-    quick/maskareaitem.cpp
+    quick/maskareaitem.cpp \
+	quick/windowobject.cpp \
+    misc/autoloader.cpp \
+    enum/autoselectmode.cpp \
+    subtitle/subtitlerenderer.cpp \
+    video/videoprocessor.cpp \
+    player/mpv.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -434,7 +440,8 @@ FORMS += \
     ui/subtitlefinddialog.ui \
     ui/audionormalizeroptionwidget.ui \
     ui/osdstylewidget.ui \
-    ui/osdthemewidget.ui
+    ui/osdthemewidget.ui \
+    ui/autoloaderwidget.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \
@@ -459,7 +466,6 @@ OTHER_FILES += \
 	imports/bomi/VolumeSlider.qml \
 	imports/bomi/PlayInfoText.qml \
 	skins/GaN/bomi.qml \
-    skins/GaN/TimeText.qml \
     skins/GaN/Button.qml \
 	imports/bomi/ItemColumn.qml \
 	imports/bomi/ModelView.qml \
@@ -482,4 +488,15 @@ OBJECTIVE_SOURCES +=
 DISTFILES += \
 	imports/bomi/Slider.qml \
     imports/bomi/Circle.qml \
-    skins/one/IconButton.qml
+    skins/one/IconButton.qml \
+    skins/Kotus-floating/bomi.qml \
+    imports/bomi/TimeDuration.qml \
+    skins/Kotus-floating/SmallButton.qml \
+    imports/bomi/ChapterMarkerStyle.qml \
+    imports/bomi/Text.qml \
+    skins/Breeze/bomi.qml \
+    skins/Breeze Dark/bomi.qml \
+    skins/GaN/TextButton.qml \
+    imports/bomi/ButtonIcon.qml \
+    skins/GaN/TimeText.qml \
+    skins/Kotus-floating/MediaButton.qml

@@ -16,7 +16,7 @@
 #include "misc/youtubedl.hpp"
 #include "misc/yledl.hpp"
 #include "video/videorenderer.hpp"
-#include "subtitle/subtitlerendereritem.hpp"
+#include "subtitle/subtitlerenderer.hpp"
 #include "opengl/opengllogger.hpp"
 #include "quick/themeobject.hpp"
 #include "misc/stepaction.hpp"
@@ -32,16 +32,6 @@ private:
     T to, from; Func  func;
 };
 
-class ActionGroup;
-
-struct EnumGroup {
-    EnumGroup() {}
-    EnumGroup(const char *p, ActionGroup *g)
-        : property(p), group(g) { }
-    const char *property = nullptr;
-    ActionGroup *group = nullptr;
-};
-
 enum SnapshotMode {
     NoSnapshot, QuickSnapshot, QuickSnapshotNoSub, SnapshotTool
 };
@@ -53,12 +43,10 @@ class PrefDialog;                       class SubtitleView;
 class TrayIcon;                         class AudioEqualizerDialog;
 
 struct MainWindow::Data {
-    Data(MainWindow *p);
     template<class T>
     SIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
 
     MainWindow *p = nullptr;
-    QList<EnumGroup> enumGroups;
     MainQuickView *view = nullptr;
     bool visible = false, sotChanging = false, fullScreen = false;
     bool starting = false;
@@ -66,10 +54,8 @@ struct MainWindow::Data {
     RootMenu menu;
     RecentInfo recent;
     AppState as;
-    PlayEngine engine;
-    VideoRenderer &vr = *engine.videoRenderer();
-    SubtitleRendererItem subtitle;
-    QPoint prevPos;
+    PlayEngine e;
+    QPoint mouseStartPos, winStartPos;
     YouTubeDL youtube;
     YleDL yle;
 
@@ -79,15 +65,14 @@ struct MainWindow::Data {
     bool moving = false, changingSub = false;
     bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
     bool stateChanging = false, loading = false, sgInit = false;
-    QTimer waiter, hider, initializer;
+    QTimer waiter, hider;
     ABRepeatChecker ab;
     QMenu contextMenu;
     PrefDialog *prefDlg = nullptr;
     SubtitleFindDialog *subFindDlg = nullptr;
     SnapshotDialog *snapshot = nullptr;
     OpenGLLogger glLogger{"SG"};
-    QStringList loadedSubtitleFiles;
-    SubtitleView *subtitleView = nullptr;
+    SubtitleView *sview = nullptr;
     PlaylistModel playlist;
     QUndoStack *undo = nullptr;
     Downloader downloader;
@@ -107,10 +92,11 @@ struct MainWindow::Data {
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
         { return preferences.mouse_action_map[mb][event->modifiers()]; }
     auto setOpen(const Mrl &mrl) -> void
-        { if (mrl.isLocalFile()) _SetLastOpenPath(mrl.toLocalFile()); }
-    auto appendSubFiles(const QStringList &files, bool checked,
-                        const QString &enc) -> void;
-    auto clearSubtitleFiles() -> void;
+    {
+        if (mrl.isLocalFile())
+            _SetLastOpenPath(mrl.toLocalFile());
+        playlist.setLoaded(mrl);
+    }
     auto applyPref() -> void;
     auto updateStaysOnTop() -> void;
     auto setVideoSize(double rate) -> void;
@@ -124,12 +110,11 @@ struct MainWindow::Data {
                      bool sign = false) -> void;
     auto showMessage(const QString &cmd, const QString &desc) -> void
         { showMessage(cmd % u": "_q % desc); }
+    static auto toMessage(bool value) -> QString { return value ? tr("On") : tr("Off"); }
     auto showMessage(const QString &cmd, bool value) -> void
-        { showMessage(cmd, value ? tr("On") : tr("Off")); }
+        { showMessage(cmd, toMessage(value)); }
     auto doVisibleAction(bool visible) -> void;
     auto commitData() -> void;
-    auto subtitleState() const -> SubtitleStateInfo;
-    auto setSubtitleState(const SubtitleStateInfo &state) -> void;
     auto initWidget() -> void;
     auto generatePlaylist(const Mrl &mrl) const -> Playlist;
     auto openMrl(const Mrl &mrl) -> void;
@@ -137,82 +122,67 @@ struct MainWindow::Data {
     auto cache(const Mrl &mrl) -> int;
     auto initEngine() -> void;
     auto initItems() -> void;
-    auto initTimers() -> void;
     auto connectMenus() -> void;
     auto setVideoSize(const QSize &video) -> void;
-    auto syncState() -> void;
-    auto syncWithState() -> void;
-    auto load(const Mrl &mrl, bool play = true) -> void;
+    auto load(const Mrl &mrl, bool play = true, bool tryResume = true) -> void;
     auto load(Subtitle &sub, const QString &file, const QString &enc) -> bool;
     auto reloadSkin() -> void;
     auto trigger(QAction *action) -> void;
-    auto updateSubtitleState() -> void;
-    auto tryToAutoselect(const QVector<SubComp> &loaded,
+    auto tryToAutoselectMode(const QVector<SubComp> &loaded,
                          const Mrl &mrl) -> QVector<int>;
-    auto tryToAutoload(const Mrl &mrl,
-                       const QDir &dir = QString()) -> QVector<SubComp>;
     auto cancelToHideCursor() -> void
         { hider.stop(); view->setCursorVisible(true); }
     auto readyToHideCursor() -> void;
     auto initContextMenu() -> void;
     auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;
     auto openDir(const QString &dir = QString()) -> void;
-    auto lastCheckedSubtitleIndex() const -> int;
-    auto setSubtitleTracksToEngine() -> void;
-    auto syncSubtitleFileMenu() -> void;
     auto updateWindowSizeState() -> void;
     auto screenSize() const -> QSize;
     auto updateWindowPosState() -> void;
     auto checkWindowState(Qt::WindowStates prev) -> void;
     auto updateWaitingMessage() -> void;
 
-    template<class List>
-    auto updateListMenu(Menu &menu, const List &list,
-                        int current, const QString &group = QString()) -> void;
-    template<class F>
-    auto plugCurrentStreamActions(Menu *menu, F f, QString g = QString()) -> void;
     template<class T, class Func>
     auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*;
+    template<class T, class S, class ToString>
+    auto push(const T &to, const char *p, T(MrlState::*get)() const,
+              void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*;
     auto showTimeLine() -> void;
     auto showMessageBox(const QVariant &msg) -> void;
     auto showOSD(const QVariant &msg) -> void;
-    template<class T, class F, class Handler, class State>
-    auto plugEnumActions(Menu &menu, State &state, Handler handler,
-                            const char *asprop, Signal<State> sig, F f) -> void;
-    template<class T, class F, class S>
-    auto plugEnumActions(Menu &menu, S &s, const char *prop, Signal<S> sig, F f) -> void;
-    template<class T, class F>
-    auto plugEnumActions(Menu &menu, const char *asprop, MSig sig, F f) -> void
-    { plugEnumActions<T, F, MrlState>(menu, as.state, asprop, sig, f); }
+    template<class T>
+    auto showProperty(const char *p, T(MrlState::*get)() const) -> void
+        { showProperty(p, (e.params()->*get)()); }
+    template<class T>
+    auto showProperty(const char *p, const T &val) -> void
+        { showMessage(e.params()->description(p), val); }
 
-    template<class T, class F, class GetNew, class S>
-    auto plugEnumDataActions(Menu &menu, S &s, const char *prop, GetNew getNew,
-                             Signal<S> sig, F f) -> void;
-    template<class T, class F, class GetNew>
-    auto plugEnumDataActions(Menu &menu, const char *asprop, GetNew getNew,
-                             MSig sig, F f) -> void
-    { plugEnumDataActions<T>(menu, as.state, asprop, getNew, sig, f); }
-
-    template<class T, class F, class S>
-    auto plugEnumMenu(Menu &parent, S &s, const char *prop,
-                      Signal<S> sig, F f) -> void
-    { plugEnumActions<T, F>(parent(typeKey<T>()), s, prop, sig, f); }
-    template<class T, class F>
-    auto plugEnumMenu(Menu &parent, const char *asprop,
-                      MSig sig, F f) -> void
-    { plugEnumActions<T, F>(parent(typeKey<T>()), as.state, asprop, sig, f); }
-    template<class F>
-    auto plugStepActions(Menu &menu, const char *asprop, MSig sig, F f) -> void;
-    template<class T, class F, class GetNew>
-    auto plugPropertyDiff(ActionGroup *g, const char *asprop, GetNew getNew,
-                          MSig sig, F f) -> void;
-    template<class T, class F>
-    auto plugPropertyDiff(ActionGroup *g, const char *asprop, T min, T max,
-                          MSig sig, F f) -> void;
-    template<class F>
-    auto plugPropertyCheckable(QAction *a, const char *p, MSig s, F f) -> void;
-    template<class F>
-    auto plugStreamActions(Menu *m, F f, const QString &g = QString()) -> void;
+    auto plugFlag(QAction *action, const char *property,
+                  bool(MrlState::*get)() const, void(MrlState::*sig)(bool),
+                  void(PlayEngine::*set)(bool)) -> void;
+#define PLUG_FLAG(a, p, s) plugFlag(a, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
+    auto plugStep(ActionGroup *g, const char *prop, int(MrlState::*get)() const,
+                  void(PlayEngine::*set)(int)) -> void;
+#define PLUG_STEP(m, p, s) plugStep(m, #p, &MrlState::p, &PlayEngine::s)
+    template<class T>
+    auto plugEnum(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
+                  void(MrlState::*sig)(T), void(PlayEngine::*set)(T), QAction *cycle) -> void;
+    template<class T>
+    auto plugEnum(Menu &m, const char *property, T(MrlState::*get)() const,
+                  void(MrlState::*sig)(T), void(PlayEngine::*set)(T)) -> void
+    { plugEnum<T>(m.g(_L(EnumInfo<T>::typeKey())), property, get, sig, set, m.action(u"cycle"_q)); }
+#define PLUG_ENUM(m, p, s) plugEnum(m, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
+    template<class T>
+    auto plugEnumChild(Menu &parent, const char *property, T(MrlState::*get)() const,
+                       void(MrlState::*sig)(T), void(PlayEngine::*set)(T)) -> void
+    { plugEnum<T>(parent(_L(EnumInfo<T>::typeKey())), property, get, sig, set); }
+#define PLUG_ENUM_CHILD(pm, p, s) plugEnumChild(pm, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
+    template<class T>
+    auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void;
+    auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
+                   void(PlayEngine::*set)(int,bool), const QString &gkey = QString(),
+                   QAction *sep = nullptr) -> void;
+    static auto triggerNextAction(const QList<QAction*> &actions) -> void;
 };
 
 #endif // MAINWINDOW_P_HPP

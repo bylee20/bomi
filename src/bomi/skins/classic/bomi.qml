@@ -1,16 +1,15 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import bomi 1.0
+import bomi 1.0 as B
 
-AppWithDock {
+B.AppWithDock {
     id: app
     readonly property real margin: 5
-    readonly property Engine engine: App.engine
+    readonly property QtObject engine: B.App.engine
     Component {
         id: slider
         SliderStyle {
-            readonly property real ratio: (control.value - control.minimumValue)/(control.maximumValue - control.minimumValue)
             groove: Item {
                 Rectangle {
                     height: 5; anchors.centerIn: parent; border { color: "#999"; width: 1 }
@@ -20,7 +19,7 @@ AppWithDock {
                         GradientStop {position: 1.0; color: "#bbb"}
                     }
                     Rectangle {
-                        height: parent.height; width: parent.width*ratio
+                        height: parent.height; width: parent.width*control.rate
                         border { color: "#6ad"; width: 1 }
                         gradient: Gradient {
                             GradientStop {position: 0.0; color: "#fff"}
@@ -67,13 +66,13 @@ AppWithDock {
             width: parent.width; height: 35
             RowLayout {
                 anchors.margins: 2; anchors.fill: parent; spacing: 1
-                FramedButton { id: pause; width: height; height: parent.height; action: "play/pause"; icon: engine.playing ? "pause.png" : "play.png" }
+                FramedButton { id: pause; width: height; height: parent.height; action: "play/pause"; icon.source: engine.playing ? "pause.png" : "play.png" }
                 Grid {
                     id: grid; columns: 2; width: h*2; readonly property real h: pause.height/2
-                    FramedButton { id: backward; width: grid.h; height: grid.h; action: "play/seek/backward1"; icon: "backward.png" }
-                    FramedButton { id: forward; width: grid.h; height: grid.h; action: "play/seek/forward1"; icon: "forward.png" }
-                    FramedButton { id: previous; width: grid.h; height: grid.h; action: "play/prev"; icon: "previous.png" }
-                    FramedButton { id: next; width: grid.h; height: grid.h; action: "play/next"; icon: "next.png" }
+                    FramedButton { id: backward; width: grid.h; height: grid.h; action: "play/seek/backward1"; icon.source: "backward.png" }
+                    FramedButton { id: forward; width: grid.h; height: grid.h; action: "play/seek/forward1"; icon.source: "forward.png" }
+                    FramedButton { id: previous; width: grid.h; height: grid.h; action: "play/prev"; icon.source: "previous.png" }
+                    FramedButton { id: next; width: grid.h; height: grid.h; action: "play/next"; icon.source: "next.png" }
                 }
                 Column {
                     id: right
@@ -91,32 +90,28 @@ AppWithDock {
                         }
                         RowLayout {
                             anchors.margins: 3; anchors.fill: parent; spacing: 0
-                            Text {
+                            B.Text {
                                 id: medianumber
-                                verticalAlignment: Text.AlignVCenter
-                                text: "[%1/%2](%3) ".arg(App.playlist.loaded+1).arg(App.playlist.count).arg(engine.stateText)
-                                font { pixelSize: 11; family: Util.monospace }
+                                text: "[%1/%2](%3) ".arg(B.App.playlist.loaded+1).arg(B.App.playlist.count).arg(engine.stateText)
+                                font.pixelSize: 11
                             }
-                            Text {
+                            B.Text {
                                 id: medianame
-                                Layout.fillWidth: true
+                                width: undefined; Layout.fillWidth: true
                                 text: engine.media.name; elide: Text.ElideMiddle
-                                font { pixelSize: 11; family: Util.monospace }
-                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: 11
                             }
-                            TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.time }
-                            TimeText { textColor: "black"; font.pixelSize: 11; text: "/" }
-                            TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.end }
+                            B.TimeDuration { font.pixelSize: 11; color: "black" }
                         }
                     }
                     RowLayout {
                         width: parent.width; spacing: 1; height: 10
-                        TimeSlider { id: timeslider; style: slider; Layout.fillWidth: true }
+                        B.TimeSlider { id: timeslider; style: slider; Layout.fillWidth: true }
                         FramedButton {
                             id: mute; width: height; height: parent.height; action: "audio/volume/mute"
-                            icon: engine.muted ? "speaker-off.png" : "speaker-on.png"
+                            icon.source: engine.muted ? "speaker-off.png" : "speaker-on.png"
                         }
-                        VolumeSlider { id: volumeslider; width: 70; style: slider }
+                        B.VolumeSlider { id: volumeslider; width: 70; style: slider }
                     }
                 }
             }

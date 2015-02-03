@@ -94,15 +94,6 @@ auto MainQuickView::mouseDoubleClickEvent(QMouseEvent *event) -> void
         d->main->onMouseDoubleClickEvent(event);
 }
 
-auto MainQuickView::keyPressEvent(QKeyEvent *event) -> void
-{
-    event->setAccepted(false);
-    if (auto item = UtilObject::itemToAcceptKey())
-        sendEvent(item, event);
-    if (!event->isAccepted())
-        d->main->onKeyPressEvent(event);
-}
-
 auto MainQuickView::mousePressEvent(QMouseEvent *event) -> void
 {
     d->main->resetMoving();
@@ -135,6 +126,15 @@ auto MainQuickView::wheelEvent(QWheelEvent *event) -> void
     QQuickView::wheelEvent(event);
     if (!event->isAccepted())
         d->main->onWheelEvent(event);
+}
+
+auto MainQuickView::keyPressEvent(QKeyEvent *event) -> void
+{
+    event->setAccepted(false);
+    if (auto item = UtilObject::itemToAcceptKey())
+        sendEvent(item, event);
+    if (!event->isAccepted())
+        d->main->onKeyPressEvent(event);
 }
 
 auto MainQuickView::event(QEvent *event) -> bool

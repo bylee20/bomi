@@ -18,8 +18,8 @@
 #include "seekingstep.hpp"
 #include "generateplaylist.hpp"
 #include "openmediabehavior.hpp"
-#include "subtitleautoload.hpp"
-#include "subtitleautoselect.hpp"
+#include "autoloadmode.hpp"
+#include "autoselectmode.hpp"
 #include "keymodifier.hpp"
 #include "verticalalignment.hpp"
 #include "horizontalalignment.hpp"
@@ -88,12 +88,12 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<OpenMediaBehavior>()) {
         conv.variantToName = _EnumVariantToEnumName<OpenMediaBehavior>;
         conv.nameToVariant = _EnumNameToEnumVariant<OpenMediaBehavior>;
-    } else    if (metaType == qMetaTypeId<SubtitleAutoload>()) {
-        conv.variantToName = _EnumVariantToEnumName<SubtitleAutoload>;
-        conv.nameToVariant = _EnumNameToEnumVariant<SubtitleAutoload>;
-    } else    if (metaType == qMetaTypeId<SubtitleAutoselect>()) {
-        conv.variantToName = _EnumVariantToEnumName<SubtitleAutoselect>;
-        conv.nameToVariant = _EnumNameToEnumVariant<SubtitleAutoselect>;
+    } else    if (metaType == qMetaTypeId<AutoloadMode>()) {
+        conv.variantToName = _EnumVariantToEnumName<AutoloadMode>;
+        conv.nameToVariant = _EnumNameToEnumVariant<AutoloadMode>;
+    } else    if (metaType == qMetaTypeId<AutoselectMode>()) {
+        conv.variantToName = _EnumVariantToEnumName<AutoselectMode>;
+        conv.nameToVariant = _EnumNameToEnumVariant<AutoselectMode>;
     } else    if (metaType == qMetaTypeId<KeyModifier>()) {
         conv.variantToName = _EnumVariantToEnumName<KeyModifier>;
         conv.nameToVariant = _EnumNameToEnumVariant<KeyModifier>;
@@ -122,3 +122,34 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
         return EnumNameVariantConverter();
     return conv;
 }
+const std::array<int, 29> EnumMetaTypeIds = {
+    qMetaTypeId<TextThemeStyle>(),
+    qMetaTypeId<SpeakerId>(),
+    qMetaTypeId<ChannelLayout>(),
+    qMetaTypeId<ColorRange>(),
+    qMetaTypeId<ColorSpace>(),
+    qMetaTypeId<SubtitleDisplay>(),
+    qMetaTypeId<VideoRatio>(),
+    qMetaTypeId<Dithering>(),
+    qMetaTypeId<DecoderDevice>(),
+    qMetaTypeId<DeintMode>(),
+    qMetaTypeId<DeintDevice>(),
+    qMetaTypeId<DeintMethod>(),
+    qMetaTypeId<Interpolator>(),
+    qMetaTypeId<AudioDriver>(),
+    qMetaTypeId<ClippingMethod>(),
+    qMetaTypeId<StaysOnTop>(),
+    qMetaTypeId<SeekingStep>(),
+    qMetaTypeId<GeneratePlaylist>(),
+    qMetaTypeId<OpenMediaBehavior>(),
+    qMetaTypeId<AutoloadMode>(),
+    qMetaTypeId<AutoselectMode>(),
+    qMetaTypeId<KeyModifier>(),
+    qMetaTypeId<VerticalAlignment>(),
+    qMetaTypeId<HorizontalAlignment>(),
+    qMetaTypeId<MoveToward>(),
+    qMetaTypeId<ChangeValue>(),
+    qMetaTypeId<VideoEffect>(),
+    qMetaTypeId<QuickSnapshotSave>(),
+    qMetaTypeId<MouseBehavior>()
+};

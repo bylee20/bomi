@@ -18,16 +18,16 @@ auto reg_play_engine() -> void
     qRegisterMetaType<QVector<int>>("QVector<int>");
     qRegisterMetaType<StreamList>("StreamList");
     qRegisterMetaType<AudioFormat>("AudioFormat");
-    qmlRegisterType<ChapterInfoObject>();
-    qmlRegisterType<VideoInfoObject>();
-    qmlRegisterType<AvTrackInfoObject>();
-    qmlRegisterType<VideoFormatInfoObject>();
-    qmlRegisterType<VideoHwAccInfoObject>();
-    qmlRegisterType<AudioFormatInfoObject>();
-    qmlRegisterType<AudioInfoObject>();
-    qmlRegisterType<CodecInfoObject>();
-    qmlRegisterType<MediaInfoObject>();
-    qmlRegisterType<SubtitleInfoObject>();
+    qmlRegisterType<EditionChapterObject>();
+    qmlRegisterType<VideoObject>();
+    qmlRegisterType<AvTrackObject>();
+    qmlRegisterType<VideoFormatObject>();
+    qmlRegisterType<VideoHwAccObject>();
+    qmlRegisterType<AudioFormatObject>();
+    qmlRegisterType<AudioObject>();
+    qmlRegisterType<CodecObject>();
+    qmlRegisterType<MediaObject>();
+    qmlRegisterType<SubtitleObject>();
     qmlRegisterType<PlayEngine>("bomi", 1, 0, "Engine");
 }
 
@@ -66,31 +66,30 @@ private:
 PlayEngine::Data::Data(PlayEngine *engine)
     : p(engine) { }
 
-auto PlayEngine::Data::af() const -> QByteArray
+auto PlayEngine::Data::af(const MrlState *s) const -> QByteArray
 {
     OptionList af(':');
-    af.add("dummy:address"_b, audio);
-    af.add("use_scaler"_b, (int)tempoScaler);
-    af.add("layout"_b, (int)layout);
+    af.add("dummy:address"_b, ac);
+    af.add("use_scaler"_b, (int)s->audio_tempo_scaler());
+    af.add("layout"_b, (int)s->audio_channel_layout());
     return af.get();
 }
 
-auto PlayEngine::Data::vf() const -> QByteArray
+auto PlayEngine::Data::vf(const MrlState *s) const -> QByteArray
 {
     OptionList vf(':');
-    vf.add("noformat:address"_b, filter);
-    vf.add("swdec_deint"_b, deint_swdec.toString().toLatin1());
-    vf.add("hwdec_deint"_b, deint_hwdec.toString().toLatin1());
+    vf.add("noformat:address"_b, vp);
+    vf.add("swdec_deint"_b, s->d->deint_swdec.toString().toLatin1());
+    vf.add("hwdec_deint"_b, s->d->deint_hwdec.toString().toLatin1());
     return vf.get();
 }
 
-auto PlayEngine::Data::vo() const -> QByteArray
+auto PlayEngine::Data::vo(const MrlState *s) const -> QByteArray
 {
-    return "opengl-cb:"
-            + videoSubOptions();
+    return "opengl-cb:" + videoSubOptions(s);
 }
 
-auto PlayEngine::Data::videoSubOptions() const -> QByteArray
+auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
 {
     static const QByteArray shader =
             "const mat4 c_matrix = mat4(__C_MATRIX__); "
@@ -135,36 +134,34 @@ auto PlayEngine::Data::videoSubOptions() const -> QByteArray
         } else
             opts.add(opt, _EnumData(scale));
     };
-    addScale("scale", lscale);
-    addScale("cscale", cscale);
+    addScale("scale", s->video_interpolator());
+    addScale("cscale", s->video_chroma_upscaler());
     opts.add("dither-depth", "auto"_b);
-    opts.add("dither", _EnumData(dithering));
-    if (filter->isSkipping())
+    opts.add("dither", _EnumData(s->video_dithering()));
+    if (vp->isSkipping())
         opts.add("frame-queue-size", 1);
     else
         opts.add("frame-queue-size", 3);
     opts.add("frame-drop-mode", "clear"_b);
-    opts.add("fancy-downscaling", hqDownscaling);
-    opts.add("sigmoid-upscaling", hqUpscaling);
+    opts.add("fancy-downscaling", s->video_hq_downscaling());
+    opts.add("sigmoid-upscaling", s->video_hq_upscaling());
     opts.add("custom-shader", customShader(c_matrix));
-
     return opts.get();
 }
 
 auto PlayEngine::Data::updateColorMatrix() -> void
 {
-
     c_matrix = QMatrix4x4();
-    if (videoEffects & VideoEffect::Invert)
+    if (params.video_effects() & VideoEffect::Invert)
         c_matrix = QMatrix4x4(-1, 0, 0, 1,
                               0, -1, 0, 1,
                               0, 0, -1, 1,
                               0, 0,  0, 1);
-    auto eq = videoEq;
-    if (videoEffects & VideoEffect::Gray)
+    auto eq = params.video_color();
+    if (params.video_effects() & VideoEffect::Gray)
         eq.setSaturation(-100);
     c_matrix *= eq.matrix();
-    if (videoEffects & VideoEffect::Remap) {
+    if (params.video_effects() & VideoEffect::Remap) {
         const float a = 255.0 / (235.0 - 16.0);
         const float b = -16.0 / 255.0 * a;
         c_matrix *= QMatrix4x4(a, 0, 0, b,
@@ -176,141 +173,24 @@ auto PlayEngine::Data::updateColorMatrix() -> void
 
 auto PlayEngine::Data::updateVideoSubOptions() -> void
 {
-    tellmpv_async("vo_cmdline", videoSubOptions());
+    mpv.tellAsync("vo_cmdline", videoSubOptions(&params));
 }
 
-auto PlayEngine::Data::tellmpv(const QByteArray &cmd) -> void
-{
-    if (handle)
-        check(mpv_command_string(handle, cmd.constData()),
-              "Cannaot execute: %%", cmd);
-}
-
-auto PlayEngine::Data::tellmpv_async(const QByteArray &cmd,
-                   std::initializer_list<QByteArray> &&list) -> void
-{
-    QVector<const char*> args(list.size()+2, nullptr);
-    auto it = args.begin();
-    *it++ = cmd.constData();
-    for (auto &one : list)
-        *it++ = one.constData();
-    if (handle)
-        check(mpv_command_async(handle, 0, args.data()), "Cannot execute: %%", cmd);
-}
-
-auto PlayEngine::Data::tellmpv(const QByteArray &cmd,
-             std::initializer_list<QByteArray> &&list) -> void
-{
-    QVector<const char*> args(list.size()+2, nullptr);
-    auto it = args.begin();
-    *it++ = cmd.constData();
-    for (auto &one : list)
-        *it++ = one.constData();
-    if (handle)
-        check(mpv_command(handle, args.data()), "Cannot execute: %%", cmd);
-}
-
-auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
-                                int edition) -> void
+auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume) -> void
 {
     QString file = mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
     if (file.isEmpty())
         return;
     OptionList opts;
-    opts.add("audio-device"_b, audioDevice.toLatin1(), true);
-    if (useHwAcc)
-        opts.add("hwdec-codecs"_b, hwCodecs, true);
-    else
-        opts.add("hwdec-codecs"_b, "", true);
-
-    if (mrl.isDisc()) {
-        file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
-        initSeek = resume;
-    } else {
-        if (edition >= 0)
-            opts.add("edition"_b, edition);
-        if (resume > 0)
-            opts.add("start"_b, resume/1000.0);
-        initSeek = -1;
-    }
-    opts.add("deinterlace"_b, deint != DeintMode::None);
-    opts.add("volume"_b, mpVolume());
-    opts.add("mute"_b, muted);
-    opts.add("audio-delay"_b, audioSync/1000.0);
-    opts.add("sub-delay"_b, subDelay/1000.0);
-
-    const auto &font = subStyle.font;
-    opts.add("sub-text-color"_b, font.color.name(QColor::HexArgb).toLatin1());
-    QStringList fontStyles;
-    if (font.bold())
-        fontStyles.append(u"Bold"_q);
-    if (font.italic())
-        fontStyles.append(u"Italic"_q);
-    QString family = font.family();
-    if (!fontStyles.isEmpty())
-        family += ":style="_a % fontStyles.join(' '_q);
-    const double factor = font.size * 720.0;
-    opts.add("sub-text-font"_b, family.toLatin1(), true);
-    opts.add("sub-text-font-size"_b, factor);
-    const auto &outline = subStyle.outline;
-    const auto scaled = [factor] (double v)
-        { return qBound(0., v*factor, 10.); };
-    const auto color = [] (const QColor &color)
-        { return color.name(QColor::HexArgb).toLatin1(); };
-    if (outline.enabled) {
-        opts.add("sub-text-border-size"_b, scaled(outline.width));
-        opts.add("sub-text-border-color"_b, color(outline.color));
-    } else
-        opts.add("sub-text-border-size"_b, 0.0);
-    const auto &bbox = subStyle.bbox;
-    if (bbox.enabled)
-        opts.add("sub-text-back-color"_b, color(bbox.color));
-    auto norm = [] (const QPointF &p)
-        { return sqrt(p.x()*p.x() + p.y()*p.y()); };
-    const auto &shadow = subStyle.shadow;
-    if (shadow.enabled) {
-        opts.add("sub-text-shadow-color"_b, color(shadow.color));
-        opts.add("sub-text-shadow-offset"_b, scaled(norm(shadow.offset)));
-    } else
-        opts.add("sub-text-shadow-offset"_b, 0.0);
-
-    if ((cacheEnabled = (cache > 0))) {
-        opts.add("cache"_b, cache);
-        opts.add("cache-initial"_b, int(cache*cacheForPlayback));
-        opts.add("cache-seek-min"_b, int(cache*cacheForSeeking));
-    } else
-        opts.add("cache"_b, "no"_b);
     opts.add("pause"_b, p->isPaused() || hasImage);
-    opts.add("audio-channels"_b, ChannelLayoutInfo::data(layout), true);
-
-    opts.add("af"_b, af(), true);
-    opts.add("vf"_b, vf(), true);
-
-    opts.add("colormatrix"_b, _EnumData(colorSpace).option);
-    opts.add("colormatrix-input-range", _EnumData(colorRange).option);
-    opts.add("vo"_b, vo(), true);
-    _Debug("Load: %% (%%)", file, opts.get());
-    tellmpv("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
-}
-
-auto PlayEngine::Data::updateMrl() -> void
-{
-    hasImage = startInfo.mrl.isImage();
-    updateMediaName();
-    emit p->mrlChanged(startInfo.mrl);
-}
-
-auto PlayEngine::Data::loadfile(int resume) -> void
-{
-    if (startInfo.isValid())
-        loadfile(startInfo.mrl, resume, startInfo.cache, startInfo.edition);
+    opts.add("resume-playback", resume);
+    mpv.tell("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
 }
 
 auto PlayEngine::Data::updateMediaName(const QString &name) -> void
 {
     mediaName = name;
     QString category;
-    auto mrl = p->mrl();
     if (mrl.isLocalFile())
         category = tr("File");
     else if (mrl.isDvd())
@@ -320,123 +200,220 @@ auto PlayEngine::Data::updateMediaName(const QString &name) -> void
     else
         category = u"URL"_q;
     const QString display = name.isEmpty() ? mrl.displayName() : name;
-    mediaInfo.setName(category % ": "_a % display);
+    info.media.setName(category % ": "_a % display);
 }
 
-auto PlayEngine::Data::setStreamList(StreamType type, StreamList &&list) -> bool
+auto PlayEngine::Data::onLoad() -> void
 {
-    auto &info = streamTypeInfo[type];
-    auto &data = streams[type];
-    int id = data.reserved;
-    if (id < 0) {
-        const auto &pri = streams[type].priority;
-        auto findLang = [&] () {
-            for (auto &p : pri) {
-                const QRegEx rx(p);
-                for (auto &str : list) {
-                    auto m = rx.match(str.language());
-                    if (m.hasMatch())
-                        return str.id();
-                }
-            }
-            return -1;
-        };
-        if (!pri.isEmpty())
-            id = findLang();
+    auto file = mpv.get<QString>("stream-open-filename");
+    t.local = localCopy();
+    auto local = t.local.data();
+
+    Mrl mrl(file);
+    local->set_mrl(mrl.toUnique());
+    local->d->disc = mrl.isDisc();
+    local->set_resume_position(-1);
+    local->set_edition(-1);
+    local->set_device(QString());
+    local->set_video_tracks(StreamList());
+    local->set_audio_tracks(StreamList());
+    local->set_sub_tracks(StreamList());
+    local->set_sub_tracks_inclusive(StreamList());
+    const auto found = history->getState(local);
+    auto setFiles = [&] (const char *name, const char *nid,
+            const StreamList &list) {
+        QStringList files; int id = -1;
+        for (auto &track : list) {
+            if (!track.isExclusive())
+                continue;
+            if (track.isExternal())
+                files.push_back(track.file());
+            if (track.isSelected())
+                id = track.id();
+        }
+        if (!files.isEmpty())
+            mpv.setAsync(name, files);
+        if (id != -1)
+            mpv.setAsync(nid, id);
+    };
+
+    if (found && local->audio_tracks().isValid())
+        setFiles("file-local-options/audio-file", "file-local-options/aid", local->audio_tracks());
+    else {
+        QMutexLocker locker(&mutex);
+        mpv.setAsync("file-local-options/audio-file", autoloadFiles(StreamAudio));
     }
-    if (id >= 0) {
-        for (auto &str : list)
-            str.m_selected = str.m_id == id;
-        setmpv(info.mpvName, id);
+    QVector<SubComp> loads;
+    if (found && local->sub_tracks().isValid()) {
+        setFiles("file-local-options/sub-file", "file-local-options/sid", local->sub_tracks());
+        loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive());
+    } else {
+        QMutexLocker locker(&mutex);
+        QStringList files, encs;
+        _R(files, loads) = autoloadSubtitle(local);
+        if (!files.isEmpty()) {
+            mpv.setAsync("options/subcp", assEncodings[files.front()].toLatin1());
+            mpv.setAsync("file-local-options/sub-file", files);
+        }
     }
-    data.reserved = -1;
-    if (streams[type].tracks == list)
-        return false;
-    streams[type].tracks = std::move(list);
-    emit (p->*(info.notifyList))(streams[type].tracks);
-    emit (p->*(info.notifyTrack))(currentTrack(type));
-    return true;
+
+    local->set_last_played_date_time(QDateTime::currentDateTime());
+    local->set_device(mrl.device());
+    local->set_mrl(mrl);
+
+    int edition = -1, start = -1;
+    if (mpv.get<bool>("options/resume-playback")
+            && resume && mrl.isUnique() && !mrl.isImage()) {
+        edition = local->edition();
+        start = local->resume_position();
+    }
+    if (mrl.isDisc()) {
+        file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
+        t.start = start;
+    } else {
+        if (edition >= 0)
+            mpv.setAsync("file-local-options/edition", edition);
+        if (start > 0)
+            mpv.setAsync("file-local-options/start", QString::number(start * 1e-3, 'f'));
+        t.start = -1;
+    }
+
+    const auto deint = local->video_deinterlacing() != DeintMode::None;
+    mpv.setAsync("options/sub-visibility", !local->sub_hidden());
+    mpv.setAsync("options/volume", volume());
+    mpv.setAsync("options/mute", local->audio_muted() ? "yes"_b : "no"_b);
+    mpv.setAsync("options/audio-delay", local->audio_sync() * 1e-3);
+    mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);
+    mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(local->audio_channel_layout()));
+    mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
+    mpv.setAsync("af", af(local));
+    mpv.setAsync("vf", vf(local));
+    mpv.setAsync("options/vo", vo(local));
+    mpv.setAsync("options/colormatrix", _EnumData(local->video_space()).option);
+    mpv.setAsync("options/colormatrix-input-range", _EnumData(local->video_range()).option);
+
+    const auto cache = local->d->cache.get(mrl);
+    t.caching = cache > 0;
+    if (t.caching) {
+        mpv.setAsync("file-local-options/cache", cache);
+        mpv.setAsync("file-local-options/cache-initial", local->d->cache.playback(cache));
+        mpv.setAsync("file-local-options/cache-seek-min", local->d->cache.seeking(cache));
+    } else
+        mpv.setAsync("file-local-options/cache", "no"_b);
+
+
+    if (file.startsWith("http://"_a) || file.startsWith("https://"_a)) {
+        file = QUrl(file).toString(QUrl::FullyEncoded);
+        if (yle && yle->supports(file)) {
+            if (yle->run(file))
+                mpv.setAsync("stream-open-filename", yle->url().toLocal8Bit());
+        } else if (youtube && youtube->run(file)) {
+            mpv.setAsync("file-local-options/cookies", true);
+            mpv.setAsync("file-local-options/cookies-file", youtube->cookies().toLocal8Bit());
+            mpv.setAsync("file-local-options/user-agent", youtube->userAgent().toLocal8Bit());
+            mpv.setAsync("stream-open-filename", youtube->url().toLocal8Bit());
+        } else
+            mpv.setAsync("stream-open-filename", file.toLocal8Bit());
+    }
+    mpv.flush();
+    _PostEvent(p, SyncMrlState, t.local, loads);
+    t.local.clear();
+}
+
+auto PlayEngine::Data::onFinish() -> void
+{
+    t.local = localCopy();
+    t.local->set_resume_position(time);
+    t.local->set_last_played_date_time(QDateTime::currentDateTime());
+    t.local->set_edition(info.edition.number());
 }
 
 auto PlayEngine::Data::hook() -> void
 {
-    hook("on_load", [=] () {
-        auto file = getmpv<QString>("stream-open-filename");
-        if (!file.startsWith("http://"_a) && !file.startsWith("https://"_a))
-            return;
-        file = QUrl(file).toString(QUrl::FullyEncoded);
-        if (yle && yle->supports(file)) {
-            if (!yle->run(file))
-                return;
-            setmpv("stream-open-filename", yle->url().toLocal8Bit());
-        } else if (youtube && youtube->run(file)) {
-            setmpv("options/cookies", true);
-            setmpv("options/cookies-file", youtube->cookies().toLocal8Bit());
-            setmpv("options/user-agent", youtube->userAgent().toLocal8Bit());
-            setmpv("stream-open-filename", youtube->url().toLocal8Bit());
-        } else
-            setmpv("stream-open-filename", file.toLocal8Bit());
-    });
+    mpv.hook("on_load", [=] () { onLoad(); });
+    mpv.hook("on_finish", [=] () { onFinish(); });
 }
 
 auto PlayEngine::Data::observe() -> void
 {
-    observeType<bool>("pause", [=] (bool p) {
-        if (p)
-            post(Paused);
-        else if (!getmpv<bool>("idle"))
-            post(Playing);
-    });
-    observeType<bool>("core-idle", [=] (bool i) { if (!i) post(Playing); });
-    observeType<bool>("paused-for-cache", [=] (bool b) { post(Buffering, b); });
-    observeType<bool>("seeking", [=] (bool s) { post(Seeking, s); });
+    mpv.setObserver(p);
+    mpv.observeState("pause", [=] (bool p)
+        { if (p) post(Paused); else if (!mpv.get<bool>("idle")) post(Playing); });
+    mpv.observeState("core-idle", [=] (bool i) { if (!i) post(Playing); });
+    mpv.observeState("paused-for-cache", [=] (bool b) { post(Buffering, b); });
+    mpv.observeState("seeking", [=] (bool s) { post(Seeking, s); });
 
-    observe("cache-used", cacheUsed, [=] () {
-        return cacheEnabled ? getmpv<int>("cache-used") : 0;
-    }, &PlayEngine::cacheUsedChanged);
-    observe("cache-size", cacheSize, [=] () {
-        return cacheEnabled ? getmpv<int>("cache-size") : 0;
-    }, &PlayEngine::cacheSizeChanged);
-    observeTime("time-pos", position, &PlayEngine::tick);
-    observeTime("time-start", begin, &PlayEngine::beginChanged);
-    observeTime("length", duration, &PlayEngine::durationChanged);
-    observeTime("avsync", avSync, &PlayEngine::avSyncChanged);
-    observe("seekable", seekable, &PlayEngine::seekableChanged);
-    observe("chapter-list", chapters, [=] () {
-        const auto array = getmpv<QVariant>("chapter-list").toList();
-        ChapterList chapters; chapters.resize(array.size());
+    mpv.observe("cache-used", [=] () { return t.caching ? mpv.get<int>("cache-used") : 0; },
+                [=] (int v) { if (_Change(cache.used, v)) emit p->cacheUsedChanged(); });
+    mpv.observe("cache-size", [=] () { return t.caching ? mpv.get<int>("cache-size") : 0; },
+                [=] (int v) { if (_Change(cache.size, v)) emit p->cacheSizeChanged(); });
+    mpv.observe("seekable", seekable, [=] () { emit p->seekableChanged(seekable); });
+
+    auto updateChapter = [=] (int n) {
+        info.chapter.invalidate();
+        for (auto chapter : info.chapters) {
+            chapter->setRate(p->rate(chapter->time()));
+            if (chapter->number() == n)
+                info.chapter.set(chapter->m);
+        }
+        emit p->chapterChanged();
+    };
+
+    mpv.observeTime("avsync", avSync, [=] () { emit p->avSyncChanged(avSync); });
+    mpv.observeTime("time-pos", time, [=] () {
+        emit p->tick(time);
+        if (_Change(time_s, time/1000))
+            emit p->time_sChanged();
+        sr->render(time);
+    });
+    mpv.observeTime("time-start", begin, [=] () {
+        emit p->beginChanged(begin);
+        if (_Change(begin_s, begin/1000))
+            emit p->begin_sChanged();
+        updateChapter(mpv.get<int>("chapter"));
+    });
+    mpv.observeTime("length", duration, [=] () {
+        emit p->durationChanged(duration);
+        if (_Change(duration_s, duration/1000))
+            emit p->duration_sChanged();
+        updateChapter(mpv.get<int>("chapter"));
+    });
+
+    mpv.observe("chapter-list", [=] () {
+        const auto array = mpv.get<QVariant>("chapter-list").toList();
+        QVector<ChapterData> data(array.size());
         for (int i=0; i<array.size(); ++i) {
             const auto map = array[i].toMap();
-            auto &chapter = chapters[i];
-            chapter.m_id = i;
-            chapter.m_time = s2ms(map[u"time"_q].toDouble());
-            chapter.m_name = map[u"title"_q].toString();
-            if (chapter.m_name.isEmpty())
-                chapter.m_name = _MSecToString(chapter.m_time, u"hh:mm:ss.zzz"_q);
+            data[i].number = i;
+            data[i].time = s2ms(map[u"time"_q].toDouble());
+            data[i].name = map[u"title"_q].toString();
+            if (data[i].name.isEmpty())
+                data[i].name = _MSecToString(data[i].time, u"hh:mm:ss.zzz"_q);
         }
-        return chapters;
-    }, [=] () {
-        chapterInfo->setCount(chapters.size());
-        emit p->chaptersChanged(chapters);
-    });
-    observe("chapter", chapter, &PlayEngine::currentChapterChanged);
-    observe("track-list", [=] () {
-        QVector<StreamList> streams(3);
-        auto list = getmpv<QVariant>("track-list").toList();
-        for (auto &var : list) {
-            const auto track = StreamTrack::fromMpvData(var);
-            streams[track.type()].insert(track.id(), track);
+        return data;
+    }, [=] (auto &&data) {
+        info.chapters.resize(data.size());
+        for (int i = 0; i < data.size(); ++i) {
+            if (!info.chapters[i].data())
+                info.chapters[i]  = ChapterPtr::create();
+            info.chapters[i]->set(data[i]);
         }
-        return streams;
-    }, [=] (QEvent *event) {
-        auto strms = _MoveData<QVector<StreamList>>(event);
-        for (auto type : streamTypes)
-            setStreamList(type, std::move(strms[type]));
+        emit p->chaptersChanged();
+        updateChapter(mpv.get<int>("chapter"));
     });
+    mpv.observe("chapter", updateChapter);
+    mpv.observe("track-list", [=] () {
+        return toTracks(mpv.get<QVariant>("track-list"));
+    }, [=] (auto &&strms) {
+        params.set_video_tracks(strms[StreamVideo]);
+        params.set_audio_tracks(strms[StreamAudio]);
+        params.set_sub_tracks(strms[StreamSubtitle]);
+    });
+
     for (auto type : streamTypes)
-        observeTrack(type);
-    observe("metadata", metaData, [=] () {
-        const auto list = getmpv<QVariant>("metadata").toList();
+        mpv.observe(streams[type].pid, [=] (int id) { params.select(type, id); });
+    mpv.observe("metadata", [=] () {
+        const auto list = mpv.get<QVariant>("metadata").toList();
         MetaData metaData;
         for (int i=0; i+1<list.size(); i+=2) {
             const auto key = list[i].toString();
@@ -452,39 +429,43 @@ auto PlayEngine::Data::observe() -> void
             else if (key == "date"_a)
                 metaData.m_date = value;
         }
-        metaData.m_mrl = mpvMrl;
-        metaData.m_duration = s2ms(getmpv<double>("length"));
+        metaData.m_mrl = params.mrl();
+        metaData.m_duration = s2ms(mpv.get<double>("length"));
         return metaData;
-    }, &PlayEngine::metaDataChanged);
-    observeType<QString>("media-title", [=] (QString &&t)
-        { updateMediaName(mpvMrl.isYouTube() ? mpvMrl.toString() : t); });
-
-    observeType<QString>("video-codec", [=] (QString &&c) { videoInfo.codec()->parse(c); });
-    observeType<double>("fps", [=] (double fps) {
-        videoInfo.input()->setFps(fps);
-        videoInfo.output()->setFps(fps);
+    }, [=] (auto &&md) {
+        if (_Change(metaData, md))
+            emit p->metaDataChanged();
     });
-    observeType<int>("width", [=] (int w) {
-        auto input = videoInfo.input();
+    mpv.observe("media-title", [=] (QString &&t)
+        { updateMediaName(params.mrl().isYouTube() ? params.mrl().toString() : t); });
+
+    mpv.observe("video-codec", [=] (QString &&c) { info.video.codec()->parse(c); });
+    mpv.observe("fps", [=] (double fps) {
+        info.video.input()->setFps(fps);
+        info.video.output()->setFps(fps);
+        sr->setFPS(fps);
+    });
+    mpv.observe("width", [=] (int w) {
+        auto input = info.video.input();
         input->setWidth(w);
         input->setBppSize(input->size());
     });
-    observeType<int>("height", [=] (int h) {
-        auto input = videoInfo.input();
+    mpv.observe("height", [=] (int h) {
+        auto input = info.video.input();
         input->setHeight(h);
         input->setBppSize(input->size());
     });
-    observeType<int>("video-bitrate", [=] (int bps) { videoInfo.input()->setBitrate(bps); });
-    observeType<QString>("video-format", [=] (QString &&f) { videoInfo.input()->setType(f); });
+    mpv.observe("video-bitrate", [=] (int bps) { info.video.input()->setBitrate(bps); });
+    mpv.observe("video-format", [=] (QString &&f) { info.video.input()->setType(f); });
     QRegularExpression rx(uR"(Video decoder: ([^\n]*))"_q);
     auto decoderOutput = [=] (const char *name) -> QString {
-        auto m = rx.match(getmpvosd(name));
+        auto m = rx.match(mpv.get_osd(name));
         if (!m.hasMatch() || m.capturedRef(1) == "unknown"_a)
             return u"Autoselect"_q;
         return m.captured(1);
     };
 
-    auto setParams = [] (VideoFormatInfoObject *info, const QVariantMap &p,
+    auto setParams = [] (VideoFormatObject *info, const QVariantMap &p,
                          const QString &wkey, const QString &hkey) {
         const auto type = p[u"pixelformat"_q].toString();
         const auto w = p[wkey].toInt(), h = p[hkey].toInt();
@@ -494,165 +475,112 @@ auto PlayEngine::Data::observe() -> void
                          p[u"average-bpp"_q].toInt());
         info->setDepth(p[u"plane-depth"_q].toInt());
     };
-    observeType<QVariant>("video-params", [=] (QVariant &&var) {
+    mpv.observe("video-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
-        auto info = videoInfo.output();
+        auto &video = info.video;
+        auto info = video.output();
         setParams(info, params, u"w"_q, u"h"_q);
         info->setRange(findEnum<ColorRange>(decoderOutput("colormatrix-input-range")));
         info->setSpace(findEnum<ColorSpace>(decoderOutput("colormatrix")));
         auto hwState = [&] () {
-            if (!useHwAcc)
+            if (!hwdec)
                 return Deactivated;
             static QVector<QString> types = { u"vaapi"_q, u"vdpau"_q, u"vda"_q };
-            const auto codec = videoInfo.codec()->type();
+            const auto codec = video.codec()->type();
             if (!HwAcc::supports(codec))
                 return Unavailable;
             if (types.contains(info->type().toLower()))
                 return Activated;
-            if (!hwCodecs.contains(codec.toLatin1()))
+            if (!hwcdc.contains(codec.toLatin1()))
                 return Unavailable;
             return Deactivated;
         };
-        auto hwacc = videoInfo.hwacc();
+        auto hwacc = video.hwacc();
         hwacc->setState(hwState());
-        const auto hwdec = getmpv<QString>("hwdec");
+        const auto hwdec = mpv.get<QString>("hwdec");
         hwacc->setDriver(hwdec == "no"_a ? QString() : hwdec);
     });
-    observeType<QVariant>("video-out-params", [=] (QVariant &&var) {
+    mpv.observe("video-out-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
-        auto info = videoInfo.renderer();
+        auto info = this->info.video.renderer();
         setParams(info, params, u"dw"_q, u"dh"_q);
         info->setRange(findEnum<ColorRange>(params[u"colorlevels"_q].toString()));
         info->setSpace(findEnum<ColorSpace>(params[u"colormatrix"_q].toString()));
     });
 
-    observeType<QString>("audio-codec", [=] (QString &&c) { audioInfo.codec()->parse(c); });
-    observeType<QString>("audio-format", [=] (QString &&f) { audioInfo.input()->setType(f); });
-    observeType<int>("audio-bitrate", [=] (int bps) { audioInfo.input()->setBitrate(bps); });
-    observeType<int>("audio-samplerate", [=] (int s) { audioInfo.input()->setSampleRate(s, false); });
-    observeType<int>("audio-channels", [=] (int n)
-        { audioInfo.input()->setChannels(QString::number(n) % "ch"_a, n); });
-    observeType<QString>("audio-device", [=] (QString &&d) { audioInfo.setDevice(d); });
-
-    for (const auto &ob : observations) {
-        if (ob.name)
-            mpv_observe_property(handle, ob.event, ob.name, MPV_FORMAT_NONE);
-    }
+    mpv.observe("audio-codec", [=] (QString &&c) { info.audio.codec()->parse(c); });
+    mpv.observe("audio-format", [=] (QString &&f) { info.audio.input()->setType(f); });
+    mpv.observe("audio-bitrate", [=] (int bps) { info.audio.input()->setBitrate(bps); });
+    mpv.observe("audio-samplerate", [=] (int s) { info.audio.input()->setSampleRate(s, false); });
+    mpv.observe("audio-channels", [=] (int n)
+        { info.audio.input()->setChannels(QString::number(n) % "ch"_a, n); });
+    mpv.observe("audio-device", [=] (QString &&d) { info.audio.setDevice(d); });
 }
 
-auto PlayEngine::Data::dispatch(mpv_event *event) -> void
+auto PlayEngine::Data::request() -> void
 {
-    switch (event->event_id) {
-    case MPV_EVENT_LOG_MESSAGE: {
-        thread_local QMap<QByteArray, QByteArray> leftmsg;
-        auto message = static_cast<mpv_event_log_message*>(event->data);
-        const QByteArray prefix(message->prefix);
-        auto &left = leftmsg[prefix];
-        left.append(message->text);
-        int from = 0;
-        for (;;) {
-            auto to = left.indexOf('\n', from);
-            if (to < 0)
-                break;
-            log(prefix, left.mid(from, to-from));
-            from = to + 1;
-        }
-        left = left.mid(from);
-        break;
-    } case MPV_EVENT_CLIENT_MESSAGE: {
-        auto message = static_cast<mpv_event_client_message*>(event->data);
-        if (message->num_args < 1)
-            break;
-        if (message->args[0] == "hook_run"_b && message->num_args == 3) {
-            QByteArray when(message->args[2]);
-            Q_ASSERT(hooks.contains(when));
-            hooks[when]();
-            tellmpv("hook_ack", when);
-        }
-        break;
-    } case MPV_EVENT_IDLE:
-        if (mpvState != MpvLoading)
-            mpvState = MpvStopped;
-        break;
-    case MPV_EVENT_START_FILE:
-        mpvState = MpvLoading;
-        mpvMrl = startInfo.mrl;
+    mpv.request(MPV_EVENT_START_FILE, [=] () {
         _PostEvent(p, PreparePlayback);
-        post(getmpv<bool>("pause") ? Paused : Playing);
+        post(mpv.get<bool>("pause") ? Paused : Playing);
         post(Loading, true);
-        break;
-    case MPV_EVENT_FILE_LOADED: {
-        post(getmpv<bool>("pause") ? Paused : Playing);
+    });
+    mpv.request(MPV_EVENT_FILE_LOADED, [=] () {
+        post(mpv.get<bool>("pause") ? Paused : Playing);
         post(Loading, false);
-        updateVideoSubOptions();
-        mpvState = MpvRunning;
-        this->disc = mpvMrl.isDisc();
-        if (this->initSeek > 0) {
-            this->tellmpv("seek", this->initSeek, 2);
-            this->initSeek = -1;
+        const auto disc = params.mrl().isDisc();
+        if (t.start > 0) {
+            mpv.tellAsync("seek", t.start * 1e-3, 2);
+            t.start = -1;
         }
-        const char *listprop = this->disc ? "disc-titles" : "editions";
-        const char *itemprop = this->disc ? "disc-title"  : "edition";
-        EditionList editions;
-        auto add = [&] (int id) -> Edition& {
-            auto &title = editions[id];
-            title.m_id = id;
-            title.m_name = tr("Title %1").arg(id+1);
-            return title;
-        };
-        const int list = getmpv<int>(listprop);
-        editions.resize(list);
-        for (int i=0; i<list; ++i)
-            add(i);
+        const char *listprop = disc ? "disc-titles" : "editions";
+        const char *itemprop = disc ? "disc-title"  : "edition";
+        const int list = mpv.get<int>(listprop);
+        QVector<EditionData> editions(list);
+        auto name = disc ? tr("Title %1") : tr("Edition %1");
+        for (int i = 0; i < list; ++i) {
+            editions[i].number = i;
+            editions[i].name = name.arg(i+1);
+        }
+        EditionData edition;
         if (list > 0) {
-            const int item = getmpv<int>(itemprop);
+            const int item = mpv.get<int>(itemprop);
             if (0 <= item && item < list)
-                editions[item].m_selected = true;
+                edition = editions[item];
         }
-        _PostEvent(p, StartPlayback, editions);
-        break;
-    } case MPV_EVENT_END_FILE: {
-        post(Loading, false);
-        disc = false;
-        auto reason = static_cast<mpv_event_end_file*>(event->data)->reason;
-        if (reason == MPV_END_FILE_REASON_EOF && mpvState != MpvRunning)
-            reason = MPV_END_FILE_REASON_ERROR;
-        mpvState = MpvStopped;
-        _PostEvent(p, EndPlayback, mpvMrl, reason);
-        break;
-    } case MPV_EVENT_PROPERTY_CHANGE:
-        observation(event->reply_userdata).post();
-        break;
-    case MPV_EVENT_SET_PROPERTY_REPLY:
-        if (!isSuccess(event->error)) {
-            auto ptr = reinterpret_cast<void*>(event->reply_userdata);
-            auto data = static_cast<QByteArray*>(ptr);
-            _Debug("Error %%: Couldn't set property %%.",
-                   mpv_error_string(event->error), *data);
-            delete data;
-        }
-        break;
-    case MPV_EVENT_GET_PROPERTY_REPLY: {
-        break;
-    } case MPV_EVENT_SHUTDOWN:
-        quit = true;
-        break;
-    case MPV_EVENT_PLAYBACK_RESTART:
-        _PostEvent(p, NotifySeek);
-        break;
-    default:
-        break;
-    }
 
+        auto strs = toTracks(mpv.get<QVariant>("track-list"));
+        auto select = [&] (StreamType type) {
+            for (auto &p : streams[type].priority) {
+                const QRegEx rx(p);
+                for (auto &str : strs[type]) {
+                    auto m = rx.match(str.language());
+                    if (m.hasMatch()) {
+                        str.m_selected = true;
+                        mpv.setAsync(streams[type].pid, str.id());
+                    }
+                }
+            }
+        };
+        select(StreamAudio);
+        select(StreamSubtitle);
+        mpv.flush();
+        _PostEvent(p, StartPlayback, editions, edition);
+    });
+    mpv.request(MPV_EVENT_END_FILE, [=] (mpv_event *e) {
+        post(Loading, false);
+        auto ev = static_cast<mpv_event_end_file*>(e->data);
+        _PostEvent(p, EndPlayback, t.local, ev->reason, ev->error);
+        t.local.clear();
+    });
+    mpv.request(MPV_EVENT_PLAYBACK_RESTART, [=] () {
+        _PostEvent(p, NotifySeek);
+    });
 }
 
 auto PlayEngine::Data::process(QEvent *event) -> void
 {
-    const int type = event->type();
-    if (UpdateEventBegin <= type && type < updateEventMax) {
-        observation(event->type()).handle(event);
+    if (mpv.process(event))
         return;
-    }
     switch ((int)event->type()) {
      case StateChange:
         updateState(_GetData<PlayEngine::State>(event));
@@ -663,75 +591,65 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         setWaitings(waitings, set);
         break;
     } case PreparePlayback: {
-        this->subtitleFiles.clear();
         break;
     } case StartPlayback: {
         clearTimings();
-        _TakeData(event, this->editions);
-        int title = -1;
-        for (auto &item : this->editions) {
-            if (item.isSelected())
-                title = item.id();
+        QVector<EditionData> editions; EditionData edition;
+        _TakeData(event, editions, edition);
+        info.editions.resize(editions.size());
+        for (int i = 0; i < info.editions.size(); ++i) {
+            if (!info.editions[i])
+                info.editions[i] = EditionPtr::create();
+            info.editions[i]->set(editions[i]);
         }
-        this->edition = title;
-        emit p->editionsChanged(this->editions);
-        emit p->started(startInfo.mrl, startInfo.reloaded);
-        startInfo.reloaded = false;
+        info.edition.set(edition);
+        emit p->editionsChanged();
+        emit p->editionChanged();
+        emit p->started(params.mrl());
         break;
     } case EndPlayback: {
-        Mrl mrl; int reason; _TakeData(event, mrl, reason);
-        int remain = (this->duration + this->begin) - this->position;
-        nextInfo = StartInfo();
+        QSharedPointer<MrlState> last; int reason, error;
+        _TakeData(event, last, reason, error);
+        Q_ASSERT(last.data());
         auto state = Stopped;
-        switch (reason) {
+        bool eof = false;
+        switch ((mpv_end_file_reason)reason) {
         case MPV_END_FILE_REASON_EOF:
+            last->set_resume_position(-1);
+            eof = true;
             _Info("Playback reached end-of-file");
-            emit p->requestNextStartInfo();
-            if (nextInfo.isValid())
-                mpvState = MpvLoading;
-            remain = 0;
             break;
         case MPV_END_FILE_REASON_QUIT:
         case MPV_END_FILE_REASON_STOP:
             _Info("Playback has been terminated by request");
             break;
-        default:
-            _Info("Playback has been terminated by error(s)");
+        case MPV_END_FILE_REASON_ERROR:
+            _Error("Playback has been terminated by error: %%", mpv_error_string(error));
             state = Error;
-            startInfo.reloaded = false;
+            break;
         }
         updateState(state);
-        if (state != Error && !mrl.isEmpty()) {
-            FinishInfo info;
-            info.mrl = mrl;
-            info.position = this->position;
-            info.remain = remain;
-            for (auto type : streamTypes)
-                info.streamIds[type] = this->currentTrack(type);
-            emit p->finished(info);
-        }
-//        updateWaiting();
-        if (nextInfo.isValid())
-            p->load(nextInfo);
+        history->update(last.data(), false);
+        emit p->finished(last->mrl(), eof);
         break;
     } case NotifySeek:
         emit p->sought();
         break;
-    default:
+    case SyncMrlState: {
+        QSharedPointer<MrlState> ms;
+        QVector<SubComp> loads;
+        _TakeData(event, ms, loads);
+        params.m_mutex = nullptr;
+        sr->setComponents(loads);
+        mutex.lock();
+        params.copyFrom(ms.data());
+        params.set_sub_tracks_inclusive(sr->toTrackList());
+        mutex.unlock();
+        params.m_mutex = &mutex;
+        history->update(&params, true);
         break;
-    }
-}
-
-auto PlayEngine::Data::log(const QByteArray &prefix,
-                           const QByteArray &text) -> void
-{
-    Log::write(Log::Info, "[mpv/%%] %%", prefix, text);
-    if (text.startsWith("AO: [")) {
-        constexpr int from = 5;
-        const int to = text.indexOf(']');
-        const auto driver = QString::fromLatin1(text.mid(from, to - from));
-        QMetaObject::invokeMethod(&audioInfo, "setDriver",
-                                  Qt::QueuedConnection, Q_ARG(QString, driver));
+    } default:
+        break;
     }
 }
 
@@ -746,40 +664,218 @@ auto PlayEngine::Data::takeSnapshot() -> void
     OpenGLFramebufferObject fbo(size);
     auto take = [&](bool withOsd) -> QImage {
         QImage image;
-        if (withOsd && !p->subtitleStreams().isEmpty()) {
-            const auto was = getmpv<bool>("sub-visibility");
+        if (withOsd && !params.sub_tracks().isEmpty()) {
+            const auto was = mpv.get<bool>("sub-visibility");
             if (was != withOsd)
-                setmpv("sub-visibility", withOsd);
-            render(&fbo);
+                mpv.set("sub-visibility", withOsd);
+            mpv.render(fbo.id(), fbo.size());
             if (was != withOsd)
-                setmpv("sub-visibility", was);
+                mpv.set("sub-visibility", was);
             return fbo.texture().toImage();
         }
-        if (!ssNoOsd.isNull())
-            return ssNoOsd;
-        render(&fbo);
+        if (!ss.video.isNull())
+            return ss.video;
+        mpv.render(fbo.id(), fbo.size());
         return fbo.texture().toImage();
     };
     if (snapshot & VideoOnly)
-        ssNoOsd = take(false);
+        ss.video = take(false);
     if (snapshot & VideoWidthOsd)
-        ssWithOsd = take(true);
+        ss.screen = take(true);
     emit p->snapshotTaken();
 }
 
 auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
 {
-    const int delay = render(fbo);
-    fpsMeasure.push(++drawnFrames);
-    videoInfo.setDelayedFrames(delay);
-    videoInfo.setDroppedFrames(getmpv<int64_t>("vo-drop-frame-count"));
+    const int delay = mpv.render(fbo->id(), fbo->size());
+    frames.measure.push(++frames.drawn);
+    info.video.setDelayedFrames(delay);
+    info.video.setDroppedFrames(mpv.get<int64_t>("vo-drop-frame-count"));
 
     _Trace("PlayEngine::Data::renderVideoFrame(): "
            "render queued frame(%%), avgfps: %%",
-           fbo->size(), videoInfo.renderer()->fps());
+           fbo->size(), info.video.renderer()->fps());
 
     if (snapshot) {
         this->takeSnapshot();
         snapshot = NoSnapshot;
     }
+}
+
+auto PlayEngine::Data::toTracks(const QVariant &var) -> QVector<StreamList>
+{
+    QVector<StreamList> streams(3);
+    streams[StreamVideo] = { StreamVideo };
+    streams[StreamAudio] = { StreamAudio };
+    streams[StreamSubtitle] = { StreamSubtitle };
+    auto list = var.toList();
+    for (auto &var : list) {
+        auto track = StreamTrack::fromMpvData(var);
+        streams[track.type()].insert(track);
+    }
+    auto &subs = streams[StreamSubtitle];
+    if (!subs.isEmpty()) {
+        QMutexLocker locker(&mutex);
+        for (auto &track : subs) {
+            if (track.isExternal())
+                track.m_encoding = assEncodings.take(track.file());
+        }
+    }
+    return streams;
+}
+
+auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>
+{
+    Q_ASSERT(tracks.type() == StreamInclusiveSubtitle);
+    QVector<SubComp> ret;
+    QMap<QString, QMap<QString, SubComp>> subMap;
+    for (auto &track : tracks) {
+        auto it = subMap.find(track.file());
+        if (it == subMap.end()) {
+            it = subMap.insert(track.file(), QMap<QString, SubComp>());
+            Subtitle sub;
+            if (!sub.load(track.file(), track.encoding(), -1))
+                continue;
+            for (int i = 0; i < sub.size(); ++i)
+                it->insert(sub[i].language(), sub[i]);
+        }
+        auto iit = it->find(track.language());
+        if (iit != it->end()) {
+            iit->selection() = track.isSelected();
+            ret.push_back(*iit);
+        }
+    }
+    return ret;
+}
+
+auto PlayEngine::Data::autoloadFiles(StreamType type) -> QStringList
+{
+    auto &a = streams[type].autoloader;
+    if (a.enabled)
+        return a.autoload(mrl, streams[type].ext);
+    return QStringList();
+}
+
+auto PlayEngine::Data::autoselect(const MrlState *s, QVector<SubComp> &loads) -> void
+{
+    QVector<int> selected;
+    QSet<QString> langSet;
+    const QFileInfo file(mrl.toLocalFile());
+    const QString base = file.completeBaseName();
+
+    for (int i = 0; i<loads.size(); ++i) {
+        bool select = false;
+        switch (s->d->autoselectMode) {
+        case AutoselectMode::Matched: {
+            const QFileInfo info(loads[i].fileName());
+            select = info.completeBaseName() == base;
+            break;
+        } case AutoselectMode::EachLanguage: {
+            //                  const QString lang = loaded[i].m_comp.language().id();
+            const auto lang = loads[i].language();
+            if ((select = (!langSet.contains(lang))))
+                langSet.insert(lang);
+            break;
+        }  case AutoselectMode::All:
+            select = true;
+            break;
+        default:
+            break;
+        }
+        if (select)
+            selected.append(i);
+    }
+    if (s->d->autoselectMode == AutoselectMode::Matched
+            && !selected.isEmpty() && !s->d->autoselectExt.isEmpty()) {
+        for (int i=0; i<selected.size(); ++i) {
+            const auto fileName = loads[selected[i]].fileName();
+            const auto suffix = QFileInfo(fileName).suffix();
+            if (s->d->autoselectExt == suffix.toLower()) {
+                const int idx = selected[i];
+                selected.clear();
+                selected.append(idx);
+                break;
+            }
+        }
+    }
+    for (int i=0; i<selected.size(); ++i)
+        loads[selected[i]].selection() = true;
+}
+
+auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<QStringList, QVector<SubComp>>
+{
+    const auto subs = autoloadFiles(StreamSubtitle);
+    QStringList files;
+    QVector<SubComp> loads;
+    for (auto &file : subs) {
+        const auto enc = s->d->detect(file);
+        Subtitle sub;
+        if (sub.load(file, enc, -1)) {
+            for (int i = 0; i < sub.size(); ++i)
+                loads.push_back(sub[i]);
+        } else {
+            files.push_back(file);
+            assEncodings[file] = enc;
+        }
+    }
+    autoselect(s, loads);
+    return _T(files, loads);
+}
+
+auto PlayEngine::Data::localCopy() -> QSharedPointer<MrlState>
+{
+    auto s = new MrlState;
+    s->blockSignals(true);
+    mutex.lock();
+    s->copyFrom(&params);
+    mutex.unlock();
+    return QSharedPointer<MrlState>(s);
+}
+
+auto PlayEngine::Data::updateState(State s) -> void
+{
+    const auto prev = state;
+    if (_Change(state, s)) {
+        emit p->stateChanged(state);
+        auto check = [&] (State s)
+            { return !!(state & s) != !!(prev & s); };
+        if (check(Paused))
+            emit p->pausedChanged();
+        if (check(Playing))
+            emit p->playingChanged();
+        if (check(Stopped))
+            emit p->stoppedChanged();
+        if (check(Running))
+            emit p->runningChanged();
+    }
+}
+
+auto PlayEngine::Data::setWaitings(Waitings w, bool set) -> void
+{
+    auto old = p->waiting();
+    if (set)
+        waitings |= w;
+    else
+        waitings &= ~w;
+    auto new_ = p->waiting();
+    if (old != new_)
+        emit p->waitingChanged(new_);
+}
+
+auto PlayEngine::Data::clearTimings() -> void
+{
+    frames.measure.reset();
+    info.video.setDroppedFrames(0);
+    info.video.setDelayedFrames(0);
+    info.video.renderer()->setFps(0);
+    frames.drawn = 0;
+}
+
+auto PlayEngine::Data::sub_add(const QString &file, const QString &enc, bool select) -> void
+{
+    mpv.setAsync("options/subcp", enc.toLatin1());
+    mpv.tellAsync("sub_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b);
+    mutex.lock();
+    assEncodings[file] = enc;
+    mutex.unlock();
 }

@@ -5,17 +5,9 @@
 #include "enum/colorspace.hpp"
 
 class AudioFormat;                      class StreamTrack;
-using StreamList = QMap<int, StreamTrack>;
+class StreamList;
 
-struct CodecInfo {
-    auto operator == (const CodecInfo &rhs) const -> bool
-        { return name == rhs.name; }
-    auto operator != (const CodecInfo &rhs) const -> bool
-        { return !operator == (rhs); }
-    QString name, description;
-};
-
-class CodecInfoObject : public QObject {
+class CodecObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString family READ family NOTIFY familyChanged)
     Q_PROPERTY(QString type READ type NOTIFY typeChanged)
@@ -61,84 +53,55 @@ private:
     int m_bitrate = 0, m_depth = 0;
 };
 
-class AvTrackInfoObject : public QObject {
+class AvTrackObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(int id READ id NOTIFY idChanged)
-    Q_PROPERTY(QString title READ title NOTIFY titleChanged)
-    Q_PROPERTY(QString language READ language NOTIFY languageChanged)
-    Q_PROPERTY(bool valid READ isValid NOTIFY validChanged)
-    Q_PROPERTY(bool selected READ isSelected NOTIFY selectedChanged)
-    Q_PROPERTY(QString codec READ codec NOTIFY codecChanged)
+    Q_PROPERTY(int number READ number CONSTANT FINAL)
+    Q_PROPERTY(QString title READ title CONSTANT FINAL)
+    Q_PROPERTY(QString language READ language CONSTANT FINAL)
+    Q_PROPERTY(bool valid READ isValid CONSTANT FINAL)
+    Q_PROPERTY(bool selected READ isSelected CONSTANT FINAL)
+    Q_PROPERTY(QString codec READ codec CONSTANT FINAL)
 public:
-    AvTrackInfoObject() = default;
-    AvTrackInfoObject(const StreamTrack &track) { set(track); }
+    AvTrackObject() = default;
     auto id() const -> int {return m_id;}
+    auto number() const -> int { return m_number; }
     auto language() const -> QString { return m_lang; }
     auto title() const -> QString { return m_title; }
     auto isValid() const -> bool { return m_id > 0; }
     auto codec() const -> QString { return m_codec; }
     auto isSelected() const -> bool { return m_selected; }
-    auto set(const AvTrackInfoObject *track) -> void;
-signals:
-    void codecChanged();
-    void idChanged();
-    void titleChanged();
-    void languageChanged();
-    void validChanged();
-    void selectedChanged();
-private slots:
-    void setId(int i) {
-        const bool was = isValid();
-        if (_Change(m_id, i)) {
-            emit idChanged();
-            const bool is = isValid();
-            if (was != is)
-                emit validChanged();
-        }
-    }
+    static auto fromTrack(int n, const StreamTrack &track) -> AvTrackObject*;
 private:
-    auto set(const StreamTrack &track) -> void;
-    auto setTitle(const QString &title) -> void
-        { if (_Change(m_title, title)) emit titleChanged(); }
-    auto setLanguage(const QString &lang) -> void
-        { if (_Change(m_lang, lang)) emit languageChanged(); }
-    auto setCodec(const QString &codec) -> void
-        { if (_Change(m_codec, codec.toUpper())) emit codecChanged(); }
-    auto setSelected(bool s) -> void
-        { if (_Change(m_selected, s)) emit selectedChanged(); }
-    friend class PlayEngine;
-    friend class AvCommonInfoObject;
-    int m_id = -1; QString m_title, m_lang, m_codec;
+    int m_id = -1, m_number = -1; QString m_title, m_lang, m_codec;
     bool m_selected = false;
 };
 
-class AvCommonInfoObject : public QObject {
+class AvCommonObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(CodecInfoObject *codec READ codec CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<AvTrackInfoObject> tracks READ tracks NOTIFY tracksChanged)
-    Q_PROPERTY(AvTrackInfoObject *track READ track CONSTANT FINAL)
+    Q_PROPERTY(CodecObject *codec READ codec CONSTANT FINAL)
+    Q_PROPERTY(AvTrackObject *track READ track NOTIFY trackChanged)
+    Q_PROPERTY(QQmlListProperty<AvTrackObject> tracks READ tracks NOTIFY tracksChanged)
 public:
-    auto tracks() const -> QQmlListProperty<AvTrackInfoObject>;
-    auto track() const -> const AvTrackInfoObject* { return &m_track; }
-    auto track() -> AvTrackInfoObject* { return &m_track; }
-    auto codec() const -> const CodecInfoObject* { return &m_codec; }
-    auto codec() -> CodecInfoObject* { return &m_codec; }
+    auto tracks() const -> QQmlListProperty<AvTrackObject>;
+    auto track() const -> AvTrackObject*;
+    auto codec() const -> const CodecObject* { return &m_codec; }
+    auto codec() -> CodecObject* { return &m_codec; }
 signals:
     void tracksChanged();
-protected:
-    auto getTracks() const -> const QVector<AvTrackInfoObject*>& { return m_tracks; }
+    void trackChanged();
 private:
-    auto setTrack(const StreamTrack &track) -> void;
+    auto update(const StreamList &tracks, bool clear = true) -> AvTrackObject*;
     auto setTracks(const StreamList &tracks) -> void;
+    auto setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void;
     friend class PlayEngine;
-    CodecInfoObject m_codec;
-    QVector<AvTrackInfoObject*> m_tracks;
-    AvTrackInfoObject m_track;
+    CodecObject m_codec;
+    QVector<AvTrackObject*> m_tracks;
+    AvTrackObject *m_track = nullptr;
 };
 
 /******************************************************************************/
 
-class AudioFormatInfoObject : public AvCommonFormatObject {
+class AudioFormatObject : public AvCommonFormatObject {
     Q_OBJECT
     Q_PROPERTY(int samplerate READ samplerate NOTIFY samplerateChanged)
     Q_PROPERTY(QString channels READ channels NOTIFY channelsChanged)
@@ -164,21 +127,21 @@ private:
     QString m_ch;
 };
 
-class AudioInfoObject : public AvCommonInfoObject {
+class AudioObject : public AvCommonObject {
     Q_OBJECT
-    Q_PROPERTY(AudioFormatInfoObject *input READ input CONSTANT FINAL)
-    Q_PROPERTY(AudioFormatInfoObject *output READ output CONSTANT FINAL)
-    Q_PROPERTY(AudioFormatInfoObject *renderer READ renderer CONSTANT FINAL)
+    Q_PROPERTY(AudioFormatObject *input READ input CONSTANT FINAL)
+    Q_PROPERTY(AudioFormatObject *output READ output CONSTANT FINAL)
+    Q_PROPERTY(AudioFormatObject *renderer READ renderer CONSTANT FINAL)
     Q_PROPERTY(double normalizer READ normalizer NOTIFY normalizerChanged)
     Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
     Q_PROPERTY(QString device READ device NOTIFY deviceChanged)
 public:
-    auto input() const -> const AudioFormatInfoObject* { return &m_input; }
-    auto output() const -> const AudioFormatInfoObject* { return &m_output; }
-    auto renderer() const -> const AudioFormatInfoObject* { return &m_renderer; }
-    auto input() -> AudioFormatInfoObject* { return &m_input; }
-    auto output() -> AudioFormatInfoObject* { return &m_output; }
-    auto renderer() -> AudioFormatInfoObject* { return &m_renderer; }
+    auto input() const -> const AudioFormatObject* { return &m_input; }
+    auto output() const -> const AudioFormatObject* { return &m_output; }
+    auto renderer() const -> const AudioFormatObject* { return &m_renderer; }
+    auto input() -> AudioFormatObject* { return &m_input; }
+    auto output() -> AudioFormatObject* { return &m_output; }
+    auto renderer() -> AudioFormatObject* { return &m_renderer; }
     auto normalizer() const -> double { return m_gain; }
     auto setNormalizer(double gain) -> void
         { if (_Change(m_gain, gain)) emit normalizerChanged(); }
@@ -192,14 +155,14 @@ signals:
     void driverChanged();
     void deviceChanged();
 private:
-    AudioFormatInfoObject m_input, m_output, m_renderer;
+    AudioFormatObject m_input, m_output, m_renderer;
     double m_gain = -1.0;
     QString m_driver, m_device;
 };
 
 /******************************************************************************/
 
-class VideoHwAccInfoObject : public QObject {
+class VideoHwAccObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(int state READ state NOTIFY stateChanged)
     Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
@@ -218,7 +181,7 @@ private:
     QString m_driver;
 };
 
-class VideoFormatInfoObject : public AvCommonFormatObject {
+class VideoFormatObject : public AvCommonFormatObject {
     Q_OBJECT
     Q_PROPERTY(qreal fps READ fps NOTIFY fpsChanged)
     Q_PROPERTY(QString space READ spaceText NOTIFY spaceChanged)
@@ -271,27 +234,27 @@ private:
     ColorRange m_range = ColorRange::Auto;
 };
 
-class VideoInfoObject : public AvCommonInfoObject {
+class VideoObject : public AvCommonObject {
     Q_OBJECT
-    Q_PROPERTY(VideoFormatInfoObject *input READ input CONSTANT FINAL)
-    Q_PROPERTY(VideoFormatInfoObject *output READ output CONSTANT FINAL)
-    Q_PROPERTY(VideoFormatInfoObject *renderer READ renderer CONSTANT FINAL)
-    Q_PROPERTY(VideoHwAccInfoObject *hwacc READ hwacc CONSTANT FINAL)
+    Q_PROPERTY(VideoFormatObject *input READ input CONSTANT FINAL)
+    Q_PROPERTY(VideoFormatObject *output READ output CONSTANT FINAL)
+    Q_PROPERTY(VideoFormatObject *renderer READ renderer CONSTANT FINAL)
+    Q_PROPERTY(VideoHwAccObject *hwacc READ hwacc CONSTANT FINAL)
     Q_PROPERTY(int deinterlacer READ deinterlacer NOTIFY deinterlacerChanged)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(int delayedFrames READ delayedFrames NOTIFY delayedFramesChanged)
     Q_PROPERTY(int delayedTime READ delayedTime NOTIFY delayedTimeChanged)
     Q_PROPERTY(qreal droppedFps READ droppedFps NOTIFY droppedFpsChanged)
 public:
-    VideoInfoObject();
-    auto input() const -> const VideoFormatInfoObject* { return &m_input; }
-    auto renderer() const -> const VideoFormatInfoObject* { return &m_renderer; }
-    auto output() const -> const VideoFormatInfoObject* { return &m_output; }
-    auto input() -> VideoFormatInfoObject* { return &m_input; }
-    auto renderer() -> VideoFormatInfoObject* { return &m_renderer; }
-    auto output() -> VideoFormatInfoObject* { return &m_output; }
-    auto hwacc() -> VideoHwAccInfoObject* { return &m_hwacc; }
-    auto hwacc() const -> const VideoHwAccInfoObject* { return &m_hwacc; }
+    VideoObject();
+    auto input() const -> const VideoFormatObject* { return &m_input; }
+    auto renderer() const -> const VideoFormatObject* { return &m_renderer; }
+    auto output() const -> const VideoFormatObject* { return &m_output; }
+    auto input() -> VideoFormatObject* { return &m_input; }
+    auto renderer() -> VideoFormatObject* { return &m_renderer; }
+    auto output() -> VideoFormatObject* { return &m_output; }
+    auto hwacc() -> VideoHwAccObject* { return &m_hwacc; }
+    auto hwacc() const -> const VideoHwAccObject* { return &m_hwacc; }
     auto deinterlacer() const -> int { return m_deint; }
     auto setDeinterlacer(int deint) -> void
         { if (_Change(m_deint, deint)) emit deinterlacerChanged(); }
@@ -310,8 +273,8 @@ signals:
     void delayedFramesChanged();
     void delayedTimeChanged();
 private:
-    VideoFormatInfoObject m_input, m_output, m_renderer;
-    VideoHwAccInfoObject m_hwacc;
+    VideoFormatObject m_input, m_output, m_renderer;
+    VideoHwAccObject m_hwacc;
     int m_deint = 0, m_dropped = 0, m_delayed = 0;
     qreal m_droppedFps = 0.0;
     QTime m_time; QTimer m_timer;
@@ -319,25 +282,10 @@ private:
 
 /******************************************************************************/
 
-class SubtitleInfoObject : public AvCommonInfoObject {
+class SubtitleObject : public AvCommonObject {
     Q_OBJECT
-    Q_PROPERTY(QQmlListProperty<AvTrackInfoObject> files READ files NOTIFY filesChanged)
-    Q_PROPERTY(int totalLength READ totalLength NOTIFY totalLengthChanged)
-    Q_PROPERTY(int currentNumber READ currentNumber NOTIFY currentNumberChanged)
 public:
-    SubtitleInfoObject();
-    auto currentNumber() const -> int { return m_id; }
-    auto files() const -> QQmlListProperty<AvTrackInfoObject>;
-    auto totalLength() const -> int { return m_total; }
-signals:
-    void filesChanged();
-    void totalLengthChanged();
-    void currentNumberChanged();
-private:
-    auto setFiles(const StreamList &files) -> void;
-    friend class PlayEngine;
-    QVector<AvTrackInfoObject*> m_files;
-    int m_total = 0, m_id = -1;
+    SubtitleObject();
 };
 
 #endif // AVINFOOBJECT_HPP

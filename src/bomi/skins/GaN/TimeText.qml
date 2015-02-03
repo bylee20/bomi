@@ -1,12 +1,26 @@
 import QtQuick 2.0
-import bomi 1.0 as Cp
+import bomi 1.0 as B
 
-Cp.TimeText {
-    width: Util.textWidth(showMSecs ? "00:00:00.000" : "00:00:00", font.pixelSize, font.family);
-    height: textHeight; font.pixelSize: 12;
-    textColor: getStateTextColor(hovered || (bind && bind.hovered), pressed || (bind && bind.pressed))
+TextButton {
+    width: Util.textWidth(msec ? "00:00:00.000" : "00:00:00", text.font.pixelSize, text.font.family);
+    height: text.contentHeight
+    adjustIconSize: false
+    acceptedButtons: Qt.LeftButton
+    icon { width: 0; height: 0 }
+    layout: centerIcon
+
+    property int time: 0
+    property bool msec: false
+    text.content: text.formatTime(time, msec)
     onClicked: checked = !checked
-    textAlignmentV: Text.AlignVCenter
-    action: bind ? bind.action : ""; action2: bind ? bind.action2 : ""; tooltip: bind ? bind.tooltip : ""
-    function getStateTextColor(hovered, pressed) { return pressed ? "#0ef" : (hovered ? "#0cf" : "white") }
 }
+
+//import QtQuick 2.0
+//import bomi 1.0 as B
+
+//B.Button {
+//    width: text.contentWidth; height: parent.height; text.color: "white"
+//    property bool showMSecs: false
+
+//    text.font { pixelSize: 10; family: Util.monospace }
+//}

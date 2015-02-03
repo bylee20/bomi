@@ -1,112 +1,104 @@
 #include "playengine.hpp"
-#include <libmpv/opengl_cb.h>
-#include "opengl/openglframebufferobject.hpp"
-#include "audio/audionormalizeroption.hpp"
 #include "playengine_p.hpp"
+#include "audio/audionormalizeroption.hpp"
+#include "subtitle/subtitlemodel.hpp"
 
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
-    Q_ASSERT(d->confDir.isValid());
-
     _Debug("Create audio/video plugins");
-    d->audio = new AudioController(this);
-    d->video = new VideoRenderer;
-    d->filter = new VideoFilter;
-
-    d->video->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
+    d->ac = new AudioController(this);
+    d->vp = new VideoProcessor;
+    d->sr = new SubtitleRenderer;
+    d->vr = new VideoRenderer;
+    d->vr->setOverlay(d->sr);
+    d->vr->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
         { d->renderVideoFrame(fbo); });
 
-    d->chapterInfo = new ChapterInfoObject(this, this);
-    d->updateMediaName();
+    d->params.m_mutex = &d->mutex;
+    connect(&d->params, &MrlState::sub_sync_changed,
+            this, [=] (int ms) { d->sr->setDelay(ms); });
+    connect(&d->params, &MrlState::video_tracks_changed, this, [=] (StreamList list) {
+        if (_Change(d->hasVideo, !list.isEmpty()))
+            emit hasVideoChanged();
+        d->info.video.setTracks(list);
+    });
+    connect(&d->params, &MrlState::audio_tracks_changed, this,
+            [=] (StreamList list) { d->info.audio.setTracks(list); });
+    auto set_subs = [=] () {
+        d->info.subtitle.setTracks(d->params.sub_tracks(),
+                                   d->params.sub_tracks_inclusive());
+    };
+    connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
+    connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
+    connect(&d->params, &MrlState::audio_volume_changed, this, &PlayEngine::volumeChanged);
+    connect(&d->params, &MrlState::play_speed_changed, this, &PlayEngine::speedChanged);
 
-    _Debug("Make registrations and connections");
-
-    d->handle = mpv_create();
-    d->client = mpv_client_name(d->handle);
-    QByteArray loglv = "no";
-    switch (Log::maximumLevel()) {
-    case Log::Trace: loglv = "trace"; break;
-    case Log::Debug: loglv = "v";     break;
-    case Log::Info:  loglv = "info";  break;
-    case Log::Warn:  loglv = "warn";  break;
-    case Log::Error: loglv = "error"; break;
-    case Log::Fatal: loglv = "fatal"; break;
-    }
-    mpv_request_log_messages(d->handle, loglv.constData());
-
-    d->observe();
-    connect(d->filter, &VideoFilter::skippingChanged, this, [=] (bool skipping) {
+    connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
+    connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
+    connect(this, &PlayEngine::endChanged, this,
+            [=] () { if (_Change(d->end_s, end()/1000)) emit end_sChanged(); });
+    auto checkDeint = [=] () {
+        auto act = Unavailable;
+        if (d->vp->isInputInterlaced())
+            act = d->vp->isOutputInterlaced() ? Deactivated : Activated;
+        d->info.video.setDeinterlacer(act);
+    };
+    connect(d->vp, &VideoProcessor::inputInterlacedChanged, this, checkDeint);
+    connect(d->vp, &VideoProcessor::outputInterlacedChanged, this, checkDeint);
+    connect(d->vp, &VideoProcessor::skippingChanged, this, [=] (bool skipping) {
         if (skipping) {
-            d->setmpv("mute", true);
             d->pauseAfterSkip = isPaused();
-            d->setmpv("pause", false);
-            d->setmpv("speed", 100.0);
+            d->mpv.setAsync("mute", true);
+            d->mpv.setAsync("pause", false);
+            d->mpv.setAsync("speed", 100.0);
         } else {
-            d->setmpv_async("speed", d->speed);
-            d->setmpv_async("pause", d->pauseAfterSkip);
-            d->setmpv_async("mute", d->muted);
+            d->mpv.setAsync("speed", d->params.play_speed() / 100.0);
+            d->mpv.setAsync("pause", d->pauseAfterSkip);
+            d->mpv.setAsync("mute", d->params.audio_muted());
         }
         d->updateVideoSubOptions();
         d->post(Searching, skipping);
     }, Qt::DirectConnection);
-    connect(d->filter, &VideoFilter::seekRequested, this,
-            &PlayEngine::seek, Qt::QueuedConnection);
-    connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
-    connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
-    connect(this, &PlayEngine::videoStreamsChanged, this, [=] () {
-        if (_Change(d->hasVideo, !d->streams[StreamVideo].tracks.isEmpty()))
-            emit hasVideoChanged();
-        d->videoInfo.setTracks(d->streams[StreamVideo].tracks);
-    });
-    connect(this, &PlayEngine::audioStreamsChanged, this, [=] ()
-        { d->audioInfo.setTracks(d->streams[StreamAudio].tracks); });
-    connect(this, &PlayEngine::subtitleStreamsChanged, this, [=] ()
-        { d->subInfo.setTracks(d->streams[StreamSubtitle].tracks); });
-    connect(this, &PlayEngine::currentVideoStreamChanged, this, [=] (int id)
-        { d->videoInfo.setTrack(d->streams[StreamVideo].tracks.value(id)); });
-    connect(this, &PlayEngine::currentAudioStreamChanged, this, [=] (int id)
-        { d->audioInfo.setTrack(d->streams[StreamAudio].tracks.value(id)); });
-    connect(this, &PlayEngine::currentSubtitleStreamChanged, this, [=] ()
-        { d->subInfo.setTracks(d->streams[StreamSubtitle].tracks); });
-    auto checkDeint = [=] () {
-        auto act = Unavailable;
-        if (d->filter->isInputInterlaced())
-            act = d->filter->isOutputInterlaced() ? Deactivated : Activated;
-        d->videoInfo.setDeinterlacer(act);
-    };
-    connect(d->filter, &VideoFilter::inputInterlacedChanged,
-            this, checkDeint, Qt::QueuedConnection);
-    connect(d->filter, &VideoFilter::outputInterlacedChanged,
-            this, checkDeint, Qt::QueuedConnection);
-    connect(d->audio, &AudioController::inputFormatChanged, this, [=] () {
-        d->audioInfo.output()->setFormat(d->audio->inputFormat());
-    }, Qt::QueuedConnection);
-    connect(d->audio, &AudioController::outputFormatChanged, this, [=] () {
-        d->audioInfo.renderer()->setFormat(d->audio->outputFormat());
-    }, Qt::QueuedConnection);
-    connect(d->audio, &AudioController::samplerateChanged, this, [=] (int sr) {
-        d->audioInfo.renderer()->setSampleRate(sr, true);
-    }, Qt::QueuedConnection);
-    connect(d->audio, &AudioController::gainChanged,
-            &d->audioInfo, &AudioInfoObject::setNormalizer);
-    auto setOption = [this] (const char *name, const char *data) {
-        const auto err = mpv_set_option_string(d->handle, name, data);
-        d->fatal(err, "Couldn't set option %%=%%.", name, data);
-    };
-    setOption("fs", "no");
-    setOption("input-cursor", "yes");
-    setOption("softvol", "yes");
-    setOption("softvol-max", "1000.0");
-    setOption("sub-auto", "no");
-    setOption("osd-level", "0");
-    setOption("quiet", "yes");
-    setOption("input-terminal", "no");
-    setOption("ad-lavc-downmix", "no");
-    setOption("title", "\"\"");
-    setOption("vo", d->vo());
-    setOption("fixed-vo", "yes");
-    auto hwdec = HwAcc::name();
-    setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.toLatin1().constData());
+    connect(d->vp, &VideoProcessor::seekRequested, this, &PlayEngine::seek);
+    connect(d->sr, &SubtitleRenderer::modelsChanged,
+            this, &PlayEngine::subtitleModelsChanged);
+    connect(d->ac, &AudioController::inputFormatChanged, this,
+            [=] () { d->info.audio.output()->setFormat(d->ac->inputFormat()); });
+    connect(d->ac, &AudioController::outputFormatChanged, this,
+            [=] () { d->info.audio.renderer()->setFormat(d->ac->outputFormat()); });
+    connect(d->ac, &AudioController::samplerateChanged, this,
+            [=] (int sr) { d->info.audio.renderer()->setSampleRate(sr, true); });
+    connect(d->ac, &AudioController::gainChanged,
+            &d->info.audio, &AudioObject::setNormalizer);
+    connect(&d->mpv, &Mpv::audioDriverChanged, &d->info.audio,
+            &AudioObject::setDriver, Qt::QueuedConnection);
+
+    d->updateMediaName();
+    d->frames.measure.setTimer([=]()
+        { d->info.video.renderer()->setFps(d->frames.measure.get()); }, 100000);
+
+    _Debug("Make registrations and connections");
+
+    d->mpv.create();
+    d->observe();
+    d->request();
+
+    const auto hwdec = HwAcc::name().toLatin1();
+    d->mpv.setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.data());
+    d->mpv.setOption("fs", "no");
+    d->mpv.setOption("input-cursor", "yes");
+    d->mpv.setOption("softvol", "yes");
+    d->mpv.setOption("softvol-max", "1000.0");
+    d->mpv.setOption("sub-auto", "no");
+    d->mpv.setOption("osd-level", "0");
+    d->mpv.setOption("quiet", "yes");
+    d->mpv.setOption("input-terminal", "no");
+    d->mpv.setOption("ad-lavc-downmix", "no");
+    d->mpv.setOption("title", "\"\"");
+    d->mpv.setOption("vo", d->vo(&d->params));
+    d->mpv.setOption("af", d->af(&d->params));
+    d->mpv.setOption("vf", d->vf(&d->params));
+    d->mpv.setOption("fixed-vo", "yes");
 
     auto overrides = qgetenv("BOMI_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
@@ -122,62 +114,44 @@ PlayEngine::PlayEngine()
             const int index = arg.indexOf('='_q);
             if (index < 0) {
                 if (arg.startsWith("no-"_a))
-                    setOption(arg.mid(3).toLatin1(), "no");
+                    d->mpv.setOption(arg.mid(3).toLatin1(), "no");
                 else
-                    setOption(arg.toLatin1(), "yes");
+                    d->mpv.setOption(arg.toLatin1(), "yes");
             } else {
                 const auto key = arg.left(index).toLatin1();
                 const auto value = arg.mid(index+1).toLatin1();
-                setOption(key, value);
+                d->mpv.setOption(key, value);
             }
         }
     }
-    d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
+    d->mpv.initialize();
     _Debug("Initialized");
-    d->initialized = true;
     d->hook();
-
-    auto ptr = mpv_get_sub_api(d->handle, MPV_SUB_API_OPENGL_CB);
-    d->glMpv = static_cast<mpv_opengl_cb_context*>(ptr);
-    Q_ASSERT(d->glMpv);
-    auto cbUpdate = [] (void *priv) {
-        auto p = static_cast<PlayEngine*>(priv);
-        if (p->d->video)
-            p->d->video->updateForNewFrame(p->d->videoInfo.renderer()->size());
-    };
-    mpv_opengl_cb_set_update_callback(d->glMpv, cbUpdate, this);
-
-    d->fpsMeasure.setTimer([=]()
-        { d->videoInfo.renderer()->setFps(d->fpsMeasure.get()); }, 100000);
+    d->mpv.setUpdateCallback([=] ()
+        { d->vr->updateForNewFrame(d->info.video.renderer()->size()); });
 }
 
 PlayEngine::~PlayEngine()
 {
-    d->initialized = false;
-    mpv_terminate_destroy(d->handle);
-    delete d->chapterInfo;
-    delete d->audio;
-    delete d->video;
-    delete d->filter;
+    d->params.m_mutex = nullptr;
+    d->mpv.destroy();
+    d->vr->setOverlay(nullptr);
+    delete d->ac;
+    delete d->sr;
+    delete d->vr;
+    delete d->vp;
     delete d;
     _Debug("Finalized");
 }
 
 auto PlayEngine::initializeGL(QOpenGLContext *ctx) -> void
 {
-    auto getProcAddr = [] (void *ctx, const char *name) -> void* {
-        auto gl = static_cast<QOpenGLContext*>(ctx);
-        if (!gl)
-            return nullptr;
-        return reinterpret_cast<void*>(gl->getProcAddress(QByteArray(name)));
-    };
-    auto err = mpv_opengl_cb_init_gl(d->glMpv, nullptr, getProcAddr, ctx);
-    Q_ASSERT(err >= 0);
+    d->mpv.initializeGL(ctx);
 }
 
 auto PlayEngine::finalizeGL(QOpenGLContext */*ctx*/) -> void
 {
-    mpv_opengl_cb_uninit_gl(d->glMpv);
+    d->mpv.finalizeGL();
 }
 
 auto PlayEngine::metaData() const -> const MetaData&
@@ -187,18 +161,8 @@ auto PlayEngine::metaData() const -> const MetaData&
 
 auto PlayEngine::setSubtitleDelay(int ms) -> void
 {
-    if (_Change(d->subDelay, ms))
-        d->setmpv_async("sub-delay", d->subDelay/1000.0);
-}
-
-auto PlayEngine::setSubtitleFiles(const StreamList &files) -> void
-{
-    d->subInfo.setFiles(files);
-}
-
-auto PlayEngine::chapterInfo() const -> ChapterInfoObject*
-{
-    return d->chapterInfo;
+    if (d->params.set_sub_sync(ms))
+        d->mpv.setAsync("sub-delay", ms * 1e-3);
 }
 
 auto PlayEngine::mediaName() const -> QString
@@ -208,12 +172,12 @@ auto PlayEngine::mediaName() const -> QString
 
 auto PlayEngine::cacheSize() const -> int
 {
-    return d->cacheSize;
+    return d->cache.size;
 }
 
 auto PlayEngine::cacheUsed() const -> int
 {
-    return d->cacheUsed;
+    return d->cache.used;
 }
 
 auto PlayEngine::begin() const -> int
@@ -231,75 +195,131 @@ auto PlayEngine::duration() const -> int
     return d->duration;
 }
 
-auto PlayEngine::currentEdition() const -> int
+auto PlayEngine::edition() const -> EditionChapterObject*
 {
-    return d->edition;
+    return &d->info.edition;
 }
 
-auto PlayEngine::editions() const -> const EditionList&
+auto PlayEngine::editions() const -> const QVector<EditionPtr>&
 {
-    return d->editions;
+    return d->info.editions;
 }
 
-auto PlayEngine::chapters() const -> const ChapterList&
+auto PlayEngine::chapters() const -> const QVector<ChapterPtr>&
 {
-    return d->chapters;
+    return d->info.chapters;
 }
 
-auto PlayEngine::setSubtitlePriority(const QStringList &sp) -> void
+auto PlayEngine::setPriority_locked(const QStringList &audio, const QStringList &sub) -> void
 {
-    d->streams[StreamSubtitle].priority = sp;
+    d->streams[StreamAudio].priority = audio;
+    d->streams[StreamSubtitle].priority = sub;
 }
 
-auto PlayEngine::setAudioPriority(const QStringList &ap) -> void
+auto PlayEngine::setAutoloader_locked(const Autoloader &audio, const Autoloader &sub) -> void
 {
-    d->streams[StreamAudio].priority = ap;
+    d->streams[StreamAudio].autoloader = audio;
+    d->streams[StreamSubtitle].autoloader = sub;
 }
 
-auto PlayEngine::subtitleStreams() const -> const StreamList&
+auto PlayEngine::setSubtitleInclusiveTrackSelected(int id, bool s) -> void
 {
-    return d->streams[StreamSubtitle].tracks;
+    if (s)
+        d->sr->select(id);
+    else
+        d->sr->deselect(id);
+    d->syncInclusiveSubtitles();
 }
 
-auto PlayEngine::videoRenderer() const -> VideoRenderer*
+auto PlayEngine::setSubtitleTrackSelected(int id, bool s) -> void
 {
-    return d->video;
+    if (s)
+        d->mpv.setAsync("sid", id);
+    else if (d->params.sub_tracks().selectionId() == id)
+        d->mpv.setAsync("sid", -1);
 }
 
-auto PlayEngine::videoStreams() const -> const StreamList&
+auto PlayEngine::autoloadSubtitleFiles() -> void
 {
-    return d->streams[StreamVideo].tracks;
+    clearSubtitleFiles();
+    QStringList files; QVector<SubComp> loads;
+    d->mutex.lock();
+    _R(files, loads) = d->autoloadSubtitle(&d->params);
+    d->mutex.unlock();
+    for (auto &file : files) {
+        d->mpv.setAsync("options/subcp", d->assEncodings[file].toLatin1());
+        d->mpv.tellAsync("sub_add", file.toLocal8Bit(), "auto"_b);
+    }
+    d->setInclusiveSubtitles(loads);
 }
 
-auto PlayEngine::audioSync() const -> int
+auto PlayEngine::autoloadAudioFiles() -> void
 {
-    return d->audioSync;
+    setAudioFiles(d->autoloadFiles(StreamAudio));
 }
 
-auto PlayEngine::audioStreams() const -> const StreamList&
+auto PlayEngine::reloadSubtitleFiles() -> void
 {
-    return d->streams[StreamAudio].tracks;
+    d->mutex.lock();
+    auto old1 = d->params.sub_tracks();
+    auto old2 = d->params.sub_tracks_inclusive();
+    d->mutex.unlock();
+    clearSubtitleFiles();
+    for (auto &track : old1) {
+        if (track.isExternal())
+            d->sub_add(track.file(), track.encoding(), track.isSelected());
+    }
+    d->setInclusiveSubtitles(d->restoreInclusiveSubtitles(old2));
+}
+
+auto PlayEngine::reloadAudioFiles() -> void
+{
+    d->mutex.lock();
+    auto old = d->params.audio_tracks();
+    d->mutex.unlock();
+    clearAudioFiles();
+    for (auto &track : old) {
+        if (track.isExternal())
+            d->audio_add(track.file(), track.isSelected());
+    }
+}
+
+auto PlayEngine::setSubtitleHidden(bool hidden) -> void
+{
+    if (d->params.set_sub_hidden(hidden))
+        d->mpv.setAsync("sub-visibility", !hidden);
+}
+
+auto PlayEngine::setVideoTrackSelected(int id, bool s) -> void
+{
+    if (s)
+        d->mpv.setAsync("vid", id);
+    else if (d->params.video_tracks().selectionId() == id)
+        d->mpv.setAsync("vid", -1);
+}
+
+auto PlayEngine::setAudioTrackSelected(int id, bool s) -> void
+{
+    if (s)
+        d->mpv.setAsync("aid", id);
+    else if (d->params.audio_tracks().selectionId() == id)
+        d->mpv.setAsync("aid", -1);
 }
 
 auto PlayEngine::run() -> void
 {
-    d->thread.start();
-}
-
-auto PlayEngine::thread() const -> QThread*
-{
-    return &d->thread;
+    d->mpv.start();
 }
 
 auto PlayEngine::waitUntilTerminated() -> void
 {
-    if (d->thread.isRunning())
-        d->thread.wait();
+    if (d->mpv.isRunning())
+        d->mpv.wait();
 }
 
 auto PlayEngine::speed() const -> double
 {
-    return d->speed;
+    return d->params.play_speed() * 1e-2;
 }
 
 SIA _ChangeZ(double &the, double one) -> bool
@@ -313,153 +333,134 @@ SIA _ChangeZ(double &the, double one) -> bool
     return false;
 }
 
-auto PlayEngine::setSpeed(double speed) -> void
+auto PlayEngine::setSpeedPercent(int p) -> void
 {
-    if (_ChangeZ(d->speed, speed)) {
-        d->setmpv_async("speed", speed);
-        emit speedChanged(d->speed);
-    }
+    if (d->params.set_play_speed(qBound(1, p, 1000)))
+        d->mpv.setAsync("speed", speed());
 }
 
-auto PlayEngine::setSubtitleStyle(const OsdStyle &style) -> void
+auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
 {
-    d->subStyle = style;
+    d->sr->setStyle(style);
+
+    const auto font = style.font;
+    d->mpv.setAsync("options/sub-text-color", font.color.name(QColor::HexArgb).toLatin1());
+    QStringList fontStyles;
+    if (font.bold())
+        fontStyles.append(u"Bold"_q);
+    if (font.italic())
+        fontStyles.append(u"Italic"_q);
+    QString family = font.family();
+    if (!fontStyles.isEmpty())
+        family += ":style="_a % fontStyles.join(' '_q);
+    const double factor = font.size * 720.0;
+    d->mpv.setAsync("options/sub-text-font", family.toLatin1());
+    d->mpv.setAsync("options/sub-text-font-size", factor);
+    const auto &outline = style.outline;
+    const auto scaled = [factor] (double v)
+        { return qBound(0., v*factor, 10.); };
+    const auto color = [] (const QColor &color)
+        { return color.name(QColor::HexArgb).toLatin1(); };
+    if (outline.enabled) {
+        d->mpv.setAsync("options/sub-text-border-size", scaled(outline.width));
+        d->mpv.setAsync("options/sub-text-border-color", color(outline.color));
+    } else
+        d->mpv.setAsync("options/sub-text-border-size", 0.0);
+    const auto &bbox = style.bbox;
+    if (bbox.enabled)
+        d->mpv.setAsync("options/sub-text-back-color", color(bbox.color));
+    else
+        d->mpv.setAsync("options/sub-text-back-color", color(Qt::transparent));
+    auto norm = [] (const QPointF &p) { return sqrt(p.x()*p.x() + p.y()*p.y()); };
+    const auto &shadow = style.shadow;
+    if (shadow.enabled) {
+        d->mpv.setAsync("options/sub-text-shadow-color", color(shadow.color));
+        d->mpv.setAsync("options/sub-text-shadow-offset", scaled(norm(shadow.offset)));
+    } else {
+        d->mpv.setAsync("options/sub-text-shadow-color", color(Qt::transparent));
+        d->mpv.setAsync("options/sub-text-shadow-offset", 0.0);
+    }
 }
 
 auto PlayEngine::seek(int pos) -> void
 {
-    d->chapter = -1;
     if (!d->hasImage)
-        d->tellmpv("seek", (double)pos/1000.0, 2);
-    d->filter->stopSkipping();
+        d->mpv.tell("seek", (double)pos/1000.0, 2);
+    d->vp->stopSkipping();
 }
 
 auto PlayEngine::relativeSeek(int pos) -> void
 {
     if (!d->hasImage) {
-        d->tellmpv("seek", (double)pos/1000.0, 0);
+        d->mpv.tell("seek", (double)pos/1000.0, 0);
         emit sought();
     }
-    d->filter->stopSkipping();
+    d->vp->stopSkipping();
 }
 
-auto PlayEngine::setClippingMethod(ClippingMethod method) -> void
+auto PlayEngine::setClippingMethod_locked(ClippingMethod method) -> void
 {
-    d->audio->setClippingMethod(method);
+    d->ac->setClippingMethod(method);
 }
 
-auto PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) -> void
+auto PlayEngine::setChannelLayoutMap_locked(const ChannelLayoutMap &map) -> void
 {
-    d->audio->setChannelLayoutMap(map);
+    d->ac->setChannelLayoutMap(map);
 }
 
 auto PlayEngine::reload() -> void
 {
     if (d->state == PlayEngine::Stopped)
         return;
-    auto info = d->startInfo;
-    info.resume = d->position;
-    info.edition = d->edition;
-    info.reloaded = true;
-    load(info);
+//    info.reloaded = true;
+//    load(info);
+}
+
+auto PlayEngine::setHistory(HistoryModel *history) -> void
+{
+    d->history = history;
+}
+
+auto PlayEngine::lock() -> void
+{
+    d->mutex.lock();
+}
+
+auto PlayEngine::unlock() -> void
+{
+    d->mutex.unlock();
 }
 
 auto PlayEngine::setChannelLayout(ChannelLayout layout) -> void
 {
-    if (_Change(d->layout, layout) && d->position > 0) {
-        d->setmpv("options/audio-channels", ChannelLayoutInfo::data(d->layout));
-        d->tellmpv("ao_reload");
+    if (d->params.set_audio_channel_layout(layout)) {
+        d->mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(layout));
+        if (d->time > 0)
+            d->mpv.tellAsync("ao_reload");
     }
 }
 
-auto PlayEngine::setAudioDevice(const QString &device) -> void
+auto PlayEngine::setAudioDevice_locked(const QString &device) -> void
 {
-    d->audioDevice = device;
+    d->params.d->audioDevice = device;
+    d->mpv.setAsync("options/audio-device", d->params.d->audioDevice.toLatin1());
 }
 
 auto PlayEngine::screen() const -> QQuickItem*
 {
-    return d->video;
+    return d->vr;
 }
 
-auto PlayEngine::setMinimumCache(qreal playback, qreal seeking) -> void
+auto PlayEngine::setCache_locked(const CacheInfo &info) -> void
 {
-    d->cacheForPlayback = playback;
-    d->cacheForSeeking = seeking;
+    d->params.d->cache = info;
 }
 
-auto PlayEngine::volumeNormalizer() const -> double
+auto PlayEngine::setHwAcc_locked(bool use, const QStringList &codecs) -> void
 {
-    auto gain = d->audio->gain(); return gain < 0 ? 1.0 : gain;
-}
-
-auto PlayEngine::setHwAcc(bool use, const QStringList &codecs) -> void
-{
-    d->hwCodecs = codecs.join(','_q).toLatin1();
-    d->useHwAcc = use;
-}
-
-auto PlayEngine::isSubtitleStreamsVisible() const -> bool
-{
-    return d->subStreamsVisible;
-}
-
-auto PlayEngine::setSubtitleStreamsVisible(bool visible) -> void
-{
-    d->subStreamsVisible = visible;
-    const auto id = currentSubtitleStream();
-    d->setmpv_async("sub-visibility", (d->subStreamsVisible && id >= 0));
-}
-
-auto PlayEngine::setCurrentSubtitleStream(int id, bool reserve) -> void
-{
-    d->setmpv_async("sub-visibility", (d->subStreamsVisible && id > 0));
-    if (id > 0) {
-        d->setmpv_async("sub", id);
-        if (reserve)
-            d->streams[StreamSubtitle].reserved = id;
-    }
-}
-
-auto PlayEngine::currentSubtitleStream() const -> int
-{
-    return d->currentTrack(StreamSubtitle);
-}
-
-auto PlayEngine::addSubtitleStream(const QString &fileName,
-                                   const QString &enc) -> bool
-{
-    QFileInfo info(fileName);
-    for (auto &file : d->subtitleFiles)
-        if (file.path == info.absoluteFilePath())
-            return false;
-    if (info.exists()) {
-        SubtitleFileInfo file;
-        file.path = info.absoluteFilePath();
-        file.encoding = enc;
-        d->subtitleFiles.append(file);
-        d->setmpv("options/subcp", enc.toLatin1().constData());
-        d->tellmpv("sub_add", file.path);
-        if (d->subStreamsVisible)
-            d->setmpv_async("sub-visibility", true);
-        return true;
-    }
-    return false;
-}
-
-auto PlayEngine::removeSubtitleStream(int id) -> void
-{
-    auto &tracks = d->streams[StreamSubtitle].tracks;
-    auto it = tracks.find(id);
-    if (it != tracks.end()) {
-        if (it->isExternal()) {
-            for (int i=0; i<d->subtitleFiles.size(); ++i) {
-                if (d->subtitleFiles[i].path == it->m_fileName)
-                    d->subtitleFiles.removeAt(i);
-            }
-        }
-        d->tellmpv("sub_remove", id);
-    }
+    d->hwcdc = codecs.join(','_q).toLatin1();
+    d->hwdec = use;
+    d->mpv.setAsync("options/hwdec-codecs", use ? d->hwcdc : ""_b);
 }
 
 auto PlayEngine::avSync() const -> int
@@ -467,15 +468,10 @@ auto PlayEngine::avSync() const -> int
     return d->avSync;
 }
 
-auto PlayEngine::setNextStartInfo(const StartInfo &startInfo) -> void
-{
-    d->nextInfo = startInfo;
-}
-
 auto PlayEngine::stepFrame(int direction) -> void
 {
     if ((d->state & (Playing | Paused)) && d->seekable)
-        d->tellmpv_async(direction > 0 ? "frame_step" : "frame_back_step");
+        d->mpv.tellAsync(direction > 0 ? "frame_step" : "frame_back_step");
 }
 
 auto PlayEngine::isWaiting() const -> bool
@@ -504,115 +500,104 @@ auto PlayEngine::customEvent(QEvent *event) -> void
     d->process(event);
 }
 
-auto PlayEngine::mediaInfo() const -> MediaInfoObject*
+auto PlayEngine::media() const -> MediaObject*
 {
-    return &d->mediaInfo;
+    return &d->info.media;
 }
 
-auto PlayEngine::audioInfo() const -> AudioInfoObject*
+auto PlayEngine::audio() const -> AudioObject*
 {
-    return &d->audioInfo;
+    return &d->info.audio;
 }
 
-auto PlayEngine::videoInfo() const -> VideoInfoObject*
+auto PlayEngine::video() const -> VideoObject*
 {
-    return &d->videoInfo;
+    return &d->info.video;
 }
 
-auto PlayEngine::subInfo() const -> SubtitleInfoObject*
+auto PlayEngine::subtitle() const -> SubtitleObject*
 {
-    return &d->subInfo;
+    return &d->info.subtitle;
 }
 
-auto PlayEngine::setCurrentChapter(int id) -> void
+auto PlayEngine::seekChapter(int number) -> void
 {
-    d->setmpv_async("chapter", id);
+    d->mpv.setAsync("chapter", number);
 }
 
-auto PlayEngine::setCurrentEdition(int id, int from) -> void
+auto PlayEngine::seekEdition(int number, int from) -> void
 {
-    const auto mrl = d->startInfo.mrl;
-    if (id == DVDMenu && mrl.isDisc()) {
+    const auto mrl = d->mrl;
+    if (number == DVDMenu && mrl.isDisc()) {
         static const char *cmds[] = {"discnav", "menu", nullptr};
-        d->check(mpv_command_async(d->handle, 0, cmds),
+        d->mpv.check(mpv_command_async(d->mpv.handle(), 0, cmds),
                  "Couldn't send 'discnav menu'.");
-    } else if (0 <= id && id < d->editions.size()) {
-        d->setmpv(mrl.isDisc() ? "disc-title" : "edition", id);
+    } else if (0 <= number && number < d->info.editions.size()) {
+        d->mpv.setAsync(mrl.isDisc() ? "disc-title" : "edition", number);
         seek(from);
     }
 }
 
-auto PlayEngine::setVolume(int volume) -> void
+auto PlayEngine::setAudioVolume(int volume) -> void
 {
-    if (_Change(d->volume, qBound(0, volume, 100))) {
-        d->setmpv_async("volume", d->mpVolume());
-        emit volumeChanged(d->volume);
-    }
+    if (d->params.set_audio_volume(qBound(0, volume, 100)))
+        d->mpv.setAsync("volume", d->volume());
 }
 
 auto PlayEngine::isMuted() const -> bool
 {
-    return d->muted;
+    return d->params.audio_muted();
 }
 
 auto PlayEngine::volume() const -> int
 {
-    return d->volume;
+    return d->params.audio_volume();
 }
 
-auto PlayEngine::amp() const -> double
+auto PlayEngine::setAudioAmpPercent(int amp) -> void
 {
-    return d->amp;
+    if (d->params.set_audio_amplifier(qBound(1, amp, 1000)))
+        d->mpv.setAsync("volume", d->volume());
 }
 
-auto PlayEngine::setAmp(double amp) -> void
+auto PlayEngine::setAudioMuted(bool muted) -> void
 {
-    if (_ChangeZ(d->amp, qBound(0.0, amp, 10.0))) {
-        d->setmpv_async("volume", d->mpVolume());
-        emit preampChanged(d->amp);
-    }
-}
-
-auto PlayEngine::setMuted(bool muted) -> void
-{
-    if (_Change(d->muted, muted)) {
-        d->setmpv_async("mute", d->muted);
-        emit mutedChanged(d->muted);
-    }
-}
-
-auto PlayEngine::exec() -> void
-{
-    _Debug("Start playloop thread");
-    d->quit = false;
-    while (!d->quit)
-        d->dispatch(mpv_wait_event(d->handle, 0.005));
-    _Debug("Finish playloop thread");
+    if (d->params.set_audio_muted(muted))
+        d->mpv.setAsync("mute", muted);
 }
 
 auto PlayEngine::shutdown() -> void
 {
-    d->tellmpv("quit 1");
+    d->mpv.tell("quit", 1);
 }
 
-auto PlayEngine::startInfo() const -> const StartInfo&
+auto PlayEngine::setResume_locked(bool resume) -> void
 {
-    return d->startInfo;
+    d->resume = resume;
 }
 
-auto PlayEngine::load(const StartInfo &info) -> void
+auto PlayEngine::setMrl(const Mrl &mrl) -> void
 {
-    const bool changed = d->startInfo.mrl != info.mrl;
-    d->startInfo = info;
-    if (changed)
-        d->updateMrl();
-    if (info.isValid())
-        d->loadfile();
+    if (d->mrl != mrl) {
+        stop();
+        d->mrl = mrl;
+    }
+}
+
+auto PlayEngine::load(const Mrl &mrl, bool tryResume) -> void
+{
+    if (_Change(d->mrl, mrl)) {
+        d->hasImage = mrl.isImage();
+        d->updateMediaName();
+        emit mrlChanged(d->mrl);
+    }
+    if (!d->mrl.isEmpty())
+        d->loadfile(d->mrl, tryResume);
 }
 
 auto PlayEngine::time() const -> int
 {
-    return d->position;
+    return d->time;
 }
 
 auto PlayEngine::isSeekable() const -> bool
@@ -620,14 +605,19 @@ auto PlayEngine::isSeekable() const -> bool
     return d->seekable;
 }
 
+auto PlayEngine::hasVideoFrame() const -> bool
+{
+    return d->vr->hasFrame();
+}
+
 auto PlayEngine::hasVideo() const -> bool
 {
     return d->hasVideo;
 }
 
-auto PlayEngine::currentChapter() const -> int
+auto PlayEngine::chapter() const -> EditionChapterObject*
 {
-    return d->chapter;
+    return &d->info.chapter;
 }
 
 auto PlayEngine::pause() -> void
@@ -635,9 +625,9 @@ auto PlayEngine::pause() -> void
     if (d->hasImage)
         d->post(Paused);
     else
-        d->setmpv("pause", true);
+        d->mpv.set("pause", true);
     d->pauseAfterSkip = true;
-    d->filter->stopSkipping();
+    d->vp->stopSkipping();
 }
 
 auto PlayEngine::unpause() -> void
@@ -645,142 +635,138 @@ auto PlayEngine::unpause() -> void
     if (d->hasImage)
         d->post(Playing);
     else
-        d->setmpv("pause", false);
+        d->mpv.set("pause", false);
 }
 
 auto PlayEngine::mrl() const -> Mrl
 {
-    return d->startInfo.mrl;
-}
-
-auto PlayEngine::currentAudioStream() const -> int
-{
-    return d->currentTrack(StreamAudio);
-}
-
-auto PlayEngine::setCurrentVideoStream(int id) -> void
-{
-    if (d->streams[StreamVideo].tracks.contains(id))
-        d->setmpv_async("video", id);
-}
-
-auto PlayEngine::currentVideoStream() const -> int
-{
-    return d->currentTrack(StreamVideo);
-}
-
-auto PlayEngine::setCurrentAudioStream(int id, bool reserve) -> void
-{
-    if (d->streams[StreamAudio].tracks.contains(id)) {
-        d->setmpv_async("audio", id);
-        if (reserve)
-            d->streams[StreamAudio].reserved = id;
-    }
+    return d->mrl;
 }
 
 auto PlayEngine::setAudioSync(int sync) -> void
 {
-    if (_Change(d->audioSync, sync))
-        d->setmpv_async("audio-delay", sync*0.001);
+    if (d->params.set_audio_sync(sync))
+        d->mpv.setAsync("audio-delay", sync * 1e-3);
 }
 
-auto PlayEngine::setVolumeNormalizerActivated(bool on) -> void
+auto PlayEngine::setAudioVolumeNormalizer(bool on) -> void
 {
-    if (d->audio->isNormalizerActivated() != on) {
-        d->audio->setNormalizerActivated(on);
-        emit volumeNormalizerActivatedChanged(on);
-    }
+    if (d->params.set_audio_volume_normalizer(on))
+        d->ac->setNormalizerActivated(on);
 }
 
-auto PlayEngine::setTempoScalerActivated(bool on) -> void
+auto PlayEngine::setAudioTempoScaler(bool on) -> void
 {
-    if (_Change(d->tempoScaler, on)) {
-        d->tellmpv("af", "set"_b, d->af());
-        emit tempoScaledChanged(on);
-    }
-}
-
-auto PlayEngine::isVolumeNormalizerActivated() const -> bool
-{
-    return d->audio->isNormalizerActivated();
-}
-
-auto PlayEngine::isTempoScaled() const -> bool
-{
-    return d->audio->isTempoScalerActivated();
+    if (d->params.set_audio_tempo_scaler(on))
+        d->mpv.tellAsync("af", "set"_b, d->af(&d->params));
 }
 
 auto PlayEngine::stop() -> void
 {
-    d->tellmpv("stop");
+    d->mpv.tell("stop");
 }
 
-auto PlayEngine::setVolumeNormalizerOption(const AudioNormalizerOption &option)
+auto PlayEngine::setVolumeNormalizerOption_locked(const AudioNormalizerOption &option)
 -> void
 {
-    d->audio->setNormalizerOption(option);
+    d->ac->setNormalizerOption(option);
 }
 
-auto PlayEngine::setDeintOptions(const DeintOption &swdec,
+auto PlayEngine::setDeintOptions_locked(const DeintOption &swdec,
                                  const DeintOption &hwdec) -> void
 {
-    d->deint_swdec = swdec;
-    d->deint_hwdec = hwdec;
+    d->params.d->deint_swdec = swdec;
+    d->params.d->deint_hwdec = hwdec;
     emit deintOptionsChanged();
 }
 
 auto PlayEngine::deintOptionForSwDec() const -> DeintOption
 {
-    return d->deint_swdec;
+    return d->params.d->deint_swdec;
 }
 
 auto PlayEngine::deintOptionForHwDec() const -> DeintOption
 {
-    return d->deint_hwdec;
+    return d->params.d->deint_hwdec;
+}
+
+auto PlayEngine::videoSizeHint() const -> QSize
+{
+    return d->vr->sizeHint();
+}
+
+auto PlayEngine::setVideoOffset(const QPoint &offset) -> void
+{
+    if (d->params.set_video_offset(offset))
+        d->vr->setOffset(offset);
+}
+
+auto PlayEngine::setVideoAspectRatio(VideoRatio ratio) -> void
+{
+    if (d->params.set_video_aspect_ratio(ratio))
+        d->vr->setAspectRatio(_EnumData(ratio));
+}
+
+auto PlayEngine::setVideoCropRatio(VideoRatio ratio) -> void
+{
+    if (d->params.set_video_crop_ratio(ratio))
+        d->vr->setCropRatio(_EnumData(ratio));
+}
+
+auto PlayEngine::setVideoVerticalAlignment(VerticalAlignment a) -> void
+{
+    if (d->params.set_video_vertical_alignment(a)) {
+        const auto v = _EnumData(d->params.video_vertical_alignment());
+        const auto h = _EnumData(d->params.video_horizontal_alignment());
+        d->vr->setAlignment(v | h);
+    }
+}
+
+auto PlayEngine::setVideoHorizontalAlignment(HorizontalAlignment a) -> void
+{
+    if (d->params.set_video_horizontal_alignment(a)) {
+        const auto v = _EnumData(d->params.video_vertical_alignment());
+        const auto h = _EnumData(d->params.video_horizontal_alignment());
+        d->vr->setAlignment(v | h);
+    }
 }
 
 auto PlayEngine::setDeintMode(DeintMode mode) -> void
 {
-    if (_Change(d->deint, mode)) {
+    if (d->params.set_video_deinterlacing(mode)) {
         if (isPaused()) {
-            d->setmpv("deinterlace", !!(int)mode);
+            d->mpv.setAsync("deinterlace", !!(int)mode);
             d->refresh();
         } else
-            d->setmpv_async("deinterlace", !!(int)mode);
+            d->mpv.setAsync("deinterlace", !!(int)mode);
     }
 }
 
 auto PlayEngine::deintMode() const -> DeintMode
 {
-    return d->deint;
+    return d->params.video_deinterlacing();
 }
 
 auto PlayEngine::sendMouseClick(const QPointF &pos) -> void
 {
-    if (d->handle && d->disc) {
-        d->setMousePos(pos);
+    if (d->setMousePos(pos)) {
         static const char *cmds[] = {"discnav", "mouse", nullptr};
-        d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse.");
+        d->mpv.check(mpv_command_async(d->mpv.handle(), 0, cmds), "Couldn't send mouse.");
     }
 }
 
 auto PlayEngine::sendMouseMove(const QPointF &pos) -> void
 {
-    if (d->handle && d->disc && d->setMousePos(pos)) {
+    if (d->setMousePos(pos)) {
         static const char *cmds[] = {"discnav", "mouse_move", nullptr};
-        d->check(mpv_command_async(d->handle, 0, cmds),
+        d->mpv.check(mpv_command_async(d->mpv.handle(), 0, cmds),
                  "Couldn't send mouse_move.");
     }
 }
 
-auto PlayEngine::subtitleFiles() const -> QVector<SubtitleFileInfo>
-{
-    return d->subtitleFiles;
-}
-
 auto PlayEngine::audioDeviceList() const -> QList<AudioDevice>
 {
-    const QVariantList list = d->getmpv<QVariant>("audio-device-list").toList();
+    const QVariantList list = d->mpv.get<QVariant>("audio-device-list").toList();
     QList<AudioDevice> devs;
     devs.reserve(list.size());
     for (auto &one : list) {
@@ -805,57 +791,37 @@ auto PlayEngine::setYouTube(YouTubeDL *yt) -> void
 
 auto PlayEngine::setColorRange(ColorRange range) -> void
 {
-    if (_Change(d->colorRange, range))
-        d->setmpv_async("colormatrix-input-range", _EnumData(range).option);
+    if (d->params.set_video_range(range))
+        d->mpv.setAsync("colormatrix-input-range", _EnumData(range).option);
 }
 
 auto PlayEngine::setColorSpace(ColorSpace space) -> void
 {
-    if (_Change(d->colorSpace, space))
-        d->setmpv_async("colormatrix", _EnumData(space).option);
+    if (d->params.set_video_space(space))
+        d->mpv.setAsync("colormatrix", _EnumData(space).option);
 }
 
 auto PlayEngine::setInterpolator(Interpolator type) -> void
 {
-    if (_Change(d->lscale, type))
+    if (d->params.set_video_interpolator(type))
         d->updateVideoSubOptions();
 }
 
 auto PlayEngine::setChromaUpscaler(Interpolator type) -> void
 {
-    if (_Change(d->cscale, type))
+    if (d->params.set_video_chroma_upscaler(type))
         d->updateVideoSubOptions();
 }
 
-auto PlayEngine::interpolator() const -> Interpolator
+auto PlayEngine::setVideoDithering(Dithering dithering) -> void
 {
-    return d->lscale;
-}
-
-auto PlayEngine::chromaUpscaler() const -> Interpolator
-{
-    return d->cscale;
-}
-
-auto PlayEngine::dithering() const -> Dithering
-{
-    return d->dithering;
-}
-
-auto PlayEngine::setDithering(Dithering dithering) -> void
-{
-    if (_Change(d->dithering, dithering))
+    if (d->params.set_video_dithering(dithering))
         d->updateVideoSubOptions();
-}
-
-auto PlayEngine::videoEqualizer() const -> VideoColor
-{
-    return d->videoEq;
 }
 
 auto PlayEngine::setVideoEqualizer(const VideoColor &eq) -> void
 {
-    if (_Change(d->videoEq, eq)) {
+    if (d->params.set_video_color(eq)) {
         d->updateColorMatrix();
         d->updateVideoSubOptions();
     }
@@ -863,46 +829,45 @@ auto PlayEngine::setVideoEqualizer(const VideoColor &eq) -> void
 
 auto PlayEngine::setVideoEffects(VideoEffects e) -> void
 {
-    if (_Change(d->videoEffects, e)) {
-        d->video->setFlipped(e & VideoEffect::FlipH, e & VideoEffect::FlipV);
+    if (d->params.set_video_effects(e)) {
+        d->vr->setFlipped(e & VideoEffect::FlipH, e & VideoEffect::FlipV);
         d->updateColorMatrix();
         d->updateVideoSubOptions();
     }
 }
 
-auto PlayEngine::videoEffects() const -> VideoEffects
-{
-    return d->videoEffects;
-}
-
 auto PlayEngine::takeSnapshot(Snapshot mode) -> void
 {
     d->snapshot = mode;
-    d->video->updateForNewFrame(d->displaySize());
+    d->vr->updateForNewFrame(d->displaySize());
 }
 
 auto PlayEngine::snapshot(bool withOsd) -> QImage
 {
-    return withOsd ? d->ssWithOsd : d->ssNoOsd;
+    return withOsd ? d->ss.screen : d->ss.video;
 }
 
 auto PlayEngine::clearSnapshots() -> void
 {
-    d->ssNoOsd = d->ssWithOsd = QImage();
+    d->ss.screen = d->ss.video = QImage();
 }
 
-auto PlayEngine::setHighQualityScaling(bool up, bool down) -> void
+auto PlayEngine::setVideoHighQualityDownscaling(bool on) -> void
 {
-    if (_Change(d->hqUpscaling, up) | _Change(d->hqDownscaling, down)) {
+    if (d->params.set_video_hq_downscaling(on))
         d->updateVideoSubOptions();
-        emit highQualityScalingChanged(up, down);
-    }
+}
+
+auto PlayEngine::setVideoHighQualityUpscaling(bool on) -> void
+{
+    if (d->params.set_video_hq_upscaling(on))
+        d->updateVideoSubOptions();
 }
 
 auto PlayEngine::seekToNextBlackFrame() -> void
 {
     if (!isStopped())
-        d->filter->skipToNextBlackFrame();
+        d->vp->skipToNextBlackFrame();
 }
 
 auto PlayEngine::waitingText() const -> QString
@@ -939,5 +904,210 @@ auto PlayEngine::stateText() const -> QString
 
 auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
 {
-    d->audio->setEqualizer(eq);
+    d->ac->setEqualizer(eq);
+}
+
+auto PlayEngine::getChapter(int idx) const -> EditionChapterObject*
+{
+    Q_ASSERT(d->info.chapters.value(idx));
+    if (_InRange0(idx, d->info.chapters.size()))
+        return d->info.chapters[idx].data();
+    return chapter();
+}
+
+template<class L, class T = EditionChapterObject>
+SIA makePtrList(const QObject *o, const L *list) -> QQmlListProperty<T>
+{
+    auto at = [] (QQmlListProperty<T> *p, int index) -> T*
+        { return static_cast<const L*>(p->data)->value(index).data(); };
+    auto count = [] (QQmlListProperty<T> *p) -> int
+        { return static_cast<const L*>(p->data)->size(); };
+    return QQmlListProperty<T>(const_cast<QObject*>(o), const_cast<L*>(list), count, at);
+}
+
+auto PlayEngine::editionList() const -> QQmlListProperty<EditionChapterObject>
+{
+    return makePtrList(this, &d->info.editions);
+}
+
+auto PlayEngine::chapterList() const -> QQmlListProperty<EditionChapterObject>
+{
+    return makePtrList(this, &d->info.chapters);
+}
+
+auto PlayEngine::time_s() const -> int
+{
+    return d->time_s;
+}
+
+auto PlayEngine::duration_s() const -> int
+{
+    return d->duration_s;
+}
+
+auto PlayEngine::begin_s() const -> int
+{
+    return d->begin_s;
+}
+
+auto PlayEngine::end_s() const -> int
+{
+    return d->end_s;
+}
+
+auto PlayEngine::setAudioFiles(const QStringList &files) -> void
+{
+    clearAudioFiles();
+    addAudioFiles(files);
+}
+
+auto PlayEngine::addAudioFiles(const QStringList &files) -> void
+{
+    for (auto file : files)
+        d->mpv.tellAsync("audio_add", file.toLocal8Bit(), "auto"_b);
+}
+
+auto PlayEngine::clearAudioFiles() -> void
+{
+    for (auto &track : d->params.audio_tracks()) {
+        if (track.isExternal())
+            d->mpv.tellAsync("audio_remove", track.id());
+    }
+}
+
+auto PlayEngine::params() const -> const MrlState*
+{
+    return &d->params;
+}
+
+auto PlayEngine::setSubtitleEncoding_locked(const QString &enc, double accuracy) -> void
+{
+    d->params.d->subtitleEncoding = enc;
+    d->params.d->autodetect = accuracy;
+}
+
+auto PlayEngine::setAutoselectMode_locked(bool enable, AutoselectMode mode,
+                                       const QString &ext) -> void
+{
+    d->params.d->autoselect = enable;
+    d->params.d->autoselectMode = mode;
+    d->params.d->autoselectExt = ext;
+}
+
+auto PlayEngine::setSubtitleAlignment(VerticalAlignment a) -> void
+{
+    if (d->params.set_sub_alignment(a))
+        d->sr->setTopAligned(a == VerticalAlignment::Top);
+}
+
+auto PlayEngine::setSubtitlePosition(int pos) -> void
+{
+    if (d->params.set_sub_position(pos))
+        d->sr->setPos(pos * 0.01);
+}
+
+auto PlayEngine::captionBeginTime() -> int
+{
+    return d->sr->start(d->time);
+}
+
+auto PlayEngine::captionEndTime() -> int
+{
+    return d->sr->finish(d->time);
+}
+
+auto PlayEngine::seekCaption(int direction) -> void
+{
+    int time = -1;
+    if (direction < 0)
+        time = d->sr->previous();
+    else if (direction > 0)
+        time = d->sr->next();
+    else
+        time = d->sr->current();
+    if (time > 0)
+        seek(time);
+}
+
+auto PlayEngine::subtitleImage(const QRect &rect, QRectF *subRect) const -> QImage
+{
+    return d->sr->draw(rect, subRect);
+}
+
+auto PlayEngine::setSubtitleDisplay(SubtitleDisplay sd) -> void
+{
+    if (d->params.set_sub_display(sd))
+        d->vr->setOverlayOnLetterbox(sd == SubtitleDisplay::OnLetterbox);
+}
+
+auto PlayEngine::setSubtitleFiles(const QStringList &files,
+                                  const QString &encoding) -> void
+{
+    clearSubtitleFiles();
+    addSubtitleFiles(files, encoding);
+}
+
+auto PlayEngine::setSubtitleFiles(const QVector<StringPair> &fileEnc) -> void
+{
+    clearSubtitleFiles();
+    addSubtitleFiles(fileEnc);
+}
+
+auto PlayEngine::addSubtitleFiles(const QStringList &files,
+                                  const QString &encoding) -> void
+{
+    QVector<StringPair> fileEnc(files.size());
+    for (int i = 0; i < files.size(); ++i) {
+        fileEnc[i].s1 = files[i];
+        fileEnc[i].s2 = encoding;
+    }
+    addSubtitleFiles(fileEnc);
+}
+
+auto PlayEngine::addSubtitleFiles(const QVector<StringPair> &fileEncs) -> void
+{
+    if (fileEncs.isEmpty())
+        return;
+    QVector<SubComp> loaded;
+    for (auto &fe : fileEncs) {
+        const auto &file = fe.s1;
+        const auto enc = d->params.d->detect(file, fe.s2);
+        Subtitle sub;
+        if (sub.load(file, enc, -1)) {
+            for (int i = 0; i < sub.size(); ++i) {
+                loaded.push_back(sub[i]);
+                loaded.back().selection() = true;
+            }
+        } else {
+            d->mpv.setAsync("options/subcp", enc.toLatin1());
+            d->mpv.tellAsync("sub_add", file.toLocal8Bit(), "auto"_b);
+            d->mutex.lock();
+            d->assEncodings[file] = enc;
+            d->mutex.unlock();
+        }
+    }
+    d->sr->addComponents(loaded);
+    d->syncInclusiveSubtitles();
+}
+
+auto PlayEngine::clearSubtitleFiles() -> void
+{
+    for (auto &track : d->params.sub_tracks()) {
+        if (track.isExternal())
+            d->mpv.tellAsync("sub_remove", track.id());
+    }
+    d->setInclusiveSubtitles(QVector<SubComp>());
+}
+
+auto PlayEngine::restore(const MrlState *params) -> void
+{
+    QMutexLocker l(&d->mutex);
+    d->params.m_mutex = nullptr;
+    d->params.copyFrom(params);
+    d->params.m_mutex = &d->mutex;
+}
+
+auto PlayEngine::subtitleModels() const -> QVector<SubCompModel*>
+{
+    return d->sr->models();
 }

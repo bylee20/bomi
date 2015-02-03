@@ -1,18 +1,18 @@
-#ifndef VIDEOFILTER_H
-#define VIDEOFILTER_H
+#ifndef VIDEOPROCESSOR_HPP
+#define VIDEOPROCESSOR_HPP
 
 struct vf_instance;                     struct mp_image_params;
 struct vf_info;                         struct mp_image;
 class HwAcc;                            class OpenGLOffscreenContext;
 enum class DeintMethod;
 
-class VideoFilter : public QObject {
+class VideoProcessor : public QObject {
     Q_OBJECT
 public:
-    VideoFilter();
-    VideoFilter(const VideoFilter &) = delete;
-    VideoFilter &operator = (const VideoFilter &) = delete;
-    ~VideoFilter();
+    VideoProcessor();
+    VideoProcessor(const VideoProcessor &) = delete;
+    VideoProcessor &operator = (const VideoProcessor &) = delete;
+    ~VideoProcessor();
     auto initializeGL(OpenGLOffscreenContext *ctx) -> void;
     auto finalizeGL() -> void;
     auto isInputInterlaced() const -> bool;
@@ -40,4 +40,4 @@ private:
     friend auto create_vf_info() -> vf_info;
 };
 
-#endif // VIDEOFILTER_H
+#endif // VIDEOPROCESSOR_HPP
