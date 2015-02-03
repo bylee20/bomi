@@ -240,11 +240,11 @@ auto StreamList::setFromJson(const QJsonObject &json) -> bool
         return true;
     }
     auto it = json.find(u"tracks"_q);
-    if (it == json.end() || !it->isArray())
+    if (it == json.end() || !it.value().isArray())
         return false;
     m_type = type;
     m_tracks.clear();
-    const auto array = it->toArray();
+    const auto array = it.value().toArray();
     for (auto one : array)
         insert(StreamTrack::fromJson(one.toObject()));
     return true;
