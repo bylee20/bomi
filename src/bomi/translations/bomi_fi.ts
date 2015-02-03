@@ -2691,11 +2691,6 @@ e.g.: English, Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="387"/>
-        <source>Show state</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../player/rootmenu.cpp" line="472"/>
         <source>Previous Frame</source>
         <translation type="unfinished"></translation>
@@ -2738,6 +2733,11 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../player/rootmenu.cpp" line="482"/>
         <source>Next Chapter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/rootmenu.cpp" line="387"/>
+        <source>Show state</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

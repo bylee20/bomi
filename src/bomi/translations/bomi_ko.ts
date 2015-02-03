@@ -3069,11 +3069,6 @@ Please wait for a while.</source>
         <translation type="obsolete">%1초 뒤로</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="356"/>
-        <source>Show state</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>List</source>
         <translation type="obsolete">목록</translation>
     </message>
@@ -7866,6 +7861,11 @@ e.g.: English, Korean</source>
         <location filename="../player/rootmenu.cpp" line="358"/>
         <source>Next Chapter</source>
         <translation>다음 챕터</translation>
+    </message>
+        <message>
+        <location filename="../player/rootmenu.cpp" line="387"/>
+        <source>Show state</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="363"/>
