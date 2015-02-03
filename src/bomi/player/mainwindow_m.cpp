@@ -335,26 +335,15 @@ auto MainWindow::Data::connectMenus() -> void
             [seekChapter] () { seekChapter(+1); });
 
     connect(play[u"state"_q], &QAction::triggered, p, [=] () {
-        auto format = [](uint x, QString& str) {
-            auto hours = x / 3600;
-            auto mins = (x % 3600) / 60;
-            auto secs = x % 60;
-            str.append(QString::number(hours));
-            str.append(u":"_q);
-            if(mins < 10){
-                str.append(u"0"_q);
-            }
-            str.append(QString::number(mins));
-            str.append(u":"_q);
-            if(secs < 10){
-                str.append(u"0"_q);
-            }
-            str.append(QString::number(secs));
-        };
         QString str;
-        format(engine.time() / 1000, str);
+        str.append(_MSecToString(engine.time()));
         str.append(u"/"_q);
-        format(engine.duration() / 1000, str);
+        str.append(_MSecToString(engine.end()));
+        str.append(u" ("_q);
+        str.append(QString::number(engine.time() * 100L / engine.end()));
+        str.append(u"%), "_q);
+        str.append(QString::number(engine.speed()));
+        str.append(u"x"_q);
         showMessage(str);
     });
 
