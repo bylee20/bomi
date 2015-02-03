@@ -242,6 +242,7 @@ auto VideoRenderer::setAspectRatio(double ratio) -> void
 {
     if (!d->isSameRatio(d->aspect, ratio)) {
         d->aspect = ratio;
+        polish();
         reserve(UpdateGeometry);
     }
 }
@@ -255,6 +256,7 @@ auto VideoRenderer::setCropRatio(double ratio) -> void
 {
     if (!d->isSameRatio(d->crop, ratio)) {
         d->crop = ratio;
+        polish();
         reserve(UpdateGeometry);
     }
 }
