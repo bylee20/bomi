@@ -2880,6 +2880,11 @@ Please wait for a while.</source>
         <translation type="obsolete">%1초 뒤로</translation>
     </message>
     <message>
+        <location filename="../player/rootmenu.cpp" line="356"/>
+        <source>Show state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>List</source>
         <translation type="obsolete">목록</translation>
     </message>

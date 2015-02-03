@@ -3505,6 +3505,11 @@ Regular expression is supported.</source>
         <translation>%1 s zurück springen</translation>
     </message>
     <message>
+        <location filename="../player/rootmenu.cpp" line="356"/>
+        <source>Show state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../player/rootmenu.cpp" line="482"/>
         <source>To Previous Subtitle</source>
         <translation>Zum vorherigen Untertitel</translation>

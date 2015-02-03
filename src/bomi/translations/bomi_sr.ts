@@ -3308,6 +3308,11 @@ Regular expression is supported.</source>
         <translation>Unazad %1sec</translation>
     </message>
     <message>
+        <location filename="../player/rootmenu.cpp" line="356"/>
+        <source>Show state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../player/rootmenu.cpp" line="479"/>
         <source>Previous Frame</source>
         <translation type="unfinished"></translation>

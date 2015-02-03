@@ -1284,6 +1284,11 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../player/mainwindow_m.cpp" line="356"/>
+        <source>Show state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../player/mainwindow_m.cpp" line="251"/>
         <source>Set A to %1</source>
         <translation type="unfinished"></translation>
@@ -2894,6 +2899,11 @@ Regular expression is supported.</source>
     <message>
         <location filename="../player/rootmenu.cpp" line="477"/>
         <source>Backward %1sec</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/rootmenu.cpp" line="356"/>
+        <source>Show state</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

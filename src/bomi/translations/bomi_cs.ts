@@ -3652,6 +3652,11 @@ Je podporován regulární výraz.</translation>
         <translation>Dozadu %1 s</translation>
     </message>
     <message>
+        <location filename="../player/rootmenu.cpp" line="356"/>
+        <source>Show state</source>
+        <translation>Zobrazit stav</translation>
+    </message>
+    <message>
         <location filename="../player/rootmenu.cpp" line="482"/>
         <source>To Previous Subtitle</source>
         <translation>Na předchozí podtitul</translation>

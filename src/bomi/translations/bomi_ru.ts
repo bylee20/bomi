@@ -3957,6 +3957,11 @@ e.g.: English, Korean</source>
         <translation>Назад %1сек</translation>
     </message>
     <message>
+        <location filename="../player/rootmenu.cpp" line="356"/>
+        <source>Show state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../player/rootmenu.cpp" line="479"/>
         <source>Previous Frame</source>
         <translation>Предыдущий кадр</translation>

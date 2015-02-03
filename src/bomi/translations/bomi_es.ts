@@ -3584,6 +3584,11 @@ Soporta expresiónes regulares.</translation>
         <translation>Retroceder %1seg</translation>
     </message>
     <message>
+        <location filename="../player/rootmenu.cpp" line="356"/>
+        <source>Show state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../player/rootmenu.cpp" line="482"/>
         <source>To Previous Subtitle</source>
         <translation>Al subtítulo anterior</translation>

@@ -334,6 +334,30 @@ auto MainWindow::Data::connectMenus() -> void
     connect(play(u"chapter"_q)[u"next"_q], &QAction::triggered, p,
             [seekChapter] () { seekChapter(+1); });
 
+    connect(play[u"state"_q], &QAction::triggered, p, [=] () {
+        auto format = [](uint x, QString& str) {
+            auto hours = x / 3600;
+            auto mins = (x % 3600) / 60;
+            auto secs = x % 60;
+            str.append(QString::number(hours));
+            str.append(u":"_q);
+            if(mins < 10){
+                str.append(u"0"_q);
+            }
+            str.append(QString::number(mins));
+            str.append(u":"_q);
+            if(secs < 10){
+                str.append(u"0"_q);
+            }
+            str.append(QString::number(secs));
+        };
+        QString str;
+        format(engine.time() / 1000, str);
+        str.append(u"/"_q);
+        format(engine.duration() / 1000, str);
+        showMessage(str);
+    });
+
     Menu &video = menu(u"video"_q);
     connect(video(u"track"_q).g(), &ActionGroup::triggered,
             p, [this] (QAction *a) {
@@ -787,29 +811,6 @@ auto MainWindow::Data::connectMenus() -> void
         toggleTool("playinfo", as.playinfo_visible);
     });
 
-    connect(tool[u"status"_q], &QAction::triggered, p, [=] () {
-        auto format = [](uint x, QString& str) {
-            auto hours = x / 3600;
-            auto mins = (x % 3600) / 60;
-            auto secs = x % 60;
-            str.append(QString::number(hours));
-            str.append(u":"_q);
-            if(mins < 10){
-                str.append(u"0"_q);
-            }
-            str.append(QString::number(mins));
-            str.append(u":"_q);
-            if(secs < 10){
-                str.append(u"0"_q);
-            }
-            str.append(QString::number(secs));
-        };
-        QString str;
-        format(engine.time() / 1000, str);
-        str.append(u"/"_q);
-        format(engine.duration() / 1000, str);
-        showMessage(str);
-    });
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         subtitleView->setVisible(!subtitleView->isVisible());
     });
