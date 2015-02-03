@@ -799,7 +799,6 @@ auto MainWindow::Data::connectMenus() -> void
         };
         toggleTool("playinfo", as.playinfo_visible);
     });
-
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         subtitleView->setVisible(!subtitleView->isVisible());
     });

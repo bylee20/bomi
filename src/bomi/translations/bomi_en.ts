@@ -1284,11 +1284,6 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="356"/>
-        <source>Show state</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../player/mainwindow_m.cpp" line="251"/>
         <source>Set A to %1</source>
         <translation type="unfinished"></translation>
