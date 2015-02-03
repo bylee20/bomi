@@ -17,16 +17,16 @@ struct MrlStateSqlField {
     { return m_v2d(value); }
     auto exportTo(QObject *state, const QVariant &sqlData) const -> bool
     {
-        const auto var = m_d2v(sqlData);
+        const auto var = m_d2v(sqlData, m_defaultValue.userType());
         return m_property.write(state, var.isValid() ? var : m_defaultValue);
     }
     auto isValid() const -> bool { return m_v2d && m_d2v; }
 private:
-    using ConvertVariant = std::function<QVariant(QVariant)>;
     QMetaProperty m_property;
     QString m_sqlType;
     QVariant m_defaultValue;
-    ConvertVariant m_v2d = nullptr, m_d2v = nullptr;
+    QVariant(*m_v2d)(const QVariant&) = nullptr;
+    QVariant(*m_d2v)(const QVariant&,int) = nullptr;
     friend class MrlStateSqlFieldList;
 };
 

@@ -24,4 +24,10 @@ private:
 auto _JsonToQObject(const QJsonObject &json, QObject *obj) -> bool;
 auto _JsonFromQObject(const QObject *obj) -> QJsonObject;
 
+auto _JsonFromQVariant(const QVariant &var) -> QJsonValue;
+auto _JsonToQVariant(const QJsonValue &json, const QVariant &def) -> QVariant;
+auto _JsonToQVariant(const QJsonValue &json, int metaType) -> QVariant;
+
+auto _JsonType(int metaType) -> QJsonValue::Type;
+
 #endif // JSONSTORAGE_HPP

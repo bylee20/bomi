@@ -79,6 +79,143 @@ auto JsonStorage::read() noexcept -> QJsonObject
 template<class T>
 SIA _Is(int type) -> bool { return type == qMetaTypeId<T>(); }
 
+struct JVConvert;
+
+using f_j2v = auto (*)(const JVConvert *d, const QJsonValue &, QVariant&) -> bool;
+using f_v2j = auto (*)(const JVConvert *d, const QVariant &) -> QJsonValue;
+
+struct JVConvert {
+    f_j2v j2v;
+    f_v2j v2j;
+    QJsonValue::Type jsonType;
+    EnumNameVariantConverter enum_;
+    int metaType;
+};
+
+static const QHash<int, JVConvert> convs = [] () {
+    QHash<int, JVConvert> c;
+
+#define INSERT(type) \
+    c[qMetaTypeId<type>()] = { \
+        [] (const JVConvert*, const QJsonValue &j, QVariant &var) -> bool { \
+            type t; \
+            if (json_io<type>()->fromJson(t, j)) { \
+                var.setValue<type>(t); \
+                return true; \
+            } \
+            return false; \
+        }, \
+        [] (const JVConvert*, const QVariant &v) -> QJsonValue { \
+            return _ToJson(v.value<type>()); \
+        }, _JsonType<type>(), {}, qMetaTypeId<type>() \
+    }
+
+    INSERT(bool);
+
+    INSERT(char);
+    INSERT(unsigned char);
+    INSERT(signed char);
+    INSERT(int);
+    INSERT(unsigned int);
+    INSERT(short);
+    INSERT(unsigned short);
+    INSERT(long);
+    INSERT(unsigned long);
+    INSERT(qlonglong);
+    INSERT(qulonglong);
+    INSERT(float);
+    INSERT(double);
+
+    INSERT(QDateTime);
+    INSERT(QString);
+    INSERT(QPoint);
+    INSERT(QPointF);
+    INSERT(QSize);
+    INSERT(QSizeF);
+    INSERT(QColor);
+    INSERT(QStringList);
+
+    INSERT(VideoColor);
+    INSERT(OpenMediaInfo);
+    INSERT(OpenMediaInfo);
+    INSERT(OsdTheme);
+    INSERT(PlaylistTheme);
+    INSERT(ChannelLayoutMap);
+    INSERT(Autoloader);
+    INSERT(OsdStyle);
+    INSERT(MouseActionMap);
+    INSERT(DeintCaps);
+    INSERT(AudioNormalizerOption);
+    INSERT(Shortcuts);
+    INSERT(Mrl);
+    INSERT(VideoEffects);
+    INSERT(StreamList);
+    INSERT(AudioEqualizer);
+    INSERT(StreamList);
+
+    for (auto type : EnumMetaTypeIds) {
+        auto &ec = c[type];
+        ec.enum_ = _EnumNameVariantConverter(type);
+        ec.j2v = [] (const JVConvert *d, const QJsonValue &j, QVariant &var) {
+            Q_ASSERT(!d->enum_.isNull());
+            var = d->enum_.nameToVariant(j.toString());
+            return true;
+        };
+        ec.v2j = [] (const JVConvert *d, const QVariant &v) -> QJsonValue {
+            Q_ASSERT(!d->enum_.isNull());
+            return d->enum_.variantToName(v);
+        };
+        ec.jsonType = QJsonValue::String;
+    }
+
+    return c;
+}();
+
+auto _JsonFromQVariant(const QVariant &var) -> QJsonValue
+{
+    const int metaType = var.userType();
+    auto it = convs.find(metaType);
+    if (it != convs.end())
+        return it->v2j(&it.value(), var);
+    _Error("Unknown type for conversion: %%", var.typeName());
+    return QJsonValue();
+}
+
+auto _JsonToQVariant(const QJsonValue &json, int metaType) -> QVariant
+{
+    QVariant var;
+    const auto it = convs.find(metaType);
+    if (it != convs.end()) {
+        if (it->j2v(&it.value(), json, var))
+            return var;
+    } else
+        _Error("Unknown type for conversion: %%", QMetaType::typeName(metaType));
+    return QVariant();
+}
+
+auto _JsonSetToQVariant(const QJsonValue &json, QVariant &var) -> bool
+{
+    auto v = _JsonToQVariant(json, var.userType());
+    if (v.isValid())
+        var = v;
+    return v.isValid();
+}
+
+auto _JsonType(int metaType) -> QJsonValue::Type
+{
+    const auto it = convs.find(metaType);
+    if (it != convs.end())
+        return it->jsonType;
+    _Error("Unknown type for conversion: %%", QMetaType::typeName(metaType));
+    return QJsonValue::Undefined;
+}
+
+auto _JsonToQVariant(const QJsonValue &json, const QVariant &def) -> QVariant
+{
+    auto v = _JsonToQVariant(json, def.userType());
+    return v.isValid() ? v : def;
+}
+
 auto _JsonToQObject(const QJsonObject &json, QObject *obj) -> bool
 {
     bool res = true;
@@ -91,67 +228,8 @@ auto _JsonToQObject(const QJsonObject &json, QObject *obj) -> bool
             res = false;
             continue;
         }
-        QVariant var;
-#define QT_CASE(vt, type) \
-    case QMetaType::vt: var.setValue(_FromJson<type>(*it)); break;
-        switch ((int)p.type()) {
-        QT_CASE(Bool, bool)
-        QT_CASE(Int, int)
-        QT_CASE(UInt, uint)
-        QT_CASE(LongLong, qlonglong)
-        QT_CASE(ULongLong, qulonglong)
-        QT_CASE(Double, double)
-#undef QT_CASE
-#define QT_CASE(type) \
-        case QMetaType::type: var.setValue(_FromJson<type>(*it)); break;
-        QT_CASE(QString)
-        QT_CASE(QPoint)
-        QT_CASE(QPointF)
-        QT_CASE(QSize)
-        QT_CASE(QSizeF)
-        QT_CASE(QColor)
-        QT_CASE(QStringList)
-        QT_CASE(QDateTime)
-#undef QT_CASE
-        case QVariant::UserType: {
-            const auto user = p.userType();
-            auto conv = _EnumNameVariantConverter(user);
-            if (!conv.isNull())
-                var = conv.nameToVariant(it->toString());
-#define USER_CASE(type) \
-            else if (_Is<type>(user)) { var.setValue(_FromJson<type>(*it)); }
-            USER_CASE(VideoColor)
-            USER_CASE(OpenMediaInfo)
-            USER_CASE(OpenMediaInfo)
-            USER_CASE(OsdTheme)
-            USER_CASE(PlaylistTheme)
-            USER_CASE(ChannelLayoutMap)
-            USER_CASE(Autoloader)
-            USER_CASE(Autoloader)
-            USER_CASE(OsdStyle)
-            USER_CASE(MouseActionMap)
-            USER_CASE(DeintCaps)
-            USER_CASE(DeintCaps)
-            USER_CASE(AudioNormalizerOption)
-            USER_CASE(Shortcuts)
-            USER_CASE(Mrl)
-            USER_CASE(VideoEffects)
-            USER_CASE(StreamList)
-            USER_CASE(AudioEqualizer)
-            USER_CASE(StreamList)
-            USER_CASE(StreamList)
-            USER_CASE(StreamList)
-#undef USER_CASE
-            else {
-                qDebug("USER_CASE(%s)", p.typeName());
-                continue;
-            }
-            break;
-        } default:
-            _Fatal("Typename '%%' is not handled.", p.typeName());
-            break;
-        }
-        Q_ASSERT(var.type() == p.type());
+        const auto var = _JsonToQVariant(*it, p.read(obj));
+        Q_ASSERT(var.userType() == p.userType());
         p.write(obj, var);
     }
     return res;
@@ -163,69 +241,7 @@ auto _JsonFromQObject(const QObject *obj) -> QJsonObject
     auto mo = obj->metaObject();
     for (int i = 1; i < mo->propertyCount(); ++i) {
         auto p = mo->property(i);
-        const QVariant var = p.read(obj);
-        QJsonValue value;
-        switch ((int)var.type()) {
-        case QVariant::Bool:
-            value = var.toBool();
-            break;
-        case QVariant::Int:
-        case QVariant::UInt:
-            value = var.toInt();
-            break;
-        case QVariant::LongLong:
-        case QVariant::ULongLong:
-        case QVariant::Double:
-            value = var.toDouble();
-            break;
-#define QT_CASE(type) \
-        case QMetaType::type: { value = _ToJson(var.value<type>()); break; }
-        QT_CASE(QString)
-        QT_CASE(QPoint)
-        QT_CASE(QPointF)
-        QT_CASE(QSize)
-        QT_CASE(QSizeF)
-        QT_CASE(QColor)
-        QT_CASE(QStringList)
-        QT_CASE(QDateTime)
-#undef QT_CASE
-        case QVariant::UserType: {
-            const auto user = var.userType();
-            auto conv = _EnumNameVariantConverter(user);
-            if (!conv.isNull())
-                value = conv.variantToName(var);
-#define USER_CASE(type) else if (_Is<type>(user)) {value = _ToJson(var.value<type>());}
-            USER_CASE(VideoColor)
-            USER_CASE(OpenMediaInfo)
-            USER_CASE(OpenMediaInfo)
-            USER_CASE(OsdTheme)
-            USER_CASE(PlaylistTheme)
-            USER_CASE(ChannelLayoutMap)
-            USER_CASE(Autoloader)
-            USER_CASE(Autoloader)
-            USER_CASE(OsdStyle)
-            USER_CASE(MouseActionMap)
-            USER_CASE(DeintCaps)
-            USER_CASE(DeintCaps)
-            USER_CASE(AudioNormalizerOption)
-            USER_CASE(Shortcuts)
-            USER_CASE(Mrl)
-            USER_CASE(VideoEffects)
-            USER_CASE(StreamList)
-            USER_CASE(AudioEqualizer)
-            USER_CASE(StreamList)
-            USER_CASE(StreamList)
-            USER_CASE(StreamList)
-            else {
-                qDebug("USER_CASE(%s)", var.typeName());
-                continue;
-            }
-            break;
-        } default:
-            _Error("Typename '%%' is not handled.", var.typeName());
-            Q_ASSERT(false);
-            break;
-        }
+        const auto value = _JsonFromQVariant(p.read(obj));
         json.insert(QString::fromLatin1(p.name()), value);
     }
     return json;
