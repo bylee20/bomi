@@ -476,6 +476,7 @@ auto MainWindow::Data::applyPref() -> void
 
     e.lock();
     e.setResume_locked(p.remember_stopped);
+    e.setPreciseSeeking_locked(p.precise_seeking);
     e.setCache_locked(cache());
     e.setPriority_locked(p.audio_priority, p.sub_priority);
     e.setAutoloader_locked(p.audio_autoload, p.sub_autoload_v2);

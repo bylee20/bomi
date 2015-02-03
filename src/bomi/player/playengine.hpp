@@ -140,6 +140,7 @@ public:
     auto setPriority_locked(const QStringList &audio, const QStringList &sub) -> void;
     auto setAutoloader_locked(const Autoloader &audio, const Autoloader &sub) -> void;
     auto setResume_locked(bool resume) -> void;
+    auto setPreciseSeeking_locked(bool on) -> void;
     auto unlock() -> void;
 
     auto params() const -> const MrlState*;

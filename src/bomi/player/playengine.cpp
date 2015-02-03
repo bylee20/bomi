@@ -99,6 +99,7 @@ PlayEngine::PlayEngine()
     d->mpv.setOption("af", d->af(&d->params));
     d->mpv.setOption("vf", d->vf(&d->params));
     d->mpv.setOption("fixed-vo", "yes");
+    d->mpv.setOption("hr-seek", d->preciseSeeking ? "yes" : "absolute");
 
     auto overrides = qgetenv("BOMI_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
@@ -574,6 +575,12 @@ auto PlayEngine::shutdown() -> void
 auto PlayEngine::setResume_locked(bool resume) -> void
 {
     d->resume = resume;
+}
+
+auto PlayEngine::setPreciseSeeking_locked(bool on) -> void
+{
+    if (_Change(d->preciseSeeking, on))
+        d->mpv.setAsync("options/hr-seek", on ? "yes" : "absolute");
 }
 
 auto PlayEngine::setMrl(const Mrl &mrl) -> void

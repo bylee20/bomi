@@ -435,6 +435,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QCheckBox" name="precise_seeking">
+           <property name="text">
+            <string>Use precise seeking regardless of key frame</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QCheckBox" name="remember_image">
            <property name="text">
             <string>Remember image slides history</string>
