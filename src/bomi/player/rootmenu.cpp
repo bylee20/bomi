@@ -36,10 +36,25 @@ struct MenuActionInfo
     QString id; Translate trans; const char *desc = nullptr;
 };
 
+struct ArgAction { QString argument; QAction *action = nullptr; };
+
 struct RootMenu::Data {
     Menu *parent = nullptr;
     QHash<QAction*, MenuActionInfo> infos;
     MenuActionInfo *info = nullptr;
+    QMap<QString, QString> alias;
+    QMap<QString, ArgAction> actions;
+
+    auto find(const QString &longId) const -> ArgAction
+    {
+        auto it = actions.find(longId);
+        if (it == actions.end()) {
+            auto ait = alias.find(longId);
+            if (ait != alias.end())
+                it = actions.find(*ait);
+        }
+        return it != actions.end() ? *it : ArgAction();
+    }
 
     auto toGetText(const char *trans) const -> GetText
         { return [=] () { return tr(trans); }; }
@@ -57,7 +72,7 @@ struct RootMenu::Data {
         auto &info = infos[action];
         const auto &prefix = infos[parent->menuAction()].id;
         info.id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
-        obj->m_actions[info.id].action = action;
+        actions[info.id].action = action;
         this->info = &info;
         return &info;
     }
@@ -224,10 +239,9 @@ struct RootMenu::Data {
     {
         const QString g = _L(EnumInfo<T>::typeKey());
         if (cycle) {
-            if (EnumInfo<T>::size() > 2)
-                actionToGroup(u"next"_q, QT_TRANSLATE_NOOP(RootMenu, "Select Next"), false, g);
-            else
-                actionToGroup(u"toggle"_q, QT_TRANSLATE_NOOP(RootMenu, "Toggle"), false, g);
+            const auto toggle = EnumInfo<T>::size() <= 2;
+            action(u"cycle"_q, toggle ? QT_TRANSLATE_NOOP(RootMenu, "Toggle")
+                                     : QT_TRANSLATE_NOOP(RootMenu, "Select Next"));
             separator();
         }
         group(g)->setExclusive(exclusive);
@@ -282,6 +296,15 @@ RootMenu::RootMenu()
     : Menu(u"menu"_q, 0), d(new Data) {
     Q_ASSERT(obj == nullptr);
     obj = this;
+
+#define ALIAS(from, to) {d->alias[u"" #from ""_q] = u"" #to ""_q;}
+    ALIAS(audio/channel/next, audio/channel/cycle);
+    ALIAS(audio/track/next, audio/track/cycle);
+    ALIAS(subtitle/track/next, subtitle/track/cycle);
+    ALIAS(video/dithering/next, video/dithering/cycle);
+    ALIAS(video/interpolator/next, video/interpolator/cycle);
+    ALIAS(video/deinterlacing/toggle, video/deinterlacing/cycle);
+#undef ALIAS
 
     setTitle(u"Root Menu"_q);
 
@@ -376,7 +399,7 @@ RootMenu::RootMenu()
 
             d->separator();
 
-            d->desc(d->action(u"next"_q, QT_TR_NOOP("Select Next")),
+            d->desc(d->action(u"cycle"_q, QT_TR_NOOP("Select Next")),
                     QT_TR_NOOP("Select Next Subtitle"));
             d->desc(d->action(u"all"_q, QT_TR_NOOP("Select All")),
                     QT_TR_NOOP("Select All Subtitles"));
@@ -477,7 +500,7 @@ RootMenu::RootMenu()
                     QT_TR_NOOP("Clear Audio Track File"));
             d->group()->setExclusive(true);
             d->separator();
-            d->desc(d->action(u"next"_q, QT_TR_NOOP("Select Next")),
+            d->desc(d->action(u"cycle"_q, QT_TR_NOOP("Select Next")),
                     QT_TR_NOOP("Select Next Audio Track"));
             d->separator();
         })->setEnabled(false);
@@ -583,7 +606,7 @@ auto RootMenu::id(QAction *action) const -> QString
 
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
 {
-    ArgAction aa = RootMenu::instance().m_actions.value(longId);
+    ArgAction aa = RootMenu::instance().d->find(longId);
     if (aa.action) {
         if (aa.action->menu())
             aa.action->menu()->exec(QCursor::pos());
@@ -605,9 +628,9 @@ auto RootMenu::setShortcuts(const Shortcuts &shortcuts) -> void
         auto id = it.key();
         if (id.startsWith(u"menu/"_q))
             id = id.mid(5);
-        auto found = m_actions.constFind(id);
-        if (found != m_actions.cend())
-            found.value().action->setShortcuts(it.value());
+        auto action = d->find(id);
+        if (action.action)
+            action.action->setShortcuts(it.value());
         else
             _Warn("Cannot set shortcuts for '%%'", id);
     }
@@ -619,7 +642,7 @@ auto RootMenu::setShortcuts(const Shortcuts &shortcuts) -> void
 auto RootMenu::shortcuts() const -> Shortcuts
 {
     Shortcuts keys;
-    for (auto it = m_actions.cbegin(); it != m_actions.cend(); ++it) {
+    for (auto it = d->actions.cbegin(); it != d->actions.cend(); ++it) {
         auto shortcuts = it.value().action->shortcuts();
         if (!shortcuts.isEmpty())
             keys[it.key()] = shortcuts;
@@ -672,4 +695,9 @@ auto RootMenu::description(const QString &longId) const -> QString
         }
     }
     return action->text();
+}
+
+auto RootMenu::action(const QString &longId) const -> QAction*
+{
+    return d->find(longId).action;
 }

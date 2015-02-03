@@ -17,10 +17,10 @@ enum class ColorRange;                  enum class ColorSpace;
 enum class Dithering;                   enum class AutoselectMode;
 enum class VideoRatio;                  enum class SubtitleDisplay;
 enum class VerticalAlignment;           enum class HorizontalAlignment;
-class AudioInfoObject;                  class VideoInfoObject;
+class AudioObject;                  class VideoObject;
 class YouTubeDL;                        struct AudioDevice;
 class YleDL;                            class AudioEqualizer;
-class StreamTrack;                      class SubtitleInfoObject;
+class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
 class Autoloader;                       struct CacheInfo;
@@ -32,10 +32,10 @@ class PlayEngine : public QObject {
     Q_ENUMS(State)
     Q_ENUMS(ActivationState)
     Q_ENUMS(Waiting)
-    Q_PROPERTY(MediaInfoObject *media READ media CONSTANT FINAL)
-    Q_PROPERTY(AudioInfoObject *audio READ audio CONSTANT FINAL)
-    Q_PROPERTY(VideoInfoObject *video READ video CONSTANT FINAL)
-    Q_PROPERTY(SubtitleInfoObject* subtitle READ subtitle CONSTANT FINAL)
+    Q_PROPERTY(MediaObject *media READ media CONSTANT FINAL)
+    Q_PROPERTY(AudioObject *audio READ audio CONSTANT FINAL)
+    Q_PROPERTY(VideoObject *video READ video CONSTANT FINAL)
+    Q_PROPERTY(SubtitleObject* subtitle READ subtitle CONSTANT FINAL)
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
@@ -177,9 +177,9 @@ public:
     auto run() -> void;
     auto waitUntilTerminated() -> void;
     auto screen() const -> QQuickItem*;
-    auto media() const -> MediaInfoObject*;
-    auto audio() const -> AudioInfoObject*;
-    auto video() const -> VideoInfoObject*;
+    auto media() const -> MediaObject*;
+    auto audio() const -> AudioObject*;
+    auto video() const -> VideoObject*;
     auto avSync() const -> int;
     auto rate(int time) const -> double { return (double)(time-begin())/duration(); }
     auto rate() const -> double { return rate(time()); }
@@ -194,7 +194,7 @@ public:
     auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
-    auto subtitle() const -> SubtitleInfoObject*;
+    auto subtitle() const -> SubtitleObject*;
     auto setSubtitleDelay(int ms) -> void;
     auto setNextMrl(const Mrl &Mrl) -> void;
     auto shutdown() -> void;

@@ -2,7 +2,6 @@
 #define SUBTITLE_HPP
 
 #include "richtextdocument.hpp"
-#include "submisc.hpp"
 
 class StreamTrack;
 
@@ -15,12 +14,15 @@ enum class SubType {
 };
 
 struct SubCapt : public RichTextDocument {
-    SubCapt() {index = -1;}
-    RichTextDocument &doc() {return *this;}
-    const RichTextDocument &doc() const {return *this;}
-    inline SubCapt &operator += (const SubCapt &rhs) {RichTextDocument::operator += (rhs); return *this;}
-    inline SubCapt &operator += (const RichTextDocument &rhs) {RichTextDocument::operator += (rhs); return *this;}
-    inline SubCapt &operator += (const QList<RichTextBlock> &rhs) {RichTextDocument::operator += (rhs); return *this;}
+    SubCapt() { index = -1; }
+    auto doc() -> RichTextDocument& {return *this;}
+    auto doc() const -> const RichTextDocument& {return *this;}
+    auto operator += (const SubCapt &rhs) -> SubCapt&
+        {RichTextDocument::operator += (rhs); return *this;}
+    auto operator += (const RichTextDocument &rhs) -> SubCapt&
+        {RichTextDocument::operator += (rhs); return *this;}
+    auto operator += (const QList<RichTextBlock> &rhs) -> SubCapt&
+        {RichTextDocument::operator += (rhs); return *this;}
     mutable int index;
 };
 
@@ -31,7 +33,7 @@ public:
     using ConstIt = Map::const_iterator;
     using iterator = Map::iterator;
     using const_iterator = Map::const_iterator;
-    enum SyncType {Time, Frame};
+    enum SyncType { Time, Frame };
     SubComp();
     auto operator == (const SubComp &rhs) const -> bool
         {return m_path == rhs.m_path && m_klass == rhs.m_klass;}
@@ -41,7 +43,8 @@ public:
     auto unite(const SubComp &other, double frameRate) -> SubComp&;
     auto united(const SubComp &other, double frameRate) const -> SubComp;
 
-    auto hasWords() const -> bool { for (auto &capt : m_capts) if (capt.hasWords()) return true; return false; }
+    auto hasWords() const -> bool
+        { for (auto &c : m_capts) if (c.hasWords()) return true; return false; }
     auto isEmpty() const -> bool { return m_capts.isEmpty(); }
     auto begin() -> It { return m_capts.begin(); }
     auto end() -> It { return m_capts.end(); }
@@ -64,17 +67,17 @@ public:
     auto language() const -> QString {return m_klass;}
     auto start(int time, double frameRate) const -> const_iterator;
     auto finish(int time, double frameRate) const -> const_iterator;
-    static auto msec(int frame, double frameRate) -> int {return qRound(frame/frameRate*1000.0);}
-    static auto frame(int msec, double frameRate) -> int {return qRound(msec*0.001*frameRate);}
     auto toTime(int key, double fps) const -> int { return m_base == Time ? key : msec(key, fps); }
-    const Map &map() const { return m_capts; }
+    auto map() const -> const Map& { return m_capts; }
     auto setLanguage(const QString &lang) -> void { m_klass = lang; }
     auto selection() const -> bool { return m_selection; }
-    bool &selection() { return m_selection; }
+    auto selection() -> bool& { return m_selection; }
     auto id() const -> int { return m_id; }
     auto type() const -> SubType { return m_type; }
     auto toTrack() const -> StreamTrack;
     auto encoding() const -> QString { return m_enc; }
+    static auto msec(int frame, double fps) -> int {return qRound(frame/fps*1e3);}
+    static auto frame(int msec, double fps) -> int {return qRound(msec*1e-3*fps);}
 private:
     SubComp(SubType type, const QFileInfo &file, const QString &enc, int id, SyncType base);
     friend class SubtitleParser;

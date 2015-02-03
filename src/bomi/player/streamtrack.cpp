@@ -40,6 +40,19 @@ SIA _IsAlphabet(const QString &text) -> bool
     return true;
 }
 
+auto StreamTrack::compareMetaData(const StreamTrack &rhs) const -> bool
+{
+    return m_title == rhs.m_title && m_lang == rhs.m_lang
+           && m_codec == rhs.m_codec && m_id == rhs.m_id
+           && m_type == rhs.m_type;
+}
+
+auto StreamTrack::isExclusive() const -> bool {
+    if (m_type != StreamSubtitle)
+        return true;
+    return !isExternal() || m_file.endsWith(u".ass"_q, Qt::CaseInsensitive);
+}
+
 auto StreamTrack::name() const -> QString
 {
     QString name = m_title;
@@ -83,6 +96,7 @@ auto StreamTrack::fromSubComp(const SubComp &comp) -> StreamTrack
     if (!track.m_file.isEmpty())
         track.m_title = QFileInfo(track.m_file).fileName();
     track.m_encoding = comp.encoding();
+    track.m_fpsBased = comp.isBasedOnFrame();
     switch (comp.type()) {
 #define TYPE(t) case SubType::t: track.m_codec = u"" #t ""_q; break;
     TYPE(SAMI);
@@ -111,6 +125,7 @@ auto StreamTrack::toJson() const -> QJsonObject
     json.insert(u"selected"_q, m_selected);
     json.insert(u"default"_q, m_default);
     json.insert(u"albumart"_q, m_albumart);
+    json.insert(u"fpsBased"_q, m_fpsBased);
     return json;
 }
 
@@ -131,6 +146,7 @@ auto StreamTrack::setFromJson(const QJsonObject &json) -> bool
     m_selected = json[u"selected"_q].toBool();
     m_default = json[u"default"_q].toBool();
     m_albumart = json[u"albumart"_q].toBool();
+    m_fpsBased = json[u"fpsBased"_q].toBool();
     return true;
 }
 

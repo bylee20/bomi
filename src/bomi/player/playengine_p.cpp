@@ -19,15 +19,15 @@ auto reg_play_engine() -> void
     qRegisterMetaType<StreamList>("StreamList");
     qRegisterMetaType<AudioFormat>("AudioFormat");
     qmlRegisterType<EditionChapterObject>();
-    qmlRegisterType<VideoInfoObject>();
-    qmlRegisterType<AvTrackInfoObject>();
-    qmlRegisterType<VideoFormatInfoObject>();
-    qmlRegisterType<VideoHwAccInfoObject>();
-    qmlRegisterType<AudioFormatInfoObject>();
-    qmlRegisterType<AudioInfoObject>();
-    qmlRegisterType<CodecInfoObject>();
-    qmlRegisterType<MediaInfoObject>();
-    qmlRegisterType<SubtitleInfoObject>();
+    qmlRegisterType<VideoObject>();
+    qmlRegisterType<AvTrackObject>();
+    qmlRegisterType<VideoFormatObject>();
+    qmlRegisterType<VideoHwAccObject>();
+    qmlRegisterType<AudioFormatObject>();
+    qmlRegisterType<AudioObject>();
+    qmlRegisterType<CodecObject>();
+    qmlRegisterType<MediaObject>();
+    qmlRegisterType<SubtitleObject>();
     qmlRegisterType<PlayEngine>("bomi", 1, 0, "Engine");
 }
 
@@ -282,9 +282,10 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.setAsync("options/audio-delay", local->audio_sync() * 1e-3);
     mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);
     mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(local->audio_channel_layout()));
-    mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
-    mpv.setAsync("options/af-set", af(local));
-    mpv.setAsync("options/vf-set", vf(local));
+//    mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
+    mpv.setAsync("deinterlace", deint);
+    mpv.setAsync("af", af(local));
+    mpv.setAsync("vf", vf(local));
     mpv.setAsync("options/vo", vo(local));
     mpv.setAsync("options/colormatrix", _EnumData(local->video_space()).option);
     mpv.setAsync("options/colormatrix-input-range", _EnumData(local->video_range()).option);
@@ -465,7 +466,7 @@ auto PlayEngine::Data::observe() -> void
         return m.captured(1);
     };
 
-    auto setParams = [] (VideoFormatInfoObject *info, const QVariantMap &p,
+    auto setParams = [] (VideoFormatObject *info, const QVariantMap &p,
                          const QString &wkey, const QString &hkey) {
         const auto type = p[u"pixelformat"_q].toString();
         const auto w = p[wkey].toInt(), h = p[hkey].toInt();

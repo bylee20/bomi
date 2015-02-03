@@ -69,9 +69,9 @@ PlayEngine::PlayEngine()
     connect(d->ac, &AudioController::samplerateChanged, this,
             [=] (int sr) { d->info.audio.renderer()->setSampleRate(sr, true); });
     connect(d->ac, &AudioController::gainChanged,
-            &d->info.audio, &AudioInfoObject::setNormalizer);
+            &d->info.audio, &AudioObject::setNormalizer);
     connect(&d->mpv, &Mpv::audioDriverChanged, &d->info.audio,
-            &AudioInfoObject::setDriver, Qt::QueuedConnection);
+            &AudioObject::setDriver, Qt::QueuedConnection);
 
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
@@ -500,22 +500,22 @@ auto PlayEngine::customEvent(QEvent *event) -> void
     d->process(event);
 }
 
-auto PlayEngine::media() const -> MediaInfoObject*
+auto PlayEngine::media() const -> MediaObject*
 {
     return &d->info.media;
 }
 
-auto PlayEngine::audio() const -> AudioInfoObject*
+auto PlayEngine::audio() const -> AudioObject*
 {
     return &d->info.audio;
 }
 
-auto PlayEngine::video() const -> VideoInfoObject*
+auto PlayEngine::video() const -> VideoObject*
 {
     return &d->info.video;
 }
 
-auto PlayEngine::subtitle() const -> SubtitleInfoObject*
+auto PlayEngine::subtitle() const -> SubtitleObject*
 {
     return &d->info.subtitle;
 }

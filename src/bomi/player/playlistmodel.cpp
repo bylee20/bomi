@@ -178,3 +178,11 @@ auto PlaylistModel::open(const Mrl &mrl, const QString &enc) -> void
         m_downloader->start(mrl.toString());
     }
 }
+
+auto PlaylistModel::checkNextMrl() const -> Mrl
+{
+    auto mrl = nextMrl();
+    if (mrl.isEmpty())
+        emit finished();
+    return mrl;
+}

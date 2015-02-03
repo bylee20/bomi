@@ -27,7 +27,6 @@
 #include "video/videorenderer.hpp"
 #include "video/videoprocessor.hpp"
 #include "video/videocolor.hpp"
-#include "subtitle/submisc.hpp"
 #include "subtitle/subtitle.hpp"
 #include "subtitle/subtitlerenderer.hpp"
 #include "enum/deintmode.hpp"
@@ -90,10 +89,10 @@ struct PlayEngine::Data {
     QMutex mutex;
 
     struct {
-        MediaInfoObject media;
-        VideoInfoObject video;
-        AudioInfoObject audio;
-        SubtitleInfoObject subtitle;
+        MediaObject media;
+        VideoObject video;
+        AudioObject audio;
+        SubtitleObject subtitle;
         QVector<EditionChapterPtr> chapters, editions;
         EditionChapterObject chapter, edition;
     } info;

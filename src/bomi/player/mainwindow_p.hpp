@@ -143,27 +143,10 @@ struct MainWindow::Data {
     auto updateWaitingMessage() -> void;
 
     template<class T, class Func>
-    auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*
-    {
-        if (undo) {
-            auto cmd = new ValueCmd<Func, T>(to, from, func);
-            undo->push(cmd);
-            return cmd;
-        } else {
-            func(to);
-            return nullptr;
-        }
-    }
+    auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*;
     template<class T, class S, class ToString>
     auto push(const T &to, const char *p, T(MrlState::*get)() const,
-              void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*
-    {
-        const auto old = (e.params()->*get)();
-        showProperty(p, ts(to));
-        if (to == old)
-            return nullptr;
-        return push(to, old, [=] (const T &s) { (e.*set)(s); showProperty(p, ts(s)); });
-    }
+              void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*;
     auto showTimeLine() -> void;
     auto showMessageBox(const QVariant &msg) -> void;
     auto showOSD(const QVariant &msg) -> void;
@@ -176,81 +159,30 @@ struct MainWindow::Data {
 
     auto plugFlag(QAction *action, const char *property,
                   bool(MrlState::*get)() const, void(MrlState::*sig)(bool),
-                  void(PlayEngine::*set)(bool)) -> void
-    {
-        connect(e.params(), sig, action, &QAction::setChecked);
-        connect(action, &QAction::triggered, &e, [=] (bool on)
-            { push(on, property, get, set, toMessage); });
-    }
+                  void(PlayEngine::*set)(bool)) -> void;
 #define PLUG_FLAG(a, p, s) plugFlag(a, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
     auto plugStep(ActionGroup *g, const char *prop, int(MrlState::*get)() const,
-                  void(PlayEngine::*set)(int)) -> void
-    {
-        connect(g, &ActionGroup::triggered, p, [=] (QAction *action) {
-            auto step = qobject_cast<StepAction*>(action);
-            Q_ASSERT(step);
-            const auto old = (e.params()->*get)();
-            auto value = old;
-            if (step->isReset())
-                value = step->default_();
-            else
-                value += step->data();
-            push(step->clamp(value), prop, get, set,
-                 [=] (int v) { return step->format(v); });
-        });
-    }
-    static auto triggerNextAction(const QList<QAction*> &actions) -> void;
-    template<class T>
-    auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void
-    {
-        auto m = &parent(_L(EnumInfo<T>::typeKey()));
-        auto g = m->g(_L(EnumInfo<T>::typeKey()));
-        connect(&as, sig, g, &ActionGroup::setChecked<T>);
-        connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-            if (a->data().userType() != qMetaTypeId<T>()) { // cycle
-                triggerNextAction(g->actions());
-            } else {
-                const auto old = as.property(prop).value<T>();
-                const auto to = a->data().template value<T>();
-                showMessage(m->title(), EnumInfo<T>::description(to));
-                if (to != old)
-                    push(to, old, [=] (T t) {
-                        as.setProperty(prop, QVariant::fromValue<T>(t));
-                        showMessage(m->title(), EnumInfo<T>::description(t));
-                    });
-            }
-        });
-    }
-
+                  void(PlayEngine::*set)(int)) -> void;
 #define PLUG_STEP(m, p, s) plugStep(m, #p, &MrlState::p, &PlayEngine::s)
-
     template<class T>
     auto plugEnum(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
-                  void(MrlState::*sig)(T), void(PlayEngine::*set)(T)) -> void
-    {
-        connect(e.params(), sig, g, &ActionGroup::setChecked<T>);
-        connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-            if (a->data().userType() != qMetaTypeId<T>()) { // cycle
-                triggerNextAction(g->actions());
-            } else
-                push(a->data().template value<T>(), prop, get, set,
-                     [=] (T t) { return EnumInfo<T>::description(t); });
-        });
-    }
+                  void(MrlState::*sig)(T), void(PlayEngine::*set)(T), QAction *cycle) -> void;
     template<class T>
     auto plugEnum(Menu &m, const char *property, T(MrlState::*get)() const,
                   void(MrlState::*sig)(T), void(PlayEngine::*set)(T)) -> void
-    { plugEnum<T>(m.g(_L(EnumInfo<T>::typeKey())), property, get, sig, set); }
+    { plugEnum<T>(m.g(_L(EnumInfo<T>::typeKey())), property, get, sig, set, m.action(u"cycle"_q)); }
 #define PLUG_ENUM(m, p, s) plugEnum(m, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
     template<class T>
     auto plugEnumChild(Menu &parent, const char *property, T(MrlState::*get)() const,
                        void(MrlState::*sig)(T), void(PlayEngine::*set)(T)) -> void
     { plugEnum<T>(parent(_L(EnumInfo<T>::typeKey())), property, get, sig, set); }
 #define PLUG_ENUM_CHILD(pm, p, s) plugEnumChild(pm, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
-
+    template<class T>
+    auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void;
     auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
                    void(PlayEngine::*set)(int,bool), const QString &gkey = QString(),
                    QAction *sep = nullptr) -> void;
+    static auto triggerNextAction(const QList<QAction*> &actions) -> void;
 };
 
 #endif // MAINWINDOW_P_HPP

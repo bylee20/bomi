@@ -15,13 +15,13 @@ static constexpr VAProfile VAProfileNone = (VAProfile)-1;
 #undef None
 #endif
 
-struct CodecInfo {
+struct HwAccCodec {
     QString name, desc;
     QVector<VAProfile> vaapiProfiles;
     QVector<VdpDecoderProfile> vdpauProfiles;
 };
 
-static const CodecInfo codecs[] = {
+static const HwAccCodec codecs[] = {
     { u"mpeg1video"_q, u"MPEG-1 video"_q, {}, {VDP_DECODER_PROFILE_MPEG1}},
     { u"mpeg2video"_q, u"MPEG-2 video"_q,
       {VAProfileMPEG2Simple, VAProfileMPEG2Main},

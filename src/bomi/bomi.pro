@@ -78,7 +78,6 @@ HEADERS += \
 	subtitle/richtextdocument.hpp \
 	subtitle/subtitledrawer.hpp \
 	subtitle/subtitlerenderingthread.hpp \
-	subtitle/submisc.hpp \
 	subtitle/opensubtitlesfinder.hpp \
 	quick/busyiconitem.hpp \
 	quick/toplevelitem.hpp \
@@ -270,7 +269,6 @@ SOURCES += \
 	subtitle/richtextdocument.cpp \
 	subtitle/subtitledrawer.cpp \
 	subtitle/subtitlerenderingthread.cpp \
-	subtitle/submisc.cpp \
 	subtitle/opensubtitlesfinder.cpp \
 	quick/geometryitem.cpp \
 	quick/busyiconitem.cpp \

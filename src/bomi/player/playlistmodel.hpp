@@ -25,6 +25,7 @@ public:
     auto loaded() const -> int { return specialRow(); }
     auto next() const -> int;
     auto previous() const -> int;
+    auto checkNextMrl() const -> Mrl;
     auto nextMrl() const -> Mrl { return value(next()); }
     auto previousMrl() const -> Mrl { return value(previous()); }
     auto hasNext() const -> bool { return isValidRow(next()); }
@@ -55,6 +56,7 @@ public:
     auto setRepeat(bool repeat) -> void;
     Q_INVOKABLE void play(int row);
 signals:
+    void finished() const;
     void loadedChanged(int row);
     void contentWidthChanged();
     void playRequested(int row);

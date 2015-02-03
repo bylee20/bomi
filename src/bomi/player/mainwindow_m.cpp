@@ -13,6 +13,93 @@
 #include "dialog/subtitlefinddialog.hpp"
 #include "dialog/encodingfiledialog.hpp"
 
+template<class T, class Func>
+auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUndoCommand*
+{
+    if (undo) {
+        auto cmd = new ValueCmd<Func, T>(to, from, func);
+        undo->push(cmd);
+        return cmd;
+    } else {
+        func(to);
+        return nullptr;
+    }
+}
+template<class T, class S, class ToString>
+auto MainWindow::Data::push(const T &to, const char *p, T(MrlState::*get)() const,
+          void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*
+{
+    const auto old = (e.params()->*get)();
+    showProperty(p, ts(to));
+    if (to == old)
+        return nullptr;
+    return push(to, old, [=] (const T &s) { (e.*set)(s); showProperty(p, ts(s)); });
+}
+
+auto MainWindow::Data::plugFlag(QAction *action, const char *property,
+                                bool(MrlState::*get)() const, void(MrlState::*sig)(bool),
+                                void(PlayEngine::*set)(bool)) -> void
+{
+    connect(e.params(), sig, action, &QAction::setChecked);
+    connect(action, &QAction::triggered, &e, [=] (bool on)
+        { push(on, property, get, set, toMessage); });
+}
+
+auto MainWindow::Data::plugStep(ActionGroup *g, const char *prop,
+                                int(MrlState::*get)() const,
+                                void(PlayEngine::*set)(int)) -> void
+{
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *action) {
+        auto step = qobject_cast<StepAction*>(action);
+        Q_ASSERT(step);
+        const auto old = (e.params()->*get)();
+        auto value = old;
+        if (step->isReset())
+            value = step->default_();
+        else
+            value += step->data();
+        push(step->clamp(value), prop, get, set,
+             [=] (int v) { return step->format(v); });
+    });
+}
+
+template<class T>
+auto MainWindow::Data::plugAppEnumChild(Menu &parent, const char *prop,
+                                        void(AppState::*sig)(T)) -> void
+{
+    auto m = &parent(_L(EnumInfo<T>::typeKey()));
+    auto g = m->g(_L(EnumInfo<T>::typeKey()));
+    connect(&as, sig, g, &ActionGroup::setChecked<T>);
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+        if (a->data().userType() != qMetaTypeId<T>()) { // cycle
+            triggerNextAction(g->actions());
+        } else {
+            const auto old = as.property(prop).value<T>();
+            const auto to = a->data().template value<T>();
+            showMessage(m->title(), EnumInfo<T>::description(to));
+            if (to != old)
+                push(to, old, [=] (T t) {
+                    as.setProperty(prop, QVariant::fromValue<T>(t));
+                    showMessage(m->title(), EnumInfo<T>::description(t));
+                });
+        }
+    });
+}
+
+template<class T>
+auto MainWindow::Data::plugEnum(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
+                                void(MrlState::*sig)(T), void(PlayEngine::*set)(T), QAction *cycle) -> void
+{
+    connect(e.params(), sig, g, &ActionGroup::setChecked<T>);
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+        push(a->data().template value<T>(), prop, get, set,
+             [=] (T t) { return EnumInfo<T>::description(t); });
+    });
+    if (cycle)
+        connect(cycle, &QAction::triggered, p,
+                [=] () { triggerNextAction(g->actions()); });
+}
+
 auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
 {
     int i = 0;
@@ -145,14 +232,11 @@ auto MainWindow::Data::connectMenus() -> void
             msg(tr("Quit repeating"));
         }
     });
-    connect(play[u"prev"_q], &QAction::triggered,
-            &playlist, &PlaylistModel::playPrevious);
-    connect(play[u"next"_q], &QAction::triggered,
-            &playlist, &PlaylistModel::playNext);
+    connect(play[u"prev"_q], &QAction::triggered, &playlist, &PlaylistModel::playPrevious);
+    connect(play[u"next"_q], &QAction::triggered, &playlist, &PlaylistModel::playNext);
+
     auto &seek = play(u"seek"_q);
-    connect(seek[u"begin"_q], &QAction::triggered, p, [=] () {
-        e.seek(e.begin());
-    });
+    connect(seek[u"begin"_q], &QAction::triggered, p, [=] () { e.seek(e.begin()); });
     connect(seek.g(u"relative"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         const int diff = static_cast<StepAction*>(a)->data();
@@ -327,6 +411,7 @@ auto MainWindow::Data::connectMenus() -> void
             });
         showProperty("video_color", tr("Reset"));
     });
+    plugTrack(video, &MrlState::video_tracks_changed, &PlayEngine::setVideoTrackSelected);
 
     Menu &audio = menu(u"audio"_q);
 
@@ -350,41 +435,31 @@ auto MainWindow::Data::connectMenus() -> void
     PLUG_FLAG(audio[u"normalizer"_q], audio_volume_normalizer, setAudioVolumeNormalizer);
     PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);
 
-
-//    PLUG_STEP(play)
-
-    Menu &sub = menu(u"subtitle"_q);
     auto &atrack = audio(u"track"_q);
-    auto &strack = sub(u"track"_q);
-    auto ssep = strack.addSeparator();
-    plugTrack(video, &MrlState::video_tracks_changed, &PlayEngine::setVideoTrackSelected);
     plugTrack(audio, &MrlState::audio_tracks_changed, &PlayEngine::setAudioTrackSelected);
-    plugTrack(sub, &MrlState::sub_tracks_changed,
-              &PlayEngine::setSubtitleTrackSelected, "exclusive"_a);
-    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed,
-              &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
-    connect(audio(u"track"_q)[u"next"_q], &QAction::triggered, p, [=] ()
+    connect(atrack[u"cycle"_q], &QAction::triggered, p, [=] ()
         { triggerNextAction(menu(u"audio"_q)(u"track"_q).g()->actions()); });
-    connect(sub(u"track"_q)[u"next"_q], &QAction::triggered, p, [=] () {
-        auto &m = menu(u"subtitle"_q)(u"track"_q);
-        auto actions = m.g(u"exclusive"_q)->actions();
-        actions += m.g(u"inclusive"_q)->actions();
-        triggerNextAction(actions);
-    });
-
-
     connect(atrack[u"open"_q], &QAction::triggered, p, [this] () {
         const auto files = _GetOpenFiles(p, tr("Open Audio File"), AudioExt);
-        if (!files.isEmpty())
-            e.addAudioFiles(files);
+        if (!files.isEmpty()) e.addAudioFiles(files);
     });
     connect(atrack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadAudioFiles);
     connect(atrack[u"reload"_q], &QAction::triggered, &e, &PlayEngine::reloadAudioFiles);
     connect(atrack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearAudioFiles);
 
-
-
-
+    Menu &sub = menu(u"subtitle"_q);
+    auto &strack = sub(u"track"_q);
+    auto ssep = strack.addSeparator();
+    plugTrack(sub, &MrlState::sub_tracks_changed,
+              &PlayEngine::setSubtitleTrackSelected, "exclusive"_a);
+    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed,
+              &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
+    connect(sub(u"track"_q)[u"cycle"_q], &QAction::triggered, p, [=] () {
+        auto &m = menu(u"subtitle"_q)(u"track"_q);
+        auto actions = m.g(u"exclusive"_q)->actions();
+        actions += m.g(u"inclusive"_q)->actions();
+        triggerNextAction(actions);
+    });
     connect(strack[u"all"_q], &QAction::triggered, p, [=, &strack] () {
         e.setSubtitleInclusiveTrackSelected(-1, true);
         const auto size = e.params()->sub_tracks_inclusive().size();
@@ -556,6 +631,10 @@ auto MainWindow::Data::connectMenus() -> void
                                "when the play list has finished."));
         } else
             showMessage(tr("Auto-shutdown is canceled."));
+    });
+    connect(&playlist, &PlaylistModel::finished, p, [=, &tool] () {
+        if (tool[u"auto-exit"_q]->isChecked())     p->exit();
+        if (tool[u"auto-shutdown"_q]->isChecked()) cApp.shutdown();
     });
 
     Menu &win = menu(u"window"_q);

@@ -30,11 +30,11 @@ private:
     int m_duration = 0;
 };
 
-class MediaInfoObject : public QObject {
+class MediaObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
 public:
-    MediaInfoObject(QObject *parent = nullptr): QObject(parent) {}
+    MediaObject(QObject *parent = nullptr): QObject(parent) {}
     auto name() const -> QString {return m_name;}
     auto setName(const QString &name) -> void
         { if (_Change(m_name, name)) emit nameChanged(m_name); }

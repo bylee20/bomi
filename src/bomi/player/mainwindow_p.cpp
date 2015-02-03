@@ -94,9 +94,7 @@ auto MainWindow::Data::initEngine() -> void
         menu(u"video"_q)(u"track"_q).setEnabled(playing);
         menu(u"audio"_q)(u"track"_q).setEnabled(playing);
         menu(u"subtitle"_q)(u"track"_q).setEnabled(playing);
-        const auto disable = pref().disable_screensaver
-                             && state == PlayEngine::Playing;
-        cApp.setScreensaverDisabled(disable);
+        cApp.setScreensaverDisabled(pref().disable_screensaver && playing);
         updateStaysOnTop();
         stateChanging = false;
     });
@@ -104,25 +102,17 @@ auto MainWindow::Data::initEngine() -> void
         if (waiting) { waiter.start(); }
         else { waiter.stop(); this->showMessageBox(QString()); }
     });
-    connect(&e, &PlayEngine::tick, p, [=] (int time) { if (ab.check(time)) e.seek(ab.a()); });
+    connect(&e, &PlayEngine::tick, p,
+            [=] (int time) { if (ab.check(time)) e.seek(ab.a()); });
     connect(&e, &PlayEngine::started, p, [=] (const Mrl &mrl) { setOpen(mrl); });
     connect(&e, &PlayEngine::finished, p, [=] (const Mrl &/*mrl*/, bool eof) {
-        if (!eof)
-            return;
-        const auto next = playlist.nextMrl();
-        if (next.isEmpty()) {
-            if (menu(u"tool"_q)[u"auto-exit"_q]->isChecked())
-                p->exit();
-            if (menu(u"tool"_q)[u"auto-shutdown"_q]->isChecked())
-                cApp.shutdown();
-        } else
-            load(next, true);
+        if (!eof) return;
+        const auto next = playlist.checkNextMrl();
+        if (!next.isEmpty()) load(next, true);
     });
-    connect(e.video()->renderer(), &VideoFormatInfoObject::sizeChanged,
-            p, [this] (const QSize &size) {
-        if (pref().fit_to_video && !size.isEmpty())
-            setVideoSize(size);
-    });
+
+    connect(e.video()->renderer(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
+        { if (pref().fit_to_video && !s.isEmpty()) setVideoSize(s); });
     auto showSize = [this] {
         const auto num = [] (qreal n) { return _N(qRound(n)); };
         const auto w = num(e.screen()->width()), h = num(e.screen()->height());

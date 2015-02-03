@@ -3,7 +3,17 @@
 #include "video/videoformat.hpp"
 #include "audio/audioformat.hpp"
 
-auto CodecInfoObject::parse(const QString &info) -> void
+template<class L, class T = typename std::remove_pointer<typename L::value_type>::type>
+static inline auto _MakeQmlList(const QObject *o, const L *list) -> QQmlListProperty<T>
+{
+    auto at = [] (QQmlListProperty<T> *p, int index) -> T*
+        { return static_cast<const L*>(p->data)->value(index); };
+    auto count = [] (QQmlListProperty<T> *p) -> int
+        { return static_cast<const L*>(p->data)->size(); };
+    return QQmlListProperty<T>(const_cast<QObject*>(o), const_cast<L*>(list), count, at);
+}
+
+auto CodecObject::parse(const QString &info) -> void
 {
     QRegEx regex(uR"(^([^\[\]]+) \[([^:]+):([^\]]+)\]$)"_q);
     const auto match = regex.match(info);
@@ -15,9 +25,9 @@ auto CodecInfoObject::parse(const QString &info) -> void
     }
 }
 
-auto AvTrackInfoObject::fromTrack(int n, const StreamTrack &track) -> AvTrackInfoObject*
+auto AvTrackObject::fromTrack(int n, const StreamTrack &track) -> AvTrackObject*
 {
-    AvTrackInfoObject *info = new AvTrackInfoObject;
+    AvTrackObject *info = new AvTrackObject;
     info->m_id = track.id();
     info->m_number = n;
     info->m_codec = track.codec();
@@ -27,43 +37,43 @@ auto AvTrackInfoObject::fromTrack(int n, const StreamTrack &track) -> AvTrackInf
     return info;
 }
 
-auto AvCommonInfoObject::track() const -> AvTrackInfoObject*
+auto AvCommonObject::track() const -> AvTrackObject*
 {
     if (m_track)
         return m_track;
-    static AvTrackInfoObject dummy;
+    static AvTrackObject dummy;
     return &dummy;
 }
 
-auto AvCommonInfoObject::update(const StreamList &tracks, bool clear) -> AvTrackInfoObject*
+auto AvCommonObject::update(const StreamList &tracks, bool clear) -> AvTrackObject*
 {
     if (clear) {
         qDeleteAll(m_tracks);
         m_tracks.clear();
     }
     m_tracks.reserve(m_tracks.size() + tracks.size());
-    AvTrackInfoObject *sel = nullptr;
+    AvTrackObject *sel = nullptr;
     for (auto track : tracks) {
-        m_tracks.push_back(AvTrackInfoObject::fromTrack(m_tracks.size() + 1, track));
+        m_tracks.push_back(AvTrackObject::fromTrack(m_tracks.size() + 1, track));
         if (track.isSelected())
             sel = m_tracks.back();
     }
     return sel;
 }
 
-auto AvCommonInfoObject::tracks() const -> QQmlListProperty<AvTrackInfoObject>
+auto AvCommonObject::tracks() const -> QQmlListProperty<AvTrackObject>
 {
     return _MakeQmlList(this, &m_tracks);
 }
 
-auto AvCommonInfoObject::setTracks(const StreamList &tracks) -> void
+auto AvCommonObject::setTracks(const StreamList &tracks) -> void
 {
     m_track = update(tracks);
     emit tracksChanged();
     emit trackChanged();
 }
 
-auto AvCommonInfoObject::setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void
+auto AvCommonObject::setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void
 {
     auto sel = update(tracks1);
     if (auto sel2 = update(tracks2, false))
@@ -75,7 +85,7 @@ auto AvCommonInfoObject::setTracks(const StreamList &tracks1, const StreamList &
 
 /******************************************************************************/
 
-auto AudioFormatInfoObject::setFormat(const AudioFormat &format) -> void
+auto AudioFormatObject::setFormat(const AudioFormat &format) -> void
 {
     setBitrate(format.bitrate());
     setSampleRate(format.samplerate(), false);
@@ -84,7 +94,7 @@ auto AudioFormatInfoObject::setFormat(const AudioFormat &format) -> void
     setDepth(format.bits());
 }
 
-auto AudioInfoObject::setDriver(const QString &driver) -> void
+auto AudioObject::setDriver(const QString &driver) -> void
 {
     if (_Change(m_driver, driver)) {
         emit driverChanged();
@@ -92,13 +102,13 @@ auto AudioInfoObject::setDriver(const QString &driver) -> void
     }
 }
 
-auto AudioInfoObject::setDevice(const QString &device) -> void
+auto AudioObject::setDevice(const QString &device) -> void
 {
     if (_Change(m_device, device))
         emit deviceChanged();
 }
 
-auto AudioInfoObject::device() const -> QString
+auto AudioObject::device() const -> QString
 {
     if (m_device.startsWith(m_driver % u'/'_q))
         return m_device.mid(m_driver.size() + 1);
@@ -107,7 +117,7 @@ auto AudioInfoObject::device() const -> QString
 
 /******************************************************************************/
 
-auto VideoFormatInfoObject::rangeText() const -> QString
+auto VideoFormatObject::rangeText() const -> QString
 {
     switch (m_range) {
     case ColorRange::Limited:
@@ -120,7 +130,7 @@ auto VideoFormatInfoObject::rangeText() const -> QString
     return QString();
 }
 
-auto VideoFormatInfoObject::spaceText() const -> QString
+auto VideoFormatObject::spaceText() const -> QString
 {
     switch (m_space) {
     case ColorSpace::BT601:
@@ -145,12 +155,12 @@ auto VideoFormatInfoObject::spaceText() const -> QString
     return QString();
 }
 
-VideoInfoObject::VideoInfoObject()
+VideoObject::VideoObject()
 {
-    connect(&m_output, &VideoFormatInfoObject::fpsChanged,
-            this, &VideoInfoObject::delayedTimeChanged);
-    connect(this, &VideoInfoObject::delayedFramesChanged,
-            this, &VideoInfoObject::delayedTimeChanged);
+    connect(&m_output, &VideoFormatObject::fpsChanged,
+            this, &VideoObject::delayedTimeChanged);
+    connect(this, &VideoObject::delayedFramesChanged,
+            this, &VideoObject::delayedTimeChanged);
     connect(&m_timer, &QTimer::timeout, this, [=] () {
         auto fps = 0.0;
         if (m_dropped)
@@ -161,7 +171,7 @@ VideoInfoObject::VideoInfoObject()
     m_timer.setInterval(100);
 }
 
-void VideoInfoObject::setDroppedFrames(int f)
+void VideoObject::setDroppedFrames(int f)
 {
     if (f > 0 && m_dropped < 1) {
         QMetaObject::invokeMethod(&m_timer, "start");
@@ -177,6 +187,6 @@ void VideoInfoObject::setDroppedFrames(int f)
 
 /******************************************************************************/
 
-SubtitleInfoObject::SubtitleInfoObject()
+SubtitleObject::SubtitleObject()
 {
 }

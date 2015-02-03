@@ -11,12 +11,7 @@ public:
     auto id() const -> int {return m_id;}
     auto operator == (const StreamTrack &rhs) const -> bool
         { return compareMetaData(rhs) && m_selected == rhs.m_selected; }
-    auto compareMetaData(const StreamTrack &rhs) const -> bool
-    {
-        return m_title == rhs.m_title && m_lang == rhs.m_lang
-               && m_codec == rhs.m_codec && m_id == rhs.m_id
-               && m_type == rhs.m_type;
-    }
+    auto compareMetaData(const StreamTrack &rhs) const -> bool;
     auto isSelected() const -> bool { return m_selected; }
     auto encoding() const { return m_encoding; }
     auto codec() const -> const QString& { return m_codec; }
@@ -26,19 +21,17 @@ public:
     auto isDefault() const -> bool { return m_default; }
     auto isAlbumArt() const -> bool { return m_albumart; }
     auto language() const -> QString { return m_lang; }
-    auto isExclusive() const -> bool {
-        if (m_type != StreamSubtitle)
-            return true;
-        return !isExternal() || m_file.endsWith(u".ass"_q, Qt::CaseInsensitive);
-    }
+    auto isExclusive() const -> bool;
+    auto isFpsBased() const -> bool { return m_fpsBased; }
+    auto isTimeBased() const -> bool { return !m_fpsBased; }
     auto isInclusive() const -> bool { return !isExclusive(); }
     auto isExternalByMpv() const -> bool { return isExclusive() && isExternal(); }
     auto file() const -> QString { return m_file; }
-    static auto fromMpvData(const QVariant &mpv) -> StreamTrack;
-    static auto fromSubComp(const SubComp &comp) -> StreamTrack;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
     static auto fromJson(const QJsonObject &json) -> StreamTrack;
+    static auto fromMpvData(const QVariant &mpv) -> StreamTrack;
+    static auto fromSubComp(const SubComp &comp) -> StreamTrack;
 private:
     friend class PlayEngine;
     friend class StreamList;
@@ -46,6 +39,7 @@ private:
     int m_id = -1;
     QString m_title, m_lang, m_file, m_codec, m_displayLang, m_encoding;
     bool m_selected = false, m_default = false, m_albumart = false;
+    bool m_fpsBased = false;
 };
 
 Q_DECLARE_METATYPE(StreamTrack);
