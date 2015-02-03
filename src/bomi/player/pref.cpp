@@ -92,7 +92,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
 
     keys[u"subtitle/track/open"_q] << Qt::SHIFT + Qt::Key_F;
     keys[u"subtitle/track/reload"_q] << Qt::SHIFT + Qt::Key_R;
-    keys[u"subtitle/track/next"_q] << Qt::SHIFT + Qt::Key_N;
+    keys[u"subtitle/track/cycle"_q] << Qt::SHIFT + Qt::Key_N;
     keys[u"subtitle/track/all"_q] << Qt::SHIFT + Qt::Key_B;
     keys[u"subtitle/track/hide"_q] << Qt::SHIFT + Qt::Key_H;
     keys[u"subtitle/position/increase"_q] << Qt::Key_W;
@@ -108,7 +108,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"video/move/down"_q] << Qt::SHIFT + Qt::Key_S;
     keys[u"video/move/left"_q] << Qt::SHIFT + Qt::Key_A;
     keys[u"video/move/right"_q] << Qt::SHIFT + Qt::Key_D;
-    keys[u"video/deinterlacing/toggle"_q] << Qt::CTRL + Qt::Key_D;
+    keys[u"video/deinterlacing/cycle"_q] << Qt::CTRL + Qt::Key_D;
     keys[u"video/color/reset"_q] << Qt::Key_O;
     keys[u"video/color/brightness+"_q] << Qt::Key_T;
     keys[u"video/color/brightness-"_q] << Qt::Key_G;
@@ -118,10 +118,10 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"video/color/saturation-"_q] << Qt::Key_J;
     keys[u"video/color/hue+"_q] << Qt::Key_I;
     keys[u"video/color/hue-"_q] << Qt::Key_K;
-    keys[u"video/interpolator/next"_q] << Qt::CTRL+ Qt::Key_I;
-    keys[u"video/dithering/next"_q] << Qt::CTRL+ Qt::Key_T;
+    keys[u"video/interpolator/cycle"_q] << Qt::CTRL+ Qt::Key_I;
+    keys[u"video/dithering/cycle"_q] << Qt::CTRL+ Qt::Key_T;
 
-    keys[u"audio/track/next"_q] << Qt::CTRL + Qt::Key_A;
+    keys[u"audio/track/cycle"_q] << Qt::CTRL + Qt::Key_A;
     keys[u"audio/volume/increase"_q] << Qt::Key_Up;
     keys[u"audio/volume/decrease"_q] << Qt::Key_Down;
     keys[u"audio/volume/mute"_q] << Qt::Key_M;
@@ -130,11 +130,14 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"audio/amp/increase"_q] << Qt::CTRL + Qt::Key_Up;
     keys[u"audio/amp/decrease"_q] << Qt::CTRL + Qt::Key_Down;
     keys[u"audio/equalizer"_q] << Qt::ALT + Qt::Key_E;
-    keys[u"audio/channel/next"_q] << Qt::ALT + Qt::Key_C;
+    keys[u"audio/channel/cycle"_q] << Qt::ALT + Qt::Key_C;
     keys[u"audio/sync/reset"_q] << Qt::Key_Backslash;
     keys[u"audio/sync/increase"_q] << Qt::Key_BracketRight;
     keys[u"audio/sync/decrease"_q] << Qt::Key_BracketLeft;
 
+
+    keys[u"tool/undo"_q] << Qt::CTRL + Qt::Key_Z;
+    keys[u"tool/redo"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_Z;
     keys[u"tool/playlist/toggle"_q] << Qt::Key_L;
     keys[u"tool/history/toggle"_q] << Qt::Key_C;
     keys[u"tool/subtitle"_q] << Qt::SHIFT + Qt::Key_V;
