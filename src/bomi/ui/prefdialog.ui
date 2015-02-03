@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>5</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -393,12 +393,12 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="ask_record_found">
+             <widget class="QCheckBox" name="resume_ignore_in_playlist">
               <property name="enabled">
                <bool>false</bool>
               </property>
               <property name="text">
-               <string>Confirm resume playback</string>
+               <string>Ignore when switching to next item in playlist</string>
               </property>
              </widget>
             </item>
@@ -2855,7 +2855,7 @@ Regular expression is supported.</string>
   <connection>
    <sender>remember_stopped</sender>
    <signal>toggled(bool)</signal>
-   <receiver>ask_record_found</receiver>
+   <receiver>resume_ignore_in_playlist</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

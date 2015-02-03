@@ -108,7 +108,7 @@ auto MainWindow::Data::initEngine() -> void
     connect(&e, &PlayEngine::finished, p, [=] (const Mrl &/*mrl*/, bool eof) {
         if (!eof) return;
         const auto next = playlist.checkNextMrl();
-        if (!next.isEmpty()) load(next, true);
+        if (!next.isEmpty()) load(next, true, !pref().resume_ignore_in_playlist);
     });
 
     connect(e.video()->renderer(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
@@ -531,10 +531,10 @@ auto MainWindow::Data::setVideoSize(double rate) -> void
     }
 }
 
-auto MainWindow::Data::load(const Mrl &mrl, bool play) -> void
+auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void
 {
     if (play)
-        e.load(mrl);
+        e.load(mrl, tryResume);
     else
         e.setMrl(mrl);
 }

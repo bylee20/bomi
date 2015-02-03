@@ -94,7 +94,7 @@ public:
     auto isRunning() const -> bool { return state() & Running; }
     auto speed() const -> double;
     auto state() const -> State;
-    auto load(const Mrl &mrl) -> void;
+    auto load(const Mrl &mrl, bool tryResume = true) -> void;
     auto setMrl(const Mrl &mrl) -> void;
     auto editions() const -> const QVector<EditionPtr>&;
     auto edition() const -> EditionObject*;

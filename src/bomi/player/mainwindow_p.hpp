@@ -124,7 +124,7 @@ struct MainWindow::Data {
     auto initItems() -> void;
     auto connectMenus() -> void;
     auto setVideoSize(const QSize &video) -> void;
-    auto load(const Mrl &mrl, bool play = true) -> void;
+    auto load(const Mrl &mrl, bool play = true, bool tryResume = true) -> void;
     auto load(Subtitle &sub, const QString &file, const QString &enc) -> bool;
     auto reloadSkin() -> void;
     auto trigger(QAction *action) -> void;

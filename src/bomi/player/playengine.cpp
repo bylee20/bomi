@@ -584,7 +584,7 @@ auto PlayEngine::setMrl(const Mrl &mrl) -> void
     }
 }
 
-auto PlayEngine::load(const Mrl &mrl) -> void
+auto PlayEngine::load(const Mrl &mrl, bool tryResume) -> void
 {
     if (_Change(d->mrl, mrl)) {
         d->hasImage = mrl.isImage();
@@ -592,7 +592,7 @@ auto PlayEngine::load(const Mrl &mrl) -> void
         emit mrlChanged(d->mrl);
     }
     if (!d->mrl.isEmpty())
-        d->loadfile(d->mrl);
+        d->loadfile(d->mrl, tryResume);
 }
 
 auto PlayEngine::time() const -> int

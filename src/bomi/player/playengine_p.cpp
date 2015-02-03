@@ -176,13 +176,14 @@ auto PlayEngine::Data::updateVideoSubOptions() -> void
     mpv.tellAsync("vo_cmdline", videoSubOptions(&params));
 }
 
-auto PlayEngine::Data::loadfile(const Mrl &mrl) -> void
+auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume) -> void
 {
     QString file = mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
     if (file.isEmpty())
         return;
     OptionList opts;
     opts.add("pause"_b, p->isPaused() || hasImage);
+    opts.add("resume-playback", resume);
     mpv.tell("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
 }
 
@@ -261,7 +262,8 @@ auto PlayEngine::Data::onLoad() -> void
     local->set_mrl(mrl);
 
     int edition = -1, start = -1;
-    if (resume && mrl.isUnique() && !mrl.isImage()) {
+    if (mpv.get<bool>("options/resume-playback")
+            && resume && mrl.isUnique() && !mrl.isImage()) {
         edition = local->edition();
         start = local->resume_position();
     }
@@ -275,6 +277,7 @@ auto PlayEngine::Data::onLoad() -> void
             mpv.setAsync("file-local-options/start", QString::number(start * 1e-3, 'f'));
         t.start = -1;
     }
+
     const auto deint = local->video_deinterlacing() != DeintMode::None;
     mpv.setAsync("options/sub-visibility", !local->sub_hidden());
     mpv.setAsync("options/volume", volume());
@@ -282,8 +285,7 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.setAsync("options/audio-delay", local->audio_sync() * 1e-3);
     mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);
     mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(local->audio_channel_layout()));
-//    mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
-    mpv.setAsync("deinterlace", deint);
+    mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
     mpv.setAsync("af", af(local));
     mpv.setAsync("vf", vf(local));
     mpv.setAsync("options/vo", vo(local));
@@ -376,9 +378,6 @@ auto PlayEngine::Data::observe() -> void
             emit p->duration_sChanged();
         updateChapter(mpv.get<int>("chapter"));
     });
-
-
-
 
     mpv.observe("chapter-list", [=] () {
         const auto array = mpv.get<QVariant>("chapter-list").toList();

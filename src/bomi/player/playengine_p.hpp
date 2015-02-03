@@ -177,7 +177,7 @@ struct PlayEngine::Data {
     auto volume() const -> double
         { return params.audio_volume() * params.audio_amplifier() * 1e-3; }
 
-    auto loadfile(const Mrl &mrl) -> void;
+    auto loadfile(const Mrl &mrl, bool resume) -> void;
     auto updateMediaName(const QString &name = QString()) -> void;
 
     auto toTracks(const QVariant &var) -> QVector<StreamList>;
