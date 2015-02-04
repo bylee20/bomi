@@ -57,7 +57,7 @@ public:
     auto upperBound(int key) const -> ConstIt { return m_capts.upperBound(key); }
     auto lowerBound(int key) const -> ConstIt { return m_capts.lowerBound(key); }
     auto insert(int key, const SubCapt &capt) -> It { return m_capts.insert(key, capt); }
-
+    auto contains(int key) const -> bool { return m_capts.contains(key); }
     auto name() const -> QString;
     auto fileName() const -> const QString& {return m_file;}
     auto path() const -> const QString& { return m_path; }

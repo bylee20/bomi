@@ -65,69 +65,34 @@ auto SamiParser::_parse(Subtitle &sub) -> void
 
 auto SubRipParser::isParsable() const -> bool
 {
-    const QRegEx rxTime(uR"(\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
-                        uR"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"_q);
-    return all().contains(rxTime);
+    return all().contains(rx);
 }
 
 auto SubRipParser::_parse(Subtitle &sub) -> void
 {
-    QRegEx rxNum(uR"(^\s*(\d+)\s*$)"_q);
-    QRegEx rxTime(uR"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
-                  uR"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)"_q);
-    QRegEx rxBlank(uR"(^\s*$)"_q);
-    auto getNumber = [&rxNum, this] () {
-        for (;;) {
-            const auto ref = getLine();
-            if (ref.isNull())
-                break;
-            auto matched = rxNum.match(ref.toString());
-            if (matched.hasMatch())
-                return matched.capturedRef(1).toInt();
-        }
-        return -1;
-    };
-    auto getTime = [&rxTime, this] (int &start, int &end) {
-        for (;;) {
-            const auto ref = getLine();
-            if (ref.isNull())
-                break;
-            auto matched = rxTime.match(ref.toString());
-            if (matched.hasMatch()) {
-#define TO_INT(n) (matched.capturedRef(n).toInt())
-                start = _TimeToMSec(TO_INT(1), TO_INT(2), TO_INT(3), TO_INT(4));
-                end = _TimeToMSec(TO_INT(5), TO_INT(6), TO_INT(7), TO_INT(8));
-#undef TO_INT
-                return true;
-            }
-        }
-        return false;
-    };
-    auto getCaption = [&rxBlank, this] () {
-        QString ret;
-        for (;;) {
-            const auto line = getLine().toString();
-            auto matched = rxBlank.match(line);
-            if (matched.hasMatch())
-                break;
-            if (!ret.isEmpty())
-                ret += "<br>"_a;
-            ret += line;
-        }
-        return QString("<p>"_a % ret % "</p>"_a);
-    };
-
     sub.clear();
     auto &comp = append(sub);
-    for (;;) {
-        const auto num = getNumber();
-        if (num < 0)
+    const auto &all = this->all();
+    auto prev = rx.match(all);
+    if (!prev.hasMatch())
+        return;
+
+    for(;;) {
+        const auto m = rx.match(all, prev.capturedEnd());
+        const int begin = prev.capturedEnd();
+        const int end = m.hasMatch() ? m.capturedStart() : all.size();
+        auto caption = all.midRef(begin, end - begin).trimmed().toString();
+        caption.replace(QRegEx(u"(\r\n|\n|\r)"_q), u"<br>"_q);
+        if (caption.isEmpty())
+            caption = u"<br>"_q;
+#define TO_INT(n) (prev.capturedRef(n).toInt())
+        const int t1 = _TimeToMSec(TO_INT(3), TO_INT(4), TO_INT(5), TO_INT(6));
+        const int t2 = _TimeToMSec(TO_INT(7), TO_INT(8), TO_INT(9), TO_INT(10));
+#undef TO_INT
+        append(comp, "<p>"_a % caption % "</p>"_a, t1, t2);
+        if (!m.hasMatch())
             break;
-        int start = 0, end = 0;
-        if (!getTime(start, end))
-            break;
-        const auto caption = getCaption();
-        append(comp, caption, start, end);
+        prev = m;
     }
 }
 

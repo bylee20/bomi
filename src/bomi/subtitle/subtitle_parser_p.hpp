@@ -15,9 +15,14 @@ public:
 
 class SubRipParser : public SubtitleParser {
 public:
+    SubRipParser()
+        : rx(uR"((^|[\n\r]+)\s*(\d+)s*[\n\r]+\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
+             uR"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*[\n\r]+)"_q) { }
     auto _parse(Subtitle &sub) -> void;
     auto isParsable() const -> bool;
     auto type() const -> SubType { return SubType::SubRip; }
+private:
+    QRegEx rx;
 };
 
 class LineParser : public SubtitleParser {
