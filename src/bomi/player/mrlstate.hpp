@@ -101,11 +101,11 @@ private:
 
     P_(VerticalAlignment, sub_alignment, VerticalAlignment::Bottom, QT_TR_NOOP("Subtitle Alignment"), 0)
     P_(SubtitleDisplay, sub_display, SubtitleDisplay::OnLetterbox, QT_TR_NOOP("Subtitle Display"), 0)
-    P_(int, sub_position, 100, QT_TR_NOOP("Subtitle Sync"), 0)
-    P_(int, sub_sync, 0, QT_TR_NOOP("Subtitle Position"), 0)
+    P_(int, sub_position, 100, QT_TR_NOOP("Subtitle Position"), 0)
+    P_(int, sub_sync, 0, QT_TR_NOOP("Subtitle Sync"), 0)
     P_(StreamList, sub_tracks, {StreamSubtitle}, QT_TR_NOOP("Subtitle Tracks"), 1)
     P_(StreamList, sub_tracks_inclusive, {StreamInclusiveSubtitle}, "", 1)
-    P_(bool, sub_hidden, false, QT_TR_NOOP("Subtitle Visibility"), 0)
+    P_(bool, sub_hidden, false, QT_TR_NOOP("Subtitle Hiding"), 0)
 public:
     static const int Version = 2;
     MrlState();
