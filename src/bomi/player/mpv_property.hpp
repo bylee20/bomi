@@ -6,11 +6,26 @@
 
 namespace detail {
 
-enum MpvTraitType { Arithmetic, Extra };
+enum MpvTraitType {
+    Arithmetic,
+    List,
+    Extra
+};
+
+template<class T>
+struct IsList : std::false_type { };
+template<class T>
+struct IsList<QList<T>> : std::true_type { };
+template<class T>
+struct IsList<QVector<T>> : std::true_type { };
 
 template<class T>
 static constexpr inline auto mpv_trait_type() -> MpvTraitType
-{ return tmp::is_arithmetic<T>() ? Arithmetic : Extra; }
+{
+    return tmp::is_arithmetic<T>() ? Arithmetic
+       : IsList<T>::value ? List : Extra;
+}
+
 struct mpv_trait_no_alloc {
     template<class S>
     static auto set_free(S&) { };
@@ -84,8 +99,7 @@ struct mpv_trait<QString> {
     {
         const auto buf = t.toLocal8Bit();
         auto str = new char[buf.size() + 1];
-        qstrncpy(str, buf.data(), buf.size());
-        str[buf.size()] = '\0';
+        qstrncpy(str, buf.data(), buf.size() + 1);
         data = str;
     }
     static auto set_free(mpv_type &str) { delete[]str; }
