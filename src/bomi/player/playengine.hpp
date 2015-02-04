@@ -32,39 +32,46 @@ class PlayEngine : public QObject {
     Q_ENUMS(State)
     Q_ENUMS(ActivationState)
     Q_ENUMS(Waiting)
+
     Q_PROPERTY(MediaObject *media READ media CONSTANT FINAL)
     Q_PROPERTY(AudioObject *audio READ audio CONSTANT FINAL)
     Q_PROPERTY(VideoObject *video READ video CONSTANT FINAL)
     Q_PROPERTY(SubtitleObject* subtitle READ subtitle CONSTANT FINAL)
+
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(int time READ time WRITE seek NOTIFY tick)
+    Q_PROPERTY(qreal rate READ rate WRITE setRate NOTIFY tick)
+
     Q_PROPERTY(int begin_s READ begin_s NOTIFY begin_sChanged)
     Q_PROPERTY(int end_s READ end_s NOTIFY end_sChanged)
     Q_PROPERTY(int duration_s READ duration_s NOTIFY duration_sChanged)
     Q_PROPERTY(int time_s READ time_s NOTIFY time_sChanged)
+
     Q_PROPERTY(int volume READ volume WRITE setAudioVolume NOTIFY volumeChanged)
+    Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
+
     Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
     Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)
-    Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
     Q_PROPERTY(int avSync READ avSync NOTIFY avSyncChanged)
+
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
     Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
     Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
     Q_PROPERTY(bool stopped READ isStopped NOTIFY stoppedChanged)
-    Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
-    Q_PROPERTY(double rate READ rate WRITE setRate NOTIFY tick)
-    Q_PROPERTY(QQuickItem *screen READ screen)
-    Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
-    Q_PROPERTY(QQmlListProperty<EditionChapterObject> chapters READ chapterList NOTIFY chaptersChanged)
-    Q_PROPERTY(EditionChapterObject* chapter READ chapter NOTIFY chapterChanged)
-    Q_PROPERTY(QQmlListProperty<EditionChapterObject> editions READ editionList NOTIFY editionsChanged)
-    Q_PROPERTY(EditionChapterObject* edition READ edition NOTIFY editionChanged)
     Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
-    Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
     Q_PROPERTY(Waiting waiting READ waiting NOTIFY waitingChanged)
+    Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
+
+    Q_PROPERTY(qreal speed READ speed NOTIFY speedChanged)
+    Q_PROPERTY(QQuickItem *screen READ screen CONSTANT FINAL)
+    Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
+    Q_PROPERTY(EditionChapterObject* chapter READ chapter NOTIFY chapterChanged)
+    Q_PROPERTY(EditionChapterObject* edition READ edition NOTIFY editionChanged)
+    Q_PROPERTY(QQmlListProperty<EditionChapterObject> chapters READ chapterList NOTIFY chaptersChanged)
+    Q_PROPERTY(QQmlListProperty<EditionChapterObject> editions READ editionList NOTIFY editionsChanged)
 public:
     enum State { Stopped = 1, Playing = 2, Paused = 4, Error = 32, Running = Playing | Paused };
     enum Waiting { NoWaiting = 0, Searching = 1, Loading = 2, Buffering = 4, Seeking = 8 };

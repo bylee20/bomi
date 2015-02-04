@@ -1,3 +1,6 @@
+// CREDIT: central icon designed by Ivan(Kotus works)
+//         https://plus.google.com/u/1/117118228830713086299/posts
+
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
