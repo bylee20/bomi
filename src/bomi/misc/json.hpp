@@ -326,10 +326,11 @@ SCIA _JIO(Entry&&... entry)
 //#define JSON_CLASS ClassName
 #define JE(a, ...) _JE(u###a##_q, &JSON_CLASS::a, ##__VA_ARGS__)
 #define JIO(...) _JIO<JSON_CLASS>(__VA_ARGS__)
-#define JSON_DECLARE_FROM_TO_FUNCTIONS \
+#define JSON_DECLARE_FROM_TO_FUNCTIONS_IO(j) \
 auto JSON_CLASS::setFromJson(const QJsonObject &json) -> bool \
-    { return jio.fromJson(*this, json); } \
-auto JSON_CLASS::toJson() const -> QJsonObject { return jio.toJson(*this); }
+    { return j.fromJson(*this, json); } \
+auto JSON_CLASS::toJson() const -> QJsonObject { return j.toJson(*this); }
+#define JSON_DECLARE_FROM_TO_FUNCTIONS JSON_DECLARE_FROM_TO_FUNCTIONS_IO(jio)
 
 #define JSON_IO_POINT(c) _JIO<c>(_JE<c>(u"x"_q, &c::rx), _JE<c>(u"y"_q, &c::ry))
 auto json_io(const QPoint*) -> const decltype(JSON_IO_POINT(QPoint))*;

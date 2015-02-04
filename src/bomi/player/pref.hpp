@@ -74,6 +74,7 @@ public:
 
     P0(OsdTheme, osd_theme, defaultOsdTheme())
     P0(PlaylistTheme, playlist_theme, {})
+    P0(HistoryTheme, history_theme, {})
 
     P0(int, blur_kern_c, 1)
     P0(int, blur_kern_n, 2)

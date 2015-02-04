@@ -144,6 +144,39 @@ Item {
                 text: prog.sizeText(B.App.download.totalSize)
             }
         }
+    }
 
+    MouseArea {
+        id: rightEdge
+        visible: B.App.theme.playlist.showOnMouseOverEdge
+        anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
+        width: 15; z: 1e10; hoverEnabled: true
+        onContainsMouseChanged: {
+            if (containsMouse) {
+                B.App.playlist.visible = true
+                rightTimer.run()
+            }
+        }
+        B.HideTimer {
+            id: rightTimer
+            target: B.App.playlist
+            hide: function() { return !Util.containsMouse(right) }
+        }
+    }
+    MouseArea {
+        id: leftEdge
+        visible: B.App.theme.history.showOnMouseOverEdge
+        anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
+        width: 15; z: 1e10; hoverEnabled: true
+        onContainsMouseChanged: {
+            if (containsMouse) {
+                B.App.history.visible = true
+                leftTimer.run()
+            }
+        }
+        B.HideTimer {
+            id: leftTimer; target: B.App.history
+            hide: function() { return !Util.containsMouse(left) }
+        }
     }
 }

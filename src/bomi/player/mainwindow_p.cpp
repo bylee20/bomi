@@ -438,8 +438,9 @@ auto MainWindow::Data::applyPref() -> void
     menu(u"audio"_q)(u"amp"_q).s()->setStep(p.amp_step);
     menu.resetKeyMap();
 
-    theme.osd()->set(p.osd_theme);
-    theme.playlist()->set(p.playlist_theme);
+    theme.set(p.osd_theme);
+    theme.set(p.playlist_theme);
+    theme.set(p.history_theme);
     reloadSkin();
     if (tray)
         tray->setVisible(p.enable_system_tray);

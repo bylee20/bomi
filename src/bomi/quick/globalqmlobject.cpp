@@ -217,3 +217,10 @@ auto UtilObject::registerItemToAcceptKey(QQuickItem *item) -> void
             m_keyItems.push_front(item);
     });
 }
+
+auto UtilObject::containsMouse(QQuickItem *item) -> bool
+{
+    if (!item || !item->window())
+        return false;
+    return item->contains(mousePos(item));
+}

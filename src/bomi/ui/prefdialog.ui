@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>2</number>
+        <number>17</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2121,13 +2121,6 @@
               </item>
              </layout>
             </item>
-            <item>
-             <widget class="PlaylistThemeWidget" name="playlist_theme">
-              <property name="text">
-               <string>Show media location in playlist</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </widget>
          </item>
@@ -2179,6 +2172,20 @@
              </layout>
             </item>
            </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="PlaylistThemeWidget" name="playlist_theme">
+           <property name="title">
+            <string>Playlist View</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="HistoryThemeWidget" name="history_theme">
+           <property name="title">
+            <string>History View</string>
+           </property>
           </widget>
          </item>
          <item>
@@ -2801,11 +2808,6 @@ Regular expression is supported.</string>
    <header>dialog/prefdialog_p.hpp</header>
   </customwidget>
   <customwidget>
-   <class>PlaylistThemeWidget</class>
-   <extends>QCheckBox</extends>
-   <header>quick/playlistthemeobject.hpp</header>
-  </customwidget>
-  <customwidget>
    <class>OsdThemeWidget</class>
    <extends>QWidget</extends>
    <header>quick/osdthemeobject.hpp</header>
@@ -2820,6 +2822,18 @@ Regular expression is supported.</string>
    <class>AutoloaderWidget</class>
    <extends>QGroupBox</extends>
    <header>misc/autoloader.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PlaylistThemeWidget</class>
+   <extends>QGroupBox</extends>
+   <header>quick/playlistthemeobject.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>HistoryThemeWidget</class>
+   <extends>QGroupBox</extends>
+   <header>quick/playlistthemeobject.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

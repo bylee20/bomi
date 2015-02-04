@@ -140,6 +140,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(OpenMediaInfo);
     INSERT(OsdTheme);
     INSERT(PlaylistTheme);
+    INSERT(HistoryTheme);
     INSERT(ChannelLayoutMap);
     INSERT(Autoloader);
     INSERT(OsdStyle);

@@ -11,14 +11,14 @@ private:
 
 #define THEME_P(type, name) \
 private: \
-    Q_PROPERTY(type name READ name NOTIFY changed) \
+    Q_PROPERTY(type name READ name CONSTANT FINAL) \
 public: \
     auto name() const -> type { return m.name; } \
 private:
 
 #define THEME_PV(type, name, var) \
 private: \
-    Q_PROPERTY(type name READ name NOTIFY changed) \
+    Q_PROPERTY(type name READ name CONSTANT FINAL) \
 public: \
     auto name() const -> type { return var; } \
 private:

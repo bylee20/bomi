@@ -2,9 +2,11 @@
 #define PLAYLISTTHEMEOBJECT_HPP
 
 #include <QObject>
+#include "themeobject_helper.hpp"
 
 struct PlaylistTheme {
     bool showLocation = true;
+    bool showOnMouseOverEdge = true;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };
@@ -13,31 +15,49 @@ Q_DECLARE_METATYPE(PlaylistTheme);
 
 class PlaylistThemeObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(bool showLocation READ showLocation NOTIFY changed)
+    THEME_P(bool, showLocation)
+    THEME_P(bool, showOnMouseOverEdge)
 public:
-    auto set(const PlaylistTheme &theme) { m_theme = theme; emit changed(); }
-    auto showLocation() const { return m_theme.showLocation; }
-signals:
-    void changed();
-private:
-    PlaylistTheme m_theme;
+    PlaylistTheme m;
 };
 
-class PlaylistThemeWidget : public QCheckBox {
+class PlaylistThemeWidget : public QGroupBox {
     Q_OBJECT
     Q_PROPERTY(PlaylistTheme value READ value WRITE setValue)
 public:
-    PlaylistThemeWidget(QWidget *parent): QCheckBox(parent) { }
-    auto value() const -> PlaylistTheme
-    {
-        PlaylistTheme theme;
-        theme.showLocation = isChecked();
-        return theme;
-    }
-    auto setValue(const PlaylistTheme &theme)
-    {
-        setChecked(theme.showLocation);
-    }
+    PlaylistThemeWidget(QWidget *parent = nullptr);
+    auto value() const -> PlaylistTheme;
+    auto setValue(const PlaylistTheme &theme) -> void;
+private:
+    QCheckBox *m_location, *m_edge;
+};
+
+/******************************************************************************/
+
+struct HistoryTheme {
+    bool showOnMouseOverEdge = true;
+    auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
+};
+
+Q_DECLARE_METATYPE(HistoryTheme);
+
+class HistoryThemeObject : public QObject {
+    Q_OBJECT
+    THEME_P(bool, showOnMouseOverEdge)
+public:
+    HistoryTheme m;
+};
+
+class HistoryThemeWidget: public QGroupBox {
+    Q_OBJECT
+    Q_PROPERTY(HistoryTheme value READ value WRITE setValue)
+public:
+    HistoryThemeWidget(QWidget *parent = nullptr);
+    auto value() const -> HistoryTheme;
+    auto setValue(const HistoryTheme &theme) -> void;
+private:
+    QCheckBox *m_edge;
 };
 
 #endif // PLAYLISTTHEMEOBJECT_HPP

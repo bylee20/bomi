@@ -6,8 +6,30 @@
 
 class ThemeObject : public QObject {
     Q_OBJECT
-    THEME_C(OsdThemeObject, osd)
-    THEME_C(PlaylistThemeObject, playlist)
+#define P_(type, name) \
+private: \
+    Q_PROPERTY(type##Object *name READ __##name NOTIFY name##Changed) \
+    type##Object m_##name; \
+public: \
+    auto __##name() const -> type##Object* { return (type##Object*)&m_##name; } \
+    auto set(const type &t) -> void { m_##name.m = t; emit name##Changed(); } \
+    Q_SIGNAL void name##Changed(); \
+private:
+    P_(PlaylistTheme, playlist)
+    P_(HistoryTheme, history)
+#undef P_
+private:
+    Q_PROPERTY(OsdThemeObject *osd READ __osd NOTIFY osdChanged)
+    OsdThemeObject m_osd;
+public:
+    Q_SIGNAL void osdChanged();
+    auto __osd() const -> OsdThemeObject* { return (OsdThemeObject*)&m_osd; }
+    auto set(const OsdTheme &t) -> void {
+        m_osd.m.style.m = t.style;
+        m_osd.m.timeline.m = t.timeline;
+        m_osd.m.message.m = t.message;
+        emit osdChanged();
+    }
 };
 
 #endif // THEMEOBJECT_HPP

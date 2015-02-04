@@ -28,6 +28,7 @@ class MaskAreaItem : public QQuickItem
 {
     Q_OBJECT
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
+    Q_PROPERTY(QUrl mask READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(qreal alpha READ alpha WRITE setAlpha NOTIFY maskAlphaChanged)
     Q_PROPERTY(bool pressed READ isPressed NOTIFY pressedChanged)
     Q_PROPERTY(bool hovered READ isHovered NOTIFY hoveredChanged)
@@ -45,10 +46,10 @@ public:
     auto setAlpha(qreal alpha) -> void;
     auto isPressed() const -> bool;
     auto isHovered() const -> bool;
-    Q_INVOKABLE auto contains(const QPointF &p) const -> bool { return contains(p.x(), p.y()); }
-    Q_INVOKABLE auto contains(qreal x, qreal y) const -> bool;
     auto mouseX() const -> qreal;
     auto mouseY() const -> qreal;
+    Q_INVOKABLE auto contains(const QPointF &p) const -> bool { return contains(p.x(), p.y()); }
+    Q_INVOKABLE auto contains(qreal x, qreal y) const -> bool;
 signals:
     void pressed(MouseEventObject *mouse);
     void released(MouseEventObject *mouse);
@@ -57,6 +58,7 @@ signals:
     void entered();
     void canceled();
     void clicked();
+    void doubleClicked();
     void maskAlphaChanged();
     void pressedChanged();
     void hoveredChanged();
@@ -67,6 +69,7 @@ private:
     auto mousePressEvent(QMouseEvent *event) -> void override;
     auto mouseReleaseEvent(QMouseEvent *event) -> void override;
     auto mouseMoveEvent(QMouseEvent *event) -> void override;
+    auto mouseDoubleClickEvent(QMouseEvent *event) -> void override;
     auto hoverEnterEvent(QHoverEvent *event) -> void override;
     auto hoverLeaveEvent(QHoverEvent *event) -> void override;
     auto hoverMoveEvent(QHoverEvent *event) -> void override;

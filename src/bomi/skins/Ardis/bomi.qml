@@ -8,7 +8,7 @@ import bomi 1.0 as B
 
 B.AppWithFloating {
     id: skin;
-    name: "net.xylosper.bomi.Kotus-floating"
+    name: "net.xylosper.bomi.Ardis"
     readonly property QtObject engine: B.App.engine
     readonly property size minimumSize: Qt.size(560, 130)
 

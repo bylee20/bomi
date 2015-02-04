@@ -43,10 +43,6 @@ private:
     THEME_P(qreal, margin)
     THEME_P(int, duration)
 public:
-    auto set(const TimelineTheme &theme) -> void { m = theme; emit changed(); }
-signals:
-    void changed();
-private:
     TimelineTheme m;
 };
 
@@ -54,10 +50,6 @@ class MessageThemeObject : public QObject {
     Q_OBJECT
     THEME_P(int, duration)
 public:
-    auto set(const MessageTheme &theme) -> void { m = theme; emit changed(); }
-signals:
-    void changed();
-private:
     MessageTheme m;
 };
 
@@ -82,25 +74,20 @@ private:
     THEME_PV(QColor, color, m.font.color)
     THEME_PV(QColor, styleColor, m.outline.color)
 public:
-    auto set(const OsdStyle &theme) -> void { m = theme; emit changed(); }
-signals:
-    void changed();
-private:
     OsdStyle m;
 };
 
 class OsdThemeObject : public QObject {
     Q_OBJECT
-    THEME_C(OsdStyleObject, style)
-    THEME_C(TimelineThemeObject, timeline)
-    THEME_C(MessageThemeObject, message)
 public:
-    auto set(const OsdTheme &theme) -> void
-    {
-        m_style.set(theme.style);
-        m_timeline.set(theme.timeline);
-        m_message.set(theme.message);
-    }
+    struct {
+        OsdStyleObject style;
+        TimelineThemeObject timeline;
+        MessageThemeObject message;
+    } mutable m;
+    THEME_PV(OsdStyleObject*, style, &m.style)
+    THEME_PV(TimelineThemeObject*, timeline, &m.timeline)
+    THEME_PV(MessageThemeObject*, message, &m.message)
 };
 
 class OsdThemeWidget : public QWidget {

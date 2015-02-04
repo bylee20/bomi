@@ -6,7 +6,7 @@ struct MaskAreaItem::Data {
     MaskAreaItem *p = nullptr;
     QUrl url;
     QImage mask;
-    qreal alpha = 0.0;
+    qreal alpha = -1.0;
     qreal x = -1, y = -1;
     bool pressed = false, hovered = false;
     QPointF pressedPos;
@@ -132,7 +132,6 @@ auto MaskAreaItem::hoverEnterEvent(QHoverEvent *event) -> void
 {
     QQuickItem::hoverEnterEvent(event);
     d->checkHovered(event->pos());
-//    event->setAccepted(d->hovered);
 }
 
 auto MaskAreaItem::hoverLeaveEvent(QHoverEvent *event) -> void
@@ -152,6 +151,13 @@ auto MaskAreaItem::mouseUngrabEvent() -> void
 {
     QQuickItem::mouseUngrabEvent();
     emit canceled();
+}
+
+auto MaskAreaItem::mouseDoubleClickEvent(QMouseEvent *event) -> void
+{
+    QQuickItem::mouseDoubleClickEvent(event);
+    qDebug() << event->isAccepted();
+    emit doubleClicked();
 }
 
 auto MaskAreaItem::isPressed() const -> bool

@@ -489,9 +489,7 @@ DISTFILES += \
 	imports/bomi/Slider.qml \
     imports/bomi/Circle.qml \
     skins/one/IconButton.qml \
-    skins/Kotus-floating/bomi.qml \
     imports/bomi/TimeDuration.qml \
-    skins/Kotus-floating/SmallButton.qml \
     imports/bomi/ChapterMarkerStyle.qml \
     imports/bomi/Text.qml \
     skins/Breeze/bomi.qml \
@@ -499,4 +497,7 @@ DISTFILES += \
     skins/GaN/TextButton.qml \
     imports/bomi/ButtonIcon.qml \
     skins/GaN/TimeText.qml \
-    skins/Kotus-floating/MediaButton.qml
+    skins/Ardis/SmallButton.qml \
+    skins/Ardis/MediaButton.qml \
+    skins/Ardis/bomi.qml \
+    imports/bomi/HideTimer.qml
