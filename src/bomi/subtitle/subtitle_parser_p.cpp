@@ -6,13 +6,8 @@ SCIA _TimeToMSec(int h, int m, int s, int ms = 0) -> qint64
 
 auto SamiParser::isParsable() const -> bool
 {
-    if (_IsOneOf(file().suffix().toLower(), "smi"_a, "sami"_a))
-        return true;
-    if (skipSeparators())
-        return false;
-    if (all().startsWith("<sami"_a, QCI))
-        return true;
-    return false;
+    const QRegEx rx(uR"(<\s*(sami|body|sync))"_q, QRegEx::CaseInsensitiveOption);
+    return all().contains(rx);
 }
 
 auto SamiParser::_parse(Subtitle &sub) -> void
@@ -70,9 +65,9 @@ auto SamiParser::_parse(Subtitle &sub) -> void
 
 auto SubRipParser::isParsable() const -> bool
 {
-    if (_Same(file().suffix(), "srt"))
-        return true;
-    return false;
+    const QRegEx rxTime(uR"(\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
+                        uR"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"_q);
+    return all().contains(rxTime);
 }
 
 auto SubRipParser::_parse(Subtitle &sub) -> void
