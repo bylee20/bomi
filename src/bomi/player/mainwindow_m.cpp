@@ -270,15 +270,10 @@ auto MainWindow::Data::connectMenus() -> void
             [seekChapter] () { seekChapter(+1); });
 
     connect(play[u"state"_q], &QAction::triggered, p, [=] () {
-        QString str;
-        str.append(_MSecToString(e.time()));
-        str.append(u"/"_q);
-        str.append(_MSecToString(e.end()));
-        str.append(u" ("_q);
-        str.append(QString::number(e.time() * 100L / e.end()));
-        str.append(u"%), "_q);
-        str.append(QString::number(e.speed()));
-        str.append(u"x"_q);
+        QString str = QString(u"%1/%2 (%3%), %4x"_q).arg(_MSecToString(e.time())
+                                                         , _MSecToString(e.end())
+                                                         , QString::number(qRound(e.rate() * 1000.0) / 10.0)
+                                                         , QString::number(e.speed()));
         showMessage(str);
     });
 
