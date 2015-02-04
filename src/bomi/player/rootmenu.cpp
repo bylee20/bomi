@@ -384,7 +384,7 @@ RootMenu::RootMenu()
 
         d->separator() ;
 
-        d->action(u"state"_q, QT_TR_NOOP("Show state"));
+        d->action(u"state"_q, QT_TR_NOOP("Show State"));
     });
 
     d->menu(u"subtitle"_q, QT_TR_NOOP("Subtitle"), [=] () {
