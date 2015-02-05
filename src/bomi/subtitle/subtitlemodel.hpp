@@ -4,7 +4,7 @@
 #include "subtitle.hpp"
 #include "misc/simplelistmodel.hpp"
 
-class SubCompModelData {
+struct SubCompModelData {
     SubCompModelData(): m_end(-1) {}
     SubCompModelData(SubComp::const_iterator it): m_end(-1), m_it(it) {}
     auto start() const -> int { return m_it.key() * m_mul; }

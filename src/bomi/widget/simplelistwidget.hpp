@@ -3,98 +3,47 @@
 
 #include "misc/simplelistmodel.hpp"
 
-class QListWidgetItem;
-
-template<class T, class List> class SimpleListWidget;
-
 class SimpleListWidgetBase : public QWidget {
     Q_OBJECT
 public:
+    SimpleListWidgetBase(QWidget *parent = nullptr);
     auto setAddingAndErasingEnabled(bool enabled) -> void;
     auto setChangingOrderEnabled(bool enabled) -> void;
     auto isChangingOrderEnabled() const -> bool { return m_movable; }
     auto isAddingAndErasingEnabled() const -> bool { return m_addable; }
     auto view() const -> QTreeView* { return m_view; }
+    auto setDragEnabled(bool enabled) -> void;
+protected:
+    auto setModel(SimpleListModelBase *base) -> void;
+    virtual auto append() -> void = 0;
 private:
-    SimpleListWidgetBase(QWidget *parent = nullptr);
     QTreeView *m_view;
     QPushButton *m_add, *m_erase, *m_up, *m_down;
     bool m_addable = false, m_movable = false;
-    template<class T, class List> friend class SimpleListWidget;
+    SimpleListModelBase *m_base = nullptr;
 };
 
-template<class T, class List = QList<T>>
+template<class Model>
 class SimpleListWidget : public SimpleListWidgetBase {
+    using List = typename Model::container_type;
+    using T = typename Model::value_type;
 public:
-    using Super = SimpleListWidget<T, List>;
-    using Model = SimpleListModel<T, List>;
-    SimpleListWidget(QWidget *parent = 0);
-    auto setList(const List &list) -> void
-    { if (m_model) m_model->setList(list); }
-    auto list() const -> List
-    { return m_model ? m_model->list() : List(); }
-    auto setModel(Model *model) -> void;
-    auto model() const -> Model* { return m_model; }
+    using Super = SimpleListWidget<Model>;
+    SimpleListWidget(QWidget *parent = 0)
+        : SimpleListWidgetBase(parent) { setModel(new Model(this)); }
+    auto setList(const List &list) -> void { model()->setList(list); }
+    auto list() const -> List { return model()->list(); }
+    auto model() const -> Model* { return static_cast<Model*>(view()->model()); }
 protected:
-    virtual auto getNewItem(T *item) -> bool
-    { Q_UNUSED(item); return false; }
-private:
-    Model *m_model = nullptr;
+    virtual auto getNewItem(T *item) -> bool { Q_UNUSED(item); return false; }
+    auto append() -> void final { T t; if (model() && getNewItem(&t)) model()->append(t); }
 };
 
-template<class T, class List>
-SimpleListWidget<T, List>::SimpleListWidget(QWidget *parent)
-    : SimpleListWidgetBase(parent)
-{
-    m_view->setRootIsDecorated(false);
-    setModel(new Model(this));
-    auto selection = m_view->selectionModel();
-    connect(selection, &QItemSelectionModel::selectionChanged,
-            this, [this] (const QItemSelection &selected)
-    {
-        int min = m_model->rows(), max = -1;
-        for (auto idx : selected.indexes()) {
-            if (idx.row() < min)
-                min = idx.row();
-            if (idx.row() > max)
-                max = idx.row();
-        }
-        m_erase->setEnabled(m_addable && max != -1);
-        m_up->setEnabled(_InRange(0, max, m_model->rows() - 2));
-        m_down->setEnabled(_InRange(1, min, m_model->rows() - 1));
-    });
-    connect(m_erase, &QPushButton::clicked, this, [this] ()
-        { if (m_model) m_model->remove(m_view->currentIndex().row()); });
-    auto move = [this] (int diff) {
-        if (m_model) {
-            const int row = m_view->currentIndex().row();
-            m_model->swap(row, row + diff);
-        }
-    };
-    connect(m_up, &QPushButton::clicked, this, [move] () { move(-1); });
-    connect(m_down, &QPushButton::clicked, this, [move] () { move(1); });
-    connect(m_add, &QPushButton::clicked, this, [this] ()
-        { T t; if (m_model && getNewItem(&t)) m_model->append(t); });
-}
-
-template<class T, class List>
-auto SimpleListWidget<T, List>::setModel(Model *model) -> void
-{
-    if (m_model != model) {
-        delete m_model;
-        m_model = model;
-        m_view->setModel(m_model);
-        if (m_model)
-            m_view->setHeaderHidden(m_model->header(0).isEmpty());
-    }
-}
-
-class StringListWidget : public SimpleListWidget<QString, QStringList> {
+class StringListWidget : public SimpleListWidget<StringListModel> {
     Q_OBJECT
     Q_PROPERTY(QStringList value READ list WRITE setList)
 public:
-    StringListWidget(QWidget *parent = 0)
-        : Super(parent) { setModel(new StringListModel(this)); }
+    StringListWidget(QWidget *parent = 0): Super(parent) { }
 private:
     auto getNewItem(QString *item) -> bool final;
 };

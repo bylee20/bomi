@@ -175,7 +175,12 @@ auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
             pl = generatePlaylist(mrl);
             break;
         }
-        playlist.merge(pl);
+        auto list = playlist.list();
+        for (auto mrl : pl) {
+            if (!list.contains(mrl))
+                list.append(mrl);
+        }
+        playlist.setList(list);
         load(mrl, mode.start_playback);
         if (!mrl.isDvd())
             recent.stack(mrl);

@@ -140,9 +140,9 @@ auto PlaylistModel::setLoaded(int row) -> void
     const int old = loaded();
     setSpecialRow(row);
     if (old != -1)
-        emitDataChanged(old);
+        emit dataChanged(old);
     if (loaded() != -1)
-        emitDataChanged(loaded());
+        emit dataChanged(loaded());
 }
 
 auto PlaylistModel::setLoaded(const Mrl &mrl) -> void

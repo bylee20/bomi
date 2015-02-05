@@ -22,6 +22,48 @@ SimpleListWidgetBase::SimpleListWidgetBase(QWidget *parent)
 
     setAddingAndErasingEnabled(false);
     setChangingOrderEnabled(false);
+
+    m_view->setDragDropMode(QAbstractItemView::InternalMove);
+    m_view->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_view->setDragDropOverwriteMode(false);
+    m_view->setRootIsDecorated(false);
+
+    connect(m_erase, &QPushButton::clicked, this,
+            [=] () { if (m_base) m_base->remove(m_view->currentIndex().row()); });
+    auto move = [this] (int diff)
+    {
+        if (m_base) {
+            const int row = m_view->currentIndex().row();
+            m_base->swap(row, row + diff);
+        }
+    };
+    connect(m_up, &QPushButton::clicked, this, [=] () { move(-1); });
+    connect(m_down, &QPushButton::clicked, this, [=] () { move(1); });
+    connect(m_add, &QPushButton::clicked, this, &SimpleListWidgetBase::append);
+}
+
+auto SimpleListWidgetBase::setModel(SimpleListModelBase *base) -> void
+{
+    Q_ASSERT(!m_base);
+    m_base = base;
+    m_view->setModel(m_base);
+    m_view->setHeaderHidden(m_base->header(0).isEmpty());
+
+    auto sm = m_view->selectionModel();
+    connect(sm, &QItemSelectionModel::selectionChanged,
+            this, [=] (const QItemSelection &selected)
+    {
+        int min = m_base->rows(), max = -1;
+        for (auto idx : selected.indexes()) {
+            if (idx.row() < min)
+                min = idx.row();
+            if (idx.row() > max)
+                max = idx.row();
+        }
+        m_erase->setEnabled(m_addable && max != -1);
+        m_up->setEnabled(_InRange(1, min, m_base->rows() - 1));
+        m_down->setEnabled(_InRange(0, max, m_base->rows() - 2));
+    });
 }
 
 auto SimpleListWidgetBase::setAddingAndErasingEnabled(bool enabled) -> void
@@ -40,6 +82,13 @@ auto SimpleListWidgetBase::setChangingOrderEnabled(bool enabled) -> void
     m_down->setEnabled(m_movable);
     m_up->setVisible(m_movable);
     m_down->setVisible(m_movable);
+}
+
+auto SimpleListWidgetBase::setDragEnabled(bool enabled) -> void
+{
+    m_view->setDragEnabled(enabled);
+    m_view->viewport()->setAcceptDrops(enabled);
+    m_view->setDropIndicatorShown(enabled);
 }
 
 auto StringListWidget::getNewItem(QString *item) -> bool

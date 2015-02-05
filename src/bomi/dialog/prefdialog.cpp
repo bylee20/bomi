@@ -277,6 +277,9 @@ PrefDialog::PrefDialog(QWidget *parent)
         }
     });
 
+    d->ui.audio_priority->setDragEnabled(true);
+    d->ui.sub_priority->setDragEnabled(true);
+
     d->retranslate();
     d->ui.restore_properties_view->setModel(d->properties);
 #ifdef Q_OS_MAC
