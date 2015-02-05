@@ -11,9 +11,8 @@ Slider {
         id: dummy;
         Item {
             property var marker
-            property int idx: -1
-            property var chapter: d.engine.chapters[idx]
-            x: chapter ? seeker.width * chapter.rate : 0
+            property var chapter
+            x: seeker.width * chapter.rate
         }
     }
 
@@ -26,7 +25,7 @@ Slider {
         function generateChapters() {
             var i;
             for (i=0; i<markers.length; ++i)
-                markers[i].destroy()
+                Util.delete_(markers[i])
             markers = []
             if (style)
                 style.destroy()
@@ -37,7 +36,7 @@ Slider {
             var chapters = engine.chapters
             for (i=0; i<chapters.length; ++i) {
                 var chapter = chapters[i]
-                var wrap = dummy.createObject(seeker, { "idx" : i })
+                var wrap = dummy.createObject(seeker, { "chapter" : chapter })
                 wrap.marker = style.marker.createObject(wrap, { "parent" : wrap })
                 markers.push(wrap)
             }

@@ -224,3 +224,9 @@ auto UtilObject::containsMouse(QQuickItem *item) -> bool
         return false;
     return item->contains(mousePos(item));
 }
+
+void UtilObject::delete_(QQuickItem *item)
+{
+    QQmlEngine::setObjectOwnership(item, QQmlEngine::CppOwnership);
+    delete item;
+}

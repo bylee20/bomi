@@ -32,7 +32,7 @@ B.AppWithFloating {
         Rectangle {
             id: panel
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            color: "#efefef"; height: 90; radius: 2
+            color: "#efefef"; height: 90; radius: 3
 
             Item {
                 id: mbuttons
@@ -138,15 +138,14 @@ B.AppWithFloating {
 
                     markerStyle: B.ChapterMarkerStyle {
                         marker: B.Button {
-                            readonly property var chapter: parent.chapter
                             readonly property bool emph: hovered || pressed
                             width: 8; height: 10
                             x: -width * 0.5; z: emph ? 1e10 : -1
                             y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0)
                             icon.source: emph ? "marker-filled.png" : "marker.png"
-                            tooltip: chapter.name; delay: 0
+                            tooltip: parent.chapter.name; delay: 0
                             acceptedButtons: Qt.LeftButton
-                            onClicked: control.time = chapter.time
+                            onClicked: control.time = parent.chapter.time
                         }
                     }
                 }

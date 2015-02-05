@@ -388,6 +388,7 @@ auto PlayEngine::Data::observe() -> void
         }
         return data;
     }, [=] (auto &&data) {
+        auto tmp = info.chapters;
         info.chapters.resize(data.size());
         for (int i = 0; i < data.size(); ++i) {
             if (!info.chapters[i].data())
@@ -396,6 +397,7 @@ auto PlayEngine::Data::observe() -> void
         }
         emit p->chaptersChanged();
         updateChapter(mpv.get<int>("chapter"));
+        tmp.clear();
     });
     mpv.observe("chapter", updateChapter);
     mpv.observe("track-list", [=] () {

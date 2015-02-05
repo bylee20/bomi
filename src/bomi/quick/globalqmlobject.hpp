@@ -39,6 +39,7 @@ public:
     Q_INVOKABLE void filterDoubleClick() { m_filterDoubleClick = true; }
     Q_INVOKABLE void registerItemToAcceptKey(QQuickItem *item);
     Q_INVOKABLE bool containsMouse(QQuickItem *item);
+    Q_INVOKABLE void delete_(QQuickItem *item);
     static auto isDoubleClickFiltered() -> bool;
     static auto resetFilterDoubleClick() -> void;
     static auto isCursorVisible() -> bool {return get().m_cursor;}
