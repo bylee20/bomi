@@ -2,14 +2,23 @@ import QtQuick 2.0
 import bomi 1.0 as B
 
 Item {
+    id: item
     property alias color: slash.color
     property alias font: slash.font
     property alias monospace: slash.monospace
     property real spacing: 0
     property bool msec: false
+    property int time: engine.time
+    property int duration: engine.end
     readonly property QtObject engine: B.App.engine
     implicitWidth: time.paintedWidth + slash.paintedWidth + end.paintedWidth
     implicitHeight: Math.max(time.paintedHeight, slash.paintedHeight, end.paintedHeight)
+    QtObject {
+        id: s
+        property int time: item.time/1000
+        property int duration: item.duration/1000
+    }
+
     B.Text {
         id: time; height: parent.height
         anchors {
@@ -17,7 +26,7 @@ Item {
             verticalCenter: slash.verticalCenter
         }
         font: slash.font; color: slash.color
-        text: formatTime(msec ? engine.time : engine.time_s*1000)
+        text: formatTime(msec ? item.time : s.time)
         monospace: slash.monospace
         verticalAlignment: slash.verticalAlignment
     }
@@ -32,7 +41,7 @@ Item {
             left: slash.right; leftMargin: spacing
             verticalCenter: slash.verticalCenter
         }
-        text: formatTime(msec ? engine.end : engine.end_s*1000)
+        text: formatTime(msec ? item.duration : s.duration)
         font: slash.font; color: slash.color
         monospace: slash.monospace
         verticalAlignment: slash.verticalAlignment
