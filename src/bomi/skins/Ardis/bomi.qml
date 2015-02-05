@@ -151,7 +151,7 @@ B.AppWithFloating {
                 }
 
                 B.TimeDuration {
-                    height: 13; spacing: 2; msec: true
+                    height: 13; spacing: 2
                     font.pixelSize: height; monospace: false; color: "black"
                     anchors {
                         horizontalCenter: parent.horizontalCenter
