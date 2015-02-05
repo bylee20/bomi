@@ -305,6 +305,11 @@ Program Behavior
 ``--list-protocols``
     Print a list of the supported protocols.
 
+``--log-file=<path>``
+    Opens the given path for writing, and print log messages to it. Existing
+    files will be truncated. The log level always corresponds to ``-v``,
+    regardless of terminal verbosity levels.
+
 ``--config-dir=<path>``
     Force a different configuration directory. If this is set, the given
     directory is used to load configuration files, and all other configuration
@@ -1033,6 +1038,16 @@ Audio
         This means that with ``--softvol-max=200``, ``--volume=100`` sets
         maximum amplification, i.e. amplify by 200%. The default volume (no
         change in volume) will be ``50`` in this case.
+
+``--audio-file-auto=<no|exact|fuzzy|all>``, ``--no-audio-file-auto``
+    Load additional audio files matching the video filename. The parameter
+    specifies how external audio files are matched. This is disabled by
+    default.
+
+    :no:    Don't automatically load external audio files (default).
+    :exact: Load the media filename with audio file extension.
+    :fuzzy: Load all audio files containing media filename.
+    :all:   Load all audio files in the current directory.
 
 ``--audio-client-name=<name>``
     The application name the player reports to the audio API. Can be useful
@@ -3130,9 +3145,9 @@ Network
     by default. The option allows the following parameters:
 
     :no:        Don't do anything special. Typically, this will simply pick the
-                first audio/video streams it can find. (Default.)
+                first audio/video streams it can find.
     :min:       Pick the streams with the lowest bitrate.
-    :max:       Same, but highest bitrate.
+    :max:       Same, but highest bitrate. (Default.)
 
     The bitrate as used is sent by the server, and there's no guarantee it's
     actually meaningful.

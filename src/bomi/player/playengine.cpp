@@ -73,8 +73,6 @@ PlayEngine::PlayEngine()
             [=] (int sr) { d->info.audio.renderer()->setSampleRate(sr, true); });
     connect(d->ac, &AudioController::gainChanged,
             &d->info.audio, &AudioObject::setNormalizer);
-    connect(&d->mpv, &Mpv::audioDriverChanged, &d->info.audio,
-            &AudioObject::setDriver, Qt::QueuedConnection);
 
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
@@ -101,7 +99,6 @@ PlayEngine::PlayEngine()
     d->mpv.setOption("vo", d->vo(&d->params));
     d->mpv.setOption("af", d->af(&d->params));
     d->mpv.setOption("vf", d->vf(&d->params));
-    d->mpv.setOption("fixed-vo", "yes");
     d->mpv.setOption("hr-seek", d->preciseSeeking ? "yes" : "absolute");
 
     auto overrides = qgetenv("BOMI_MPV_OPTIONS").trimmed();

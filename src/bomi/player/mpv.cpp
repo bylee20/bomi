@@ -22,12 +22,12 @@ struct Mpv::Data {
     auto log(const QByteArray &prefix, const QByteArray &text) -> void
     {
         Log::write(Log::Info, "[mpv/%%] %%", prefix, text);
-        if (text.startsWith("AO: [")) {
-            constexpr int from = 5;
-            const int to = text.indexOf(']');
-            const auto driver = QString::fromLatin1(text.mid(from, to - from));
-            emit p->audioDriverChanged(driver);
-        }
+//        if (text.startsWith("AO: [")) {
+//            constexpr int from = 5;
+//            const int to = text.indexOf(']');
+//            const auto driver = QString::fromLatin1(text.mid(from, to - from));
+//            emit p->audioDriverChanged(driver);
+//        }
     }
 };
 

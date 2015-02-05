@@ -251,7 +251,7 @@ static void resize(struct vo *vo)
     vc->flip_offset_us = vo->opts->fullscreen ?
                          1000LL * vc->flip_offset_fs :
                          1000LL * vc->flip_offset_window;
-    vo_set_flip_queue_offset(vo, vc->flip_offset_us);
+    vo_set_flip_queue_params(vo, vc->flip_offset_us, false);
 
     if (vc->output_surface_width < vo->dwidth
         || vc->output_surface_height < vo->dheight) {
@@ -1009,10 +1009,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     check_preemption(vo);
 
     switch (request) {
-    case VOCTRL_PAUSE:
-        if (vc->dropped_frame)
-            vo->want_redraw = true;
-        return true;
     case VOCTRL_GET_HWDEC_INFO: {
         struct mp_hwdec_info **arg = data;
         *arg = &vc->hwdec_info;
@@ -1048,18 +1044,11 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_RESET:
         forget_frames(vo, true);
         return true;
-    case VOCTRL_SCREENSHOT: {
+    case VOCTRL_SCREENSHOT_WIN:
         if (!status_ok(vo))
             return false;
-        struct voctrl_screenshot_args *args = data;
-        if (args->full_window) {
-            args->out_image = get_window_screenshot(vo);
-        } else {
-            args->out_image =
-                vc->current_image ? mp_image_new_ref(vc->current_image) : NULL;
-        }
+        *(struct mp_image **)data = get_window_screenshot(vo);
         return true;
-    }
     case VOCTRL_GET_PREF_DEINT:
         *(int *)data = vc->deint;
         return true;

@@ -173,7 +173,7 @@ static void mp_image_destructor(void *ptr)
     m_refcount_unref(mpi->refcount);
 }
 
-static int mp_chroma_div_up(int size, int shift)
+int mp_chroma_div_up(int size, int shift)
 {
     return (size + (1 << shift) - 1) >> shift;
 }
@@ -252,6 +252,9 @@ void mp_image_steal_data(struct mp_image *dst, struct mp_image *src)
 // while img is left untouched.
 struct mp_image *mp_image_new_ref(struct mp_image *img)
 {
+    if (!img)
+        return NULL;
+
     if (!img->refcount)
         return mp_image_new_copy(img);
 

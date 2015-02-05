@@ -266,7 +266,7 @@ static void VS_CC vs_frame_done(void *userData, const VSFrameRef *f, int n,
 static bool locked_need_input(struct vf_instance *vf)
 {
     struct vf_priv_s *p = vf->priv;
-    return p->num_buffered < MP_TALLOC_ELEMS(p->buffered);
+    return p->num_buffered < MP_TALLOC_AVAIL(p->buffered);
 }
 
 // Return true if progress was made.
@@ -457,7 +457,7 @@ static const VSFrameRef *VS_CC infiltGetFrame(int frameno, int activationReason,
             p->vsapi->setFilterError(msg, frameCtx);
             break;
         }
-        if (frameno >= p->in_frameno + MP_TALLOC_ELEMS(p->buffered)) {
+        if (frameno >= p->in_frameno + MP_TALLOC_AVAIL(p->buffered)) {
             // Too far in the future. Remove frames, so that the main thread can
             // queue new frames.
             if (p->num_buffered) {
@@ -829,6 +829,7 @@ static int drv_lazy_init(struct vf_instance *vf)
     p->ls = luaL_newstate();
     if (!p->ls)
         return -1;
+    luaL_openlibs(p->ls);
     p->vsapi = getVapourSynthAPI(VAPOURSYNTH_API_VERSION);
     p->vscore = p->vsapi ? p->vsapi->createCore(0) : NULL;
     if (!p->vscore) {

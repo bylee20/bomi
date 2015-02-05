@@ -79,8 +79,6 @@ public:
     auto render(GLuint fbo, const QSize &size) -> int;
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL() -> void;
-signals:
-    void audioDriverChanged(const QString &driver);
 private:
     auto run() -> void override;
     auto fill(mpv_node *) { }

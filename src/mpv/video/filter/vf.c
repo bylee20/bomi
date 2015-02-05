@@ -53,15 +53,10 @@ extern const vf_info_t vf_info_noise;
 extern const vf_info_t vf_info_eq;
 extern const vf_info_t vf_info_gradfun;
 extern const vf_info_t vf_info_unsharp;
-extern const vf_info_t vf_info_swapuv;
 extern const vf_info_t vf_info_hqdn3d;
-extern const vf_info_t vf_info_ilpack;
 extern const vf_info_t vf_info_dsize;
-extern const vf_info_t vf_info_softpulldown;
 extern const vf_info_t vf_info_pullup;
 extern const vf_info_t vf_info_delogo;
-extern const vf_info_t vf_info_phase;
-extern const vf_info_t vf_info_divtc;
 extern const vf_info_t vf_info_screenshot;
 extern const vf_info_t vf_info_sub;
 extern const vf_info_t vf_info_yadif;
@@ -95,15 +90,10 @@ static const vf_info_t *const filter_list[] = {
     &vf_info_eq,
     &vf_info_gradfun,
     &vf_info_unsharp,
-    &vf_info_swapuv,
     &vf_info_hqdn3d,
-    &vf_info_ilpack,
     &vf_info_dsize,
-    &vf_info_softpulldown,
     &vf_info_pullup,
     &vf_info_delogo,
-    &vf_info_phase,
-    &vf_info_divtc,
     &vf_info_sub,
     &vf_info_yadif,
     &vf_info_stereo3d,
@@ -761,88 +751,4 @@ void vf_set_dar(int *d_w, int *d_h, int w, int h, double dar)
             *d_h = w / dar + 0.5;
         }
     }
-}
-
-void vf_detc_init_pts_buf(struct vf_detc_pts_buf *p)
-{
-    p->inpts_prev = MP_NOPTS_VALUE;
-    p->outpts_prev = MP_NOPTS_VALUE;
-    p->lastdelta = 0;
-}
-
-static double vf_detc_adjust_pts_internal(struct vf_detc_pts_buf *p,
-                                          double pts, bool reset_pattern,
-                                          bool skip_frame, double delta,
-                                          double boundfactor_minus,
-                                          double increasefactor,
-                                          double boundfactor_plus)
-{
-    double newpts;
-
-    if (pts == MP_NOPTS_VALUE)
-        return pts;
-
-    if (delta <= 0) {
-        if (p->inpts_prev == MP_NOPTS_VALUE)
-            delta = 0;
-        else if (pts == p->inpts_prev)
-            delta = p->lastdelta;
-        else
-            delta = pts - p->inpts_prev;
-    }
-    p->inpts_prev = pts;
-    p->lastdelta = delta;
-
-    if (skip_frame)
-        return MP_NOPTS_VALUE;
-
-    /* detect bogus deltas and then passthru pts (possibly caused by seeking,
-     * or bad input) */
-    if (p->outpts_prev == MP_NOPTS_VALUE || reset_pattern || delta <= 0.0 ||
-            delta >= 0.5)
-        newpts = pts;
-    else {
-        // turn 5 frames into 4
-        newpts = p->outpts_prev + delta * increasefactor;
-
-        // bound to input pts in a sensible way; these numbers come because we
-        // map frames the following way when ivtc'ing:
-        // 0/30 -> 0/24   diff=0
-        // 1/30 -> 1/24   diff=1/120
-        // 2/30 -> -
-        // 3/30 -> 2/24   diff=-1/60
-        // 4/30 -> 3/24   diff=-1/120
-        if (newpts < pts - delta * boundfactor_minus)
-            newpts = pts - delta * boundfactor_minus;
-        if (newpts > pts + delta * boundfactor_plus)
-            newpts = pts + delta * boundfactor_plus;
-        if (newpts < p->outpts_prev)
-            newpts = p->outpts_prev;  // damage control
-    }
-    p->outpts_prev = newpts;
-
-    return newpts;
-}
-
-double vf_detc_adjust_pts(struct vf_detc_pts_buf *p, double pts,
-                          bool reset_pattern, bool skip_frame)
-{
-    // standard telecine (see above)
-    return vf_detc_adjust_pts_internal(p, pts, reset_pattern, skip_frame,
-                                       0, 0.5, 1.25, 0.25);
-}
-
-double vf_softpulldown_adjust_pts(struct vf_detc_pts_buf *p, double pts,
-                                  bool reset_pattern, bool skip_frame,
-                                  int last_frame_duration)
-{
-    // for the softpulldown filter we get:
-    // 0/60 -> 0/30
-    // 2/60 -> 1/30
-    // 5/60 -> 2/30
-    // 7/60 -> 3/30, 4/30
-    return vf_detc_adjust_pts_internal(p, pts, reset_pattern, skip_frame,
-                                       0, 1.0 / last_frame_duration,
-                                       2.0 / last_frame_duration,
-                                       1.0 / last_frame_duration);
 }

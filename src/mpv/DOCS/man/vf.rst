@@ -345,19 +345,6 @@ Available filters are:
         and just plain white. A value of 0.0 turns the gamma correction all
         the way down while 1.0 leaves it at its full strength (default: 1.0).
 
-``ilpack[=mode]``
-    When interlaced video is stored in YUV 4:2:0 formats, chroma interlacing
-    does not line up properly due to vertical downsampling of the chroma
-    channels. This filter packs the planar 4:2:0 data into YUY2 (4:2:2) format
-    with the chroma lines in their proper locations, so that in any given
-    scanline, the luma and chroma data both come from the same field.
-
-    ``<mode>``
-        Select the sampling mode.
-
-        :0: nearest-neighbor sampling, fast but incorrect
-        :1: linear interpolation (default)
-
 ``unsharp[=lx:ly:la:cx:cy:ca]``
     unsharp mask / Gaussian blur
 
@@ -374,9 +361,6 @@ Available filters are:
 
         :<0: blur
         :>0: sharpen
-
-``swapuv``
-    Swap U & V plane.
 
 ``pullup[=jl:jr:jt:jb:sb:mp]``
     Pulldown reversal (inverse telecine) filter, capable of handling mixed
@@ -408,120 +392,6 @@ Available filters are:
         especially if there is chroma noise (rainbow effect) or any grayscale
         video. The main purpose of setting ``mp`` to a chroma plane is to reduce
         CPU load and make pullup usable in realtime on slow machines.
-
-``divtc[=options]``
-    Inverse telecine for deinterlaced video. If 3:2-pulldown telecined video
-    has lost one of the fields or is deinterlaced using a method that keeps
-    one field and interpolates the other, the result is a juddering video that
-    has every fourth frame duplicated. This filter is intended to find and
-    drop those duplicates and restore the original film framerate. Two
-    different modes are available: One-pass mode is the default and is
-    straightforward to use, but has the disadvantage that any changes in the
-    telecine phase (lost frames or bad edits) cause momentary judder until the
-    filter can resync again. Two-pass mode avoids this by analyzing the entire
-    video beforehand so it will have forward knowledge about the phase changes
-    and can resync at the exact spot. These passes do *not* correspond to pass
-    one and two of the encoding process. You must run an extra pass using
-    ``divtc`` pass one before the actual encoding throwing the resulting video
-    away. Then use ``divtc`` pass two for the actual encoding. If you use
-    multiple encoder passes, use ``divtc`` pass two for all of them.
-
-    The options are:
-
-    ``pass=1|2``
-        Use two pass mode.
-
-    ``file=<filename>``
-        Set the two pass log filename (default: ``framediff.log``).
-
-    ``threshold=<value>``
-        Set the minimum strength the telecine pattern must have for the filter
-        to believe in it (default: 0.5). This is used to avoid recognizing
-        false pattern from the parts of the video that are very dark or very
-        still.
-
-    ``window=<numframes>``
-        Set the number of past frames to look at when searching for pattern
-        (default: 30). Longer window improves the reliability of the pattern
-        search, but shorter window improves the reaction time to the changes
-        in the telecine phase. This only affects the one-pass mode. The
-        two-pass mode currently uses fixed window that extends to both future
-        and past.
-
-    ``phase=0|1|2|3|4``
-        Sets the initial telecine phase for one pass mode (default: 0). The
-        two-pass mode can see the future, so it is able to use the correct
-        phase from the beginning, but one-pass mode can only guess. It catches
-        the correct phase when it finds it, but this option can be used to fix
-        the possible juddering at the beginning. The first pass of the two
-        pass mode also uses this, so if you save the output from the first
-        pass, you get constant phase result.
-
-    ``deghost=<value>``
-        Set the deghosting threshold (0-255 for one-pass mode, -255-255 for
-        two-pass mode, default 0). If nonzero, deghosting mode is used. This
-        is for video that has been deinterlaced by blending the fields
-        together instead of dropping one of the fields. Deghosting amplifies
-        any compression artifacts in the blended frames, so the parameter
-        value is used as a threshold to exclude those pixels from deghosting
-        that differ from the previous frame less than specified value. If two
-        pass mode is used, then negative value can be used to make the filter
-        analyze the whole video in the beginning of pass-2 to determine
-        whether it needs deghosting or not and then select either zero or the
-        absolute value of the parameter. Specify this option for pass 2, it
-        makes no difference on pass 1.
-
-``phase[=t|b|p|a|u|T|B|A|U][:v]``
-    Delay interlaced video by one field time so that the field order changes.
-    The intended use is to fix PAL videos that have been captured with the
-    opposite field order to the film-to-video transfer. The options are:
-
-    ``t``
-        Capture field order top-first, transfer bottom-first. Filter will
-        delay the bottom field.
-
-    ``b``
-        Capture bottom-first, transfer top-first. Filter will delay the top
-        field.
-
-    ``p``
-        Capture and transfer with the same field order. This mode only exists
-        for the documentation of the other options to refer to, but if you
-        actually select it, the filter will faithfully do nothing ;-)
-
-    ``a``
-        Capture field order determined automatically by field flags, transfer
-        opposite. Filter selects among ``t`` and ``b`` modes on a frame by frame
-        basis using field flags. If no field information is available, then this
-        works just like ``u``.
-
-    ``u``
-        Capture unknown or varying, transfer opposite. Filter selects among
-        ``t`` and ``b`` on a frame by frame basis by analyzing the images and
-        selecting the alternative that produces best match between the fields.
-
-    ``T``
-        Capture top-first, transfer unknown or varying. Filter selects among
-        ``t`` and ``p`` using image analysis.
-
-    ``B``
-        Capture bottom-first, transfer unknown or varying. Filter selects
-        among ``b`` and ``p`` using image analysis.
-
-    ``A``
-        Capture determined by field flags, transfer unknown or varying. Filter
-        selects among ``t``, ``b`` and ``p`` using field flags and image
-        analysis. If no field information is available, then this works just
-        like ``U``. This is the default mode.
-
-    ``U``
-        Both capture and transfer unknown or varying. Filter selects among
-        ``t``, ``b`` and ``p`` using image analysis only.
-
-    ``v``
-        Verbose operation. Prints the selected mode for each frame and the
-        average squared difference between fields for ``t``, ``b``, and ``p``
-        alternatives. (Ignored when libavfilter is used.)
 
 ``yadif=[mode[:enabled=yes|no]]``
     Yet another deinterlacing filter

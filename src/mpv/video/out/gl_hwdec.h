@@ -17,10 +17,11 @@ struct gl_hwdec {
     bool reject_emulated;
     // hwdec backends must set this to an IMGFMT_ that has an equivalent
     // internal representation in gl_video.c as the hardware texture.
-    // It's used to build the rendering chain, and also as screenshot format.
+    // It's used to build the rendering chain. For example, setting it to
+    // IMGFMT_RGB0 indicates that the video texture is RGB.
     int converted_imgfmt;
     // Normally this is GL_TEXTURE_2D, but the hwdec driver can set it to
-    // GL_TEXTURE_RECTANGLE.
+    // GL_TEXTURE_RECTANGLE. This is needed because VDA is shit.
     GLenum gl_texture_target;
 };
 
@@ -34,7 +35,8 @@ struct gl_hwdec_driver {
     int (*create)(struct gl_hwdec *hw);
     // Prepare for rendering video. (E.g. create textures.)
     // Called on initialization, and every time the video size changes.
-    int (*reinit)(struct gl_hwdec *hw, const struct mp_image_params *params);
+    // *params must be set to the format the hw textures return.
+    int (*reinit)(struct gl_hwdec *hw, struct mp_image_params *params);
     // Return textures that contain the given hw_image.
     // Note that the caller keeps a reference to hw_image until unmap_image
     // is called, so the hwdec driver doesn't need to do that.

@@ -266,7 +266,7 @@ int reinit_video_chain(struct MPContext *mpctx)
                sh->video->fps);
 
     //================== Init VIDEO (codec & libvo) ==========================
-    if (!opts->fixed_vo || !mpctx->video_out) {
+    if (!mpctx->video_out) {
         struct vo_extra ex = {
             .input_ctx = mpctx->input,
             .osd = mpctx->osd,
@@ -528,7 +528,7 @@ static void adjust_sync(struct MPContext *mpctx, double v_pts, double frame_time
     if (mpctx->audio_status != STATUS_PLAYING)
         return;
 
-    double a_pts = written_audio_pts(mpctx) + mpctx->audio_delay - mpctx->delay;
+    double a_pts = written_audio_pts(mpctx) + opts->audio_delay - mpctx->delay;
     double av_delay = a_pts - v_pts;
 
     double change = av_delay * 0.1;
@@ -588,9 +588,8 @@ static int video_output_image(struct MPContext *mpctx, double endpts)
             frame_time = 0;
         }
         mpctx->video_next_pts = pts;
-        if (mpctx->d_audio)
-            mpctx->delay -= frame_time;
-        if (mpctx->video_status >= STATUS_READY) {
+        mpctx->delay -= frame_time;
+        if (mpctx->video_status >= STATUS_PLAYING) {
             mpctx->time_frame += frame_time / mpctx->opts->playback_speed;
             adjust_sync(mpctx, pts, frame_time);
         }
@@ -663,7 +662,11 @@ static void update_avsync_before_frame(struct MPContext *mpctx)
                !ao_untimed(mpctx->ao))
     {
         double buffered_audio = ao_get_delay(mpctx->ao);
-        MP_TRACE(mpctx, "audio delay=%f\n", buffered_audio);
+
+        double predicted = mpctx->delay / opts->playback_speed +
+                           mpctx->time_frame;
+        double difference = buffered_audio - predicted;
+        MP_STATS(mpctx, "value %f audio-diff", difference);
 
         if (opts->autosync) {
             /* Smooth reported playback position from AO by averaging
@@ -673,9 +676,6 @@ static void update_avsync_before_frame(struct MPContext *mpctx)
              * This is badly implemented; the behavior of the smoothing
              * now undesirably depends on how often this code runs
              * (mainly depends on video frame rate). */
-            float predicted = mpctx->delay / opts->playback_speed +
-                              mpctx->time_frame;
-            float difference = buffered_audio - predicted;
             buffered_audio = predicted + difference / opts->autosync;
         }
 
@@ -696,7 +696,8 @@ static void update_avsync_before_frame(struct MPContext *mpctx)
 // Update the A/V sync difference after a video frame has been shown.
 static void update_avsync_after_frame(struct MPContext *mpctx)
 {
-    mpctx->time_frame -= get_relative_time(mpctx);
+    struct MPOpts *opts = mpctx->opts;
+
     mpctx->last_av_difference = 0;
 
     if (mpctx->audio_status != STATUS_PLAYING ||
@@ -705,13 +706,12 @@ static void update_avsync_after_frame(struct MPContext *mpctx)
 
     double a_pos = playing_audio_pts(mpctx);
 
-    mpctx->last_av_difference = a_pos - mpctx->video_pts + mpctx->audio_delay;
+    mpctx->last_av_difference = a_pos - mpctx->video_pts + opts->audio_delay;
     if (mpctx->time_frame > 0)
-        mpctx->last_av_difference +=
-                mpctx->time_frame * mpctx->opts->playback_speed;
+        mpctx->last_av_difference += mpctx->time_frame * opts->playback_speed;
     if (a_pos == MP_NOPTS_VALUE || mpctx->video_pts == MP_NOPTS_VALUE)
         mpctx->last_av_difference = MP_NOPTS_VALUE;
-    if (mpctx->last_av_difference > 0.5 && !mpctx->drop_message_shown) {
+    if (fabs(mpctx->last_av_difference) > 0.5 && !mpctx->drop_message_shown) {
         MP_WARN(mpctx, "%s", av_desync_help_text);
         mpctx->drop_message_shown = true;
     }
@@ -774,9 +774,6 @@ void write_video(struct MPContext *mpctx, double endpts)
     if (mpctx->video_status > STATUS_PLAYING)
         mpctx->video_status = STATUS_PLAYING;
 
-    mpctx->time_frame -= get_relative_time(mpctx);
-    update_avsync_before_frame(mpctx);
-
     if (r != VD_NEW_FRAME) {
         mpctx->sleeptime = 0; // Decode more in next iteration.
         return;
@@ -803,8 +800,10 @@ void write_video(struct MPContext *mpctx, double endpts)
             goto error;
         }
         init_vo(mpctx);
-        mpctx->time_frame = 0; // display immediately
     }
+
+    mpctx->time_frame -= get_relative_time(mpctx);
+    update_avsync_before_frame(mpctx);
 
     double time_frame = MPMAX(mpctx->time_frame, -1);
     int64_t pts = mp_time_us() + (int64_t)(time_frame * 1e6);
@@ -838,6 +837,8 @@ void write_video(struct MPContext *mpctx, double endpts)
     mpctx->last_vo_pts = mpctx->video_pts;
     mpctx->playback_pts = mpctx->video_pts;
 
+    update_avsync_after_frame(mpctx);
+
     mpctx->osd_force_update = true;
     update_osd_msg(mpctx);
     update_subtitles(mpctx);
@@ -851,7 +852,6 @@ void write_video(struct MPContext *mpctx, double endpts)
         // After a seek, make sure to wait until the first frame is visible.
         vo_wait_frame(vo);
     }
-    update_avsync_after_frame(mpctx);
     screenshot_flip(mpctx);
 
     mp_notify(mpctx, MPV_EVENT_TICK, NULL);

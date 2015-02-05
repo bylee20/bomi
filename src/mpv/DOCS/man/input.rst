@@ -391,6 +391,15 @@ List of Input Commands
     <double>
         The mouse event represents double-click.
 
+``audio_add "<file>" [<flags> [<title> [<lang>]]]``
+    Load the given audio file. See ``sub_add`` command.
+
+``audio_remove [<id>]``
+    Remove the given audio track. See ``sub_remove`` command.
+
+``audio_reload [<id>]``
+    Reload the given audio tracks. See ``sub_reload`` command.
+
 
 Input Commands that are Possibly Subject to Change
 --------------------------------------------------
@@ -611,6 +620,67 @@ Input Commands that are Possibly Subject to Change
 
 Undocumented commands: ``tv_last_channel`` (TV/DVB only), ``get_property`` (?),
 ``ao_reload`` (experimental/internal).
+
+
+Hooks
+~~~~~
+
+Hooks are synchronous events between player core and a script or similar. This
+applies to the Lua scripting interface and the client API and only. Normally,
+events are supposed to be asynchronous, and the hook API provides an awkward
+and obscure way to handle events that require stricter coordination. There are
+no API stability guarantees made. Not following the protocol exactly can make
+the player freeze randomly. Basically, nobody should use this API.
+
+There are two special commands involved. Also, the client must listen for
+client messages (``MPV_EVENT_CLIENT_MESSAGE`` in the C API).
+
+``hook_add <hook-name> <id> <priority>``
+    Subscribe to the hook identified by the first argument (basically, the
+    name of event). The ``id`` argument is an arbitrary integer chosen by the
+    user. ``priority`` is used to sort all hook handlers globally across all
+    clients. Each client can register multiple hook handlers (even for the
+    same hook-name). Once the hook is registered, it cannot be unregistered.
+
+    When a specific event happens, all registered handlers are run serially.
+    This uses a protocol every client has to follow explicitly. When a hook
+    handler is run, a client message (``MPV_EVENT_CLIENT_MESSAGE``) is sent to
+    the client which registered the hook. This message has the following
+    arguments:
+
+    1. the string ``hook_run``
+    2. the ``id`` argument the hook was registered with as string (this can be
+       used to correctly handle multiple hooks registered by the same client,
+       as long as the ``id`` argument is unique in the client)
+    3. something undefined, used by the hook mechanism to track hook execution
+       (currently, it's the hook-name, but this might change without warning)
+
+    Upon receiving this message, the client can handle the event. While doing
+    this, the player core will still react to requests, but playback will
+    typically be stopped.
+
+    When the client is done, it must continue the core's hook execution by
+    running the ``hook_ack`` command.
+
+``hook_ack <string>``
+    Run the next hook in the global chain of hooks. The argument is the 3rd
+    argument of the client message that starts hook execution for the
+    current client.
+
+The following hooks are currently defined:
+
+``on_load``
+    Called when a file is to be opened, before anything is actually done.
+    For example, you could read and write the ``stream-open-filename``
+    property to redirect an URL to something else (consider support for
+    streaming sites which rarely give the user a direct media URL), or
+    you could set per-file options with by setting the property
+    ``file-local-options/<option name>``. The player will wait until all
+    hooks are run.
+
+``on_unload``
+    Run before closing a file, and before actually uninitializing
+    everything. It's not possible to resume playback in this state.
 
 Input Command Prefixes
 ----------------------
@@ -1119,6 +1189,17 @@ Property list
     Note that you don't know the success of the operation immediately after
     writing this property. It happens with a delay as video is reinitialized.
 
+``detected-hwdec``
+    Return the current hardware decoder that was detected and opened. Returns
+    the same values as ``hwdec``.
+
+    This is known only once the VO has opened (and possibly later). With some
+    VOs (like ``opengl``), this is never known in advance, but only when the
+    decoder attempted to create the hw decoder successfully. Also, hw decoders
+    with ``-copy`` suffix are returned only while hw decoding is active (and
+    unset afterwards). All this reflects how detecting hw decoders are
+    detected and used internally in mpv.
+
 ``panscan`` (RW)
     See ``--panscan``.
 
@@ -1480,6 +1561,14 @@ Property list
 ``seekable``
     Return whether it's generally possible to seek in the current file.
 
+``partially-seekable``
+    Return ``yes`` if the current file is considered seekable, but only because
+    the cache is active. This means small relative seeks may be fine, but larger
+    seeks may fail anyway. Whether a seek will succeed or not is generally not
+    known in advance.
+
+    If this property returns true, ``seekable`` will also return true.
+
 ``playback-abort``
     Return whether playback is stopped or is to be stopped. (Useful in obscure
     situations like during ``on_load`` hook processing, when the user can
@@ -1563,6 +1652,16 @@ Property list
     This property also doesn't tell you which audio device is actually in use.
 
     How these details are handled may change in the future.
+
+``current-vo``
+    Current video output driver (name as used with ``--vo``).
+
+``current-ao``
+    Current audio output driver (name as used with ``--ao``).
+
+``audio-out-detected-device``
+    Return the audio device selected by the AO driver (only implemented for
+    some drivers: currently only ``coreaudio``).
 
 ``mpv-version``
     Return the mpv version/copyright string. Depending on how the binary was

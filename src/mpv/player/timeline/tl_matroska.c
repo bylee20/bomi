@@ -281,7 +281,7 @@ static int find_ordered_chapter_sources(struct MPContext *mpctx,
             MP_INFO(mpctx, "Will scan other files in the "
                     "same directory to find referenced sources.\n");
             filenames = find_files(main_filename);
-            num_filenames = MP_TALLOC_ELEMS(filenames);
+            num_filenames = MP_TALLOC_AVAIL(filenames);
             talloc_steal(tmp, filenames);
         }
         // Possibly get further segments appended to the first segment
@@ -294,7 +294,7 @@ static int find_ordered_chapter_sources(struct MPContext *mpctx,
         for (int i = 0; i < num_filenames; i++) {
             if (!missing(*sources, *num_sources))
                 break;
-            MP_INFO(mpctx, "Checking file %s\n", filenames[i]);
+            MP_VERBOSE(mpctx, "Checking file %s\n", filenames[i]);
             check_file(mpctx, sources, num_sources, uids, filenames[i], 0);
         }
     } while (old_source_count != *num_sources);
@@ -471,6 +471,53 @@ static void build_timeline_loop(struct MPContext *mpctx,
         *missing_time += limit - local_starttime;
 }
 
+static void check_track_compatibility(struct MPContext *mpctx)
+{
+    struct demuxer *mainsrc = mpctx->track_layout;
+
+    for (int n = 0; n < mpctx->num_timeline_parts; n++) {
+        struct timeline_part *p = &mpctx->timeline[n];
+        if (p->source == mainsrc)
+            continue;
+
+        for (int i = 0; i < p->source->num_streams; i++) {
+            struct sh_stream *s = p->source->streams[i];
+            if (s->attached_picture)
+                continue;
+
+            if (!demuxer_stream_by_demuxer_id(mainsrc, s->type, s->demuxer_id)) {
+                MP_WARN(mpctx, "Source %s has %s stream with TID=%d, which "
+                               "is not present in the ordered chapters main "
+                               "file. This is a broken file. "
+                               "The additional stream is ignored.\n",
+                               p->source->filename, stream_type_name(s->type),
+                               s->demuxer_id);
+            }
+        }
+
+        for (int i = 0; i < mainsrc->num_streams; i++) {
+            struct sh_stream *m = mainsrc->streams[i];
+            if (m->attached_picture)
+                continue;
+
+            struct sh_stream *s =
+                demuxer_stream_by_demuxer_id(p->source, m->type, m->demuxer_id);
+            if (s) {
+                // There are actually many more things that in theory have to
+                // match (though mpv's implementation doesn't care).
+                if (s->codec && m->codec && strcmp(s->codec, m->codec) != 0)
+                    MP_WARN(mpctx, "Timeline segments have mismatching codec.\n");
+            } else {
+                MP_WARN(mpctx, "Source %s lacks %s stream with TID=%d, which "
+                               "is present in the ordered chapters main "
+                               "file. This is a broken file.\n",
+                               p->source->filename, stream_type_name(m->type),
+                               m->demuxer_id);
+            }
+        }
+    }
+}
+
 void build_ordered_chapter_timeline(struct MPContext *mpctx)
 {
     struct MPOpts *opts = mpctx->opts;
@@ -569,4 +616,16 @@ void build_ordered_chapter_timeline(struct MPContext *mpctx)
     mpctx->num_timeline_parts = part_count - 1;
     mpctx->num_chapters = m->num_ordered_chapters;
     mpctx->chapters = chapters;
+
+    // With Matroska, the "master" file usually dictates track layout etc.,
+    // except maybe with playlist-like files.
+    mpctx->track_layout = mpctx->timeline[0].source;
+    for (int n = 0; n < mpctx->num_timeline_parts; n++) {
+        if (mpctx->timeline[n].source == mpctx->demuxer) {
+            mpctx->track_layout = mpctx->demuxer;
+            break;
+        }
+    }
+
+    check_track_compatibility(mpctx);
 }

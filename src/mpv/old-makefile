@@ -62,7 +62,7 @@ SOURCES-$(SDL2)                 += audio/out/ao_sdl.c video/out/vo_sdl.c
 SOURCES-$(GL)                   += video/out/gl_common.c video/out/gl_osd.c \
                                    video/out/vo_opengl.c video/out/gl_lcms.c \
                                    video/out/gl_video.c video/out/dither.c \
-                                   video/out/gl_hwdec.c \
+                                   video/out/gl_hwdec.c video/out/gl_utils.c \
                                    video/out/vo_opengl_cb.c
 
 SOURCES-$(ENCODING)             += video/out/vo_lavc.c audio/out/ao_lavc.c \
@@ -248,11 +248,9 @@ SOURCES = audio/audio.c \
           video/decode/dec_video.c \
           video/decode/vd_lavc.c \
           video/filter/vf.c \
-          video/filter/pullup.c \
           video/filter/vf_buffer.c \
           video/filter/vf_crop.c \
           video/filter/vf_delogo.c \
-          video/filter/vf_divtc.c \
           video/filter/vf_dsize.c \
           video/filter/vf_eq.c \
           video/filter/vf_expand.c \
@@ -260,19 +258,15 @@ SOURCES = audio/audio.c \
           video/filter/vf_format.c \
           video/filter/vf_gradfun.c \
           video/filter/vf_hqdn3d.c \
-          video/filter/vf_ilpack.c \
           video/filter/vf_mirror.c \
           video/filter/vf_noformat.c \
           video/filter/vf_noise.c \
-          video/filter/vf_phase.c \
           video/filter/vf_pullup.c \
           video/filter/vf_rotate.c \
           video/filter/vf_scale.c \
           video/filter/vf_screenshot.c \
-          video/filter/vf_softpulldown.c \
           video/filter/vf_stereo3d.c \
           video/filter/vf_sub.c \
-          video/filter/vf_swapuv.c \
           video/filter/vf_unsharp.c \
           video/filter/vf_yadif.c \
           video/out/bitmap_packer.c \

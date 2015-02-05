@@ -313,7 +313,7 @@ auto PlayEngine::Data::onLoad() -> void
     t.local.clear();
 }
 
-auto PlayEngine::Data::onFinish() -> void
+auto PlayEngine::Data::onUnload() -> void
 {
     t.local = localCopy();
     t.local->set_resume_position(time);
@@ -327,7 +327,7 @@ auto PlayEngine::Data::onFinish() -> void
 auto PlayEngine::Data::hook() -> void
 {
     mpv.hook("on_load", [=] () { onLoad(); });
-    mpv.hook("on_finish", [=] () { onFinish(); });
+    mpv.hook("on_unload", [=] () { onUnload(); });
 }
 
 auto PlayEngine::Data::observe() -> void
@@ -513,6 +513,7 @@ auto PlayEngine::Data::observe() -> void
     mpv.observe("audio-channels", [=] (int n)
         { info.audio.input()->setChannels(QString::number(n) % "ch"_a, n); });
     mpv.observe("audio-device", [=] (QString &&d) { info.audio.setDevice(d); });
+    mpv.observe("current-ao", [=] (QString &&ao) { info.audio.setDriver(ao); });
 }
 
 auto PlayEngine::Data::request() -> void

@@ -60,6 +60,7 @@ typedef struct MPOpts {
     int msg_color;
     int msg_module;
     int msg_time;
+    char *log_file;
 
     char **reset_options;
     char **script_files;
@@ -73,7 +74,6 @@ typedef struct MPOpts {
     struct m_obj_settings *audio_driver_list, *ao_defs;
     char *audio_device;
     char *audio_client_name;
-    int fixed_vo;
     int force_vo;
     int softvol;
     float mixer_init_volume;
@@ -230,6 +230,7 @@ typedef struct MPOpts {
     char **sub_name;
     char **sub_paths;
     int sub_auto;
+    int audiofile_auto;
     int use_text_osd;
     int osd_bar_visible;
     float osd_bar_align_x;

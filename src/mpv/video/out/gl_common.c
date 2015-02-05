@@ -45,44 +45,6 @@
 #include "options/options.h"
 #include "options/m_option.h"
 
-//! \defgroup glgeneral OpenGL general helper functions
-
-// GLU has this as gluErrorString (we don't use GLU, as it is legacy-OpenGL)
-static const char *gl_error_to_string(GLenum error)
-{
-    switch (error) {
-    case GL_INVALID_ENUM: return "INVALID_ENUM";
-    case GL_INVALID_VALUE: return "INVALID_VALUE";
-    case GL_INVALID_OPERATION: return "INVALID_OPERATION";
-    case GL_INVALID_FRAMEBUFFER_OPERATION:
-        return "INVALID_FRAMEBUFFER_OPERATION";
-    case GL_OUT_OF_MEMORY: return "OUT_OF_MEMORY";
-    default: return "unknown";
-    }
-}
-
-void glCheckError(GL *gl, struct mp_log *log, const char *info)
-{
-    for (;;) {
-        GLenum error = gl->GetError();
-        if (error == GL_NO_ERROR)
-            break;
-        mp_msg(log, MSGL_ERR, "%s: OpenGL error %s.\n", info,
-               gl_error_to_string(error));
-    }
-}
-
-static int get_alignment(int stride)
-{
-    if (stride % 8 == 0)
-        return 8;
-    if (stride % 4 == 0)
-        return 4;
-    if (stride % 2 == 0)
-        return 2;
-    return 1;
-}
-
 struct feature {
     int id;
     const char *name;
@@ -91,8 +53,6 @@ struct feature {
 static const struct feature features[] = {
     {MPGL_CAP_FB,               "Framebuffers"},
     {MPGL_CAP_VAO,              "VAOs"},
-    {MPGL_CAP_SRGB_TEX,         "sRGB textures"},
-    {MPGL_CAP_SRGB_FB,          "sRGB framebuffers"},
     {MPGL_CAP_FLOAT_TEX,        "Float textures"},
     {MPGL_CAP_TEX_RG,           "RG textures"},
     {MPGL_CAP_1ST_CLASS_ARRAYS, "1st class shader arrays"},
@@ -225,8 +185,7 @@ static const struct gl_functions gl_functions[] = {
     {
         .ver_core = 300,
         .ver_es_core = 300,
-        .provides = MPGL_CAP_SRGB_TEX | MPGL_CAP_SRGB_FB | MPGL_CAP_3D_TEX |
-                    MPGL_CAP_1ST_CLASS_ARRAYS,
+        .provides = MPGL_CAP_3D_TEX | MPGL_CAP_1ST_CLASS_ARRAYS,
         .functions = (const struct gl_function[]) {
             DEF_FN(GetStringi),
             // for ES 3.0
@@ -285,18 +244,6 @@ static const struct gl_functions gl_functions[] = {
             DEF_FN(DeleteVertexArrays),
             {0}
         }
-    },
-    // sRGB textures, extension in GL 2.x, core in GL 3.x core.
-    {
-        .ver_core = 300,
-        .extension = "GL_EXT_texture_sRGB",
-        .provides = MPGL_CAP_SRGB_TEX,
-    },
-    // sRGB framebuffers, extension in GL 2.x, core in GL 3.x core.
-    {
-        .ver_core = 300,
-        .extension = "GL_EXT_framebuffer_sRGB",
-        .provides = MPGL_CAP_SRGB_FB,
     },
     // Float textures, extension in GL 2.x, core in GL 3.x core.
     {
@@ -579,153 +526,6 @@ void mpgl_load_functions(GL *gl, void *(*getProcAddress)(const GLubyte *),
     mpgl_load_functions2(gl, get_procaddr_wrapper, getProcAddress, ext2, log);
 }
 
-/**
- * \brief return the number of bytes per pixel for the given format
- * \param format OpenGL format
- * \param type OpenGL type
- * \return bytes per pixel
- * \ingroup glgeneral
- *
- * Does not handle all possible variants, just those used by MPlayer
- */
-int glFmt2bpp(GLenum format, GLenum type)
-{
-    int component_size = 0;
-    switch (type) {
-    case GL_UNSIGNED_BYTE_3_3_2:
-    case GL_UNSIGNED_BYTE_2_3_3_REV:
-        return 1;
-    case GL_UNSIGNED_SHORT_5_5_5_1:
-    case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-    case GL_UNSIGNED_SHORT_5_6_5:
-    case GL_UNSIGNED_SHORT_5_6_5_REV:
-        return 2;
-    case GL_UNSIGNED_BYTE:
-        component_size = 1;
-        break;
-    case GL_UNSIGNED_SHORT:
-        component_size = 2;
-        break;
-    }
-    switch (format) {
-    case GL_LUMINANCE:
-    case GL_ALPHA:
-        return component_size;
-    case GL_RGB_422_APPLE:
-        return 2;
-    case GL_RGB:
-    case GL_BGR:
-    case GL_RGB_INTEGER:
-        return 3 * component_size;
-    case GL_RGBA:
-    case GL_BGRA:
-    case GL_RGBA_INTEGER:
-        return 4 * component_size;
-    case GL_RED:
-    case GL_RED_INTEGER:
-        return component_size;
-    case GL_RG:
-    case GL_LUMINANCE_ALPHA:
-    case GL_RG_INTEGER:
-        return 2 * component_size;
-    }
-    abort(); // unknown
-}
-
-/**
- * \brief upload a texture, handling things like stride and slices
- * \param target texture target, usually GL_TEXTURE_2D
- * \param format OpenGL format of data
- * \param type OpenGL type of data
- * \param dataptr data to upload
- * \param stride data stride
- * \param x x offset in texture
- * \param y y offset in texture
- * \param w width of the texture part to upload
- * \param h height of the texture part to upload
- * \param slice height of an upload slice, 0 for all at once
- * \ingroup gltexture
- */
-void glUploadTex(GL *gl, GLenum target, GLenum format, GLenum type,
-                 const void *dataptr, int stride,
-                 int x, int y, int w, int h, int slice)
-{
-    const uint8_t *data = dataptr;
-    int y_max = y + h;
-    if (w <= 0 || h <= 0)
-        return;
-    if (slice <= 0)
-        slice = h;
-    if (stride < 0) {
-        data += (h - 1) * stride;
-        stride = -stride;
-    }
-    gl->PixelStorei(GL_UNPACK_ALIGNMENT, get_alignment(stride));
-    bool use_rowlength = slice > 1 && (gl->mpgl_caps & MPGL_CAP_ROW_LENGTH);
-    if (use_rowlength) {
-        // this is not always correct, but should work for MPlayer
-        gl->PixelStorei(GL_UNPACK_ROW_LENGTH, stride / glFmt2bpp(format, type));
-    } else {
-        if (stride != glFmt2bpp(format, type) * w)
-            slice = 1; // very inefficient, but at least it works
-    }
-    for (; y + slice <= y_max; y += slice) {
-        gl->TexSubImage2D(target, 0, x, y, w, slice, format, type, data);
-        data += stride * slice;
-    }
-    if (y < y_max)
-        gl->TexSubImage2D(target, 0, x, y, w, y_max - y, format, type, data);
-    if (use_rowlength)
-        gl->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-    gl->PixelStorei(GL_UNPACK_ALIGNMENT, 4);
-}
-
-// Like glUploadTex, but upload a byte array with all elements set to val.
-// If scratch is not NULL, points to a resizeable talloc memory block than can
-// be freely used by the function (for avoiding temporary memory allocations).
-void glClearTex(GL *gl, GLenum target, GLenum format, GLenum type,
-                int x, int y, int w, int h, uint8_t val, void **scratch)
-{
-    int bpp = glFmt2bpp(format, type);
-    int stride = w * bpp;
-    int size = h * stride;
-    if (size < 1)
-        return;
-    void *data = scratch ? *scratch : NULL;
-    if (talloc_get_size(data) < size)
-        data = talloc_realloc(NULL, data, char *, size);
-    memset(data, val, size);
-    gl->PixelStorei(GL_UNPACK_ALIGNMENT, get_alignment(stride));
-    gl->TexSubImage2D(target, 0, x, y, w, h, format, type, data);
-    gl->PixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    if (scratch) {
-        *scratch = data;
-    } else {
-        talloc_free(data);
-    }
-}
-
-mp_image_t *glGetWindowScreenshot(GL *gl)
-{
-    if (gl->es)
-        return NULL; // ES can't read from front buffer
-    GLint vp[4]; //x, y, w, h
-    gl->GetIntegerv(GL_VIEWPORT, vp);
-    mp_image_t *image = mp_image_alloc(IMGFMT_RGB24, vp[2], vp[3]);
-    if (!image)
-        return NULL;
-    gl->PixelStorei(GL_PACK_ALIGNMENT, 1);
-    gl->ReadBuffer(GL_FRONT);
-    //flip image while reading (and also avoid stride-related trouble)
-    for (int y = 0; y < vp[3]; y++) {
-        gl->ReadPixels(vp[0], vp[1] + vp[3] - y - 1, vp[2], 1,
-                       GL_RGB, GL_UNSIGNED_BYTE,
-                       image->planes[0] + y * image->stride[0]);
-    }
-    gl->PixelStorei(GL_PACK_ALIGNMENT, 4);
-    return image;
-}
-
 typedef void (*MPGLSetBackendFn)(MPGLContext *ctx);
 
 struct backend {
@@ -817,6 +617,8 @@ static MPGLContext *mpgl_create(struct vo *vo, const char *backend_name)
     return ctx;
 }
 
+// Create a VO window and create a GL context on it.
+//  vo_flags: passed to the backend's create window function
 MPGLContext *mpgl_init(struct vo *vo, const char *backend_name, int vo_flags)
 {
     MPGLContext *ctx = mpgl_create(vo, backend_name);
@@ -851,9 +653,10 @@ cleanup:
     return NULL;
 }
 
-bool mpgl_reconfig_window(struct MPGLContext *ctx, int flags)
+// flags: passed to the backend function
+bool mpgl_reconfig_window(struct MPGLContext *ctx, int vo_flags)
 {
-    return ctx->config_window(ctx, flags);
+    return ctx->config_window(ctx, vo_flags);
 }
 
 void mpgl_uninit(MPGLContext *ctx)
@@ -865,45 +668,14 @@ void mpgl_uninit(MPGLContext *ctx)
     talloc_free(ctx);
 }
 
-void mpgl_set_context(MPGLContext *ctx)
+void mpgl_lock(MPGLContext *ctx)
 {
     if (ctx->set_current)
         ctx->set_current(ctx, true);
 }
 
-void mpgl_unset_context(MPGLContext *ctx)
+void mpgl_unlock(MPGLContext *ctx)
 {
     if (ctx->set_current)
         ctx->set_current(ctx, false);
-}
-
-void mpgl_lock(MPGLContext *ctx)
-{
-    mpgl_set_context(ctx);
-}
-
-void mpgl_unlock(MPGLContext *ctx)
-{
-    mpgl_unset_context(ctx);
-}
-
-bool mpgl_is_thread_safe(MPGLContext *ctx)
-{
-    return !!ctx->set_current;
-}
-
-void mp_log_source(struct mp_log *log, int lev, const char *src)
-{
-    int line = 1;
-    if (!src)
-        return;
-    while (*src) {
-        const char *end = strchr(src, '\n');
-        const char *next = end + 1;
-        if (!end)
-            next = end = src + strlen(src);
-        mp_msg(log, lev, "[%3d] %.*s\n", line, (int)(end - src), src);
-        line++;
-        src = next;
-    }
 }

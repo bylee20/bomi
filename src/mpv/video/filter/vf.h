@@ -144,7 +144,7 @@ enum vf_ctrl {
     VFCTRL_SEEK_RESET = 1,   // reset on picture and PTS discontinuities
     VFCTRL_SET_EQUALIZER,    // set color options (brightness,contrast etc)
     VFCTRL_GET_EQUALIZER,    // get color options (brightness,contrast etc)
-    VFCTRL_SCREENSHOT,       // Take screenshot, arg is voctrl_screenshot_args
+    VFCTRL_SCREENSHOT,       // Take screenshot, arg is mp_image**
     VFCTRL_INIT_OSD,         // Filter OSD renderer present?
     VFCTRL_SET_DEINTERLACE,  // Set deinterlacing status
     VFCTRL_GET_DEINTERLACE,  // Get deinterlacing status
@@ -190,20 +190,5 @@ int vf_next_query_format(struct vf_instance *vf, unsigned int fmt);
 void vf_rescale_dsize(int *d_width, int *d_height, int old_w, int old_h,
                       int new_w, int new_h);
 void vf_set_dar(int *d_width, int *d_height, int w, int h, double dar);
-
-struct vf_detc_pts_buf {
-    double inpts_prev, outpts_prev;
-    double lastdelta;
-};
-void vf_detc_init_pts_buf(struct vf_detc_pts_buf *p);
-/* Adjust pts when detelecining.
- * skip_frame: do not render this frame
- * reset_pattern: set to 1 if the telecine pattern has reset due to scene cut
- */
-double vf_detc_adjust_pts(struct vf_detc_pts_buf *p, double pts,
-                          bool reset_pattern, bool skip_frame);
-double vf_softpulldown_adjust_pts(struct vf_detc_pts_buf *p, double pts,
-                                  bool reset_pattern, bool skip_frame,
-                                  int last_frame_duration);
 
 #endif /* MPLAYER_VF_H */

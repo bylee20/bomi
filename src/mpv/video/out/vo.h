@@ -35,7 +35,7 @@
 // VO needs to update state to a new window size
 #define VO_EVENT_RESIZE 2
 // The ICC profile needs to be reloaded
-#define VO_EVENT_ICC_PROFILE_PATH_CHANGED 4
+#define VO_EVENT_ICC_PROFILE_CHANGED 4
 // Some other window state changed
 #define VO_EVENT_WIN_STATE 8
 
@@ -63,7 +63,7 @@ enum mp_voctrl {
 
     // Redraw the image previously passed to draw_image() (basically, repeat
     // the previous draw_image call). If this is handled, the OSD should also
-    // be updated and redrawn.
+    // be updated and redrawn. Optional; emulated if not available.
     VOCTRL_REDRAW_FRAME,
 
     VOCTRL_FULLSCREEN,
@@ -97,7 +97,8 @@ enum mp_voctrl {
     // imgfmt/w/h/d_w/d_h can be omitted for convenience.
     VOCTRL_GET_COLORSPACE,              // struct mp_image_params*
 
-    VOCTRL_SCREENSHOT,                  // struct voctrl_screenshot_args*
+    // Retrieve window contents. (Normal screenshots use vo_get_current_frame().)
+    VOCTRL_SCREENSHOT_WIN,              // struct mp_image**
 
     VOCTRL_SET_COMMAND_LINE,            // char**
 
@@ -106,8 +107,6 @@ enum mp_voctrl {
     VOCTRL_GET_RECENT_FLIP_TIME,        // int64_t* (using mp_time_us())
 
     VOCTRL_GET_PREF_DEINT,              // int*
-
-    VOCTRL_GET_VSYNC_TIMED,             // bool*
 };
 
 // VOCTRL_SET_EQUALIZER
@@ -122,25 +121,6 @@ struct voctrl_get_equalizer_args {
     int *valueptr;
 };
 
-// VOCTRL_SCREENSHOT
-struct voctrl_screenshot_args {
-    // 0: Save image of the currently displayed video frame, in original
-    //    resolution.
-    // 1: Save full screenshot of the window. Should contain OSD, EOSD, and the
-    //    scaled video.
-    // The value of this variable can be ignored if only a single method is
-    // implemented.
-    int full_window;
-    // Will be set to a newly allocated image, that contains the screenshot.
-    // The caller has to free the image with talloc_free().
-    // It is not specified whether the image data is a copy or references the
-    // image data directly.
-    // Can be NULL on failure.
-    struct mp_image *out_image;
-    // Whether the VO rendered OSD/subtitles into out_image
-    bool has_osd;
-};
-
 // VOCTRL_GET_WIN_STATE
 #define VO_WIN_STATE_MINIMIZED 1
 
@@ -152,7 +132,6 @@ struct voctrl_screenshot_args {
 
 #define VOFLAG_FLIPPING         0x08
 #define VOFLAG_HIDDEN           0x10  //< Use to create a hidden window
-#define VOFLAG_STEREO           0x20  //< Use to create a stereo-capable window
 #define VOFLAG_GL_DEBUG         0x40  // Hint to request debug OpenGL context
 #define VOFLAG_ALPHA            0x80  // Hint to request alpha framebuffer
 
@@ -185,7 +164,7 @@ struct vo_driver {
     // VO_CAP_* bits
     int caps;
 
-    // Disable video timing, push frames as quickly as possible.
+    // Disable video timing, push frames as quickly as possible, never redraw.
     bool untimed;
 
     const char *name;
@@ -337,8 +316,9 @@ void vo_increment_drop_count(struct vo *vo, int64_t n);
 void vo_query_formats(struct vo *vo, uint8_t *list);
 void vo_event(struct vo *vo, int event);
 int vo_query_and_reset_events(struct vo *vo, int events);
+struct mp_image *vo_get_current_frame(struct vo *vo);
 
-void vo_set_flip_queue_offset(struct vo *vo, int64_t us);
+void vo_set_flip_queue_params(struct vo *vo, int64_t offset_us, bool vsync_timed);
 int64_t vo_get_vsync_interval(struct vo *vo);
 void vo_wakeup(struct vo *vo);
 

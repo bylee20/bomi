@@ -198,7 +198,7 @@ struct PlayEngine::Data {
     auto takeSnapshot() -> void;
     auto localCopy() -> QSharedPointer<MrlState>;
     auto onLoad() -> void;
-    auto onFinish() -> void;
+    auto onUnload() -> void;
     auto request() -> void;
 };
 

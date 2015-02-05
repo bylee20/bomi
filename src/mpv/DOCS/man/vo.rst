@@ -504,13 +504,19 @@ Available video output drivers are:
         rgb32f, rgba12, rgba16, rgba16f, rgba32f.
         Default: rgba.
 
-    ``gamma=<0.0..10.0>``
-        Set a gamma value. If gamma is adjusted in other ways (like with
-        the ``--gamma`` option or key bindings and the ``gamma`` property), the
-        value is multiplied with the other gamma value.
+    ``gamma=<0.1..2.0>``
+        Set a gamma value (default: 1.0). If gamma is adjusted in other ways
+        (like with the ``--gamma`` option or key bindings and the ``gamma``
+        property), the value is multiplied with the other gamma value.
 
-        Setting this value to 1.0 can be used to always enable gamma control.
-        (Disables delayed enabling.)
+        Recommended values based on the environmental brightness:
+
+        1.0
+            Brightly illuminated (default)
+        0.9
+            Slightly dim
+        0.8
+            Pitch black room
 
     ``icc-profile=<file>``
         Load an ICC profile and use it to transform linear RGB to screen output.
@@ -523,7 +529,7 @@ Available video output drivers are:
         Automatically select the ICC display profile currently specified by
         the display settings of the operating system.
 
-        NOTE: Only implemented on OS X with Cocoa.
+        NOTE: Only implemented on OS X and X11
 
     ``icc-cache=<file>``
         Store and load the 3D LUT created from the ICC profile in this file.
@@ -551,7 +557,7 @@ Available video output drivers are:
         Sizes must be a power of two, and 512 at most.
 
     ``alpha=<blend|yes|no>``
-        Decides what to do if the input has an alpha component (default: blend).
+        Decides what to do if the input has an alpha component (default: no).
 
         blend
             Blend the frame against a black background.
@@ -580,12 +586,24 @@ Available video output drivers are:
 
     ``smoothmotion``
         Use frame interpolation to reduce stuttering caused by mismatches in
-        video fps and display refresh rate (similar to MadVR's smoothmotion,
-        thus the naming). GPU drivers or compositing window managers overriding
-        vsync behavior can lead to bad results. If the framerate is close to or
-        over the display refresh rate, results can be bad as well.
+        video fps and display refresh rate.
 
-    ``smoothmotion-threshold=<0.0-1.0>``
+        Instead of drawing each frame exactly once, smoothmotion redraws the
+        the OpenGL scene at the display refresh rate. If a vsync is detected
+        to be the one when a frame changes to the next, a linear interpolation
+        of the previous frame with next is shown instead.
+
+        This means that displaying a 1fps video on a 60hz monitor will blend
+        at most during 1 vsync for each second of playback.
+
+        GPU drivers or compositing window managers overriding vsync behavior
+        can lead to bad results. If the framerate is close to or over the
+        display refresh rate, results can be bad as well.
+
+        .. note:: On systems other than Linux or OS X, you currently must set
+                  the ``--display-fps`` option, or the results will be bad.
+
+    ``smoothmotion-threshold=<0.0-0.5>``
         Mix threshold at which interpolation is skipped (default: 0.0 – never
         skip).
 
@@ -594,7 +612,7 @@ Available video output drivers are:
 
     This is equivalent to::
 
-        --vo=opengl:scale=spline36:dither-depth=auto:fbo-format=rgba16:fancy-downscaling:sigmoid-upscaling
+        --vo=opengl:scale=spline36:scale-down=mitchell:dither-depth=auto:fbo-format=rgba16:fancy-downscaling:sigmoid-upscaling
 
     Note that some cheaper LCDs do dithering that gravely interferes with
     ``opengl``'s dithering. Disabling dithering with ``dither-depth=no`` helps.

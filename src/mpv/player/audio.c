@@ -146,6 +146,7 @@ void reset_audio_state(struct MPContext *mpctx)
     if (mpctx->ao_buffer)
         mp_audio_buffer_clear(mpctx->ao_buffer);
     mpctx->audio_status = mpctx->d_audio ? STATUS_SYNCING : STATUS_EOF;
+    mpctx->delay = 0;
 }
 
 void uninit_audio_out(struct MPContext *mpctx)
@@ -401,15 +402,15 @@ static bool get_sync_samples(struct MPContext *mpctx, int *skip)
     if (written_pts == MP_NOPTS_VALUE && !mp_audio_buffer_samples(mpctx->ao_buffer))
         return false; // no audio read yet
 
-    bool sync_to_video = mpctx->d_video && mpctx->sync_audio_to_video;
+    bool sync_to_video = mpctx->d_video && mpctx->sync_audio_to_video &&
+                         mpctx->video_status != STATUS_EOF;
 
     double sync_pts = MP_NOPTS_VALUE;
     if (sync_to_video) {
-        if (mpctx->video_next_pts != MP_NOPTS_VALUE) {
-            sync_pts = mpctx->video_next_pts;
-        } else if (mpctx->video_status < STATUS_READY) {
+        if (mpctx->video_status < STATUS_READY)
             return false; // wait until we know a video PTS
-        }
+        if (mpctx->video_next_pts != MP_NOPTS_VALUE)
+            sync_pts = mpctx->video_next_pts - (opts->audio_delay - mpctx->delay);
     } else if (mpctx->hrseek_active) {
         sync_pts = mpctx->hrseek_pts;
     }
@@ -417,9 +418,6 @@ static bool get_sync_samples(struct MPContext *mpctx, int *skip)
         mpctx->audio_status = STATUS_FILLING;
         return true; // syncing disabled
     }
-
-    if (sync_to_video)
-        sync_pts -= mpctx->audio_delay - mpctx->delay;
 
     double ptsdiff = written_pts - sync_pts;
     // Missing timestamp, or PTS reset, or just broken.
@@ -476,10 +474,7 @@ static void do_fill_audio_out_buffers(struct MPContext *mpctx, double endpts)
         mpctx->video_status != STATUS_EOF && mpctx->delay > 0)
         return;
 
-    // if paused, just initialize things (audio format & pts)
-    int playsize = 1;
-    if (!mpctx->paused)
-        playsize = ao_get_space(mpctx->ao);
+    int playsize = ao_get_space(mpctx->ao);
 
     int skip = 0;
     bool sync_known = get_sync_samples(mpctx, &skip);
@@ -559,7 +554,7 @@ static void do_fill_audio_out_buffers(struct MPContext *mpctx, double endpts)
     int playflags = 0;
 
     if (endpts != MP_NOPTS_VALUE) {
-        double samples = (endpts - written_audio_pts(mpctx) - mpctx->audio_delay)
+        double samples = (endpts - written_audio_pts(mpctx) - opts->audio_delay)
                          * play_samplerate;
         if (playsize > samples) {
             playsize = MPMAX(samples, 0);

@@ -53,21 +53,10 @@
 struct GL;
 typedef struct GL GL;
 
-int glFmt2bpp(GLenum format, GLenum type);
-void glUploadTex(GL *gl, GLenum target, GLenum format, GLenum type,
-                 const void *dataptr, int stride,
-                 int x, int y, int w, int h, int slice);
-void glClearTex(GL *gl, GLenum target, GLenum format, GLenum type,
-                int x, int y, int w, int h, uint8_t val, void **scratch);
-void glCheckError(GL *gl, struct mp_log *log, const char *info);
-mp_image_t *glGetWindowScreenshot(GL *gl);
-
 enum {
     MPGL_CAP_ROW_LENGTH         = (1 << 4),     // GL_[UN]PACK_ROW_LENGTH
     MPGL_CAP_FB                 = (1 << 5),
     MPGL_CAP_VAO                = (1 << 6),
-    MPGL_CAP_SRGB_TEX           = (1 << 7),
-    MPGL_CAP_SRGB_FB            = (1 << 8),
     MPGL_CAP_FLOAT_TEX          = (1 << 9),
     MPGL_CAP_TEX_RG             = (1 << 10),    // GL_ARB_texture_rg / GL 3.x
     MPGL_CAP_VDPAU              = (1 << 11),    // GL_NV_vdpau_interop
@@ -127,20 +116,10 @@ typedef struct MPGLContext {
 
 void mpgl_lock(MPGLContext *ctx);
 void mpgl_unlock(MPGLContext *ctx);
-void mpgl_set_context(MPGLContext *ctx);
-void mpgl_unset_context(MPGLContext *ctx);
-bool mpgl_is_thread_safe(MPGLContext *ctx);
 
-// Create a VO window and create a GL context on it.
-// (Calls config_window_gl3 or config_window+setGlWindow.)
-// gl_flavor: 110 for legacy GL, 210 for GL 2.1 or 3.x core
-// flags: passed to the backend's create window function
-// Returns success.
 MPGLContext *mpgl_init(struct vo *vo, const char *backend_name, int vo_flags);
 void mpgl_uninit(MPGLContext *ctx);
-
-// flags: passed to the backend function
-bool mpgl_reconfig_window(struct MPGLContext *ctx, int flags);
+bool mpgl_reconfig_window(struct MPGLContext *ctx, int vo_flags);
 
 int mpgl_find_backend(const char *name);
 
@@ -160,10 +139,6 @@ void mpgl_load_functions(GL *gl, void *(*getProcAddress)(const GLubyte *),
                          const char *ext2, struct mp_log *log);
 void mpgl_load_functions2(GL *gl, void *(*get_fn)(void *ctx, const char *n),
                           void *fn_ctx, const char *ext2, struct mp_log *log);
-
-// print a multi line string with line numbers (e.g. for shader sources)
-// log, lev: module and log level, as in mp_msg()
-void mp_log_source(struct mp_log *log, int lev, const char *src);
 
 typedef void (GLAPIENTRY *MP_GLDEBUGPROC)(GLenum, GLenum, GLuint, GLenum,
                                           GLsizei, const GLchar *,const void *);
