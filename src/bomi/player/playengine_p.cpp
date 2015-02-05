@@ -319,9 +319,6 @@ auto PlayEngine::Data::onUnload() -> void
     t.local->set_resume_position(time);
     t.local->set_last_played_date_time(QDateTime::currentDateTime());
     t.local->set_edition(info.edition.number());
-    mutex.lock();
-    reload = -1;
-    mutex.unlock();
 }
 
 auto PlayEngine::Data::hook() -> void
