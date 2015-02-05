@@ -271,11 +271,10 @@ auto MainWindow::Data::connectMenus() -> void
             [seekChapter] () { seekChapter(+1); });
 
     connect(play[u"state"_q], &QAction::triggered, p, [=] () {
-        QString str = QString(u"%1/%2 (%3%), %4x"_q).arg(_MSecToString(e.time())
-                                                         , _MSecToString(e.end())
-                                                         , QString::number(qRound(e.rate() * 1000.0) / 10.0)
-                                                         , QString::number(e.speed()));
-        showMessage(str);
+        const auto fmt = u"%1/%2 (%3%), %4x"_q;
+        showMessage(fmt.arg(_MSecToString(e.time()), _MSecToString(e.end()),
+                            QString::number(e.rate() * 100, 'f', 1),
+                            QString::number(e.speed())));
     });
 
     Menu &video = menu(u"video"_q);
