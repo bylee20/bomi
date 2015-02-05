@@ -31,6 +31,7 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
     connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
     connect(&d->params, &MrlState::audio_volume_changed, this, &PlayEngine::volumeChanged);
+    connect(&d->params, &MrlState::audio_muted_changed, this, &PlayEngine::mutedChanged);
     connect(&d->params, &MrlState::play_speed_changed, this, &PlayEngine::speedChanged);
 
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
