@@ -153,7 +153,7 @@ struct RootMenu::Data {
         auto reset = new StepAction(ChangeValue::Reset);
         reset->setRange(min, def, max);
         parent->addActionToGroup(reset, u"reset"_q, g);
-        reg(reset, u"reset"_q, GetText([] () { return ChangeValueInfo::description(ChangeValue::Reset); }) );
+        reg(reset, u"reset"_q, [=] () { reset->setFormat(tr(format)); });
         separator();
         return stepPair(format, min, def, max, g);
     }

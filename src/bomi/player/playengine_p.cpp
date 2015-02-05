@@ -272,6 +272,7 @@ auto PlayEngine::Data::onLoad() -> void
     }
 
     const auto deint = local->video_deinterlacing() != DeintMode::None;
+    mpv.setAsync("speed", local->play_speed() * 1e-2);
     mpv.setAsync("options/sub-visibility", !local->sub_hidden());
     mpv.setAsync("options/volume", volume());
     mpv.setAsync("options/mute", local->audio_muted() ? "yes"_b : "no"_b);
@@ -279,8 +280,8 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);
     mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(local->audio_channel_layout()));
     mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
-    mpv.setAsync("af", af(local));
-    mpv.setAsync("vf", vf(local));
+    mpv.setAsync("options/af", af(local));
+    mpv.setAsync("options/vf", vf(local));
     mpv.setAsync("options/vo", vo(local));
     mpv.setAsync("options/colormatrix", _EnumData(local->video_space()).option);
     mpv.setAsync("options/colormatrix-input-range", _EnumData(local->video_range()).option);

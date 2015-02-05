@@ -181,8 +181,8 @@ struct MainWindow::Data {
     template<class T>
     auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void;
     auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
-                   void(PlayEngine::*set)(int,bool), const QString &gkey = QString(),
-                   QAction *sep = nullptr) -> void;
+                   void(PlayEngine::*set)(int,bool), const char *msg,
+                   const QString &gkey = QString(), QAction *sep = nullptr) -> void;
     static auto triggerNextAction(const QList<QAction*> &actions) -> void;
 };
 

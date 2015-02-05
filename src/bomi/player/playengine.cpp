@@ -35,6 +35,8 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::play_speed_changed, this, &PlayEngine::speedChanged);
     connect(&d->params, &MrlState::audio_volume_normalizer_changed,
             d->ac, &AudioController::setNormalizerActivated);
+    connect(&d->params, &MrlState::audio_equalizer_changed,
+            d->ac, &AudioController::setEqualizer);
 
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
@@ -960,7 +962,8 @@ auto PlayEngine::stateText() const -> QString
 
 auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
 {
-    d->ac->setEqualizer(eq);
+    if (d->params.set_audio_equalizer(eq))
+        d->ac->setEqualizer(eq);
 }
 
 auto PlayEngine::getChapter(int idx) const -> EditionChapterObject*

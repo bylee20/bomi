@@ -122,7 +122,7 @@ auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
 }
 
 auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
-                                 void(PlayEngine::*set)(int,bool),
+                                 void(PlayEngine::*set)(int,bool), const char *msg,
                                  const QString &gkey, QAction *sep) -> void
 {
     auto *m = &parent(u"track"_q);
@@ -140,8 +140,10 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
             }
         }
     });
-    connect(g, &ActionGroup::triggered, p, [=] (QAction *a)
-        { (e.*set)(a->data().toInt(), a->isChecked()); });
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+        (e.*set)(a->data().toInt(), a->isChecked());
+        showMessage(tr(msg), a->text());
+    });
 }
 
 auto MainWindow::Data::connectMenus() -> void
@@ -443,15 +445,13 @@ auto MainWindow::Data::connectMenus() -> void
             });
         showProperty("video_color", tr("Reset"));
     });
-    plugTrack(video, &MrlState::video_tracks_changed, &PlayEngine::setVideoTrackSelected);
+    plugTrack(video, &MrlState::video_tracks_changed,
+              &PlayEngine::setVideoTrackSelected, QT_TR_NOOP("Selected Video Track"));
 
     Menu &audio = menu(u"audio"_q);
 
     PLUG_STEP(audio(u"volume"_q).g(), audio_volume, setAudioVolume);
     PLUG_FLAG(audio(u"volume"_q)[u"mute"_q], audio_muted, setAudioMuted);
-    connect(e.params(), &MrlState::audio_equalizer_changed, p, [=] (auto aeq)
-        { if (eq) { QSignalBlocker bl(eq); eq->setEqualizer(aeq); } });
-
     connect(audio[u"equalizer"_q], &QAction::triggered, p, [=] () {
         if (!eq) {
             eq = new AudioEqualizerDialog(p);
@@ -468,7 +468,8 @@ auto MainWindow::Data::connectMenus() -> void
     PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);
 
     auto &atrack = audio(u"track"_q);
-    plugTrack(audio, &MrlState::audio_tracks_changed, &PlayEngine::setAudioTrackSelected);
+    plugTrack(audio, &MrlState::audio_tracks_changed,
+              &PlayEngine::setAudioTrackSelected, QT_TR_NOOP("Selected Audio Track"));
     connect(atrack[u"cycle"_q], &QAction::triggered, p, [=] ()
         { triggerNextAction(menu(u"audio"_q)(u"track"_q).g()->actions()); });
     connect(atrack[u"open"_q], &QAction::triggered, p, [this] () {
@@ -482,10 +483,10 @@ auto MainWindow::Data::connectMenus() -> void
     Menu &sub = menu(u"subtitle"_q);
     auto &strack = sub(u"track"_q);
     auto ssep = strack.addSeparator();
-    plugTrack(sub, &MrlState::sub_tracks_changed,
-              &PlayEngine::setSubtitleTrackSelected, "exclusive"_a);
-    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed,
-              &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
+    plugTrack(sub, &MrlState::sub_tracks_changed, &PlayEngine::setSubtitleTrackSelected,
+              QT_TR_NOOP("Selected Subtitle Track"), "exclusive"_a);
+    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed, &PlayEngine::setSubtitleInclusiveTrackSelected,
+              QT_TR_NOOP("Selected Subtitle Track"), "inclusive"_a, ssep);
     connect(sub(u"track"_q)[u"cycle"_q], &QAction::triggered, p, [=] () {
         auto &m = menu(u"subtitle"_q)(u"track"_q);
         auto actions = m.g(u"exclusive"_q)->actions();
