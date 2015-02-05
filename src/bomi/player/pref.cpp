@@ -70,6 +70,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"play/pause"_q] << Qt::Key_Space;
     keys[u"play/prev"_q] << Qt::CTRL + Qt::Key_Left;
     keys[u"play/next"_q] << Qt::CTRL + Qt::Key_Right;
+    keys[u"play/state"_q] << Qt::Key_Semicolon;
     keys[u"play/speed/reset"_q] << Qt::Key_Backspace;
     keys[u"play/speed/increase"_q] << Qt::Key_Plus << Qt::Key_Equal;
     keys[u"play/speed/decrease"_q] << Qt::Key_Minus;
