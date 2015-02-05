@@ -269,6 +269,14 @@ auto MainWindow::Data::connectMenus() -> void
     connect(play(u"chapter"_q)[u"next"_q], &QAction::triggered, p,
             [seekChapter] () { seekChapter(+1); });
 
+    connect(play[u"state"_q], &QAction::triggered, p, [=] () {
+        QString str = QString(u"%1/%2 (%3%), %4x"_q).arg(_MSecToString(e.time())
+                                                         , _MSecToString(e.end())
+                                                         , QString::number(qRound(e.rate() * 1000.0) / 10.0)
+                                                         , QString::number(e.speed()));
+        showMessage(str);
+    });
+
     Menu &video = menu(u"video"_q);
 
     PLUG_ENUM(video(u"aspect"_q), video_aspect_ratio, setVideoAspectRatio);
