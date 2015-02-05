@@ -119,7 +119,7 @@ struct PlayEngine::Data {
 
     struct { int size = 0, used = 0; } cache;
 
-    int avSync = 0;
+    int avSync = 0, reload = -1;
     int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;
     int duration = 0, begin = 0, time = 0;
 

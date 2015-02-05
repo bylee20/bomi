@@ -414,10 +414,12 @@ auto PlayEngine::setChannelLayoutMap_locked(const ChannelLayoutMap &map) -> void
 
 auto PlayEngine::reload() -> void
 {
-    if (d->state == PlayEngine::Stopped)
+    if (isStopped())
         return;
-//    info.reloaded = true;
-//    load(info);
+    d->mutex.lock();
+    d->reload = d->time;
+    d->mutex.unlock();
+    load(d->mrl);
 }
 
 auto PlayEngine::setHistory(HistoryModel *history) -> void

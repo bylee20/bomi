@@ -191,14 +191,29 @@ auto PlayEngine::Data::onLoad() -> void
     Mrl mrl(file);
     local->set_mrl(mrl.toUnique());
     local->d->disc = mrl.isDisc();
-    local->set_resume_position(-1);
-    local->set_edition(-1);
-    local->set_device(QString());
-    local->set_video_tracks(StreamList());
-    local->set_audio_tracks(StreamList());
-    local->set_sub_tracks(StreamList());
-    local->set_sub_tracks_inclusive(StreamList());
-    const auto found = history->getState(local);
+
+    mutex.lock();
+    auto reload = this->reload;
+    this->reload = -1;
+    mutex.unlock();
+
+    bool found = false, resume = false;
+    if (reload < 0) {
+        local->set_resume_position(-1);
+        local->set_edition(-1);
+        local->set_device(QString());
+        local->set_video_tracks(StreamList());
+        local->set_audio_tracks(StreamList());
+        local->set_sub_tracks(StreamList());
+        local->set_sub_tracks_inclusive(StreamList());
+        found = history->getState(local);
+        resume = mpv.get<bool>("options/resume-playback") && this->resume;
+    } else {
+        local->set_resume_position(reload);
+        local->set_device(mrl.device());
+        resume = found = true;
+    }
+
     auto setFiles = [&] (const char *name, const char *nid,
             const StreamList &list) {
         QStringList files; int id = -1;
@@ -241,8 +256,7 @@ auto PlayEngine::Data::onLoad() -> void
     local->set_mrl(mrl);
 
     int edition = -1, start = -1;
-    if (mpv.get<bool>("options/resume-playback")
-            && resume && mrl.isUnique() && !mrl.isImage()) {
+    if (resume && mrl.isUnique() && !mrl.isImage()) {
         edition = local->edition();
         start = local->resume_position();
     }
@@ -305,6 +319,9 @@ auto PlayEngine::Data::onFinish() -> void
     t.local->set_resume_position(time);
     t.local->set_last_played_date_time(QDateTime::currentDateTime());
     t.local->set_edition(info.edition.number());
+    mutex.lock();
+    reload = -1;
+    mutex.unlock();
 }
 
 auto PlayEngine::Data::hook() -> void
