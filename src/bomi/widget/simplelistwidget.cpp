@@ -25,16 +25,23 @@ SimpleListWidgetBase::SimpleListWidgetBase(QWidget *parent)
 
     m_view->setDragDropMode(QAbstractItemView::InternalMove);
     m_view->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_view->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_view->setDragDropOverwriteMode(false);
     m_view->setRootIsDecorated(false);
 
-    connect(m_erase, &QPushButton::clicked, this,
-            [=] () { if (m_base) m_base->remove(m_view->currentIndex().row()); });
+    connect(m_erase, &QPushButton::clicked, this, [=] () {
+        const int row = m_view->currentIndex().row();
+        if (!m_base || row < 0)
+            return;
+        m_base->remove(row);
+        m_view->setCurrentIndex(m_base->index(row));
+    });
     auto move = [this] (int diff)
     {
         if (m_base) {
             const int row = m_view->currentIndex().row();
-            m_base->swap(row, row + diff);
+            if (m_base->swap(row, row + diff))
+                m_view->setCurrentIndex(m_base->index(row + diff));
         }
     };
     connect(m_up, &QPushButton::clicked, this, [=] () { move(-1); });
