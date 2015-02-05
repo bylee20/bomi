@@ -33,6 +33,8 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::audio_volume_changed, this, &PlayEngine::volumeChanged);
     connect(&d->params, &MrlState::audio_muted_changed, this, &PlayEngine::mutedChanged);
     connect(&d->params, &MrlState::play_speed_changed, this, &PlayEngine::speedChanged);
+    connect(&d->params, &MrlState::audio_volume_normalizer_changed,
+            d->ac, &AudioController::setNormalizerActivated);
 
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
@@ -659,8 +661,7 @@ auto PlayEngine::setAudioSync(int sync) -> void
 
 auto PlayEngine::setAudioVolumeNormalizer(bool on) -> void
 {
-    if (d->params.set_audio_volume_normalizer(on))
-        d->ac->setNormalizerActivated(on);
+    d->params.set_audio_volume_normalizer(on);
 }
 
 auto PlayEngine::setAudioTempoScaler(bool on) -> void
