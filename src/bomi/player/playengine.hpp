@@ -24,8 +24,9 @@ class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
 class Autoloader;                       struct CacheInfo;
-
+struct IntrplParamSet;
 struct StringPair { QString s1, s2; };
+using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;
 
 class PlayEngine : public QObject {
     Q_OBJECT
@@ -231,8 +232,14 @@ public:
     auto setVideoEqualizer(const VideoColor &eq) -> void;
     auto setInterpolator(Interpolator type) -> void;
     auto setChromaUpscaler(Interpolator type) -> void;
-    auto interpolator() const -> Interpolator;
-    auto chromaUpscaler() const -> Interpolator;
+    auto setInterpolator(const IntrplParamSet &params) -> void;
+    auto setChromaUpscaler(const IntrplParamSet &params) -> void;
+    auto setInterpolatorMap(const IntrplParamSetMap &map) -> void;
+    auto setChromaUpscalerMap(const IntrplParamSetMap &map) -> void;
+    auto interpolator() const -> IntrplParamSet;
+    auto chromaUpscaler() const -> IntrplParamSet;
+    auto interpolatorMap() const -> IntrplParamSetMap;
+    auto chromaUpscalerMap() const -> IntrplParamSetMap;
     auto setVideoDithering(Dithering dithering) -> void;
     auto dithering() const -> Dithering;
     auto setVideoEffects(VideoEffects effects) -> void;

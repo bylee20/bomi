@@ -4,6 +4,7 @@
 #include "mrlstate.hpp"
 #include "enum/autoselectmode.hpp"
 #include "video/deintoption.hpp"
+#include "video/interpolatorparams.hpp"
 #include "misc/charsetdetector.hpp"
 
 struct MrlState::Data {
@@ -14,6 +15,7 @@ struct MrlState::Data {
     QString autoselectExt, subtitleEncoding;
     DeintOption deint_swdec, deint_hwdec;
     QString audioDevice = _L("auto");
+    IntrplParamSetMap intrpl, chroma;
 
     auto detect(const QString &file, const QString &fallback) const -> QString
     {

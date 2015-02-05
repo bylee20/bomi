@@ -150,18 +150,12 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 
 +Interpolator[:QByteArray:]
 -Bilinear[[bilinear]][-Bilinear-][:"bilinear"_b:]
--BicubicBS[[b-spline]][-B-Spline-][:"bicubic_fast"_b:]
--BicubicCR[[catmull]][-Catmull-Rom-][:"catmull_rom"_b:]
--BicubicMN[[mitchell]][-Mitchell-Netravali-][:"mitchell"_b:]
--Spline16[[spline16]][-Spline (Radius: 2)-][:"spline16"_b:]
--Spline36[[spline36]][-Spline (Radius: 3)-][:"spline36"_b:]
--Spline64[[spline64]][-Spline (Radius: 4)-][:"spline64"_b:]
+-Bicubic[[bicubic]][-Bicubic-][:"mitchell"_b:]
+-Spline[[spline]][-Spline-][:"spline"_b:]
 #-LanczosFast[[lanczos-fast]][-Fast Lanczos-]
--Lanczos2[[lanczos2]][-Lanczos (Radius: 2)-][:"lanczos2"_b:]
--Lanczos3[[lanczos3]][-Lanczos (Radius: 3)-][:"lanczos3"_b:]
--Lanczos4[[lanczos4]][-Lanczos (Radius: 4)-][:"lanczos4"_b:]
--Sharpen3[[sharpen3]][-Unsharp Masking (Radius: 3)-][:"sharpen3"_b:]
--Sharpen5[[sharpen5]][-Unsharp Masking (Radius: 5)-][:"sharpen5"_b:]
+-Lanczos[[lanczos]][-Lanczos-][:"lanczos"_b:]
+-EwaLanczos[[ewa-lanczos]][-EWA Lanczos-][:"ewa_lanczos"_b:]
+-Sharpen[[sharpen]][-Unsharp Masking-][:"sharpen"_b:]
 
 +AudioDriver
 -Auto

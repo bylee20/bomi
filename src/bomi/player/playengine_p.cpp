@@ -112,30 +112,8 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     };
 
     OptionList opts(':');
-
-    auto addScale = [&] (const char *opt, Interpolator scale) {
-        int lanczos = 0;
-        switch (scale) {
-        case Interpolator::Lanczos2:
-            lanczos = 2;
-            break;
-        case Interpolator::Lanczos3:
-            lanczos = 3;
-            break;
-        case Interpolator::Lanczos4:
-            lanczos = 4;
-            break;
-        default:
-            break;
-        }
-        if (lanczos) {
-            opts.add(opt, "lanczos"_b);
-            opts.add("scale-radius", lanczos);
-        } else
-            opts.add(opt, _EnumData(scale));
-    };
-    addScale("scale", s->video_interpolator());
-    addScale("cscale", s->video_chroma_upscaler());
+    opts.add("scale", s->d->intrpl[s->video_interpolator()].toMpvOption("scale"));
+    opts.add("cscale", s->d->chroma[s->video_chroma_upscaler()].toMpvOption("cscale"));
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(s->video_dithering()));
     if (vp->isSkipping())
@@ -146,6 +124,7 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     opts.add("fancy-downscaling", s->video_hq_downscaling());
     opts.add("sigmoid-upscaling", s->video_hq_upscaling());
     opts.add("custom-shader", customShader(c_matrix));
+
     return opts.get();
 }
 

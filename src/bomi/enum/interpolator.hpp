@@ -6,17 +6,11 @@
 
 enum class Interpolator : int {
     Bilinear = (int)0,
-    BicubicBS = (int)1,
-    BicubicCR = (int)2,
-    BicubicMN = (int)3,
-    Spline16 = (int)4,
-    Spline36 = (int)5,
-    Spline64 = (int)6,
-    Lanczos2 = (int)7,
-    Lanczos3 = (int)8,
-    Lanczos4 = (int)9,
-    Sharpen3 = (int)10,
-    Sharpen5 = (int)11
+    Bicubic = (int)1,
+    Spline = (int)2,
+    Lanczos = (int)3,
+    EwaLanczos = (int)4,
+    Sharpen = (int)5
 };
 
 Q_DECLARE_METATYPE(Interpolator)
@@ -56,9 +50,9 @@ public:
         QString name, key;
         QByteArray data;
     };
-    using ItemList = std::array<Item, 12>;
+    using ItemList = std::array<Item, 6>;
     static constexpr auto size() -> int
-    { return 12; }
+    { return 6; }
     static constexpr auto typeName() -> const char*
     { return "Interpolator"; }
     static constexpr auto typeKey() -> const char*
@@ -79,17 +73,11 @@ public:
     {
         switch (e) {
         case Enum::Bilinear: return qApp->translate("EnumInfo", "Bilinear");
-        case Enum::BicubicBS: return qApp->translate("EnumInfo", "B-Spline");
-        case Enum::BicubicCR: return qApp->translate("EnumInfo", "Catmull-Rom");
-        case Enum::BicubicMN: return qApp->translate("EnumInfo", "Mitchell-Netravali");
-        case Enum::Spline16: return qApp->translate("EnumInfo", "Spline (Radius: 2)");
-        case Enum::Spline36: return qApp->translate("EnumInfo", "Spline (Radius: 3)");
-        case Enum::Spline64: return qApp->translate("EnumInfo", "Spline (Radius: 4)");
-        case Enum::Lanczos2: return qApp->translate("EnumInfo", "Lanczos (Radius: 2)");
-        case Enum::Lanczos3: return qApp->translate("EnumInfo", "Lanczos (Radius: 3)");
-        case Enum::Lanczos4: return qApp->translate("EnumInfo", "Lanczos (Radius: 4)");
-        case Enum::Sharpen3: return qApp->translate("EnumInfo", "Unsharp Masking (Radius: 3)");
-        case Enum::Sharpen5: return qApp->translate("EnumInfo", "Unsharp Masking (Radius: 5)");
+        case Enum::Bicubic: return qApp->translate("EnumInfo", "Bicubic");
+        case Enum::Spline: return qApp->translate("EnumInfo", "Spline");
+        case Enum::Lanczos: return qApp->translate("EnumInfo", "Lanczos");
+        case Enum::EwaLanczos: return qApp->translate("EnumInfo", "EWA Lanczos");
+        case Enum::Sharpen: return qApp->translate("EnumInfo", "Unsharp Masking");
         default: return QString();
         }
     }

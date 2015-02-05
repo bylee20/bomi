@@ -118,8 +118,9 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"video/color/saturation-"_q] << Qt::Key_J;
     keys[u"video/color/hue+"_q] << Qt::Key_I;
     keys[u"video/color/hue-"_q] << Qt::Key_K;
-    keys[u"video/interpolator/cycle"_q] << Qt::CTRL+ Qt::Key_I;
-    keys[u"video/dithering/cycle"_q] << Qt::CTRL+ Qt::Key_T;
+    keys[u"video/interpolator/advanced"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_I;
+    keys[u"video/interpolator/cycle"_q] << Qt::CTRL + Qt::Key_I;
+    keys[u"video/dithering/cycle"_q] << Qt::CTRL + Qt::Key_T;
 
     keys[u"audio/track/cycle"_q] << Qt::CTRL + Qt::Key_A;
     keys[u"audio/volume/increase"_q] << Qt::Key_Up;

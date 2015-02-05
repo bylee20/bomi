@@ -453,8 +453,14 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->enumMenuCheckable<Interpolator>(u"chroma-upscaler"_q, QT_TR_NOOP("Chroma Upscaler"), true);
-        d->enumMenuCheckable<Interpolator>(u"interpolator"_q, QT_TR_NOOP("Interpolator"), true);
+        d->menu(u"chroma-upscaler"_q, QT_TR_NOOP("Chroma Upscaler"), [=] () {
+            d->action(u"advanced"_q, QT_TR_NOOP("Advanced..."));
+            d->enumActionsCheckable<Interpolator>(true);
+        });
+        d->menu(u"interpolator"_q, QT_TR_NOOP("Interpolator"), [=] () {
+            d->action(u"advanced"_q, QT_TR_NOOP("Advanced..."));
+            d->enumActionsCheckable<Interpolator>(true);
+        });
         d->menu(u"hq-scaling"_q, QT_TR_NOOP("High Quality Scaling"), [=] () {
             d->action(u"up"_q, QT_TR_NOOP("High Quality Upscaling"), true);
             d->action(u"down"_q, QT_TR_NOOP("High Quality Downscaling"), true);

@@ -12,6 +12,7 @@
 #include "dialog/snapshotdialog.hpp"
 #include "dialog/subtitlefinddialog.hpp"
 #include "dialog/encodingfiledialog.hpp"
+#include "video/interpolatorparams.hpp"
 
 template<class T, class Func>
 auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUndoCommand*
@@ -376,6 +377,30 @@ auto MainWindow::Data::connectMenus() -> void
     PLUG_ENUM_CHILD(video, video_deinterlacing, setDeintMode);
     PLUG_ENUM(video(u"interpolator"_q), video_interpolator, setInterpolator);
     PLUG_ENUM(video(u"chroma-upscaler"_q), video_chroma_upscaler, setChromaUpscaler);
+
+#define PLUG_INTRPL(m, name, dlg, title, setParams, getParams, getMap) \
+        connect(m[u"advanced"_q], &QAction::triggered, p, [=] () { \
+            if (!dlg) { \
+                dlg = new IntrplDialog(p); \
+                connect(dlg, &IntrplDialog::paramsChanged, &e, \
+                    static_cast<Signal<PlayEngine, const IntrplParamSet&>>(&PlayEngine::setParams)); \
+                connect(e.params(), &MrlState::video_##name##_changed, dlg, [=] () { \
+                    if (dlg->isVisible()) \
+                        dlg->set(e.getParams().type, e.getMap()); \
+                }); \
+            } \
+            if (!dlg->isVisible()) { \
+                dlg->setWindowTitle(title); \
+                dlg->set(e.getParams().type, e.getMap()); \
+                dlg->show(); \
+            } \
+        });
+    PLUG_INTRPL(video(u"interpolator"_q), interpolator, intrpl,
+                tr("Advanced Interpolator Settings"),
+                setInterpolator, interpolator, interpolatorMap);
+    PLUG_INTRPL(video(u"chroma-upscaler"_q), chroma_upscaler, chroma,
+                tr("Advanced Chroma Upscaler Settings"),
+                setChromaUpscaler, chromaUpscaler, chromaUpscalerMap);
 
     PLUG_FLAG(video(u"hq-scaling"_q)[u"down"_q], video_hq_downscaling, setVideoHighQualityDownscaling);
     PLUG_FLAG(video(u"hq-scaling"_q)[u"up"_q], video_hq_upscaling, setVideoHighQualityUpscaling);

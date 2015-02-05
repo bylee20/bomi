@@ -808,6 +808,54 @@ auto PlayEngine::setColorSpace(ColorSpace space) -> void
         d->mpv.setAsync("colormatrix", _EnumData(space).option);
 }
 
+auto PlayEngine::setInterpolator(const IntrplParamSet &params) -> void
+{
+    d->mutex.lock();
+    auto changed = _Change(d->params.d->intrpl[params.type], params);
+    d->mutex.unlock();
+    if (changed | d->params.set_video_interpolator(params.type))
+        d->updateVideoSubOptions();
+}
+
+auto PlayEngine::setChromaUpscaler(const IntrplParamSet &params) -> void
+{
+    d->mutex.lock();
+    auto changed = _Change(d->params.d->chroma[params.type], params);
+    d->mutex.unlock();
+    if (changed | d->params.set_video_chroma_upscaler(params.type))
+        d->updateVideoSubOptions();
+}
+
+auto PlayEngine::interpolator() const -> IntrplParamSet
+{
+    return d->params.d->intrpl[d->params.video_interpolator()];
+}
+
+auto PlayEngine::chromaUpscaler() const -> IntrplParamSet
+{
+    return d->params.d->chroma[d->params.video_chroma_upscaler()];
+}
+
+auto PlayEngine::interpolatorMap() const -> IntrplParamSetMap
+{
+    return d->params.d->intrpl;
+}
+
+auto PlayEngine::chromaUpscalerMap() const -> IntrplParamSetMap
+{
+    return d->params.d->chroma;
+}
+
+auto PlayEngine::setInterpolatorMap(const IntrplParamSetMap &map) -> void
+{
+    d->params.d->intrpl = map;
+}
+
+auto PlayEngine::setChromaUpscalerMap(const IntrplParamSetMap &map) -> void
+{
+    d->params.d->chroma = map;
+}
+
 auto PlayEngine::setInterpolator(Interpolator type) -> void
 {
     if (d->params.set_video_interpolator(type))

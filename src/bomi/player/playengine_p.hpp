@@ -27,6 +27,7 @@
 #include "video/videorenderer.hpp"
 #include "video/videoprocessor.hpp"
 #include "video/videocolor.hpp"
+#include "video/interpolatorparams.hpp"
 #include "subtitle/subtitle.hpp"
 #include "subtitle/subtitlerenderer.hpp"
 #include "enum/deintmode.hpp"

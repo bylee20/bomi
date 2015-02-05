@@ -1,5 +1,6 @@
 #include "mrlstate.hpp"
 #include "mrlstate_p.hpp"
+#include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
 #include "misc/log.hpp"
 
@@ -30,12 +31,29 @@ auto MrlState::select(StreamType type, int id) -> void
 
 auto MrlState::toJson() const -> QJsonObject
 {
-    return _JsonFromQObject(this);
+    auto json = _JsonFromQObject(this);
+    json.insert(u"video_interpolator_map"_q, _ToJson(d->intrpl));
+    json.insert(u"video_chroma_upscaler_map"_q, _ToJson(d->chroma));
+    return json;
 }
 
 auto MrlState::setFromJson(const QJsonObject &json) -> bool
 {
-    return _JsonToQObject(json, this);
+    bool ret = _JsonToQObject(json, this);
+    auto set = [&] (const QString &key, IntrplParamSetMap &map) {
+        auto it = json.find(key);
+        if (it == json.end())
+            return false;
+        map = _FromJson<IntrplParamSetMap>(it.value());
+        for (auto &item : InterpolatorInfo::items()) {
+            if (!map.contains(item.value))
+                map[item.value] = IntrplParamSet::default_(item.value);
+        }
+        return true;
+    };
+    ret = set(u"video_interpolator_map"_q, d->intrpl) && ret;
+    ret = set(u"video_chroma_upscaler_map"_q, d->chroma) && ret;
+    return ret;
 }
 
 auto MrlState::copyFrom(const MrlState *state) -> void
