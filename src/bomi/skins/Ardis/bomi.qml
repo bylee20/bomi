@@ -139,8 +139,8 @@ B.AppWithFloating {
                     markerStyle: B.ChapterMarkerStyle {
                         marker: B.Button {
                             readonly property bool emph: hovered || pressed
-                            width: 8; height: 10
-                            x: -width * 0.5; z: emph ? 1e10 : -1
+                            width: 5; height: 5; z: emph ? 1e10 : -1
+                            x: -width * 0.5;
                             y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0)
                             icon.source: emph ? "marker-filled.png" : "marker.png"
                             tooltip: parent.chapter.name; delay: 0
