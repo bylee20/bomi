@@ -223,17 +223,17 @@ auto Pref::load() -> void
         _Error("Error: Cannot convert JSON object to preferences");
 
     if (json.contains(u"sub_enable_autoload"_q)) {
-        sub_autoload_v2.enabled = json[u"sub_enable_autoload"_q].toBool();
-        sub_autoload_v2.search_paths = _FromJson<QList<MatchString>>(json[u"sub_search_paths_v2"_q]);
-        sub_autoload_v2.mode = _FromJson<AutoloadMode>(json[u"sub_autoload"_q]);
+        m_sub_autoload_v2.enabled = json[u"sub_enable_autoload"_q].toBool();
+        m_sub_autoload_v2.search_paths = _FromJson<QList<MatchString>>(json[u"sub_search_paths_v2"_q]);
+        m_sub_autoload_v2.mode = _FromJson<AutoloadMode>(json[u"sub_autoload"_q]);
     }
-    int idx = restore_properties.indexOf(u"audio_track"_q);
+    int idx = m_restore_properties.indexOf(u"audio_track"_q);
     if (idx != -1)
-        restore_properties[idx] = u"audio_tracks"_q;
-    idx = restore_properties.indexOf(u"sub_track"_q);
+        m_restore_properties[idx] = u"audio_tracks"_q;
+    idx = m_restore_properties.indexOf(u"sub_track"_q);
     if (idx != -1) {
-        restore_properties[idx] = u"sub_tracks"_q;
-        restore_properties.append(u"sub_tracks_inclusive"_q);
+        m_restore_properties[idx] = u"sub_tracks"_q;
+        m_restore_properties.append(u"sub_tracks_inclusive"_q);
     }
 }
 

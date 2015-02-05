@@ -8,6 +8,7 @@ public:
     MatchString() { }
     MatchString(const QString &text, bool regex = false)
         : m_text(text), m_regex(regex) { }
+    DECL_EQ(MatchString, &T::m_text, &T::m_regex, &T::m_caseSensitive)
     auto caseSensitivity() const
         { return m_caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive; }
     auto isCaseInsensitive() const { return !m_caseSensitive; }

@@ -9,6 +9,7 @@ template<class T> struct JsonIO;
 
 class DeintCaps {
 public:
+    DECL_EQ(DeintCaps, &T::m_method, &T::m_decoders, &T::m_devices, &T::m_doubler)
     auto method() const -> DeintMethod { return m_method; }
     auto hwdec() const -> bool { return supports(DecoderDevice::GPU); }
     auto swdec() const -> bool { return supports(DecoderDevice::CPU); }

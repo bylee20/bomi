@@ -94,7 +94,7 @@ auto MainWindow::Data::initEngine() -> void
         menu(u"video"_q)(u"track"_q).setEnabled(playing);
         menu(u"audio"_q)(u"track"_q).setEnabled(playing);
         menu(u"subtitle"_q)(u"track"_q).setEnabled(playing);
-        cApp.setScreensaverDisabled(pref().disable_screensaver && playing);
+        cApp.setScreensaverDisabled(pref.disable_screensaver() && playing);
         updateStaysOnTop();
         stateChanging = false;
     });
@@ -108,15 +108,16 @@ auto MainWindow::Data::initEngine() -> void
     connect(&e, &PlayEngine::finished, p, [=] (const Mrl &/*mrl*/, bool eof) {
         if (!eof) return;
         const auto next = playlist.checkNextMrl();
-        if (!next.isEmpty()) load(next, true, !pref().resume_ignore_in_playlist);
+        if (!next.isEmpty()) load(next, true, !pref.resume_ignore_in_playlist());
     });
 
     connect(e.video()->renderer(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
-        { if (pref().fit_to_video && !s.isEmpty()) setVideoSize(s); });
+        { if (pref.fit_to_video() && !s.isEmpty()) setVideoSize(s); });
     auto showSize = [this] {
         const auto num = [] (qreal n) { return _N(qRound(n)); };
         const auto w = num(e.screen()->width()), h = num(e.screen()->height());
-        showMessage(w % u'×'_q % h, &pref().osd_theme.message.show_on_resized);
+        const auto forced = pref.osd_theme().message.show_on_resized;
+        showMessage(w % u'×'_q % h, &forced);
     };
     connect(e.screen(), &QQuickItem::widthChanged, p, showSize);
     connect(e.screen(), &QQuickItem::heightChanged, p, showSize);
@@ -234,9 +235,9 @@ auto MainWindow::Data::trigger(QAction *action) -> void
 
 auto MainWindow::Data::readyToHideCursor() -> void
 {
-    if (pref().hide_cursor
-            && (p->isFullScreen() || !pref().hide_cursor_fs_only))
-        hider.start(pref().hide_cursor_delay_sec * 1000);
+    if (pref.hide_cursor()
+            && (p->isFullScreen() || !pref.hide_cursor_fs_only()))
+        hider.start(pref.hide_cursor_delay_sec() * 1000);
     else
         cancelToHideCursor();
 }
@@ -266,7 +267,7 @@ auto MainWindow::Data::commitData() -> void
 
 auto MainWindow::Data::showTimeLine() -> void
 {
-    if (player && pref().osd_theme.timeline.show_on_seeking)
+    if (player && pref.osd_theme().timeline.show_on_seeking)
         QMetaObject::invokeMethod(player, "showTimeLine");
 }
 
@@ -334,12 +335,12 @@ auto MainWindow::Data::openMrl(const Mrl &mrl) -> void
 
 auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
 {
-    if (!mrl.isLocalFile() || !pref().enable_generate_playlist)
+    if (!mrl.isLocalFile() || !pref.enable_generate_playlist())
         return Playlist(mrl);
-    const auto mode = pref().generate_playlist;
+    const auto mode = pref.generate_playlist();
     const QFileInfo file(mrl.toLocalFile());
     const QDir dir = file.dir();
-    const auto filter = _ToNameFilter(pref().exclude_images ? VideoExt | AudioExt : MediaExt);
+    const auto filter = _ToNameFilter(pref.exclude_images() ? VideoExt | AudioExt : MediaExt);
     if (mode == GeneratePlaylist::Folder) {
         Playlist pl;
         const auto files = dir.entryList(filter, QDir::Files, QDir::Name);
@@ -387,7 +388,7 @@ auto MainWindow::Data::showMessage(const QString &msg, const bool *force) -> voi
     if (force) {
         if (!*force)
             return;
-    } else if (!pref().osd_theme.message.show_on_action)
+    } else if (!pref.osd_theme().message.show_on_action)
         return;
     if (!dontShowMsg)
         showOSD(msg);
@@ -413,51 +414,51 @@ void MainWindow::Data::showMessage(const QString &cmd, double value,
 
 auto MainWindow::Data::applyPref() -> void
 {
-    preferences.save();
-    const Pref &p = preferences;
+    pref.save();
+    const Pref &p = pref;
 
-    youtube.setUserAgent(p.yt_user_agent);
-    youtube.setProgram(p.yt_program);
-    yle.setProgram(p.yle_program);
-    history.setRememberImage(p.remember_image);
-    history.setPropertiesToRestore(p.restore_properties);
-    SubtitleParser::setMsPerCharactor(p.ms_per_char);
-    cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
-                      p.heartbeat_interval);
-    cApp.setMprisActivated(p.use_mpris2);
+    youtube.setUserAgent(p.yt_user_agent());
+    youtube.setProgram(p.yt_program());
+    yle.setProgram(p.yle_program());
+    history.setRememberImage(p.remember_image());
+    history.setPropertiesToRestore(p.restore_properties());
+    SubtitleParser::setMsPerCharactor(p.ms_per_char());
+    cApp.setHeartbeat(p.use_heartbeat() ? p.heartbeat_command() : QString(),
+                      p.heartbeat_interval());
+    cApp.setMprisActivated(p.use_mpris2());
 
     menu.retranslate();
-    menu.setShortcuts(p.shortcuts);
-    menu(u"play"_q)(u"speed"_q).s()->setStep(p.speed_step);
-    menu(u"play"_q)(u"seek"_q).s(u"seek1"_q)->setStep(p.seek_step1_sec * 1000);
-    menu(u"play"_q)(u"seek"_q).s(u"seek2"_q)->setStep(p.seek_step2_sec * 1000);
-    menu(u"play"_q)(u"seek"_q).s(u"seek3"_q)->setStep(p.seek_step3_sec * 1000);
-    menu(u"subtitle"_q)(u"position"_q).s()->setStep(p.sub_pos_step);
-    menu(u"subtitle"_q)(u"sync"_q).s()->setStep(p.sub_sync_step_sec * 1000);
-    menu(u"video"_q)(u"color"_q).s(u"brightness"_q)->setStep(p.brightness_step);
-    menu(u"video"_q)(u"color"_q).s(u"contrast"_q)->setStep(p.contrast_step);
-    menu(u"video"_q)(u"color"_q).s(u"saturation"_q)->setStep(p.saturation_step);
-    menu(u"video"_q)(u"color"_q).s(u"hue"_q)->setStep(p.hue_step);
-    menu(u"audio"_q)(u"sync"_q).s()->setStep(p.audio_sync_step_sec * 1000);
-    menu(u"audio"_q)(u"volume"_q).s()->setStep(p.volume_step);
-    menu(u"audio"_q)(u"amp"_q).s()->setStep(p.amp_step);
+    menu.setShortcuts(p.shortcuts());
+    menu(u"play"_q)(u"speed"_q).s()->setStep(p.speed_step());
+    menu(u"play"_q)(u"seek"_q).s(u"seek1"_q)->setStep(p.seek_step1_sec() * 1000);
+    menu(u"play"_q)(u"seek"_q).s(u"seek2"_q)->setStep(p.seek_step2_sec() * 1000);
+    menu(u"play"_q)(u"seek"_q).s(u"seek3"_q)->setStep(p.seek_step3_sec() * 1000);
+    menu(u"subtitle"_q)(u"position"_q).s()->setStep(p.sub_pos_step());
+    menu(u"subtitle"_q)(u"sync"_q).s()->setStep(p.sub_sync_step_sec() * 1000);
+    menu(u"video"_q)(u"color"_q).s(u"brightness"_q)->setStep(p.brightness_step());
+    menu(u"video"_q)(u"color"_q).s(u"contrast"_q)->setStep(p.contrast_step());
+    menu(u"video"_q)(u"color"_q).s(u"saturation"_q)->setStep(p.saturation_step());
+    menu(u"video"_q)(u"color"_q).s(u"hue"_q)->setStep(p.hue_step());
+    menu(u"audio"_q)(u"sync"_q).s()->setStep(p.audio_sync_step_sec() * 1000);
+    menu(u"audio"_q)(u"volume"_q).s()->setStep(p.volume_step());
+    menu(u"audio"_q)(u"amp"_q).s()->setStep(p.amp_step());
     menu.resetKeyMap();
 
-    theme.set(p.osd_theme);
-    theme.set(p.playlist_theme);
-    theme.set(p.history_theme);
+    theme.set(p.osd_theme());
+    theme.set(p.playlist_theme());
+    theme.set(p.history_theme());
     reloadSkin();
     if (tray)
-        tray->setVisible(p.enable_system_tray);
+        tray->setVisible(p.enable_system_tray());
 
     auto cache = [&] () {
         CacheInfo cache;
-        cache.local = p.cache_local;
-        cache.network = p.cache_network;
-        cache.disc = p.cache_disc;
-        cache.min_playback = p.cache_min_playback / 100.;
-        cache.min_seeking = p.cache_min_seeking / 100.;
-        cache.remotes = p.network_folders;
+        cache.local = p.cache_local();
+        cache.network = p.cache_network();
+        cache.disc = p.cache_disc();
+        cache.min_playback = p.cache_min_playback() / 100.;
+        cache.min_seeking = p.cache_min_seeking() / 100.;
+        cache.remotes = p.network_folders();
         return cache;
     };
     auto conv = [&p] (const DeintCaps &caps) {
@@ -478,26 +479,26 @@ auto MainWindow::Data::applyPref() -> void
                             ? DeintDevice::OpenGL : DeintDevice::CPU;
         return option;
     };
-    const auto chardet = p.sub_enc_autodetection ? -1 : p.sub_enc_accuracy * 1e-2;
+    const auto chardet = p.sub_enc_autodetection() ? -1 : p.sub_enc_accuracy() * 1e-2;
 
     e.lock();
-    e.setResume_locked(p.remember_stopped);
-    e.setPreciseSeeking_locked(p.precise_seeking);
+    e.setResume_locked(p.remember_stopped());
+    e.setPreciseSeeking_locked(p.precise_seeking());
     e.setCache_locked(cache());
-    e.setPriority_locked(p.audio_priority, p.sub_priority);
-    e.setAutoloader_locked(p.audio_autoload, p.sub_autoload_v2);
+    e.setPriority_locked(p.audio_priority(), p.sub_priority());
+    e.setAutoloader_locked(p.audio_autoload(), p.sub_autoload_v2());
 
-    e.setHwAcc_locked(p.enable_hwaccel, p.hwaccel_codecs);
-    e.setDeintOptions_locked(conv(p.deint_swdec), conv(p.deint_hwdec));
+    e.setHwAcc_locked(p.enable_hwaccel(), p.hwaccel_codecs());
+    e.setDeintOptions_locked(conv(p.deint_swdec()), conv(p.deint_hwdec()));
 
-    e.setAudioDevice_locked(p.audio_device);
-    e.setVolumeNormalizerOption_locked(p.audio_normalizer);
-    e.setChannelLayoutMap_locked(p.channel_manipulation);
-    e.setClippingMethod_locked(p.clipping_method);
+    e.setAudioDevice_locked(p.audio_device());
+    e.setVolumeNormalizerOption_locked(p.audio_normalizer());
+    e.setChannelLayoutMap_locked(p.channel_manipulation());
+    e.setClippingMethod_locked(p.clipping_method());
 
-    e.setSubtitleStyle_locked(p.sub_style);
-    e.setAutoselectMode_locked(p.sub_enable_autoselect, p.sub_autoselect, p.sub_ext);
-    e.setSubtitleEncoding_locked(p.sub_enc, chardet);
+    e.setSubtitleStyle_locked(p.sub_style());
+    e.setAutoselectMode_locked(p.sub_enable_autoselect(), p.sub_autoselect(), p.sub_ext());
+    e.setSubtitleEncoding_locked(p.sub_enc(), chardet);
     e.unlock();
     e.reload();
 }
@@ -549,7 +550,7 @@ auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void
 auto MainWindow::Data::reloadSkin() -> void
 {
     player = nullptr;
-    view->setSkin(pref().skin_name);
+    view->setSkin(pref.skin_name());
     auto root = view->rootObject();
     if (!root)
         return;
@@ -569,8 +570,8 @@ auto MainWindow::Data::reloadSkin() -> void
         if (auto item = view->findItem(u"playinfo"_q))
             item->setProperty("show", as.playinfo_visible);
         if (auto item = view->findItem(u"logo"_q)) {
-            item->setProperty("show", pref().show_logo);
-            item->setProperty("color", pref().bg_color);
+            item->setProperty("show", pref.show_logo());
+            item->setProperty("color", pref.bg_color());
         }
     }
 }
@@ -644,10 +645,9 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
         p->setWindowIcon(cApp.defaultIcon());
 #endif
     } else {
-        const auto &p = pref();
-        if (!p.pause_minimized || dontPause)
+        if (!pref.pause_minimized() || dontPause)
             return;
-        if (!e.isPlaying() || (p.pause_video_only && !e.hasVideo()))
+        if (!e.isPlaying() || (pref.pause_video_only() && !e.hasVideo()))
             return;
         pausedByHiding = true;
         e.pause();

@@ -6,6 +6,7 @@
 #include "player/mrl.hpp"
 
 struct Autoloader {
+    DECL_EQ(Autoloader, &T::search_paths, &T::enabled, &T::mode)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
     auto autoload(const Mrl &mrl, ExtType type) const -> QStringList;

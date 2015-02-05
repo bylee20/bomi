@@ -7,6 +7,7 @@ struct ChannelName {const char *abbr; const char *desc;};
 
 class ChannelLayoutMap {
 public:
+    DECL_EQ(ChannelLayoutMap, &T::m_map)
     auto operator () (ChannelLayout src,
                       ChannelLayout dest) const -> ChannelManipulation
         { return m_map[src][dest]; }

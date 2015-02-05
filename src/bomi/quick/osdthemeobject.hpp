@@ -11,18 +11,21 @@ struct TimelineTheme {
     VerticalAlignment position = VerticalAlignment::Center;
     double margin = 0.1;
     int duration = 2500;
+    DECL_EQ(TimelineTheme, &T::show_on_seeking, &T::position, &T::margin, &T::duration)
 };
 
 struct MessageTheme {
     bool show_on_action = true;
     bool show_on_resized = true;
     int duration = 2500;
+    DECL_EQ(MessageTheme, &T::show_on_action, &T::show_on_resized, &T::duration)
 };
 
 struct OsdTheme {
     OsdStyle style;
     TimelineTheme timeline;
     MessageTheme message;
+    DECL_EQ(OsdTheme, &T::style, &T::timeline, &T::message)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };

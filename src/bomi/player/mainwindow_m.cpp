@@ -335,9 +335,9 @@ auto MainWindow::Data::connectMenus() -> void
             const auto time = QDateTime::currentDateTime();
             const QString fileName = "bomi-snapshot-"_a
                     % time.toString(u"yyyy-MM-dd-hh-mm-ss-zzz"_q)
-                    % '.'_q % pref().quick_snapshot_format;
+                    % '.'_q % pref.quick_snapshot_format();
             QString file;
-            switch (pref().quick_snapshot_save) {
+            switch (pref.quick_snapshot_save()) {
             case QuickSnapshotSave::Current:
                 if (e.mrl().isLocalFile()) {
                     file = _ToAbsPath(e.mrl().toLocalFile())
@@ -348,11 +348,11 @@ auto MainWindow::Data::connectMenus() -> void
                 file = _GetSaveFile(p, tr("Save File"), fileName, WritableImageExt);
                 break;
             case QuickSnapshotSave::Fixed:
-                file = pref().quick_snapshot_folder % '/'_q % fileName;
+                file = pref.quick_snapshot_folder() % '/'_q % fileName;
                 break;
             }
             if (!file.isEmpty() && image.save(file, nullptr,
-                                              pref().quick_snapshot_quality))
+                                              pref.quick_snapshot_quality()))
                 showMessage(tr("Snapshot saved"), fileName);
             else
                 showMessage(tr("Failed to save a snapshot"));
@@ -503,7 +503,7 @@ auto MainWindow::Data::connectMenus() -> void
         QString dir;
         if (e.mrl().isLocalFile())
             dir = _ToAbsPath(e.mrl().toLocalFile());
-        QString enc = pref().sub_enc;
+        QString enc = pref.sub_enc();
         const auto files = EncodingFileDialog::getOpenFileNames(
             p, tr("Open Subtitle"), dir, _ToFilter(SubtitleExt), &enc);
         e.addSubtitleFiles(files, enc);
@@ -618,13 +618,13 @@ auto MainWindow::Data::connectMenus() -> void
             prefDlg = new PrefDialog(p);
             prefDlg->setAudioDeviceList(e.audioDeviceList());
             connect(prefDlg, &PrefDialog::applyRequested, p, [this] {
-                prefDlg->get(preferences); applyPref();
+                prefDlg->get(pref); applyPref();
             });
             connect(prefDlg, &PrefDialog::resetRequested, p, [this] {
-                prefDlg->set(pref());
+                prefDlg->set(pref);
             });
         }
-        prefDlg->set(pref());
+        prefDlg->set(pref);
         prefDlg->show();
     });
     connect(tool[u"find-subtitle"_q], &QAction::triggered, p, [this] () {
@@ -633,7 +633,7 @@ auto MainWindow::Data::connectMenus() -> void
             subFindDlg->setSelectedLangCode(as.sub_find_lang_code);
             connect(subFindDlg, &SubtitleFindDialog::loadRequested,
                     p, [this] (const QString &fileName) {
-                e.addSubtitleFiles(QStringList(fileName), pref().sub_enc);
+                e.addSubtitleFiles(QStringList(fileName), pref.sub_enc());
                 showMessage(tr("Downloaded"), QFileInfo(fileName).fileName());
             });
         }

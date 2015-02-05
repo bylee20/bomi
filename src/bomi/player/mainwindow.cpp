@@ -17,8 +17,8 @@ MainWindow::MainWindow(QWidget *parent)
     d->p = this;
     d->view = new MainQuickView(this);
     d->desktop = cApp.desktop();
-    d->preferences.initialize();
-    d->preferences.load();
+    d->pref.initialize();
+    d->pref.load();
 
     AppObject::setEngine(&d->e);
     AppObject::setHistory(&d->history);
@@ -116,7 +116,7 @@ MainWindow::MainWindow(QWidget *parent)
             else if (reason == TrayIcon::Quit)
                 exit();
         });
-        d->tray->setVisible(d->preferences.enable_system_tray);
+        d->tray->setVisible(d->pref.enable_system_tray());
     }
 
     QTimer::singleShot(1, this, [=] () { d->applyPref(); cApp.runCommands(); });
@@ -138,7 +138,7 @@ auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
         if (mrl.isLocalFile() && _IsSuffixOf(PlaylistExt, mrl.suffix()))
             d->playlist.open(mrl, QString());
         else {
-            const auto mode = d->pref().open_media_from_file_manager;
+            const auto mode = d->pref.open_media_from_file_manager();
             d->openWith(mode, QList<Mrl>() << mrl);
         }
     }
@@ -217,7 +217,7 @@ auto MainWindow::setFullScreen(bool full) -> void
         d->fullScreen = full;
         d->updateWindowPosState();
 #ifdef Q_OS_MAC
-        if (!d->pref().lion_style_fullscreen) {
+        if (!d->pref.lion_style_fullscreen()) {
             static Qt::WindowFlags flags = windowFlags();
             static QRect geometry;
             if (full) {
@@ -348,7 +348,7 @@ auto MainWindow::onWheelEvent(QWheelEvent *ev) -> void
     QWidget::wheelEvent(ev);
     const auto delta = ev->delta();
     if (delta) {
-        const bool up = d->pref().invert_wheel ? delta < 0 : delta > 0;
+        const bool up = d->pref.invert_wheel() ? delta < 0 : delta > 0;
         const auto id = d->actionId(up ? MsBh::ScrollUp : MsBh::ScrollDown, ev);
         d->trigger(d->menu.action(id));
         ev->accept();
@@ -405,9 +405,9 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
             addPlaylist(url, QFileInfo(url.path()).suffix().toLower());
     }
     if (!playlist.isEmpty()) {
-        d->openWith(d->pref().open_media_by_drag_and_drop, playlist);
+        d->openWith(d->pref.open_media_by_drag_and_drop(), playlist);
     } else if (!subList.isEmpty())
-        d->e.addSubtitleFiles(subList, d->pref().sub_enc);
+        d->e.addSubtitleFiles(subList, d->pref.sub_enc());
 }
 
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
@@ -452,8 +452,8 @@ auto MainWindow::closeEvent(QCloseEvent *event) -> void
     setFullScreen(false);
     QWidget::closeEvent(event);
 #ifndef Q_OS_MAC
-    if (d->tray && d->pref().enable_system_tray
-            && d->pref().hide_rather_close) {
+    if (d->tray && d->pref.enable_system_tray()
+            && d->pref.hide_rather_close()) {
         hide();
         if (d->as.ask_system_tray) {
             MBox mbox(this);

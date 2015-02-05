@@ -50,6 +50,22 @@ using QRegExMatchIterator = QRegularExpressionMatchIterator;
 
 namespace Pch {
 
+namespace pch_detail {
+template<class T>
+struct GenericEq {
+    static auto eq(const T *, const T *) -> bool { return true; }
+    template<class S, class... Args>
+    static auto eq(const T *lhs, const T *rhs, S pm, Args... args) -> bool
+        { return (lhs->*pm) == (rhs->*pm) && eq(lhs, rhs, args...); }
+};
+}
+#define DECL_EQ(type, ...) \
+    using T = type; \
+    auto operator == (const T &rhs) const -> bool \
+        { return pch_detail::GenericEq<T>::eq(this, &rhs, __VA_ARGS__); } \
+    auto operator != (const T &rhs) const -> bool \
+        { return !operator == (rhs); }
+
 SIA operator "" _q(const char16_t *str, size_t len) -> QString
 { return QString::fromRawData(reinterpret_cast<const QChar*>(str), len); }
 

@@ -23,24 +23,29 @@ struct OsdStyle {
         QColor color = { Qt::white };
         double size = 0.05;
         QFont qfont;
+        DECL_EQ(Font, &T::color, &T::size, &T::qfont)
     };
     struct BBox {
         bool enabled = false;
         QColor color = {0, 0, 0, 127};
         QPointF padding = {0.3, 0.1};
+        DECL_EQ(BBox, &T::enabled, &T::color, &T::padding)
     };
     struct Shadow {
         bool enabled = true, blur = true;
         QColor color = {0, 0, 0, 127};
         QPointF offset = {0.1, 0.1};
+        DECL_EQ(Shadow, &T::enabled, &T::blur, &T::color, &T::offset)
     };
     struct Outline {
         QColor color = {Qt::black};
         double width = 0.05;
         bool enabled = true;
+        DECL_EQ(Outline, &T::color, &T::width, &T::enabled)
     };
     struct Spacing {
         double line = 0, paragraph = 0;
+        DECL_EQ(Spacing, &T::line, &T::paragraph)
     };
     QTextOption::WrapMode wrapMode = QTextOption::WrapAtWordBoundaryOrAnywhere;
     Shadow shadow;
@@ -48,6 +53,8 @@ struct OsdStyle {
     Font font;
     Spacing spacing;
     BBox bbox;
+    DECL_EQ(OsdStyle, &T::wrapMode, &T::shadow, &T::outline,
+            &T::font, &T::spacing, &T::bbox)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };

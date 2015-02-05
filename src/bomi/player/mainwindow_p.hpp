@@ -79,7 +79,7 @@ struct MainWindow::Data {
     Downloader downloader;
     TrayIcon *tray = nullptr;
     QString filePath;
-    Pref preferences;
+    Pref pref;
     QAction *subtrackSep = nullptr;
     QDesktopWidget *desktop = nullptr;
     QSize virtualDesktopSize;
@@ -90,9 +90,8 @@ struct MainWindow::Data {
     AudioEqualizerDialog *eq = nullptr;
     IntrplDialog *intrpl = nullptr, *chroma = nullptr;
 
-    auto pref() const -> const Pref& {return preferences;}
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
-        { return preferences.mouse_action_map[mb][event->modifiers()]; }
+        { return pref.mouse_action_map()[mb][event->modifiers()]; }
     auto setOpen(const Mrl &mrl) -> void
     {
         if (mrl.isLocalFile())

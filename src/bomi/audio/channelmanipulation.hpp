@@ -15,6 +15,7 @@ class ChannelManipulation {
 public:
     ChannelManipulation(): m_mix(MP_SPEAKER_ID_COUNT) {}
     using SourceArray = QVector<mp_speaker_id>;
+    DECL_EQ(ChannelManipulation, &T::m_mix)
     auto sources(int speaker_out) const -> const SourceArray&
         { return m_mix[speaker_out]; }
     auto hasSources(mp_speaker_id dest) const -> bool

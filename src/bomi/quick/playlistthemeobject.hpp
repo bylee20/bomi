@@ -7,6 +7,7 @@
 struct PlaylistTheme {
     bool showLocation = true;
     bool showOnMouseOverEdge = true;
+    DECL_EQ(PlaylistTheme, &T::showLocation, &T::showOnMouseOverEdge)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };
@@ -36,6 +37,7 @@ private:
 
 struct HistoryTheme {
     bool showOnMouseOverEdge = true;
+    DECL_EQ(HistoryTheme, &T::showOnMouseOverEdge)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };

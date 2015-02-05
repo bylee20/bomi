@@ -29,10 +29,12 @@ class Pref : public QObject {
 /***************************************************************/
 #define P_(type, name, def, info_type, ...) \
 public: \
-    type name = def; \
+    auto name() const -> type { return m_##name; } \
 private: \
-    Q_PROPERTY(type name MEMBER name WRITE set_##name) \
-    auto set_##name(const type &t) { name = t; }\
+    type m_##name = def; \
+    Q_PROPERTY(type name READ name WRITE set_##name NOTIFY name##_changed) \
+    auto set_##name(const type &t) { if (_Change(m_##name, t)) emit name##_changed(m_##name); }\
+    Q_SIGNAL void name##_changed(type); \
     Q_INVOKABLE void init_##name##_info() { static const info_type info{this, __VA_ARGS__}; } \
 public:
 #define P0(type, var, def) P_(type, var, def, PrefFieldInfo, #var, PrefEditorProperty<type>::name)

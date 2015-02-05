@@ -7,6 +7,7 @@ enum class MouseBehavior;
 
 struct KeyModifierActionMap {
     KeyModifierActionMap();
+    DECL_EQ(KeyModifierActionMap, &T::m_map)
     auto operator[](KeyModifier m) -> QString& {return m_map[m];}
     auto operator[](KeyModifier m) const -> QString {return m_map[m];}
     auto operator[](int id) const -> QString
