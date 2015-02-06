@@ -10,9 +10,6 @@
     <height>236</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Form</string>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QCheckBox" name="enabled">
@@ -24,7 +21,7 @@
    <item>
     <widget class="AutoloadModeComboBox" name="mode">
      <property name="toolTip">
-      <string>Load next subtitles when starting to play a file.</string>
+      <string>Load next extern files when starting to play a file.</string>
      </property>
      <property name="sizeAdjustPolicy">
       <enum>QComboBox::AdjustToContents</enum>

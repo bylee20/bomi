@@ -55,7 +55,7 @@ auto Autoloader::tryDir(const QFileInfo &fileInfo, ExtType type,
 /******************************************************************************/
 
 class SearchPathModel : public SimpleListModel<MatchString> {
-//    Q_PROPERTY(QList<MatchString> value READ list WRITE setList)
+    Q_DECLARE_TR_FUNCTIONS(SearchPathModel)
 public:
     SearchPathModel(QObject *parent = nullptr)
         : SimpleListModel(3, parent) { }

@@ -335,7 +335,7 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"), QT_TR_NOOP("%1%"), 10, 100, 1000);
+        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"), "%1%", 10, 100, 1000);
 
         d->menu(u"repeat"_q, QT_TR_NOOP("A-B Repeat"), [=] () {
             d->actionToGroup(u"range"_q, QT_TR_NOOP("Set Range to Current Time"))->setData(int('r'));
