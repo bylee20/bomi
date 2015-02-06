@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtQuick 2.0 as Q
 import bomi 1.0
 
 Item { id: view
@@ -27,7 +28,7 @@ Item { id: view
     property Component itemDelegate: Component { Text { text: value } }
     property Component headerItemDelegate: Component {
         Item {
-            Text {
+            Q.Text {
                 text: column.title
                 anchors { fill: parent; leftMargin: 5; rightMargin: 5 }
                 color: "black"; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter
