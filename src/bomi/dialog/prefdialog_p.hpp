@@ -41,7 +41,7 @@ private:
 
 class PrefMenuTreeWidget : public QTreeWidget {
     Q_OBJECT
-    Q_PROPERTY(Shortcuts value READ get WRITE set)
+    Q_PROPERTY(Shortcuts value READ get WRITE set NOTIFY changed)
 public:
     PrefMenuTreeWidget(QWidget *parent = nullptr);
     auto actionInfoList() const -> const QVector<ActionInfo>& { return m_actionInfos; }
@@ -68,6 +68,17 @@ public:
         }
         return nullptr;
     }
+    auto compare(const QVariant &var) const -> bool
+    {
+        const auto shortcuts = var.value<Shortcuts>();
+        for (auto item : m_actionItems) {
+            if (item->shortcuts() != shortcuts[item->id()])
+                return false;
+        }
+        return true;
+    }
+signals:
+    void changed();
 private:
     QVector<PrefMenuTreeItem*> m_actionItems;
     QVector<ActionInfo> m_actionInfos;
@@ -92,12 +103,15 @@ private:
 
 class PrefMouseActionTree : public QTreeWidget {
     Q_OBJECT
-    Q_PROPERTY(MouseActionMap value READ get WRITE set)
+    Q_PROPERTY(MouseActionMap value READ get WRITE set NOTIFY changed)
 public:
-    PrefMouseActionTree(QWidget *parent = nullptr): QTreeWidget(parent) { }
+    PrefMouseActionTree(QWidget *parent = nullptr);
     auto setActionList(const QVector<ActionInfo> *actions) -> void;
     auto set(const MouseActionMap &map) -> void;
     auto get() const -> MouseActionMap;
+    auto compare(const QVariant &var) const -> bool;
+signals:
+    void changed();
 };
 
 #endif // PREFDIALOG_P_HPP

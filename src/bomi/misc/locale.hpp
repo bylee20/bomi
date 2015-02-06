@@ -27,6 +27,8 @@ public:
     auto isC() const -> bool { return m_locale && m_locale->language() == QLocale::C; }
     auto language() const -> QLocale::Language { return m_locale ? m_locale->language() : QLocale::AnyLanguage; }
     auto toVariant() const -> QVariant { return m_locale ? QVariant::fromValue(*m_locale) : QVariant(); }
+    auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
     static auto fromVariant(const QVariant &var) -> Locale
         { return var.isValid() ? Locale(var.value<QLocale>()) : Locale(); }
     static auto system() -> Locale { return {QLocale::system()}; }
@@ -38,5 +40,7 @@ private:
     Locale(const QLocale &l): m_locale(new QLocale(l)) { }
     QLocale *m_locale = nullptr;
 };
+
+Q_DECLARE_METATYPE(Locale)
 
 #endif // LOCALE_HPP

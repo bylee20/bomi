@@ -16,6 +16,9 @@ OpenMediaBehaviorGroupBox::OpenMediaBehaviorGroupBox(QWidget *parent)
     layout->addWidget(d->playlist);
     auto vbox = static_cast<QVBoxLayout*>(parent->layout());
     vbox->insertWidget(vbox->count()-1, this);
+
+    connect(d->start, SIGNAL(toggled(bool)), this, SIGNAL(valueChanged()));
+    connect(d->playlist, SIGNAL(currentIndexChanged(int)), this, SIGNAL(valueChanged()));
 }
 
 OpenMediaBehaviorGroupBox::~OpenMediaBehaviorGroupBox()

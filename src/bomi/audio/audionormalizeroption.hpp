@@ -31,12 +31,14 @@ struct AudioNormalizerOption {
 
 class AudioNormalizerOptionWidget : public QWidget {
     Q_OBJECT
-    Q_PROPERTY(AudioNormalizerOption value READ option WRITE setOption)
+    Q_PROPERTY(AudioNormalizerOption value READ option WRITE setOption NOTIFY optionChanged)
 public:
     AudioNormalizerOptionWidget(QWidget *parent = nullptr);
     ~AudioNormalizerOptionWidget();
     auto option() const -> AudioNormalizerOption;
     auto setOption(const AudioNormalizerOption &option) -> void;
+signals:
+    void optionChanged();
 private:
     struct Data;
     Data *d;

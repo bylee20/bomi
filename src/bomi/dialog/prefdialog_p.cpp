@@ -92,6 +92,7 @@ PrefMenuTreeWidget::PrefMenuTreeWidget(QWidget *parent)
     delete item;
     m_actionInfos.prepend({QString(), tr("Unused")});
     header()->resizeSection(0, 200);
+    connect(this, &QTreeWidget::itemChanged, this, &PrefMenuTreeWidget::changed);
 }
 
 /******************************************************************************/
@@ -222,6 +223,15 @@ public:
             addChild(sub);
         }
     }
+    auto compare(const KeyModifierActionMap &map) const -> bool
+    {
+        for (int i = 0; i < mods.size(); ++i) {
+            const auto idx = child(i)->data(1, ActionIndexRole).toInt();
+            if (map[mods[i]] != m_actions->at(idx).key)
+                return false;
+        }
+        return true;
+    }
     auto set(const KeyModifierActionMap &map) -> void
     {
         for (int i = 0; i < mods.size(); ++i) {
@@ -251,6 +261,12 @@ private:
     const QVector<ActionInfo> *m_actions = nullptr;
 };
 
+PrefMouseActionTree::PrefMouseActionTree(QWidget *parent)
+    : QTreeWidget(parent)
+{
+    connect(this, &QTreeWidget::itemChanged, this, &PrefMouseActionTree::changed);
+}
+
 auto PrefMouseActionTree::setActionList(const QVector<ActionInfo> *acts) -> void
 {
     clear();
@@ -268,6 +284,16 @@ auto PrefMouseActionTree::setActionList(const QVector<ActionInfo> *acts) -> void
            qApp->translate("PrefDialog", "Typically denoted as 'Back' button"));
     setExp(MouseBehavior::Extra2Click,
            qApp->translate("PrefDialog", "Typically denoted as 'Forward' button"));
+}
+
+auto PrefMouseActionTree::compare(const QVariant &var) const -> bool
+{
+    const auto map = var.value<MouseActionMap>();
+    for (int i = 0; i < topLevelItemCount(); ++i) {
+        if (!static_cast<MouseActionItem*>(topLevelItem(i))->compare(map[(MouseBehavior)i]))
+            return false;
+    }
+    return true;
 }
 
 auto PrefMouseActionTree::set(const MouseActionMap &map) -> void

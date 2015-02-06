@@ -54,6 +54,26 @@ OsdStyleWidget::OsdStyleWidget(QWidget *parent)
     d->ui.outline_color->setAlphaChannel(false);
     d->ui.shadow_color->setAlphaChannel(true);
     d->ui.bbox_color->setAlphaChannel(true);
+
+    auto signal = &OsdStyleWidget::valueChanged;
+    PLUG_CHANGED(d->ui.font_family);
+    PLUG_CHANGED(d->ui.font_option);
+    PLUG_CHANGED(d->ui.font_color);
+    PLUG_CHANGED(d->ui.outline);
+    PLUG_CHANGED(d->ui.outline_color);
+    PLUG_CHANGED(d->ui.outline_width);
+    PLUG_CHANGED(d->ui.font_size);
+    PLUG_CHANGED(d->ui.shadow);
+    PLUG_CHANGED(d->ui.shadow_color);
+    PLUG_CHANGED(d->ui.shadow_offset_x);
+    PLUG_CHANGED(d->ui.shadow_offset_y);
+    PLUG_CHANGED(d->ui.shadow_blur);
+    PLUG_CHANGED(d->ui.bbox);
+    PLUG_CHANGED(d->ui.bbox_color);
+    PLUG_CHANGED(d->ui.bbox_hpadding);
+    PLUG_CHANGED(d->ui.bbox_vpadding);
+    PLUG_CHANGED(d->ui.spacing_line);
+    PLUG_CHANGED(d->ui.spacing_paragraph);
 }
 
 OsdStyleWidget::~OsdStyleWidget()

@@ -16,6 +16,12 @@
 
 /******************************************************************************/
 
+struct ValueWatcher {
+    QMetaProperty property;
+    QQmlProperty editor;
+    std::function<bool()> isModified = nullptr;
+};
+
 struct PrefDialog::Data {
     PrefDialog *p;
     Ui::PrefDialog ui;
@@ -26,11 +32,44 @@ struct PrefDialog::Data {
     QStringList imports;
     DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
     MrlStatePropertyListModel *properties = nullptr;
-    QVector<QObject*> editors;
+    QVector<ValueWatcher> watchers;
+    QSet<ValueWatcher*> modified;
+    QHash<QObject*, ValueWatcher*> editorToWatcher;
+    Pref orig;
 
     auto retranslate() -> void
     {
         ui.sub_ext->setItemText(0, tr("All"));
+    }
+
+    auto fillEditors(const Pref *pref) -> void
+    {
+        for (auto &w : watchers) {
+            if (!w.editor.isValid())
+                continue;
+            w.editor.write(w.property.read(pref));
+        }
+//        d->ui.app_unique->setChecked(cApp.isUnique());
+//        d->ui.app_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
+//        d->ui.locale->setCurrentLocale(cApp.locale());
+//        d->modified.clear();
+//        setWindowModified(false);
+    }
+
+    auto sync() -> void
+    {
+        for (auto &w : watchers) {
+            if (!w.editor.isValid())
+                continue;
+            w.property.write(&orig, w.editor.read());
+            if (w.isModified())
+                qDebug() << w.property.typeName() << w.property.name();
+        }
+    //    d->ui.app_unique->setChecked(cApp.isUnique());
+    //    d->ui.app_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
+    //    d->ui.locale->setCurrentLocale(cApp.locale());
+        modified.clear();
+        p->setWindowModified(false);
     }
 };
 
@@ -155,7 +194,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->ui.sub_ext->addItem(QString(), QString());
     d->ui.sub_ext->addItemTextData(_ExtList(SubtitleExt));
-    d->ui.window_style->addItemTextData(cApp.availableStyleNames());
+    d->ui.app_style->addItems(cApp.availableStyleNames());
 
     d->shortcutGroup = new QButtonGroup(this);
     d->shortcutGroup->addButton(d->ui.shortcut1, 0);
@@ -249,17 +288,19 @@ PrefDialog::PrefDialog(QWidget *parent)
         case BBox::Ok:
             hide();
         case BBox::Apply:
+            d->sync();
             emit applyRequested();
             break;
         case BBox::Cancel:
             hide();
         case BBox::Reset:
-            emit resetRequested();
+            d->fillEditors(&d->orig);
             break;
-        case BBox::RestoreDefaults:
-            set(Pref());
+        case BBox::RestoreDefaults: {
+            Pref pref;
+            d->fillEditors(&pref);
             break;
-        default:
+        } default:
             break;
         }
     });
@@ -299,18 +340,59 @@ PrefDialog::PrefDialog(QWidget *parent)
     group->addButton(d->ui.fill_bg_color);
     group->setExclusive(true);
 
-    cApp.setWindowTitle(this, tr("Preferences"));
+    cApp.setWindowTitle(this, tr("Preferences") % _L("[*]"));
 
-    for (auto &info : Pref::fields()) {
-        d->editors.push_back(findChild<QObject*>(_L(info->editorName())));
-        if (!d->editors.last())
-            qDebug() << "no editor for" << info->property().name();
+    auto &mo = Pref::staticMetaObject;
+    d->watchers.resize(mo.propertyCount() - mo.propertyOffset());
+    for (int i = mo.propertyOffset(); i < mo.propertyCount(); ++i) {
+        auto &w = d->watchers[i - mo.propertyOffset()];
+        w.property = mo.property(i);
+        auto editor = findChild<QObject*>(_L(w.property.name()));
+        if (!editor) {
+            qDebug() << "no editor for" << w.property.name();
+            continue;
+        }
+        d->editorToWatcher[editor] = &w;
+        const auto name = "editor_" + QByteArray(w.property.name()) ;
+        QString editor_p;
+        mo.invokeMethod(&d->orig, name.constData(), Q_RETURN_ARG(QString, editor_p));
+        Q_ASSERT(!editor_p.isEmpty());
+        w.editor = QQmlProperty(editor, editor_p);
+        if (!w.editor.hasNotifySignal())
+            qDebug() << "No notify signal in" << editor->metaObject()->className() << "for" << w.property.name();
+        else
+            w.editor.connectNotifySignal(this, SLOT(checkModified()));
+#define CHECK_W(W) if (qobject_cast<W*>(editor)) { w.isModified = [=, &w] () { \
+            return !static_cast<W*>(w.editor.object())->compare(w.property.read(&d->orig)); }; continue; }
+        CHECK_W(PrefMenuTreeWidget);
+        CHECK_W(MrlStatePropertyListModel);
+        CHECK_W(PrefMouseActionTree);
+        const auto compare = "compare_" + QByteArray(w.property.name()) + "(QVariant)";
+        const int idx = mo.indexOfMethod(compare.constData());
+        Q_ASSERT(idx != -1);
+        const auto method = mo.method(idx);
+        w.isModified = [=] () {
+            bool ret = false;
+            method.invoke(&d->orig, Q_RETURN_ARG(bool, ret), Q_ARG(QVariant, w.editor.read()));
+            return !ret;
+        };
     }
-    Q_ASSERT(Pref::fields().size() == d->editors.size());
 }
 
 PrefDialog::~PrefDialog() {
     delete d;
+}
+
+auto PrefDialog::checkModified() -> void
+{
+    auto w = d->editorToWatcher.value(sender());
+    if (!w)
+        return;
+    if (w->isModified())
+        d->modified.insert(w);
+    else
+        d->modified.remove(w);
+    setWindowModified(!d->modified.isEmpty());
 }
 
 auto PrefDialog::setAudioDeviceList(const QList<AudioDevice> &devices) -> void {
@@ -323,29 +405,32 @@ auto PrefDialog::setAudioDeviceList(const QList<AudioDevice> &devices) -> void {
     }
 }
 
-auto PrefDialog::set(const Pref &p) -> void
+auto PrefDialog::set(const Pref *p) -> void
 {
-    auto &infos = Pref::fields();
-    for (int i = 0; i < d->editors.size(); ++i) {
-        if (auto editor = d->editors[i])
-            infos[i]->setToEditor(&p, editor);
-    }
-    d->ui.single_app->setChecked(cApp.isUnique());
-    d->ui.window_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
-    d->ui.locale->setCurrentLocale(cApp.locale());
+    d->fillEditors(p);
+    d->sync();
+//    for (auto &w : d->watchers) {
+//        if (!w.editor.isValid())
+//            continue;
+//        w.editor.write(w.property.read(p));
+//        w.property.write(&d->orig, w.editor.read());
+//        if (w.isModified())
+//            qDebug() << w.property.typeName() << w.property.name();
+//    }
+////    d->ui.app_unique->setChecked(cApp.isUnique());
+////    d->ui.app_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
+////    d->ui.locale->setCurrentLocale(cApp.locale());
+//    d->modified.clear();
+//    setWindowModified(false);
 }
 
-auto PrefDialog::get(Pref &p) -> void
+auto PrefDialog::get(Pref *p) -> void
 {
-    auto &infos = Pref::fields();
-    for (int i = 0; i < d->editors.size(); ++i) {
-        if (auto editor = d->editors[i])
-            infos[i]->setFromEditor(&p, editor);
-    }
-
-    cApp.setUnique(d->ui.single_app->isChecked());
-    cApp.setLocale(d->ui.locale->currentLocale());
-    cApp.setStyleName(d->ui.window_style->currentData().toString());
+    for (auto &w : d->watchers)
+        w.property.write(p, w.property.read(&d->orig));
+//    cApp.setUnique(d->ui.app_unique->isChecked());
+//    cApp.setLocale(d->ui.locale->currentLocale());
+//    cApp.setStyleName(d->ui.app_style->currentData().toString());
 }
 
 auto PrefDialog::changeEvent(QEvent *event) -> void
@@ -354,6 +439,11 @@ auto PrefDialog::changeEvent(QEvent *event) -> void
     if (event->type() == QEvent::LanguageChange) {
         d->ui.retranslateUi(this);
         d->retranslate();
+    } else if (event->type() == QEvent::ModifiedChange) {
+        const auto modified = isWindowModified();
+        d->ui.dbb->button(BBox::Ok)->setEnabled(modified);
+        d->ui.dbb->button(BBox::Apply)->setEnabled(modified);
+        d->ui.dbb->button(BBox::Reset)->setEnabled(modified);
     }
 }
 

@@ -36,6 +36,8 @@ char *gets(char *str);
 template<class State, class... Args>
 using Signal = void(State::*)(Args...);
 
+#define SIGNAL_T(T, name, ...) static_cast<void(T::*)(__VA_ARGS__)>(&T::name)
+
 #define SIA static inline auto
 #define SCA static constexpr auto
 #define SCIA static constexpr inline auto
@@ -48,6 +50,25 @@ using QRegEx = QRegularExpression;
 using QRegExMatch = QRegularExpressionMatch;
 using QRegExMatchIterator = QRegularExpressionMatchIterator;
 
+#define DECL_PLUG_CHANGED_T(Q, from, ...) \
+namespace Pch { \
+template<class T, class... Args> \
+SIA _PlugChanged(const Q *q, const T *t, void(T::*sig)(Args...)) -> void \
+{ QObject::connect(q, SIGNAL_T(Q, from, ##__VA_ARGS__), t, sig); }}
+
+#define DECL_PLUG_CHANGED(Q, from) \
+namespace Pch { \
+template<class T, class... Args> \
+SIA _PlugChanged(const Q *q, const T *t, void(T::*sig)(Args...)) -> void \
+{ QObject::connect(q, &Q::from, t, sig); }}
+
+DECL_PLUG_CHANGED_T(QComboBox, currentIndexChanged, int)
+DECL_PLUG_CHANGED(QAbstractButton, toggled)
+DECL_PLUG_CHANGED(QLineEdit, textChanged)
+DECL_PLUG_CHANGED_T(QDoubleSpinBox, valueChanged, double)
+DECL_PLUG_CHANGED_T(QSpinBox, valueChanged, int)
+
+#define PLUG_CHANGED(Q) _PlugChanged(Q, this, signal)
 namespace Pch {
 
 namespace pch_detail {

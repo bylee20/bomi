@@ -24,11 +24,13 @@ public:
 
 class PlaylistThemeWidget : public QGroupBox {
     Q_OBJECT
-    Q_PROPERTY(PlaylistTheme value READ value WRITE setValue)
+    Q_PROPERTY(PlaylistTheme value READ value WRITE setValue NOTIFY valueChanged)
 public:
     PlaylistThemeWidget(QWidget *parent = nullptr);
     auto value() const -> PlaylistTheme;
     auto setValue(const PlaylistTheme &theme) -> void;
+signals:
+    void valueChanged();
 private:
     QCheckBox *m_location, *m_edge;
 };
@@ -53,11 +55,13 @@ public:
 
 class HistoryThemeWidget: public QGroupBox {
     Q_OBJECT
-    Q_PROPERTY(HistoryTheme value READ value WRITE setValue)
+    Q_PROPERTY(HistoryTheme value READ value WRITE setValue NOTIFY valueChanged)
 public:
     HistoryThemeWidget(QWidget *parent = nullptr);
     auto value() const -> HistoryTheme;
     auto setValue(const HistoryTheme &theme) -> void;
+signals:
+    void valueChanged();
 private:
     QCheckBox *m_edge;
 };

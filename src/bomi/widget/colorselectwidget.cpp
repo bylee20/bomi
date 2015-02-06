@@ -28,6 +28,8 @@ ColorSelectWidget::ColorSelectWidget(QWidget *parent)
     d->alpha->hide();
     d->alphaLabel->hide();
 
+    connect(d->alpha, SIGNAL(valueChanged(double)), this, SIGNAL(colorChanged()));
+    connect(d->color, SIGNAL(colorChanged(QColor)), this, SIGNAL(colorChanged()));
 }
 
 ColorSelectWidget::~ColorSelectWidget() {

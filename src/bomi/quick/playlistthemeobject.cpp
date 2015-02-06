@@ -29,6 +29,10 @@ PlaylistThemeWidget::PlaylistThemeWidget(QWidget *parent)
     vbox->addWidget(m_location);
     vbox->addWidget(m_edge);
     setLayout(vbox);
+
+    auto signal = &PlaylistThemeWidget::valueChanged;
+    PLUG_CHANGED(m_location);
+    PLUG_CHANGED(m_edge);
 }
 auto PlaylistThemeWidget::value() const -> PlaylistTheme
 {
@@ -52,6 +56,9 @@ HistoryThemeWidget::HistoryThemeWidget(QWidget *parent)
     auto vbox = new QVBoxLayout;
     vbox->addWidget(m_edge);
     setLayout(vbox);
+
+    auto signal = &HistoryThemeWidget::valueChanged;
+    PLUG_CHANGED(m_edge);
 }
 
 auto HistoryThemeWidget::value() const -> HistoryTheme

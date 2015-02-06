@@ -22,12 +22,14 @@ Q_DECLARE_METATYPE(Autoloader)
 
 class AutoloaderWidget : public QGroupBox {
     Q_OBJECT
-    Q_PROPERTY(Autoloader value READ value WRITE setValue)
+    Q_PROPERTY(Autoloader value READ value WRITE setValue NOTIFY valueChanged)
 public:
     AutoloaderWidget(QWidget *parent = nullptr);
     ~AutoloaderWidget();
     auto value() const -> Autoloader;
     auto setValue(const Autoloader &value) -> void;
+signals:
+    void valueChanged();
 private:
     struct Data;
     Data *d;

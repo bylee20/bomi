@@ -745,6 +745,12 @@
         <layout class="QVBoxLayout" name="verticalLayout_18">
          <item>
           <widget class="AutoloaderWidget" name="sub_autoload_v2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="title">
             <string>Load</string>
            </property>
@@ -2036,7 +2042,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="single_app">
+          <widget class="QCheckBox" name="app_unique">
            <property name="text">
             <string>Run only single bomi application at the same time</string>
            </property>
@@ -2142,7 +2148,7 @@
               <item>
                <widget class="QRadioButton" name="fill_bg_color">
                 <property name="text">
-                 <string>Fill color:</string>
+                 <string>Fi&amp;ll color:</string>
                 </property>
                </widget>
               </item>
@@ -2195,7 +2201,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_20">
             <item>
-             <widget class="DataComboBox" name="window_style"/>
+             <widget class="QComboBox" name="app_style"/>
             </item>
             <item>
              <widget class="QLabel" name="label_27">
@@ -2264,7 +2270,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_15">
             <item>
-             <widget class="LocaleComboBox" name="locale">
+             <widget class="LocaleComboBox" name="app_locale">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>

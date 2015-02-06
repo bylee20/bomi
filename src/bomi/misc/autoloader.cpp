@@ -231,6 +231,11 @@ AutoloaderWidget::AutoloaderWidget(QWidget *parent)
         const int idx = d->ui.search_paths->currentIndex().row();
         d->searchPaths->remove(idx);
     });
+
+    auto signal = &AutoloaderWidget::valueChanged;
+    PLUG_CHANGED(d->ui.enabled);
+    PLUG_CHANGED(d->ui.mode);
+    PLUG_CHANGED(d->searchPaths);
 }
 
 AutoloaderWidget::~AutoloaderWidget()

@@ -23,17 +23,18 @@ private:
     SimpleListModelBase *m_base = nullptr;
 };
 
-template<class Model>
+template<class M>
 class SimpleListWidget : public SimpleListWidgetBase {
-    using List = typename Model::container_type;
-    using T = typename Model::value_type;
+    using List = typename M::container_type;
+    using T = typename M::value_type;
 public:
-    using Super = SimpleListWidget<Model>;
+    using Super = SimpleListWidget<M>;
+    using Model = M;
     SimpleListWidget(QWidget *parent = 0)
-        : SimpleListWidgetBase(parent) { setModel(new Model(this)); }
+        : SimpleListWidgetBase(parent) { setModel(new M(this)); }
     auto setList(const List &list) -> void { model()->setList(list); }
     auto list() const -> List { return model()->list(); }
-    auto model() const -> Model* { return static_cast<Model*>(view()->model()); }
+    auto model() const -> M* { return static_cast<M*>(view()->model()); }
 protected:
     virtual auto getNewItem(T *item) -> bool { Q_UNUSED(item); return false; }
     auto append() -> void final { T t; if (model() && getNewItem(&t)) model()->append(t); }
@@ -41,9 +42,16 @@ protected:
 
 class StringListWidget : public SimpleListWidget<StringListModel> {
     Q_OBJECT
-    Q_PROPERTY(QStringList value READ list WRITE setList)
+    Q_PROPERTY(QStringList value READ list WRITE setList NOTIFY contentsChanged)
 public:
-    StringListWidget(QWidget *parent = 0): Super(parent) { }
+    StringListWidget(QWidget *parent = 0)
+        : Super(parent)
+    {
+        connect(model(), &SimpleListModelBase::contentsChanged,
+                this, &StringListWidget::contentsChanged);
+    }
+signals:
+    void contentsChanged();
 private:
     auto getNewItem(QString *item) -> bool final;
 };

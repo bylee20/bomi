@@ -13,6 +13,7 @@ struct ChannelManipulationWidget::Data {
     ChannelLayout currentOutput = ChannelLayout::Mono;
 
     void makeTable() {
+        table->blockSignals(true);
         mp_chmap src, dest;
         ChannelLayout output = this->output->currentValue();
         ChannelLayout  input = this-> input->currentValue();
@@ -62,6 +63,7 @@ struct ChannelManipulationWidget::Data {
         }
         currentInput = input;
         currentOutput = output;
+        table->blockSignals(false);
     }
     void fillMap() {
         if (!table->rowCount() || !table->columnCount())
@@ -137,6 +139,9 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     const auto dst = _EnumFrom<ChannelLayout>(r.value("output"_a, _EnumName(ChannelLayout::_2_0)).toString());
     r.endGroup();
     setCurrentLayouts(src, dst);
+
+    auto signal = &ChannelManipulationWidget::mapChanged;
+    connect(d->table, &QTableWidget::itemChanged, this, signal);
 }
 
 ChannelManipulationWidget::~ChannelManipulationWidget() {

@@ -30,6 +30,7 @@ signals:
     void rowsChanged(int rows);
     void specialRowChanged(int row);
     void dataChanged(int row);
+    void contentsChanged();
 protected:
     auto resize(int rows) -> void;
     auto reset(int rows) -> void;
@@ -56,6 +57,8 @@ private:
     struct Data;
     Data *d;
 };
+
+DECL_PLUG_CHANGED(SimpleListModelBase, contentsChanged)
 
 template<class T, class Container = QList<T>>
 class SimpleListModel : public SimpleListModelBase {

@@ -10,6 +10,7 @@
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/osdstyle.hpp"
 #include "misc/autoloader.hpp"
+#include "misc/locale.hpp"
 #include "enum/generateplaylist.hpp"
 #include "enum/autoselectmode.hpp"
 #include "enum/audiodriver.hpp"
@@ -27,21 +28,21 @@ enum class KeyMapPreset {Bomi, Movist};
 class Pref : public QObject {
     Q_OBJECT
 /***************************************************************/
-#define P_(type, name, def, info_type, ...) \
+#define P_(type, name, def, editor) \
 public: \
     auto name() const -> type { return m_##name; } \
 private: \
     type m_##name = def; \
-    Q_PROPERTY(type name READ name WRITE set_##name NOTIFY name##_changed) \
-    auto set_##name(const type &t) { if (_Change(m_##name, t)) emit name##_changed(m_##name); }\
-    Q_SIGNAL void name##_changed(type); \
-    Q_INVOKABLE void init_##name##_info() { static const info_type info{this, __VA_ARGS__}; } \
+    Q_PROPERTY(type name READ name WRITE set_##name) \
+    auto set_##name(const type &t) { m_##name = t; } \
+    Q_INVOKABLE QString editor_##name() const { return QString::fromLatin1(editor); } \
+    Q_INVOKABLE bool compare_##name(const QVariant &var) const { return m_##name == var.value<type>(); } \
 public:
-#define P0(type, var, def) P_(type, var, def, PrefFieldInfo, #var, PrefEditorProperty<type>::name)
-#define P1(type, var, def, editorProp) P_(type, var, def, PrefFieldInfo, #var, editorProp) // same editor name, custom editor property
-#define P2(type, var, def, editorName) P_(type, var, def, PrefFieldInfo, #var, editorName, PrefEditorProperty<type>::name) // custom editor name, default editor property
+#define P0(type, var, def) P_(type, var, def, PrefEditorProperty<type>::name)
+#define P1(type, var, def, editor) P_(type, var, def, editor)
 /***************************************************************/
 public:
+    Pref();
     P0(OpenMediaInfo, open_media_from_file_manager, {OpenMediaBehavior::NewPlaylist})
     P0(OpenMediaInfo, open_media_by_drag_and_drop, {OpenMediaBehavior::Append})
     P1(QString, quick_snapshot_format, u"png"_q, "currentText")
@@ -145,14 +146,16 @@ public:
 
     QStringList sub_search_paths;
 
+    P0(bool, app_unique, true);
+    P1(Locale, app_locale, {}, "locale");
+    P1(QString, app_style, {}, "currentText");
+
     static auto preset(KeyMapPreset id) -> Shortcuts;
 
     auto save() const -> void;
     auto load() -> void;
 
     auto initialize() -> void;
-
-    static auto fields() -> const QVector<const PrefFieldInfo*>&;
 private:
     static auto defaultSubtitleAutoload() -> Autoloader;
     static auto defaultAutioAutoload() -> Autoloader;

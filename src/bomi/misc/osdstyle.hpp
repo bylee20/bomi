@@ -65,7 +65,7 @@ Q_DECLARE_METATYPE(OsdStyle);
 
 class OsdStyleWidget : public QWidget {
     Q_OBJECT
-    Q_PROPERTY(OsdStyle value READ value WRITE setValue)
+    Q_PROPERTY(OsdStyle value READ value WRITE setValue NOTIFY valueChanged)
 public:
     OsdStyleWidget(QWidget *parent = nullptr);
     ~OsdStyleWidget();
@@ -76,10 +76,13 @@ public:
     auto setBBoxVisible(bool visible) -> void;
     auto setValue(const OsdStyle &v) -> void;
     auto value() const -> OsdStyle;
+signals:
+    void valueChanged();
 private:
     struct Data;
     Data *d;
-
 };
+
+DECL_PLUG_CHANGED(OsdStyleWidget, valueChanged)
 
 #endif // SUBTITLESTYLE_H

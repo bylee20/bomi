@@ -618,15 +618,13 @@ auto MainWindow::Data::connectMenus() -> void
         if (!prefDlg) {
             prefDlg = new PrefDialog(p);
             prefDlg->setAudioDeviceList(e.audioDeviceList());
-            connect(prefDlg, &PrefDialog::applyRequested, p, [this] {
-                prefDlg->get(pref); applyPref();
-            });
-            connect(prefDlg, &PrefDialog::resetRequested, p, [this] {
-                prefDlg->set(pref);
-            });
+            connect(prefDlg, &PrefDialog::applyRequested, p,
+                    [this] { prefDlg->get(&pref); applyPref(); });
         }
-        prefDlg->set(pref);
-        prefDlg->show();
+        if (!prefDlg->isVisible()) {
+            prefDlg->set(&pref);
+            prefDlg->show();
+        }
     });
     connect(tool[u"find-subtitle"_q], &QAction::triggered, p, [this] () {
         if (!subFindDlg) {

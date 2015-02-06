@@ -27,6 +27,7 @@ public:
 #endif
     auto setStyleName(const QString &name) -> void;
     auto setLocale(const Locale &locale) -> void;
+    auto defaultStyleName() const -> QString;
     auto locale() const -> Locale;
     auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
     auto setScreensaverDisabled(bool disabled) -> void;

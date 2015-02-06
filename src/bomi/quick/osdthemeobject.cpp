@@ -42,6 +42,16 @@ OsdThemeWidget::OsdThemeWidget(QWidget *parent)
         const bool center = d->ui.timeline_position->currentValue() == VerticalAlignment::Center;
         d->ui.timeline_margin->setEnabled(!center);
     });
+
+    auto signal = &OsdThemeWidget::valueChanged;
+    PLUG_CHANGED(d->ui.style);
+    PLUG_CHANGED(d->ui.timeline_visible);
+    PLUG_CHANGED(d->ui.timeline_position);
+    PLUG_CHANGED(d->ui.timeline_margin);
+    PLUG_CHANGED(d->ui.timeline_duration);
+    PLUG_CHANGED(d->ui.message_on_action);
+    PLUG_CHANGED(d->ui.message_on_resized);
+    PLUG_CHANGED(d->ui.message_duration);
 }
 
 OsdThemeWidget::~OsdThemeWidget()
@@ -53,7 +63,7 @@ auto OsdThemeWidget::value() const -> OsdTheme
 {
     OsdTheme theme;
     theme.style = d->ui.style->value();
-    theme.timeline.show_on_seeking = d->ui.timline_visible->isChecked();
+    theme.timeline.show_on_seeking = d->ui.timeline_visible->isChecked();
     theme.timeline.position = d->ui.timeline_position->currentValue();
     theme.timeline.margin = d->ui.timeline_margin->value()/100.0;
     theme.timeline.duration = d->ui.timeline_duration->value() * 1000 + 0.5;
@@ -66,7 +76,7 @@ auto OsdThemeWidget::value() const -> OsdTheme
 auto OsdThemeWidget::setValue(const OsdTheme &theme) -> void
 {
     d->ui.style->setValue(theme.style);
-    d->ui.timline_visible->setChecked(theme.timeline.show_on_seeking);
+    d->ui.timeline_visible->setChecked(theme.timeline.show_on_seeking);
     d->ui.timeline_position->setCurrentValue(theme.timeline.position);
     d->ui.timeline_margin->setValue(theme.timeline.margin * 100 + 0.5);
     d->ui.timeline_duration->setValue(theme.timeline.duration/1e3);

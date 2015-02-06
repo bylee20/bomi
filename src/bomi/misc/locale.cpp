@@ -108,3 +108,15 @@ auto ::Locale::nativeName() const -> QString
     l.getDisplayName(data().icu, str);
     return QString::fromUtf16(str.getBuffer(), str.length());
 }
+
+// dummy for pref
+auto ::Locale::toJson() const -> QJsonObject
+{
+    return QJsonObject();
+}
+
+auto ::Locale::setFromJson(const QJsonObject &json) -> bool
+{
+    Q_UNUSED(json);
+    return true;
+}

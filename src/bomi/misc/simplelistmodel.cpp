@@ -25,6 +25,15 @@ SimpleListModelBase::SimpleListModelBase(int columns, QObject *parent)
         const auto tl = index(row, 0), br = index(row, d->columns - 1);
         emit QAbstractListModel::dataChanged(tl, br);
     });
+
+    auto signal = &SimpleListModelBase::contentsChanged;
+    using M = QAbstractItemModel;
+    connect(this, &M::modelReset, this, signal);
+    connect(this, &M::dataChanged, this, signal);
+    connect(this, &M::rowsInserted, this, signal);
+    connect(this, &M::rowsRemoved, this, signal);
+    connect(this, &M::rowsMoved, this, signal);
+    connect(this, &M::layoutChanged, this, signal);
 }
 
 SimpleListModelBase::~SimpleListModelBase()

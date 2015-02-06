@@ -14,10 +14,13 @@ public:
     auto underline() const -> bool;
     auto strikeOut() const -> bool;
     auto apply(QFont &font) -> void;
+signals:
+    void changed();
 private:
     struct Data;
     Data *d;
 };
 
+DECL_PLUG_CHANGED(FontOptionWidget, changed)
 
 #endif // FONTOPTIONWIDGET_HPP

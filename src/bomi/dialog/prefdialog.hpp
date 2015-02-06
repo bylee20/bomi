@@ -9,11 +9,12 @@ public:
     PrefDialog(QWidget *parent = 0);
     ~PrefDialog();
     auto setAudioDeviceList(const QList<AudioDevice> &devices) -> void;
-    auto set(const Pref &pref) -> void;
-    auto get(Pref &p) -> void;
+    auto set(const Pref *pref) -> void;
+    auto get(Pref *p) -> void;
 signals:
     void applyRequested();
-    void resetRequested();
+private slots:
+    void checkModified();
 private:
     auto changeEvent(QEvent *event) -> void;
     auto showEvent(QShowEvent *event) -> void;

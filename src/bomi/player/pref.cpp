@@ -1,6 +1,6 @@
 #include "pref.hpp"
+#include "app.hpp"
 #include "misc/log.hpp"
-#include "mrlstate.hpp"
 #include "video/hwacc.hpp"
 #include "misc/jsonstorage.hpp"
 #include "pref_helper.hpp"
@@ -10,12 +10,16 @@ DECLARE_LOG_CONTEXT(Pref)
 
 static bool init = false;
 
+Pref::Pref()
+{
+    m_app_style = cApp.defaultStyleName();
+}
+
 auto Pref::initialize() -> void
 {
     if (init)
         return;
     init = true;
-    qRegisterMetaType<const PrefFieldInfo*>();
     qRegisterMetaType<QVector<QMetaProperty>>();
     qRegisterMetaType<ChannelLayoutMap>();
     qRegisterMetaType<QList<MatchString>>();
@@ -25,17 +29,6 @@ auto Pref::initialize() -> void
     qRegisterMetaType<Shortcuts>();
     qRegisterMetaType<OsdStyle>();
     qRegisterMetaType<HwAcc::Type>();
-    auto &mo = *this->metaObject();
-    for (int i =  mo.methodOffset(); i < mo.methodCount(); ++i) {
-        auto method = mo.method(i);
-        if (method.name().startsWith("init_"))
-            method.invoke(this, Qt::DirectConnection);
-    }
-}
-
-auto Pref::fields() -> const QVector<const PrefFieldInfo*>&
-{
-    return PrefFieldInfo::getList();
 }
 
 #define PREF_FILE_PATH QString(_WritablePath(Location::Config) % "/pref.json"_a)
@@ -210,6 +203,9 @@ auto Pref::save() const -> void
     JsonStorage storage(PREF_FILE_PATH);
     QJsonObject json = _JsonFromQObject(this);
     storage.write(json);
+    cApp.setUnique(m_app_unique);
+    cApp.setLocale(m_app_locale);
+    cApp.setStyleName(m_app_style);
 }
 
 auto Pref::load() -> void
@@ -217,24 +213,29 @@ auto Pref::load() -> void
     JsonStorage storage(PREF_FILE_PATH);
     auto json = storage.read();
     if (storage.hasError())
-        return;
-    bool res = _JsonToQObject(json, this);
-    if (!res)
-        _Error("Error: Cannot convert JSON object to preferences");
+        ;
+    else {
+        bool res = _JsonToQObject(json, this);
+        if (!res)
+            _Error("Error: Cannot convert JSON object to preferences");
 
-    if (json.contains(u"sub_enable_autoload"_q)) {
-        m_sub_autoload_v2.enabled = json[u"sub_enable_autoload"_q].toBool();
-        m_sub_autoload_v2.search_paths = _FromJson<QList<MatchString>>(json[u"sub_search_paths_v2"_q]);
-        m_sub_autoload_v2.mode = _FromJson<AutoloadMode>(json[u"sub_autoload"_q]);
+        if (json.contains(u"sub_enable_autoload"_q)) {
+            m_sub_autoload_v2.enabled = json[u"sub_enable_autoload"_q].toBool();
+            m_sub_autoload_v2.search_paths = _FromJson<QList<MatchString>>(json[u"sub_search_paths_v2"_q]);
+            m_sub_autoload_v2.mode = _FromJson<AutoloadMode>(json[u"sub_autoload"_q]);
+        }
+        int idx = m_restore_properties.indexOf(u"audio_track"_q);
+        if (idx != -1)
+            m_restore_properties[idx] = u"audio_tracks"_q;
+        idx = m_restore_properties.indexOf(u"sub_track"_q);
+        if (idx != -1) {
+            m_restore_properties[idx] = u"sub_tracks"_q;
+            m_restore_properties.append(u"sub_tracks_inclusive"_q);
+        }
     }
-    int idx = m_restore_properties.indexOf(u"audio_track"_q);
-    if (idx != -1)
-        m_restore_properties[idx] = u"audio_tracks"_q;
-    idx = m_restore_properties.indexOf(u"sub_track"_q);
-    if (idx != -1) {
-        m_restore_properties[idx] = u"sub_tracks"_q;
-        m_restore_properties.append(u"sub_tracks_inclusive"_q);
-    }
+    m_app_unique = cApp.isUnique();
+    m_app_locale = cApp.locale();
+    m_app_style = cApp.styleName();
 }
 
 auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>

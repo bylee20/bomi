@@ -37,7 +37,7 @@ class MrlStatePropertyListModel
         : public SimpleListModel<MrlState::PropertyInfo,
                                  QVector<MrlState::PropertyInfo>> {
     Q_OBJECT
-    Q_PROPERTY(QStringList value READ value WRITE setValue)
+    Q_PROPERTY(QStringList value READ value WRITE setValue NOTIFY valueChanged)
 public:
     MrlStatePropertyListModel(QObject *parent)
         : SimpleListModel<MrlState::PropertyInfo,
@@ -45,6 +45,8 @@ public:
     {
         setCheckable(0, true);
         setList(MrlState::restorableProperties());
+        connect(this, &MrlStatePropertyListModel::contentsChanged,
+                this, &MrlStatePropertyListModel::valueChanged);
     }
     auto flags(int row, int column) const -> Qt::ItemFlags
         { return Super::flags(row, column) | Qt::ItemIsUserCheckable; }
@@ -67,6 +69,18 @@ public:
             restores[i] = list.contains(_L(at(i).property.name()));
         setChecked(0, restores);
     }
+    auto compare(const QVariant &var) const -> bool
+    {
+        auto list = var.toStringList();
+        auto restores = checkedList(0);
+        for (int i = 0; i < restores.size(); ++i) {
+            if (list.contains(_L(at(i).property.name())) != restores[i])
+                return false;
+        }
+        return true;
+    }
+signals:
+    void valueChanged();
 };
 
 #endif // PREFWIDGETS_HPP

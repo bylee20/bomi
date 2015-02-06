@@ -406,6 +406,11 @@ auto App::locale() const -> Locale
     return d->locale;
 }
 
+auto App::defaultStyleName() const -> QString
+{
+    return d->styleNames.front();
+}
+
 auto App::availableStyleNames() const -> QStringList
 {
     return d->styleNames;

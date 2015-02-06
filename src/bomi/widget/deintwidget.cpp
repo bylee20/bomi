@@ -78,19 +78,27 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
             cap.m_devices &= ~GPU;
     };
     connect(d->combo, &DataComboBox::currentDataChanged,
-            [update] (const QVariant &data) {
+            [=] (const QVariant &data) {
         update(DeintMethod(data.toInt()));
+        emit changed();
     });
     connect(d->doubler, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating) d->current().m_doubler = on;
+        if (!d->updating) {
+            d->current().m_doubler = on;
+            emit changed();
+        }
     });
     connect(d->gl, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating)
+        if (!d->updating) {
             d->current().m_devices.set(OpenGL, on);
+            emit changed();
+        }
     });
     connect(d->gpu, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating)
+        if (!d->updating) {
             d->current().m_devices.set(GPU, on);
+            emit changed();
+        }
     });
     update(DeintMethod::Bob);
 }

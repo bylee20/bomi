@@ -95,12 +95,14 @@ public:
 
 class OsdThemeWidget : public QWidget {
     Q_OBJECT
-    Q_PROPERTY(OsdTheme value READ value WRITE setValue)
+    Q_PROPERTY(OsdTheme value READ value WRITE setValue NOTIFY valueChanged)
 public:
     OsdThemeWidget(QWidget *parent = nullptr);
     ~OsdThemeWidget();
     auto value() const -> OsdTheme;
     auto setValue(const OsdTheme &theme) -> void;
+signals:
+    void valueChanged();
 private:
     struct Data;
     Data *d;

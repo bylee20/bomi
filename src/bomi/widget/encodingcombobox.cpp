@@ -28,6 +28,8 @@ EncodingComboBox::EncodingComboBox(QWidget *parent)
     add(u"Korean Charset"_q, u"CP949"_q);
     add(u"Thai Charset"_q, u"CP874"_q);;
     setEditable(true);
+    connect(this, &QComboBox::currentTextChanged,
+            this, &EncodingComboBox::encodingChanged);
 }
 
 auto EncodingComboBox::encoding() const -> QString

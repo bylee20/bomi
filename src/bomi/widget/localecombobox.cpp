@@ -41,6 +41,8 @@ LocaleComboBox::LocaleComboBox(QWidget *parent)
     for (auto &locale : locales)
         d->items.append(Item{locale});
     d->reset();
+    auto signal = &LocaleComboBox::currentLocaleChanged;
+    PLUG_CHANGED(this);
 }
 
 LocaleComboBox::~LocaleComboBox()

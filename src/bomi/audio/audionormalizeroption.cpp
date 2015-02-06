@@ -23,6 +23,12 @@ AudioNormalizerOptionWidget::AudioNormalizerOptionWidget(QWidget *parent)
     : QWidget(parent), d(new Data)
 {
     d->ui.setupUi(this);
+    auto signal = &AudioNormalizerOptionWidget::optionChanged;
+    PLUG_CHANGED(d->ui.target);
+    PLUG_CHANGED(d->ui.silence);
+    PLUG_CHANGED(d->ui.min);
+    PLUG_CHANGED(d->ui.max);
+    PLUG_CHANGED(d->ui.length);
 }
 
 AudioNormalizerOptionWidget::~AudioNormalizerOptionWidget()
