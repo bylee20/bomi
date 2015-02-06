@@ -241,12 +241,12 @@ auto Player::playbackStatus() const -> QString
 
 auto Player::loopStatus() const -> QString
 {
-    return u"None"_q;
+    return d->playlist->repeat() ? u"Playlist"_q : u"None"_q;
 }
 
-auto Player::setLoopStatus(const QString &/*status*/) -> void
+auto Player::setLoopStatus(const QString &status) -> void
 {
-
+    d->playlist->setRepeat(status != u"None"_q);
 }
 
 auto Player::rate() const -> double
