@@ -15,33 +15,57 @@ PlayEngine::PlayEngine()
         { d->renderVideoFrame(fbo); });
 
     d->params.m_mutex = &d->mutex;
-    connect(&d->params, &MrlState::sub_sync_changed,
-            this, [=] (int ms) { d->sr->setDelay(ms); });
+
+    connect(&d->params, &MrlState::video_offset_changed, d->vr, &VideoRenderer::setOffset);
+    connect(&d->params, &MrlState::video_aspect_ratio_changed, d->vr,
+            [=] (auto r) { d->vr->setAspectRatio(_EnumData(r)); });
+    connect(&d->params, &MrlState::video_crop_ratio_changed, d->vr,
+            [=] (auto r) { d->vr->setCropRatio(_EnumData(r)); });
+    connect(&d->params, &MrlState::sub_display_changed, d->vr,
+            [=] (auto sd) { d->vr->setOverlayOnLetterbox(sd == SubtitleDisplay::OnLetterbox); });
+
+    auto setAlignment = [=] () {
+        const auto v = _EnumData(d->params.video_vertical_alignment());
+        const auto h = _EnumData(d->params.video_horizontal_alignment());
+        d->vr->setAlignment(v | h);
+    };
+    connect(&d->params, &MrlState::video_horizontal_alignment_changed, d->vr, setAlignment);
+    connect(&d->params, &MrlState::video_vertical_alignment_changed, d->vr, setAlignment);
+    connect(&d->params, &MrlState::video_effects_changed, d->vr, [=] (auto e)
+        { d->vr->setFlipped(e & VideoEffect::FlipH, e & VideoEffect::FlipV); });
     connect(&d->params, &MrlState::video_tracks_changed, this, [=] (StreamList list) {
         if (_Change(d->hasVideo, !list.isEmpty()))
             emit hasVideoChanged();
         d->info.video.setTracks(list);
     });
-    connect(&d->params, &MrlState::audio_tracks_changed, this,
-            [=] (StreamList list) { d->info.audio.setTracks(list); });
-    auto set_subs = [=] () {
-        d->info.subtitle.setTracks(d->params.sub_tracks(),
-                                   d->params.sub_tracks_inclusive());
-    };
-    connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
-    connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
+
     connect(&d->params, &MrlState::audio_volume_changed, this, &PlayEngine::volumeChanged);
     connect(&d->params, &MrlState::audio_muted_changed, this, &PlayEngine::mutedChanged);
     connect(&d->params, &MrlState::play_speed_changed, this, &PlayEngine::speedChanged);
+    connect(&d->params, &MrlState::audio_tracks_changed, this,
+            [=] (StreamList list) { d->info.audio.setTracks(list); });
     connect(&d->params, &MrlState::audio_volume_normalizer_changed,
             d->ac, &AudioController::setNormalizerActivated);
     connect(&d->params, &MrlState::audio_equalizer_changed,
             d->ac, &AudioController::setEqualizer);
 
+    connect(&d->params, &MrlState::sub_sync_changed, d->sr, &SubtitleRenderer::setDelay);
+    connect(&d->params, &MrlState::sub_hidden_changed, d->sr, &SubtitleRenderer::setHidden);
+    connect(&d->params, &MrlState::sub_position_changed, d->sr,
+            [=] (int pos) { d->sr->setPos(pos * 0.01); });
+    connect(&d->params, &MrlState::sub_alignment_changed, d->sr,
+            [=] (auto a) { d->sr->setTopAligned(a == VerticalAlignment::Top); });
+
+    auto set_subs = [=] ()
+        { d->info.subtitle.setTracks(d->params.sub_tracks(), d->params.sub_tracks_inclusive()); };
+    connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
+    connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
+
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::endChanged, this,
             [=] () { if (_Change(d->end_s, end()/1000)) emit end_sChanged(); });
+
     auto checkDeint = [=] () {
         auto act = Unavailable;
         if (d->vp->isInputInterlaced())
@@ -65,8 +89,7 @@ PlayEngine::PlayEngine()
         d->post(Searching, skipping);
     }, Qt::DirectConnection);
     connect(d->vp, &VideoProcessor::seekRequested, this, &PlayEngine::seek);
-    connect(d->sr, &SubtitleRenderer::modelsChanged,
-            this, &PlayEngine::subtitleModelsChanged);
+
     connect(d->ac, &AudioController::inputFormatChanged, this,
             [=] () { d->info.audio.output()->setFormat(d->ac->inputFormat()); });
     connect(d->ac, &AudioController::outputFormatChanged, this,
@@ -75,6 +98,9 @@ PlayEngine::PlayEngine()
             [=] (int sr) { d->info.audio.renderer()->setSampleRate(sr, true); });
     connect(d->ac, &AudioController::gainChanged,
             &d->info.audio, &AudioObject::setNormalizer);
+
+    connect(d->sr, &SubtitleRenderer::modelsChanged,
+            this, &PlayEngine::subtitleModelsChanged);
 
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
@@ -548,7 +574,7 @@ auto PlayEngine::seekEdition(int number, int from) -> void
 auto PlayEngine::setAudioVolume(int volume) -> void
 {
     if (d->params.set_audio_volume(qBound(0, volume, 100)))
-        d->mpv.setAsync("volume", d->volume());
+        d->mpv.setAsync("volume", d->volume(&d->params));
 }
 
 auto PlayEngine::isMuted() const -> bool
@@ -564,7 +590,7 @@ auto PlayEngine::volume() const -> int
 auto PlayEngine::setAudioAmpPercent(int amp) -> void
 {
     if (d->params.set_audio_amplifier(qBound(1, amp, 1000)))
-        d->mpv.setAsync("volume", d->volume());
+        d->mpv.setAsync("volume", d->volume(&d->params));
 }
 
 auto PlayEngine::setAudioMuted(bool muted) -> void
@@ -709,38 +735,27 @@ auto PlayEngine::videoSizeHint() const -> QSize
 
 auto PlayEngine::setVideoOffset(const QPoint &offset) -> void
 {
-    if (d->params.set_video_offset(offset))
-        d->vr->setOffset(offset);
+    d->params.set_video_offset(offset);
 }
 
 auto PlayEngine::setVideoAspectRatio(VideoRatio ratio) -> void
 {
-    if (d->params.set_video_aspect_ratio(ratio))
-        d->vr->setAspectRatio(_EnumData(ratio));
+    d->params.set_video_aspect_ratio(ratio);
 }
 
 auto PlayEngine::setVideoCropRatio(VideoRatio ratio) -> void
 {
-    if (d->params.set_video_crop_ratio(ratio))
-        d->vr->setCropRatio(_EnumData(ratio));
+    d->params.set_video_crop_ratio(ratio);
 }
 
 auto PlayEngine::setVideoVerticalAlignment(VerticalAlignment a) -> void
 {
-    if (d->params.set_video_vertical_alignment(a)) {
-        const auto v = _EnumData(d->params.video_vertical_alignment());
-        const auto h = _EnumData(d->params.video_horizontal_alignment());
-        d->vr->setAlignment(v | h);
-    }
+    d->params.set_video_vertical_alignment(a);
 }
 
 auto PlayEngine::setVideoHorizontalAlignment(HorizontalAlignment a) -> void
 {
-    if (d->params.set_video_horizontal_alignment(a)) {
-        const auto v = _EnumData(d->params.video_vertical_alignment());
-        const auto h = _EnumData(d->params.video_horizontal_alignment());
-        d->vr->setAlignment(v | h);
-    }
+    d->params.set_video_horizontal_alignment(a);
 }
 
 auto PlayEngine::setDeintMode(DeintMode mode) -> void
@@ -881,19 +896,14 @@ auto PlayEngine::setVideoDithering(Dithering dithering) -> void
 
 auto PlayEngine::setVideoEqualizer(const VideoColor &eq) -> void
 {
-    if (d->params.set_video_color(eq)) {
-        d->updateColorMatrix();
+    if (d->params.set_video_color(eq))
         d->updateVideoSubOptions();
-    }
 }
 
 auto PlayEngine::setVideoEffects(VideoEffects e) -> void
 {
-    if (d->params.set_video_effects(e)) {
-        d->vr->setFlipped(e & VideoEffect::FlipH, e & VideoEffect::FlipV);
-        d->updateColorMatrix();
+    if (d->params.set_video_effects(e))
         d->updateVideoSubOptions();
-    }
 }
 
 auto PlayEngine::takeSnapshot(Snapshot mode) -> void
@@ -964,16 +974,7 @@ auto PlayEngine::stateText() const -> QString
 
 auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
 {
-    if (d->params.set_audio_equalizer(eq))
-        d->ac->setEqualizer(eq);
-}
-
-auto PlayEngine::getChapter(int idx) const -> EditionChapterObject*
-{
-    Q_ASSERT(d->info.chapters.value(idx));
-    if (_InRange0(idx, d->info.chapters.size()))
-        return d->info.chapters[idx].data();
-    return chapter();
+    d->params.set_audio_equalizer(eq);
 }
 
 template<class L, class T = EditionChapterObject>
@@ -1057,14 +1058,12 @@ auto PlayEngine::setAutoselectMode_locked(bool enable, AutoselectMode mode,
 
 auto PlayEngine::setSubtitleAlignment(VerticalAlignment a) -> void
 {
-    if (d->params.set_sub_alignment(a))
-        d->sr->setTopAligned(a == VerticalAlignment::Top);
+    d->params.set_sub_alignment(a);
 }
 
 auto PlayEngine::setSubtitlePosition(int pos) -> void
 {
-    if (d->params.set_sub_position(pos))
-        d->sr->setPos(pos * 0.01);
+    d->params.set_sub_position(pos);
 }
 
 auto PlayEngine::captionBeginTime() -> int
@@ -1097,8 +1096,7 @@ auto PlayEngine::subtitleImage(const QRect &rect, QRectF *subRect) const -> QIma
 
 auto PlayEngine::setSubtitleDisplay(SubtitleDisplay sd) -> void
 {
-    if (d->params.set_sub_display(sd))
-        d->vr->setOverlayOnLetterbox(sd == SubtitleDisplay::OnLetterbox);
+    d->params.set_sub_display(sd);
 }
 
 auto PlayEngine::setSubtitleFiles(const QStringList &files,

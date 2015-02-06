@@ -91,10 +91,32 @@ auto PlayEngine::Data::vo(const MrlState *s) const -> QByteArray
 
 auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
 {
+    auto c_matrix = [s] () {
+        QMatrix4x4 matrix;
+        if (s->video_effects() & VideoEffect::Invert)
+            matrix = QMatrix4x4(-1, 0, 0, 1,
+                                0, -1, 0, 1,
+                                0, 0, -1, 1,
+                                0, 0,  0, 1);
+        auto eq = s->video_color();
+        if (s->video_effects() & VideoEffect::Gray)
+            eq.setSaturation(-100);
+        matrix *= eq.matrix();
+        if (s->video_effects() & VideoEffect::Remap) {
+            const float a = 255.0 / (235.0 - 16.0);
+            const float b = -16.0 / 255.0 * a;
+            matrix *= QMatrix4x4(a, 0, 0, b,
+                                 0, a, 0, b,
+                                 0, 0, a, b,
+                                 0, 0, 0, 1);
+        }
+        return matrix;
+    };
+
     static const QByteArray shader =
             "const mat4 c_matrix = mat4(__C_MATRIX__); "
-            "vec4 custom_shader(vec4 color) { return c_matrix * color; }";
-    auto customShader = [&] (const QMatrix4x4 &c_matrix) -> QByteArray {
+            "vec4 custom_shader(vec4 color) { return c_matrix * color; }"_b;
+    auto customShader = [] (const QMatrix4x4 &c_matrix) -> QByteArray {
         QByteArray mat;
         for (int c = 0; c < 4; ++c) {
             mat += "vec4(";
@@ -123,35 +145,16 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     opts.add("frame-drop-mode", "clear"_b);
     opts.add("fancy-downscaling", s->video_hq_downscaling());
     opts.add("sigmoid-upscaling", s->video_hq_upscaling());
-    opts.add("custom-shader", customShader(c_matrix));
+    opts.add("custom-shader", customShader(c_matrix()));
 
     return opts.get();
 }
 
-auto PlayEngine::Data::updateColorMatrix() -> void
-{
-    c_matrix = QMatrix4x4();
-    if (params.video_effects() & VideoEffect::Invert)
-        c_matrix = QMatrix4x4(-1, 0, 0, 1,
-                              0, -1, 0, 1,
-                              0, 0, -1, 1,
-                              0, 0,  0, 1);
-    auto eq = params.video_color();
-    if (params.video_effects() & VideoEffect::Gray)
-        eq.setSaturation(-100);
-    c_matrix *= eq.matrix();
-    if (params.video_effects() & VideoEffect::Remap) {
-        const float a = 255.0 / (235.0 - 16.0);
-        const float b = -16.0 / 255.0 * a;
-        c_matrix *= QMatrix4x4(a, 0, 0, b,
-                               0, a, 0, b,
-                               0, 0, a, b,
-                               0, 0, 0, 1);
-    }
-}
-
 auto PlayEngine::Data::updateVideoSubOptions() -> void
 {
+    mutex.lock();
+    auto opts = videoSubOptions(&params);
+    mutex.unlock();
     mpv.tellAsync("vo_cmdline", videoSubOptions(&params));
 }
 
@@ -274,7 +277,7 @@ auto PlayEngine::Data::onLoad() -> void
     const auto deint = local->video_deinterlacing() != DeintMode::None;
     mpv.setAsync("speed", local->play_speed() * 1e-2);
     mpv.setAsync("options/sub-visibility", !local->sub_hidden());
-    mpv.setAsync("options/volume", volume());
+    mpv.setAsync("options/volume", volume(local));
     mpv.setAsync("options/mute", local->audio_muted() ? "yes"_b : "no"_b);
     mpv.setAsync("options/audio-delay", local->audio_sync() * 1e-3);
     mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);

@@ -198,7 +198,6 @@ public:
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterList() const -> QQmlListProperty<EditionChapterObject>;
     auto editionList() const -> QQmlListProperty<EditionChapterObject>;
-    Q_INVOKABLE EditionChapterObject* getChapter(int idx) const;
     auto setYle(YleDL *yle) -> void;
     auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;

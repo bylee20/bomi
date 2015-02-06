@@ -123,10 +123,6 @@ struct PlayEngine::Data {
     int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;
     int duration = 0, begin = 0, time = 0;
 
-
-    QMatrix4x4 c_matrix;
-
-
     QMap<QString, QString> assEncodings;
 
     std::array<StreamData, StreamUnknown> streams = []() {
@@ -169,14 +165,13 @@ struct PlayEngine::Data {
     auto vo(const MrlState *s) const -> QByteArray;
     auto videoSubOptions(const MrlState *s) const -> QByteArray;
     auto updateVideoSubOptions() -> void;
-    auto updateColorMatrix() -> void;
     auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
     auto displaySize() const { return info.video.renderer()->size(); }
     auto post(State state) -> void { _PostEvent(p, StateChange, state); }
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
 
-    auto volume() const -> double
-        { return params.audio_volume() * params.audio_amplifier() * 1e-3; }
+    auto volume(const MrlState *s) const -> double
+        { return s->audio_volume() * s->audio_amplifier() * 1e-3; }
 
     auto loadfile(const Mrl &mrl, bool resume) -> void;
     auto updateMediaName(const QString &name = QString()) -> void;
