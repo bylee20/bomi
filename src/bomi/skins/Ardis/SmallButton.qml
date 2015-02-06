@@ -4,7 +4,7 @@ import bomi 1.0 as B
 B.Button {
     width: 34; height: 24
     adjustIconSize: false
-
+    icon.smooth: false
     background { color: Qt.rgba(0, 0, 0, checked ? 0.2 : 0); radius: 2 }
 
     icon {
