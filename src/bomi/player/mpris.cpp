@@ -1,19 +1,10 @@
 #include "mpris.hpp"
 #include "playengine.hpp"
 #include "playlistmodel.hpp"
+#include "app.hpp"
 #include "mainwindow.hpp"
 
 namespace mpris {
-
-auto getMainWindow() -> MainWindow*
-{
-    auto tops = qApp->topLevelWidgets();
-    for (auto w : tops) {
-        if (auto mw = qobject_cast<MainWindow*>(w))
-            return mw;
-    }
-    return nullptr;
-}
 
 RootObject::RootObject(QObject *parent)
     : QObject(parent)
@@ -78,7 +69,7 @@ struct MediaPlayer2::Data {
 
 MediaPlayer2::MediaPlayer2(QObject *parent)
 : QDBusAbstractAdaptor(parent), d(new Data) {
-    d->mw = getMainWindow();
+    d->mw = cApp.mainWindow();
     Q_ASSERT(d->mw);
     connect(d->mw, &MainWindow::fullscreenChanged, [this] (bool fs) {
         sendPropertiesChanged(this, "Fullscreen", fs);
@@ -192,7 +183,7 @@ Player::Player(QObject *parent)
     : QDBusAbstractAdaptor(parent)
     , d(new Data)
 {
-    d->mw = getMainWindow();
+    d->mw = cApp.mainWindow();
     d->engine = d->mw->engine();
     d->playlist = d->mw->playlist();
 
