@@ -102,6 +102,8 @@ PlayEngine::PlayEngine()
     d->mpv.setOption("af", d->af(&d->params));
     d->mpv.setOption("vf", d->vf(&d->params));
     d->mpv.setOption("hr-seek", d->preciseSeeking ? "yes" : "absolute");
+    d->mpv.setOption("audio-file-auto", "no");
+    d->mpv.setOption("sub-auto", "no");
 
     auto overrides = qgetenv("BOMI_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
