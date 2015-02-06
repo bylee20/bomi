@@ -14,6 +14,36 @@
 #include "dialog/subtitlefinddialog.hpp"
 #include "avinfoobject.hpp"
 
+auto MainWindow::Data::restoreState() -> void
+{
+    playlist.setVisible(as.playlist_visible);
+    playlist.setRepeat(as.playlist_repeat);
+    playlist.setShuffled(as.playlist_shuffled);
+    playlist.setList(recent.lastPlaylist());
+    if (!recent.lastMrl().isEmpty()) {
+        load(recent.lastMrl(), false);
+        setOpen(recent.lastMrl());
+    }
+    updateRecentActions(recent.openList());
+    history.setVisible(as.history_visible);
+
+    if (as.win_size.isValid()) {
+        auto screen = screenSize();
+        const int x = screen.width() * as.win_pos.x();
+        const int y = screen.height() * as.win_pos.y();
+        p->setGeometry(QRect({x, y}, as.win_size));
+    }
+    winState = prevWinState = p->windowState();
+
+    auto &tool = menu(u"tool"_q);
+    auto &pl = tool(u"playlist"_q);
+    pl[u"shuffle"_q]->setChecked(as.playlist_shuffled);
+    pl[u"repeat"_q]->setChecked(as.playlist_repeat);
+    tool[u"auto-exit"_q]->setChecked(as.auto_exit);
+
+    e.restore(&as.state);
+}
+
 auto MainWindow::Data::initContextMenu() -> void
 {
     auto addContextMenu = [this] (Menu &menu) { contextMenu.addMenu(&menu); };
@@ -33,7 +63,7 @@ auto MainWindow::Data::initContextMenu() -> void
 ////    qt_mac_set_dock_menu(&menu);
     QMenuBar *mb = cApp.globalMenuBar();
     qDeleteAll(mb->actions());
-    auto addMenuBar = [this, mb] (Menu &menu)
+    auto addMenuBar = [=] (Menu &menu)
         {mb->addMenu(menu.copied(mb));};
     addMenuBar(menu(u"open"_q));
     addMenuBar(menu(u"play"_q));
@@ -46,23 +76,8 @@ auto MainWindow::Data::initContextMenu() -> void
 #endif
 }
 
-auto MainWindow::Data::initWidget() -> void
+auto MainWindow::Data::initDesktop() -> void
 {
-    connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
-        auto context = view->openglContext();
-        if (cApp.isOpenGLDebugLoggerRequested())
-            glLogger.initialize(context);
-        sgInit = true;
-        e.initializeGL(context);
-        emit p->sceneGraphInitialized();
-    }, Qt::DirectConnection);
-    connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
-        sgInit = false;
-        auto context = QOpenGLContext::currentContext();
-        glLogger.finalize(context);
-        e.finalizeGL(context);
-    }, Qt::DirectConnection);
-
     auto reset = [this] () {
         if (!desktop->isVirtualDesktop())
             virtualDesktopSize = QSize();
@@ -80,7 +95,65 @@ auto MainWindow::Data::initWidget() -> void
     reset();
 }
 
-auto MainWindow::Data::initEngine() -> void
+auto MainWindow::Data::initTray() -> void
+{
+    if (!TrayIcon::isAvailable())
+        return;
+    tray = new TrayIcon(cApp.defaultIcon(), p);
+    tray->setVisible(pref.enable_system_tray());
+    connect(tray, &TrayIcon::activated, p, [=] (auto reason) {
+        if (reason == TrayIcon::Trigger)
+            p->setVisible(!p->isVisible());
+        else if (reason == TrayIcon::Context)
+            contextMenu.exec(QCursor::pos());
+        else if (reason == TrayIcon::Show)
+            p->setVisible(true);
+        else if (reason == TrayIcon::Quit)
+            p->exit();
+    });
+}
+
+auto MainWindow::Data::initWindow() -> void
+{
+    auto format = view->requestedFormat();
+    if (OpenGLLogger::isAvailable())
+        format.setOption(QSurfaceFormat::DebugContext);
+    view->setFormat(format);
+    view->setPersistentOpenGLContext(true);
+    view->setPersistentSceneGraph(true);
+
+    auto widget = createWindowContainer(view, p);
+    auto layout = new QVBoxLayout;
+    layout->addWidget(widget);
+    layout->setMargin(0);
+    p->setLayout(layout);
+    p->setFocusProxy(widget);
+    p->setFocus();
+    p->setAcceptDrops(true);
+    p->resize(400, 300);
+    p->setMinimumSize(QSize(400, 300));
+
+    connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
+        auto context = view->openglContext();
+        if (cApp.isOpenGLDebugLoggerRequested())
+            glLogger.initialize(context);
+        sgInit = true;
+        e.initializeGL(context);
+        emit p->sceneGraphInitialized();
+    }, Qt::DirectConnection);
+    connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
+        sgInit = false;
+        auto context = QOpenGLContext::currentContext();
+        glLogger.finalize(context);
+        e.finalizeGL(context);
+    }, Qt::DirectConnection);
+
+    connect(&cApp, &App::commitDataRequest, p, [=] () { commitData(); });
+    connect(&cApp, &App::saveStateRequest, p, [=] (QSessionManager &session)
+        { session.setRestartHint(QSessionManager::RestartIfRunning); });
+}
+
+auto MainWindow::Data::plugEngine() -> void
 {
     connect(&e, &PlayEngine::mrlChanged, p, [=] (const Mrl &mrl) { updateMrl(mrl); });
     connect(&e, &PlayEngine::stateChanged, p, [this] (PlayEngine::State state) {

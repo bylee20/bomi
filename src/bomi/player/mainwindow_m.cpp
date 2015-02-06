@@ -17,9 +17,9 @@
 template<class T, class Func>
 auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUndoCommand*
 {
-    if (undo) {
+    if (undo.isActive()) {
         auto cmd = new ValueCmd<Func, T>(to, from, func);
-        undo->push(cmd);
+        undo.push(cmd);
         return cmd;
     } else {
         func(to);
@@ -146,7 +146,7 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
     });
 }
 
-auto MainWindow::Data::connectMenus() -> void
+auto MainWindow::Data::plugMenu() -> void
 {
     Menu &open = menu(u"open"_q);
     connect(open[u"file"_q], &QAction::triggered, p, [this] () {
@@ -704,4 +704,11 @@ auto MainWindow::Data::connectMenus() -> void
     }
     PLUG_EC(play(u"title"_q), edition, Edition, tr("Current Title/Edition"));
     PLUG_EC(play(u"chapter"_q), chapter, Chapter, tr("Current Chapter"));
+
+#define PLUG_UR(ur, UR) { \
+    auto a = tool[u"" #ur ""_q]; \
+    connect(&undo, &QUndoStack::can##UR##Changed, a, &QAction::setEnabled); \
+    connect(a, &QAction::triggered, &undo, &QUndoStack::ur); \
+    a->setEnabled(undo.can##UR()); }
+    PLUG_UR(undo, Undo); PLUG_UR(redo, Redo);
 }

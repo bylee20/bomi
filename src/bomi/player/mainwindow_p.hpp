@@ -75,7 +75,7 @@ struct MainWindow::Data {
     OpenGLLogger glLogger{"SG"};
     SubtitleView *sview = nullptr;
     PlaylistModel playlist;
-    QUndoStack *undo = nullptr;
+    QUndoStack undo;
     Downloader downloader;
     TrayIcon *tray = nullptr;
     QString filePath;
@@ -98,6 +98,7 @@ struct MainWindow::Data {
             _SetLastOpenPath(mrl.toLocalFile());
         playlist.setLoaded(mrl);
     }
+    auto restoreState() -> void;
     auto applyPref() -> void;
     auto updateStaysOnTop() -> void;
     auto setVideoSize(double rate) -> void;
@@ -116,14 +117,16 @@ struct MainWindow::Data {
         { showMessage(cmd, toMessage(value)); }
     auto doVisibleAction(bool visible) -> void;
     auto commitData() -> void;
-    auto initWidget() -> void;
+    auto initDesktop() -> void;
+    auto initWindow() -> void;
+    auto initTray() -> void;
     auto generatePlaylist(const Mrl &mrl) const -> Playlist;
     auto openMrl(const Mrl &mrl) -> void;
     auto resume(const Mrl &mrl, int *edition) -> int;
     auto cache(const Mrl &mrl) -> int;
-    auto initEngine() -> void;
+    auto plugEngine() -> void;
     auto initItems() -> void;
-    auto connectMenus() -> void;
+    auto plugMenu() -> void;
     auto setVideoSize(const QSize &video) -> void;
     auto load(const Mrl &mrl, bool play = true, bool tryResume = true) -> void;
     auto load(Subtitle &sub, const QString &file, const QString &enc) -> bool;

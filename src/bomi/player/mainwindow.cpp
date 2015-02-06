@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
     d->desktop = cApp.desktop();
     d->pref.initialize();
     d->pref.load();
+    d->undo.setActive(false);
+    d->dontShowMsg = true;
 
     AppObject::setEngine(&d->e);
     AppObject::setHistory(&d->history);
@@ -33,92 +35,19 @@ MainWindow::MainWindow(QWidget *parent)
     d->e.setYle(&d->yle);
     d->e.run();
 
-    auto format = d->view->requestedFormat();
-    if (OpenGLLogger::isAvailable())
-        format.setOption(QSurfaceFormat::DebugContext);
-    d->view->setFormat(format);
-    d->view->setPersistentOpenGLContext(true);
-    d->view->setPersistentSceneGraph(true);
-
-    auto widget = createWindowContainer(d->view, this);
-    auto layout = new QVBoxLayout;
-    layout->addWidget(widget);
-    layout->setMargin(0);
-    setLayout(layout);
-    setFocusProxy(widget);
-    setFocus();
-    setAcceptDrops(true);
-    resize(400, 300);
-    setMinimumSize(QSize(400, 300));
-
-    d->initWidget();
+    d->initWindow();
+    d->initDesktop();
     d->initContextMenu();
     d->initItems();
-    d->initEngine();
+    d->initTray();
 
-    d->dontShowMsg = true;
-    d->connectMenus();
+    d->plugEngine();
+    d->plugMenu();
 
-    d->playlist.setVisible(d->as.playlist_visible);
-    d->playlist.setRepeat(d->as.playlist_repeat);
-    d->playlist.setShuffled(d->as.playlist_shuffled);
-    d->history.setVisible(d->as.history_visible);
-    auto &pl = d->menu(u"tool"_q)(u"playlist"_q);
-    pl[u"shuffle"_q]->setChecked(d->as.playlist_shuffled);
-    pl[u"repeat"_q]->setChecked(d->as.playlist_repeat);
-
-    if (d->as.win_size.isValid()) {
-        auto screen = d->screenSize();
-        const auto x = screen.width() * d->as.win_pos.x();
-        const auto y = screen.height() * d->as.win_pos.y();
-        move(x, y);
-        resize(d->as.win_size);
-    }
-
-    d->menu(u"tool"_q)[u"auto-exit"_q]->setChecked(d->as.auto_exit);
+    d->restoreState();
 
     d->dontShowMsg = false;
-
-    d->playlist.setList(d->recent.lastPlaylist());
-    if (!d->recent.lastMrl().isEmpty()) {
-        d->load(d->recent.lastMrl(), false);
-        d->setOpen(d->recent.lastMrl());
-    }
-    d->updateRecentActions(d->recent.openList());
-    d->winState = d->prevWinState = windowState();
-    d->e.restore(&d->as.state);
-
-    connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
-    connect(&cApp, &App::saveStateRequest, [this] (QSessionManager &session) {
-        session.setRestartHint(QSessionManager::RestartIfRunning);
-    });
-
-    d->undo = new QUndoStack(this);
-    auto undo = d->menu(u"tool"_q)[u"undo"_q];
-    auto redo = d->menu(u"tool"_q)[u"redo"_q];
-    connect(d->undo, &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
-    connect(d->undo, &QUndoStack::canRedoChanged, redo, &QAction::setEnabled);
-    connect(undo, &QAction::triggered, d->undo, &QUndoStack::undo);
-    connect(redo, &QAction::triggered, d->undo, &QUndoStack::redo);
-    d->menu(u"tool"_q)[u"undo"_q]->setEnabled(d->undo->canUndo());
-    d->menu(u"tool"_q)[u"redo"_q]->setEnabled(d->undo->canRedo());
-
-    if (TrayIcon::isAvailable()) {
-        d->tray = new TrayIcon(cApp.defaultIcon(), this);
-        connect(d->tray, &TrayIcon::activated,
-                this, [this] (TrayIcon::ActivationReason reason) {
-            if (reason == TrayIcon::Trigger)
-                setVisible(!isVisible());
-            else if (reason == TrayIcon::Context)
-                d->contextMenu.exec(QCursor::pos());
-            else if (reason == TrayIcon::Show)
-                setVisible(true);
-            else if (reason == TrayIcon::Quit)
-                exit();
-        });
-        d->tray->setVisible(d->pref.enable_system_tray());
-    }
-
+    d->undo.setActive(true);
     QTimer::singleShot(1, this, [=] () { d->applyPref(); cApp.runCommands(); });
 }
 
