@@ -502,4 +502,5 @@ DISTFILES += \
     skins/Ardis/SmallButton.qml \
     skins/Ardis/MediaButton.qml \
     skins/Ardis/bomi.qml \
-    imports/bomi/HideTimer.qml
+    imports/bomi/HideTimer.qml \
+    skins/Numix/bomi.qml
