@@ -144,7 +144,6 @@ B.AppWithFloating {
                             y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0)
                             icon.source: emph ? "marker-filled.png" : "marker.png"
                             tooltip: parent.chapter.name; delay: 0
-                            acceptedButtons: Qt.LeftButton
                             onClicked: control.time = parent.chapter.time
                         }
                     }

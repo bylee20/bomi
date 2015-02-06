@@ -8,25 +8,24 @@ Item {
     property alias monospace: slash.monospace
     property real spacing: 0
     property bool msec: false
-    property int time: s.engine.time
-    property int duration: s.engine.end
+    property alias time: timeText.time
+    property alias duration: endText.time
     implicitWidth: timeText.paintedWidth + slash.paintedWidth + endText.paintedWidth
     implicitHeight: Math.max(timeText.paintedHeight, slash.paintedHeight, endText.paintedHeight)
+
     QtObject {
-        id: s
+        id: d
         readonly property QtObject engine: B.App.engine
-        property int time: item.time/1000
-        property int duration: item.duration/1000
     }
 
-    B.Text {
+    B.TimeText {
         id: timeText; height: parent.height
         anchors {
             right: slash.left; rightMargin: spacing
             verticalCenter: slash.verticalCenter
         }
+        time: d.engine.time
         font: slash.font; color: slash.color
-        text: formatTime(msec ? item.time : s.time * 1000, msec)
         monospace: slash.monospace
         verticalAlignment: slash.verticalAlignment
     }
@@ -35,13 +34,13 @@ Item {
         height: parent.height; anchors.centerIn: parent
         text: "/"; verticalAlignment: Text.AlignVCenter
     }
-    B.Text {
+    B.TimeText {
         id: endText; height: parent.height
         anchors {
             left: slash.right; leftMargin: spacing
             verticalCenter: slash.verticalCenter
         }
-        text: formatTime(msec ? item.duration : s.duration * 1000, msec)
+        time: d.engine.end
         font: slash.font; color: slash.color
         monospace: slash.monospace
         verticalAlignment: slash.verticalAlignment

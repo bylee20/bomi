@@ -71,7 +71,6 @@ B.AppWithFloating {
                             readonly property var chapter: parent.chapter
                             size: 6; x: -3; y: 0; z: hovered ? 1e10 : -1
                             iconName: "marker"; tooltip: chapter.name; delay: 0
-                            acceptedButtons: Qt.LeftButton
                             onClicked: control.time = chapter.time
                         }
                     }

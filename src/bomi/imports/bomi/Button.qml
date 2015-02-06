@@ -69,7 +69,7 @@ Item {
             anchors.fill: parent; anchors.margins: item.paddings
             readonly property real sp: icon.visible && text.visible ? item.spacing : 0
             B.ButtonIcon {
-                id: icon; smooth: sourceSize != Qt.size(width, height)
+                id: icon; smooth: true
                 source: getStateIconName(prefix.toString(), hovered, pressed)
                 visible: sourceSize.width > 0
                 anchors {
@@ -119,8 +119,7 @@ Item {
                 id: area; anchors.fill: parent;
                 alpha: item.useMask ? 0 : -1
                 hoverEnabled: true
-                acceptedButtons: (action ? Qt.LeftButton : 0)
-                               | (action2 ? Qt.RightButton : 0)
+                acceptedButtons: Qt.LeftButton | (action2 ? Qt.RightButton : 0)
                 onReleased: {
                     var action = mouse.button & Qt.RightButton ? item.action2 : item.action
                     if (containsMouse && action)
