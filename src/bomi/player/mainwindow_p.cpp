@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "misc/trayicon.hpp"
 #include "misc/stepactionpair.hpp"
+#include "tmp/algorithm.hpp"
 #include "video/kernel3x3.hpp"
 #include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
@@ -297,7 +298,7 @@ auto MainWindow::Data::trigger(QAction *action) -> void
     if (view->topLevelItem()->isVisible()) {
         if (unblockedActions.isEmpty()) {
             unblockedActions += menu(u"window"_q).actions();
-            qSort(unblockedActions);
+            tmp::sort(unblockedActions);
         }
         const auto it = qBinaryFind(_C(unblockedActions), action);
         if (it == unblockedActions.cend())

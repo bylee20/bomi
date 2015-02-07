@@ -1,4 +1,5 @@
 #include "mrl.hpp"
+#include "tmp/algorithm.hpp"
 #include "misc/udf25.hpp"
 
 Mrl::Mrl(const QUrl &url) {
@@ -168,7 +169,7 @@ static QByteArray blurayHash(const QString &device) {
         dir(u"/BDMV/PLAYLIST"_q);
         dir(u"/BDMV/CLIPINF"_q);
         dir(u"/BDMV/STREAM"_q);
-        qSort(files);
+        tmp::sort(files);
         for (auto &fileName : files) {
             QFile file(device % fileName);
             if (file.open(QFile::ReadOnly))
@@ -188,7 +189,7 @@ static QByteArray blurayHash(const QString &device) {
         dir(u"/BDMV/PLAYLIST"_q);
         dir(u"/BDMV/CLIPINF"_q);
         dir(u"/BDMV/STREAM"_q);
-        qSort(files);
+        tmp::sort(files);
         for (auto &fileName : files) {
             ::udf::File file(&fs, fileName);
             if (file.isOpen())
