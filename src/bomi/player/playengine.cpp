@@ -1,5 +1,6 @@
 #include "playengine.hpp"
 #include "playengine_p.hpp"
+#include "app.hpp"
 #include "audio/audionormalizeroption.hpp"
 #include "subtitle/subtitlemodel.hpp"
 
@@ -130,6 +131,7 @@ PlayEngine::PlayEngine()
     d->mpv.setOption("hr-seek", d->preciseSeeking ? "yes" : "absolute");
     d->mpv.setOption("audio-file-auto", "no");
     d->mpv.setOption("sub-auto", "no");
+    d->mpv.setOption("audio-client-name", cApp.name());
 
     auto overrides = qgetenv("BOMI_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
