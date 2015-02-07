@@ -466,6 +466,8 @@ RootMenu::RootMenu()
             d->action(u"down"_q, QT_TR_NOOP("High Quality Downscaling"), true);
         });
 
+        d->action(u"motion"_q, QT_TR_NOOP("Motion Interpolation"), true);
+
         d->separator();
 
         d->enumMenuCheckable<DeintMode>(true);

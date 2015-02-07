@@ -235,6 +235,7 @@ public:
     auto setChromaUpscaler(const IntrplParamSet &params) -> void;
     auto setInterpolatorMap(const IntrplParamSetMap &map) -> void;
     auto setChromaUpscalerMap(const IntrplParamSetMap &map) -> void;
+    auto setMotionInterpolation(bool on) -> void;
     auto interpolator() const -> IntrplParamSet;
     auto chromaUpscaler() const -> IntrplParamSet;
     auto interpolatorMap() const -> IntrplParamSetMap;

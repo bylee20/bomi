@@ -243,7 +243,9 @@ HEADERS += \
     subtitle/subtitlerenderer.hpp \
     video/videoprocessor.hpp \
     player/mpv.hpp \
-    video/interpolatorparams.hpp
+    video/interpolatorparams.hpp \
+    video/videofilter.hpp \
+    video/motioninterpolator.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -422,7 +424,9 @@ SOURCES += \
     subtitle/subtitlerenderer.cpp \
     video/videoprocessor.cpp \
     player/mpv.cpp \
-    video/interpolatorparams.cpp
+    video/interpolatorparams.cpp \
+    video/videofilter.cpp \
+    video/motioninterpolator.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

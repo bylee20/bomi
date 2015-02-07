@@ -115,6 +115,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"video/interpolator/advanced"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_I;
     keys[u"video/interpolator/cycle"_q] << Qt::CTRL + Qt::Key_I;
     keys[u"video/dithering/cycle"_q] << Qt::CTRL + Qt::Key_T;
+    keys[u"video/motion"_q] << Qt::CTRL + Qt::Key_M;
 
     keys[u"audio/track/cycle"_q] << Qt::CTRL + Qt::Key_A;
     keys[u"audio/volume/increase"_q] << Qt::Key_Up;

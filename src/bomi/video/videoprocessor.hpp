@@ -20,6 +20,7 @@ public:
     auto skipToNextBlackFrame() -> void;
     auto stopSkipping() -> void;
     auto isSkipping() const -> bool;
+    auto isInterpolating() const -> bool;
 signals:
     void inputInterlacedChanged();
     void outputInterlacedChanged();
@@ -28,13 +29,14 @@ signals:
     void seekRequested(int msec);
 private:
     static auto open(vf_instance *vf) -> int;
-    static auto uninit(vf_instance *vf) -> void;
-    static auto reconfig(vf_instance *vf,
-                         mp_image_params *in, mp_image_params *out) -> int;
-    static auto control(vf_instance *vf, int request, void *data) -> int;
     static auto queryFormat(vf_instance *vf, uint fmt) -> int;
-    static auto filterIn(vf_instance *vf, mp_image *mpi)-> int;
-    static auto filterOut(vf_instance *vf) -> int;
+    auto open() -> int;
+    auto uninit() -> void;
+    auto reconfig(mp_image_params *in, mp_image_params *out) -> int;
+    auto control(int request, void *data) -> int;
+    auto filterIn(mp_image *mpi)-> int;
+    auto filterOut() -> int;
+    auto needsInput() const -> bool;
     struct Data;
     Data *d;
     friend auto create_vf_info() -> vf_info;

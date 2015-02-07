@@ -1,9 +1,11 @@
 #ifndef SOFTWAREDEINTERLACER_HPP
 #define SOFTWAREDEINTERLACER_HPP
 
+#include "videofilter.hpp"
+
 class DeintOption;        class MpImage;
 
-class SoftwareDeinterlacer {
+class SoftwareDeinterlacer : public VideoFilter {
 public:
     enum Type {Graph, PP, Mark, Pass};
     SoftwareDeinterlacer();
@@ -14,6 +16,7 @@ public:
     auto push(MpImage &&mpi) -> void;
     auto pop() -> MpImage;
     auto clear() -> void;
+    auto needsMore() const -> bool final { return false; }
     auto type() const -> Type;
     auto pass() const -> bool;
 private:

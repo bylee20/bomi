@@ -828,6 +828,14 @@ auto PlayEngine::setColorSpace(ColorSpace space) -> void
         d->mpv.setAsync("colormatrix", _EnumData(space).option);
 }
 
+auto PlayEngine::setMotionInterpolation(bool on) -> void
+{
+    if (d->params.set_video_motion_interpolation(on)) {
+        d->mpv.tellAsync("vf", "set"_b, d->vf(&d->params));
+        d->updateVideoSubOptions();
+    }
+}
+
 auto PlayEngine::setInterpolator(const IntrplParamSet &params) -> void
 {
     d->mutex.lock();

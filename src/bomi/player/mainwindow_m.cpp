@@ -405,6 +405,7 @@ auto MainWindow::Data::plugMenu() -> void
 
     PLUG_FLAG(video(u"hq-scaling"_q)[u"down"_q], video_hq_downscaling, setVideoHighQualityDownscaling);
     PLUG_FLAG(video(u"hq-scaling"_q)[u"up"_q], video_hq_upscaling, setVideoHighQualityUpscaling);
+    PLUG_FLAG(video[u"motion"_q], video_motion_interpolation, setMotionInterpolation);
 
     PLUG_ENUM_CHILD(video, video_dithering, setVideoDithering);
     PLUG_ENUM_CHILD(video, video_space, setColorSpace);

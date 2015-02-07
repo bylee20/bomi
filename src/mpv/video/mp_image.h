@@ -37,6 +37,7 @@
 #define MP_IMGFIELD_TOP 0x08
 #define MP_IMGFIELD_BOTTOM 0x10
 #define MP_IMGFIELD_INTERLACED 0x20
+#define MP_IMGFIELD_ADDITIONAL 0x100
 
 // Describes image parameters that usually stay constant.
 // New fields can be added in the future. Code changing the parameters should
@@ -101,7 +102,7 @@ typedef struct mp_image {
     int plane_h[MP_MAX_PLANES];
 
     /* only inside filter chain */
-    double pts;
+	double pts, pts_orig;
     /* memory management */
     struct m_refcount *refcount;
     /* for private use */

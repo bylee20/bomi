@@ -81,6 +81,7 @@ auto PlayEngine::Data::vf(const MrlState *s) const -> QByteArray
     vf.add("noformat:address"_b, vp);
     vf.add("swdec_deint"_b, s->d->deint_swdec.toString().toLatin1());
     vf.add("hwdec_deint"_b, s->d->deint_hwdec.toString().toLatin1());
+    vf.add("interpolate"_b, (int)s->video_motion_interpolation());
     return vf.get();
 }
 
@@ -146,6 +147,7 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     opts.add("fancy-downscaling", s->video_hq_downscaling());
     opts.add("sigmoid-upscaling", s->video_hq_upscaling());
     opts.add("custom-shader", customShader(c_matrix()));
+    opts.add("smoothmotion", s->video_motion_interpolation());
 
     return opts.get();
 }
@@ -276,18 +278,22 @@ auto PlayEngine::Data::onLoad() -> void
 
     const auto deint = local->video_deinterlacing() != DeintMode::None;
     mpv.setAsync("speed", local->play_speed() * 1e-2);
-    mpv.setAsync("options/sub-visibility", !local->sub_hidden());
+
+    mpv.setAsync("options/vo", vo(local));
+    mpv.setAsync("options/vf", vf(local));
+    mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
+    mpv.setAsync("options/colormatrix", _EnumData(local->video_space()).option);
+    mpv.setAsync("options/colormatrix-input-range", _EnumData(local->video_range()).option);
+
+    mpv.setAsync("options/af", af(local));
     mpv.setAsync("options/volume", volume(local));
     mpv.setAsync("options/mute", local->audio_muted() ? "yes"_b : "no"_b);
     mpv.setAsync("options/audio-delay", local->audio_sync() * 1e-3);
-    mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);
     mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(local->audio_channel_layout()));
-    mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
-    mpv.setAsync("options/af", af(local));
-    mpv.setAsync("options/vf", vf(local));
-    mpv.setAsync("options/vo", vo(local));
-    mpv.setAsync("options/colormatrix", _EnumData(local->video_space()).option);
-    mpv.setAsync("options/colormatrix-input-range", _EnumData(local->video_range()).option);
+
+    // missing options: sub_alignment, sub_display, sub_position
+    mpv.setAsync("options/sub-visibility", !local->sub_hidden());
+    mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);
 
     const auto cache = local->d->cache.get(mrl);
     t.caching = cache > 0;
@@ -696,6 +702,11 @@ auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
            "render queued frame(%%), avgfps: %%",
            fbo->size(), info.video.renderer()->fps());
 
+    static qint64 time = 0;
+    auto next = mpv_get_time_us(mpv.handle());
+//    qDebug() << 1/((next - time)/1e6);
+    time = next;
+
     if (snapshot) {
         this->takeSnapshot();
         snapshot = NoSnapshot;
@@ -771,7 +782,7 @@ auto PlayEngine::Data::autoselect(const MrlState *s, QVector<SubComp> &loads) ->
             select = info.completeBaseName() == base;
             break;
         } case AutoselectMode::EachLanguage: {
-            //                  const QString lang = loaded[i].m_comp.language().id();
+//                  const QString lang = loaded[i].m_comp.language().id();
             const auto lang = loads[i].language();
             if ((select = (!langSet.contains(lang))))
                 langSet.insert(lang);

@@ -63,12 +63,14 @@ struct mpv_opengl_cb_context {
     void *update_cb_ctx;
     struct mp_image *waiting_frame;
     struct mp_image **frame_queue;
+    struct frame_timing last_timing;
     int queued_frames;
     struct mp_image_params img_params;
     bool reconfigured;
     struct mp_rect wnd;
     bool flip;
     bool force_update;
+    bool reset;
     bool imgfmt_supported[IMGFMT_END - IMGFMT_START];
     struct mp_vo_opts vo_opts;
     bool update_new_opts;
@@ -317,8 +319,13 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
             gl_video_set_debug(ctx->renderer, opts->use_gl_debug);
             frame_queue_shrink(ctx, opts->frame_queue_size);
         }
+        if (ctx->reconfigured || ctx->reset) {
+            p->ctx->last_timing.next_vsync = -1;
+            gl_video_reset(p->ctx->renderer);
+        }
         ctx->reconfigured = false;
         ctx->update_new_opts = false;
+        ctx->reset = false;
     }
 
     struct mp_csp_equalizer *eq = gl_video_eq_ptr(ctx->renderer);
@@ -333,10 +340,20 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
 
     pthread_mutex_unlock(&ctx->lock);
 
-    if (mpi)
-        gl_video_upload_image(ctx->renderer, mpi);
+    if (mpi) {
+        ctx->last_timing.pts = mpi->pts_orig * 1e6;
+        ctx->last_timing.next_vsync = mpi->pts * 1e6;
+        if (mpi->fields & MP_IMGFIELD_ADDITIONAL)
+            talloc_free(mpi);
+        else
+            gl_video_upload_image(ctx->renderer, mpi);
+    }
+    
+    struct frame_timing *timing = NULL;
+    if (ctx->last_timing.next_vsync >= 0)
+        timing = &ctx->last_timing;
 
-    gl_video_render_frame(ctx->renderer, fbo, NULL);
+    gl_video_render_frame(ctx->renderer, fbo, timing);
 
     gl_video_unset_gl_state(ctx->renderer);
 
@@ -493,6 +510,12 @@ static int control(struct vo *vo, uint32_t request, void *data)
         *arg = p->ctx ? &p->ctx->hwdec_info : NULL;
         return true;
     }
+    case VOCTRL_RESET:
+        pthread_mutex_lock(&p->ctx->lock);
+        p->ctx->reset = true;
+        forget_frames(p->ctx);
+        pthread_mutex_unlock(&p->ctx->lock);
+        return true;
     }
 
     return VO_NOTIMPL;
@@ -549,7 +572,7 @@ static const struct m_option options[] = {
 const struct vo_driver video_out_opengl_cb = {
     .description = "OpenGL Callbacks for libmpv",
     .name = "opengl-cb",
-    .caps = VO_CAP_ROTATE90,
+    .caps = VO_CAP_ROTATE90 | VO_CAP_FRAMEDROP,
     .preinit = preinit,
     .query_format = query_format,
     .reconfig = reconfig,

@@ -85,6 +85,7 @@ public:
     P0(int, sharpen_kern_c, 5)
     P0(int, sharpen_kern_n, -1)
     P0(int, sharpen_kern_d, 0)
+    P0(double, motion_interpolation_fps, -1)
 
     P0(ChannelLayoutMap, channel_manipulation, ChannelLayoutMap::default_())
 

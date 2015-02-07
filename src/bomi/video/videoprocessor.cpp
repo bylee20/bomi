@@ -1,7 +1,9 @@
 #include "videoprocessor.hpp"
 #include "hwacc.hpp"
+#include "videofilter.hpp"
 #include "mpimage.hpp"
 #include "softwaredeinterlacer.hpp"
+#include "motioninterpolator.hpp"
 #include "deintoption.hpp"
 #include "player/mpv_helper.hpp"
 #include "opengl/opengloffscreencontext.hpp"
@@ -15,13 +17,14 @@ extern vf_info vf_info_noformat;
 }
 
 struct bomi_vf_priv {
-    VideoProcessor *vf;
+    VideoProcessor *vp;
     char *address, *swdec_deint, *hwdec_deint;
+    int interpolate;
 };
 
 static auto priv(vf_instance *vf) -> VideoProcessor*
 {
-    return reinterpret_cast<bomi_vf_priv*>(vf->priv)->vf;
+    return reinterpret_cast<bomi_vf_priv*>(vf->priv)->vp;
 }
 
 auto create_vf_info() -> vf_info
@@ -31,6 +34,7 @@ auto create_vf_info() -> vf_info
         MPV_OPTION(address),
         MPV_OPTION(swdec_deint),
         MPV_OPTION(hwdec_deint),
+        MPV_OPTION(interpolate),
         mpv::null_option
     };
 
@@ -93,8 +97,11 @@ struct VideoProcessor::Data {
     vf_instance *vf = nullptr;
     DeintOption deint_swdec, deint_hwdec;
     SoftwareDeinterlacer deinterlacer;
+    PassthroughVideoFilter passthrough;
+    VideoFilter *filter = nullptr;
+    MotionInterpolator doubler;
     mp_image_params params;
-    bool deint = false, hwacc = false, inter_i = false, inter_o = false;
+    bool deint = false, hwacc = false, inter_i = false, inter_o = false, interpolate = false;
     OpenGLOffscreenContext *gl = nullptr;
     HwDecTool *hwdec = nullptr;
     mp_image_pool *pool = nullptr;
@@ -103,13 +110,20 @@ struct VideoProcessor::Data {
     double ptsSkipStart = MP_NOPTS_VALUE, ptsLastSkip = MP_NOPTS_VALUE;
     bool skip = false;
 
+    auto reset() -> void
+    {
+        deinterlacer.clear();
+        passthrough.clear();
+        doubler.clear();
+        filter = nullptr;
+    }
     auto updateDeint() -> void
     {
         DeintOption opt;
         if (deint)
             opt = hwacc ? deint_hwdec : deint_swdec;
         deinterlacer.setOption(opt);
-    //    d->vaapi.setDeintOption(opt);
+        reset();
         emit p->deintMethodChanged(opt.method);
     }
 };
@@ -140,22 +154,30 @@ auto VideoProcessor::finalizeGL() -> void
 
 auto VideoProcessor::open(vf_instance *vf) -> int
 {
-    auto priv = reinterpret_cast<bomi_vf_priv*>(vf->priv);
-    priv->vf = address_cast<VideoProcessor*>(priv->address);
-    priv->vf->d->vf = vf;
-    auto d = priv->vf->d;
-    if (priv->swdec_deint)
-        d->deint_swdec = DeintOption::fromString(_L(priv->swdec_deint));
-    if (priv->hwdec_deint)
-        d->deint_hwdec = DeintOption::fromString(_L(priv->hwdec_deint));
+    auto p = reinterpret_cast<bomi_vf_priv*>(vf->priv);
+    p->vp = address_cast<VideoProcessor*>(p->address);
+    p->vp->d->vf = vf;
+    auto d = p->vp->d;
+    if (p->swdec_deint)
+        d->deint_swdec = DeintOption::fromString(_L(p->swdec_deint));
+    if (p->hwdec_deint)
+        d->deint_hwdec = DeintOption::fromString(_L(p->hwdec_deint));
+    d->interpolate = p->interpolate;
     d->updateDeint();
     memset(&d->params, 0, sizeof(d->params));
-    vf->reconfig = reconfig;
-    vf->filter_ext = filterIn;
-    vf->filter_out = filterOut;
+    vf->reconfig = [] (vf_instance *vf, mp_image_params *in,
+                       mp_image_params *out) -> int
+        { return priv(vf)->reconfig(in, out); };
+    vf->filter_ext = [] (vf_instance *vf, mp_image *in) -> int
+        { return priv(vf)->filterIn(in); };
+    vf->filter_out = [] (vf_instance *vf) -> int
+        { return priv(vf)->filterOut(); };
+    vf->needs_input = [] (vf_instance *vf) -> bool
+        { return priv(vf)->needsInput(); };
     vf->query_format = queryFormat;
-    vf->uninit = uninit;
-    vf->control = control;
+    vf->uninit = [] (vf_instance *vf) -> void { return priv(vf)->uninit(); };
+    vf->control = [] (vf_instance *vf, int request, void *data) -> int
+        { return priv(vf)->control(request, data); };
 
     _Delete(d->hwdec);
     hwdec_request_api(vf->hwdec, HwAcc::name().toLatin1());
@@ -166,7 +188,39 @@ auto VideoProcessor::open(vf_instance *vf) -> int
             d->hwacc = new VaApiTool(vf->hwdec->hwctx->vaapi_ctx);
     }
     mp_image_pool_clear(d->pool);
-    priv->vf->stopSkipping();
+    p->vp->stopSkipping();
+    return true;
+}
+
+auto VideoProcessor::open() -> int
+{
+    d->updateDeint();
+    memset(&d->params, 0, sizeof(d->params));
+    d->vf->reconfig = [] (vf_instance *vf, mp_image_params *in,
+                          mp_image_params *out) -> int
+        { return priv(vf)->reconfig(in, out); };
+    d->vf->filter_ext = [] (vf_instance *vf, mp_image *in) -> int
+        { return priv(vf)->filterIn(in); };
+    d->vf->filter_out = [] (vf_instance *vf) -> int
+        { return priv(vf)->filterOut(); };
+    d->vf->needs_input = [] (vf_instance *vf) -> bool
+        { return priv(vf)->needsInput(); };
+    d->vf->query_format = queryFormat;
+    d->vf->uninit = [] (vf_instance *vf) -> void { return priv(vf)->uninit(); };
+    d->vf->control = [] (vf_instance *vf, int request, void *data) -> int
+        { return priv(vf)->control(request, data); };
+
+    _Delete(d->hwdec);
+    hwdec_request_api(d->vf->hwdec, HwAcc::name().toLatin1());
+    if (d->vf->hwdec && d->vf->hwdec->hwctx) {
+        auto hwctx = d->vf->hwdec->hwctx;
+        if (hwctx->vdpau_ctx)
+            d->hwdec = new VdpauTool(hwctx->vdpau_ctx);
+        else
+            d->hwacc = new VaApiTool(hwctx->vaapi_ctx);
+    }
+    mp_image_pool_clear(d->pool);
+    stopSkipping();
     return true;
 }
 
@@ -180,14 +234,13 @@ auto VideoProcessor::isOutputInterlaced() const -> bool
     return d->inter_o;
 }
 
-auto VideoProcessor::reconfig(vf_instance *vf,
-                           mp_image_params *in, mp_image_params *out) -> int
+auto VideoProcessor::reconfig(mp_image_params *in, mp_image_params *out) -> int
 {
-    auto v = priv(vf); auto d = v->d;
     d->params = *in;
     *out = *in;
     if (_Change(d->hwacc, !!IMGFMT_IS_HWACCEL(in->imgfmt)))
         d->updateDeint();
+    d->reset();
     return 0;
 }
 
@@ -265,12 +318,12 @@ static auto luminance(const mp_image *mpi) -> double
     }
 }
 
-auto VideoProcessor::filterIn(vf_instance *vf, mp_image *_mpi) -> int
+auto VideoProcessor::filterIn(mp_image *_mpi) -> int
 {
     if (!_mpi)
         return 0;
-    auto v = priv(vf); Data *d = v->d;
     MpImage mpi = MpImage::wrap(_mpi);
+    mpi->pts_orig = -1;
     if (d->skip) {
         d->mutex.lock();
         auto scan = d->skip;
@@ -310,34 +363,47 @@ auto VideoProcessor::filterIn(vf_instance *vf, mp_image *_mpi) -> int
                 d->ptsLastSkip = mpi->pts;
                 d->mutex.unlock();
             } else {
-                v->stopSkipping();
+                stopSkipping();
                 if (mpi->pts != MP_NOPTS_VALUE)
-                    emit v->seekRequested(mpi->pts * 1000);
+                    emit seekRequested(mpi->pts * 1000);
             }
         }
     }
+
+    if (!d->filter) {
+        if (mpi.isInterlaced() && !d->deinterlacer.pass())
+            d->filter = &d->deinterlacer;
+        else if (d->interpolate)
+            d->filter = &d->doubler;
+        else
+            d->filter = &d->passthrough;
+    }
     if (_Change(d->inter_i, mpi.isInterlaced()))
-        emit v->inputInterlacedChanged();
-    d->deinterlacer.push(std::move(mpi));
+        emit inputInterlacedChanged();
+    d->filter->push(std::move(mpi));
     return 0;
 }
 
-auto VideoProcessor::filterOut(vf_instance *vf) -> int
+auto VideoProcessor::needsInput() const -> bool
 {
-    auto v = priv(vf); auto d = v->d;
-    auto mpi = std::move(d->deinterlacer.pop());
+    return d->filter && d->filter->needsMore();
+}
+
+auto VideoProcessor::filterOut() -> int
+{
+    if (!d->filter)
+        return 0;
+    auto mpi = std::move(d->filter->pop());
     if (mpi.isNull())
         return 0;
     if (_Change(d->inter_o, d->deinterlacer.pass() ? d->inter_i : false))
-        emit v->outputInterlacedChanged();
-    vf_add_output_frame(vf, mpi.take());
-
+        emit outputInterlacedChanged();
+    vf_add_output_frame(d->vf, mpi.take());
     return 0;
 }
 
-auto VideoProcessor::control(vf_instance *vf, int request, void* data) -> int
+auto VideoProcessor::control(int request, void* data) -> int
 {
-    auto v = priv(vf); auto d = v->d;
     switch (request){
     case VFCTRL_GET_DEINTERLACE:
         *(int*)data = d->deint;
@@ -346,14 +412,18 @@ auto VideoProcessor::control(vf_instance *vf, int request, void* data) -> int
         if (_Change(d->deint, (bool)*(int*)data))
             d->updateDeint();
         return true;
+    case VFCTRL_SEEK_RESET:
+        d->reset();
+        return true;
     default:
         return CONTROL_UNKNOWN;
     }
 }
 
-auto VideoProcessor::uninit(vf_instance *vf) -> void {
-    auto v = priv(vf); auto d = v->d;
-    d->deinterlacer.clear();
+auto VideoProcessor::uninit() -> void
+{
+    d->reset();
+    _Delete(d->hwdec);
 }
 
 auto query_video_format(quint32 format) -> int
