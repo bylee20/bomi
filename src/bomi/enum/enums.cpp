@@ -7,9 +7,8 @@
 #include "subtitledisplay.hpp"
 #include "videoratio.hpp"
 #include "dithering.hpp"
-#include "decoderdevice.hpp"
 #include "deintmode.hpp"
-#include "deintdevice.hpp"
+#include "processor.hpp"
 #include "deintmethod.hpp"
 #include "interpolator.hpp"
 #include "audiodriver.hpp"
@@ -55,15 +54,12 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<Dithering>()) {
         conv.variantToName = _EnumVariantToEnumName<Dithering>;
         conv.nameToVariant = _EnumNameToEnumVariant<Dithering>;
-    } else    if (metaType == qMetaTypeId<DecoderDevice>()) {
-        conv.variantToName = _EnumVariantToEnumName<DecoderDevice>;
-        conv.nameToVariant = _EnumNameToEnumVariant<DecoderDevice>;
     } else    if (metaType == qMetaTypeId<DeintMode>()) {
         conv.variantToName = _EnumVariantToEnumName<DeintMode>;
         conv.nameToVariant = _EnumNameToEnumVariant<DeintMode>;
-    } else    if (metaType == qMetaTypeId<DeintDevice>()) {
-        conv.variantToName = _EnumVariantToEnumName<DeintDevice>;
-        conv.nameToVariant = _EnumNameToEnumVariant<DeintDevice>;
+    } else    if (metaType == qMetaTypeId<Processor>()) {
+        conv.variantToName = _EnumVariantToEnumName<Processor>;
+        conv.nameToVariant = _EnumNameToEnumVariant<Processor>;
     } else    if (metaType == qMetaTypeId<DeintMethod>()) {
         conv.variantToName = _EnumVariantToEnumName<DeintMethod>;
         conv.nameToVariant = _EnumNameToEnumVariant<DeintMethod>;
@@ -122,7 +118,7 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
         return EnumNameVariantConverter();
     return conv;
 }
-const std::array<int, 29> EnumMetaTypeIds = {
+const std::array<int, 28> EnumMetaTypeIds = {
     qMetaTypeId<TextThemeStyle>(),
     qMetaTypeId<SpeakerId>(),
     qMetaTypeId<ChannelLayout>(),
@@ -131,9 +127,8 @@ const std::array<int, 29> EnumMetaTypeIds = {
     qMetaTypeId<SubtitleDisplay>(),
     qMetaTypeId<VideoRatio>(),
     qMetaTypeId<Dithering>(),
-    qMetaTypeId<DecoderDevice>(),
     qMetaTypeId<DeintMode>(),
-    qMetaTypeId<DeintDevice>(),
+    qMetaTypeId<Processor>(),
     qMetaTypeId<DeintMethod>(),
     qMetaTypeId<Interpolator>(),
     qMetaTypeId<AudioDriver>(),

@@ -145,7 +145,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(Autoloader);
     INSERT(OsdStyle);
     INSERT(MouseActionMap);
-    INSERT(DeintCaps);
+    INSERT(DeintOptionSet);
     INSERT(AudioNormalizerOption);
     INSERT(Shortcuts);
     INSERT(Mrl);

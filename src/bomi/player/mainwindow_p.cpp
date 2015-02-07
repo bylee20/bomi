@@ -534,24 +534,6 @@ auto MainWindow::Data::applyPref() -> void
         cache.remotes = p.network_folders();
         return cache;
     };
-    auto conv = [&p] (const DeintCaps &caps) {
-        DeintOption option;
-        option.method = caps.method();
-        option.doubler = caps.doubler();
-        if (caps.hwdec()) {
-            if (!caps.supports(DeintDevice::GPU)
-                    && !caps.supports(DeintDevice::OpenGL))
-                return DeintOption();
-            if (caps.supports(DeintDevice::GPU)
-                    && p.hwdeints.contains(caps.method()))
-                option.device = DeintDevice::GPU;
-            else
-                option.device = DeintDevice::OpenGL;
-        } else
-            option.device = caps.supports(DeintDevice::OpenGL)
-                            ? DeintDevice::OpenGL : DeintDevice::CPU;
-        return option;
-    };
     const auto chardet = p.sub_enc_autodetection() ? -1 : p.sub_enc_accuracy() * 1e-2;
 
     e.lock();
@@ -562,7 +544,7 @@ auto MainWindow::Data::applyPref() -> void
     e.setAutoloader_locked(p.audio_autoload(), p.sub_autoload_v2());
 
     e.setHwAcc_locked(p.enable_hwaccel(), p.hwaccel_codecs());
-    e.setDeintOptions_locked(conv(p.deint_swdec()), conv(p.deint_hwdec()));
+    e.setDeintOptions_locked(p.deinterlacing());
 
     e.setAudioDevice_locked(p.audio_device());
     e.setVolumeNormalizerOption_locked(p.audio_normalizer());

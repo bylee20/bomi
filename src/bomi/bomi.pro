@@ -129,8 +129,6 @@ HEADERS += \
 	enum/channellayout.hpp \
 	enum/clippingmethod.hpp \
 	enum/colorrange.hpp \
-	enum/decoderdevice.hpp \
-	enum/deintdevice.hpp \
 	enum/deintmethod.hpp \
 	enum/deintmode.hpp \
 	enum/dithering.hpp \
@@ -245,7 +243,9 @@ HEADERS += \
     player/mpv.hpp \
     video/interpolatorparams.hpp \
     video/videofilter.hpp \
-    video/motioninterpolator.hpp
+    video/motioninterpolator.hpp \
+    enum/processor.hpp \
+    video/motionintrploption.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -323,8 +323,6 @@ SOURCES += \
 	enum/channellayout.cpp \
 	enum/clippingmethod.cpp \
 	enum/colorrange.cpp \
-	enum/decoderdevice.cpp \
-	enum/deintdevice.cpp \
 	enum/deintmethod.cpp \
 	enum/deintmode.cpp \
 	enum/dithering.cpp \
@@ -426,7 +424,9 @@ SOURCES += \
     player/mpv.cpp \
     video/interpolatorparams.cpp \
     video/videofilter.cpp \
-    video/motioninterpolator.cpp
+    video/motioninterpolator.cpp \
+    enum/processor.cpp \
+    video/motionintrploption.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

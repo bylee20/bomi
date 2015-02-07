@@ -6,7 +6,7 @@
 #include "enum/videoeffect.hpp"
 
 class VideoRenderer;                    class HistoryModel;
-class DeintOption;                      class ChannelLayoutMap;
+class DeintOptionSet;                   class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct OsdStyle;
 struct AudioNormalizerOption;
@@ -17,7 +17,7 @@ enum class ColorRange;                  enum class ColorSpace;
 enum class Dithering;                   enum class AutoselectMode;
 enum class VideoRatio;                  enum class SubtitleDisplay;
 enum class VerticalAlignment;           enum class HorizontalAlignment;
-class AudioObject;                  class VideoObject;
+class AudioObject;                      class VideoObject;
 class YouTubeDL;                        struct AudioDevice;
 class YleDL;                            class AudioEqualizer;
 class StreamTrack;                      class SubtitleObject;
@@ -141,7 +141,7 @@ public:
     auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;
     auto setCache_locked(const CacheInfo &info) -> void;
     auto setVolumeNormalizerOption_locked(const AudioNormalizerOption &option) -> void;
-    auto setDeintOptions_locked(const DeintOption &swdec, const DeintOption &hwdec) -> void;
+    auto setDeintOptions_locked(const DeintOptionSet &set) -> void;
     auto setAudioDevice_locked(const QString &device) -> void;
     auto setClippingMethod_locked(ClippingMethod method) -> void;
     auto setChannelLayoutMap_locked(const ChannelLayoutMap &map) -> void;
@@ -179,8 +179,6 @@ public:
     auto volume() const -> int;
     auto isMuted() const -> bool;
 
-    auto deintOptionForSwDec() const -> DeintOption;
-    auto deintOptionForHwDec() const -> DeintOption;
     auto setDeintMode(DeintMode mode) -> void;
     auto deintMode() const -> DeintMode;
     auto run() -> void;

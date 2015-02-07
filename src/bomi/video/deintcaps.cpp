@@ -1,50 +1,9 @@
 #include "deintcaps.hpp"
+#include "deintoption.hpp"
 #include "hwacc.hpp"
 #include "misc/json.hpp"
 
-template<>
-struct JsonIO<DeintCaps> {
-    static auto io()
-    {
-        static const auto io = _JIO<DeintCaps>(\
-            _JE(u"method"_q, &DeintCaps::m_method),\
-            _JE(u"decoders"_q, &DeintCaps::m_decoders),\
-            _JE(u"devices"_q, &DeintCaps::m_devices),\
-            _JE(u"doubler"_q, &DeintCaps::m_doubler)\
-        );
-        return &io;
-    }
-};
-
-static const auto jio = JsonIO<DeintCaps>::io();
-
-auto DeintCaps::toJson() const -> QJsonObject
-{
-    return jio->toJson(*this);
-}
-
-auto DeintCaps::setFromJson(const QJsonObject &json) -> bool
-{
-    return jio->fromJson(*this, json);
-}
-
-//decltype(DeintCaps::m_method) a;
-
-
-
-//auto DeintCaps::jio() -> const void*
-//{
-//    static const auto io = JSON_IO_DEINT_CAPS;
-//    return &io;
-//}
-
-//auto json_io(const DeintCaps*) -> const decltype(JSON_IO_DEINT_CAPS)*
-//{
-
-//}
-
-
-auto DeintCaps::list() -> QList<DeintCaps>
+auto DeintCaps::list() -> const QList<DeintCaps>&
 {
     static QList<DeintCaps> caps;
     if (!caps.isEmpty())
@@ -54,74 +13,69 @@ auto DeintCaps::list() -> QList<DeintCaps>
         caps.back().m_method = (DeintMethod)i;
     }
 
-    auto set = [] (DeintMethod method, bool cpu, bool gl, bool doubler) {
+    auto push = [] (DeintMethod method, bool cpu, bool gpu, bool doubler) {
         auto &cap = caps[(int)method];
         cap.m_method = method;
-        if (cpu) {
-            cap.m_devices |= DeintDevice::CPU;
-            cap.m_decoders |= DecoderDevice::CPU;
-        }
-        if (gl) {
-            cap.m_devices |= DeintDevice::OpenGL;
-            cap.m_decoders |= (DecoderDevice::CPU | DecoderDevice::GPU);
-        }
-        if (HwAcc::supports(method)) {
-            cap.m_devices |= DeintDevice::GPU;
-            cap.m_decoders |= DecoderDevice::GPU;
-        }
+        if (cpu)
+            cap.m_procs |= Processor::CPU;
+        if (gpu && HwAcc::supports(method))
+            cap.m_procs |= Processor::GPU;
         cap.m_doubler = doubler;
         return caps[(int)method];
     };
-    //  method                       cpu    gl     doubler
-    set(DeintMethod::Bob           , false, true , true );
-    set(DeintMethod::LinearBob     , true , true , true );
-    set(DeintMethod::CubicBob      , true , false, true );
-    set(DeintMethod::LinearBlend   , true , false, false);
-    set(DeintMethod::Yadif         , true , false, true );
-    set(DeintMethod::Median        , true , false, true );
-    set(DeintMethod::MotionAdaptive, false, false, true );
+    //  method                        cpu    gpu    doubler
+    push(DeintMethod::Bob           , false, true , true );
+    push(DeintMethod::LinearBob     , true , false, true );
+    push(DeintMethod::CubicBob      , true , false, true );
+    push(DeintMethod::LinearBlend   , true , false, false);
+    push(DeintMethod::Yadif         , true , false, true );
+    push(DeintMethod::Median        , true , false, true );
     return caps;
 }
 
-auto DeintCaps::default_(DecoderDevice dec) -> DeintCaps
+auto DeintCaps::list(Processors procs) -> QList<DeintCaps>
 {
-    auto ref = list()[(int)DeintMethod::Bob];
-    Q_ASSERT(ref.m_decoders.contains(dec));
-    DeintCaps caps;
-    caps.m_doubler = ref.m_doubler;
-    caps.m_decoders = dec;
-    caps.m_devices = dec == DecoderDevice::CPU ? DeintDevice::CPU
-                                               : DeintDevice::GPU;
-    return caps;
-}
-
-auto DeintCaps::toString() const -> QString
-{
-    QString text = DeintMethodInfo::name(m_method) % '|'_q;
-    for (auto dec : DecoderDeviceInfo::items()) {
-        if (m_decoders.contains(dec.value))
-            text += dec.name % ':'_q;
+    QList<DeintCaps> ret;
+    for (auto &caps : list()) {
+        if (caps.m_procs & procs)
+            ret.push_back(caps);
     }
-    text += '|'_q;
-    for (auto dev : DeintDeviceInfo::items()) {
-        if (m_devices.contains(dev.value))
-            text += dev.name % ':'_q;
-    }
-    text += '|'_q % _N(m_doubler);
-    return text;
+    return ret;
 }
 
-auto DeintCaps::fromString(const QString &text) -> DeintCaps
+auto DeintCaps::default_(Processor proc) -> DeintCaps
 {
-    auto tokens = text.split('|'_q, QString::SkipEmptyParts);
-    if (tokens.size() != 4)
-        return DeintCaps();
-    DeintCaps caps;
-    caps.m_method = DeintMethodInfo::from(tokens[0]);
-    for (auto dec : tokens[1].split(':'_q, QString::SkipEmptyParts))
-        caps.m_decoders |= DecoderDeviceInfo::from(dec);
-    for (auto dev : tokens[2].split(':'_q, QString::SkipEmptyParts))
-        caps.m_devices |= DeintDeviceInfo::from(dev);
-    caps.m_doubler = tokens[3].toInt();
-    return caps;
+    for (auto &caps : list()) {
+        if (caps.supports(proc))
+            return caps;
+    }
+    return DeintCaps();
+}
+
+auto DeintCaps::defaultOption(Processor proc) -> DeintOption
+{
+    return default_(proc).toOption(proc);
+}
+
+auto DeintCaps::toOption(Processor proc) const -> DeintOption
+{
+    DeintOption option;
+    option.method = m_method;
+    option.processor = proc & m_procs;
+    option.doubler = m_doubler;
+    return option;
+}
+
+auto DeintCaps::supports(const DeintOption &option) -> bool
+{
+    for (auto &caps : list()) {
+        if (caps.method() != option.method)
+            continue;
+        if (!caps.supports(option.processor))
+            return false;
+        if (option.doubler && !caps.doubler())
+            return false;
+        return true;
+    }
+    return false;
 }

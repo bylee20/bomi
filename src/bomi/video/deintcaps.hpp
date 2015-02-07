@@ -2,40 +2,35 @@
 #define DEINTCAPS_HPP
 
 #include "enum/deintmethod.hpp"
-#include "enum/deintdevice.hpp"
-#include "enum/decoderdevice.hpp"
+#include "enum/processor.hpp"
 
 template<class T> struct JsonIO;
+struct DeintOption;
 
 class DeintCaps {
 public:
-    DECL_EQ(DeintCaps, &T::m_method, &T::m_decoders, &T::m_devices, &T::m_doubler)
+    DeintCaps() { }
+    DECL_EQ(DeintCaps, &T::m_method, &T::m_procs, &T::m_doubler)
     auto method() const -> DeintMethod { return m_method; }
-    auto hwdec() const -> bool { return supports(DecoderDevice::GPU); }
-    auto swdec() const -> bool { return supports(DecoderDevice::CPU); }
+    auto hwdec() const -> bool { return supports(Processor::GPU); }
+    auto swdec() const -> bool { return supports(Processor::CPU); }
     auto doubler() const -> bool { return m_doubler; }
-    auto supports(DeintDevice dev) const -> bool { return m_devices.contains(dev); }
-    auto supports(DecoderDevice dev) const -> bool { return m_decoders.contains(dev); }
-    auto isAvailable() const -> bool;
-    auto toString() const -> QString;
-    static auto fromString(const QString &text) -> DeintCaps;
-    static auto default_(DecoderDevice dec) -> DeintCaps;
-    static auto list() -> QList<DeintCaps>;
-    auto toJson() const -> QJsonObject;
-    auto setFromJson(const QJsonObject &json) -> bool;
+    auto supports(Processor proc) const -> bool
+        { return m_procs.contains(proc); }
+    auto isAvailable() const -> bool
+        { return m_method != DeintMethod::None && m_procs != 0; }
+    auto toOption(Processor proc) const -> DeintOption;
+    static auto supports(const DeintOption &option) -> bool;
+    static auto list(Processors procs) -> QList<DeintCaps>;
+    static auto default_(Processor proc) -> DeintCaps;
+    static auto defaultOption(Processor proc) -> DeintOption;
 private:
-    friend class DeintWidget;
+    static auto list() -> const QList<DeintCaps>&;
     DeintMethod m_method = DeintMethod::None;
-    DecoderDevices m_decoders = 0;
-    DeintDevices m_devices = 0;
+    Processors m_procs = Processor::None;
     bool m_doubler = false;
     friend struct JsonIO<DeintCaps>;
 };
-
-inline auto DeintCaps::isAvailable() const -> bool
-{
-    return m_method != DeintMethod::None && m_devices != 0 && m_decoders != 0;
-}
 
 Q_DECLARE_METATYPE(DeintCaps);
 

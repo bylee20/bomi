@@ -710,22 +710,10 @@ auto PlayEngine::setVolumeNormalizerOption_locked(const AudioNormalizerOption &o
     d->ac->setNormalizerOption(option);
 }
 
-auto PlayEngine::setDeintOptions_locked(const DeintOption &swdec,
-                                 const DeintOption &hwdec) -> void
+auto PlayEngine::setDeintOptions_locked(const DeintOptionSet &set) -> void
 {
-    d->params.d->deint_swdec = swdec;
-    d->params.d->deint_hwdec = hwdec;
+    d->params.d->deint = set;
     emit deintOptionsChanged();
-}
-
-auto PlayEngine::deintOptionForSwDec() const -> DeintOption
-{
-    return d->params.d->deint_swdec;
-}
-
-auto PlayEngine::deintOptionForHwDec() const -> DeintOption
-{
-    return d->params.d->deint_hwdec;
 }
 
 auto PlayEngine::videoSizeHint() const -> QSize

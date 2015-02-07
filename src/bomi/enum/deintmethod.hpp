@@ -11,8 +11,7 @@ enum class DeintMethod : int {
     CubicBob = (int)3,
     Median = (int)4,
     LinearBlend = (int)5,
-    Yadif = (int)6,
-    MotionAdaptive = (int)7
+    Yadif = (int)6
 };
 
 Q_DECLARE_METATYPE(DeintMethod)
@@ -52,9 +51,9 @@ public:
         QString name, key;
         QVariant data;
     };
-    using ItemList = std::array<Item, 8>;
+    using ItemList = std::array<Item, 7>;
     static constexpr auto size() -> int
-    { return 8; }
+    { return 7; }
     static constexpr auto typeName() -> const char*
     { return "DeintMethod"; }
     static constexpr auto typeKey() -> const char*
@@ -81,7 +80,6 @@ public:
         case Enum::Median: return qApp->translate("EnumInfo", "");
         case Enum::LinearBlend: return qApp->translate("EnumInfo", "");
         case Enum::Yadif: return qApp->translate("EnumInfo", "");
-        case Enum::MotionAdaptive: return qApp->translate("EnumInfo", "");
         default: return QString();
         }
     }

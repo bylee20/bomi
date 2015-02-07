@@ -37,6 +37,8 @@ template<class State, class... Args>
 using Signal = void(State::*)(Args...);
 
 #define SIGNAL_T(T, name, ...) static_cast<void(T::*)(__VA_ARGS__)>(&T::name)
+#define SIGNAL_VT(var, sig, ...) var, SIGNAL_T(std::remove_pointer_t<std::remove_reference_t<decltype(var)>>, sig, ##__VA_ARGS__)
+#define SIGNAL_V(var, sig) var, &std::remove_pointer_t<std::remove_reference_t<decltype(var)>>::sig
 
 #define SIA static inline auto
 #define SCA static constexpr auto

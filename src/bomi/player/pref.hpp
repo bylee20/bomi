@@ -7,6 +7,7 @@
 #include "audio/audionormalizeroption.hpp"
 #include "video/hwacc.hpp"
 #include "video/deintcaps.hpp"
+#include "video/deintoption.hpp"
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/osdstyle.hpp"
 #include "misc/autoloader.hpp"
@@ -120,9 +121,7 @@ public:
     P0(int, sub_pos_step, 1)
     P0(bool, enable_hwaccel, false)
     P0(QStringList, hwaccel_codecs, defaultHwAccCodecs())
-    QVector<DeintMethod> hwdeints = defaultHwAccDeints();
-    P0(DeintCaps, deint_hwdec, DeintCaps::default_(DecoderDevice::GPU))
-    P0(DeintCaps, deint_swdec, DeintCaps::default_(DecoderDevice::CPU))
+    P0(DeintOptionSet, deinterlacing, {})
 
     P0(AudioNormalizerOption, audio_normalizer, AudioNormalizerOption::default_())
 

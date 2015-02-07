@@ -15,28 +15,34 @@ template<class Enum>
 class EnumComboBox : public DataComboBox {
 public:
     EnumComboBox(QWidget *parent = 0): DataComboBox(parent) {
-        setup(this);
-        retranslate(this);
+        setup();
     }
+    EnumComboBox(bool autosetup, QWidget *parent = nullptr)
+        : DataComboBox(parent) {
+        if (autosetup)
+            setup();
+    }
+    auto addValue(Enum e) -> void
+        { addItem(EnumInfo<Enum>::description(e), QVariant::fromValue(e)); }
+    auto value(int i) const -> Enum { return itemData(i).template value<Enum>(); }
     auto currentValue() const -> Enum { return currentData().template value<Enum>(); }
     auto setCurrentValue(Enum e) -> void { setCurrentData(QVariant::fromValue(e)); }
     auto setRetranslatable(bool retrans) -> void { m_retrans = retrans; }
 private:
-    static auto setup(QComboBox *combo) -> void {
-        combo->clear();
+    auto setup() -> void {
         for (auto &item : EnumInfo<Enum>::items())
-            combo->addItem(QString(), QVariant::fromValue(item.value));
+            addValue(item.value);
     }
-    static auto retranslate(QComboBox *combo) -> void {
-        const auto items = EnumInfo<Enum>::items();
-        Q_ASSERT((int)items.size() == combo->count());
-        for (int i=0; i<(int)items.size(); ++i)
-            combo->setItemText(i, EnumInfo<Enum>::description(items[i].value));
+    auto retranslate() -> void {
+        for (int i = 0; i < count(); ++i) {
+            auto e = itemData(i).template value<Enum>();
+            setItemText(i, EnumInfo<Enum>::description(e));
+        }
     }
     auto changeEvent(QEvent *event) -> void {
         QComboBox::changeEvent(event);
         if (event->type() == QEvent::LanguageChange && m_retrans)
-            retranslate(this);
+            retranslate();
     }
     bool m_retrans = true;
 };

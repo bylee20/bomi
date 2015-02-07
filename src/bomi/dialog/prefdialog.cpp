@@ -6,7 +6,6 @@
 #include "player/skin.hpp"
 #include "player/pref.hpp"
 #include "player/mrlstate.hpp"
-#include "widget/deintwidget.hpp"
 #include "misc/simplelistmodel.hpp"
 #include "ui_prefdialog.h"
 
@@ -30,7 +29,6 @@ struct PrefDialog::Data {
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     QStringList imports;
-    DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
     MrlStatePropertyListModel *properties = nullptr;
     QVector<ValueWatcher> watchers;
     QSet<ValueWatcher*> modified;
@@ -130,8 +128,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     addCategory(tr("Video"));
     addPage(tr("Hardware acceleration"), d->ui.video_hwacc, u":/img/apps-hardware-icon.png"_q);
-    addPage(tr("Deinterlace"), d->ui.video_deint, u":/img/format-line-spacing-double.png"_q);
-//    addPage(tr("Video filter"), d->ui.video_filter, u":/img/draw-brush.png"_q);
+    addPage(tr("Video Processing"), d->ui.video_deint, u":/img/tool-animator.png"_q);
 
     addCategory(tr("Audio"));
     addPage(tr("Sound"), d->ui.audio_sound, u":/img/audio-volume-high.png"_q);
@@ -183,14 +180,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     vbox = new QVBoxLayout;
     vbox->setMargin(0);
-
-    d->deint_swdec = new DeintWidget(DecoderDevice::CPU, this);
-    d->deint_hwdec = new DeintWidget(DecoderDevice::GPU, this);
-    d->deint_swdec->setObjectName(u"deint_swdec"_q);
-    d->deint_hwdec->setObjectName(u"deint_hwdec"_q);
-    d->ui.deint_tabs->addTab(d->deint_swdec, tr("For S/W decoding"));
-    d->ui.deint_tabs->addTab(d->deint_hwdec, tr("For H/W decoding"));
-    d->ui.deint_desc->setText(DeintWidget::informations());
 
     d->ui.sub_ext->addItem(QString(), QString());
     d->ui.sub_ext->addItemTextData(_ExtList(SubtitleExt));

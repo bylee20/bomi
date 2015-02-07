@@ -1,159 +1,115 @@
 #include "deintwidget.hpp"
 #include "datacombobox.hpp"
+#include "enumcombobox.hpp"
 #include "video/deintcaps.hpp"
+#include "video/deintoption.hpp"
 
-static constexpr auto GPU = DeintDevice::GPU;
-static constexpr auto CPU = DeintDevice::CPU;
-static constexpr auto OpenGL = DeintDevice::OpenGL;
+using DeintMethodComboBox = EnumComboBox<DeintMethod>;
 
-struct DeintWidget::Data {
-    bool updating = false, hwdec = false;
-    DataComboBox *combo = nullptr;
-    QCheckBox *gl = nullptr, *doubler = nullptr, *gpu = nullptr;
+static constexpr auto GPU = Processor::GPU;
+static constexpr auto CPU = Processor::CPU;
+
+struct Line {
     QMap<DeintMethod, DeintCaps> caps;
-    QList<DeintCaps> defaults;
-    DecoderDevice decoder;
-    auto current() -> DeintCaps&
-        { return caps[(DeintMethod)combo->currentData().toInt()]; }
+    DeintMethodComboBox *combo = nullptr;
+    QCheckBox *doubler = nullptr;
 };
 
-DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
-    : QWidget(parent)
+struct DeintWidget::Data {
+    DeintWidget *p = nullptr;
+    Line lines[2];
+    auto line(Processor proc) -> Line& { return lines[proc == Processor::GPU]; }
+    auto create(Processor proc, const QString &label, QGridLayout *grid) -> void
+    {
+        auto &l = line(proc);
+
+        l.combo = new DeintMethodComboBox(false, p);
+        Q_ASSERT(l.combo->value(0) == DeintMethod::None);
+        l.combo->removeItem(0);
+        for (auto &caps : DeintCaps::list(proc)) {
+            Q_ASSERT(caps.supports(proc));
+            const auto m = caps.method();
+            l.caps[m] = caps;
+            l.combo->addItem(_EnumName(m), QVariant::fromValue(m));
+        }
+
+        auto methodText = [] (DeintMethod method, const QString &desc) -> QString
+            { return DeintMethodInfo::name(method) % ": "_a % desc; };
+        l.combo->setToolTip(
+            methodText(DeintMethod::Bob,
+                       tr("Display each line twice.")) % '\n'_q %
+            methodText(DeintMethod::LinearBob,
+                       tr("Bob with linear interpolation.")) % '\n'_q %
+            methodText(DeintMethod::CubicBob,
+                       tr("Bob with cubic interpolation.")) % '\n'_q %
+            methodText(DeintMethod::LinearBlend,
+                       tr("Blend linearly each line with (1 2 1) filter."))%'\n'_q %
+            methodText(DeintMethod::Median,
+                       tr("Apply median filter to every second line.")) % '\n'_q %
+            methodText(DeintMethod::Yadif,
+                       tr("Use complicated temporal and spatial interpolation."))
+        );
+
+        l.doubler = new QCheckBox(tr("Double framerate"), p);
+        l.doubler->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+        l.doubler->setToolTip(tr("This option makes the framerate doubled and motions smoother.\n"
+                                 "This requires much more CPU or GPU usage."));
+
+        const int row = proc == Processor::GPU;
+        grid->addWidget(new QLabel(label), row, 0);
+        grid->addWidget(l.combo, row, 1);
+        grid->addWidget(l.doubler, row, 2);
+
+        connect(SIGNAL_V(l.combo, currentDataChanged), p, [=, &l] (const QVariant &data) {
+            l.doubler->setEnabled(l.caps[data.value<DeintMethod>()].doubler());
+            emit p->optionsChanged();
+        });
+        connect(l.doubler, &QCheckBox::toggled, p, &DeintWidget::optionsChanged);
+    }
+    auto setOption(Processor proc, const DeintOption &option)
+    {
+        auto &l = line(proc);
+        l.combo->setCurrentValue(option.method);
+        l.doubler->setChecked(option.doubler);
+    }
+    auto option(Processor proc) -> DeintOption
+    {
+        auto &l = line(proc);
+
+        DeintOption opt;
+        opt.processor = proc;
+        opt.method = l.combo->currentValue();
+        opt.doubler = l.doubler->isEnabled() && l.doubler->isChecked();
+        return opt;
+    }
+};
+
+DeintWidget::DeintWidget(QWidget *parent)
+    : QGroupBox(parent)
     , d(new Data)
 {
-    d->decoder = decoder;
-    d->hwdec = decoder == DecoderDevice::GPU;
-    QSettings r;
-    r.beginGroup(u"deint_caps"_q);
-    const auto tokens = r.value(DecoderDeviceInfo::name(decoder));
-    r.endGroup();
-    for (const auto &token : tokens.toStringList()) {
-        auto caps = DeintCaps::fromString(token);
-        if (caps.isAvailable())
-            d->caps[caps.method()] = caps;
-    }
-    d->combo = new DataComboBox(this);
-    d->defaults = DeintCaps::list();
-    for (auto &caps : d->defaults) {
-        if (!caps.isAvailable())
-            continue;
-        if ((d->hwdec && !caps.hwdec()) || (!d->hwdec && !caps.swdec()))
-            continue;
-        const auto method = caps.method();
-        d->combo->addItem(DeintMethodInfo::name(method), (int)method);
-        if (!d->caps.contains(method))
-            d->caps[method] = caps;
-        d->caps[method].m_decoders = d->decoder;
-    }
-    d->doubler = new QCheckBox(tr("Double framerate"), this);
-    d->gl = new QCheckBox(tr("Use OpenGL"), this);
-    d->gpu = new QCheckBox(tr("Use hardware acceleration if available"), this);
-    auto hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(tr("Method"), this));
-    hbox->addWidget(d->combo);
-    hbox->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
-    auto vbox = new QVBoxLayout;
-    vbox->addLayout(hbox);
-    vbox->addWidget(d->doubler);
-    vbox->addWidget(d->gl);
-    vbox->addWidget(d->gpu);
-    setLayout(vbox);
+    d->p = this;
 
-    auto update = [this] (DeintMethod method) {
-        d->updating = true;
-        auto &cap = d->caps[method];
-        const auto &def = d->defaults[(int)method];
-        const auto dev = d->hwdec ? GPU : CPU;
-        d->gpu->setEnabled(d->hwdec && def.supports(GPU));
-        d->gpu->setChecked(d->hwdec && cap.supports(GPU));
-        d->gl->setEnabled(def.supports(dev) && def.supports(OpenGL));
-        d->gl->setChecked(!def.supports(dev) || cap.supports(OpenGL));
-        d->doubler->setEnabled(def.doubler());
-        d->doubler->setChecked(cap.doubler());
-        d->updating = false;
-        cap.m_devices = def.m_devices;
-        if (!d->gl->isChecked())
-            cap.m_devices &= ~OpenGL;
-        if (!d->gpu->isChecked())
-            cap.m_devices &= ~GPU;
-    };
-    connect(d->combo, &DataComboBox::currentDataChanged,
-            [=] (const QVariant &data) {
-        update(DeintMethod(data.toInt()));
-        emit changed();
-    });
-    connect(d->doubler, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating) {
-            d->current().m_doubler = on;
-            emit changed();
-        }
-    });
-    connect(d->gl, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating) {
-            d->current().m_devices.set(OpenGL, on);
-            emit changed();
-        }
-    });
-    connect(d->gpu, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating) {
-            d->current().m_devices.set(GPU, on);
-            emit changed();
-        }
-    });
-    update(DeintMethod::Bob);
+    auto grid = new QGridLayout;
+    d->create(Processor::CPU, tr("For S/W decoding"), grid);
+    d->create(Processor::GPU, tr("For H/W decoding"), grid);
+    setLayout(grid);
 }
 
 DeintWidget::~DeintWidget() {
-    QStringList tokens;
-    for (auto it = d->caps.begin(); it != d->caps.end(); ++it)
-        tokens.push_back(it->toString());
-    QSettings r;
-    r.beginGroup(u"deint_caps"_q);
-    r.setValue(DecoderDeviceInfo::name(d->decoder), tokens);
-    r.endGroup();
     delete d;
 }
 
-auto DeintWidget::set(const DeintCaps &caps) -> void
+auto DeintWidget::set(const DeintOptionSet &options) -> void
 {
-    (d->caps[caps.method()] = caps).m_decoders = d->decoder;
-    d->combo->setCurrentData((int)caps.method());
+    d->setOption(Processor::CPU, options.option(Processor::CPU));
+    d->setOption(Processor::GPU, options.option(Processor::GPU));
 }
 
-auto DeintWidget::get() const -> DeintCaps
+auto DeintWidget::get() const -> DeintOptionSet
 {
-    return d->current();
-}
-
-auto DeintWidget::informations() -> QString
-{
-    auto methodText = [] (DeintMethod method, const QString &desc) -> QString
-        { return DeintMethodInfo::name(method) % ": "_a % desc; };
-    QString text =
-        '\n'_q % tr("Methods") % "\n\n"_a %
-        methodText(DeintMethod::Bob,
-                   tr("Display each line twice.")) % '\n'_q %
-        methodText(DeintMethod::LinearBob,
-                   tr("Bob with linear interpolation.")) % '\n'_q %
-        methodText(DeintMethod::CubicBob,
-                   tr("Bob with cubic interpolation.")) % '\n'_q %
-        methodText(DeintMethod::LinearBlend,
-                   tr("Blend linearly each line with (1 2 1) filter."))%'\n'_q %
-        methodText(DeintMethod::Median,
-                   tr("Apply median filter to every second line.")) % '\n'_q %
-        methodText(DeintMethod::Yadif,
-                   tr("Use complicated temporal and spatial interpolation."))
-                   % "\n\n"_a %
-        tr("Double framerate") % "\n\n"_a %
-        tr("This option makes the framerate doubled. "
-           "You can get smoother and fluid motions "
-           "but it requires more CPU or GPU usage.") % "\n\n"_a %
-        tr("Use OpenGL") % "\n\n"_a %
-        tr("In most case, deinterlacing with OpenGL can be performed faster "
-           "unless your graphics driver has poor support of OpenGL.") % "\n\n"_a %
-        tr("Use hardware acceleration if available") % "\n\n"_a %
-        tr("Some methods can be accelerated with GPU "
-           "by turning on this option if your hardware supports VA-API well.")
-    ;
-    return text;
+    DeintOptionSet set;
+    set.swdec = d->option(Processor::CPU);
+    set.hwdec = d->option(Processor::GPU);
+    return set;
 }

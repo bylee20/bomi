@@ -123,20 +123,14 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Fruit[[random]][-Random Dithering-][:"fruit":]
 -Ordered[[ordered]][-Ordered Dithering-][:"ordered":]
 
-+DecoderDevice[~DecoderDevices~]
--None[=0=]
--CPU[=1=]
--GPU[=2=]
-
 +DeintMode[[deinterlacing]][-Deinterlacing-]
 -None[[off]][-Off-]
 -*Auto[[auto]][-Auto-]
 
-+DeintDevice[~DeintDevices~]
++Processor[~Processors~]
 -None[=0=]
 -CPU[=1=]
 -GPU[=2=]
--OpenGL[=4=]
 
 +DeintMethod
 -None
@@ -146,7 +140,6 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Median
 -LinearBlend
 -Yadif
--MotionAdaptive
 
 +Interpolator[:QByteArray:]
 -Bilinear[[bilinear]][-Bilinear-][:"bilinear"_b:]

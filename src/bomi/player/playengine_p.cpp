@@ -79,8 +79,8 @@ auto PlayEngine::Data::vf(const MrlState *s) const -> QByteArray
 {
     OptionList vf(':');
     vf.add("noformat:address"_b, vp);
-    vf.add("swdec_deint"_b, s->d->deint_swdec.toString().toLatin1());
-    vf.add("hwdec_deint"_b, s->d->deint_hwdec.toString().toLatin1());
+    vf.add("swdec_deint"_b, s->d->deint.swdec.toString().toLatin1());
+    vf.add("hwdec_deint"_b, s->d->deint.hwdec.toString().toLatin1());
     vf.add("interpolate"_b, (int)s->video_motion_interpolation());
     return vf.get();
 }

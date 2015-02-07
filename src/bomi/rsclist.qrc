@@ -48,5 +48,6 @@
         <file>img/logo-center.png</file>
         <file>img/logo-center.svg</file>
         <file>img/audio-x-generic.png</file>
+        <file>img/tool-animator.png</file>
     </qresource>
 </RCC>

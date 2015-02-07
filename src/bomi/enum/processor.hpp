@@ -1,46 +1,46 @@
-#ifndef DECODERDEVICE_HPP
-#define DECODERDEVICE_HPP
+#ifndef PROCESSOR_HPP
+#define PROCESSOR_HPP
 
 #include "enums.hpp"
-#define DECODERDEVICE_IS_FLAG 1
+#define PROCESSOR_IS_FLAG 1
 
-enum class DecoderDevice : int {
+enum class Processor : int {
     None = (int)0,
     CPU = (int)1,
     GPU = (int)2
 };
 
-Q_DECLARE_METATYPE(DecoderDevice)
+Q_DECLARE_METATYPE(Processor)
 
-constexpr inline auto operator == (DecoderDevice e, int i) -> bool { return (int)e == i; }
-constexpr inline auto operator != (DecoderDevice e, int i) -> bool { return (int)e != i; }
-constexpr inline auto operator == (int i, DecoderDevice e) -> bool { return (int)e == i; }
-constexpr inline auto operator != (int i, DecoderDevice e) -> bool { return (int)e != i; }
-constexpr inline auto operator > (DecoderDevice e, int i) -> bool { return (int)e > i; }
-constexpr inline auto operator < (DecoderDevice e, int i) -> bool { return (int)e < i; }
-constexpr inline auto operator >= (DecoderDevice e, int i) -> bool { return (int)e >= i; }
-constexpr inline auto operator <= (DecoderDevice e, int i) -> bool { return (int)e <= i; }
-constexpr inline auto operator > (int i, DecoderDevice e) -> bool { return i > (int)e; }
-constexpr inline auto operator < (int i, DecoderDevice e) -> bool { return i < (int)e; }
-constexpr inline auto operator >= (int i, DecoderDevice e) -> bool { return i >= (int)e; }
-constexpr inline auto operator <= (int i, DecoderDevice e) -> bool { return i <= (int)e; }
-#if DECODERDEVICE_IS_FLAG
+constexpr inline auto operator == (Processor e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (Processor e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, Processor e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, Processor e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (Processor e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (Processor e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (Processor e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (Processor e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, Processor e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, Processor e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, Processor e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, Processor e) -> bool { return i <= (int)e; }
+#if PROCESSOR_IS_FLAG
 #include "enumflags.hpp"
-using DecoderDevices = EnumFlags<DecoderDevice>;
-constexpr inline auto operator | (DecoderDevice e1, DecoderDevice e2) -> DecoderDevices
-{ return DecoderDevices(DecoderDevices::IntType(e1) | DecoderDevices::IntType(e2)); }
-constexpr inline auto operator ~ (DecoderDevice e) -> EnumNot<DecoderDevice>
-{ return EnumNot<DecoderDevice>(e); }
-constexpr inline auto operator & (DecoderDevice lhs, DecoderDevices rhs) -> EnumAnd<DecoderDevice>
+using Processors = EnumFlags<Processor>;
+constexpr inline auto operator | (Processor e1, Processor e2) -> Processors
+{ return Processors(Processors::IntType(e1) | Processors::IntType(e2)); }
+constexpr inline auto operator ~ (Processor e) -> EnumNot<Processor>
+{ return EnumNot<Processor>(e); }
+constexpr inline auto operator & (Processor lhs, Processors rhs) -> EnumAnd<Processor>
 { return rhs & lhs; }
-Q_DECLARE_METATYPE(DecoderDevices)
+Q_DECLARE_METATYPE(Processors)
 #endif
 
 template<>
-class EnumInfo<DecoderDevice> {
-    typedef DecoderDevice Enum;
+class EnumInfo<Processor> {
+    typedef Processor Enum;
 public:
-    typedef DecoderDevice type;
+    typedef Processor type;
     using Data =  QVariant;
     struct Item {
         Enum value;
@@ -51,7 +51,7 @@ public:
     static constexpr auto size() -> int
     { return 3; }
     static constexpr auto typeName() -> const char*
-    { return "DecoderDevice"; }
+    { return "Processor"; }
     static constexpr auto typeKey() -> const char*
     { return ""; }
     static auto typeDescription() -> QString
@@ -115,11 +115,11 @@ public:
         return it != info.cend() ? it->value : def;
     }
     static constexpr auto default_() -> Enum
-    { return DecoderDevice::None; }
+    { return Processor::None; }
 private:
     static const ItemList info;
 };
 
-using DecoderDeviceInfo = EnumInfo<DecoderDevice>;
+using ProcessorInfo = EnumInfo<Processor>;
 
 #endif

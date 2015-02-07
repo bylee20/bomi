@@ -158,12 +158,12 @@ auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
     d->option.clear();
     if (d->deint.method == DeintMethod::None) {
         d->type = Pass;
-    } else if (deint.device == DeintDevice::OpenGL
-               || d->deint.device == DeintDevice::GPU) {
+    } else if (deint.processor == Processor::GPU) {
         d->type = Mark;
     } else {
         d->type = PP;
         switch (d->deint.method) {
+        case DeintMethod::Bob:
         case DeintMethod::LinearBob:
             d->option = u"li"_q;
             break;

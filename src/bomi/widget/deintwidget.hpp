@@ -1,21 +1,18 @@
 #ifndef DEINTWIDGET_HPP
 #define DEINTWIDGET_HPP
 
-#include "video/deintcaps.hpp"
+#include "video/deintoption.hpp"
 
-enum class DecoderDevice;
-
-class DeintWidget : public QWidget {
+class DeintWidget : public QGroupBox {
     Q_OBJECT
-    Q_PROPERTY(DeintCaps value READ get WRITE set NOTIFY changed)
+    Q_PROPERTY(DeintOptionSet value READ get WRITE set NOTIFY optionsChanged)
 public:
-    DeintWidget(DecoderDevice decoder, QWidget *parent = nullptr);
+    DeintWidget(QWidget *parent = nullptr);
     ~DeintWidget();
-    auto set(const DeintCaps &caps) -> void;
-    auto get() const -> DeintCaps;
-    static auto informations() -> QString;
+    auto set(const DeintOptionSet &options) -> void;
+    auto get() const -> DeintOptionSet;
 signals:
-    void changed();
+    void optionsChanged();
 private:
     struct Data;
     Data *d;

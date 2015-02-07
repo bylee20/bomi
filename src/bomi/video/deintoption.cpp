@@ -1,9 +1,14 @@
 #include "deintoption.hpp"
+#include "deintcaps.hpp"
+#include "misc/json.hpp"
+
+#define JSON_CLASS DeintOption
+static const auto jioOpt = JIO(JE(method), JE(processor), JE(doubler));
+JSON_DECLARE_FROM_TO_FUNCTIONS_IO(jioOpt)
 
 auto DeintOption::toString() const -> QString
 {
-    return DeintMethodInfo::name(method) % '|'_q
-           % _N(doubler) % '|'_q % DeintDeviceInfo::name(device);
+    return _EnumName(method) % '|'_q % _N(doubler) % '|'_q % _EnumName(processor);
 }
 
 auto DeintOption::fromString(const QString &string) -> DeintOption
@@ -12,10 +17,20 @@ auto DeintOption::fromString(const QString &string) -> DeintOption
     if (tokens.size() != 3)
         return DeintOption();
     DeintOption opt;
-    opt.method = DeintMethodInfo::from(tokens[0]);
+    opt.method = _EnumFrom(tokens[0], opt.method);
     opt.doubler = tokens[1].toInt();
-    opt.device = DeintDeviceInfo::from(tokens[2]);
+    opt.processor = _EnumFrom(tokens[2], opt.processor);
     return opt;
 }
 
+#undef JSON_CLASS
+#define JSON_CLASS DeintOptionSet
+static const auto jio = JIO(JE(swdec), JE(hwdec));
+JSON_DECLARE_FROM_TO_FUNCTIONS
 
+DeintOptionSet::DeintOptionSet()
+    : hwdec(DeintCaps::defaultOption(Processor::GPU))
+    , swdec(DeintCaps::defaultOption(Processor::CPU))
+{
+
+}
