@@ -13,8 +13,6 @@ DECLARE_LOG_CONTEXT(App)
 
 extern "C" {
 #include <xcb/xcb.h>
-#include <xcb/xcb_icccm.h>
-#include <xcb/xcb_util.h>
 #include <xcb/randr.h>
 #include <xcb/xproto.h>
 }
@@ -35,13 +33,12 @@ struct AppX11::Data {
     QDBusInterface *iface = nullptr;
     QDBusReply<uint> reply;
     bool inhibit = false, xss = false, gnome = false;
-    QByteArray wmName;
     QString hbCommand;
 
     xcb_connection_t *connection = nullptr;
     xcb_window_t root = 0;
     xcb_atom_t aNetWmState = 0, aNetWmStateAbove = 0;
-    xcb_atom_t aNetWmStateStaysOnTop = 0, aWmName = 0, aWmClass = 0;
+    xcb_atom_t aNetWmStateStaysOnTop = 0;
     Display *display = nullptr;
 
     auto getAtom(const char *name) -> xcb_atom_t
