@@ -13,6 +13,7 @@ public:
     Playlist(const Mrl &mrl);
     Playlist(const QList<Mrl> &rhs);
     Playlist(const Mrl &mrl, const QString &enc);
+    auto sort() -> void;
     auto save(const QString &prefix, QSettings *set) const -> void;
     auto load(const QString &prefix, QSettings *set) -> void;
     auto save(const QString &filePath, Type type = Unknown) const -> bool;

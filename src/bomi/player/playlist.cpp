@@ -17,6 +17,16 @@ Playlist::Playlist(const Mrl &mrl, const QString &enc) {
 Playlist::Playlist(const QList<Mrl> &rhs)
 : QList<Mrl>(rhs) {}
 
+auto Playlist::sort() -> void
+{
+  QCollator c;
+  c.setNumericMode(true);
+
+  qSort(begin(), end(), [&](Mrl a, Mrl b) ->
+      bool{ return c.compare(a.fileName(), b.fileName()) < 0; }
+  );
+}
+
 auto Playlist::save(const QString &filePath, Type type) const -> bool
 {
     QFile file(filePath);
