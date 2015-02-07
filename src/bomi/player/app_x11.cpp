@@ -10,13 +10,13 @@ DECLARE_LOG_CONTEXT(App)
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
 #include <QtX11Extras/QX11Info>
+
 extern "C" {
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_util.h>
 #include <xcb/randr.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include <xcb/xproto.h>
 }
 
 static auto getAtom(xcb_connection_t *conn, const char *name) -> xcb_atom_t
@@ -52,11 +52,11 @@ AppX11::AppX11(QObject *parent)
 : QObject(parent), d(new Data) {
     d->xssTimer.setInterval(20000);
     connect(&d->xssTimer, &QTimer::timeout, this, [this] () {
-        if (d->xss && d->display) {
-            _Trace("Call XResetScreenSaver().");
-            XResetScreenSaver(d->display);
+        if (d->xss && d->connection) {
+            _Trace("Call xcb_force_screen_saver().");
+            xcb_force_screen_saver(d->connection, XCB_SCREEN_SAVER_RESET);
         } else
-            _Error("Cannot run XResetScreenSaver().");
+            _Error("Cannot run xcb_force_screen_saver().");
     });
     connect(&d->hbTimer, &QTimer::timeout, this, [this] () {
         if (!d->hbCommand.isEmpty()) {
@@ -143,7 +143,7 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
                    u"/ScreenSaver"_q, u"org.freedesktop.ScreenSaver"_q);
             if (!d->iface->isValid()) {
                 _Debug("Failed to connect 'org.freedesktop.ScreenSaver'. "
-                       "Fallback to XResetScreenSaver().");
+                       "Fallback to xcb_force_screen_saver().");
                 _Delete(d->iface);
                 d->xss = true;
             }
@@ -166,7 +166,7 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
                 if (!d->reply.isValid()) {
                     _Error("DBus '%%' error: %%", d->iface->interface(),
                            d->reply.error().message());
-                    _Error("Fallback to XResetScreenSaver().");
+                    _Error("Fallback to xcb_force_screen_saver().");
                     _Delete(d->iface);
                     d->xss = true;
                 } else
@@ -174,7 +174,7 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
                            d->iface->interface());
             }
             if (d->xss) {
-                _Debug("Disable screensaver with XResetScreenSaver().");
+                _Debug("Disable screensaver with xcb_force_screen_saver().");
                 d->xssTimer.start();
             }
         }
@@ -219,22 +219,6 @@ auto AppX11::devices() const -> QStringList
     for (auto &dev : dir.entryList(filter, QDir::System))
         devices.append(u"/dev/"_q % dev);
     return devices;
-}
-
-auto AppX11::setWmName(QWidget *widget, const QString &name) -> void
-{
-    d->wmName = name.toUtf8();
-    char *utf8 = d->wmName.data();
-    auto wid = widget->effectiveWinId();
-    if (!d->connection || !d->display)
-        return;
-    XTextProperty text;
-    Xutf8TextListToTextProperty(d->display, &utf8, 1, XCompoundTextStyle, &text);
-    XSetWMName(d->display, wid, &text);
-//        xcb_icccm_set_wm_name(d->x.connection, d->x.window,
-        //XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
-    const char className[] = "bomi\0bomi";
-    xcb_icccm_set_wm_class(d->connection, wid, sizeof(className), className);
 }
 
 auto AppX11::shutdown() -> bool

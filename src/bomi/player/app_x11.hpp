@@ -13,7 +13,6 @@ public:
     auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
     auto devices() const -> QStringList;
     auto shutdown() -> bool;
-    auto setWmName(QWidget *widget, const QString &name) -> void;
     auto refreshRate() const -> qreal;
 private:
     AppX11(const AppX11&) = delete;

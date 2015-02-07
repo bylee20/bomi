@@ -295,9 +295,6 @@ auto App::setWindowTitle(QWidget *widget, const QString &title) -> void
     const QString text = title % (title.isEmpty() ? u""_q : u" - "_q)
                          % displayName();
     widget->setWindowTitle(text);
-#ifdef Q_OS_LINUX
-    d->helper.setWmName(widget, text);
-#endif
 }
 
 auto App::setMprisActivated(bool activated) -> void
