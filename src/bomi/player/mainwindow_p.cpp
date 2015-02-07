@@ -410,50 +410,54 @@ auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
 {
     if (!mrl.isLocalFile() || !pref.enable_generate_playlist())
         return Playlist(mrl);
+
+    Playlist list;
     const auto mode = pref.generate_playlist();
     const QFileInfo file(mrl.toLocalFile());
     const QDir dir = file.dir();
     const auto filter = _ToNameFilter(pref.exclude_images() ? VideoExt | AudioExt : MediaExt);
     if (mode == GeneratePlaylist::Folder) {
-        Playlist pl;
         const auto files = dir.entryList(filter, QDir::Files, QDir::Name);
         for (int i=0; i<files.size(); ++i)
-            pl.push_back(dir.absoluteFilePath(files[i]));
-        return pl;
+            list.push_back(dir.absoluteFilePath(files[i]));
+    } else {
+      const auto files = dir.entryInfoList(filter, QDir::Files, QDir::Name);
+      const auto fileName = file.fileName();
+      bool prefix = false, suffix = false;
+      auto it = files.cbegin();
+      for(; it != files.cend(); ++it) {
+          static QRegEx rxs(uR"((\D*)\d+(.*))"_q);
+          const auto ms = rxs.match(fileName);
+          if (!ms.hasMatch())
+              continue;
+          static QRegEx rxt(uR"((\D*)\d+(.*))"_q);
+          const auto mt = rxt.match(it->fileName());
+          if (!mt.hasMatch())
+              continue;
+          if (!prefix && !suffix) {
+              if (ms.capturedRef(1) == mt.capturedRef(1))
+                  prefix = true;
+              else if (ms.capturedRef(2) == mt.capturedRef(2))
+                  suffix = true;
+              else
+                  continue;
+          } else if (prefix) {
+              if (ms.capturedRef(1) != mt.capturedRef(1))
+                  continue;
+          } else if (suffix) {
+              if (ms.capturedRef(2) != mt.capturedRef(2))
+                  continue;
+          }
+          list.append(it->absoluteFilePath());
+      }
     }
-    const auto files = dir.entryInfoList(filter, QDir::Files, QDir::Name);
-    const auto fileName = file.fileName();
-    Playlist list;
-    bool prefix = false, suffix = false;
-    auto it = files.cbegin();
-    for(; it != files.cend(); ++it) {
-        static QRegEx rxs(uR"((\D*)\d+(.*))"_q);
-        const auto ms = rxs.match(fileName);
-        if (!ms.hasMatch())
-            continue;
-        static QRegEx rxt(uR"((\D*)\d+(.*))"_q);
-        const auto mt = rxt.match(it->fileName());
-        if (!mt.hasMatch())
-            continue;
-        if (!prefix && !suffix) {
-            if (ms.capturedRef(1) == mt.capturedRef(1))
-                prefix = true;
-            else if (ms.capturedRef(2) == mt.capturedRef(2))
-                suffix = true;
-            else
-                continue;
-        } else if (prefix) {
-            if (ms.capturedRef(1) != mt.capturedRef(1))
-                continue;
-        } else if (suffix) {
-            if (ms.capturedRef(2) != mt.capturedRef(2))
-                continue;
-        }
-        list.append(it->absoluteFilePath());
-    }
-    if (list.isEmpty())
+
+    if (list.size()) {
+        list.sort();
+        return list;
+    } else {
         return Playlist(mrl);
-    return list;
+    }
 }
 
 auto MainWindow::Data::showMessage(const QString &msg, const bool *force) -> void
