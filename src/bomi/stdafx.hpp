@@ -67,6 +67,7 @@ SIA _PlugChanged(const Q *q, const T *t, void(T::*sig)(Args...)) -> void \
 DECL_PLUG_CHANGED_T(QComboBox, currentIndexChanged, int)
 DECL_PLUG_CHANGED(QAbstractButton, toggled)
 DECL_PLUG_CHANGED(QLineEdit, textChanged)
+DECL_PLUG_CHANGED_T(QButtonGroup, buttonToggled, int, bool)
 DECL_PLUG_CHANGED_T(QDoubleSpinBox, valueChanged, double)
 DECL_PLUG_CHANGED_T(QSpinBox, valueChanged, int)
 

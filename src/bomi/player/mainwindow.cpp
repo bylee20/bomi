@@ -73,6 +73,11 @@ auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
     }
 }
 
+auto MainWindow::screen() const -> QScreen*
+{
+    return d->view->screen();
+}
+
 auto MainWindow::engine() const -> PlayEngine*
 {
     return &d->e;

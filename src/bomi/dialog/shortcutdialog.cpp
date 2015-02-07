@@ -128,8 +128,7 @@ auto ShortcutDialog::keyReleaseEvent(QKeyEvent *event) -> void
             d->edit->setStyleSheet(u"color: black"_q);
             d->edit->setText(key);
         } else {
-            d->edit->setText(tr("'%1' is already bound to '%2'")
-                             .arg(key).arg(desc));
+            d->edit->setText(tr("'%1' is already bound to '%2'").arg(key, desc));
             d->edit->setStyleSheet(u"color: red"_q);
             d->input = QKeySequence();
         }

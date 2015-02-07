@@ -24,7 +24,7 @@ class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
 class Autoloader;                       struct CacheInfo;
-struct IntrplParamSet;
+struct IntrplParamSet;                  struct MotionIntrplOption;
 struct StringPair { QString s1, s2; };
 using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;
 
@@ -149,6 +149,7 @@ public:
     auto setAutoloader_locked(const Autoloader &audio, const Autoloader &sub) -> void;
     auto setResume_locked(bool resume) -> void;
     auto setPreciseSeeking_locked(bool on) -> void;
+    auto setMotionIntrplOption_locked(const MotionIntrplOption &option) -> void;
     auto unlock() -> void;
 
     auto params() const -> const MrlState*;

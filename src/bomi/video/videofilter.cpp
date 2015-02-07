@@ -7,6 +7,8 @@ auto VideoFilter::needsMore() const -> bool
 
 auto PassthroughVideoFilter::push(MpImage &&mpi) -> void
 {
+    if (mpi.isNull())
+        return;
     m_queue.push_back(std::move(mpi));
 }
 

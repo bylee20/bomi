@@ -4,6 +4,7 @@
 #include "mpimage.hpp"
 #include "softwaredeinterlacer.hpp"
 #include "motioninterpolator.hpp"
+#include "motionintrploption.hpp"
 #include "deintoption.hpp"
 #include "player/mpv_helper.hpp"
 #include "opengl/opengloffscreencontext.hpp"
@@ -99,10 +100,10 @@ struct VideoProcessor::Data {
     SoftwareDeinterlacer deinterlacer;
     PassthroughVideoFilter passthrough;
     VideoFilter *filter = nullptr;
-    MotionInterpolator doubler;
+    MotionInterpolator interpolator;
+    MotionIntrplOption intrplOption;
     mp_image_params params;
     bool deint = false, hwacc = false, inter_i = false, inter_o = false, interpolate = false;
-    OpenGLOffscreenContext *gl = nullptr;
     HwDecTool *hwdec = nullptr;
     mp_image_pool *pool = nullptr;
 
@@ -114,7 +115,7 @@ struct VideoProcessor::Data {
     {
         deinterlacer.clear();
         passthrough.clear();
-        doubler.clear();
+        interpolator.clear();
         filter = nullptr;
     }
     auto updateDeint() -> void
@@ -142,14 +143,9 @@ VideoProcessor::~VideoProcessor()
     delete d;
 }
 
-auto VideoProcessor::initializeGL(OpenGLOffscreenContext *ctx) -> void
+auto VideoProcessor::setMotionIntrplOption(const MotionIntrplOption &option) -> void
 {
-    d->gl = ctx;
-}
-
-auto VideoProcessor::finalizeGL() -> void
-{
-    d->gl = nullptr;
+    d->intrplOption = option;
 }
 
 auto VideoProcessor::open(vf_instance *vf) -> int
@@ -240,6 +236,7 @@ auto VideoProcessor::reconfig(mp_image_params *in, mp_image_params *out) -> int
     *out = *in;
     if (_Change(d->hwacc, !!IMGFMT_IS_HWACCEL(in->imgfmt)))
         d->updateDeint();
+    d->interpolator.setTargetFps(d->intrplOption.fps());
     d->reset();
     return 0;
 }
@@ -320,8 +317,13 @@ static auto luminance(const mp_image *mpi) -> double
 
 auto VideoProcessor::filterIn(mp_image *_mpi) -> int
 {
-    if (!_mpi)
+    if (!_mpi) { // propagate eof
+        d->passthrough.push(MpImage());
+        d->deinterlacer.push(MpImage());
+        d->interpolator.push(MpImage());
         return 0;
+    }
+
     MpImage mpi = MpImage::wrap(_mpi);
     mpi->pts_orig = -1;
     if (d->skip) {
@@ -374,7 +376,7 @@ auto VideoProcessor::filterIn(mp_image *_mpi) -> int
         if (mpi.isInterlaced() && !d->deinterlacer.pass())
             d->filter = &d->deinterlacer;
         else if (d->interpolate)
-            d->filter = &d->doubler;
+            d->filter = &d->interpolator;
         else
             d->filter = &d->passthrough;
     }

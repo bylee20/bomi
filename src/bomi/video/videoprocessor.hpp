@@ -3,7 +3,7 @@
 
 struct vf_instance;                     struct mp_image_params;
 struct vf_info;                         struct mp_image;
-class HwAcc;                            class OpenGLOffscreenContext;
+struct MotionIntrplOption;
 enum class DeintMethod;
 
 class VideoProcessor : public QObject {
@@ -13,14 +13,12 @@ public:
     VideoProcessor(const VideoProcessor &) = delete;
     VideoProcessor &operator = (const VideoProcessor &) = delete;
     ~VideoProcessor();
-    auto initializeGL(OpenGLOffscreenContext *ctx) -> void;
-    auto finalizeGL() -> void;
     auto isInputInterlaced() const -> bool;
     auto isOutputInterlaced() const -> bool;
     auto skipToNextBlackFrame() -> void;
     auto stopSkipping() -> void;
     auto isSkipping() const -> bool;
-    auto isInterpolating() const -> bool;
+    auto setMotionIntrplOption(const MotionIntrplOption &option) -> void;
 signals:
     void inputInterlacedChanged();
     void outputInterlacedChanged();

@@ -14,6 +14,7 @@ extern "C" {
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_util.h>
+#include <xcb/randr.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 }
@@ -77,6 +78,46 @@ AppX11::AppX11(QObject *parent)
 AppX11::~AppX11() {
     delete d->iface;
     delete d;
+}
+
+template<class T, class Free>
+auto _MakeShared(T *t, Free f) { return QSharedPointer<T>(t, f); }
+
+auto AppX11::refreshRate() const -> qreal
+{
+    auto sr = _MakeShared(xcb_randr_get_screen_resources_current_reply(
+        d->connection,
+        xcb_randr_get_screen_resources_current_unchecked(d->connection, d->root),
+        nullptr), free);
+    const auto len = xcb_randr_get_screen_resources_current_crtcs_length(sr.data());
+    const int n = cApp.screenNumber();
+    if (len < 1 || n >= len)
+        return -1;
+    auto crtc = xcb_randr_get_screen_resources_current_crtcs(sr.data())[n];
+    auto ci = _MakeShared(xcb_randr_get_crtc_info_reply(
+        d->connection,
+        xcb_randr_get_crtc_info_unchecked(d->connection, crtc, XCB_CURRENT_TIME),
+        nullptr), free);
+
+    auto mode_refresh = [] (xcb_randr_mode_info_t *mode_info) -> double
+    {
+        double vtotal = mode_info->vtotal;
+        if (mode_info->mode_flags & XCB_RANDR_MODE_FLAG_DOUBLE_SCAN)
+            vtotal *= 2;
+        if (mode_info->mode_flags & XCB_RANDR_MODE_FLAG_INTERLACE)
+            vtotal /= 2;
+        if (mode_info->htotal && vtotal)
+            return ((double) mode_info->dot_clock / ((double) mode_info->htotal * (double) vtotal));
+        return -1;
+    };
+
+    auto it = xcb_randr_get_screen_resources_current_modes_iterator(sr.data());
+    while (it.rem) {
+        if (it.data->id == ci->mode)
+            return mode_refresh(it.data);
+        xcb_randr_mode_info_next(&it);
+    }
+    return -1;
 }
 
 auto AppX11::setHeartbeat(const QString &command, int interval) -> void

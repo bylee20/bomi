@@ -23,6 +23,8 @@ QMAKE_CXXFLAGS_CXX11 = -std=c++1y
 QMAKE_CXXFLAGS += -Wno-non-template-friend
 }
 
+QMAKE_CXXFLAGS += -fpermissive
+
 !isEmpty(USE_CCACHE): QMAKE_CXX = ccache $${QMAKE_CXX}
 
 macx {
@@ -41,7 +43,7 @@ macx {
 } else:unix {
     QT += dbus x11extras
 	TARGET = bomi
-	LIBS += -ldl
+	LIBS += -ldl -lxcb-randr -lXrandr
 	HEADERS += player/app_x11.hpp player/mpris.hpp
 	SOURCES += player/app_x11.cpp player/mpris.cpp
 }

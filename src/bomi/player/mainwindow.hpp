@@ -20,6 +20,7 @@ public:
     auto exit() -> void;
     auto isSceneGraphInitialized() const -> bool;
     auto resetMoving() -> void;
+    auto screen() const -> QScreen*;
 signals:
     void fullscreenChanged(bool fs);
     void sceneGraphInitialized();

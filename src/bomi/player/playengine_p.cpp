@@ -702,11 +702,6 @@ auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
            "render queued frame(%%), avgfps: %%",
            fbo->size(), info.video.renderer()->fps());
 
-    static qint64 time = 0;
-    auto next = mpv_get_time_us(mpv.handle());
-//    qDebug() << 1/((next - time)/1e6);
-    time = next;
-
     if (snapshot) {
         this->takeSnapshot();
         snapshot = NoSnapshot;

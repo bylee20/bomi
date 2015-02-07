@@ -545,6 +545,7 @@ auto MainWindow::Data::applyPref() -> void
 
     e.setHwAcc_locked(p.enable_hwaccel(), p.hwaccel_codecs());
     e.setDeintOptions_locked(p.deinterlacing());
+    e.setMotionIntrplOption_locked(p.motion_interpolation());
 
     e.setAudioDevice_locked(p.audio_device());
     e.setVolumeNormalizerOption_locked(p.audio_normalizer());

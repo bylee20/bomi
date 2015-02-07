@@ -79,7 +79,8 @@ auto SoftwareDeinterlacer::pass() const -> bool
 
 auto SoftwareDeinterlacer::push(MpImage &&mpi) -> void
 {
-    Q_ASSERT(!mpi.isNull());
+    if (mpi.isNull())
+        return;
     d->setNewPts(mpi->pts);
     d->input = std::move(mpi);
     d->processed = 0;

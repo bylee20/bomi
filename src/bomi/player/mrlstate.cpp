@@ -70,10 +70,14 @@ auto MrlState::description(const char *property) const -> QString
 {
     QByteArray name = "desc_";
     name += property;
+    name += "()";
     auto mo = metaObject();
+    const int idx = mo->indexOfMethod(name.constData());
+    if (idx < 0)
+        return QString();
     QString ret;
-    auto ok = mo->invokeMethod(const_cast<MrlState*>(this),
-                               name.constData(), Q_RETURN_ARG(QString, ret));
+    auto ok = mo->method(idx).invoke(const_cast<MrlState*>(this),
+                                     Q_RETURN_ARG(QString, ret));
     return ok ? ret : QString();
 }
 

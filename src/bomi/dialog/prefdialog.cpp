@@ -26,9 +26,6 @@ struct PrefDialog::Data {
     Ui::PrefDialog ui;
     QButtonGroup *shortcutGroup;
     DataButtonGroup *saveQuickSnapshot;
-    QMap<int, QCheckBox*> hwdec;
-    QMap<DeintMethod, QCheckBox*> hwdeint;
-    QStringList imports;
     MrlStatePropertyListModel *properties = nullptr;
     QVector<ValueWatcher> watchers;
     QSet<ValueWatcher*> modified;
@@ -47,11 +44,6 @@ struct PrefDialog::Data {
                 continue;
             w.editor.write(w.property.read(pref));
         }
-//        d->ui.app_unique->setChecked(cApp.isUnique());
-//        d->ui.app_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
-//        d->ui.locale->setCurrentLocale(cApp.locale());
-//        d->modified.clear();
-//        setWindowModified(false);
     }
 
     auto sync() -> void
@@ -63,9 +55,6 @@ struct PrefDialog::Data {
             if (w.isModified())
                 qDebug() << w.property.typeName() << w.property.name();
         }
-    //    d->ui.app_unique->setChecked(cApp.isUnique());
-    //    d->ui.app_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
-    //    d->ui.locale->setCurrentLocale(cApp.locale());
         modified.clear();
         p->setWindowModified(false);
     }
@@ -147,8 +136,9 @@ PrefDialog::PrefDialog(QWidget *parent)
     auto vbox = new QVBoxLayout;
     vbox->setMargin(0);
 
-    void(QComboBox::*curIdxChanged)(int) = &QComboBox::currentIndexChanged;
     d->ui.enable_hwaccel->setEnabled(HwAcc::isAvailable());
+
+    void(QComboBox::*curIdxChanged)(int) = &QComboBox::currentIndexChanged;
     auto checkHearbeat = [this] () {
         const auto enable = d->ui.use_heartbeat->isChecked()
                             && d->ui.disable_screensaver->isChecked();
@@ -251,49 +241,6 @@ PrefDialog::PrefDialog(QWidget *parent)
             b->setEnabled(item && !item->isMenu());
     });
 
-    auto onBlurKernelChanged = [this] () {
-        const auto number = d->ui.blur_kern_c->value()
-                            + d->ui.blur_kern_n->value()*4
-                            + d->ui.blur_kern_d->value()*4;
-        d->ui.blur_sum->setText(QString::number(number));
-    };
-    auto onSharpenKernelChanged = [this] () {
-        const auto number = d->ui.sharpen_kern_c->value()
-                            + d->ui.sharpen_kern_n->value()*4
-                            + d->ui.sharpen_kern_d->value()*4;
-        d->ui.sharpen_sum->setText(QString::number(number));
-    };
-    void(QSpinBox::*valueChanged)(int) = &QSpinBox::valueChanged;
-    connect(d->ui.blur_kern_c, valueChanged, onBlurKernelChanged);
-    connect(d->ui.blur_kern_n, valueChanged, onBlurKernelChanged);
-    connect(d->ui.blur_kern_d, valueChanged, onBlurKernelChanged);
-
-    connect(d->ui.sharpen_kern_c, valueChanged, onSharpenKernelChanged);
-    connect(d->ui.sharpen_kern_n, valueChanged, onSharpenKernelChanged);
-    connect(d->ui.sharpen_kern_d, valueChanged, onSharpenKernelChanged);
-
-    connect(d->ui.dbb, &BBox::clicked, [this] (QAbstractButton *button) {
-        switch (d->ui.dbb->standardButton(button)) {
-        case BBox::Ok:
-            hide();
-        case BBox::Apply:
-            d->sync();
-            emit applyRequested();
-            break;
-        case BBox::Cancel:
-            hide();
-        case BBox::Reset:
-            d->fillEditors(&d->orig);
-            break;
-        case BBox::RestoreDefaults: {
-            Pref pref;
-            d->fillEditors(&pref);
-            break;
-        } default:
-            break;
-        }
-    });
-
     static constexpr auto bomi = static_cast<int>(KeyMapPreset::Bomi);
     static constexpr auto movist = static_cast<int>(KeyMapPreset::Movist);
     d->ui.shortcut_preset->addItem(cApp.displayName(), bomi);
@@ -366,6 +313,28 @@ PrefDialog::PrefDialog(QWidget *parent)
             return !ret;
         };
     }
+
+    connect(d->ui.dbb, &BBox::clicked, [this] (QAbstractButton *button) {
+        switch (d->ui.dbb->standardButton(button)) {
+        case BBox::Ok:
+            hide();
+        case BBox::Apply:
+            d->sync();
+            emit applyRequested();
+            break;
+        case BBox::Cancel:
+            hide();
+        case BBox::Reset:
+            d->fillEditors(&d->orig);
+            break;
+        case BBox::RestoreDefaults: {
+            Pref pref;
+            d->fillEditors(&pref);
+            break;
+        } default:
+            break;
+        }
+    });
 }
 
 PrefDialog::~PrefDialog() {

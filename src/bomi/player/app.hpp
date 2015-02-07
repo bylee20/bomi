@@ -35,6 +35,7 @@ public:
     auto setUnique(bool unique) -> void;
     auto shutdown() -> bool;
     auto runCommands() -> void;
+    auto screenNumber() const -> int;
     auto isOpenGLDebugLoggerRequested() const -> bool;
     auto setMprisActivated(bool activated) -> void;
     template<class T>
@@ -44,6 +45,7 @@ public:
     static constexpr auto name() -> const char* { return "bomi"; }
     static auto displayName() -> QString { return tr("bomi"); }
     static auto defaultIcon() -> QIcon;
+    auto refreshRate() const -> qreal;
 private:
     auto sendMessage(const QByteArray &message, int timeout = 5000) -> bool;
     auto handleMessage(const QByteArray &message) -> void;

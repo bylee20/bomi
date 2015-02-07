@@ -1605,7 +1605,7 @@
         </layout>
        </widget>
        <widget class="QWidget" name="video_deint">
-        <layout class="QVBoxLayout" name="verticalLayout_34">
+        <layout class="QVBoxLayout" name="verticalLayout_32">
          <item>
           <widget class="DeintWidget" name="deinterlacing">
            <property name="title">
@@ -1614,56 +1614,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_8">
+          <widget class="MotionIntrplOptionWidget" name="motion_interpolation">
            <property name="title">
             <string>Motion Interpolation</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_32">
-            <item>
-             <widget class="QRadioButton" name="mi_sync_to_monitor">
-              <property name="text">
-               <string>Sync to monitor refresh rate (detected: %&amp;1Hz)</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_8">
-              <item>
-               <widget class="QRadioButton" name="mi_use_custom_fps">
-                <property name="text">
-                 <string>Target fra&amp;merate</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="mi_target_fps">
-                <property name="suffix">
-                 <string>fps</string>
-                </property>
-                <property name="minimum">
-                 <double>10.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>1000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-           </layout>
           </widget>
          </item>
          <item>
@@ -2880,6 +2834,12 @@ Regular expression is supported.</string>
    <class>DeintWidget</class>
    <extends>QGroupBox</extends>
    <header>widget/deintwidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MotionIntrplOptionWidget</class>
+   <extends>QGroupBox</extends>
+   <header>video/motionintrploption.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

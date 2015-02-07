@@ -416,6 +416,19 @@ auto App::availableStyleNames() const -> QStringList
     return d->styleNames;
 }
 
+auto App::refreshRate() const -> qreal
+{
+    if (!d->main)
+        return -1;
+    return d->helper.refreshRate();
+}
+
+auto App::screenNumber() const -> int
+{
+    auto desktop = this->desktop();
+    return d->main ? desktop->screenNumber(d->main) : desktop->primaryScreen();
+}
+
 auto App::setStyleName(const QString &name) -> void
 {
     if (!d->styleNames.contains(name, QCI))

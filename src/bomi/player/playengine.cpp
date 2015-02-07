@@ -704,6 +704,12 @@ auto PlayEngine::stop() -> void
     d->mpv.tell("stop");
 }
 
+auto PlayEngine::setMotionIntrplOption_locked(const MotionIntrplOption &option)
+-> void
+{
+    d->vp->setMotionIntrplOption(option);
+}
+
 auto PlayEngine::setVolumeNormalizerOption_locked(const AudioNormalizerOption &option)
 -> void
 {
