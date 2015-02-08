@@ -15,6 +15,7 @@ extern "C" {
 #include <xcb/xcb.h>
 #include <xcb/randr.h>
 #include <xcb/xproto.h>
+#include <xcb/screensaver.h>
 }
 
 static auto getAtom(xcb_connection_t *conn, const char *name) -> xcb_atom_t
@@ -171,19 +172,26 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
                            d->iface->interface());
             }
             if (d->xss) {
+                xcb_screensaver_suspend(d->connection, 1);
                 _Debug("Disable screensaver with xcb_force_screen_saver().");
                 d->xssTimer.start();
             }
         }
-    } else if (d->iface) {
-        auto response = d->iface->call(d->gnome ? u"Uninhibit"_q
-                                                : u"UnInhibit"_q,
-                                       d->reply.value());
-        if (response.type() == QDBusMessage::ErrorMessage)
-            _Error("DBus '%%' error: [%%] %%", d->iface->interface(),
-                   response.errorName(), response.errorMessage());
-        else
-            _Debug("Enable screensaver with '%%'.", d->iface->interface());
+    } else {
+        if (d->iface) {
+            auto response = d->iface->call(d->gnome ? u"Uninhibit"_q
+                                                    : u"UnInhibit"_q,
+                                           d->reply.value());
+            if (response.type() == QDBusMessage::ErrorMessage)
+                _Error("DBus '%%' error: [%%] %%", d->iface->interface(),
+                       response.errorName(), response.errorMessage());
+            else
+                _Debug("Enable screensaver with '%%'.", d->iface->interface());
+        }
+        if (d->xss) {
+            xcb_screensaver_suspend(d->connection, 0);
+            d->xssTimer.start();
+        }
     }
     d->inhibit = disabled;
 }
