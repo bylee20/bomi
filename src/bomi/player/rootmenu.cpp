@@ -240,8 +240,10 @@ struct RootMenu::Data {
         const QString g = _L(EnumInfo<T>::typeKey());
         if (cycle) {
             const auto toggle = EnumInfo<T>::size() <= 2;
-            action(u"cycle"_q, toggle ? QT_TRANSLATE_NOOP(RootMenu, "Toggle")
-                                     : QT_TRANSLATE_NOOP(RootMenu, "Select Next"));
+            if (toggle)
+                action(u"cycle"_q, QT_TRANSLATE_NOOP(RootMenu, "Toggle"));
+            else
+                action(u"cycle"_q, QT_TRANSLATE_NOOP(RootMenu, "Select Next"));
             separator();
         }
         group(g)->setExclusive(exclusive);
@@ -294,6 +296,9 @@ SIA _EnumKey(E e) -> QString { return EnumInfo<E>::key(e); }
 
 RootMenu::RootMenu()
     : Menu(u"menu"_q, 0), d(new Data) {
+
+    Q_UNUSED(QT_TR_NOOP("Toggle")); // dummy to tranlsate
+
     Q_ASSERT(obj == nullptr);
     obj = this;
 
