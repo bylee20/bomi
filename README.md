@@ -136,7 +136,7 @@ If you want to contact me privately, please send me an e-mail.
 
 bomi is distributed under GPLv2.
 
-Copyright (C) 2014 xylosper
+Copyright (C) 2015 Lee, Byoung-young A.K.A. xylosper
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

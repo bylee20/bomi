@@ -114,7 +114,7 @@ p, li { white-space: pre-wrap; }
          <item>
           <widget class="QLabel" name="copyright">
            <property name="text">
-            <string notr="true">Copyright (C) 2008-%1 xylosper</string>
+            <string notr="true">Copyright (C) 2008-%1 %2 A.K.A. xylosper</string>
            </property>
           </widget>
          </item>
