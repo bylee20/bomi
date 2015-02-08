@@ -43,16 +43,16 @@ Item {
         readonly property int nameFontSize: 15
         readonly property bool showLocation: B.App.theme.playlist.showLocation
         readonly property int locationFontSize: 10
-        readonly property string nameFontFamily: Util.monospace
-        readonly property string locationFontFamily: Util.monospace
+        readonly property string nameFontFamily: B.App.theme.monospace
+        readonly property string locationFontFamily: B.App.theme.monospace
         currentIndex: playlist.loaded
         function contentWidth() {
             var max = 0;
             for (var i=0; i<table.count; ++i) {
-                var number = Util.textWidth(playlist.number(i), table.nameFontSize, table.nameFontFamily);
-                var name = Util.textWidth(playlist.name(i), table.nameFontSize, table.nameFontFamily);
+                var number = B.App.textWidth(playlist.number(i), table.nameFontSize, table.nameFontFamily);
+                var name = B.App.textWidth(playlist.name(i), table.nameFontSize, table.nameFontFamily);
                 if (showLocation) {
-                    var loc = Util.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
+                    var loc = B.App.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
                     max = Math.max(number + name, loc, max);
                 } else
                     max = Math.max(number + name, max);
@@ -97,6 +97,6 @@ Item {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
-        onClicked: Util.execute("tool/playlist")
+        onClicked: B.App.execute("tool/playlist")
     }
 }

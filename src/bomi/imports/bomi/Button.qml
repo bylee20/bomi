@@ -123,15 +123,15 @@ Item {
                 onReleased: {
                     var action = mouse.button & Qt.RightButton ? item.action2 : item.action
                     if (containsMouse && action)
-                        Util.execute(action)
+                        B.App.execute(action)
                 }
                 onClicked: item.clicked();
-                onExited: Util.hideToolTip();
-                onCanceled: Util.hideToolTip()
+                onExited: B.App.window.hideToolTip();
+                onCanceled: B.App.window.hideToolTip()
                 Timer {
                     id: tooltipTimer; interval: 1000
                     running: parent.containsMouse && !pressed && tooltip.length
-                    onTriggered: Util.showToolTip(parent, Qt.point(parent.mouseX, parent.mouseY), tooltip)
+                    onTriggered: B.App.window.showToolTip(parent, Qt.point(parent.mouseX, parent.mouseY), tooltip)
                 }
             }
         }

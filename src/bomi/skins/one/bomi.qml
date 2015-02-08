@@ -32,7 +32,7 @@ B.AppWithFloating {
                 interval: 1500
                 repeat: true
                 onTriggered: {
-                    if (!mouse.contains(Util.mousePos(mouse))) {
+                    if (!B.App.window.mouse.isIn(mouse)) {
                         expand.running = false
                         shrink.running = true
                         cursorChecker.stop()

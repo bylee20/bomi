@@ -22,6 +22,7 @@ public:
     auto resetMoving() -> void;
     auto screen() const -> QScreen*;
 signals:
+    void cursorChanged(const QCursor &cursor);
     void fullscreenChanged(bool fs);
     void sceneGraphInitialized();
 private:

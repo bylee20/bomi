@@ -155,7 +155,10 @@ Item { id: view
             }
         }
         onContentXChanged: d.syncContentX(list, headerFlickable)
-        Component.onCompleted: Util.registerItemToAcceptKey(list)
+        Component.onCompleted: {
+            App.registerToAccept(list, App.DoubleClickEvent | App.KeyEvent);
+        }
+
         function getIndex(y) {
             var pos = list.contentItem.mapFromItem(list, 0.5, y)
             return list.indexAt(pos.x, pos.y);
@@ -214,7 +217,6 @@ Item { id: view
                     list.selectedIndex = index
             }
             onDoubleClicked: {
-                Util.filterDoubleClick()
                 var index = list.getIndex(mouse.y)
                 if (index !== -1)
                     view.activated(index)

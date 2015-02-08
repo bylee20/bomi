@@ -20,6 +20,7 @@ private:
 #undef P_
 private:
     Q_PROPERTY(OsdThemeObject *osd READ __osd NOTIFY osdChanged)
+    Q_PROPERTY(QString monospace READ monospace CONSTANT FINAL)
     OsdThemeObject m_osd;
 public:
     Q_SIGNAL void osdChanged();
@@ -30,6 +31,7 @@ public:
         m_osd.m.message.m = t.message;
         emit osdChanged();
     }
+    auto monospace() const -> QString;
 };
 
 #endif // THEMEOBJECT_HPP

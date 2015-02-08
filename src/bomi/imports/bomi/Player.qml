@@ -146,6 +146,8 @@ Item {
         }
     }
 
+    property var mouse: B.App.window.mouse
+
     MouseArea {
         id: rightEdge
         visible: B.App.theme.playlist.showOnMouseOverEdge
@@ -160,7 +162,7 @@ Item {
         B.HideTimer {
             id: rightTimer
             target: B.App.playlist
-            hide: function() { return !Util.containsMouse(right) }
+            hide: function() { return !mouse.isIn(right) }
         }
     }
     MouseArea {
@@ -176,7 +178,7 @@ Item {
         }
         B.HideTimer {
             id: leftTimer; target: B.App.history
-            hide: function() { return !Util.containsMouse(left) }
+            hide: function() { return !mouse.isIn(left) }
         }
     }
 }

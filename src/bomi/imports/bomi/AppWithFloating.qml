@@ -28,8 +28,9 @@ Item {
             onExited: floating.hidden = true
             MouseArea {
                 id: floating
-                function setCx(cx) { x = Util.bound(0, cx*parent.width - width/2, parent.width - width) }
-                function setCy(cy) { y = Util.bound(0, cy*parent.height - height/2, parent.height - height) }
+                function clamp(min, v, max) { return Math.max(Math.min(max, v), min); }
+                function setCx(cx) { x = clamp(0, cx*parent.width - width/2, parent.width - width) }
+                function setCy(cy) { y = clamp(0, cy*parent.height - height/2, parent.height - height) }
                 function getCx(bg) { return (x+width/2)/bg; }
                 function getCy(bg) { return (y+height/2)/bg; }
 
@@ -38,7 +39,6 @@ Item {
                 drag.target: floating; drag.axis: Drag.XAndYAxis
                 drag.minimumX: 0; drag.maximumX: root.width-width
                 drag.minimumY: 0; drag.maximumY: root.height-height
-                onDoubleClicked: Util.filterDoubleClick()
                 states: State {
                     name: "hidden"; when: floating.hidden
                     PropertyChanges { target: floating; opacity: 0.0 }
@@ -51,8 +51,14 @@ Item {
                         PropertyAction { property: "visible" }
                     }
                 }
+                Component.onCompleted: {
+                    App.registerToAccept(floating, App.DoubleClickEvent)
+                }
             }
-            Connections { target: Util; onCursorVisibleChanged: floating.hidden = !cursorVisible }
+            Connections {
+                target: App.window.mouse
+                onCursorChanged: floating.hidden = !target.cursor
+            }
         }
     }
 

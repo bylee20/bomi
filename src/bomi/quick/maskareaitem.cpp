@@ -156,7 +156,6 @@ auto MaskAreaItem::mouseUngrabEvent() -> void
 auto MaskAreaItem::mouseDoubleClickEvent(QMouseEvent *event) -> void
 {
     QQuickItem::mouseDoubleClickEvent(event);
-    qDebug() << event->isAccepted();
     emit doubleClicked();
 }
 

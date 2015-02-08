@@ -9,20 +9,20 @@ Item {
     Binding { target: player; property: "width"; value: root.width }
     Binding {
         target: player; property: "height";
-        value: Util.fullScreen ? root.height : root.height - controls.height
+        value: App.window.fullscreen ? root.height : root.height - controls.height
     }
     Connections {
         id: conn
         function update() {
             catcher.update()
-            if (Util.fullScreen)
+            if (target.fullscreen)
                 player.bottomPadding = catcher.height
             else
                 player.bottomPadding = 0
         }
 
-        target: Util
-        onFullScreenChanged: update()
+        target: App.window
+        onFullscreenChanged: update()
     }
 
     MouseArea {
@@ -32,7 +32,7 @@ Item {
         anchors.bottom: parent.bottom
         hoverEnabled: true
         function update() {
-            if (Util.fullScreen && !catcher.containsMouse)
+            if (App.window.fullscreen && !catcher.containsMouse)
                 sliding.start()
             else
                 controls.y = 0

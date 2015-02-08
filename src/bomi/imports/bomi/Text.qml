@@ -1,11 +1,12 @@
 import QtQuick 2.0 as Q
+import bomi 1.0 as B
 
 Q.Text {
     id: textItem
     property bool monospace: true
     property alias content: textItem.text
     font.pixelSize: 10
-    font.family: monospace ? Util.monospace : ""
+    font.family: monospace ? B.App.theme.monospace : ""
     verticalAlignment: Q.Text.AlignVCenter
     width: paintedWidth
 

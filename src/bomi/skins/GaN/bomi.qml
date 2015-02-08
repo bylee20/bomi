@@ -95,7 +95,7 @@ B.AppWithFloating {
                         spacing: 5; anchors.centerIn: parent; property real size: 24
                         B.Button { size: parent.size; icon.prefix: "prev"; action: "play/prev"; action2: "play/chapter/prev"}
                         B.Button { size: parent.size; icon.prefix: "backward"; action: "play/seek/backward1"; action2: "play/seek/backward2" }
-                        B.Button { size: parent.size; icon.prefix: engine.running ? "pause" : "play"; action: "play/pause" }
+                        B.Button { size: parent.size; icon.prefix: engine.playing ? "pause" : "play"; action: "play/pause" }
                         B.Button { size: parent.size; icon.prefix: "forward"; action: "play/seek/forward1"; action2: "play/seek/forward2" }
                         B.Button { size: parent.size; icon.prefix: "next"; action: "play/next";  action2: "play/chapter/next" }
                     }

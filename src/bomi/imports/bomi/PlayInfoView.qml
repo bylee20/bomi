@@ -21,18 +21,6 @@ Item {
     }
     visible: false
 
-    property real __cpu: 0.0
-    property real __mem: 0.0
-
-    Timer {
-        running: parent.visible
-        interval: 1000
-        repeat: true
-        onTriggered: {
-            __cpu = Util.cpu
-            __mem = Util.memory
-        }
-    }
     ColumnLayout {
         id: box; spacing: 0
         readonly property alias fontSize: wrapper.fontSize
@@ -53,15 +41,15 @@ Item {
         PlayInfoText { }
 
         PlayInfoText {
-            property alias cpu: wrapper.__cpu
+            property real usage: App.cpu.usage
             text: qsTr("CPU Usage: %1%(avg. %2%/core)")
-                .arg(cpu.toFixed(0)).arg((cpu/Util.cores).toFixed(1));
+                .arg(usage.toFixed(0)).arg((usage/App.cpu.cores).toFixed(1));
         }
         PlayInfoText {
-            property alias mem: wrapper.__mem
+            property real usage: App.memory.usage
             text: qsTr("RAM Usage: %3MiB(%4% of %5GiB)")
-                .arg(mem.toFixed(1)).arg((mem/Util.totalMemory*100.0).toFixed(1))
-                .arg((Util.totalMemory/1024.0).toFixed(2));
+                .arg(usage.toFixed(1)).arg((usage/App.memory.total*100.0).toFixed(1))
+                .arg((App.memory.total/1024.0).toFixed(2));
         }
         PlayInfoText {
             readonly property int used: engine.cacheUsed

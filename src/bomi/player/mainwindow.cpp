@@ -181,7 +181,7 @@ auto MainWindow::setFullScreen(bool full) -> void
             setWindowState(full ? Qt::WindowFullScreen
                                 : (d->prevWinState & ~minfull));
         }
-        d->view->setCursorVisible(!d->fullScreen);
+        d->setCursorVisible(!d->fullScreen);
         emit fullscreenChanged(d->fullScreen);
     }
     d->dontPause = false;

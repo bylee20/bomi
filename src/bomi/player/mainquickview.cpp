@@ -3,7 +3,6 @@
 #include "mainwindow.hpp"
 #include "quick/appobject.hpp"
 #include "quick/toplevelitem.hpp"
-#include "quick/globalqmlobject.hpp"
 
 struct MainQuickView::Data {
     MainWindow *main = nullptr;
@@ -19,12 +18,9 @@ MainQuickView::MainQuickView(MainWindow *main)
     main->installEventFilter(this);
     m_top = new TopLevelItem;
     AppObject::setTopLevelItem(m_top);
-    UtilObject::setMainWindow(d->main);
-    UtilObject::setQmlEngine(engine());
-    connect(this, &QQuickView::statusChanged, this, [this] (Status status) {
-       if (status == Ready)
-            m_top->setParentItem(contentItem());
-    });
+    AppObject::setQmlEngine(engine());
+    connect(this, &QQuickView::statusChanged, this, [=] (Status status)
+        { if (status == Ready) m_top->setParentItem(contentItem()); });
 }
 
 MainQuickView::~MainQuickView()
@@ -36,7 +32,6 @@ MainQuickView::~MainQuickView()
 auto MainQuickView::setSkin(const QString &name) -> bool
 {
     engine()->clearComponentCache();
-    rootContext()->setContextProperty(u"Util"_q, &UtilObject::get());
     Skin::apply(this, name);
     if (status() != QQuickView::Error)
         return true;
@@ -50,7 +45,6 @@ auto MainQuickView::setCursorVisible(bool visible) -> void
         unsetCursor();
     else if (!visible && cursor().shape() != Qt::BlankCursor)
         setCursor(Qt::BlankCursor);
-    UtilObject::setCursorVisible(cursor().shape() != Qt::BlankCursor);
 }
 
 auto MainQuickView::eventFilter(QObject *obj, QEvent *ev) -> bool
@@ -88,9 +82,10 @@ auto MainQuickView::eventFilter(QObject *obj, QEvent *ev) -> bool
 auto MainQuickView::mouseDoubleClickEvent(QMouseEvent *event) -> void
 {
     d->main->resetMoving();
-    UtilObject::resetFilterDoubleClick();
-    QQuickView::mouseDoubleClickEvent(event);
-    if (!UtilObject::isDoubleClickFiltered())
+    event->setAccepted(false);
+    if (AppObject::itemToAccept(AppObject::DoubleClickEvent, event->localPos()))
+        QQuickView::mouseDoubleClickEvent(event);
+    if (!event->isAccepted())
         d->main->onMouseDoubleClickEvent(event);
 }
 
@@ -131,7 +126,7 @@ auto MainQuickView::wheelEvent(QWheelEvent *event) -> void
 auto MainQuickView::keyPressEvent(QKeyEvent *event) -> void
 {
     event->setAccepted(false);
-    if (auto item = UtilObject::itemToAcceptKey())
+    if (auto item = AppObject::itemToAccept(AppObject::KeyEvent))
         sendEvent(item, event);
     if (!event->isAccepted())
         d->main->onKeyPressEvent(event);

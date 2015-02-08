@@ -207,7 +207,7 @@ auto MainWindow::Data::initItems() -> void
             p, [this] (int row) { openMrl(playlist.at(row)); });
 
     hider.setSingleShot(true);
-    connect(&hider, &QTimer::timeout, p, [this] () { view->setCursorVisible(false); });
+    connect(&hider, &QTimer::timeout, p, [this] () { setCursorVisible(false); });
 
     waiter.setInterval(500);
     waiter.setSingleShot(true);

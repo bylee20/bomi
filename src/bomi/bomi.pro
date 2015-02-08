@@ -94,7 +94,6 @@ HEADERS += \
 	quick/geometryitem.hpp \
 	quick/osdthemeobject.hpp \
 	quick/themeobject.hpp \
-	quick/globalqmlobject.hpp \
 	opengl/openglmisc.hpp \
 	opengl/openglvertex.hpp \
 	opengl/opengltexturebase.hpp \
@@ -288,7 +287,6 @@ SOURCES += \
 	quick/simplefboitem.cpp \
 	quick/osdthemeobject.cpp \
 	quick/themeobject.cpp \
-	quick/globalqmlobject.cpp \
 	opengl/openglmisc.cpp \
 	opengl/openglvertex.cpp \
 	opengl/opengltexturebase.cpp \

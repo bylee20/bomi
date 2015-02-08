@@ -134,8 +134,9 @@ struct MainWindow::Data {
     auto trigger(QAction *action) -> void;
     auto tryToAutoselectMode(const QVector<SubComp> &loaded,
                          const Mrl &mrl) -> QVector<int>;
-    auto cancelToHideCursor() -> void
-        { hider.stop(); view->setCursorVisible(true); }
+    auto setCursorVisible(bool visible) -> void
+        { view->setCursorVisible(visible); emit p->cursorChanged(view->cursor()); }
+    auto cancelToHideCursor() -> void { hider.stop(); setCursorVisible(true); }
     auto readyToHideCursor() -> void;
     auto initContextMenu() -> void;
     auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;

@@ -1,5 +1,5 @@
 #include "itemwrapper.hpp"
-#include "globalqmlobject.hpp"
+#include "appobject.hpp"
 
 static QHash<const QMetaObject*, QMap<QByteArray, QMetaProperty>> propertyHash;
 
@@ -9,7 +9,7 @@ QtItem::QtItem(const QByteArray &source, QQuickItem *parent)
     static QMap<QByteArray, QQmlComponent*> components;
     auto &component = components[source];
     if (!component) {
-        auto engine = UtilObject::qmlEngine();
+        auto engine = AppObject::qmlEngine();
         component = new QQmlComponent(engine, engine);
         component->setData(source, QUrl());
     }
