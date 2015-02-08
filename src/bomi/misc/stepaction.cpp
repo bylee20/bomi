@@ -8,9 +8,7 @@ StepAction::StepAction(ChangeValue t, QObject *parent)
 
 auto StepAction::toString(bool sign, int value) const -> QString
 {
-    if (m_textRate == 0.0)
-        return sign ? _NS(value) : _N(value);
-    return sign ? _NS(value*m_textRate) : _N(value*m_textRate);
+    return m_textRate ? _NS(value*m_textRate, sign) : _NS(value, sign);
 }
 
 auto StepAction::update() -> void

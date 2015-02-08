@@ -148,9 +148,8 @@ auto VideoColor::formatText(Type type) -> QString
 
 auto VideoColor::getText(Type type) const -> QString
 {
-    const auto value = 0 <= type && type < TypeMax ? _NS(m[type]) : QString();
     const auto format = formatText(type);
-    return value.isEmpty() ? format : format.arg(value);
+    return _InRange0(type, TypeMax) ? format.arg(_NS(m[type], true)) : format;
 }
 
 auto VideoColor::toString() const -> QString

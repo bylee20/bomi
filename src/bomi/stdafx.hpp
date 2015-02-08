@@ -120,8 +120,8 @@ SCIA _T(const Args&... args) -> T<Args...>
 SIA _L(const char *str) -> QLatin1String
 { return QLatin1String(str); }
 
-SIA _N(int n, int base, int width, const QChar &c = ' '_q) -> QString
-{ return u"%1"_q.arg(n, width, base, c); }
+SIA _L(const QByteArray &b) -> QString
+{ return QString::fromLatin1(b); }
 
 SIA _N(int n, int base = 10) -> QString
 { return QString::number(n, base); }
@@ -135,8 +135,10 @@ SIA _N(quint64 n, int base = 10) -> QString
 SIA _N(double n, int dec = 1) -> QString
 { return QString::number(n, 'f', dec); }
 
-SIA _N(double n, int dec, int width,
-                      const QChar &c = QChar(QChar::Nbsp)) -> QString
+SIA _N(int n, int base, int width, const QChar &c = ' '_q) -> QString
+{ return u"%1"_q.arg(n, width, base, c); }
+
+SIA _N(double n, int dec, int width, const QChar &c = ' '_q) -> QString
 { return u"%1"_q.arg(n, width, 'f', dec, c); }
 
 template<class Conv, class Container>
@@ -147,11 +149,11 @@ SIA _ToStringList(const Container &c, Conv f) -> QStringList
 template<class N>
 SIA _SignSymbol(N n) -> QChar { return n < 0 ? '-'_q : n > 0 ? '+'_q : u'±'_q; }
 
-SIA _NS(int n) -> QString
-{ return _SignSymbol(n) % _N(qAbs(n)); }
+SIA _NS(int n, bool sign, int base = 10) -> QString
+{ return sign ? (_SignSymbol(n) % _N(qAbs(n), base)) : _N(n, base); }
 
-SIA _NS(double n, int dec = 1) -> QString
-{ return _SignSymbol(n) % _N(qAbs(n), dec); }
+SIA _NS(double n, bool sign, int dec = 1) -> QString
+{ return sign ? (_SignSymbol(n) % _N(qAbs(n), dec)) : _N(n, dec); }
 
 template<class T>
 SCIA _InRange(const T &min, const T &val, const T &max) -> bool
