@@ -171,33 +171,19 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
                            d->iface->interface());
             }
             if (d->xss) {
-                auto get = _MakeShared(xcb_get_screen_saver_reply(
-                    d->connection, xcb_get_screen_saver_unchecked(d->connection), nullptr), free);
-                if (get->timeout)
-                    xcb_set_screen_saver(d->connection, 0, get->interval,
-                                         get->prefer_blanking, get->allow_exposures);
                 _Debug("Disable screensaver with xcb_force_screen_saver().");
                 d->xssTimer.start();
             }
         }
-    } else {
-        if (d->iface) {
-            auto response = d->iface->call(d->gnome ? u"Uninhibit"_q
-                                                    : u"UnInhibit"_q,
-                                           d->reply.value());
-            if (response.type() == QDBusMessage::ErrorMessage)
-                _Error("DBus '%%' error: [%%] %%", d->iface->interface(),
-                       response.errorName(), response.errorMessage());
-            else
-                _Debug("Enable screensaver with '%%'.", d->iface->interface());
-        }
-        if (d->xss) {
-            auto get = _MakeShared(xcb_get_screen_saver_reply(
-                d->connection, xcb_get_screen_saver_unchecked(d->connection), nullptr), free);
-            if (!get->timeout)
-                xcb_set_screen_saver(d->connection, -1, get->interval,
-                                     get->prefer_blanking, get->allow_exposures);
-        }
+    } else if (d->iface) {
+        auto response = d->iface->call(d->gnome ? u"Uninhibit"_q
+                                                : u"UnInhibit"_q,
+                                       d->reply.value());
+        if (response.type() == QDBusMessage::ErrorMessage)
+            _Error("DBus '%%' error: [%%] %%", d->iface->interface(),
+                   response.errorName(), response.errorMessage());
+        else
+            _Debug("Enable screensaver with '%%'.", d->iface->interface());
     }
     d->inhibit = disabled;
 }
