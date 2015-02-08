@@ -42,6 +42,10 @@ auto MainWindow::Data::restoreState() -> void
     pl[u"repeat"_q]->setChecked(as.playlist_repeat);
     tool[u"auto-exit"_q]->setChecked(as.auto_exit);
 
+    as.state.set_video_tracks(StreamList(StreamVideo));
+    as.state.set_audio_tracks(StreamList(StreamAudio));
+    as.state.set_sub_tracks(StreamList(StreamSubtitle));
+    as.state.set_sub_tracks_inclusive(StreamList(StreamInclusiveSubtitle));
     e.restore(&as.state);
 }
 
