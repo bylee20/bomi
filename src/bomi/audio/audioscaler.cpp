@@ -53,6 +53,8 @@ auto AudioScaler::setFormat(const AudioBufferFormat &format) -> void
 
     expand(m_buf_pre_corr, m_overlap.frames);
     expand(m_queue, m_frames_search + m_overlap.frames + m_frames_stride);
+
+    reset();
 }
 
 auto AudioScaler::passthrough(const AudioBufferPtr &in) const -> bool

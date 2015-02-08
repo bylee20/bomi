@@ -207,10 +207,8 @@ auto AudioController::reinitialize(mp_audio *from) -> int
     d->fmt_to = (af_format)to->format;
     d->dirty = 0xffffffff;
 
-    for (auto filter : d->chain) {
+    for (auto filter : d->chain)
         filter->setPool(d->af->out_pool);
-        filter->reset();
-    }
     return true;
 }
 
