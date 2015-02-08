@@ -115,7 +115,7 @@ Developer&apos;s E-mail: %4</source>
         <translation>Zapnout volby pro ladění.</translation>
     </message>
     <message>
-        <location filename="../player/app.hpp" line="45"/>
+        <location filename="../player/app.hpp" line="46"/>
         <source>bomi</source>
         <translation type="unfinished">bomi</translation>
     </message>
@@ -498,77 +498,83 @@ Klepnutí pravým tlačítkem myši: %2</translation>
 <context>
     <name>DeintWidget</name>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="48"/>
-        <location filename="../widget/deintwidget.cpp" line="147"/>
+        <location filename="../widget/deintwidget.cpp" line="53"/>
         <source>Double framerate</source>
         <translation>Dvojnásobná rychlost snímkování</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="49"/>
-        <location filename="../widget/deintwidget.cpp" line="151"/>
         <source>Use OpenGL</source>
-        <translation>Použít OpenGL</translation>
+        <translation type="vanished">Použít OpenGL</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="50"/>
-        <location filename="../widget/deintwidget.cpp" line="154"/>
         <source>Use hardware acceleration if available</source>
-        <translation>Použít hardwarové zrychlení, je-li dostupné</translation>
+        <translation type="vanished">Použít hardwarové zrychlení, je-li dostupné</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="52"/>
         <source>Method</source>
-        <translation>Metoda</translation>
+        <translation type="vanished">Metoda</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="133"/>
         <source>Methods</source>
-        <translation>Metody</translation>
+        <translation type="vanished">Metody</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="135"/>
+        <location filename="../widget/deintwidget.cpp" line="40"/>
         <source>Display each line twice.</source>
         <translation>Zobrazit každý řádek dvakrát.</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="137"/>
+        <location filename="../widget/deintwidget.cpp" line="42"/>
         <source>Bob with linear interpolation.</source>
         <translation>Přistřihnout pomocí lineární interpolace.</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="139"/>
+        <location filename="../widget/deintwidget.cpp" line="44"/>
         <source>Bob with cubic interpolation.</source>
         <translation>Přistřihnout pomocí kubické interpolace.</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="141"/>
+        <location filename="../widget/deintwidget.cpp" line="46"/>
         <source>Blend linearly each line with (1 2 1) filter.</source>
         <translation>Smíchat lineárně každý řádek pomocí filtru (1 2 1).</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="143"/>
+        <location filename="../widget/deintwidget.cpp" line="48"/>
         <source>Apply median filter to every second line.</source>
         <translation>Použít středový filtr na každý druhý řádek.</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="145"/>
+        <location filename="../widget/deintwidget.cpp" line="50"/>
         <source>Use complicated temporal and spatial interpolation.</source>
         <translation>Použít složitou časovou a prostorovou interpolaci.</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="148"/>
+        <location filename="../widget/deintwidget.cpp" line="55"/>
+        <source>This option makes the framerate doubled and motions smoother.
+This requires much more CPU or GPU usage.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../widget/deintwidget.cpp" line="94"/>
+        <source>For S/W decoding</source>
+        <translation type="unfinished">Pro S/W dekódování</translation>
+    </message>
+    <message>
+        <location filename="../widget/deintwidget.cpp" line="95"/>
+        <source>For H/W decoding</source>
+        <translation type="unfinished">Pro H/W dekódování</translation>
+    </message>
+    <message>
         <source>This option makes the framerate doubled. You can get smoother and fluid motions but it requires more CPU or GPU usage.</source>
-        <translation>Tato volba zdvojnásobí rychlost snímkování. Lze tak dostat jemnější a plynulé pohyby, ale je potřeba více vytížení procesoru a grafického procesoru.</translation>
+        <translation type="vanished">Tato volba zdvojnásobí rychlost snímkování. Lze tak dostat jemnější a plynulé pohyby, ale je potřeba více vytížení procesoru a grafického procesoru.</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="152"/>
         <source>In most case, deinterlacing with OpenGL can be performed faster unless your graphics driver has poor support of OpenGL.</source>
-        <translation>Ve většině případů lze prokládání s OpenGL provést rychleji, pokud váš grafický ovladač zrovna nemá bídnou podporu pro OpenGL.</translation>
+        <translation type="vanished">Ve většině případů lze prokládání s OpenGL provést rychleji, pokud váš grafický ovladač zrovna nemá bídnou podporu pro OpenGL.</translation>
     </message>
     <message>
-        <location filename="../widget/deintwidget.cpp" line="155"/>
         <source>Some methods can be accelerated with GPU by turning on this option if your hardware supports VA-API well.</source>
-        <translation>Některé metody lze pomocí GPU zapnutím této volby zrychlit, pokud vaše technické vybavení VA-API podporuje dobře.</translation>
+        <translation type="vanished">Některé metody lze pomocí GPU zapnutím této volby zrychlit, pokud vaše technické vybavení VA-API podporuje dobře.</translation>
     </message>
 </context>
 <context>
@@ -1567,8 +1573,8 @@ Klepnutí pravým tlačítkem myši: %2</translation>
     <name>MainWindow</name>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="153"/>
-        <location filename="../player/mainwindow_m.cpp" line="528"/>
-        <location filename="../player/mainwindow_m.cpp" line="543"/>
+        <location filename="../player/mainwindow_m.cpp" line="529"/>
+        <location filename="../player/mainwindow_m.cpp" line="544"/>
         <source>Open File</source>
         <translation>Otevřít soubor</translation>
     </message>
@@ -1581,7 +1587,7 @@ Klepnutí pravým tlačítkem myši: %2</translation>
         <translation type="vanished">Soubory s titulky</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="509"/>
+        <location filename="../player/mainwindow_m.cpp" line="510"/>
         <source>Open Subtitle</source>
         <translation>Otevřít titulky</translation>
     </message>
@@ -1605,7 +1611,7 @@ Stopped Position: %2</source>
 Poloha zastavení: %2</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="163"/>
+        <location filename="../player/mainwindow_p.cpp" line="164"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>Chyba!
@@ -1623,27 +1629,27 @@ Počkejte chvíli, prosím.</translation>
         <translation>s</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="500"/>
+        <location filename="../player/mainwindow_m.cpp" line="501"/>
         <source>Select All Subtitles</source>
         <translation>Vybrat všechny titulky</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="499"/>
+        <location filename="../player/mainwindow_m.cpp" line="500"/>
         <source>%1 Subtitle(s)</source>
         <translation>%1 titulky</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="664"/>
+        <location filename="../player/mainwindow_m.cpp" line="665"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>Automatické vypnutí je zrušeno.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="391"/>
+        <location filename="../player/mainwindow.cpp" line="396"/>
         <source>bomi will be running in the system tray when the window closed.</source>
         <translation>bomi poběží, když bude okno zavřeno, dále v oznamovací oblasti panelu.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="394"/>
+        <location filename="../player/mainwindow.cpp" line="399"/>
         <source>You can change this behavior in the preferences. If you want to exit bomi, please use &apos;Exit&apos; menu.</source>
         <translation>Toto chování můžete změnit v nastavení. Pokud chcete bomi ukončit, použijte, prosím, nabídku Ukončit.</translation>
     </message>
@@ -1669,17 +1675,17 @@ Poloha zastavení: %2</translation>
         <translation type="vanished">Pokračovat v přehrávání</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="166"/>
+        <location filename="../player/mainwindow_p.cpp" line="167"/>
         <source>Pause</source>
         <translation>Pozastavit</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="166"/>
+        <location filename="../player/mainwindow_p.cpp" line="167"/>
         <source>Play</source>
         <translation>Přehrát</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="220"/>
+        <location filename="../player/mainwindow_p.cpp" line="221"/>
         <source>%1 ...
 Please wait for a while.</source>
         <translation type="unfinished"></translation>
@@ -1730,7 +1736,7 @@ Please wait for a while.</source>
         <translation type="vanished">Vybrané titulky</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="390"/>
+        <location filename="../player/mainwindow.cpp" line="395"/>
         <source>System Tray Icon</source>
         <translation>Ikona v oznamovací oblasti panelu</translation>
     </message>
@@ -1740,7 +1746,7 @@ Please wait for a while.</source>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="350"/>
-        <location filename="../player/mainwindow_m.cpp" line="535"/>
+        <location filename="../player/mainwindow_m.cpp" line="536"/>
         <source>Save File</source>
         <translation>Uložit soubor</translation>
     </message>
@@ -1755,75 +1761,75 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="444"/>
-        <location filename="../player/mainwindow_m.cpp" line="446"/>
+        <location filename="../player/mainwindow_m.cpp" line="445"/>
+        <location filename="../player/mainwindow_m.cpp" line="447"/>
         <source>Reset</source>
         <translation type="unfinished">Nastavit znovu</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="444"/>
+        <location filename="../player/mainwindow_m.cpp" line="445"/>
         <source>Restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="449"/>
+        <location filename="../player/mainwindow_m.cpp" line="450"/>
         <source>Selected Video Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="472"/>
+        <location filename="../player/mainwindow_m.cpp" line="473"/>
         <source>Selected Audio Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="476"/>
+        <location filename="../player/mainwindow_m.cpp" line="477"/>
         <source>Open Audio File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="487"/>
-        <location filename="../player/mainwindow_m.cpp" line="489"/>
+        <location filename="../player/mainwindow_m.cpp" line="488"/>
+        <location filename="../player/mainwindow_m.cpp" line="490"/>
         <source>Selected Subtitle Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="580"/>
+        <location filename="../player/mainwindow_m.cpp" line="581"/>
         <source>Shuffle Playlist</source>
         <translation>Zamíchat seznam skladeb</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="591"/>
+        <location filename="../player/mainwindow_m.cpp" line="592"/>
         <source>Repeat Playlist</source>
         <translation>Opakovat seznam skladeb</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="636"/>
+        <location filename="../player/mainwindow_m.cpp" line="637"/>
         <source>Downloaded</source>
         <translation>Staženo</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="648"/>
+        <location filename="../player/mainwindow_m.cpp" line="649"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>Ukončit bomi po dokončení seznamu skladeb.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="649"/>
+        <location filename="../player/mainwindow_m.cpp" line="650"/>
         <source>Auto-exit is canceled.</source>
         <translation>Automatické ukončení je zrušeno.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="655"/>
+        <location filename="../player/mainwindow_m.cpp" line="656"/>
         <source>Auto-shutdown</source>
         <translation>Automatické vypnutí</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="656"/>
-        <location filename="../player/mainwindow_m.cpp" line="661"/>
+        <location filename="../player/mainwindow_m.cpp" line="657"/>
+        <location filename="../player/mainwindow_m.cpp" line="662"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>Systém bude vypnut po dokončení seznamu skladeb.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="705"/>
+        <location filename="../player/mainwindow_m.cpp" line="706"/>
         <source>Current Title/Edition</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1840,7 +1846,7 @@ Please wait for a while.</source>
         <translation type="vanished">Nynější titul DVD</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="706"/>
+        <location filename="../player/mainwindow_m.cpp" line="707"/>
         <source>Current Chapter</source>
         <translation>Nynější kapitola</translation>
     </message>
@@ -1879,7 +1885,7 @@ Please wait for a while.</source>
         <translation type="vanished">bomi poběží po zavření okna v oznamovací oblasti panelu.&lt;br&gt;Toto chování lze změnit v nastavení.&lt;br&gt;Pokud chcete bomi ukončit, použijte položku nabídky Ukončit.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="397"/>
+        <location filename="../player/mainwindow.cpp" line="402"/>
         <source>Do not display this message again</source>
         <translation>Tuto zprávu znovu nezobrazovat</translation>
     </message>
@@ -1895,14 +1901,32 @@ Please wait for a while.</source>
     </message>
 </context>
 <context>
+    <name>MotionIntrplOptionWidget</name>
+    <message>
+        <location filename="../video/motionintrploption.cpp" line="34"/>
+        <source>Sync to refresh rate of monitor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../video/motionintrploption.cpp" line="42"/>
+        <source>Target framerate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../video/motionintrploption.cpp" line="91"/>
+        <source>detected: %1Hz</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Mrl</name>
     <message>
-        <location filename="../player/mrl.cpp" line="51"/>
+        <location filename="../player/mrl.cpp" line="52"/>
         <source>DVD</source>
         <translation>DVD</translation>
     </message>
     <message>
-        <location filename="../player/mrl.cpp" line="53"/>
+        <location filename="../player/mrl.cpp" line="54"/>
         <source>Blu-ray</source>
         <translation>Blu-ray</translation>
     </message>
@@ -1986,41 +2010,46 @@ Please wait for a while.</source>
     </message>
     <message>
         <location filename="../player/mrlstate.hpp" line="89"/>
+        <source>Video Motion Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/mrlstate.hpp" line="90"/>
         <source>Video Effects</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="92"/>
+        <location filename="../player/mrlstate.hpp" line="93"/>
         <source>Audio Volume</source>
         <translation>Hlasitost zvuku</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="93"/>
+        <location filename="../player/mrlstate.hpp" line="94"/>
         <source>Audio Amp</source>
         <translation>Zesílení zvuku</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="94"/>
+        <location filename="../player/mrlstate.hpp" line="95"/>
         <source>Audio Equalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="95"/>
+        <location filename="../player/mrlstate.hpp" line="96"/>
         <source>Audio Sync</source>
         <translation>Seřízení zvuku</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="96"/>
+        <location filename="../player/mrlstate.hpp" line="97"/>
         <source>Audio Tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="106"/>
+        <location filename="../player/mrlstate.hpp" line="107"/>
         <source>Subtitle Tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="108"/>
+        <location filename="../player/mrlstate.hpp" line="109"/>
         <source>Subtitle Hiding</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2029,22 +2058,22 @@ Please wait for a while.</source>
         <translation type="vanished">Zvuková stopa</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="97"/>
+        <location filename="../player/mrlstate.hpp" line="98"/>
         <source>Audio Mute</source>
         <translation>Ztlumení zvuku</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="98"/>
+        <location filename="../player/mrlstate.hpp" line="99"/>
         <source>Audio Volume Normalizer</source>
         <translation>Normalizace hlasitosti zvuku</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="99"/>
+        <location filename="../player/mrlstate.hpp" line="100"/>
         <source>Audio Tempo Scaler</source>
         <translation>Měnič rytmu zvuku</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="100"/>
+        <location filename="../player/mrlstate.hpp" line="101"/>
         <source>Audio Channel Layout</source>
         <translation>Rozvržení zvukových kanálů</translation>
     </message>
@@ -2053,22 +2082,22 @@ Please wait for a while.</source>
         <translation type="vanished">Stopa titulků</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="102"/>
+        <location filename="../player/mrlstate.hpp" line="103"/>
         <source>Subtitle Alignment</source>
         <translation>Zarovnání titulků</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="103"/>
+        <location filename="../player/mrlstate.hpp" line="104"/>
         <source>Subtitle Display</source>
         <translation>Zobrazení titulků</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="104"/>
+        <location filename="../player/mrlstate.hpp" line="105"/>
         <source>Subtitle Position</source>
         <translation>Poloha titulků</translation>
     </message>
     <message>
-        <location filename="../player/mrlstate.hpp" line="105"/>
+        <location filename="../player/mrlstate.hpp" line="106"/>
         <source>Subtitle Sync</source>
         <translation>Seřízení titulků</translation>
     </message>
@@ -2398,17 +2427,17 @@ Please wait for a while.</source>
         <translation type="vanished">Titulek %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="174"/>
+        <location filename="../player/playengine_p.cpp" line="179"/>
         <source>File</source>
         <translation>Soubor</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="178"/>
+        <location filename="../player/playengine_p.cpp" line="183"/>
         <source>Blu-ray</source>
         <translation>Blu-ray</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="536"/>
+        <location filename="../player/playengine_p.cpp" line="545"/>
         <source>Edition %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2425,17 +2454,17 @@ Please wait for a while.</source>
         <translation type="vanished">Nedostupné</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="536"/>
+        <location filename="../player/playengine_p.cpp" line="545"/>
         <source>Title %1</source>
         <translation>Titul %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="953"/>
+        <location filename="../player/playengine.cpp" line="976"/>
         <source>Playing</source>
         <translation>Přehrává se</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="951"/>
+        <location filename="../player/playengine.cpp" line="974"/>
         <source>Stopped</source>
         <translation>Zastaveno</translation>
     </message>
@@ -2444,32 +2473,32 @@ Please wait for a while.</source>
         <translation type="vanished">Dokončeno</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="935"/>
+        <location filename="../player/playengine.cpp" line="958"/>
         <source>Loading</source>
         <translation>Nahrává se</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="937"/>
+        <location filename="../player/playengine.cpp" line="960"/>
         <source>Searching</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="939"/>
+        <location filename="../player/playengine.cpp" line="962"/>
         <source>Buffering</source>
         <translation>Ukládá se do vyrovnávací paměti</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="941"/>
+        <location filename="../player/playengine.cpp" line="964"/>
         <source>Seeking</source>
         <translation type="unfinished">Posunutí</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="957"/>
+        <location filename="../player/playengine.cpp" line="980"/>
         <source>Error</source>
         <translation>Chyba</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="955"/>
+        <location filename="../player/playengine.cpp" line="978"/>
         <source>Paused</source>
         <translation>Pozastaveno</translation>
     </message>
@@ -2497,12 +2526,12 @@ Please wait for a while.</source>
         <translation type="vanished">Rychlost přehrávání: ×%1</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="42"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="30"/>
         <source>State: %2/%3(%4%) ×%5 [%1]</source>
         <translation>Stav: %2/%3(%4%) ×%5 [%1]</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="57"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="45"/>
         <source>CPU Usage: %1%(avg. %2%/core)</source>
         <translation>Využití procesoru: %1%(prům. %2%/core)</translation>
     </message>
@@ -2515,66 +2544,66 @@ Please wait for a while.</source>
         <translation type="obsolete">Kodek videa: %1[%2]</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="62"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="50"/>
         <source>RAM Usage: %3MiB(%4% of %5GiB)</source>
         <translation>Využití RAM: %3 MiB (%4% z %5 GiB)</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="72"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="60"/>
         <source>%1KiB(%3% of %2KiB)</source>
         <translation>%1 KiB (%3% z %2 KiB)</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="78"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="66"/>
         <source>Video Track</source>
         <translation>Obrazová stopa</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="79"/>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="113"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="67"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="101"/>
         <source>Input   </source>
         <translation>Vstup</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="80"/>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="114"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="68"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="102"/>
         <source>Output  </source>
         <translation>Výstup</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="81"/>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="115"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="69"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="103"/>
         <source>Renderer</source>
         <translation>Kreslič</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="93"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="81"/>
         <source>Dropped Frames: %1 (%2fps)</source>
         <translation>Zahozené snímky: %1 (%2 snímků za sekundu)</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="96"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="84"/>
         <source>Delayed Frames: %1 (%2ms)</source>
         <translation>Zpožděné snímky: %1 (%2 snímků za sekundu)</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="87"/>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="119"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="75"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="107"/>
         <source>Activated</source>
         <translation>Zapnuto</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="101"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="89"/>
         <source>Hardware Acceleration: %1[%2]</source>
         <translation>Hardwarové zrychlení: %1 [%2]</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="107"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="95"/>
         <source>Deinterlacer: %3</source>
         <translation>Odstranění prokládání: %3</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="112"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="100"/>
         <source>Audio Track</source>
         <translation>Zvuková stopa</translation>
     </message>
@@ -2583,7 +2612,7 @@ Please wait for a while.</source>
         <translation type="vanished">Soubory s titulky</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="129"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="117"/>
         <source>Subtitle Track</source>
         <translation>Stopa titulků</translation>
     </message>
@@ -2592,12 +2621,12 @@ Please wait for a while.</source>
         <translation type="obsolete">Kodek zvuku: %1[%2]</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="118"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="106"/>
         <source>Normalizer: %1[%2%]</source>
         <translation>Normalizace: %1 [%2%]</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="123"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="111"/>
         <source>Driver: %1[%2]</source>
         <translation>Ovladač: %1 [%2]</translation>
     </message>
@@ -2618,8 +2647,8 @@ Please wait for a while.</source>
         <translation type="vanished">Normalizace hlasitosti: %1</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="86"/>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="119"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="74"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="107"/>
         <source>Deactivated</source>
         <translation>Vypnuto</translation>
     </message>
@@ -2632,18 +2661,18 @@ Please wait for a while.</source>
         <translation type="vanished">Výstup: %1 %2 kb/s %3 kHz %4 %5 b/s</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="70"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="58"/>
         <source>Cache: %1</source>
         <translation>Vyrovnávací paměť: %1</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="71"/>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="85"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="59"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="73"/>
         <source>Unavailable</source>
         <translation>Nedostupný</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="49"/>
+        <location filename="../imports/bomi/PlayInfoView.qml" line="37"/>
         <source>Audio/Video Sync: %1%2ms</source>
         <translation>Seřízení zvuku/obrazu: %1%2 ms</translation>
     </message>
@@ -2709,7 +2738,7 @@ Please wait for a while.</source>
 <context>
     <name>Pref</name>
     <message>
-        <location filename="../player/pref.cpp" line="291"/>
+        <location filename="../player/pref.cpp" line="292"/>
         <source>70</source>
         <comment>This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. Higher value means that auto-detection will be applied only if the result is more reliable.</comment>
         <translation>70</translation>
@@ -2718,7 +2747,7 @@ Please wait for a while.</source>
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="343"/>
+        <location filename="../dialog/prefdialog.cpp" line="279"/>
         <source>Preferences</source>
         <translation>Nastavení</translation>
     </message>
@@ -2753,17 +2782,17 @@ Please wait for a while.</source>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="176"/>
-        <location filename="../ui/prefdialog.ui" line="2025"/>
-        <location filename="../ui/prefdialog.ui" line="2368"/>
-        <location filename="../ui/prefdialog.ui" line="2391"/>
-        <location filename="../ui/prefdialog.ui" line="2414"/>
-        <location filename="../ui/prefdialog.ui" line="2498"/>
-        <location filename="../ui/prefdialog.ui" line="2586"/>
+        <location filename="../ui/prefdialog.ui" line="2013"/>
+        <location filename="../ui/prefdialog.ui" line="2356"/>
+        <location filename="../ui/prefdialog.ui" line="2379"/>
+        <location filename="../ui/prefdialog.ui" line="2402"/>
+        <location filename="../ui/prefdialog.ui" line="2486"/>
+        <location filename="../ui/prefdialog.ui" line="2574"/>
         <source>sec</source>
         <translation>s</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1964"/>
+        <location filename="../ui/prefdialog.ui" line="1952"/>
         <source>Disable screensaver while playing</source>
         <translation>Zakázat spořič obrazovky při přehrávání</translation>
     </message>
@@ -2777,7 +2806,7 @@ Please wait for a while.</source>
         <translation type="vanished">Trvání</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1655"/>
+        <location filename="../ui/prefdialog.ui" line="1643"/>
         <source>Volume Normalizer</source>
         <translation>Normalizace hlasitosti</translation>
     </message>
@@ -2840,33 +2869,33 @@ Please wait for a while.</source>
         <translation>Skrýt ukazovátko myši po překročení času:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2047"/>
+        <location filename="../ui/prefdialog.ui" line="2035"/>
         <source>Run only single bomi application at the same time</source>
         <translation>Spustit současně jen jednu instanci programu bomi</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2061"/>
+        <location filename="../ui/prefdialog.ui" line="2049"/>
         <source>Use Lion-style fullscreen mode</source>
         <translation>Použít režim zobrazení na celou obrazovku ve lvím stylu</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="124"/>
+        <location filename="../dialog/prefdialog.cpp" line="111"/>
         <source>Language</source>
         <translation>Jazyk</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2209"/>
-        <location filename="../ui/prefdialog.ui" line="2285"/>
+        <location filename="../ui/prefdialog.ui" line="2197"/>
+        <location filename="../ui/prefdialog.ui" line="2273"/>
         <source>You may need to restart bomi to apply the changes </source>
         <translation>Aby se změny projevily, je možné, že bude potřeba bomi spustit znovu </translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2200"/>
+        <location filename="../ui/prefdialog.ui" line="2188"/>
         <source>Window style</source>
         <translation>Styl okna</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2136"/>
+        <location filename="../ui/prefdialog.ui" line="2124"/>
         <source>Background Image</source>
         <translation>Obrázek na pozadí</translation>
     </message>
@@ -2875,24 +2904,24 @@ Please wait for a while.</source>
         <translation type="vanished">Barva výplně:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1932"/>
+        <location filename="../ui/prefdialog.ui" line="1920"/>
         <source>System tray</source>
         <translation>Oznamovací oblast panelu</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1938"/>
+        <location filename="../ui/prefdialog.ui" line="1926"/>
         <source>Show system tray icon</source>
         <translation>Ukázat ikonu v oznamovací oblasti panelu</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1948"/>
+        <location filename="../ui/prefdialog.ui" line="1936"/>
         <source>Hide the window rather than quit when closed </source>
         <translation>Skrýt při zavření okno, spíše než ukončit program</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="739"/>
-        <location filename="../ui/prefdialog.ui" line="2465"/>
-        <location filename="../dialog/prefdialog.cpp" line="141"/>
+        <location filename="../ui/prefdialog.ui" line="2453"/>
+        <location filename="../dialog/prefdialog.cpp" line="127"/>
         <source>Subtitle</source>
         <translation>Titulky</translation>
     </message>
@@ -2925,9 +2954,9 @@ Please wait for a while.</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="585"/>
         <location filename="../ui/prefdialog.ui" line="755"/>
-        <location filename="../ui/prefdialog.ui" line="1811"/>
-        <location filename="../dialog/prefdialog.cpp" line="139"/>
-        <location filename="../dialog/prefdialog.cpp" line="142"/>
+        <location filename="../ui/prefdialog.ui" line="1799"/>
+        <location filename="../dialog/prefdialog.cpp" line="125"/>
+        <location filename="../dialog/prefdialog.cpp" line="128"/>
         <source>Load</source>
         <translation>Nahrát</translation>
     </message>
@@ -2937,7 +2966,7 @@ Please wait for a while.</source>
         <translation>Uložit a obnovit stav podle přehrávání média</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2269"/>
+        <location filename="../ui/prefdialog.ui" line="2257"/>
         <source>Locale</source>
         <translation>Jazyk</translation>
     </message>
@@ -3063,7 +3092,7 @@ Please wait for a while.</source>
         <translation type="vanished">Čas zobrazení jednoho znaku</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1734"/>
+        <location filename="../ui/prefdialog.ui" line="1722"/>
         <source>When display time is not specifid in subtitle, caculate interval wih this value.</source>
         <translation>Když není v titulku stanoven čas zobrazení, spočítat interval za použití této hodnoty.</translation>
     </message>
@@ -3072,17 +3101,15 @@ Please wait for a while.</source>
         <translation type="vanished">ms</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="191"/>
         <source>For S/W decoding</source>
-        <translation>Pro S/W dekódování</translation>
+        <translation type="vanished">Pro S/W dekódování</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="192"/>
         <source>For H/W decoding</source>
-        <translation>Pro H/W dekódování</translation>
+        <translation type="vanished">Pro H/W dekódování</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1684"/>
+        <location filename="../ui/prefdialog.ui" line="1672"/>
         <source>Use hardware-accelerated decoding</source>
         <translation>Použít hardwarově zrychlené dekódování</translation>
     </message>
@@ -3099,12 +3126,12 @@ Please wait for a while.</source>
         <translation type="vanished">Nový odstavec</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1794"/>
+        <location filename="../ui/prefdialog.ui" line="1782"/>
         <source>Preset</source>
         <translation>Přednastavení</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1849"/>
+        <location filename="../ui/prefdialog.ui" line="1837"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
@@ -3121,7 +3148,7 @@ Please wait for a while.</source>
         <translation type="vanished">Ukázat při změně velikosti okna zprávu na obrazovce (OSD)</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2553"/>
+        <location filename="../ui/prefdialog.ui" line="2541"/>
         <source>Amplifier</source>
         <translation>Zesilovač</translation>
     </message>
@@ -3130,7 +3157,7 @@ Please wait for a while.</source>
         <translation type="vanished">Písmo</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2605"/>
+        <location filename="../ui/prefdialog.ui" line="2593"/>
         <source>Color</source>
         <translation>Barva</translation>
     </message>
@@ -3222,31 +3249,31 @@ Není-li zadáno, budou zobrazeny ve vybraném pořadí.
 Např.: English, Korean</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1824"/>
+        <location filename="../ui/prefdialog.ui" line="1812"/>
         <source>Menu</source>
         <translation>Nabídka</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1829"/>
-        <location filename="../ui/prefdialog.ui" line="1871"/>
+        <location filename="../ui/prefdialog.ui" line="1817"/>
+        <location filename="../ui/prefdialog.ui" line="1859"/>
         <source>Shortcut1</source>
         <translation>Klávesová zkratka 1</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1834"/>
-        <location filename="../ui/prefdialog.ui" line="1887"/>
+        <location filename="../ui/prefdialog.ui" line="1822"/>
+        <location filename="../ui/prefdialog.ui" line="1875"/>
         <source>Shortcut2</source>
         <translation>Klávesová zkratka 2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1839"/>
-        <location filename="../ui/prefdialog.ui" line="1903"/>
+        <location filename="../ui/prefdialog.ui" line="1827"/>
+        <location filename="../ui/prefdialog.ui" line="1891"/>
         <source>Shortcut3</source>
         <translation>Klávesová zkratka 3</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1844"/>
-        <location filename="../ui/prefdialog.ui" line="1919"/>
+        <location filename="../ui/prefdialog.ui" line="1832"/>
+        <location filename="../ui/prefdialog.ui" line="1907"/>
         <source>Shortcut4</source>
         <translation>Klávesová zkratka 4</translation>
     </message>
@@ -3344,47 +3371,57 @@ Např.: English, Korean</translation>
         <translation>Automaticky zjistit kódování, když je přesnost nad</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1721"/>
+        <location filename="../ui/prefdialog.ui" line="1612"/>
+        <source>Deinterlacing</source>
+        <translation type="unfinished">Odstranění prokládání</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1619"/>
+        <source>Motion Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1709"/>
         <source>Display Time</source>
         <translation>Zobrazení času</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1727"/>
+        <location filename="../ui/prefdialog.ui" line="1715"/>
         <source>Calculate display time when not specified</source>
         <translation>Spočítat čas zobrazení, když není stanoven</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1740"/>
+        <location filename="../ui/prefdialog.ui" line="1728"/>
         <source>msec/character</source>
         <translation>ms/znak</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1958"/>
+        <location filename="../ui/prefdialog.ui" line="1946"/>
         <source>Screensaver</source>
         <translation>Spořič obrazovky</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1974"/>
+        <location filename="../ui/prefdialog.ui" line="1962"/>
         <source>Use external command</source>
         <translation>Použít vnější příkaz</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2018"/>
+        <location filename="../ui/prefdialog.ui" line="2006"/>
         <source>Interval</source>
         <translation>Interval</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2054"/>
+        <location filename="../ui/prefdialog.ui" line="2042"/>
         <source>Resize to video resolution in windowed-mode when video is changed</source>
         <translation>Změnit velikost rozlišení obrazu v okenním režimu, když je obrazový záznam změněn</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2068"/>
+        <location filename="../ui/prefdialog.ui" line="2056"/>
         <source>Use D-Bus interface for MPRISv2</source>
         <translation>Použít rozhraní D-Bus pro MPRISv2</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="143"/>
+        <location filename="../dialog/prefdialog.cpp" line="129"/>
         <source>Display</source>
         <translation>Zobrazit</translation>
     </message>
@@ -3397,91 +3434,91 @@ Např.: English, Korean</translation>
         <translation type="vanished">Ukázat umístění souboru v seznamu skladeb</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2142"/>
+        <location filename="../ui/prefdialog.ui" line="2130"/>
         <source>Show default C&amp;MPlayer logo</source>
         <translation>Ukázat výchozí symbol pro C&amp;MPlayer</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2151"/>
+        <location filename="../ui/prefdialog.ui" line="2139"/>
         <source>Fi&amp;ll color:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2186"/>
+        <location filename="../ui/prefdialog.ui" line="2174"/>
         <source>Playlist View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2193"/>
+        <location filename="../ui/prefdialog.ui" line="2181"/>
         <source>History View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2245"/>
+        <location filename="../ui/prefdialog.ui" line="2233"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation>Obrátit směr posunování obrazu pomocí kolečka myši</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2295"/>
+        <location filename="../ui/prefdialog.ui" line="2283"/>
         <source>Audio Priority</source>
         <translation>Přednost zvuku</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2314"/>
+        <location filename="../ui/prefdialog.ui" line="2302"/>
         <source>Subtitle Priority</source>
         <translation>Přednost titulků</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2333"/>
+        <location filename="../ui/prefdialog.ui" line="2321"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
         <translation>Tyto volby se použijí na určení přednosti zvuku/titulků.
 Je podporován regulární výraz.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2352"/>
+        <location filename="../ui/prefdialog.ui" line="2340"/>
         <source>Seek</source>
         <translation>Posunutí</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2361"/>
+        <location filename="../ui/prefdialog.ui" line="2349"/>
         <source>Step 1</source>
         <translation>Krok 1</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2384"/>
+        <location filename="../ui/prefdialog.ui" line="2372"/>
         <source>Step 2</source>
         <translation>Krok 2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2407"/>
+        <location filename="../ui/prefdialog.ui" line="2395"/>
         <source>Step 3</source>
         <translation>Krok 3</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2433"/>
-        <location filename="../dialog/prefdialog.cpp" line="122"/>
+        <location filename="../ui/prefdialog.ui" line="2421"/>
+        <location filename="../dialog/prefdialog.cpp" line="109"/>
         <source>Playback</source>
         <translation>Přehrávání</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2442"/>
+        <location filename="../ui/prefdialog.ui" line="2430"/>
         <source>Speed</source>
         <translation>Rychlost</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2521"/>
-        <location filename="../dialog/prefdialog.cpp" line="136"/>
+        <location filename="../ui/prefdialog.ui" line="2509"/>
+        <location filename="../dialog/prefdialog.cpp" line="122"/>
         <source>Audio</source>
         <translation>Zvuk</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2527"/>
+        <location filename="../ui/prefdialog.ui" line="2515"/>
         <source>Volume</source>
         <translation>Hlasitost</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2471"/>
+        <location filename="../ui/prefdialog.ui" line="2459"/>
         <source>Position</source>
         <translation>Poloha</translation>
     </message>
@@ -3500,97 +3537,102 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Cesta ke skriptu</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1694"/>
+        <location filename="../ui/prefdialog.ui" line="1682"/>
         <source>Codec to allow hardware-acceleration</source>
         <translation>Kodek na povolení hardwarového zrychlení</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2491"/>
-        <location filename="../ui/prefdialog.ui" line="2579"/>
+        <location filename="../ui/prefdialog.ui" line="2479"/>
+        <location filename="../ui/prefdialog.ui" line="2567"/>
         <source>Sync Delay</source>
         <translation>Zpoždění seřízení</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2611"/>
+        <location filename="../ui/prefdialog.ui" line="2599"/>
         <source>Brightness</source>
         <translation>Jas</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2631"/>
+        <location filename="../ui/prefdialog.ui" line="2619"/>
         <source>Contrast</source>
         <translation>Kontrast</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2651"/>
+        <location filename="../ui/prefdialog.ui" line="2639"/>
         <source>Saturation</source>
         <translation>Sytost</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2671"/>
+        <location filename="../ui/prefdialog.ui" line="2659"/>
         <source>Hue</source>
         <translation>Barevný odstín</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="119"/>
+        <location filename="../dialog/prefdialog.cpp" line="106"/>
         <source>General</source>
         <translation>Obecné</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="120"/>
+        <location filename="../dialog/prefdialog.cpp" line="107"/>
         <source>Application</source>
         <translation>Program</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="121"/>
+        <location filename="../dialog/prefdialog.cpp" line="108"/>
         <source>Open</source>
         <translation>Otevřít</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="125"/>
+        <location filename="../dialog/prefdialog.cpp" line="112"/>
         <source>Miscellaneous</source>
         <translation>Různé</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="127"/>
+        <location filename="../dialog/prefdialog.cpp" line="114"/>
         <source>Appearance</source>
         <translation>Vzhled</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="128"/>
+        <location filename="../dialog/prefdialog.cpp" line="115"/>
         <source>OSD</source>
         <translation>Zpráva zobrazená na obrazovce</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="129"/>
+        <location filename="../dialog/prefdialog.cpp" line="116"/>
         <source>Skin &amp; Style</source>
         <translation>V&amp;zhled a styl</translation>
+    </message>
+    <message>
+        <location filename="../dialog/prefdialog.cpp" line="120"/>
+        <source>Video Processing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Priority</source>
         <translation type="vanished">Přednost</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="145"/>
+        <location filename="../dialog/prefdialog.cpp" line="131"/>
         <source>User interface</source>
         <translation>Uživatelské rozhraní</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="146"/>
+        <location filename="../dialog/prefdialog.cpp" line="132"/>
         <source>Keyboard shortcuts</source>
         <translation>Klávesové zkratky</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="147"/>
+        <location filename="../dialog/prefdialog.cpp" line="133"/>
         <source>Mouse actions</source>
         <translation>Činnosti myši</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="148"/>
+        <location filename="../dialog/prefdialog.cpp" line="134"/>
         <source>Control step</source>
         <translation>Řídící krok</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2113"/>
+        <location filename="../ui/prefdialog.ui" line="2101"/>
         <source>Skin</source>
         <translation>Motiv vzhledu</translation>
     </message>
@@ -3603,32 +3645,31 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Pohled</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="123"/>
+        <location filename="../dialog/prefdialog.cpp" line="110"/>
         <source>Cache</source>
         <translation>Vyrovnávací paměť</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="131"/>
+        <location filename="../dialog/prefdialog.cpp" line="118"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="132"/>
+        <location filename="../dialog/prefdialog.cpp" line="119"/>
         <source>Hardware acceleration</source>
         <translation>Hardwarové zrychlení</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="133"/>
         <source>Deinterlace</source>
-        <translation>Odstranění prokládání</translation>
+        <translation type="vanished">Odstranění prokládání</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="137"/>
+        <location filename="../dialog/prefdialog.cpp" line="123"/>
         <source>Sound</source>
         <translation>Zvuk</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="138"/>
+        <location filename="../dialog/prefdialog.cpp" line="124"/>
         <source>Audio filter</source>
         <translation>Zvukový filtr</translation>
     </message>
@@ -3647,7 +3688,7 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Nepodporováno</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="167"/>
+        <location filename="../dialog/prefdialog.cpp" line="154"/>
         <source>Browse for Folder</source>
         <translation>Procházet složky</translation>
     </message>
@@ -3656,7 +3697,7 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">bomi</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="311"/>
+        <location filename="../dialog/prefdialog.cpp" line="247"/>
         <source>Movist</source>
         <translation>Movist</translation>
     </message>
@@ -3697,7 +3738,7 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Posun pomocí kolečka myši</translation>
     </message>
     <message>
-        <location filename="../dialog/prefdialog.cpp" line="42"/>
+        <location filename="../dialog/prefdialog.cpp" line="37"/>
         <source>All</source>
         <translation>Vše</translation>
     </message>
@@ -3888,14 +3929,14 @@ Je podporován regulární výraz.</translation>
     <name>RootMenu</name>
     <message>
         <location filename="../player/rootmenu.cpp" line="314"/>
-        <location filename="../player/rootmenu.cpp" line="545"/>
+        <location filename="../player/rootmenu.cpp" line="547"/>
         <source>Open</source>
         <translation>Otevřít</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="315"/>
         <location filename="../player/rootmenu.cpp" line="395"/>
-        <location filename="../player/rootmenu.cpp" line="503"/>
+        <location filename="../player/rootmenu.cpp" line="505"/>
         <source>Open File</source>
         <translation>Otevřít soubor</translation>
     </message>
@@ -3916,8 +3957,8 @@ Je podporován regulární výraz.</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="325"/>
-        <location filename="../player/rootmenu.cpp" line="547"/>
-        <location filename="../player/rootmenu.cpp" line="561"/>
+        <location filename="../player/rootmenu.cpp" line="549"/>
+        <location filename="../player/rootmenu.cpp" line="563"/>
         <source>Clear</source>
         <translation>Vyprázdnit</translation>
     </message>
@@ -4015,7 +4056,7 @@ Je podporován regulární výraz.</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="406"/>
-        <location filename="../player/rootmenu.cpp" line="513"/>
+        <location filename="../player/rootmenu.cpp" line="515"/>
         <source>Select Next</source>
         <translation>Vybrat další</translation>
     </message>
@@ -4086,7 +4127,7 @@ Je podporován regulární výraz.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="357"/>
         <location filename="../player/rootmenu.cpp" line="424"/>
-        <location filename="../player/rootmenu.cpp" line="517"/>
+        <location filename="../player/rootmenu.cpp" line="519"/>
         <source>%1sec</source>
         <translation>%1 s</translation>
     </message>
@@ -4101,17 +4142,17 @@ Je podporován regulární výraz.</translation>
         <translation>Interpolátor</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="473"/>
+        <location filename="../player/rootmenu.cpp" line="475"/>
         <source>Filter</source>
         <translation>Filtr</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="476"/>
+        <location filename="../player/rootmenu.cpp" line="478"/>
         <source>Flip Vertically</source>
         <translation>Převrátit svisle</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="477"/>
+        <location filename="../player/rootmenu.cpp" line="479"/>
         <source>Flip Horizontally</source>
         <translation>Převrátit vodorovně</translation>
     </message>
@@ -4124,62 +4165,62 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Zostřit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="482"/>
+        <location filename="../player/rootmenu.cpp" line="484"/>
         <source>Grayscale</source>
         <translation>Odstíny šedi</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="483"/>
+        <location filename="../player/rootmenu.cpp" line="485"/>
         <source>Invert Color</source>
         <translation>Obrátit barvu</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="487"/>
+        <location filename="../player/rootmenu.cpp" line="489"/>
         <source>Disable Filters</source>
         <translation>Zakázat filtry</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="517"/>
+        <location filename="../player/rootmenu.cpp" line="519"/>
         <source>Audio Sync</source>
         <translation>Seřízení zvuku</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="521"/>
+        <location filename="../player/rootmenu.cpp" line="523"/>
         <source>Volume</source>
         <translation>Hlasitost</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="526"/>
+        <location filename="../player/rootmenu.cpp" line="528"/>
         <source>Amp</source>
         <translation>Zesílení</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="532"/>
+        <location filename="../player/rootmenu.cpp" line="534"/>
         <source>Volume Normalizer</source>
         <translation>Normalizace hlasitosti</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="533"/>
+        <location filename="../player/rootmenu.cpp" line="535"/>
         <source>Tempo Scaler</source>
         <translation>Změna tempa</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="537"/>
+        <location filename="../player/rootmenu.cpp" line="539"/>
         <source>Undo</source>
         <translation>Zpět</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="538"/>
+        <location filename="../player/rootmenu.cpp" line="540"/>
         <source>Redo</source>
         <translation>Znovu</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="550"/>
+        <location filename="../player/rootmenu.cpp" line="552"/>
         <source>Append URL</source>
         <translation>Připojit adresu (URL)</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="565"/>
+        <location filename="../player/rootmenu.cpp" line="567"/>
         <source>Playback Information</source>
         <translation>Informace o přehrávání</translation>
     </message>
@@ -4234,7 +4275,7 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Uklidit soubor</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="489"/>
+        <location filename="../player/rootmenu.cpp" line="491"/>
         <source>Adjust Color</source>
         <translation>Upravit barvu</translation>
     </message>
@@ -4275,7 +4316,7 @@ Je podporován regulární výraz.</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="397"/>
-        <location filename="../player/rootmenu.cpp" line="505"/>
+        <location filename="../player/rootmenu.cpp" line="507"/>
         <source>Auto-load File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4286,7 +4327,7 @@ Je podporován regulární výraz.</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="399"/>
-        <location filename="../player/rootmenu.cpp" line="507"/>
+        <location filename="../player/rootmenu.cpp" line="509"/>
         <source>Reload File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4297,7 +4338,7 @@ Je podporován regulární výraz.</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="401"/>
-        <location filename="../player/rootmenu.cpp" line="509"/>
+        <location filename="../player/rootmenu.cpp" line="511"/>
         <source>Clear File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4358,108 +4399,113 @@ Je podporován regulární výraz.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="481"/>
+        <location filename="../player/rootmenu.cpp" line="469"/>
+        <source>Motion Interpolation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/rootmenu.cpp" line="483"/>
         <source>Remap</source>
         <translation>Přemapovat</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="501"/>
+        <location filename="../player/rootmenu.cpp" line="503"/>
         <source>Audio</source>
         <translation>Zvuk</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="502"/>
+        <location filename="../player/rootmenu.cpp" line="504"/>
         <source>Audio Track</source>
         <translation>Zvuková stopa</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="504"/>
+        <location filename="../player/rootmenu.cpp" line="506"/>
         <source>Open Audio Track File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="506"/>
+        <location filename="../player/rootmenu.cpp" line="508"/>
         <source>Auto-load Audio Track File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="508"/>
+        <location filename="../player/rootmenu.cpp" line="510"/>
         <source>Reload Audio Track File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="510"/>
+        <location filename="../player/rootmenu.cpp" line="512"/>
         <source>Clear Audio Track File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="514"/>
+        <location filename="../player/rootmenu.cpp" line="516"/>
         <source>Select Next Audio Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="522"/>
+        <location filename="../player/rootmenu.cpp" line="524"/>
         <source>Mute</source>
         <translation>Ztlumit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="527"/>
+        <location filename="../player/rootmenu.cpp" line="529"/>
         <source>Equalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="536"/>
+        <location filename="../player/rootmenu.cpp" line="538"/>
         <source>Tools</source>
         <translation>Nástroje</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="542"/>
+        <location filename="../player/rootmenu.cpp" line="544"/>
         <source>Playlist</source>
         <translation>Seznam skladeb</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="543"/>
-        <location filename="../player/rootmenu.cpp" line="560"/>
+        <location filename="../player/rootmenu.cpp" line="545"/>
+        <location filename="../player/rootmenu.cpp" line="562"/>
         <source>Show/Hide</source>
         <translation>Ukázat/Skrýt</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="546"/>
+        <location filename="../player/rootmenu.cpp" line="548"/>
         <source>Save</source>
         <translation>Uložit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="549"/>
+        <location filename="../player/rootmenu.cpp" line="551"/>
         <source>Append File</source>
         <translation>Připojit soubor</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="551"/>
+        <location filename="../player/rootmenu.cpp" line="553"/>
         <source>Remove</source>
         <translation>Odstranit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="553"/>
+        <location filename="../player/rootmenu.cpp" line="555"/>
         <source>Move Up</source>
         <translation>Posunout nahoru</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="554"/>
+        <location filename="../player/rootmenu.cpp" line="556"/>
         <source>Move Down</source>
         <translation>Posunout dolů</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="556"/>
+        <location filename="../player/rootmenu.cpp" line="558"/>
         <source>Shuffle</source>
         <translation>Zamíchat</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="557"/>
+        <location filename="../player/rootmenu.cpp" line="559"/>
         <source>Repeat</source>
         <translation>Opakovat</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="698"/>
+        <location filename="../player/rootmenu.cpp" line="700"/>
         <source>%1 Menu</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4468,77 +4514,77 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Oblíbené</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="559"/>
+        <location filename="../player/rootmenu.cpp" line="561"/>
         <source>History</source>
         <translation>Historie</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="563"/>
+        <location filename="../player/rootmenu.cpp" line="565"/>
         <source>Find Subtitle</source>
         <translation>Najít titulky</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="564"/>
+        <location filename="../player/rootmenu.cpp" line="566"/>
         <source>Subtitle View</source>
         <translation>Zobrazení titulku</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="569"/>
+        <location filename="../player/rootmenu.cpp" line="571"/>
         <source>Preferences</source>
         <translation>Nastavení</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="570"/>
+        <location filename="../player/rootmenu.cpp" line="572"/>
         <source>Reload Skin</source>
         <translation>Nahrát znovu motiv vzhledu</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="574"/>
+        <location filename="../player/rootmenu.cpp" line="576"/>
         <source>Auto-exit</source>
         <translation>Automatické ukončení</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="575"/>
+        <location filename="../player/rootmenu.cpp" line="577"/>
         <source>Auto-shutdown</source>
         <translation>Automatické vypnutí</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="578"/>
+        <location filename="../player/rootmenu.cpp" line="580"/>
         <source>Window</source>
         <translation>Okno</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="583"/>
+        <location filename="../player/rootmenu.cpp" line="585"/>
         <source>Proper Size</source>
         <translation>Velikost</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="588"/>
+        <location filename="../player/rootmenu.cpp" line="590"/>
         <source>Fullscreen</source>
         <translation>Celá obrazovka</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="592"/>
+        <location filename="../player/rootmenu.cpp" line="594"/>
         <source>Minimize</source>
         <translation>Zmenšit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="593"/>
+        <location filename="../player/rootmenu.cpp" line="595"/>
         <source>Maximize</source>
         <translation>Zvětšit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="594"/>
+        <location filename="../player/rootmenu.cpp" line="596"/>
         <source>Close</source>
         <translation>Zavřít</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="597"/>
+        <location filename="../player/rootmenu.cpp" line="599"/>
         <source>Help</source>
         <translation>Nápověda</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="598"/>
+        <location filename="../player/rootmenu.cpp" line="600"/>
         <source>About bomi</source>
         <translation type="unfinished">O programu bomi</translation>
     </message>
@@ -4547,7 +4593,7 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">O %1</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="601"/>
+        <location filename="../player/rootmenu.cpp" line="603"/>
         <source>Exit</source>
         <translation>Ukončit</translation>
     </message>
