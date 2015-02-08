@@ -157,8 +157,6 @@ auto VideoFormatObject::spaceText() const -> QString
 
 VideoObject::VideoObject()
 {
-    connect(&m_output, &VideoFormatObject::fpsChanged,
-            this, &VideoObject::delayedTimeChanged);
     connect(this, &VideoObject::delayedFramesChanged,
             this, &VideoObject::delayedTimeChanged);
     connect(&m_timer, &QTimer::timeout, this, [=] () {
@@ -183,6 +181,18 @@ void VideoObject::setDroppedFrames(int f)
     }
     if (_Change(m_dropped, f))
         emit droppedFramesChanged();
+}
+
+auto VideoObject::delayedTime() const -> int
+{
+    double fps = m_output.fps();
+    if (m_fpsMp < 1)
+        ;
+    else if (m_fpsMp < 10)
+        fps *= m_fpsMp;
+    else
+        fps = m_fpsMp;
+    return fps > 1 ? (m_delayed / fps) * 1e3 + 0.5 : 0.0;
 }
 
 /******************************************************************************/

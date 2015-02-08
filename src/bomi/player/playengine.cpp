@@ -90,6 +90,8 @@ PlayEngine::PlayEngine()
         d->post(Searching, skipping);
     }, Qt::DirectConnection);
     connect(d->vp, &VideoProcessor::seekRequested, this, &PlayEngine::seek);
+    connect(d->vp, &VideoProcessor::fpsManimulated, &d->info.video,
+            &VideoObject::setFpsManimulation, Qt::QueuedConnection);
 
     connect(d->ac, &AudioController::inputFormatChanged, this,
             [=] () { d->info.audio.output()->setFormat(d->ac->inputFormat()); });

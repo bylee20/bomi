@@ -193,3 +193,8 @@ auto SoftwareDeinterlacer::clear() -> void
 {
     d->queue.clear();
 }
+
+auto SoftwareDeinterlacer::fpsManipulation() const -> double
+{
+    return pass() ? 1 : d->count;
+}

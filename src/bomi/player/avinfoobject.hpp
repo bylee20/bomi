@@ -261,8 +261,9 @@ public:
     auto droppedFrames() const -> int { return m_dropped; }
     auto droppedFps() const -> qreal { return m_droppedFps; }
     auto delayedFrames() const -> int { return m_delayed; }
-    auto delayedTime() const -> int
-        { return m_output.fps() > 1 ? (m_delayed / m_output.fps()) * 1e3 + 0.5: 0.0; }
+    auto setFpsManimulation(double fps) -> void
+        { if (_Change(m_fpsMp, fps)) emit delayedTimeChanged(); }
+    auto delayedTime() const -> int;
     void setDroppedFrames(int f);
     void setDelayedFrames(int f)
         { if (_Change(m_delayed, f)) emit delayedFramesChanged(); }
@@ -276,7 +277,7 @@ private:
     VideoFormatObject m_input, m_output, m_renderer;
     VideoHwAccObject m_hwacc;
     int m_deint = 0, m_dropped = 0, m_delayed = 0;
-    qreal m_droppedFps = 0.0;
+    qreal m_droppedFps = 0.0, m_fpsMp = 1;
     QTime m_time; QTimer m_timer;
 };
 

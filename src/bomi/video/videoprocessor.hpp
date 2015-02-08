@@ -25,6 +25,7 @@ signals:
     void deintMethodChanged(DeintMethod method);
     void skippingChanged(bool skipping);
     void seekRequested(int msec);
+    void fpsManimulated(double fps);
 private:
     static auto open(vf_instance *vf) -> int;
     static auto queryFormat(vf_instance *vf, uint fmt) -> int;

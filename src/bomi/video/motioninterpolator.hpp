@@ -13,7 +13,8 @@ public:
     auto pop() -> MpImage;
     auto clear() -> void;
     auto needsMore() const -> bool;
-    auto setTargetFps(double fps) -> void;
+    auto setTargetFps(double fpsManipulation) -> void;
+    auto fpsManipulation() const -> double final;
 private:
     struct Data;
     Data *d;

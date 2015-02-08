@@ -379,6 +379,7 @@ auto VideoProcessor::filterIn(mp_image *_mpi) -> int
             d->filter = &d->interpolator;
         else
             d->filter = &d->passthrough;
+        emit fpsManimulated(d->filter->fpsManipulation());
     }
     if (_Change(d->inter_i, mpi.isInterlaced()))
         emit inputInterlacedChanged();

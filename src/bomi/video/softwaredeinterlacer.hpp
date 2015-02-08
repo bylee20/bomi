@@ -19,6 +19,7 @@ public:
     auto needsMore() const -> bool final { return false; }
     auto type() const -> Type;
     auto pass() const -> bool;
+    auto fpsManipulation() const -> double final;
 private:
     struct Data;
     Data *d;

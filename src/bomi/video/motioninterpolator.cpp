@@ -73,3 +73,8 @@ auto MotionInterpolator::setTargetFps(double fps) -> void
 {
     d->dt = 1.0/fps;
 }
+
+auto MotionInterpolator::fpsManipulation() const -> double
+{
+    return 1.0/d->dt;
+}
