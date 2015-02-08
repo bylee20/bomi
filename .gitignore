@@ -88,3 +88,4 @@ src/ffmpeg/version.h
 src/ffmpeg/doc/examples/pc-uninstalled/libswresample.pc
 src/ffmpeg/libswresample/libswresample.pc
 build/
+/bomi.1.gz

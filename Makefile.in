@@ -1,7 +1,8 @@
 os := @os@
 install_file := install -m 644
 install_exe := install -m 755
-install_dir := sh install_dir.sh
+install_dir := install -d -m 755
+install_all := sh install_dir.sh
 pkg_config_path := @PKG_CONFIG_PATH@
 
 prefix := @prefix@
@@ -81,22 +82,22 @@ clean:
 
 install: bomi
 ifeq ($(os),linux)
-	-install -d $(DEST_DIR)$(bin_dir)
-	-install -d $(DEST_DIR)$(app_dir)
-	-install -d $(DEST_DIR)$(action_dir)
-	-install -d $(DEST_DIR)$(comp_dir)
-	-install -d $(DEST_DIR)$(man_dir)/man1
-	-install -d $(DEST_DIR)$(icon_dir)/16x16/apps
-	-install -d $(DEST_DIR)$(icon_dir)/22x22/apps
-	-install -d $(DEST_DIR)$(icon_dir)/24x24/apps
-	-install -d $(DEST_DIR)$(icon_dir)/32x32/apps
-	-install -d $(DEST_DIR)$(icon_dir)/48x48/apps
-	-install -d $(DEST_DIR)$(icon_dir)/64x64/apps
-	-install -d $(DEST_DIR)$(icon_dir)/128x128/apps
-	-install -d $(DEST_DIR)$(icon_dir)/256x256/apps
-	-install -d $(DEST_DIR)$(skin_dir)
-	-install -d $(DEST_DIR)$(import_dir)
-#	-install -d $(DEST_DIR)$(icon_dir)/scalable/apps
+	$(install_dir) $(DEST_DIR)$(bin_dir)
+	$(install_dir) $(DEST_DIR)$(app_dir)
+	$(install_dir) $(DEST_DIR)$(action_dir)
+	$(install_dir) $(DEST_DIR)$(comp_dir)
+	$(install_dir) $(DEST_DIR)$(man_dir)/man1
+	$(install_dir) $(DEST_DIR)$(icon_dir)/16x16/apps
+	$(install_dir) $(DEST_DIR)$(icon_dir)/22x22/apps
+	$(install_dir) $(DEST_DIR)$(icon_dir)/24x24/apps
+	$(install_dir) $(DEST_DIR)$(icon_dir)/32x32/apps
+	$(install_dir) $(DEST_DIR)$(icon_dir)/48x48/apps
+	$(install_dir) $(DEST_DIR)$(icon_dir)/64x64/apps
+	$(install_dir) $(DEST_DIR)$(icon_dir)/128x128/apps
+	$(install_dir) $(DEST_DIR)$(icon_dir)/256x256/apps
+	$(install_dir) $(DEST_DIR)$(skin_dir)
+	$(install_dir) $(DEST_DIR)$(import_dir)
+#	$(install_dir) $(DEST_DIR)$(icon_dir)/scalable/apps
 	$(install_exe) build/$(bomi_exec) $(DEST_DIR)$(bin_dir)
 	$(install_file) bomi.desktop $(DEST_DIR)$(app_dir)
 	$(install_file) bomi-opendvd.desktop $(DEST_DIR)$(action_dir)
@@ -112,8 +113,8 @@ ifeq ($(os),linux)
 	$(install_file) icons/bomi128.png $(DEST_DIR)$(icon_dir)/128x128/apps/bomi.png
 	$(install_file) icons/bomi256.png $(DEST_DIR)$(icon_dir)/256x256/apps/bomi.png
 #	$(install_file) icons/bomi.svg $(DEST_DIR)$(icon_dir)/scalable/apps/bomi.svg
-	-cp -r build/skins/* $(DEST_DIR)$(skin_dir)/
-	-cp -r build/imports/* $(DEST_DIR)$(import_dir)/
+	$(install_all) build/skins $(DEST_DIR)$(skin_dir)
+	$(install_all) build/imports $(DEST_DIR)$(import_dir)
 else
 	mv build/$(bomi_exec).app $(DEST_DIR)$(prefix)
 endif
