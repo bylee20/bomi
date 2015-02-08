@@ -10,6 +10,12 @@ B.AppWithFloating {
     id: skin;
     name: "net.xylosper.bomi.one"
     readonly property QtObject engine: B.App.engine
+
+    B.Text {
+        id: text // dummy for text formatting
+        visible: false
+    }
+
     controls: Item {
         width: 130; height: 130;
 
@@ -98,6 +104,7 @@ B.AppWithFloating {
             Image {
                 anchors.fill: parent
                 source: "trace.png"
+                visible: !engine.stopped
                 RotationAnimation on rotation {
                     loops: Animation.Infinite
                     from: 0; to: 360
@@ -126,6 +133,7 @@ B.AppWithFloating {
             }
 
             MouseArea {
+                id: ringMouse
                 anchors.fill: parent
                 readonly property real gap: 4
                 readonly property real r1: grab.radius - gap
@@ -139,6 +147,7 @@ B.AppWithFloating {
                     var dy = y - c.y
                     engine.rate = (Math.PI + Math.atan2(-dx, dy))/(2*Math.PI)
                 }
+                hoverEnabled: true
 
                 onPressed: {
                     var dx = mouse.x - c.x, dy = mouse.y - c.y
@@ -146,7 +155,23 @@ B.AppWithFloating {
                     if (mouse.accepted = r1*r1 <= rr && rr <= r2*r2)
                         setRate(mouse.x, mouse.y)
                 }
-                onPositionChanged: { setRate(mouse.x, mouse.y) }
+                onPositionChanged: {
+                    if (pressed) setRate(mouse.x, mouse.y)
+                    var dx = mouse.x - c.x, dy = mouse.y - c.y
+                    var rr = dx*dx + dy*dy
+                    if (mouse.accepted = r1*r1 <= rr && rr <= r2*r2) {
+                        tooltipHider.stop()
+                        B.App.window.showToolTip(ringMouse, Qt.point(mouse.x, mouse.y), text.formatTime(engine.time) + "/" + text.formatTime(engine.end))
+                    } else
+                        tooltipHider.start()
+                }
+                onExited: tooltipHider.start()
+                Timer {
+                    id: tooltipHider
+                    repeat: false
+                    interval: 1000
+                    onTriggered: B.App.window.hideToolTip()
+                }
             }
 
             B.Button {
