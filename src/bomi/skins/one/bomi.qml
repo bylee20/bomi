@@ -161,7 +161,9 @@ B.AppWithFloating {
                     var rr = dx*dx + dy*dy
                     if (mouse.accepted = r1*r1 <= rr && rr <= r2*r2) {
                         tooltipHider.stop()
-                        B.App.window.showToolTip(ringMouse, Qt.point(mouse.x, mouse.y), text.formatTime(engine.time) + "/" + text.formatTime(engine.end))
+                        var pos = Qt.point(mouse.x, mouse.y);
+                        var time = text.formatTime(engine.time) + "/" + text.formatTime(engine.end)
+                        B.App.window.showToolTip(ringMouse, pos, time)
                     } else
                         tooltipHider.start()
                 }
