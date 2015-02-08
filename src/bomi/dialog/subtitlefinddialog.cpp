@@ -93,6 +93,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     d->proxy.setSourceModel(&d->model);
     d->proxy.setFilterKeyColumn(d->model.Language);
     d->proxy.setFilterRole(LangCodeRole);
+    d->ui.directory->hide();
     d->ui.view->setModel(&d->proxy);
     d->ui.view->header()->resizeSection(0, 100);
     d->ui.view->header()->resizeSection(1, 450);
@@ -131,7 +132,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         const auto index = d->ui.view->currentIndex();
         if (!index.isValid())
             return;
-        const auto dir = QFileInfo(d->ui.file->text()).dir();
+        auto dir = QDir(d->ui.directory->text());
         auto file = dir.absoluteFilePath(index.data(FileNameRole).toString());
         const QFileInfo info(file);
         if (info.exists()) {
@@ -190,7 +191,8 @@ SubtitleFindDialog::~SubtitleFindDialog() {
 
 auto SubtitleFindDialog::find(const Mrl &mrl) -> void
 {
-    d->ui.file->setText(mrl.toLocalFile());
+    d->ui.fileName->setText(mrl.fileName());
+    d->ui.directory->setText(QFileInfo(mrl.toLocalFile()).absolutePath());
     if (!d->finder->isAvailable()) {
         d->pending = mrl;
     } else if (!d->finder->find(mrl)) {
