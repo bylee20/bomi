@@ -133,7 +133,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         if (!index.isValid())
             return;
         auto dir = QDir(d->ui.directory->text());
-        auto file = dir.absoluteFilePath(index.data(FileNameRole).toString());
+        auto fileName = d->ui.fileName->text() + QString::fromStdString(" - ") + index.data(FileNameRole).toString();
+        auto file = dir.absoluteFilePath(fileName);
         const QFileInfo info(file);
         if (info.exists()) {
             MBox mbox(this, MBox::Icon::Question, tr("Find Subtitle"),
