@@ -245,7 +245,7 @@ auto MainWindow::Data::plugMenu() -> void
         const int diff = static_cast<StepAction*>(a)->data();
         if (diff && !e.isStopped() && e.isSeekable()) {
             e.relativeSeek(diff);
-            showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
+            showMessage(tr("Seeking"), a->text());
             showTimeLine();
         }
     });

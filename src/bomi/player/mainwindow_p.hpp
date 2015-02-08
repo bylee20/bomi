@@ -106,10 +106,6 @@ struct MainWindow::Data {
     auto updateMrl(const Mrl &mrl) -> void;
     auto updateTitle() -> void;
     auto showMessage(const QString &msg, const bool *force = nullptr) -> void;
-    auto showMessage(const QString &cmd, int value, const QString &unit,
-                     bool sign = false) -> void;
-    auto showMessage(const QString &cmd, double value, const QString &unit,
-                     bool sign = false) -> void;
     auto showMessage(const QString &cmd, const QString &desc) -> void
         { showMessage(cmd % u": "_q % desc); }
     static auto toMessage(bool value) -> QString { return value ? tr("On") : tr("Off"); }

@@ -473,24 +473,6 @@ auto MainWindow::Data::showMessage(const QString &msg, const bool *force) -> voi
         showOSD(msg);
 }
 
-SIA _SignN(int value, bool sign) -> QString
-    { return sign ? _NS(value) : _N(value); }
-
-SIA _SignN(double value, bool sign, int n = 1) -> QString
-    { return sign ? _NS(value, n) : _N(value, n); }
-
-void MainWindow::Data::showMessage(const QString &cmd, int value,
-                             const QString &unit, bool sign)
-{
-    showMessage(cmd, _SignN(value, sign) + unit);
-}
-
-void MainWindow::Data::showMessage(const QString &cmd, double value,
-                             const QString &unit, bool sign)
-{
-    showMessage(cmd, _SignN(value, sign) + unit);
-}
-
 auto MainWindow::Data::applyPref() -> void
 {
     pref.save();
