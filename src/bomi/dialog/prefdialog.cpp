@@ -13,8 +13,6 @@
 #undef None
 #endif
 
-/******************************************************************************/
-
 struct ValueWatcher {
     QMetaProperty property;
     QQmlProperty editor;
@@ -367,28 +365,12 @@ auto PrefDialog::set(const Pref *p) -> void
 {
     d->fillEditors(p);
     d->sync();
-//    for (auto &w : d->watchers) {
-//        if (!w.editor.isValid())
-//            continue;
-//        w.editor.write(w.property.read(p));
-//        w.property.write(&d->orig, w.editor.read());
-//        if (w.isModified())
-//            qDebug() << w.property.typeName() << w.property.name();
-//    }
-////    d->ui.app_unique->setChecked(cApp.isUnique());
-////    d->ui.app_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
-////    d->ui.locale->setCurrentLocale(cApp.locale());
-//    d->modified.clear();
-//    setWindowModified(false);
 }
 
 auto PrefDialog::get(Pref *p) -> void
 {
     for (auto &w : d->watchers)
         w.property.write(p, w.property.read(&d->orig));
-//    cApp.setUnique(d->ui.app_unique->isChecked());
-//    cApp.setLocale(d->ui.locale->currentLocale());
-//    cApp.setStyleName(d->ui.app_style->currentData().toString());
 }
 
 auto PrefDialog::changeEvent(QEvent *event) -> void
