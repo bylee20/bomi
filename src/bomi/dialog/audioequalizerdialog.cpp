@@ -1,6 +1,5 @@
 #include "audioequalizerdialog.hpp"
 #include "audio/audioequalizer.hpp"
-#include "player/app.hpp"
 
 static constexpr int Factor = 10;
 
@@ -76,7 +75,7 @@ AudioEqualizerDialog::AudioEqualizerDialog(QWidget *parent)
     vbox->addLayout(hbox);
     setLayout(vbox);
 
-    cApp.setWindowTitle(this, tr("Audio Equalizer"));
+    _SetWindowTitle(this, tr("Audio Equalizer"));
 }
 
 AudioEqualizerDialog::~AudioEqualizerDialog()

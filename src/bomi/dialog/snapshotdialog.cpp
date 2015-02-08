@@ -25,6 +25,8 @@ SnapshotDialog::SnapshotDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->p = this;
     d->ui.setupUi(this);
+    _SetWindowTitle(this, tr("Take Snapshot"));
+
     connect(d->ui.zoomIn, &QAbstractButton::clicked,
             this, [this] () { d->ui.viewer->scale(1.25); });
     connect(d->ui.zoomOut, &QAbstractButton::clicked,

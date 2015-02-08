@@ -64,37 +64,37 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>App</name>
     <message>
-        <location filename="../player/app.cpp" line="119"/>
+        <location filename="../player/app.cpp" line="116"/>
         <source>The file path or URL to open.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="189"/>
+        <location filename="../player/app.cpp" line="186"/>
         <source>Open given %1 for file path or URL.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="191"/>
+        <location filename="../player/app.cpp" line="188"/>
         <source>Bring the application window in front.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="193"/>
+        <location filename="../player/app.cpp" line="190"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="195"/>
+        <location filename="../player/app.cpp" line="192"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="198"/>
+        <location filename="../player/app.cpp" line="195"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="200"/>
+        <location filename="../player/app.cpp" line="197"/>
         <source>Turn on options for debugging.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -200,17 +200,17 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>AudioEqualizerDialog</name>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="26"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="25"/>
         <source>Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="40"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="39"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="79"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="78"/>
         <source>Audio Equalizer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1154,33 +1154,33 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>Info</name>
     <message>
-        <location filename="../stdafx.cpp" line="163"/>
-        <location filename="../stdafx.cpp" line="165"/>
+        <location filename="../stdafx.cpp" line="162"/>
+        <location filename="../stdafx.cpp" line="164"/>
         <source>Images</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="157"/>
+        <location filename="../stdafx.cpp" line="156"/>
         <source>Video Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="159"/>
+        <location filename="../stdafx.cpp" line="158"/>
         <source>Audio Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="161"/>
+        <location filename="../stdafx.cpp" line="160"/>
         <source>Subtitle Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="167"/>
+        <location filename="../stdafx.cpp" line="166"/>
         <source>ISO Image Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="169"/>
+        <location filename="../stdafx.cpp" line="168"/>
         <source>Playlist Files</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1244,7 +1244,7 @@ This requires much more CPU or GPU usage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="164"/>
+        <location filename="../player/mainwindow_p.cpp" line="165"/>
         <source>Error!
 Cannot open the media.</source>
         <translation type="unfinished"></translation>
@@ -1270,17 +1270,17 @@ Cannot open the media.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="167"/>
+        <location filename="../player/mainwindow_p.cpp" line="168"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="167"/>
+        <location filename="../player/mainwindow_p.cpp" line="168"/>
         <source>Play</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="221"/>
+        <location filename="../player/mainwindow_p.cpp" line="222"/>
         <source>%1 ...
 Please wait for a while.</source>
         <translation type="unfinished"></translation>
@@ -1704,23 +1704,23 @@ Please wait for a while.</source>
 <context>
     <name>OpenMediaFolderDialog</name>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="14"/>
         <location filename="../dialog/openmediafolderdialog.cpp" line="87"/>
+        <location filename="../dialog/openmediafolderdialog.cpp" line="99"/>
         <source>Open Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="44"/>
+        <location filename="../ui/openmediafolderdialog.ui" line="41"/>
         <source>Videos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="51"/>
+        <location filename="../ui/openmediafolderdialog.ui" line="48"/>
         <source>Images</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="58"/>
+        <location filename="../ui/openmediafolderdialog.ui" line="55"/>
         <source>Audios</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1824,49 +1824,49 @@ Please wait for a while.</source>
 <context>
     <name>OsdThemeWidget</name>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="35"/>
+        <location filename="../ui/osdthemewidget.ui" line="32"/>
         <source>Message</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="41"/>
+        <location filename="../ui/osdthemewidget.ui" line="38"/>
         <source>Show messages when actions are triggered</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="48"/>
+        <location filename="../ui/osdthemewidget.ui" line="45"/>
         <source>Show messages when the window is resized</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="57"/>
-        <location filename="../ui/osdthemewidget.ui" line="148"/>
+        <location filename="../ui/osdthemewidget.ui" line="54"/>
+        <location filename="../ui/osdthemewidget.ui" line="145"/>
         <source>Duration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="64"/>
-        <location filename="../ui/osdthemewidget.ui" line="157"/>
+        <location filename="../ui/osdthemewidget.ui" line="61"/>
+        <location filename="../ui/osdthemewidget.ui" line="154"/>
         <source>sec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="98"/>
+        <location filename="../ui/osdthemewidget.ui" line="95"/>
         <source>Timeline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="104"/>
+        <location filename="../ui/osdthemewidget.ui" line="101"/>
         <source>Show timeline when seeking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="111"/>
+        <location filename="../ui/osdthemewidget.ui" line="108"/>
         <source>Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="123"/>
+        <location filename="../ui/osdthemewidget.ui" line="120"/>
         <source>% of height</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1894,42 +1894,42 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="976"/>
+        <location filename="../player/playengine.cpp" line="977"/>
         <source>Playing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="974"/>
+        <location filename="../player/playengine.cpp" line="975"/>
         <source>Stopped</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="958"/>
+        <location filename="../player/playengine.cpp" line="959"/>
         <source>Loading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="960"/>
+        <location filename="../player/playengine.cpp" line="961"/>
         <source>Searching</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="962"/>
+        <location filename="../player/playengine.cpp" line="963"/>
         <source>Buffering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="964"/>
+        <location filename="../player/playengine.cpp" line="965"/>
         <source>Seeking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="980"/>
+        <location filename="../player/playengine.cpp" line="981"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="978"/>
+        <location filename="../player/playengine.cpp" line="979"/>
         <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3678,58 +3678,58 @@ Regular expression is supported.</source>
 <context>
     <name>SnapshotDialog</name>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="14"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="28"/>
         <source>Take Snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="32"/>
+        <location filename="../ui/snapshotdialog.ui" line="29"/>
         <source>Take</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="42"/>
+        <location filename="../ui/snapshotdialog.ui" line="39"/>
         <source>Zoom Out</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="45"/>
-        <location filename="../ui/snapshotdialog.ui" line="56"/>
+        <location filename="../ui/snapshotdialog.ui" line="42"/>
+        <location filename="../ui/snapshotdialog.ui" line="53"/>
         <source>Zoom In</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="67"/>
+        <location filename="../ui/snapshotdialog.ui" line="64"/>
         <source>View Original Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="70"/>
+        <location filename="../ui/snapshotdialog.ui" line="67"/>
         <source>Zoom Original</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="81"/>
+        <location filename="../ui/snapshotdialog.ui" line="78"/>
         <source>Include subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="104"/>
+        <location filename="../ui/snapshotdialog.ui" line="101"/>
         <source>Copy to Clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="114"/>
+        <location filename="../ui/snapshotdialog.ui" line="111"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="121"/>
+        <location filename="../ui/snapshotdialog.ui" line="118"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="43"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="45"/>
         <source>Save File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3778,23 +3778,23 @@ Regular expression is supported.</source>
 <context>
     <name>SubtitleFindDialog</name>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="14"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="93"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="22"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="121"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="19"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="123"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="63"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="60"/>
         <source>Get</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="70"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="67"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3814,43 +3814,43 @@ Regular expression is supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="198"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="140"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="200"/>
         <source>Find Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="139"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="143"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="142"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="144"/>
         <source>Save as...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="150"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="152"/>
         <source>Save As...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="148"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="150"/>
         <source>Subtitle Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="177"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="179"/>
         <source>All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="199"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
         <source>Cannot find subtitles for %1.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3876,17 +3876,17 @@ Regular expression is supported.</source>
 <context>
     <name>SubtitleView</name>
     <message>
-        <location filename="../subtitle/subtitleview.cpp" line="51"/>
+        <location filename="../subtitle/subtitleview.cpp" line="49"/>
         <source>Show start/end time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleview.cpp" line="52"/>
+        <location filename="../subtitle/subtitleview.cpp" line="50"/>
         <source>Scroll to current time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleview.cpp" line="72"/>
+        <location filename="../subtitle/subtitleview.cpp" line="70"/>
         <source>Subtitle View</source>
         <translation type="unfinished"></translation>
     </message>

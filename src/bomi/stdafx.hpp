@@ -74,6 +74,8 @@ DECL_PLUG_CHANGED_T(QSpinBox, valueChanged, int)
 #define PLUG_CHANGED(Q) _PlugChanged(Q, this, signal)
 namespace Pch {
 
+auto _SetWindowTitle(QWidget *w, const QString &title) -> void;
+
 namespace pch_detail {
 template<class T>
 struct GenericEq {

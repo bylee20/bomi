@@ -48,7 +48,7 @@ UrlDialog::UrlDialog(QWidget *parent, const QString &key)
     vbox->addLayout(form);
     vbox->addLayout(hbox);
 
-    setWindowTitle(tr("Open URL"));
+    _SetWindowTitle(this, tr("Open URL"));
     setMaximumWidth(700);
 }
 

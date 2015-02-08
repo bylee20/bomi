@@ -629,6 +629,7 @@ auto PlayEngine::setMrl(const Mrl &mrl) -> void
     if (d->mrl != mrl) {
         stop();
         d->mrl = mrl;
+        emit mrlChanged(d->mrl);
     }
 }
 

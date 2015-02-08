@@ -96,6 +96,8 @@ OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key
 {
     d->p = this;
     d->ui.setupUi(this);
+    _SetWindowTitle(this, tr("Open Folder"));
+
     connect(d->ui.get, &QAbstractButton::clicked,
             this, [=] () { d->getFolder(); });
     connect(d->ui.videos, &QAbstractButton::toggled,
@@ -114,6 +116,7 @@ OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key
     settings.beginGroup(GROUP % d->key);
     d->setCheckedTypes(settings.value(u"checked_types"_q, u"vi"_q).toString());
     settings.endGroup();
+
 }
 
 OpenMediaFolderDialog::~OpenMediaFolderDialog() {

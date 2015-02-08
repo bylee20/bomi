@@ -101,7 +101,7 @@ auto SimpleListWidgetBase::setDragEnabled(bool enabled) -> void
 auto StringListWidget::getNewItem(QString *item) -> bool
 {
     QDialog dlg(this);
-    dlg.setWindowTitle(tr("Add"));
+    _SetWindowTitle(&dlg, tr("Add"));
     QLineEdit *edit = new QLineEdit(&dlg);
     QPushButton *ok = new QPushButton(tr("&Ok"), &dlg);
     QPushButton *cancel = new QPushButton(tr("&Cancel"), &dlg);

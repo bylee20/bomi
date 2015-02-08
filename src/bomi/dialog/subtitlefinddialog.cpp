@@ -90,6 +90,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->p = this;
     d->ui.setupUi(this);
+    _SetWindowTitle(this, tr("Find Subtitle from OpenSubtitles.org"));
+
     d->proxy.setSourceModel(&d->model);
     d->proxy.setFilterKeyColumn(d->model.Language);
     d->proxy.setFilterRole(LangCodeRole);

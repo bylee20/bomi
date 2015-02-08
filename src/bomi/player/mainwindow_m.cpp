@@ -167,7 +167,7 @@ auto MainWindow::Data::plugMenu() -> void
     auto openDisc = [this] (const QString &title, QString &device, bool dvd) {
         OpenDiscDialog dlg(p);
         dlg.setIsoEnabled(dvd);
-        dlg.setWindowTitle(title);
+        _SetWindowTitle(&dlg, title);
         dlg.setDeviceList(cApp.devices());
         if (!device.isEmpty())
             dlg.setDevice(device);
@@ -391,7 +391,7 @@ auto MainWindow::Data::plugMenu() -> void
                 }); \
             } \
             if (!dlg->isVisible()) { \
-                dlg->setWindowTitle(title); \
+                _SetWindowTitle(dlg, title); \
                 dlg->set(e.getParams().type, e.getMap()); \
                 dlg->show(); \
             } \

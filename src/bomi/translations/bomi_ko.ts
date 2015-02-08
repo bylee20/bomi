@@ -262,37 +262,37 @@ Run-time Qt Version: %3</source>
         <translation type="obsolete">bomi는 비디오 표시를 위해 OpenGL을 필요로 합니다. 당신의 시스템은 OpenGL을 지원하지 않습니다. bomi를 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="119"/>
+        <location filename="../player/app.cpp" line="116"/>
         <source>The file path or URL to open.</source>
         <translation>파일 경로 또는 URL.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="189"/>
+        <location filename="../player/app.cpp" line="186"/>
         <source>Open given %1 for file path or URL.</source>
         <translation>주어진 파일 경로 또는 URL의 %1을 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="191"/>
+        <location filename="../player/app.cpp" line="188"/>
         <source>Bring the application window in front.</source>
         <translation>어플리케이션 창을 위로 가져옵니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="193"/>
+        <location filename="../player/app.cpp" line="190"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation>%1 액션을 실행하거나 %1 메뉴를 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="195"/>
+        <location filename="../player/app.cpp" line="192"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation>최대 로그 레벨. %1는 다음 값 중 하나여야 합니다:</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="198"/>
+        <location filename="../player/app.cpp" line="195"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation>OpenGL 디버그 로거를 켭니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="200"/>
+        <location filename="../player/app.cpp" line="197"/>
         <source>Turn on options for debugging.</source>
         <translation>디버깅을 위한 옵션들을 켭니다.</translation>
     </message>
@@ -405,17 +405,17 @@ Run-time Qt Version: %3</source>
 <context>
     <name>AudioEqualizerDialog</name>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="26"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="25"/>
         <source>Preset</source>
         <translation>프리셋</translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="40"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="39"/>
         <source>Load</source>
         <translation>불러오기</translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="79"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="78"/>
         <source>Audio Equalizer</source>
         <translation>오디어 이퀄라이저</translation>
     </message>
@@ -2197,33 +2197,33 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>Info</name>
     <message>
-        <location filename="../stdafx.cpp" line="163"/>
-        <location filename="../stdafx.cpp" line="165"/>
+        <location filename="../stdafx.cpp" line="162"/>
+        <location filename="../stdafx.cpp" line="164"/>
         <source>Images</source>
         <translation>이미지</translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="157"/>
+        <location filename="../stdafx.cpp" line="156"/>
         <source>Video Files</source>
         <translation>비디오 파일</translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="159"/>
+        <location filename="../stdafx.cpp" line="158"/>
         <source>Audio Files</source>
         <translation>오디오 파일</translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="161"/>
+        <location filename="../stdafx.cpp" line="160"/>
         <source>Subtitle Files</source>
         <translation>자막 파일</translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="167"/>
+        <location filename="../stdafx.cpp" line="166"/>
         <source>ISO Image Files</source>
         <translation>ISO 이미지 파일</translation>
     </message>
     <message>
-        <location filename="../stdafx.cpp" line="169"/>
+        <location filename="../stdafx.cpp" line="168"/>
         <source>Playlist Files</source>
         <translation>재생 목록 파일</translation>
     </message>
@@ -2414,17 +2414,17 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">속도: ×%1</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="167"/>
+        <location filename="../player/mainwindow_p.cpp" line="168"/>
         <source>Pause</source>
         <translation>일시정지</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="167"/>
+        <location filename="../player/mainwindow_p.cpp" line="168"/>
         <source>Play</source>
         <translation>재생</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="221"/>
+        <location filename="../player/mainwindow_p.cpp" line="222"/>
         <source>%1 ...
 Please wait for a while.</source>
         <translation>%1 ...
@@ -2566,7 +2566,7 @@ Stopped Position: %2</source>
 중단된 시간: %2</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="164"/>
+        <location filename="../player/mainwindow_p.cpp" line="165"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>에러!
@@ -3615,23 +3615,23 @@ Please wait for a while.</source>
 <context>
     <name>OpenMediaFolderDialog</name>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="14"/>
         <location filename="../dialog/openmediafolderdialog.cpp" line="87"/>
+        <location filename="../dialog/openmediafolderdialog.cpp" line="99"/>
         <source>Open Folder</source>
         <translation>폴더 열기</translation>
     </message>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="44"/>
+        <location filename="../ui/openmediafolderdialog.ui" line="41"/>
         <source>Videos</source>
         <translation>비디오</translation>
     </message>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="51"/>
+        <location filename="../ui/openmediafolderdialog.ui" line="48"/>
         <source>Images</source>
         <translation>이미지</translation>
     </message>
     <message>
-        <location filename="../ui/openmediafolderdialog.ui" line="58"/>
+        <location filename="../ui/openmediafolderdialog.ui" line="55"/>
         <source>Audios</source>
         <translation>오디오</translation>
     </message>
@@ -3913,49 +3913,49 @@ Please wait for a while.</source>
         <translation type="vanished">수직 여백</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="35"/>
+        <location filename="../ui/osdthemewidget.ui" line="32"/>
         <source>Message</source>
         <translation>메시지</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="41"/>
+        <location filename="../ui/osdthemewidget.ui" line="38"/>
         <source>Show messages when actions are triggered</source>
         <translation>액션이 작동되었을 때 메시지를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="48"/>
+        <location filename="../ui/osdthemewidget.ui" line="45"/>
         <source>Show messages when the window is resized</source>
         <translation>창의 크기가 바뀌었을 때 메시지를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="57"/>
-        <location filename="../ui/osdthemewidget.ui" line="148"/>
+        <location filename="../ui/osdthemewidget.ui" line="54"/>
+        <location filename="../ui/osdthemewidget.ui" line="145"/>
         <source>Duration</source>
         <translation>지속시간</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="64"/>
-        <location filename="../ui/osdthemewidget.ui" line="157"/>
+        <location filename="../ui/osdthemewidget.ui" line="61"/>
+        <location filename="../ui/osdthemewidget.ui" line="154"/>
         <source>sec</source>
         <translation>초</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="98"/>
+        <location filename="../ui/osdthemewidget.ui" line="95"/>
         <source>Timeline</source>
         <translation>타임라인</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="104"/>
+        <location filename="../ui/osdthemewidget.ui" line="101"/>
         <source>Show timeline when seeking</source>
         <translation>탐색시 타임라인 표시</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="111"/>
+        <location filename="../ui/osdthemewidget.ui" line="108"/>
         <source>Position</source>
         <translation>위치</translation>
     </message>
     <message>
-        <location filename="../ui/osdthemewidget.ui" line="123"/>
+        <location filename="../ui/osdthemewidget.ui" line="120"/>
         <source>% of height</source>
         <translation>%(화면 높이 기준)</translation>
     </message>
@@ -4030,12 +4030,12 @@ Please wait for a while.</source>
         <translation>에디션 %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="976"/>
+        <location filename="../player/playengine.cpp" line="977"/>
         <source>Playing</source>
         <translation>재생중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="974"/>
+        <location filename="../player/playengine.cpp" line="975"/>
         <source>Stopped</source>
         <translation>정지</translation>
     </message>
@@ -4044,32 +4044,32 @@ Please wait for a while.</source>
         <translation type="vanished">마침</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="958"/>
+        <location filename="../player/playengine.cpp" line="959"/>
         <source>Loading</source>
         <translation>로딩중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="960"/>
+        <location filename="../player/playengine.cpp" line="961"/>
         <source>Searching</source>
         <translation>검색중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="962"/>
+        <location filename="../player/playengine.cpp" line="963"/>
         <source>Buffering</source>
         <translation>버퍼링</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="964"/>
+        <location filename="../player/playengine.cpp" line="965"/>
         <source>Seeking</source>
         <translation>탐색중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="980"/>
+        <location filename="../player/playengine.cpp" line="981"/>
         <source>Error</source>
         <translation>에러</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="978"/>
+        <location filename="../player/playengine.cpp" line="979"/>
         <source>Paused</source>
         <translation>일시정지</translation>
     </message>
@@ -8957,7 +8957,7 @@ e.g.: English, Korean</source>
         <translation type="vanished">이미지</translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="43"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="45"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
@@ -8971,53 +8971,53 @@ e.g.: English, Korean</source>
         <translation>스냅샷을 찍는데 실패하였습니다!</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="14"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="28"/>
         <source>Take Snapshot</source>
         <translation>스냅샷 찍기</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="32"/>
+        <location filename="../ui/snapshotdialog.ui" line="29"/>
         <source>Take</source>
         <translation>찍기</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="42"/>
+        <location filename="../ui/snapshotdialog.ui" line="39"/>
         <source>Zoom Out</source>
         <translation>축소</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="45"/>
-        <location filename="../ui/snapshotdialog.ui" line="56"/>
+        <location filename="../ui/snapshotdialog.ui" line="42"/>
+        <location filename="../ui/snapshotdialog.ui" line="53"/>
         <source>Zoom In</source>
         <translation>확대</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="67"/>
+        <location filename="../ui/snapshotdialog.ui" line="64"/>
         <source>View Original Size</source>
         <translation>원본크기로 보기</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="70"/>
+        <location filename="../ui/snapshotdialog.ui" line="67"/>
         <source>Zoom Original</source>
         <translation>원본 크기로 보기</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="81"/>
+        <location filename="../ui/snapshotdialog.ui" line="78"/>
         <source>Include subtitle</source>
         <translation>자막 표시</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="104"/>
+        <location filename="../ui/snapshotdialog.ui" line="101"/>
         <source>Copy to Clipboard</source>
         <translation>클립보드로 복사</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="114"/>
+        <location filename="../ui/snapshotdialog.ui" line="111"/>
         <source>Save</source>
         <translation>저장</translation>
     </message>
     <message>
-        <location filename="../ui/snapshotdialog.ui" line="121"/>
+        <location filename="../ui/snapshotdialog.ui" line="118"/>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -9190,23 +9190,23 @@ e.g.: English, Korean</source>
 <context>
     <name>SubtitleFindDialog</name>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="14"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="93"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
         <translation>자막 찾기(OpenSubtitles.org)</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="22"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="121"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="19"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="123"/>
         <source>Open</source>
         <translation>열기</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="63"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="60"/>
         <source>Get</source>
         <translation>받기</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="70"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="67"/>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -9226,23 +9226,23 @@ e.g.: English, Korean</source>
         <translation>찾기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="198"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="140"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="200"/>
         <source>Find Subtitle</source>
         <translation>자막 찾기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="139"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation>같은 이름의 파일이 이미 존재합니다. 덮어쓰겠습니까?</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="143"/>
         <source>Overwrite</source>
         <translation>덮어쓰기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="142"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="144"/>
         <source>Save as...</source>
         <translation>다른 이름으로 저장</translation>
     </message>
@@ -9251,22 +9251,22 @@ e.g.: English, Korean</source>
         <translation type="vanished">취소</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="150"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="152"/>
         <source>Save As...</source>
         <translation>다른 이름으로 저장</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="148"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="150"/>
         <source>Subtitle Files</source>
         <translation>자막 파일</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="177"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="179"/>
         <source>All</source>
         <translation>모든 파일</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="199"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
         <source>Cannot find subtitles for %1.</source>
         <translation>%1의 자막을 찾을 수 없습니다.</translation>
     </message>
@@ -9304,17 +9304,17 @@ e.g.: English, Korean</source>
         <translation type="obsolete">텍스트</translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleview.cpp" line="51"/>
+        <location filename="../subtitle/subtitleview.cpp" line="49"/>
         <source>Show start/end time</source>
         <translation>시작/끝 표시하기</translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleview.cpp" line="52"/>
+        <location filename="../subtitle/subtitleview.cpp" line="50"/>
         <source>Scroll to current time</source>
         <translation>현재 시간으로 자동 스크롤</translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleview.cpp" line="72"/>
+        <location filename="../subtitle/subtitleview.cpp" line="70"/>
         <source>Subtitle View</source>
         <translation>자막 보기</translation>
     </message>

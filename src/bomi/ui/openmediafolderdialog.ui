@@ -10,9 +10,6 @@
     <height>203</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Open Folder</string>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">

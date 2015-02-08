@@ -18,15 +18,12 @@ DECLARE_LOG_CONTEXT(App)
 namespace Pch {
 auto open_folders() -> QMap<QString, QString>;
 auto set_open_folders(const QMap<QString, QString> &folders) -> void;
+auto _SetWindowTitle(QWidget *w, const QString &title) -> void
+{ cApp.setWindowTitle(w, title); }
 }
 
 auto root_menu_execute(const QString &longId, const QString &argument) -> bool;
 auto translator_load(const Locale &locale) -> bool;
-
-auto set_window_title(QWidget *w, const QString &title) -> void
-{
-    cApp.setWindowTitle(w, title);
-}
 
 enum class LineCmd {
     Wake, Open, Action, LogLevel, OpenGLDebug, Debug

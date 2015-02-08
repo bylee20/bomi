@@ -78,7 +78,7 @@ inline auto MBox::setDefaultButton(Button button) -> void
 { m_mbox->setDefaultButton((QMessageBox::StandardButton)button); }
 
 inline auto MBox::setTitle(const QString &title) -> void
-{ m_mbox->setWindowTitle(title); }
+{ _SetWindowTitle(m_mbox, title); }
 
 inline auto MBox::role(QAbstractButton *button) const -> Role
 { return static_cast<Role>(m_mbox->buttonRole(button)); }

@@ -276,7 +276,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     group->addButton(d->ui.fill_bg_color);
     group->setExclusive(true);
 
-    cApp.setWindowTitle(this, tr("Preferences") % _L("[*]"));
+    _SetWindowTitle(this, tr("Preferences") % _L("[*]"));
 
     auto &mo = Pref::staticMetaObject;
     d->watchers.resize(mo.propertyCount() - mo.propertyOffset());

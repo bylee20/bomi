@@ -133,6 +133,7 @@ auto MainWindow::Data::initWindow() -> void
     p->setAcceptDrops(true);
     p->resize(400, 300);
     p->setMinimumSize(QSize(400, 300));
+    _SetWindowTitle(p, QString());
 
     connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
         auto context = view->openglContext();
@@ -690,7 +691,7 @@ auto MainWindow::Data::updateTitle() -> void
         } else
             fileName = e.mediaName();
     }
-    cApp.setWindowTitle(p, fileName);
+    _SetWindowTitle(p, fileName);
 }
 
 auto MainWindow::Data::doVisibleAction(bool visible) -> void
