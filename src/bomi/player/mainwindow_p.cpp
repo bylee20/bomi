@@ -483,6 +483,10 @@ auto MainWindow::Data::applyPref() -> void
     yle.setProgram(p.yle_program());
     history.setRememberImage(p.remember_image());
     history.setPropertiesToRestore(p.restore_properties());
+    if (subFindDlg)
+        subFindDlg->setOptions(pref.preserve_downloaded_subtitles(),
+                               pref.preserve_file_name_format(),
+                               pref.preserve_fallback_folder());
     SubtitleParser::setMsPerCharactor(p.ms_per_char());
     cApp.setHeartbeat(p.use_heartbeat() ? p.heartbeat_command() : QString(),
                       p.heartbeat_interval());

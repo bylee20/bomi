@@ -348,3 +348,13 @@ auto Pref::defaultAutioAutoload() -> Autoloader
     al.search_paths << MatchString(u".*"_q, true);
     return al;
 }
+
+auto Pref::defaultFileNameFormat() -> QString
+{
+    return u"%MEDIA_NAME%"_q % '-'_q % u"%SUBTITLE_NAME%"_q % '.'_q % u"%SUBTITLE_EXT%"_q;
+}
+
+auto Pref::defaultFallbackFolder() -> QString
+{
+    return _WritablePath(Location::Download);
+}

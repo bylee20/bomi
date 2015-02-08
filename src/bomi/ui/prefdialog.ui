@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>668</width>
-    <height>504</height>
+    <height>636</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>9</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -148,7 +148,7 @@
         </layout>
        </widget>
        <widget class="QWidget" name="misc">
-        <layout class="QVBoxLayout" name="verticalLayout_25">
+        <layout class="QVBoxLayout" name="verticalLayout_34">
          <item>
           <widget class="QGroupBox" name="groupBox_30">
            <property name="title">
@@ -321,21 +321,56 @@
            <property name="title">
             <string>Subtitle finder</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_42">
-             <item>
-              <widget class="QCheckBox" name="save_downloaded_subtitles">
-               <property name="text">
-                <string>Save downloaded subtitles</string>
-               </property>
-              </widget>
-             </item>
+           <layout class="QVBoxLayout" name="verticalLayout_25">
+            <item>
+             <widget class="QCheckBox" name="preserve_downloaded_subtitles">
+              <property name="text">
+               <string>Preserve downloaded subtitles</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="formLayout_2">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>File Name Format</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="preserve_file_name_format">
+                <property name="toolTip">
+                 <string>Available formatting placeholders:
+%MEDIA_NAME%: the name of media file (extension is excluded)
+%SUBTITLE_NAME%: the name of subtitle file (extension is excluded)
+%SUBTITLE_EXT%: the extension of subtitle file</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Fallback Folder</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="preserve_fallback_folder">
+                <property name="toolTip">
+                 <string>This is a fallback folder to save downloaded subtitles when original folder is not writable.</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
            </layout>
           </widget>
          </item>
          <item>
           <widget class="QGroupBox" name="groupBox_34">
            <property name="title">
-            <string notr="true">Streaming</string>
+            <string>Streaming</string>
            </property>
            <layout class="QFormLayout" name="formLayout_21">
             <item row="0" column="0">
@@ -379,7 +414,7 @@
            <property name="sizeHint" stdset="0">
             <size>
              <width>20</width>
-             <height>334</height>
+             <height>0</height>
             </size>
            </property>
           </spacer>

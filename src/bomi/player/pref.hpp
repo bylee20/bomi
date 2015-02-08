@@ -68,7 +68,9 @@ public:
     P0(bool, lion_style_fullscreen, false)
     P0(bool, hide_cursor_fs_only, false)
     P0(int, hide_cursor_delay_sec, 3)
-    P0(bool, save_downloaded_subtitles, true)
+    P0(bool, preserve_downloaded_subtitles, true)
+    P0(QString, preserve_file_name_format, defaultFileNameFormat())
+    P0(QString, preserve_fallback_folder, defaultFallbackFolder())
     P0(bool, show_logo, true)
     P0(QColor, bg_color, Qt::black)
     P0(bool, use_heartbeat, false)
@@ -171,6 +173,8 @@ private:
     static auto defaultHwAccDeints() -> QVector<DeintMethod>;
     static auto defaultShortcuts() -> Shortcuts;
     static auto defaultMouseActionMap() -> MouseActionMap;
+    static auto defaultFileNameFormat() -> QString;
+    static auto defaultFallbackFolder() -> QString;
 };
 #undef P_
 #undef P0

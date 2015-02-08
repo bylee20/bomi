@@ -629,7 +629,10 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(tool[u"find-subtitle"_q], &QAction::triggered, p, [this] () {
         if (!subFindDlg) {
-            subFindDlg = new SubtitleFindDialog(pref.save_downloaded_subtitles(), p);
+            subFindDlg = new SubtitleFindDialog(p);
+            subFindDlg->setOptions(pref.preserve_downloaded_subtitles(),
+                                   pref.preserve_file_name_format(),
+                                   pref.preserve_fallback_folder());
             subFindDlg->setSelectedLangCode(as.sub_find_lang_code);
             connect(subFindDlg, &SubtitleFindDialog::loadRequested,
                     p, [this] (const QString &fileName) {

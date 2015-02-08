@@ -42,6 +42,11 @@ public:
     }
 };
 
+struct DownloadInfo {
+    bool temp = false;
+    QString fileName;
+};
+
 struct SubtitleFindDialog::Data {
     SubtitleFindDialog *p = nullptr;
     Ui::SubtitleFindDialog ui;
@@ -51,9 +56,15 @@ struct SubtitleFindDialog::Data {
     SubtitleLinkModel model;
     QSortFilterProxyModel proxy;
     QString fileName;
-    QMap<QUrl, QString> downloads;
+    QMap<QUrl, DownloadInfo> downloads;
     QMap<QString, QString> languages; // code, name
     QString langCode;
+    QTemporaryDir temp;
+    QFileInfo mediaFile;
+    struct {
+        bool preserve;
+        QString format, fallback;
+    } options;
     void updateState() {
         const bool ok = finder->isAvailable() && !downloader.isRunning();
         ui.open->setEnabled(ok);
@@ -84,9 +95,75 @@ struct SubtitleFindDialog::Data {
             break;
         }
     }
+    auto getNameToPreserve(const QString &subName) -> QString
+    {
+        Q_ASSERT(options.preserve);
+
+        auto dir = mediaFile.dir();
+        QTemporaryFile temp(dir.absoluteFilePath(u"XXXXXX"_q));
+        if (!temp.open())
+            dir = QDir(options.fallback);
+
+        const QFileInfo remoteFile(subName);
+        auto fileName = options.format;
+        fileName.replace(u"%MEDIA_NAME%"_q, mediaFile.completeBaseName());
+        fileName.replace(u"%SUBTITLE_NAME%"_q, remoteFile.completeBaseName());
+        fileName.replace(u"%SUBTITLE_EXT%"_q, remoteFile.suffix());
+        auto file = dir.absoluteFilePath(fileName);
+        const QFileInfo info(file);
+        if (info.exists()) {
+            MBox mbox(p, MBox::Icon::Question, tr("Find Subtitle"),
+                      tr("A file with the same name already exists. "
+                         "Do you want overwrite it?"));
+            mbox.addButton(tr("Overwrite"), BBox::AcceptRole);
+            mbox.addButton(tr("Save as..."), BBox::ActionRole);
+            mbox.addButton(BBox::Cancel);
+            mbox.exec();
+            switch (mbox.clickedRole()) {
+            case BBox::ActionRole: {
+                const QString suffix = '.'_q % info.suffix();
+                const QString filter = tr("Subtitle Files")
+                                       % " (*"_a % suffix % ')'_q;
+                file = QFileDialog::getSaveFileName(p, tr("Save As..."), file, filter);
+                if (file.isEmpty())
+                    return QString();
+                if (!file.endsWith(suffix))
+                    file += suffix;
+                file = _ToAbsFilePath(file);
+            } case BBox::AcceptRole:
+                break;
+            default:
+                return QString();
+            }
+        }
+        return file;
+    }
+    auto writeData(const DownloadInfo &info, const QByteArray &data) -> void
+    {
+        if (data.isEmpty() || info.fileName.isEmpty())
+            return;
+        QScopedPointer<QFile> file;
+        if (info.temp) {
+            auto tfile = new QTemporaryFile(temp.path() % "/XXXXXX_"_a % info.fileName);
+            tfile->setAutoRemove(false);
+            tfile->open();
+            file.reset(tfile);
+        } else {
+            file.reset(new QFile(info.fileName));
+            if (!file->open(QFile::WriteOnly | QFile::Truncate)) {
+                MBox::critical(p, tr("Find Subtitle"),
+                               tr("Cannot write file!") % '\n'_q % file->fileName(),
+                               { BBox::Ok });
+                return;
+            }
+        }
+        file->write(data);
+        file->close();
+        emit p->loadRequested(file->fileName());
+    }
 };
 
-SubtitleFindDialog::SubtitleFindDialog(const bool save, QWidget *parent)
+SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->p = this;
     d->ui.setupUi(this);
@@ -95,7 +172,6 @@ SubtitleFindDialog::SubtitleFindDialog(const bool save, QWidget *parent)
     d->proxy.setSourceModel(&d->model);
     d->proxy.setFilterKeyColumn(d->model.Language);
     d->proxy.setFilterRole(LangCodeRole);
-    d->ui.directory->hide();
     d->ui.view->setModel(&d->proxy);
     d->ui.view->header()->resizeSection(0, 100);
     d->ui.view->header()->resizeSection(1, 450);
@@ -106,28 +182,10 @@ SubtitleFindDialog::SubtitleFindDialog(const bool save, QWidget *parent)
         d->ui.prog->setMaximum(total);
         d->ui.prog->setValue(written);
     });
-    connect(&d->downloader, &Downloader::finished, [this, save] () {
+    connect(&d->downloader, &Downloader::finished, [this] () {
         auto it = d->downloads.find(d->downloader.url());
         Q_ASSERT(it != d->downloads.end());
-        auto data = _Uncompress(d->downloader.data());
-        if (!data.isEmpty()) {
-            QFile nativeFile(*it);
-            auto writable = nativeFile.open(QFile::WriteOnly | QFile::Truncate);
-            QString path;
-            if (save && writable) {
-                nativeFile.write(data);
-                nativeFile.close();
-                path = nativeFile.fileName();
-            } else {
-                QTemporaryFile tempFile;
-                tempFile.setAutoRemove(false);
-                tempFile.open();
-                tempFile.write(data);
-                tempFile.close();
-                path = tempFile.fileName();
-            }
-            emit loadRequested(path);
-        }
+        d->writeData(*it, _Uncompress(d->downloader.data()));
         d->downloads.erase(it);
         d->updateState();
     });
@@ -145,39 +203,17 @@ SubtitleFindDialog::SubtitleFindDialog(const bool save, QWidget *parent)
         const auto index = d->ui.view->currentIndex();
         if (!index.isValid())
             return;
-        auto dir = QDir(d->ui.directory->text());
-        auto fileName = d->ui.fileName->text() + u"-"_q + index.data(FileNameRole).toString();
-        auto file = dir.absoluteFilePath(fileName);
-        const QFileInfo info(file);
-        if (info.exists()) {
-            MBox mbox(this, MBox::Icon::Question, tr("Find Subtitle"),
-                      tr("A file with the same name already exists. "
-                         "Do you want overwrite it?"));
-            mbox.addButton(tr("Overwrite"), BBox::AcceptRole);
-            mbox.addButton(tr("Save as..."), BBox::ActionRole);
-            mbox.addButton(BBox::Cancel);
-            mbox.exec();
-            switch (mbox.clickedRole()) {
-            case BBox::ActionRole: {
-                const QString suffix = '.'_q % info.suffix();
-                const QString filter = tr("Subtitle Files")
-                                       % " (*"_a % suffix % ')'_q;
-                file = QFileDialog::getSaveFileName(this, tr("Save As..."),
-                                                    file, filter);
-                if (file.isEmpty())
-                    return;
-                if (!file.endsWith(suffix))
-                    file += suffix;
-                file = _ToAbsFilePath(file);
-            } case BBox::AcceptRole:
-                break;
-            default:
+        DownloadInfo info;
+        info.temp = !d->options.preserve;
+        info.fileName = index.data(FileNameRole).toString();
+        if (d->options.preserve) {
+            info.fileName = d->getNameToPreserve(info.fileName);
+            if (info.fileName.isEmpty())
                 return;
-            }
         }
         const auto url = d->ui.view->currentIndex().data(UrlRole).toUrl();
         if (d->downloader.start(url))
-            d->downloads[d->downloader.url()] = file;
+            d->downloads[d->downloader.url()] = info;
     });
     connect(d->finder, &OpenSubtitlesFinder::stateChanged,
             [this] () { d->updateState(); });
@@ -205,10 +241,18 @@ SubtitleFindDialog::~SubtitleFindDialog() {
     delete d;
 }
 
+auto SubtitleFindDialog::setOptions(bool preserve, const QString &format,
+                                    const QString &fb) -> void
+{
+    d->options.preserve = preserve;
+    d->options.format = format;
+    d->options.fallback = fb;
+}
+
 auto SubtitleFindDialog::find(const Mrl &mrl) -> void
 {
-    d->ui.fileName->setText(mrl.fileName());
-    d->ui.directory->setText(QFileInfo(mrl.toLocalFile()).absolutePath());
+    d->mediaFile = QFileInfo(mrl.toLocalFile());
+    d->ui.fileName->setText(d->mediaFile.fileName());
     if (!d->finder->isAvailable()) {
         d->pending = mrl;
     } else if (!d->finder->find(mrl)) {

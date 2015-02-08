@@ -28,9 +28,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="directory"/>
-     </item>
-     <item>
       <widget class="QPushButton" name="state"/>
      </item>
     </layout>
