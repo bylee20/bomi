@@ -172,6 +172,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             [this] (const QVector<SubtitleLink> &links) {
         auto prev = d->langCode;
         d->model.setList(links);
+        // Select first entry of list
+        d->ui.view->setCurrentIndex(d->ui.view->indexAt(QPoint()));
         d->languages.clear();
         for (auto &it : links)
             d->languages[it.langCode] = it.language;
