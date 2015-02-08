@@ -108,6 +108,11 @@ PlayEngine::PlayEngine()
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
         { d->info.video.renderer()->setFps(d->frames.measure.get()); }, 100000);
+    connect(&d->info.frameTimer, &QTimer::timeout, this, [=] () {
+        d->info.video.setDelayedFrames(d->info.delayed);
+        d->info.video.setDroppedFrames(d->mpv.get<int64_t>("vo-drop-frame-count"));
+    });
+    d->info.frameTimer.setInterval(100);
 
     _Debug("Make registrations and connections");
 

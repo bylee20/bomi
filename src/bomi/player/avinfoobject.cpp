@@ -159,28 +159,19 @@ VideoObject::VideoObject()
 {
     connect(this, &VideoObject::delayedFramesChanged,
             this, &VideoObject::delayedTimeChanged);
-    connect(&m_timer, &QTimer::timeout, this, [=] () {
-        auto fps = 0.0;
-        if (m_dropped)
-            fps = m_dropped / (m_time.elapsed() * 1e-3);
-        if (_Change(m_droppedFps, fps))
-            emit droppedFpsChanged();
-    });
-    m_timer.setInterval(100);
 }
 
 void VideoObject::setDroppedFrames(int f)
 {
-    if (f > 0 && m_dropped < 1) {
-        QMetaObject::invokeMethod(&m_timer, "start");
+    if (f > 0 && m_dropped < 1)
         m_time.restart();
-    } else if (f < 1 && m_timer.isActive()) {
-        QMetaObject::invokeMethod(&m_timer, "stop");
-        if (_Change(m_droppedFps, 0.0))
-            emit droppedFpsChanged();
-    }
     if (_Change(m_dropped, f))
         emit droppedFramesChanged();
+    auto fps = 0.0;
+    if (m_dropped)
+        fps = m_dropped / (m_time.elapsed() * 1e-3);
+    if (_Change(m_droppedFps, fps))
+        emit droppedFpsChanged();
 }
 
 auto VideoObject::delayedTime() const -> int

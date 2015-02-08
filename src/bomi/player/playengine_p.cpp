@@ -693,10 +693,8 @@ auto PlayEngine::Data::takeSnapshot() -> void
 
 auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
 {
-    const int delay = mpv.render(fbo->id(), fbo->size());
+    info.delayed = mpv.render(fbo->id(), fbo->size());
     frames.measure.push(++frames.drawn);
-    info.video.setDelayedFrames(delay);
-    info.video.setDroppedFrames(mpv.get<int64_t>("vo-drop-frame-count"));
 
     _Trace("PlayEngine::Data::renderVideoFrame(): "
            "render queued frame(%%), avgfps: %%",
@@ -853,6 +851,10 @@ auto PlayEngine::Data::updateState(State s) -> void
             emit p->stoppedChanged();
         if (check(Running))
             emit p->runningChanged();
+        if (p->isRunning())
+            info.frameTimer.start();
+        else
+            info.frameTimer.stop();
     }
 }
 

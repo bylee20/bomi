@@ -278,7 +278,7 @@ private:
     VideoHwAccObject m_hwacc;
     int m_deint = 0, m_dropped = 0, m_delayed = 0;
     qreal m_droppedFps = 0.0, m_fpsMp = 1;
-    QTime m_time; QTimer m_timer;
+    QTime m_time;
 };
 
 /******************************************************************************/
