@@ -86,7 +86,7 @@ struct SubtitleFindDialog::Data {
     }
 };
 
-SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
+SubtitleFindDialog::SubtitleFindDialog(const bool save, QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->p = this;
     d->ui.setupUi(this);
@@ -104,7 +104,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         d->ui.prog->setMaximum(total);
         d->ui.prog->setValue(written);
     });
-    connect(&d->downloader, &Downloader::finished, [this] () {
+    connect(&d->downloader, &Downloader::finished, [this, save] () {
         auto it = d->downloads.find(d->downloader.url());
         Q_ASSERT(it != d->downloads.end());
         auto data = _Uncompress(d->downloader.data());
@@ -112,7 +112,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             QFile nativeFile(*it);
             auto writable = nativeFile.open(QFile::WriteOnly | QFile::Truncate);
             QString path;
-            if (writable) {
+            if (save && writable) {
                 nativeFile.write(data);
                 nativeFile.close();
                 path = nativeFile.fileName();

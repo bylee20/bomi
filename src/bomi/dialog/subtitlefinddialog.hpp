@@ -6,7 +6,7 @@ class Mrl;
 class SubtitleFindDialog : public QDialog {
     Q_OBJECT
 public:
-    SubtitleFindDialog(QWidget *parent = nullptr);
+    SubtitleFindDialog(const bool save, QWidget *parent = nullptr);
     ~SubtitleFindDialog();
     auto find(const Mrl &mrl) -> void;
     auto setSelectedLangCode(const QString &langCode) -> void;
