@@ -33,8 +33,9 @@ auto AudioResampler::setFormat(const AudioBufferFormat &in, const AudioBufferFor
     d->resample = d->in != d->out;
     if (!d->resample)
         return;
-    if (!d->swr)
-        d->swr = swr_alloc();
+    if (d->swr)
+        swr_free(&d->swr);
+    d->swr = swr_alloc();
     Q_ASSERT(in.channels().num == out.channels().num);
     const auto nch = in.channels().num;
     av_opt_set_int(d->swr,  "in_channel_count", nch, 0);
