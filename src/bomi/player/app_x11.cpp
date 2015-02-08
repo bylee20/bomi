@@ -53,6 +53,7 @@ AppX11::AppX11(QObject *parent)
         if (d->xss && d->connection) {
             _Trace("Call xcb_force_screen_saver().");
             xcb_force_screen_saver(d->connection, XCB_SCREEN_SAVER_RESET);
+            xcb_flush(d->connection);
         } else
             _Error("Cannot run xcb_force_screen_saver().");
     });
