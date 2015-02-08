@@ -86,7 +86,7 @@ struct SubtitleFindDialog::Data {
     }
 };
 
-SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
+SubtitleFindDialog::SubtitleFindDialog(const bool save, QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->p = this;
     d->ui.setupUi(this);
@@ -95,6 +95,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     d->proxy.setSourceModel(&d->model);
     d->proxy.setFilterKeyColumn(d->model.Language);
     d->proxy.setFilterRole(LangCodeRole);
+    d->ui.directory->hide();
     d->ui.view->setModel(&d->proxy);
     d->ui.view->header()->resizeSection(0, 100);
     d->ui.view->header()->resizeSection(1, 450);
@@ -105,16 +106,27 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         d->ui.prog->setMaximum(total);
         d->ui.prog->setValue(written);
     });
-    connect(&d->downloader, &Downloader::finished, [this] () {
+    connect(&d->downloader, &Downloader::finished, [this, save] () {
         auto it = d->downloads.find(d->downloader.url());
         Q_ASSERT(it != d->downloads.end());
         auto data = _Uncompress(d->downloader.data());
         if (!data.isEmpty()) {
-            QFile file(*it);
-            file.open(QFile::WriteOnly | QFile::Truncate);
-            file.write(data);
-            file.close();
-            emit loadRequested(file.fileName());
+            QFile nativeFile(*it);
+            auto writable = nativeFile.open(QFile::WriteOnly | QFile::Truncate);
+            QString path;
+            if (save && writable) {
+                nativeFile.write(data);
+                nativeFile.close();
+                path = nativeFile.fileName();
+            } else {
+                QTemporaryFile tempFile;
+                tempFile.setAutoRemove(false);
+                tempFile.open();
+                tempFile.write(data);
+                tempFile.close();
+                path = tempFile.fileName();
+            }
+            emit loadRequested(path);
         }
         d->downloads.erase(it);
         d->updateState();
@@ -133,8 +145,9 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         const auto index = d->ui.view->currentIndex();
         if (!index.isValid())
             return;
-        const auto dir = QFileInfo(d->ui.file->text()).dir();
-        auto file = dir.absoluteFilePath(index.data(FileNameRole).toString());
+        auto dir = QDir(d->ui.directory->text());
+        auto fileName = d->ui.fileName->text() + QString::fromStdString(" - ") + index.data(FileNameRole).toString();
+        auto file = dir.absoluteFilePath(fileName);
         const QFileInfo info(file);
         if (info.exists()) {
             MBox mbox(this, MBox::Icon::Question, tr("Find Subtitle"),
@@ -172,6 +185,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             [this] (const QVector<SubtitleLink> &links) {
         auto prev = d->langCode;
         d->model.setList(links);
+        // Select first entry of list
+        d->ui.view->setCurrentIndex(d->ui.view->indexAt(QPoint()));
         d->languages.clear();
         for (auto &it : links)
             d->languages[it.langCode] = it.language;
@@ -192,7 +207,8 @@ SubtitleFindDialog::~SubtitleFindDialog() {
 
 auto SubtitleFindDialog::find(const Mrl &mrl) -> void
 {
-    d->ui.file->setText(mrl.toLocalFile());
+    d->ui.fileName->setText(mrl.fileName());
+    d->ui.directory->setText(QFileInfo(mrl.toLocalFile()).absolutePath());
     if (!d->finder->isAvailable()) {
         d->pending = mrl;
     } else if (!d->finder->find(mrl)) {

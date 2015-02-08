@@ -317,6 +317,22 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="subtitle_finder">
+           <property name="title">
+            <string>Subtitle finder</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_42">
+             <item>
+              <widget class="QCheckBox" name="save_downloaded_subtitles">
+               <property name="text">
+                <string>Save downloaded subtitles</string>
+               </property>
+              </widget>
+             </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="QGroupBox" name="groupBox_34">
            <property name="title">
             <string notr="true">Streaming</string>

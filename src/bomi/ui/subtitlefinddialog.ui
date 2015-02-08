@@ -21,11 +21,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="file">
+      <widget class="QLineEdit" name="fileName">
        <property name="readOnly">
         <bool>true</bool>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="directory"/>
      </item>
      <item>
       <widget class="QPushButton" name="state"/>
@@ -58,6 +61,9 @@
       <widget class="QPushButton" name="get">
        <property name="text">
         <string>Get</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
