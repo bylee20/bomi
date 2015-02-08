@@ -109,11 +109,22 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         Q_ASSERT(it != d->downloads.end());
         auto data = _Uncompress(d->downloader.data());
         if (!data.isEmpty()) {
-            QFile file(*it);
-            file.open(QFile::WriteOnly | QFile::Truncate);
-            file.write(data);
-            file.close();
-            emit loadRequested(file.fileName());
+            QFile nativeFile(*it);
+            auto writable = nativeFile.open(QFile::WriteOnly | QFile::Truncate);
+            QString path;
+            if (writable) {
+                nativeFile.write(data);
+                nativeFile.close();
+                path = nativeFile.fileName();
+            } else {
+                QTemporaryFile tempFile;
+                tempFile.setAutoRemove(false);
+                tempFile.open();
+                tempFile.write(data);
+                tempFile.close();
+                path = tempFile.fileName();
+            }
+            emit loadRequested(path);
         }
         d->downloads.erase(it);
         d->updateState();
