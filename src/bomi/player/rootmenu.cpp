@@ -718,3 +718,27 @@ auto RootMenu::action(const QString &longId) const -> QAction*
 {
     return d->find(longId).action;
 }
+
+auto RootMenu::action(const QKeyEvent *event) const -> QAction*
+{
+    std::list<Qt::Modifier> acceptedMod = {Qt::SHIFT, Qt::CTRL, Qt::ALT, Qt::META};
+    QAction *action;
+
+    while (acceptedMod.size()) {
+        auto modMask = std::accumulate(acceptedMod.begin(), acceptedMod.end(), 0x0, [](auto x, auto y) { return x | y; });
+        auto keyCombo = event->key() + (event->modifiers() & modMask);
+
+        if ((action = m_keymap.value(keyCombo))) {
+            _Debug("Found valid key sequence '%%'", QKeySequence(keyCombo).toString());
+            break;
+        } else {
+            // Key sequence not recognized, so ignoring a modifier
+            acceptedMod.pop_front();
+        }
+    }
+
+    if (!action) {
+        _Info("No shortcut found for key sequence '%%'", QKeySequence(event->key() | event->modifiers()).toString());
+    }
+    return action;
+}

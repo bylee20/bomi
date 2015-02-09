@@ -354,9 +354,7 @@ auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void
 {
     QWidget::keyPressEvent(event);
-    constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
-    const QKeySequence shortcut(event->key() + (event->modifiers() & modMask));
-    d->trigger(RootMenu::instance().action(shortcut));
+    d->trigger(RootMenu::instance().action(event));
     event->accept();
 }
 
