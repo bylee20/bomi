@@ -34,7 +34,7 @@ bomi_exec_path := $(bomi_exec_dir)/$(bomi_exec)
 
 bomi: build/$(bomi_exec_path)
 
-build/$(bomi_exec_path): mpv skins imports
+build/$(bomi_exec_path): mpv skins imports translations
 	cd src/bomi && $(qmake) bomi.pro && $(MAKE) -j$(njobs) release
 ifeq ($(os),osx)
 	cp -r build/skins $(bomi_exec_dir)
