@@ -73,6 +73,7 @@ struct LogOptionWidget::Data {
             l.combo->addItem(names[i], (Log::Level)i);
         grid->addWidget(l.name, r, c);
         grid->addWidget(l.combo, r, c+1);
+        grid->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding), r, c+2);
         return &l;
     }
 };
@@ -93,8 +94,8 @@ LogOptionWidget::LogOptionWidget(QWidget *parent)
 
     auto file = d->create(LogOutput::File, grid, 1, 0)->combo;
 
-    d->create(LogOutput::StdOut, grid, 0, 2);
-    d->create(LogOutput::StdErr, grid, 1, 2);
+    d->create(LogOutput::StdOut, grid, 0, 3);
+    d->create(LogOutput::StdErr, grid, 1, 3);
 
     vbox->addLayout(grid);
 
