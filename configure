@@ -153,8 +153,8 @@ check_qt5_or_exit() {
             break
         fi
         done
-    elif detect_qt5 "$var"; then
-        found="$var"
+    elif detect_qt5 "$value"; then
+        found="$value"
     fi
     if [ -z "$found" ]; then
         echo "no"
