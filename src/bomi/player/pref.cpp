@@ -1,6 +1,5 @@
 #include "pref.hpp"
 #include "app.hpp"
-#include "misc/log.hpp"
 #include "video/hwacc.hpp"
 #include "misc/jsonstorage.hpp"
 #include "pref_helper.hpp"
@@ -207,6 +206,7 @@ auto Pref::save() const -> void
     cApp.setUnique(m_app_unique);
     cApp.setLocale(m_app_locale);
     cApp.setStyleName(m_app_style);
+    cApp.setLogOption(m_app_log_option);
 }
 
 auto Pref::load() -> void
@@ -237,6 +237,7 @@ auto Pref::load() -> void
     m_app_unique = cApp.isUnique();
     m_app_locale = cApp.locale();
     m_app_style = cApp.styleName();
+    m_app_log_option = cApp.logOption();
 }
 
 auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>

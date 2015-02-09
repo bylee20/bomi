@@ -9,6 +9,7 @@ src/build-*
 *.o
 *.d
 *.a
+*.qm
 *DS_Store
 moc_*.cpp
 a.out

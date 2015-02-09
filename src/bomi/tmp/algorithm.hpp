@@ -47,6 +47,20 @@ template<class Container, class Compare>
 SIA sort(Container &c, Compare cmp) -> void
 { std::sort(std::begin(c), std::end(c), cmp); }
 
+template<class T>
+SIA max(const T &t1, const T &t2) -> T { return std::max(t1, t2); }
+
+template<class T, class... Args>
+SIA max(const T &t1, const T &t2, const Args&... args) -> T
+    { return max(max(t1, t2), args...); }
+
+template<class T>
+SIA min(const T &t1, const T &t2) -> T { return std::min(t1, t2); }
+
+template<class T, class... Args>
+SIA min(const T &t1, const T &t2, const Args&... args) -> T
+    { return min(min(t1, t2), args...); }
+
 }
 
 #endif // ALGORITHM_HPP

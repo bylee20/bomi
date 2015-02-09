@@ -247,14 +247,14 @@ auto AutoloaderWidget::setValue(const Autoloader &value) -> void
 {
     d->searchPaths->setList(value.search_paths);
     d->ui.enabled->setChecked(value.enabled);
-    d->ui.mode->setCurrentValue(value.mode);
+    d->ui.mode->setCurrentEnum(value.mode);
 }
 
 auto AutoloaderWidget::value() const -> Autoloader
 {
     Autoloader al;
     al.enabled = d->ui.enabled->isChecked();
-    al.mode = d->ui.mode->currentValue();
+    al.mode = d->ui.mode->currentEnum();
     al.search_paths = d->searchPaths->list();
     return al;
 }

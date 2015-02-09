@@ -267,42 +267,42 @@ Run-time Qt Version: %3</source>
         <translation type="obsolete">bomi는 비디오 표시를 위해 OpenGL을 필요로 합니다. 당신의 시스템은 OpenGL을 지원하지 않습니다. bomi를 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="116"/>
+        <location filename="../player/app.cpp" line="118"/>
         <source>The file path or URL to open.</source>
         <translation>파일 경로 또는 URL.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="186"/>
+        <location filename="../player/app.cpp" line="190"/>
         <source>Open given %1 for file path or URL.</source>
         <translation>주어진 파일 경로 또는 URL의 %1을 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="188"/>
+        <location filename="../player/app.cpp" line="192"/>
         <source>Bring the application window in front.</source>
         <translation>어플리케이션 창을 위로 가져옵니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="190"/>
+        <location filename="../player/app.cpp" line="194"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation>%1 액션을 실행하거나 %1 메뉴를 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="192"/>
+        <location filename="../player/app.cpp" line="196"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation>최대 로그 레벨. %1는 다음 값 중 하나여야 합니다:</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="195"/>
+        <location filename="../player/app.cpp" line="199"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation>OpenGL 디버그 로거를 켭니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="197"/>
+        <location filename="../player/app.cpp" line="201"/>
         <source>Turn on options for debugging.</source>
         <translation>디버깅을 위한 옵션들을 켭니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.hpp" line="46"/>
+        <location filename="../player/app.hpp" line="48"/>
         <source>bomi</source>
         <translation>보미</translation>
     </message>
@@ -1852,6 +1852,31 @@ This requires much more CPU or GPU usage.</source>
         <source>All files in the matched folders</source>
         <translation>폴더내 모든 파일</translation>
     </message>
+    <message>
+        <location filename="../enum/logoutput.hpp" line="79"/>
+        <source>No Output</source>
+        <translation>출력 없음</translation>
+    </message>
+    <message>
+        <location filename="../enum/logoutput.hpp" line="80"/>
+        <source>Standard Output</source>
+        <translation>표준 출력</translation>
+    </message>
+    <message>
+        <location filename="../enum/logoutput.hpp" line="81"/>
+        <source>Standard Error</source>
+        <translation>표준 에러</translation>
+    </message>
+    <message>
+        <location filename="../enum/logoutput.hpp" line="82"/>
+        <source>Plain Text File</source>
+        <translation>평문 텍스트 파일</translation>
+    </message>
+    <message>
+        <location filename="../enum/logoutput.hpp" line="83"/>
+        <source>Systemd Journal</source>
+        <translation>Systemd Journal</translation>
+    </message>
 </context>
 <context>
     <name>FavoritesView</name>
@@ -2278,6 +2303,14 @@ This requires much more CPU or GPU usage.</source>
         <location filename="../widget/localecombobox.cpp" line="26"/>
         <source>System locale[%1]</source>
         <translation>시스템 로캘[%1]</translation>
+    </message>
+</context>
+<context>
+    <name>LogOptionWidget</name>
+    <message>
+        <location filename="../misc/logoption.cpp" line="103"/>
+        <source>File Path</source>
+        <translation>파일 경로</translation>
     </message>
 </context>
 <context>
@@ -4765,7 +4798,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
 <context>
     <name>Pref</name>
     <message>
-        <location filename="../player/pref.cpp" line="292"/>
+        <location filename="../player/pref.cpp" line="293"/>
         <source>70</source>
         <comment>This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. Higher value means that auto-detection will be applied only if the result is more reliable.</comment>
         <translation></translation>
@@ -5280,17 +5313,17 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="176"/>
-        <location filename="../ui/prefdialog.ui" line="2064"/>
-        <location filename="../ui/prefdialog.ui" line="2407"/>
-        <location filename="../ui/prefdialog.ui" line="2430"/>
-        <location filename="../ui/prefdialog.ui" line="2453"/>
-        <location filename="../ui/prefdialog.ui" line="2537"/>
-        <location filename="../ui/prefdialog.ui" line="2625"/>
+        <location filename="../ui/prefdialog.ui" line="2071"/>
+        <location filename="../ui/prefdialog.ui" line="2414"/>
+        <location filename="../ui/prefdialog.ui" line="2437"/>
+        <location filename="../ui/prefdialog.ui" line="2460"/>
+        <location filename="../ui/prefdialog.ui" line="2544"/>
+        <location filename="../ui/prefdialog.ui" line="2632"/>
         <source>sec</source>
         <translation>초</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2003"/>
+        <location filename="../ui/prefdialog.ui" line="2010"/>
         <source>Disable screensaver while playing</source>
         <translation>재생중 화면 보호기 끄기</translation>
     </message>
@@ -5415,12 +5448,12 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">최대 휘도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2086"/>
+        <location filename="../ui/prefdialog.ui" line="2093"/>
         <source>Run only single bomi application at the same time</source>
         <translation>동시에 하나의 보미 어플리케이션만 실행</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2100"/>
+        <location filename="../ui/prefdialog.ui" line="2107"/>
         <source>Use Lion-style fullscreen mode</source>
         <translation>라이온 방식의 풀스크린 모드 사용</translation>
     </message>
@@ -5430,13 +5463,13 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>언어</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2248"/>
-        <location filename="../ui/prefdialog.ui" line="2324"/>
+        <location filename="../ui/prefdialog.ui" line="2255"/>
+        <location filename="../ui/prefdialog.ui" line="2331"/>
         <source>You may need to restart bomi to apply the changes </source>
         <translation>변경점을 모두 적용하기 위해서는 보미를 다시 시작해야 합니다</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2239"/>
+        <location filename="../ui/prefdialog.ui" line="2246"/>
         <source>Window style</source>
         <translation>창 스타일</translation>
     </message>
@@ -5507,7 +5540,12 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>동작 보간</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2175"/>
+        <location filename="../ui/prefdialog.ui" line="1997"/>
+        <source>Logging (Restart required)</source>
+        <translation>로그 (재시작 필요)</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2182"/>
         <source>Background Image</source>
         <translation>배경 그림</translation>
     </message>
@@ -5554,7 +5592,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="790"/>
-        <location filename="../ui/prefdialog.ui" line="2504"/>
+        <location filename="../ui/prefdialog.ui" line="2511"/>
         <location filename="../dialog/prefdialog.cpp" line="125"/>
         <source>Subtitle</source>
         <translation>자막</translation>
@@ -5597,7 +5635,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="vanished">bomi 기본 로고를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2308"/>
+        <location filename="../ui/prefdialog.ui" line="2315"/>
         <source>Locale</source>
         <translation>로캘</translation>
     </message>
@@ -5837,27 +5875,27 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="vanished">재생 목록에 미디어 위치를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2181"/>
+        <location filename="../ui/prefdialog.ui" line="2188"/>
         <source>Show default C&amp;MPlayer logo</source>
         <translation>기본 보미 로고 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2190"/>
+        <location filename="../ui/prefdialog.ui" line="2197"/>
         <source>Fi&amp;ll color:</source>
         <translation>색 채우기:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2225"/>
+        <location filename="../ui/prefdialog.ui" line="2232"/>
         <source>Playlist View</source>
         <translation>재생 목록</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2232"/>
+        <location filename="../ui/prefdialog.ui" line="2239"/>
         <source>History View</source>
         <translation>재생 기록</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2592"/>
+        <location filename="../ui/prefdialog.ui" line="2599"/>
         <source>Amplifier</source>
         <translation>앰프</translation>
     </message>
@@ -5879,7 +5917,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>이름</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2644"/>
+        <location filename="../ui/prefdialog.ui" line="2651"/>
         <source>Color</source>
         <translation>색</translation>
     </message>
@@ -6108,27 +6146,27 @@ e.g.: English, Korean</source>
         <translation type="vanished">배경 상자</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1997"/>
+        <location filename="../ui/prefdialog.ui" line="2004"/>
         <source>Screensaver</source>
         <translation>화면 보호기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2013"/>
+        <location filename="../ui/prefdialog.ui" line="2020"/>
         <source>Use external command</source>
         <translation>외부 명령어 사용</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2057"/>
+        <location filename="../ui/prefdialog.ui" line="2064"/>
         <source>Interval</source>
         <translation>간격</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2093"/>
+        <location filename="../ui/prefdialog.ui" line="2100"/>
         <source>Resize to video resolution in windowed-mode when video is changed</source>
         <translation>윈도우 모드에서 비디오가 바뀌면 창 크기를 비디오 해상도에 맞춤</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2107"/>
+        <location filename="../ui/prefdialog.ui" line="2114"/>
         <source>Use D-Bus interface for MPRISv2</source>
         <translation>MPRISv2 D-Bus 인터페이스를 사용</translation>
     </message>
@@ -6154,66 +6192,66 @@ e.g.: English, Korean</source>
         <translation type="vanished">버튼 클릭</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2284"/>
+        <location filename="../ui/prefdialog.ui" line="2291"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation>마우스 휠 스크롤 방향을 반대로</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2334"/>
+        <location filename="../ui/prefdialog.ui" line="2341"/>
         <source>Audio Priority</source>
         <translation>오디오 우선 순위</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2353"/>
+        <location filename="../ui/prefdialog.ui" line="2360"/>
         <source>Subtitle Priority</source>
         <translation>자막 우선 순위</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2372"/>
+        <location filename="../ui/prefdialog.ui" line="2379"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
         <translation>이 옵션은 오디오 및 자막 우선 순위를 결정하는데 사용됩니다.
 정규 표현식이 지원됩니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2391"/>
+        <location filename="../ui/prefdialog.ui" line="2398"/>
         <source>Seek</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2400"/>
+        <location filename="../ui/prefdialog.ui" line="2407"/>
         <source>Step 1</source>
         <translation>1단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2423"/>
+        <location filename="../ui/prefdialog.ui" line="2430"/>
         <source>Step 2</source>
         <translation>2단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2446"/>
+        <location filename="../ui/prefdialog.ui" line="2453"/>
         <source>Step 3</source>
         <translation>3단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2472"/>
+        <location filename="../ui/prefdialog.ui" line="2479"/>
         <location filename="../dialog/prefdialog.cpp" line="107"/>
         <source>Playback</source>
         <translation>재생</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2481"/>
+        <location filename="../ui/prefdialog.ui" line="2488"/>
         <source>Speed</source>
         <translation>속도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2560"/>
+        <location filename="../ui/prefdialog.ui" line="2567"/>
         <location filename="../dialog/prefdialog.cpp" line="120"/>
         <source>Audio</source>
         <translation>오디오</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2566"/>
+        <location filename="../ui/prefdialog.ui" line="2573"/>
         <source>Volume</source>
         <translation>소리</translation>
     </message>
@@ -6222,33 +6260,33 @@ Regular expression is supported.</source>
         <translation type="obsolete">앰프</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2510"/>
+        <location filename="../ui/prefdialog.ui" line="2517"/>
         <source>Position</source>
         <translation>위치</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2530"/>
-        <location filename="../ui/prefdialog.ui" line="2618"/>
+        <location filename="../ui/prefdialog.ui" line="2537"/>
+        <location filename="../ui/prefdialog.ui" line="2625"/>
         <source>Sync Delay</source>
         <translation>싱크 지연</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2650"/>
+        <location filename="../ui/prefdialog.ui" line="2657"/>
         <source>Brightness</source>
         <translation>밝기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2670"/>
+        <location filename="../ui/prefdialog.ui" line="2677"/>
         <source>Contrast</source>
         <translation>대비</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2690"/>
+        <location filename="../ui/prefdialog.ui" line="2697"/>
         <source>Saturation</source>
         <translation>채도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2710"/>
+        <location filename="../ui/prefdialog.ui" line="2717"/>
         <source>Hue</source>
         <translation>색조</translation>
     </message>
@@ -6337,7 +6375,7 @@ Regular expression is supported.</source>
         <translation>조작 단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2152"/>
+        <location filename="../ui/prefdialog.ui" line="2159"/>
         <source>Skin</source>
         <translation>스킨</translation>
     </message>
@@ -9401,7 +9439,7 @@ e.g.: English, Korean</source>
 <context>
     <name>Translator</name>
     <message>
-        <location filename="../player/translator.cpp" line="110"/>
+        <location filename="../player/translator.cpp" line="111"/>
         <source>UTF-8</source>
         <comment>Specify most popular encoding here in target localization.</comment>
         <translation>CP949</translation>

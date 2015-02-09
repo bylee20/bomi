@@ -29,9 +29,9 @@ OpenMediaBehaviorGroupBox::~OpenMediaBehaviorGroupBox()
 auto OpenMediaBehaviorGroupBox::setValue(const OpenMediaInfo &open) -> void
 {
     d->start->setChecked(open.start_playback);
-    d->playlist->setCurrentValue(open.behavior);
+    d->playlist->setCurrentEnum(open.behavior);
 }
 auto OpenMediaBehaviorGroupBox::value() const -> OpenMediaInfo
 {
-    return OpenMediaInfo(d->playlist->currentValue(), d->start->isChecked());
+    return OpenMediaInfo(d->playlist->currentEnum(), d->start->isChecked());
 }

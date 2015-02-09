@@ -22,16 +22,16 @@ public:
         if (autosetup)
             setup();
     }
-    auto addValue(Enum e) -> void
-        { addItem(EnumInfo<Enum>::description(e), QVariant::fromValue(e)); }
-    auto value(int i) const -> Enum { return itemData(i).template value<Enum>(); }
-    auto currentValue() const -> Enum { return currentData().template value<Enum>(); }
-    auto setCurrentValue(Enum e) -> void { setCurrentData(QVariant::fromValue(e)); }
+    auto addEnum(Enum e) -> void
+        { addItem<Enum>(EnumInfo<Enum>::description(e), e); }
+    auto enum_(int i) const -> Enum { return value<Enum>(i); }
+    auto currentEnum() const -> Enum { return currentValue<Enum>(); }
+    auto setCurrentEnum(Enum e) -> void { setCurrentValue(e); }
     auto setRetranslatable(bool retrans) -> void { m_retrans = retrans; }
 private:
     auto setup() -> void {
         for (auto &item : EnumInfo<Enum>::items())
-            addValue(item.value);
+            addEnum(item.value);
     }
     auto retranslate() -> void {
         for (int i = 0; i < count(); ++i) {

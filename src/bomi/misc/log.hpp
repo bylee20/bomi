@@ -1,6 +1,8 @@
 #ifndef LOG_HPP
 #define LOG_HPP
 
+class LogOption;
+
 SIA _ToLog(char n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(qint8 n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(qint16 n) -> QByteArray { return QByteArray::number(n); }
@@ -49,20 +51,17 @@ class Log {
     constexpr static const char *l2t = " FEWIDT";
 public:
     enum Level { Off, Fatal, Error, Warn, Info, Debug, Trace };
-    enum Output { StdOut, StdErr, SystemD, File };
-    static auto maximumLevel() -> Level { return m_maxLevel; }
-    static auto  setMaximumLevel(Level level) -> void { m_maxLevel = level; }
     template<class F>
     static auto write(Level level, F &&getLogText) -> void
     {
-        if (level <= m_maxLevel)
+        if (level <= maximumLevel())
             print(level, std::move(getLogText() += '\n'));
     }
     template<class... Args>
     static auto write(const char *ctx, Level level, const QByteArray &format,
                       const Args &... args) -> void
     {
-        if (level <= m_maxLevel)
+        if (level <= maximumLevel())
             print(level, std::move(Helper(level, ctx, format, args...).log() += '\n'));
     }
     template<class... Args>
@@ -71,14 +70,16 @@ public:
     template<class... Args>
     static auto parse(const QByteArray &fmt, const Args &... args) -> QByteArray
         { return std::move(Helper(fmt, args...).log()); }
-    static auto options() -> QStringList { return m_options; }
-    static auto setMaximumLevel(const QString &option) -> void
+    static auto name(Level level) -> QString { return m_options[level]; }
+    static auto levelNames() -> QStringList { return m_options; }
+    static auto level(const QString &name) -> Level
     {
-        const int index = m_options.indexOf(option);
-        setMaximumLevel(index < 0 ? Info : (Level)index);
+        const int index = m_options.indexOf(name);
+        return index < 0 ? Off : (Level)index;
     }
     static auto print(Level lv, const QByteArray &log) -> void;
-
+    static auto maximumLevel() -> Level;
+    static auto setOption(const LogOption &option) -> void;
     static auto qt(QtMsgType type, const QMessageLogContext &context, const QString &msg) -> void;
 private:
     struct Helper {
@@ -140,13 +141,15 @@ private:
 #define DECLARE_LOG_CONTEXT(ctx) \
     static inline const char *getLogContext() { return (#ctx); }
 
-#define _WriteLog(lv, fmt, ...) \
-    Log::write(lv, [&] () { return std::move(Log::parse(lv, getLogContext(), fmt, ##__VA_ARGS__)); })
+#define _WriteLog(lv, fmt, ...) Log::write(lv, [&] () \
+    { return std::move(Log::parse(lv, getLogContext(), fmt, ##__VA_ARGS__)); })
 #define _Fatal(fmt, ...) _WriteLog(Log::Fatal, fmt, ##__VA_ARGS__)
 #define _Error(fmt, ...) _WriteLog(Log::Error, fmt, ##__VA_ARGS__)
-#define _Warn(fmt, ...) _WriteLog(Log::Warn, fmt, ##__VA_ARGS__)
-#define _Info(fmt, ...) _WriteLog(Log::Info, fmt, ##__VA_ARGS__)
+#define _Warn(fmt, ...)  _WriteLog(Log::Warn,  fmt, ##__VA_ARGS__)
+#define _Info(fmt, ...)  _WriteLog(Log::Info,  fmt, ##__VA_ARGS__)
 #define _Debug(fmt, ...) _WriteLog(Log::Debug, fmt, ##__VA_ARGS__)
 #define _Trace(fmt, ...) _WriteLog(Log::Trace, fmt, ##__VA_ARGS__)
+
+Q_DECLARE_METATYPE(Log::Level)
 
 #endif // LOG_HPP

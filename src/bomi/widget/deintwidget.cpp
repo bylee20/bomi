@@ -24,7 +24,7 @@ struct DeintWidget::Data {
         auto &l = line(proc);
 
         l.combo = new DeintMethodComboBox(false, p);
-        Q_ASSERT(l.combo->value(0) == DeintMethod::None);
+        Q_ASSERT(l.combo->enum_(0) == DeintMethod::None);
         l.combo->removeItem(0);
         for (auto &caps : DeintCaps::list(proc)) {
             Q_ASSERT(caps.supports(proc));
@@ -69,7 +69,7 @@ struct DeintWidget::Data {
     auto setOption(Processor proc, const DeintOption &option)
     {
         auto &l = line(proc);
-        l.combo->setCurrentValue(option.method);
+        l.combo->setCurrentEnum(option.method);
         l.doubler->setChecked(option.doubler);
     }
     auto option(Processor proc) -> DeintOption
@@ -78,7 +78,7 @@ struct DeintWidget::Data {
 
         DeintOption opt;
         opt.processor = proc;
-        opt.method = l.combo->currentValue();
+        opt.method = l.combo->currentEnum();
         opt.doubler = l.doubler->isEnabled() && l.doubler->isChecked();
         return opt;
     }

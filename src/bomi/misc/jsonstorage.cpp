@@ -154,6 +154,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(AudioEqualizer);
     INSERT(StreamList);
     INSERT(Locale);
+    INSERT(LogOption);
 
     for (auto type : EnumMetaTypeIds) {
         auto &ec = c[type];

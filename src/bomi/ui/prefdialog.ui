@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1992,6 +1992,13 @@
           </widget>
          </item>
          <item>
+          <widget class="LogOptionWidget" name="app_log_option">
+           <property name="title">
+            <string>Logging (Restart required)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QGroupBox" name="groupBox_27">
            <property name="title">
             <string>Screensaver</string>
@@ -2891,6 +2898,12 @@ Regular expression is supported.</string>
    <class>MotionIntrplOptionWidget</class>
    <extends>QGroupBox</extends>
    <header>video/motionintrploption.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>LogOptionWidget</class>
+   <extends>QGroupBox</extends>
+   <header>misc/logoption.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -27,6 +27,7 @@
 #include "videoeffect.hpp"
 #include "quicksnapshotsave.hpp"
 #include "mousebehavior.hpp"
+#include "logoutput.hpp"
 auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
 {
     EnumNameVariantConverter conv;
@@ -114,11 +115,14 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<MouseBehavior>()) {
         conv.variantToName = _EnumVariantToEnumName<MouseBehavior>;
         conv.nameToVariant = _EnumNameToEnumVariant<MouseBehavior>;
+    } else    if (metaType == qMetaTypeId<LogOutput>()) {
+        conv.variantToName = _EnumVariantToEnumName<LogOutput>;
+        conv.nameToVariant = _EnumNameToEnumVariant<LogOutput>;
     } else
         return EnumNameVariantConverter();
     return conv;
 }
-const std::array<int, 28> EnumMetaTypeIds = {
+const std::array<int, 29> EnumMetaTypeIds = {
     qMetaTypeId<TextThemeStyle>(),
     qMetaTypeId<SpeakerId>(),
     qMetaTypeId<ChannelLayout>(),
@@ -146,5 +150,6 @@ const std::array<int, 28> EnumMetaTypeIds = {
     qMetaTypeId<ChangeValue>(),
     qMetaTypeId<VideoEffect>(),
     qMetaTypeId<QuickSnapshotSave>(),
-    qMetaTypeId<MouseBehavior>()
+    qMetaTypeId<MouseBehavior>(),
+    qMetaTypeId<LogOutput>()
 };

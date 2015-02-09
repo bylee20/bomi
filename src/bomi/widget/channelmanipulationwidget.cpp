@@ -15,8 +15,8 @@ struct ChannelManipulationWidget::Data {
     void makeTable() {
         table->blockSignals(true);
         mp_chmap src, dest;
-        ChannelLayout output = this->output->currentValue();
-        ChannelLayout  input = this-> input->currentValue();
+        ChannelLayout output = this->output->currentEnum();
+        ChannelLayout  input = this-> input->currentEnum();
         auto makeHeader = [] (ChannelLayout layout, mp_chmap &chmap) {
             _ChmapFromLayout(&chmap, layout);
             QStringList header;
@@ -147,8 +147,8 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
 ChannelManipulationWidget::~ChannelManipulationWidget() {
     QSettings r;
     r.beginGroup(u"channel_layouts"_q);
-    r.setValue("output"_a, _EnumName(d->output->currentValue()));
-    r.setValue("input"_a, _EnumName(d->input->currentValue()));
+    r.setValue("output"_a, _EnumName(d->output->currentEnum()));
+    r.setValue("input"_a, _EnumName(d->input->currentEnum()));
     r.endGroup();
     delete d;
 }
@@ -156,8 +156,8 @@ ChannelManipulationWidget::~ChannelManipulationWidget() {
 auto ChannelManipulationWidget::setCurrentLayouts(ChannelLayout src,
                                                   ChannelLayout dst) -> void
 {
-    d->output->setCurrentValue(dst);
-    d-> input->setCurrentValue(src);
+    d->output->setCurrentEnum(dst);
+    d-> input->setCurrentEnum(src);
 }
 
 auto ChannelManipulationWidget::setMap(const ChannelLayoutMap &map) -> void

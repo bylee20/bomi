@@ -5,7 +5,7 @@
 
 class QUrl;                             class Mrl;
 class MainWindow;                       class QMenuBar;
-class Locale;
+class Locale;                           class LogOption;
 
 class App : public QApplication {
     Q_OBJECT
@@ -29,6 +29,8 @@ public:
     auto setLocale(const Locale &locale) -> void;
     auto defaultStyleName() const -> QString;
     auto locale() const -> Locale;
+    auto setLogOption(const LogOption &option) -> void;
+    auto logOption() const -> LogOption;
     auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
     auto setScreensaverDisabled(bool disabled) -> void;
     auto setHeartbeat(const QString &command, int interval) -> void;

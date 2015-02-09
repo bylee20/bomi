@@ -39,7 +39,7 @@ OsdThemeWidget::OsdThemeWidget(QWidget *parent)
 
     connect(d->ui.timeline_position, &VerticalAlignmentComboBox::currentDataChanged,
             this, [=] () {
-        const bool center = d->ui.timeline_position->currentValue() == VerticalAlignment::Center;
+        const bool center = d->ui.timeline_position->currentEnum() == VerticalAlignment::Center;
         d->ui.timeline_margin->setEnabled(!center);
     });
 
@@ -64,7 +64,7 @@ auto OsdThemeWidget::value() const -> OsdTheme
     OsdTheme theme;
     theme.style = d->ui.style->value();
     theme.timeline.show_on_seeking = d->ui.timeline_visible->isChecked();
-    theme.timeline.position = d->ui.timeline_position->currentValue();
+    theme.timeline.position = d->ui.timeline_position->currentEnum();
     theme.timeline.margin = d->ui.timeline_margin->value()/100.0;
     theme.timeline.duration = d->ui.timeline_duration->value() * 1000 + 0.5;
     theme.message.show_on_action = d->ui.message_on_action->isChecked();
@@ -77,7 +77,7 @@ auto OsdThemeWidget::setValue(const OsdTheme &theme) -> void
 {
     d->ui.style->setValue(theme.style);
     d->ui.timeline_visible->setChecked(theme.timeline.show_on_seeking);
-    d->ui.timeline_position->setCurrentValue(theme.timeline.position);
+    d->ui.timeline_position->setCurrentEnum(theme.timeline.position);
     d->ui.timeline_margin->setValue(theme.timeline.margin * 100 + 0.5);
     d->ui.timeline_duration->setValue(theme.timeline.duration/1e3);
     d->ui.message_on_action->setChecked(theme.message.show_on_action);

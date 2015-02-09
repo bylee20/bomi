@@ -2,7 +2,7 @@
 #include "mrl.hpp"
 #include "mainwindow.hpp"
 #include "misc/localconnection.hpp"
-#include "misc/log.hpp"
+#include "misc/logoption.hpp"
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
 
@@ -47,6 +47,7 @@ struct App::Data {
 #endif
     MainWindow *main = nullptr;
 
+    LogOption logOption = LogOption::default_();
     Locale locale;
     QCommandLineOption dummy{u"__dummy__"_q};
     QCommandLineParser cmdParser, msgParser;
@@ -74,7 +75,7 @@ struct App::Data {
         } else
             options.insert(cmd, QCommandLineOption(names, desc, valName, def));
     }
-    auto execute(const QCommandLineParser *parser) -> void
+    auto execute(const QCommandLineParser *parser) -> Log::Level
     {
         auto isSet = [parser, this] (LineCmd cmd)
             { return parser->isSet(options.value(cmd, dummy)); };
@@ -82,8 +83,9 @@ struct App::Data {
             { return parser->value(options.value(cmd, dummy)); };
         auto values = [parser, this] (LineCmd cmd)
             { return parser->values(options.value(cmd, dummy)); };
+        Log::Level lvStdOut = Log::Off;
         if (isSet(LineCmd::LogLevel))
-            Log::setMaximumLevel(value(LineCmd::LogLevel));
+            lvStdOut = Log::level(value(LineCmd::LogLevel));
         if (isSet(LineCmd::OpenGLDebug))
             gldebug = true;
         if (main) {
@@ -101,10 +103,10 @@ struct App::Data {
                 root_menu_execute(args[0], args.value(1));
         }
         if (isSet(LineCmd::Debug)) {
-            if (Log::maximumLevel() < Log::Debug)
-                Log::setMaximumLevel(Log::Debug);
+            lvStdOut = qMax(lvStdOut, Log::Debug);
             gldebug = true;
         }
+        return lvStdOut;
     }
     auto getCommandParser(QCommandLineParser *parser) const
     -> QCommandLineParser*
@@ -136,16 +138,19 @@ struct App::Data {
         s.setValue(_L(key), t);
         s.endGroup();
     }
-    auto import() -> void
+    auto import() -> bool
     {
-        auto copy = [] (const QString &from, const QString &to) -> void
+        auto copy = [] (const QString &from, const QString &to) -> bool
         {
             if (QFile::exists(to) || !QFile::exists(from))
-                return;
-            if (QFile::copy(from, to))
-                _Info("Import old file: %%", from);
-            else
-                _Error("Failed to import old file: %%", from);
+                return false;
+            if (QFile::copy(from, to)) {
+                qDebug("Import old file: %s", from.toLocal8Bit().constData());
+                return true;
+            } else {
+                qDebug("Failed to import old file: %s", from.toLocal8Bit().constData());
+                return false;
+            }
         };
 
         auto path = [] (Location loc, const QString &fileName) -> QString
@@ -165,7 +170,7 @@ struct App::Data {
         copy(path(Location::Data, "/appstate.json"_a), _WritablePath(Location::Config) % "/appstate.json"_a);
         copy(path(Location::Data, "/history.db"_a), _WritablePath(Location::Config) % "/history.db"_a);
         copy(path(Location::Config, "/pref.json"_a), _WritablePath(Location::Config) % "/pref.json"_a);
-        copy(path(Location::Config, ".conf"_a), _WritablePath(Location::Config) % ".conf"_a);
+        return copy(path(Location::Config, ".conf"_a), _WritablePath(Location::Config) % ".conf"_a);
     }
 };
 
@@ -178,7 +183,6 @@ App::App(int &argc, char **argv)
     setOrganizationDomain(u"xylosper.net"_q);
     setApplicationName(_L(name()));
     setApplicationVersion(_L(version()));
-    d->import();
 
     setLocale(Locale::fromVariant(d->read("locale", Locale().toVariant())));
 
@@ -190,14 +194,22 @@ App::App(int &argc, char **argv)
                  tr("Exectute %1 action or open %1 menu."), u"id"_q);
     d->addOption(LineCmd::LogLevel, u"log-level"_q,
                  tr("Maximum verbosity for log. %1 should be one of nexts:")
-                 % "\n    "_a % Log::options().join(u", "_q), u"lv"_q);
+                 % "\n    "_a % Log::levelNames().join(u", "_q), u"lv"_q);
     d->addOption(LineCmd::OpenGLDebug, u"opengl-debug"_q,
                  tr("Turn on OpenGL debug logger."));
     d->addOption(LineCmd::Debug, u"debug"_q,
                  tr("Turn on options for debugging."));
     d->getCommandParser(&d->cmdParser)->process(arguments());
     d->getCommandParser(&d->msgParser);
-    d->execute(&d->cmdParser);
+    auto lvStdOut = d->execute(&d->cmdParser);
+
+    if (d->import())
+        setLocale(Locale::fromVariant(d->read("locale", Locale().toVariant())));
+
+    auto logOption = d->logOption;
+    if (logOption.level(LogOutput::StdOut) < lvStdOut)
+        logOption.setLevel(LogOutput::StdOut, lvStdOut);
+    Log::setOption(logOption);
 
     setQuitOnLastWindowClosed(false);
 #ifndef Q_OS_MAC
@@ -451,4 +463,15 @@ auto App::isUnique() const -> bool
 auto App::shutdown() -> bool
 {
     return d->helper.shutdown();
+}
+
+auto App::logOption() const -> LogOption
+{
+    return d->logOption;
+}
+
+auto App::setLogOption(const LogOption &option) -> void
+{
+    if (_Change(d->logOption, option))
+        d->write("log-option", _JsonToString(option.toJson()));
 }

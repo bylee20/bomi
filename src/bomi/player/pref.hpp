@@ -13,6 +13,7 @@
 #include "misc/osdstyle.hpp"
 #include "misc/autoloader.hpp"
 #include "misc/locale.hpp"
+#include "misc/logoption.hpp"
 #include "enum/generateplaylist.hpp"
 #include "enum/autoselectmode.hpp"
 #include "enum/audiodriver.hpp"
@@ -153,6 +154,7 @@ public:
     P0(bool, app_unique, true);
     P1(Locale, app_locale, {}, "locale");
     P1(QString, app_style, {}, "currentText");
+    P0(LogOption, app_log_option, LogOption::default_())
 
     static auto preset(KeyMapPreset id) -> Shortcuts;
 

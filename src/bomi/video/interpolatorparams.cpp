@@ -153,7 +153,7 @@ struct IntrplDialog::Data {
     QMap<Interpolator, IntrplParamSet> map;
     bool setting = false;
     auto current() -> IntrplParamSet&
-        { auto it = map.find(combo->currentValue()); return it.value(); }
+        { auto it = map.find(combo->currentEnum()); return it.value(); }
 };
 
 IntrplDialog::IntrplDialog(QWidget *parent)
@@ -165,11 +165,11 @@ IntrplDialog::IntrplDialog(QWidget *parent)
     d->combo = new InterpolatorComboBox;
     d->combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     connect(d->combo, &InterpolatorComboBox::currentDataChanged,
-            this, [=] () { set(d->map[d->combo->currentValue()]); });
+            this, [=] () { set(d->map[d->combo->currentEnum()]); });
     hbox->addWidget(d->combo);
     auto reset = new QPushButton(tr("Reset"));
     connect(reset, &QPushButton::clicked, this,
-            [=] () { set(IntrplParamSet::default_(d->combo->currentValue())); });
+            [=] () { set(IntrplParamSet::default_(d->combo->currentEnum())); });
     hbox->addWidget(reset);
     vbox->addLayout(hbox);
 
@@ -216,7 +216,7 @@ auto IntrplDialog::set(const IntrplParamSet &set) -> void
     d->map[set.type] = set;
 
     d->combo->blockSignals(true);
-    d->combo->setCurrentValue(set.type);
+    d->combo->setCurrentEnum(set.type);
     d->combo->blockSignals(false);
 
     for (int i = 0; i < IntrplParam::TypeMax; ++i) {

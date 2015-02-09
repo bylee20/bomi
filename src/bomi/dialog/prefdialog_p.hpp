@@ -114,4 +114,5 @@ signals:
     void changed();
 };
 
+
 #endif // PREFDIALOG_P_HPP

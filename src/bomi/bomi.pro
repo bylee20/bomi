@@ -246,7 +246,9 @@ HEADERS += \
     video/videofilter.hpp \
     video/motioninterpolator.hpp \
     enum/processor.hpp \
-    video/motionintrploption.hpp
+    video/motionintrploption.hpp \
+    enum/logoutput.hpp \
+    widget/pathbutton.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -426,7 +428,9 @@ SOURCES += \
     video/videofilter.cpp \
     video/motioninterpolator.cpp \
     enum/processor.cpp \
-    video/motionintrploption.cpp
+    video/motionintrploption.cpp \
+    enum/logoutput.cpp \
+    widget/pathbutton.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
