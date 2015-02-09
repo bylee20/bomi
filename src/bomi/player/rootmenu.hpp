@@ -16,6 +16,7 @@ public:
     auto id(QAction *action) const -> QString;
     auto description(const QString &longId) const -> QString;
     auto action(const QString &longId) const -> QAction*;
+    auto action(const QKeyEvent *event) const -> QAction*;
     auto action(const QKeySequence &shortcut) const -> QAction*
         { return m_keymap.value(shortcut); }
     auto resetKeyMap() -> void { m_keymap.clear(); fillKeyMap(this); }
