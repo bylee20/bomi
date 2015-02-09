@@ -19,16 +19,6 @@ struct Mpv::Data {
         Q_ASSERT(event == observations[event - UpdateEventBegin].event);
         return observations[event - UpdateEventBegin];
     }
-    auto log(const QByteArray &prefix, const QByteArray &text) -> void
-    {
-        Log::write(Log::Info, "[mpv/%%] %%", prefix, text);
-//        if (text.startsWith("AO: [")) {
-//            constexpr int from = 5;
-//            const int to = text.indexOf(']');
-//            const auto driver = QString::fromLatin1(text.mid(from, to - from));
-//            emit p->audioDriverChanged(driver);
-//        }
-    }
 };
 
 Mpv::Mpv(QObject *parent)
@@ -59,6 +49,7 @@ auto Mpv::initialize() -> void
     case Log::Warn:  loglv = "warn";  break;
     case Log::Error: loglv = "error"; break;
     case Log::Fatal: loglv = "fatal"; break;
+    case Log::Off:   loglv = "no";    break;
     }
     mpv_request_log_messages(m_handle, loglv.constData());
 
@@ -163,20 +154,21 @@ auto Mpv::run() -> void
             o.notify(o.event);
             break;
         } case MPV_EVENT_LOG_MESSAGE: {
-            thread_local QMap<QByteArray, QByteArray> leftmsg;
-            auto message = static_cast<mpv_event_log_message*>(ev->data);
-            const QByteArray prefix(message->prefix);
-            auto &left = leftmsg[prefix];
-            left.append(message->text);
-            int from = 0;
-            for (;;) {
-                auto to = left.indexOf('\n', from);
-                if (to < 0)
-                    break;
-                d->log(prefix, left.mid(from, to-from));
-                from = to + 1;
-            }
-            left = left.mid(from);
+            auto msg = static_cast<mpv_event_log_message*>(ev->data);
+            if (msg->log_level == MPV_LOG_LEVEL_NONE)
+                break;
+            auto getLevel = [&]() {
+                switch (msg->log_level) {
+                case MPV_LOG_LEVEL_TRACE: return Log::Trace;
+                case MPV_LOG_LEVEL_V:
+                case MPV_LOG_LEVEL_DEBUG: return Log::Debug;
+                case MPV_LOG_LEVEL_INFO:  return Log::Info;
+                case MPV_LOG_LEVEL_WARN:  return Log::Warn;
+                default:                  return Log::Error;
+                }
+            };
+            const auto lv = getLevel();
+            Log::print(lv, Log::parse(lv, "mpv/"_b + msg->prefix, msg->text));
             break;
         } case MPV_EVENT_CLIENT_MESSAGE: {
             auto message = static_cast<mpv_event_client_message*>(ev->data);

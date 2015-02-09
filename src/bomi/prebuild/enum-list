@@ -273,3 +273,10 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 #-Soft[-Soft-]
 #-SoftRock[-Soft rock-]
 #-Techno[-Techno-]
+
++LogOutput[~LogOutputs~]
+-Off[=0=][-No Output-]
+-StdOut[=1=][-Standard Output-]
+-StdErr[=2=][-Standard Error-]
+-File[=4=][-Plain Text File-]
+-Journal[=8=][-Systemd Journal-]

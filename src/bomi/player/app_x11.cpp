@@ -238,8 +238,8 @@ auto AppX11::shutdown() -> bool
     auto check = [&] (const char *fmt, const char *fb) -> bool {
         if (response.type() != QDBusMessage::ErrorMessage)
             return true;
-        Log::write(Log::Debug, fmt, response.errorName(), response.errorMessage());
-        Log::write(Log::Debug, fb);
+        _Debug(fmt, response.errorName(), response.errorMessage());
+        _Debug(fb);
         return false;
     };
     if (check("KDE session manager does not work: [%%] %%",

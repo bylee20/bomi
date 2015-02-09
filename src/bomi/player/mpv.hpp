@@ -112,18 +112,14 @@ auto Mpv::check(int err, const char *msg, const Args &... args) const -> bool
         return true;
     const auto lv = err == MPV_ERROR_PROPERTY_UNAVAILABLE ? Log::Debug
                                                           : Log::Error;
-    if (lv <= Log::maximumLevel())
-        Log::write(getLogContext(), lv, "%% %%: %%",
-                   lv == Log::Debug ? "Debug" : "Error", error(err),
-                   Log::parse(msg, args...));
+    _WriteLog(lv, "%%: %%", error(err), Log::parse(msg, args...));
     return false;
 }
 template<class... Args>
 auto Mpv::fatal(int err, const char *msg, const Args &... args) const -> void
 {
     if (!isSuccess(err))
-        Log::write(getLogContext(), Log::Fatal, "Error %%: %%",
-                   error(err), Log::parse(msg, args...));
+        _Fatal("%%: %%", error(err), Log::parse(msg, args...));
 }
 
 template<class T>

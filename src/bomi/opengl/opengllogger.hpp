@@ -13,6 +13,7 @@ public:
 signals:
     void logged(const QOpenGLDebugMessage &message);
 private:
+    auto getLogContext() const -> const char*;
     struct Data;
     Data *d;
 };
