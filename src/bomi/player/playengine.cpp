@@ -570,11 +570,9 @@ auto PlayEngine::seekChapter(int number) -> void
 auto PlayEngine::seekEdition(int number, int from) -> void
 {
     const auto mrl = d->mrl;
-    if (number == DVDMenu && mrl.isDisc()) {
-        static const char *cmds[] = {"discnav", "menu", nullptr};
-        d->mpv.check(mpv_command_async(d->mpv.handle(), 0, cmds),
-                 "Couldn't send 'discnav menu'.");
-    } else if (0 <= number && number < d->info.editions.size()) {
+    if (number == DVDMenu && mrl.isDisc())
+        d->mpv.tellAsync("discnav", "menu"_b);
+    else if (0 <= number && number < d->info.editions.size()) {
         d->mpv.setAsync(mrl.isDisc() ? "disc-title" : "edition", number);
         seek(from);
     }
@@ -780,19 +778,14 @@ auto PlayEngine::deintMode() const -> DeintMode
 
 auto PlayEngine::sendMouseClick(const QPointF &pos) -> void
 {
-    if (d->setMousePos(pos)) {
-        static const char *cmds[] = {"discnav", "mouse", nullptr};
-        d->mpv.check(mpv_command_async(d->mpv.handle(), 0, cmds), "Couldn't send mouse.");
-    }
+    if (d->setMousePos(pos))
+        d->mpv.tellAsync("discnav", "mouse"_b);
 }
 
 auto PlayEngine::sendMouseMove(const QPointF &pos) -> void
 {
-    if (d->setMousePos(pos)) {
-        static const char *cmds[] = {"discnav", "mouse_move", nullptr};
-        d->mpv.check(mpv_command_async(d->mpv.handle(), 0, cmds),
-                 "Couldn't send mouse_move.");
-    }
+    if (d->setMousePos(pos))
+        d->mpv.tellAsync("discnav", "mouse_move"_b);
 }
 
 auto PlayEngine::audioDeviceList() const -> QList<AudioDevice>
