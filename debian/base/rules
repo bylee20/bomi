@@ -5,9 +5,6 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-# This is the debhelper compatibility version to use.
-export DH_COMPAT=4
-
 CFLAGS = -g
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 CFLAGS += -O0
@@ -15,7 +12,9 @@ else
 CFLAGS += -O2
 endif
 
-build: build-stamp
+build: build-arch build-indep
+build-arch: build-stamp
+build-indep: build-stamp
 build-stamp:
 	dh_testdir
 
@@ -36,18 +35,18 @@ clean:
 	rm -f build-stamp
 
 	# Add here commands to clean up after the build process.
-	-make clean
-	-cd src/libchardet* && make distclean
-	-cd src/ffmpeg && make distclean
-	-cd src/mpv && make distclean
-	-rm -rf build
+	[ ! -f Makefile ] || make clean
+	cd src/libchardet*; [ ! -f Makefile ] || make distclean
+	cd src/ffmpeg; [ ! -f config.h ] || make distclean
+	cd src/mpv; ./waf distclean
+	rm -rf build
 
 	dh_clean
 
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	dh_installdirs
 
 	# Add here commands to install the package into debian/gentoo.

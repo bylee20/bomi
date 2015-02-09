@@ -1,6 +1,0 @@
-?package(bomi): needs="X11" \
-	section="Applications/Video" \
-	title="bomi" \
-	longtitle="bomi - Multimedia Player" \
-	command="/usr/bin/bomi"
- 
