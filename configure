@@ -7,7 +7,7 @@ export PKG_CONFIG_PATH="`pwd`/build/lib/pkgconfig:$PKG_CONFIG_PATH"
 arguments="$@"
 
 has_arg() {
-        [ -n "`echo $arguments | grep "$1"`" ]
+    [ -n "`echo $arguments | grep "$1"`" ]
 }
 
 kern=`uname -s`
@@ -16,17 +16,17 @@ mpv_args=
 os=
 mkspec=
 if [ "$kern" = "Darwin" ]; then
-        os="osx"
-        mpv_args="$mpv_args --enable-coreaudio --enable-vda-hwaccel" #
-        njobs=`sysctl hw.ncpu | awk '{print $2}'`
-        mkspec=macx-clang
+    os="osx"
+    mpv_args="$mpv_args --enable-coreaudio --enable-vda-hwaccel" #
+    njobs=`sysctl hw.ncpu | awk '{print $2}'`
+    mkspec=macx-clang
 elif [ "$kern" = "Linux" ]; then
-        os="linux"
-        mpv_args="$mpv_args --enable-alsa --enable-oss-audio" # --enable-vaapi-hwaccel  --enable-vdpau-hwaccel
-        njobs=$(nproc)
+    os="linux"
+    mpv_args="$mpv_args --enable-alsa --enable-oss-audio" # --enable-vaapi-hwaccel  --enable-vdpau-hwaccel
+    njobs=$(nproc)
 else
-        echo "Not supported!"
-        exit
+    echo "Not supported!"
+    exit
 fi
 
 argument_line=
@@ -34,69 +34,69 @@ option_line=
 key_max_cols=22
 
 parse_for_key() {
-        local key=`echo $1 | cut -d "=" -sf1`
-        if [ -z "$key" ]; then
-                echo $1
-        else
-                echo $key
-        fi
+    local key=`echo $1 | cut -d "=" -sf1`
+    if [ -z "$key" ]; then
+        echo $1
+    else
+        echo $key
+    fi
 }
 parse_for_value() {
-        echo `echo $1 | cut -d "=" -sf2`
+    echo `echo $1 | cut -d "=" -sf2`
 }
 
 get_option_field() {
-        echo `echo $option_line | cut -d "|" -sf $1`
+    echo `echo $option_line | cut -d "|" -sf $1`
 }
 
 get_option_name() {
-        echo $(parse_for_key $(get_option_field $f_key))
+    echo $(parse_for_key $(get_option_field $f_key))
 }
 
 get_feature_name() {
-        local name=$1
-        if ! [ $name ]; then name=$(get_option_name); fi 
-        echo `echo $name | cut -d '-' -sf 4`
+    local name=$1
+    if ! [ $name ]; then name=$(get_option_name); fi 
+    echo `echo $name | cut -d '-' -sf 4`
 }
 
 loop_options() {
-        while read line; do
-                option_line=$line
-                "${@:2}"
-        done <<-heredoc
-                $1
+    while read line; do
+        option_line=$line
+        "${@:2}"
+    done <<-heredoc
+        $1
 heredoc
 }
 
 print_help_option_one() {
-        local key=$(get_option_field $f_key)
-        if [ -z "$key" ]; then continue; fi
-        local def=$(get_option_field $f_def)
-        if [ -z "$def" ]; then 
-                printf "  %-${key_max_cols}s %s\n" $key "$(get_option_field $f_help)"
-        else
-                printf "  %-${key_max_cols}s %s [%s]\n" $key "$(get_option_field $f_help)" "$(get_option_field $f_def)"
-        fi
+    local key=$(get_option_field $f_key)
+    if [ -z "$key" ]; then continue; fi
+    local def=$(get_option_field $f_def)
+    if [ -z "$def" ]; then 
+        printf "  %-${key_max_cols}s %s\n" $key "$(get_option_field $f_help)"
+    else
+        printf "  %-${key_max_cols}s %s [%s]\n" $key "$(get_option_field $f_help)" "$(get_option_field $f_def)"
+    fi
 }
 print_help_options() {
-        printf "$1:\n"
-        loop_options "$2" print_help_option_one
-        printf "\n"
+    printf "$1:\n"
+    loop_options "$2" print_help_option_one
+    printf "\n"
 }
 set_option_key_max_cols_one() {
-        local key=$(get_option_field $f_key)
-        if [ -z "$key" ]; then continue; fi
-        if [ $key_max_cols -lt ${#key} ]; then key_max_cols=${#key}; fi
+    local key=$(get_option_field $f_key)
+    if [ -z "$key" ]; then continue; fi
+    if [ $key_max_cols -lt ${#key} ]; then key_max_cols=${#key}; fi
 }
 print_help() {
-        printf "Usage: $0 [OPTIONS]...\n\n"
+    printf "Usage: $0 [OPTIONS]...\n\n"
 
-        loop_options "$options" set_option_key_max_cols_one
+    loop_options "$options" set_option_key_max_cols_one
 
-        print_help_options "Configuration" "$config_opts"
-        print_help_options "Installation directories" "$install_opts"
-        print_help_options "Optional features" "$feature_opts"
-        exit 0
+    print_help_options "Configuration" "$config_opts"
+    print_help_options "Installation directories" "$install_opts"
+    print_help_options "Optional features" "$feature_opts"
+    exit 0
 }
 
 
@@ -111,17 +111,20 @@ f_pkg=4
 
 parallel=$njobs
 release=
-qmake=
+cc=gcc
+qmake=autodetect
+lrelease=autodetect
 qtsdk=
 macdeployqt=
 defaultskin=
 
 mo() {
-        local value=$(eval echo \$$1)
+    local value=$(eval echo \$$1)
 }
 
 config_opts="""
 --help|display this help and exit
+--cc=COMPILER|C compiler (corresponding C++ compiler will be detected)|$cc
 --qtsdk=QTSDK|directory for Qt SDK|
 --qmake=QMAKE|qmake executable|$qmake
 --mkspec=MKSPEC|make spec for qmake|$mkspec
@@ -134,14 +137,63 @@ config_opts="""
 
 config=
 
-setup_build() {
-        if ! has_arg "release"; then config="$config release"; fi
-        if [ -n "$qtsdk" ]; then
-                if [ -z "$qmake" ]; then qmake=$qtsdk/bin/qmake; fi
-                if [ -z "$macdeployqt" ]; then macdeployqt=$qtsdk/bin/macdeployqt; fi
+detect_qt5() {
+    test -n "$(LANG=en_US.UTF-8 "$1" -version 2> /dev/null | grep "version 5.")"
+}
+
+check_qt5_or_exit() {
+    local var=$1
+    local value=$(eval echo \$$var)
+    local found=""
+    printf "checking for $var ... "
+    if [ "$value" = autodetect ]; then
+        for q in "$var" "$var-qt5"; do
+        if detect_qt5 $q; then
+            found=$q
+            break
         fi
-        if [ -z "$qmake" ]; then qmake=qmake-qt5; fi
-        if [ -n "$mkspec" ]; then qmake="$qmake -spec $mkspec"; fi
+        done
+    elif detect_qt5 "$var"; then
+        found="$var"
+    fi
+    if [ -z "$found" ]; then
+        echo "no"
+        echo "'$value' failed."
+        exit
+    else
+        declare -g "$var=$found"
+        echo "$found"
+    fi
+}
+
+check_cc() {
+    test -n "$("$cc" -dM -E -x c /dev/null 2> /dev/null | grep "$1")"
+}
+
+setup_build() {
+    if [ -n "$qtsdk" ]; then
+        qmake=$qtsdk/bin/qmake
+        lrelease=$qtsdk/bin/lrelease
+        macdeployqt=$qtsdk/bin/macdeployqt
+    fi
+
+    printf "checking for cc ... "
+    if check_cc __clang__; then
+        mkspec=linux-clang
+    elif check_cc __GNUC__; then
+        mkspec=linux-g++
+    else
+        echo "no"
+        echo "'$cc' is not supported."
+        exit
+    fi
+    echo "$cc"
+
+    check_qt5_or_exit qmake
+    check_qt5_or_exit lrelease
+
+    echo "checking for mkspec ... $mkspec"
+    if [ -n "$mkspec" ]; then qmake="$qmake -spec $mkspec"; fi
 }
 
 prefix=/usr/local
@@ -165,50 +217,54 @@ install_opts="""
 --appdir=APPDIR|directory for application launchers|DATADIR/applications
 --actiondir=ACTIONDIR|directory for action launchers|DATADIR/apps/solid/actions
 --skindir=SKINDIR|directory for skin files|DATADIR/bomi/skins
+--transdir=TRANSDIR|directory for translation files|DATADIR/bomi/translations
 --importdir=IMPORTDIR|directory for QML files|DATADIR/bomi/imports
 """
 
 setup_dirs() {
-        if [ -z "$prefix"    ]; then exit; fi
-        if [ -z "$bindir"    ]; then    bindir=$prefix/bin;                 fi
-        if [ -z "$datadir"   ]; then   datadir=$prefix/share;               fi
-        if [ -z "$compdir"   ]; then   compdir=$datadir/bash-completion/completions; fi
-        if [ -z "$mandir"    ]; then   mandir=$datadir/man;                 fi
-        if [ -z "$icondir"   ]; then   icondir=$datadir/icons/hicolor;      fi
-        if [ -z "$appdir"    ]; then    appdir=$datadir/applications;       fi
-        if [ -z "$actiondir" ]; then actiondir=$datadir/apps/solid/actions; fi
-        if [ -z "$skindir"   ]; then   skindir=$datadir/bomi/skins;     fi
-        if [ -z "$importdir" ]; then importdir=$datadir/bomi/imports;   fi
+    if [ -z "$prefix"    ]; then exit; fi
+    if [ -z "$bindir"    ]; then    bindir=$prefix/bin;                          fi
+    if [ -z "$datadir"   ]; then   datadir=$prefix/share;                        fi
+    if [ -z "$compdir"   ]; then   compdir=$datadir/bash-completion/completions; fi
+    if [ -z "$mandir"    ]; then   mandir=$datadir/man;                          fi
+    if [ -z "$icondir"   ]; then   icondir=$datadir/icons/hicolor;               fi
+    if [ -z "$appdir"    ]; then    appdir=$datadir/applications;                fi
+    if [ -z "$actiondir" ]; then actiondir=$datadir/apps/solid/actions;          fi
+    if [ -z "$skindir"   ]; then   skindir=$datadir/bomi/skins;                  fi
+    if [ -z "$transdir"  ]; then  transdir=$datadir/bomi/translations;           fi
+    if [ -z "$importdir" ]; then importdir=$datadir/bomi/imports;                fi
 }
 
-jack=disable
-pulseaudio=disable
-cdda=disable
+jack=autodetect
+pulseaudio=autodetect
+cdda=autodetect
+systemd=autodetect
 
 mf() { # make_feature
-        local value=$(eval echo \$$1)
-        local opt="disable"
-        if [ $value = "disable" ]; then opt="enable"
-        elif [ $value = "enable" ]; then opt="disable"; fi
-        local pkg=$3
-        if [ -z "$pkg" ]; then pkg=$1; fi
-        echo "--$opt-$1|$2|$value|$pkg"
+    local value=$(eval echo \$$1)
+    local opt="disable"
+    if [ $value = "disable" ]; then opt="enable"
+    elif [ $value = "enable" ]; then opt="disable"; fi
+    local pkg=$3
+    if [ -z "$pkg" ]; then pkg=$1; fi
+    echo "--$opt-$1|$2|$value|$pkg"
 }
 
 feature_opts="""
 $(mf jack "enable JACK support")
 $(mf pulseaudio "enable PulseAudio support" "libpulse")
 $(mf cdda "enable CDDA support" "libcdio_paranoia libcdio libcdio_cdda")
+$(mf systemd "enable systemd integration" "libsystemd")
 """
 
 
 add_mpv() {
-        mpv_args="$mpv_args --$1-$2"
+    mpv_args="$mpv_args --$1-$2"
 }
 setup_features() {
-        add_mpv $jack jack
-        add_mpv $pulseaudio pulse
-        add_mpv $cdda cdda
+    add_mpv $jack jack
+    add_mpv $pulseaudio pulse
+    add_mpv $cdda cdda
 }
 
 options="""
@@ -218,62 +274,62 @@ $feature_opts
 """
 
 check_valid_option() {
-        arg=$1
-        local ok
-        local value
-        local var
-        local key=$(parse_for_key $arg)
-        if [ $key = "--help" ]; then print_help; fi
-        
-        if [ `echo "$key" | grep "^\-\-enable\|disable\-"` ]; then
-                while read line; do
-                        option_line=$line
-                        local name=$(get_option_name)
-                        if [ -z "$name" ]; then continue; fi
-                        if [ $(get_feature_name $key) = $(get_feature_name $name) ]; then
-                                var=$(echo "$key" | grep "\-\-enable\|disable\-" | sed -E 's/^--(enable|disable)-([a-zA-Z0-9]+)$/\2/g')
-                                value=$(echo "$key" | grep "\-\-enable\|disable\-" | sed -E 's/^--(enable|disable)-([a-zA-Z0-9]+)$/\1/g')
-                                ok="ok"
-                                break;
-                        fi
-                done <<-heredoc
-                        $feature_opts
+    arg=$1
+    local ok
+    local value
+    local var
+    local key=$(parse_for_key $arg)
+    if [ $key = "--help" ]; then print_help; fi
+    
+    if [ `echo "$key" | grep "^\-\-enable\|disable\-"` ]; then
+        while read line; do
+            option_line=$line
+            local name=$(get_option_name)
+            if [ -z "$name" ]; then continue; fi
+            if [ $(get_feature_name $key) = $(get_feature_name $name) ]; then
+                var=$(echo "$key" | grep "\-\-enable\|disable\-" | sed -E 's/^--(enable|disable)-([a-zA-Z0-9]+)$/\2/g')
+                value=$(echo "$key" | grep "\-\-enable\|disable\-" | sed -E 's/^--(enable|disable)-([a-zA-Z0-9]+)$/\1/g')
+                ok="ok"
+                break;
+            fi
+        done <<-heredoc
+            $feature_opts
 heredoc
-        else
-                while read line; do
-                        option_line=$line
-                        local name=$(get_option_name)
-                        if [ -z $name ]; then continue; fi
-                        if [ $key = $name ]; then
-                                var=$(echo "$key" | sed -E 's/^--(.+)$/\1/g')
-                                value=$(parse_for_value "$arg")
-                                local ph=$(parse_for_value $(get_option_field $f_key))
-                                if [ -n "$ph" ]; then
-                                        if [ -z "$value" ]; then break; fi
-                                        ok="ok"
-                                else
-                                        if [ -n "$value" ]; then break; fi
-                                        value="yes"
-                                        ok="ok"
-                                fi
-                        fi
-                done <<-heredoc
-                        $config_opts
-                        $install_opts
+    else
+        while read line; do
+            option_line=$line
+            local name=$(get_option_name)
+            if [ -z $name ]; then continue; fi
+            if [ $key = $name ]; then
+                var=$(echo "$key" | sed -E 's/^--(.+)$/\1/g')
+                value=$(parse_for_value "$arg")
+                local ph=$(parse_for_value $(get_option_field $f_key))
+                if [ -n "$ph" ]; then
+                    if [ -z "$value" ]; then break; fi
+                    ok="ok"
+                else
+                    if [ -n "$value" ]; then break; fi
+                    value="yes"
+                    ok="ok"
+                fi
+            fi
+        done <<-heredoc
+            $config_opts
+            $install_opts
 heredoc
-        fi
-        if [ -n "$ok" ]; then
-                declare -g "$var=$value"
-                true
-        else
-                echo "'$arg' is not a vaild option."
-                print_help
-                false
-        fi
+    fi
+    if [ -n "$ok" ]; then
+        declare -g "$var=$value"
+        true
+    else
+        echo "'$arg' is not a vaild option."
+        print_help
+        false
+    fi
 }
 
 for arg in "$@"; do
-        check_valid_option "$arg"
+    check_valid_option "$arg"
 done
 
 
@@ -283,69 +339,71 @@ done
 
 cflags=
 libs=
-defines=
 
 has_pkg() {
-        if `pkg-config --exists $1`; then
-                true
-        else
-                false
-        fi
+    if `pkg-config --exists $1`; then
+        true
+    else
+        false
+    fi
 }
 
 err_pkg=
 check_pkg() {
-        err_pkg=""
-        printf "Checking for $1 ... "
+    err_pkg=""
+    printf "Checking for $1 ... "
 
-        local pkgs
-        if [ "$#" = 1 ]; then
-                if has_pkg "$1"; then
-                        pkgs="$1"
-                else
-                        err_pkg="$1"
-                fi
+    local pkgs
+    if [ "$#" = 1 ]; then
+        if has_pkg "$1"; then
+            pkgs="$1"
         else
-                for pkg in "${@:2}"; do
-                        if has_pkg "$pkg"; then
-                                pkgs="$pkgs $pkg"
-                        else
-                                err_pkg="$pkg"
-                                break
-                        fi
-                done
+            err_pkg="$1"
         fi
-        
-        if [ -z "$err_pkg" ]; then
-                cflags="$cflags `pkg-config --cflags $pkgs`"
-                libs="$libs `pkg-config --libs $pkgs`"
-                printf "yes\n"
-                true
-        else
-                printf "no\n"
-                false
-        fi
+    else
+        for pkg in "${@:2}"; do
+            if has_pkg "$pkg"; then
+                pkgs="$pkgs $pkg"
+            else
+                err_pkg="$pkg"
+                break
+            fi
+        done
+    fi
+    
+    if [ -z "$err_pkg" ]; then
+        cflags="$cflags `pkg-config --cflags $pkgs`"
+        libs="$libs `pkg-config --libs $pkgs`"
+        printf "yes\n"
+        true
+    else
+        printf "no\n"
+        false
+    fi
 }
 
 check_pkg_or_exit() {
-        if ! check_pkg "$@"; then
-                printf "'$err_pkg' package was not found.\n"
-                exit
-        fi
-        true
+    if ! check_pkg "$@"; then
+        printf "'$err_pkg' package was not found.\n"
+        exit
+    fi
+    true
 }
 
 if has_arg "developer"; then
-        if [ "$os" = "linux" ]; then
-                jack=enable
-                pulseaudio=enable
-                cdda=enable
-        elif [ "$os" = "osx" ]; then
-        		qtsdk=/usr/local/opt/qt5
-        		macdeployqt=macdeployqt
-        		qmake=qmake
-        		export PKG_CONFIG_PATH="/usr/local/opt/icu4c/lib/pkgconfig:/usr/local/opt/libass-ct/lib/pkgconfig:${PKG_CONFIG_PATH}"
-        fi
+    if [ "$os" = "linux" ]; then
+        jack=enable
+        pulseaudio=enable
+        cdda=enable
+    elif [ "$os" = "osx" ]; then
+        qtsdk=/usr/local/opt/qt5
+        macdeployqt=macdeployqt
+        qmake=qmake
+        export PKG_CONFIG_PATH="/usr/local/opt/icu4c/lib/pkgconfig:/usr/local/opt/libass-ct/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    fi
+    skindir=$(pwd)/src/bomi/skins
+    importdir=$(pwd)/src/bomi/imports
+    transdir=$(pwd)/src/bomi/translations
 fi
 
 check_pkg_or_exit ffmpeg "libavformat >= 55.12.0" "libavutil >= 52.48.101" "libavcodec >= 55.34.1" "libswresample" "libswscale" "libavfilter" "libpostproc"
@@ -357,41 +415,43 @@ check_pkg_or_exit "libbluray"
 check_pkg_or_exit "icu-uc"
 check_pkg_or_exit "chardet"
 if [ $os = "linux" ]; then
-        check_pkg_or_exit glib "glib-2.0" "gobject-2.0"
-        check_pkg_or_exit "vaapi" "libva" "libva-glx" "libva-x11"
-        check_pkg_or_exit "vdpau"
-        check_pkg_or_exit xcb "xcb" "xcb-icccm" "x11"
-        check_pkg_or_exit "alsa"
+    check_pkg_or_exit glib "glib-2.0" "gobject-2.0"
+    check_pkg_or_exit "vaapi" "libva" "libva-glx" "libva-x11"
+    check_pkg_or_exit "vdpau"
+    check_pkg_or_exit xcb "xcb" "xcb-icccm" "xcb-screensaver" "xcb-randr" "x11"
+    check_pkg_or_exit "alsa"
 fi
 
 confhpp="src/bomi/configure.hpp"
 rm -f "$confhpp"
 touch "$confhpp"
 
-add_defines() {
-        local var=$(echo $1 | tr "[:lower:]" "[:upper:]")
-        echo "#define $var $2" >> "$confhpp"
+add_define() {
+    local var=$(echo $1 | tr "[:lower:]" "[:upper:]")
+    echo "#define $var $2" >> "$confhpp"
 }
 
 check_feature_one() {
-        local var=$(get_feature_name)
-        local pkg=$(get_option_field $f_pkg)
-        local value=$(eval echo \$$var)
-        if [ -z $var ]; then continue; fi
-        if [ $value = enable ]; then
-                check_pkg_or_exit "$pkg"
-        elif [ $value = autodetect ]; then
-                if check_pkg "$pkg"; then
-                        eval $var="enable"
-                else
-                        eval $var="disable"
-                fi
-        fi
-        if [ $value = enable ]; then
-                add_defines HAVE_$var 1
+    local var=$(get_feature_name)
+    local pkg=$(get_option_field $f_pkg)
+    local value=$(eval echo \$$var)
+    if [ -z $var ]; then continue; fi
+    if [ $value = enable ]; then
+        check_pkg_or_exit "$pkg"
+    elif [ $value = autodetect ]; then
+        if check_pkg "$pkg"; then
+            value="enable"
+            eval $var="enable"
         else
-                add_defines HAVE_$var 0
+            value="disable"
+            eval $var="disable"
         fi
+    fi
+    if [ $value = enable ]; then
+    add_define HAVE_$var 1
+    else
+    add_define HAVE_$var 0
+    fi
 }
 
 loop_options "$feature_opts" check_feature_one
@@ -400,42 +460,33 @@ setup_dirs
 setup_features
 setup_build
 
-# check qmake is valid
-printf "checking for qmake ... "
-if [ -z "$(LANG=en_US.UTF-8 $qmake -v | grep "version 5.")" ]; then
-    echo "no"
-    echo "'$qmake' is not a valid qmake executable."
-    exit
-else
-    echo "yes"
-fi
-
-add_defines BOMI_SKINS_PATH "\"$skindir\""
-add_defines BOMI_IMPORTS_PATH "\"$importdir\""
-add_defines BOMI_DEFAULT_SKIN "\"$defaultskin\""
+add_define BOMI_SKINS_PATH "\"$skindir\""
+add_define BOMI_IMPORTS_PATH "\"$importdir\""
+add_define BOMI_DEFAULT_SKIN "\"$defaultskin\""
+add_define BOMI_TRANSLATIONS_PATH "\"$transdir\""
 if has_arg release ; then
-    add_defines BOMI_RELEASE 1
+    add_define BOMI_RELEASE 1
 else
-    add_defines BOMI_RELEASE 0
+    add_define BOMI_RELEASE 0
 fi
 
 parse_file() {
-        cp $1.in $1
-        local var
-        local sed="sed -i"
-        if [ "$os" = "osx" ]; then sed="sed -i .conf.bk -e"; fi
-        for token in "${@:2}"; do
-                var=$(eval echo \$$token)
-                $sed 's#@'"$token"'@#'"$var"'#g' $1
-        done
+    cp $1.in $1
+    local var
+    local sed="sed -i"
+    if [ "$os" = "osx" ]; then sed="sed -i .conf.bk -e"; fi
+    for token in "${@:2}"; do
+    var=$(eval echo \$$token)
+    $sed 's#@'"$token"'@#'"$var"'#g' $1
+    done
 }
 
 rootdir=`pwd`
 
-parse_file "src/bomi/configure.pro" defines config libs cflags rootdir
-parse_file "Makefile" os qmake PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
-        skindir importdir parallel qtsdk macdeployqt
-parse_file "build-mpv" mpv_args parallel os njobs PKG_CONFIG_PATH
+parse_file "src/bomi/configure.pro" config libs cflags rootdir
+parse_file "Makefile" os qmake lrelease PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
+    transdir skindir importdir parallel qtsdk macdeployqt
+parse_file "build-mpv" cc mpv_args parallel os njobs PKG_CONFIG_PATH
 chmod +x build-mpv
 
 printf "\nbomi has been configured successfully!\n\n"

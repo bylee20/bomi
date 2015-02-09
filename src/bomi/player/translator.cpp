@@ -1,4 +1,5 @@
 #include "translator.hpp"
+#include "configure.hpp"
 #include "misc/log.hpp"
 
 DECLARE_LOG_CONTEXT(Translator)
@@ -44,7 +45,7 @@ auto getLocales(const QString &path, const QString &filter,
 
 Translator::Translator()
 : d(new Data) {
-    d->def = u":/translations"_q;
+    d->def = u"" BOMI_TRANSLATIONS_PATH ""_q;
     qApp->installTranslator(&d->trans);
     qApp->installTranslator(&d->qt);
     d->locales += getLocales(d->def, u"*.qm"_q, u"(.*).qm"_q);

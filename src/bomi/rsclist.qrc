@@ -34,14 +34,6 @@
         <file>img/chronometer.png</file>
         <file>img/audio-volume-high.png</file>
         <file>img/preferences-web-browser-cache.png</file>
-        <file>translations/bomi_en.qm</file>
-        <file>translations/bomi_ko.qm</file>
-        <file>translations/bomi_ru.qm</file>
-        <file>translations/bomi_it.qm</file>
-        <file>translations/bomi_cs.qm</file>
-        <file>translations/bomi_de.qm</file>
-        <file>translations/bomi_sr.qm</file>
-        <file>translations/bomi_es.qm</file>
         <file>img/media-optical.png</file>
         <file>img/view-multiple-objects.png</file>
         <file>img/preferences-desktop-locale.png</file>

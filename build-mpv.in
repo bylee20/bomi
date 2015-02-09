@@ -17,6 +17,7 @@ args="--prefix=../../build --disable-manpage-build --enable-libmpv-static --disa
 os=@os@
 njobs=@parallel@
 export PKG_CONFIG_PATH="@PKG_CONFIG_PATH@"
+export CC="@cc@"
 
 cd src/mpv && ./bootstrap.py && ./waf clean; ./waf distclean; ./waf configure $args
 ./waf build -j $njobs && ./waf install

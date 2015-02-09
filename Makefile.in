@@ -7,6 +7,7 @@ pkg_config_path := @PKG_CONFIG_PATH@
 
 prefix := @prefix@
 qmake := @qmake@ BOMI_RELEASE=1
+lrelease := @lrelease@
 bin_dir := @bindir@
 DATADIR := @datadir@
 comp_dir := @compdir@
@@ -15,6 +16,7 @@ icon_dir := @icondir@
 app_dir := @appdir@
 action_dir := @actiondir@
 skin_dir := @skindir@
+trans_dir := @transdir@
 import_dir := @importdir@
 njobs := @parallel@
 qt_sdk := @qtsdk@
@@ -41,7 +43,7 @@ endif
 
 bomi-bundle: bomi
 	cp -r $(qt_sdk)/qml/QtQuick.2 $(bomi_exec_dir)/imports
-	install -d $(bomi_exec_dir)/imports/QtQuick
+	$(install_dir) $(bomi_exec_dir)/imports/QtQuick
 	cp -r $(qt_sdk)/qml/QtQuick/Controls $(bomi_exec_dir)/imports/QtQuick
 	cp -r $(qt_sdk)/qml/QtQuick/Layouts $(bomi_exec_dir)/imports/QtQuick
 	cp -r /usr/local/Cellar/libquvi/0.4.1/libquvi-scripts/share/libquvi-scripts/lua $(bomi_exec_dir)
@@ -56,17 +58,26 @@ build/lib/libmpv.a: build-mpv
 mpv: build/lib/libmpv.a
 
 build/skins: build
-	cp -r src/bomi/skins build
+	$(install_dir) build/skins
 
 build/imports: build
-	cp -r src/bomi/imports build
+	$(install_dir) build/imports
+
+build/translations: build
+	$(install_dir) build/translations
 
 skins: build/skins
+	$(install_all) src/bomi/skins build/skins
 
 imports: build/imports
+	$(install_all) src/bomi/imports build/imports
+
+translations: build/translations
+	$(lrelease) src/bomi/bomi.pro
+	$(install_file) src/bomi/translations/*.qm build/translations
 
 build:
-	install -d build
+	$(install_dir) build
 
 clean:
 	-cd src/mpv && ./waf uninstall
@@ -97,6 +108,7 @@ ifeq ($(os),linux)
 	$(install_dir) $(DEST_DIR)$(icon_dir)/256x256/apps
 	$(install_dir) $(DEST_DIR)$(skin_dir)
 	$(install_dir) $(DEST_DIR)$(import_dir)
+	$(install_dir) $(DEST_DIR)$(trans_dir)
 #	$(install_dir) $(DEST_DIR)$(icon_dir)/scalable/apps
 	$(install_exe) build/$(bomi_exec) $(DEST_DIR)$(bin_dir)
 	$(install_file) bomi.desktop $(DEST_DIR)$(app_dir)
@@ -115,6 +127,7 @@ ifeq ($(os),linux)
 #	$(install_file) icons/bomi.svg $(DEST_DIR)$(icon_dir)/scalable/apps/bomi.svg
 	$(install_all) build/skins $(DEST_DIR)$(skin_dir)
 	$(install_all) build/imports $(DEST_DIR)$(import_dir)
+	$(install_file) build/translations/* $(DEST_DIR)$(trans_dir)
 else
 	mv build/$(bomi_exec).app $(DEST_DIR)$(prefix)
 endif
