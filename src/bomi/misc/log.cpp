@@ -1,18 +1,12 @@
-#include "misc/log.hpp"
-#include "misc/logoption.hpp"
+#include "log.hpp"
+#include "logoption.hpp"
+#include "configure.hpp"
 #include "tmp/algorithm.hpp"
 #include <cstdlib>
+
+#if HAVE_SYSTEMD
 #include <syslog.h>
 #include <systemd/sd-journal.h>
-
-static Log::Level lvStdOut  = Log::Trace;
-static Log::Level lvStdErr  = Log::Off;
-static Log::Level lvJournal = Log::Off;
-static Log::Level lvFile    = Log::Off;
-static Log::Level lvMax     = Log::Trace;
-
-QSharedPointer<FILE> file;
-
 static const std::array<int, 7> jp = [] () {
     std::array<int, 7> ret;
     ret[Log::Fatal] = LOG_CRIT;
@@ -23,6 +17,15 @@ static const std::array<int, 7> jp = [] () {
     ret[Log::Trace] = LOG_DEBUG;
     return ret;
 }();
+#endif
+
+static Log::Level lvStdOut  = Log::Trace;
+static Log::Level lvStdErr  = Log::Off;
+static Log::Level lvJournal = Log::Off;
+static Log::Level lvFile    = Log::Off;
+static Log::Level lvMax     = Log::Trace;
+
+QSharedPointer<FILE> file;
 
 const QStringList Log::m_options = QStringList()
         << u"off"_q   << u"fatal"_q << u"error"_q << u"warn"_q
@@ -36,8 +39,10 @@ SIA print(FILE *file, const QByteArray &log) -> void
 
 auto Log::print(Level lv, const QByteArray &log) -> void
 {
+#if HAVE_SYSTEMD
     if (lv <= lvJournal)
         sd_journal_print(jp[lv], log.constData());
+#endif
     if (lv <= lvStdOut)
         ::print(stdout, log);
     if (lv <= lvStdErr)
@@ -69,7 +74,10 @@ auto Log::setOption(const LogOption &option) -> void
     lvStdErr  = option.level(LogOutput::StdErr);
     lvJournal = option.level(LogOutput::Journal);
     lvFile    = option.level(LogOutput::File);
-    lvMax = tmp::max(lvStdOut, lvStdErr, lvJournal, lvFile);
+    lvMax = tmp::max(lvStdOut, lvStdErr, lvFile);
+#if HAVE_SYSTEMD
+    lvMax = tmp::max(lvMax, lvJournal);
+#endif
 
     if (!lvFile)
         return;

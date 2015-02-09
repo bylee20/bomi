@@ -43,7 +43,7 @@ macx {
 } else:unix {
     QT += dbus x11extras
 	TARGET = bomi
-	LIBS += -ldl -lxcb-randr -lxcb-screensaver -lsystemd
+	LIBS += -ldl -lxcb-randr -lxcb-screensaver
 	HEADERS += player/app_x11.hpp player/mpris.hpp
 	SOURCES += player/app_x11.cpp player/mpris.cpp
 }
@@ -248,7 +248,8 @@ HEADERS += \
     enum/processor.hpp \
     video/motionintrploption.hpp \
     enum/logoutput.hpp \
-    widget/pathbutton.hpp
+    widget/pathbutton.hpp \
+	misc/logoption.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -430,7 +431,8 @@ SOURCES += \
     enum/processor.cpp \
     video/motionintrploption.cpp \
     enum/logoutput.cpp \
-    widget/pathbutton.cpp
+    widget/pathbutton.cpp \
+	misc/logoption.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
