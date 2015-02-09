@@ -25,7 +25,7 @@ Slider {
         function generateChapters() {
             var i;
             for (i=0; i<markers.length; ++i)
-                Util.delete_(markers[i])
+                App.delete_(markers[i])
             markers = []
             if (style)
                 style.destroy()

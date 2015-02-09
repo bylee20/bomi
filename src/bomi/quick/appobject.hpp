@@ -77,6 +77,7 @@ public:
     Q_INVOKABLE double textWidth(const QString &text, int size, const QString &family) const;
     Q_INVOKABLE bool execute(const QString &id) const;
     Q_INVOKABLE QObject *action(const QString &id) const;
+    Q_INVOKABLE void delete_(QObject *o);
 
     static auto setTheme(ThemeObject *theme) -> void { s.theme = theme; }
     static auto setEngine(PlayEngine *engine) -> void { s.engine = engine; }

@@ -252,3 +252,9 @@ auto AppObject::itemToAccept(Event event, const QPointF &scenePos) -> QQuickItem
     }
     return nullptr;
 }
+
+auto AppObject::delete_(QObject *o) -> void
+{
+    QQmlEngine::setObjectOwnership(o, QQmlEngine::CppOwnership);
+    delete o;
+}
