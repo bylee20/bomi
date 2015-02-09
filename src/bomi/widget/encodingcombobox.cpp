@@ -1,7 +1,7 @@
 #include "encodingcombobox.hpp"
 
 EncodingComboBox::EncodingComboBox(QWidget *parent)
-: QComboBox(parent) {
+: DataComboBox(parent) {
     auto add = [this] (const QString &desc, const QString &enc)
         { this->addItem(desc % " ("_a % enc % ')'_q, enc); };
     add(u"UTF-8"_q, u"UTF-8"_q);
@@ -24,25 +24,22 @@ EncodingComboBox::EncodingComboBox(QWidget *parent)
     add(u"Ukrainian, Belarusian"_q, u"KOI8-U/RU"_q);
     add(u"Simplified Chinese Charset"_q, u"CP936"_q);
     add(u"Traditional Chinese Charset"_q, u"BIG5"_q);
+    add(u"Chinese Government Standard Charset"_q, u"GB18030"_q);
     add(u"Japanese Charset"_q, u"SHIFT-JIS"_q);
+    add(u"Japanese Charset"_q, u"ISO 2022-JP"_q);
+    add(u"Japanese Charset"_q, u"EUC-JP"_q);
     add(u"Korean Charset"_q, u"CP949"_q);
-    add(u"Thai Charset"_q, u"CP874"_q);;
-    setEditable(true);
+    add(u"Thai Charset"_q, u"CP874"_q);
     connect(this, &QComboBox::currentTextChanged,
             this, &EncodingComboBox::encodingChanged);
 }
 
 auto EncodingComboBox::encoding() const -> QString
 {
-    const auto idx = currentIndex();
-    return idx < 0 ? currentText() : itemData(idx).toString();
+    return currentValue<QString>();
 }
 
 auto EncodingComboBox::setEncoding(const QString &encoding) -> void
 {
-    auto idx = findData(encoding.toUpper());
-    if (idx != -1)
-        setCurrentIndex(idx);
-    else
-        setEditText(encoding);
+    setCurrentValue<QString>(encoding.toUpper());
 }

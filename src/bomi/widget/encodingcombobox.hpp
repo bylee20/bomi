@@ -1,7 +1,9 @@
 #ifndef ENCODINGCOMBOBOX_HPP
 #define ENCODINGCOMBOBOX_HPP
 
-class EncodingComboBox : public QComboBox {
+#include "datacombobox.hpp"
+
+class EncodingComboBox : public DataComboBox {
     Q_OBJECT
     Q_PROPERTY(QString encoding READ encoding WRITE setEncoding NOTIFY encodingChanged)
 public:

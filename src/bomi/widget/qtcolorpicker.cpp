@@ -211,6 +211,8 @@ void QtColorPicker::buttonPressed(bool toggled)
 
     // Execute the popup. The popup will enter the event loop.
     popup->show();
+
+    adjustSize();
 }
 
 /*!
@@ -231,6 +233,7 @@ void QtColorPicker::paintEvent(QPaintEvent *e)
     p.setBrush(col);
     p.drawRect(2, 2, w - 5, h - 5);
     setIcon(QIcon(pix));
+    adjustSize();
 
     dirty = false;
     }

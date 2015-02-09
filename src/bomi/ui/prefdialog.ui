@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>668</width>
-    <height>636</height>
+    <height>693</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>14</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -879,9 +879,6 @@
              <widget class="EncodingComboBox" name="sub_enc">
               <property name="toolTip">
                <string>Open subtitle file with selected encoding.</string>
-              </property>
-              <property name="editable">
-               <bool>true</bool>
               </property>
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContentsOnFirstShow</enum>

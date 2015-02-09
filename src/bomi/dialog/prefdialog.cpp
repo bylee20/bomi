@@ -131,9 +131,6 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Mouse actions"), d->ui.ui_mouse, u":/img/input-mouse-32.png"_q);
     addPage(tr("Control step"), d->ui.ui_step, u":/img/run-build-32.png"_q);
 
-    auto vbox = new QVBoxLayout;
-    vbox->setMargin(0);
-
     d->ui.enable_hwaccel->setEnabled(HwAcc::isAvailable());
 
     void(QComboBox::*curIdxChanged)(int) = &QComboBox::currentIndexChanged;
@@ -165,9 +162,6 @@ PrefDialog::PrefDialog(QWidget *parent)
                                     QVariant::fromValue(QuickSnapshotSave::Ask));
     d->saveQuickSnapshot->setCurrentData(QVariant::fromValue(QuickSnapshotSave::Current));
     d->ui.quick_snapshot_format->addItems(_ExtList(WritableImageExt));
-
-    vbox = new QVBoxLayout;
-    vbox->setMargin(0);
 
     d->ui.sub_ext->addItem(QString(), QString());
     d->ui.sub_ext->addItemTextData(_ExtList(SubtitleExt));
@@ -266,8 +260,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 #ifndef Q_OS_MAC
     d->ui.lion_style_fullscreen->hide();
 #endif
-
-    adjustSize();
 
     auto group = new QButtonGroup(this);
     group->addButton(d->ui.show_logo);
