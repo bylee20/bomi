@@ -778,7 +778,8 @@ auto PlayEngine::deintMode() const -> DeintMode
 
 auto PlayEngine::sendMouseClick(const QPointF &pos) -> void
 {
-    if (d->setMousePos(pos))
+    d->setMousePos(pos);
+    if (d->params.d->disc)
         d->mpv.tellAsync("discnav", "mouse"_b);
 }
 
