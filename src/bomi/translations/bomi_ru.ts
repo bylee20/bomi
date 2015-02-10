@@ -1673,7 +1673,7 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>LogViewer</name>
     <message>
-        <location filename="../ui/logviewer.ui" line="47"/>
+        <location filename="../ui/logviewer.ui" line="44"/>
         <source>Level Filter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1683,19 +1683,35 @@ This requires much more CPU or GPU usage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="141"/>
+        <location filename="../ui/logviewer.ui" line="72"/>
+        <source>Autoscroll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/logviewer.ui" line="79"/>
+        <source>Clear</source>
+        <translation type="unfinished">Очистить</translation>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="221"/>
+        <location filename="../misc/logviewer.cpp" line="257"/>
         <source>Log Viewer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="163"/>
+        <location filename="../misc/logviewer.cpp" line="190"/>
         <source>Copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="164"/>
+        <location filename="../misc/logviewer.cpp" line="191"/>
         <source>Select All</source>
         <translation type="unfinished">Выбрать все</translation>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="258"/>
+        <source>Do you want remove all logs and contexts?</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

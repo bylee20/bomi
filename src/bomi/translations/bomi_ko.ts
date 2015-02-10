@@ -2356,7 +2356,7 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>LogViewer</name>
     <message>
-        <location filename="../ui/logviewer.ui" line="47"/>
+        <location filename="../ui/logviewer.ui" line="44"/>
         <source>Level Filter</source>
         <translation>레벨 필터</translation>
     </message>
@@ -2366,19 +2366,39 @@ This requires much more CPU or GPU usage.</source>
         <translation>컨텍스트 필터</translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="141"/>
+        <location filename="../ui/logviewer.ui" line="72"/>
+        <source>Autoscroll</source>
+        <translation>자동 스크롤</translation>
+    </message>
+    <message>
+        <location filename="../ui/logviewer.ui" line="79"/>
+        <source>Clear</source>
+        <translation>비우기</translation>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="221"/>
+        <location filename="../misc/logviewer.cpp" line="257"/>
         <source>Log Viewer</source>
         <translation>로그 뷰어</translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="163"/>
+        <location filename="../misc/logviewer.cpp" line="190"/>
         <source>Copy</source>
         <translation>복사</translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="164"/>
+        <location filename="../misc/logviewer.cpp" line="191"/>
         <source>Select All</source>
         <translation>모두 선택</translation>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="258"/>
+        <source>Do you want remove all logs and contexts?</source>
+        <translation>모든 로그와 컨텍스트를 삭제하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Do you want clear all logs and contexts?</source>
+        <translation type="vanished">모든 로그와 컨텍스트를 삭제할까요?</translation>
     </message>
 </context>
 <context>
