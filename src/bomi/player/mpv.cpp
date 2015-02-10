@@ -2,6 +2,21 @@
 
 static constexpr const int UpdateEventBegin = QEvent::User + 10000;
 
+auto Mpv::e2l(int error) -> Log::Level
+{
+    if (error >= 0)
+        return Log::Off;
+    switch (error) {
+    case MPV_ERROR_NOMEM:
+    case MPV_ERROR_UNINITIALIZED:
+        return Log::Fatal;
+    case MPV_ERROR_PROPERTY_UNAVAILABLE:
+        return Log::Trace;
+    default:
+        return Log::Error;
+    }
+}
+
 struct Mpv::Data {
     Mpv *p = nullptr;
     mpv_opengl_cb_context *gl = nullptr;
@@ -198,6 +213,8 @@ auto Mpv::run() -> void
             }
             break;
         case MPV_EVENT_GET_PROPERTY_REPLY: {
+            auto event = static_cast<mpv_event_property*>(ev->data);
+            _Error("Never requested reply: %%", event->name);
             break;
         } case MPV_EVENT_SHUTDOWN:
             d->quit = true;

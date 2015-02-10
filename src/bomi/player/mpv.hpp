@@ -10,6 +10,9 @@
 
 SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
 
+#define CHECK_MPV(err, fmt, ...) \
+    (isSuccess(err) ? true : (_WriteLog(e2l(err), "Failed to " fmt ": %%", __VA_ARGS__, e2s(err)), false))
+
 struct PropertyObservation {
     int event;
     const char *name = nullptr;
@@ -36,8 +39,6 @@ public:
     auto process(QEvent *event) -> bool;
 
     template<class... Args>
-    auto check(int err, const char *msg, const Args &... args) const -> bool;
-    template<class... Args>
     auto fatal(int err, const char *msg, const Args &... args) const -> void;
 
     template<class T>
@@ -49,14 +50,18 @@ public:
     auto setOption(const char *name, const char *data) -> void;
 
     template <class T>
-    auto set(const char *name, const T &value) -> void;
-    template <class T>
-    auto setAsync(const char *name, const T &value) -> void;
+    auto set(const char *name, const T &value) -> bool;
+    template<class T>
+    auto setAsync(QByteArray &&name, const T &value) -> bool;
+    template<class T, int N>
+    auto setAsync(const char (&name)[N], const T &value) -> bool;
 
     template<class... Args>
-    auto tell(const char *name, const Args&... args);
+    auto tell(const char *name, const Args&... args) -> bool;
+    template<int N, class... Args>
+    auto tellAsync(const char (&name)[N], const Args&... args) -> bool;
     template<class... Args>
-    auto tellAsync(const char *name, const Args&... args);
+    auto tellAsync(QByteArray &&name, const Args&... args) -> bool;
     auto flush() { mpv_wait_async_requests(m_handle); }
 
     auto setObserver(QObject *observer) -> void { m_observer = observer; }
@@ -80,15 +85,17 @@ public:
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL() -> void;
 private:
+    static auto e2s(int error) -> const char* { return mpv_error_string(error); }
+    static auto e2l(int error) -> Log::Level;
     auto run() -> void override;
     auto fill(mpv_node *) { }
     template<class T, class... Args>
     auto fill(mpv_node *it, const T &t, const Args&... args)
         { mpv_trait<T>::node_fill(*it, t); fill(++it, args...); }
     static auto error(int err) -> const char* { return mpv_error_string(err); }
-    static auto isSuccess(int error) -> bool { return error == MPV_ERROR_SUCCESS; }
+    static auto isSuccess(int error) -> bool { return error >=0 ; }
     template<class Func, class... Args>
-    auto command(const char *name, Func &&f, const Args&... args)
+    auto command(const char *name, Func &&f, const Args&... args) -> bool
     {
         std::array<mpv_node, sizeof...(args) + 1> nodes;
         mpv_node_list list = { nodes.size(), nodes.data(), nullptr };
@@ -96,7 +103,8 @@ private:
         mpv_node node;
         node.format = MPV_FORMAT_NODE_ARRAY;
         node.u.list = &list;
-        return check(f(&node), "Cannot execute: %%", name);
+        const int error = f(&node);
+        return CHECK_MPV(error, "execute %%", name);
     }
     auto newObservation(const char *name, std::function<void(int)> &&notify,
                         std::function<void(QEvent*)> &&process) -> int;
@@ -105,16 +113,6 @@ private:
     QObject *m_observer = nullptr;
 };
 
-template<class... Args>
-auto Mpv::check(int err, const char *msg, const Args &... args) const -> bool
-{
-    if (isSuccess(err))
-        return true;
-    const auto lv = err == MPV_ERROR_PROPERTY_UNAVAILABLE ? Log::Debug
-                                                          : Log::Error;
-    _WriteLog(lv, "%%: %%", error(err), Log::parse(msg, args...));
-    return false;
-}
 template<class... Args>
 auto Mpv::fatal(int err, const char *msg, const Args &... args) const -> void
 {
@@ -126,51 +124,57 @@ template<class T>
 auto Mpv::get(const char *name, T &def) const -> bool
 {
     if (!m_handle) return false;
-    type<T> data;
-    if (!check(mpv_get_property(m_handle, name, trait<T>::format, &data),
-               "Couldn't get property '%%'.", name))
+    MpvGetScopedData<T> data;
+    int error = mpv_get_property(m_handle, name, data.format(), data.raw());
+    if (!CHECK_MPV(error, "get %%", name))
         return false;
-    trait<T>::get(def, data); trait<T>::get_free(data); return true;
+    data.get(def); return true;
+}
+
+template<class T, int N>
+auto Mpv::setAsync(const char (&name)[N], const T &value) -> bool
+    { return setAsync<T>(QByteArray::fromRawData(name, N), value); }
+
+template<class T>
+auto Mpv::setAsync(QByteArray &&name, const T &value) -> bool
+{
+    Q_ASSERT(m_handle);
+    auto user = new QByteArray(std::move(name));
+    MpvSetScopedData<T> data(value);
+    int error = mpv_set_property_async(m_handle, (quint64)user,
+                                       name, data.format(), data.raw());
+    return CHECK_MPV(error, "set_async %%", name);
 }
 
 template <class T>
-auto Mpv::setAsync(const char *name, const T &value) -> void
+auto Mpv::set(const char *name, const T &value) -> bool
 {
     Q_ASSERT(m_handle);
-    auto user = new QByteArray(name);
-    type<T> data; trait<T>::set(data, value);
-    check(mpv_set_property_async(m_handle, (quint64)user, name,
-                                 trait<T>::format, &data),
-          "Error on set_async %%", name);
-    trait<T>::set_free(data);
-}
-
-template <class T>
-auto Mpv::set(const char *name, const T &value) -> void
-{
-    Q_ASSERT(m_handle);
-    type<T> data; trait<T>::set(data, value);
-    check(mpv_set_property(m_handle, name, trait<T>::format, &data),
-          "Error on %%=%%", name, value);
-    trait<T>::set_free(data);
+    MpvSetScopedData<T> data(value);
+    int error = mpv_set_property(m_handle, name, data.format(), data.raw());
+    return CHECK_MPV(error, "set %%=%%", name, value);
 }
 
 template<class... Args>
-auto Mpv::tell(const char *name, const Args&... args)
+auto Mpv::tell(const char *name, const Args&... args) -> bool
 {
-    return command(name, [=] (auto *node) {
+    return command(name, [&] (auto *node) {
         return mpv_command_node(m_handle, node, nullptr);
     }, args...);
 }
 
 template<class... Args>
-auto Mpv::tellAsync(const char *name, const Args&... args)
+auto Mpv::tellAsync(QByteArray &&name, const Args&... args) -> bool
 {
-    return command(name, [=] (auto *node) {
-        auto user = new QByteArray(name);
+    return command(name, [&] (auto *node) {
+        auto user = new QByteArray(std::move(name));
         return mpv_command_node_async(m_handle, (quint64)user, node);
     }, args...);
 }
+
+template<int N, class... Args>
+auto Mpv::tellAsync(const char (&name)[N], const Args&... args) -> bool
+    { return tellAsync(QByteArray::fromRawData(name, N), args...); }
 
 template<class Get, class Set>
 auto Mpv::observe(const char *name, Get get, Set set) -> std::enable_if_t<tmp::is_callable<Get>(), int>

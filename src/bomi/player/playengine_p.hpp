@@ -187,7 +187,7 @@ struct PlayEngine::Data {
             return false;
         if (!_Change(mouse, vr->mapToVideo(pos).toPoint()))
             return false;
-        mpv.tellAsync("mouse"_b, mouse.x(), mouse.y());
+        mpv.tellAsync("mouse", mouse.x(), mouse.y());
         return true;
     }
     auto takeSnapshot() -> void;

@@ -45,7 +45,7 @@ struct mpv_trait<T, detail::Arithmetic> : detail::mpv_trait_no_alloc {
     static constexpr mpv_format format = IsBool ? MPV_FORMAT_FLAG
                                        : IsInt ? MPV_FORMAT_INT64
                                                : MPV_FORMAT_DOUBLE;
-    static auto get_free(mpv_type) { };
+    static auto get_free(mpv_type&) { };
     static auto get(T &t, mpv_type data) { t = data; }
     static auto set(mpv_type &data, T t) { data = t; }
     static auto node_fill(mpv_node &node, T t)
@@ -189,6 +189,34 @@ private:
 
 template<class T>
 using mpv_t = typename mpv_trait<T>::mpv_type;
+
+template<class T>
+struct MpvScopedData {
+    using type = typename mpv_trait<T>::mpv_type;
+    MpvScopedData(const MpvScopedData&) = delete;
+    ~MpvScopedData() { m_free(m_data); }
+    auto operator = (const MpvScopedData&) = delete;
+    auto raw() -> type* { return &m_data; }
+    auto format() const { return mpv_trait<T>::format; }
+    auto set(const T &t) -> void { mpv_trait<T>::set(m_data, t); }
+protected:
+    MpvScopedData(void(*free)(type&)): m_data(), m_free(free) { }
+    type m_data;
+private:
+    void(*m_free)(type&) = nullptr;
+};
+
+template<class T>
+struct MpvGetScopedData : MpvScopedData<T> {
+    MpvGetScopedData(): MpvScopedData<T>(mpv_trait<T>::get_free) { }
+    auto get(T &t) const -> void { mpv_trait<T>::get(t, this->m_data); }
+};
+
+template<class T>
+struct MpvSetScopedData : MpvScopedData<T> {
+    MpvSetScopedData(const T &t): MpvScopedData<T>(mpv_trait<T>::set_free)
+        { mpv_trait<T>::set(this->m_data, t); }
+};
 
 #endif // MPV_PROPERTY_HPP
 

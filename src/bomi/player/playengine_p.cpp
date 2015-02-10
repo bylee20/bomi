@@ -219,7 +219,7 @@ auto PlayEngine::Data::onLoad() -> void
         resume = found = true;
     }
 
-    auto setFiles = [&] (const char *name, const char *nid,
+    auto setFiles = [&] (QByteArray &&name, QByteArray &&nid,
             const StreamList &list) {
         QStringList files; int id = -1;
         for (auto &track : list) {
@@ -231,20 +231,20 @@ auto PlayEngine::Data::onLoad() -> void
                 id = track.id();
         }
         if (!files.isEmpty())
-            mpv.setAsync(name, files);
+            mpv.setAsync(std::move(name), files);
         if (id != -1)
-            mpv.setAsync(nid, id);
+            mpv.setAsync(std::move(nid), id);
     };
 
     if (found && local->audio_tracks().isValid())
-        setFiles("file-local-options/audio-file", "file-local-options/aid", local->audio_tracks());
+        setFiles("file-local-options/audio-file"_b, "file-local-options/aid"_b, local->audio_tracks());
     else {
         QMutexLocker locker(&mutex);
         mpv.setAsync("file-local-options/audio-file", autoloadFiles(StreamAudio));
     }
     QVector<SubComp> loads;
     if (found && local->sub_tracks().isValid()) {
-        setFiles("file-local-options/sub-file", "file-local-options/sid", local->sub_tracks());
+        setFiles("file-local-options/sub-file"_b, "file-local-options/sid"_b, local->sub_tracks());
         loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive());
     } else {
         QMutexLocker locker(&mutex);

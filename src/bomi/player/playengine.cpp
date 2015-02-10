@@ -502,7 +502,7 @@ auto PlayEngine::avSync() const -> int
 auto PlayEngine::stepFrame(int direction) -> void
 {
     if ((d->state & (Playing | Paused)) && d->seekable)
-        d->mpv.tellAsync(direction > 0 ? "frame_step" : "frame_back_step");
+        d->mpv.tellAsync(direction > 0 ? "frame_step"_b : "frame_back_step"_b);
 }
 
 auto PlayEngine::isWaiting() const -> bool
@@ -562,7 +562,7 @@ auto PlayEngine::seekEdition(int number, int from) -> void
     if (number == DVDMenu && mrl.isDisc())
         d->mpv.tellAsync("discnav", "menu"_b);
     else if (0 <= number && number < d->info.editions.size()) {
-        d->mpv.setAsync(mrl.isDisc() ? "disc-title" : "edition", number);
+        d->mpv.setAsync(mrl.isDisc() ? "disc-title"_b : "edition"_b, number);
         seek(from);
     }
 }
