@@ -128,7 +128,9 @@ auto Mpv::get(const char *name, T &def) const -> bool
     int error = mpv_get_property(m_handle, name, data.format(), data.raw());
     if (!CHECK_MPV(error, "get %%", name))
         return false;
-    data.get(def); return true;
+    data.get(def);
+    _Trace("get %%: %%", name, def);
+    return true;
 }
 
 template<class T, int N>

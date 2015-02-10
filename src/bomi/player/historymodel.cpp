@@ -27,7 +27,7 @@ private:
     auto check(bool ok, const char *at) const noexcept -> bool
     {
         if (!ok)
-            _Error("Error on %%: %%", _L(at), m_db->lastError().text());
+            _Error("Error on %%: %%", at, m_db->lastError().text());
         return ok;
     }
     QSqlDatabase *m_db = nullptr;

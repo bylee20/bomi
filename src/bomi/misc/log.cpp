@@ -129,3 +129,8 @@ auto Log::unsubscribe(QObject *o) -> void
     s_subscribers.remove(o);
     s_rwLock.unlock();
 }
+
+auto _ToLog(const QVariant &var) -> QByteArray
+{
+    return "QVariant"_b;
+}

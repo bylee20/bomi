@@ -4,16 +4,20 @@
 struct LogOption;
 
 SIA _ToLog(char n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(qint8 n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(qint16 n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(qint32 n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(qint64 n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(quint8 n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(quint16 n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(quint32 n) -> QByteArray { return QByteArray::number(n); }
-SIA _ToLog(quint64 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(signed char n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(short n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(int n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(long n) -> QByteArray { return QByteArray::number((qlonglong)n); }
+SIA _ToLog(long long n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(unsigned char n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(unsigned short n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(unsigned int n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(unsigned long n) -> QByteArray { return QByteArray::number((qulonglong)n); }
+SIA _ToLog(unsigned long long n) -> QByteArray { return QByteArray::number(n); }
+
 SIA _ToLog(float n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(double n) -> QByteArray { return QByteArray::number(n); }
+
 SIA _ToLog(const QString &str) -> QByteArray { return str.toLocal8Bit(); }
 SIA _ToLog(const QStringRef &str) -> QByteArray { return str.toLocal8Bit(); }
 SIA _ToLog(const char *str) -> QByteArray { return QByteArray(str); }
@@ -46,6 +50,7 @@ SIA _ToLog(const QList<T> &list) -> QByteArray
     log[log.size() - 1] = ')';
     return log;
 }
+auto _ToLog(const QVariant &var) -> QByteArray;
 
 class Log {
     constexpr static const char *l2t = " FEWIDT";
