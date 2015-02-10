@@ -1,5 +1,8 @@
 #include "charsetdetector.hpp"
+#include "misc/log.hpp"
 #include <chardet.h>
+
+DECLARE_LOG_CONTEXT(Charset)
 
 struct CharsetDetector::Data {
     DetectObj *obj;
@@ -42,15 +45,26 @@ auto CharsetDetector::confidence() const -> double
 auto CharsetDetector::detect(const QByteArray &data, double confidence) -> QString
 {
     CharsetDetector chardet(data);
-    if (chardet.isDetected() && chardet.confidence() > confidence)
-        return chardet.encoding();
+    if (!chardet.isDetected()) {
+        _Info("Failed to detect encoding.");
+        return QString();
+    }
+    const auto enc = chardet.encoding();
+    const auto conf = chardet.confidence();
+    _Info("Encoding detected: %% (confidence: %%)", enc, conf);
+    if (conf >= confidence)
+        return enc;
+    _Info("Through away detected encoding for low confidence < %%.", confidence);
     return QString();
 }
 
 auto CharsetDetector::detect(const QString &fileName, double confidence, int size) -> QString
 {
     QFile file(fileName);
-    if (!file.open(QFile::ReadOnly))
+    if (!file.open(QFile::ReadOnly)) {
+        _Error("Cannot open file: %%", fileName);
         return QString();
+    }
+    _Info("Trying encoding autodetection: %%", fileName);
     return detect(file.read(size), confidence);
 }
