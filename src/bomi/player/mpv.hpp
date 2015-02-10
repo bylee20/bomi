@@ -57,7 +57,7 @@ public:
     auto tell(const char *name, const Args&... args);
     template<class... Args>
     auto tellAsync(const char *name, const Args&... args);
-    auto flush() { mpv_command_string(m_handle, "ignore"); }
+    auto flush() { mpv_wait_async_requests(m_handle); }
 
     auto setObserver(QObject *observer) -> void { m_observer = observer; }
     template<class Get, class Set>
