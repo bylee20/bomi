@@ -141,8 +141,11 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
         }
     });
     connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-        (e.*set)(a->data().toInt(), a->isChecked());
-        showMessage(tr(msg), a->text());
+        const auto checked = a->isChecked();
+        const auto text = a->text();
+        (e.*set)(a->data().toInt(), checked);
+        if (checked)
+            showMessage(tr(msg), text);
     });
 }
 
