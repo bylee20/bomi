@@ -456,7 +456,6 @@ FORMS += \
     ui/osdstylewidget.ui \
     ui/osdthemewidget.ui \
     ui/autoloaderwidget.ui \
-    ui/logoptionwidget.ui \
     ui/logviewer.ui
 
 OTHER_FILES += \
