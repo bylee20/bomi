@@ -151,7 +151,7 @@ struct SubtitleFindDialog::Data {
         } else {
             file.reset(new QFile(info.fileName));
             if (!file->open(QFile::WriteOnly | QFile::Truncate)) {
-                MBox::critical(p, tr("Find Subtitle"),
+                MBox::error(p, tr("Find Subtitle"),
                                tr("Cannot write file!") % '\n'_q % file->fileName(),
                                { BBox::Ok });
                 return;
