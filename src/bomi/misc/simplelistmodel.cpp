@@ -101,6 +101,16 @@ auto SimpleListModelBase::setSpecialFont(const QFont &font) -> void
     d->specialFont = font;
 }
 
+auto SimpleListModelBase::clear() -> void
+{
+    if (isEmpty())
+        return;
+    beginResetModel();
+    removeAll();
+    reset(0);
+    endResetModel();
+}
+
 auto SimpleListModelBase::insertRows(int row, int count, const QModelIndex &parent) -> bool
 {
     beginInsertRows(parent, row, row + count - 1);

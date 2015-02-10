@@ -25,6 +25,7 @@ public:
     auto remove(int row) -> bool;
     auto remove(const QModelIndexList &indices) -> int;
     auto swap(int r1, int r2) -> bool;
+    auto clear() -> void;
     virtual auto header(int column) const -> QString;
 signals:
     void rowChanged(int row);
@@ -45,6 +46,7 @@ protected:
     virtual auto editData(int row, int column) const -> QVariant;
     virtual auto edit(int row, int column, const QVariant &var) -> bool;
 private:
+    virtual auto removeAll() -> void = 0;
     virtual auto insertAt(int row) -> void = 0;
     virtual auto removeAt(int row) -> bool = 0;
     virtual auto swapAt(int r1, int r2) -> bool = 0;
@@ -93,6 +95,7 @@ private:
     auto insertAt(int row) -> void final { m_list.insert(row, T()); }
     auto removeAt(int row) -> bool final
         { return _InRange0(row, m_list.size()) && (m_list.removeAt(row), true); }
+    auto removeAll() -> void final { m_list.clear(); }
     Container m_list;
 };
 

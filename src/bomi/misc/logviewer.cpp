@@ -3,6 +3,7 @@
 #include "dataevent.hpp"
 #include "simplelistmodel.hpp"
 #include "log.hpp"
+#include "dialog/mbox.hpp"
 #include "ui_logviewer.h"
 
 static const int LogEvent = QEvent::User + 10;
@@ -164,6 +165,7 @@ struct LogViewer::Data {
         }
         s.endArray();
         auto geometry = s.value(u"geometry"_q).toRect();
+        ui.autoscroll->setChecked(s.value(u"autoscroll"_q, true).toBool());
         s.endGroup();
 
         const auto max = Log::option().level(LogOutput::Viewer);
@@ -204,7 +206,7 @@ struct LogViewer::Data {
         all->setShortcut(QKeySequence::SelectAll);
         p->addAction(all);
         connect(all, &QAction::triggered, ui.view, &QTreeView::selectAll);
-        connect(p, &QWidget::customContextMenuRequested,
+        connect(ui.view, &QWidget::customContextMenuRequested,
                 menu, [=] () { menu->popup(QCursor::pos()); });
     }
 };
@@ -215,6 +217,7 @@ LogViewer::LogViewer(QWidget *parent)
     d->p = this;
     std::fill(d->proxy.level.begin(), d->proxy.level.end(), true);
     d->ui.setupUi(this);
+    d->ui.view->viewport()->setStyleSheet("background-color: rgb(0, 0, 0);"_a);
     _SetWindowTitle(this, tr("Log Viewer"));
 
     const auto geometry = d->restore();
@@ -250,6 +253,17 @@ LogViewer::LogViewer(QWidget *parent)
     PLUG_FILTER(level, syncLevel);
     PLUG_FILTER(context, syncContext);
 
+    connect(d->ui.clear, &QPushButton::clicked, this, [=] () {
+        if (MBox::ask(this, tr("Log Viewer"),
+                      tr("Do you want remove all logs and contexts?"),
+                      { BBox::Ok, BBox::Cancel }) == BBox::Ok) {
+            d->model.clear();
+            d->ui.context->clear();
+            d->ctx.clear();
+            d->syncContext();
+        }
+    });
+
     if (!geometry.isEmpty())
         setGeometry(geometry);
 }
@@ -272,6 +286,7 @@ LogViewer::~LogViewer()
     save(d->ui.level);
     save(d->ui.context);
     s.setValue(u"geometry"_q, geometry());
+    s.setValue(u"autoscroll"_q, d->ui.autoscroll->isChecked());
     s.endGroup();
     delete d;
 }
@@ -294,18 +309,13 @@ auto LogViewer::customEvent(QEvent *ev) -> void
     entry.context = entry.message.mid(4, idx -4 );
     d->model.append(entry);
 
-    if (d->ctx.find(entry.context) == d->ctx.end()) {
-        auto item = new QListWidgetItem;
-        item->setText(entry.context);
-        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-        item->setCheckState(Qt::Checked);
-        d->ui.context->addItem(item);
+    if (d->newContext(entry.context, true)) {
         d->ui.context->sortItems();
-        d->ctx.insert(entry.context);
         d->syncContext();
     }
 
     if (d->model.rows() > d->lines)
         d->model.remove(0);
-    d->ui.view->scrollToBottom();
+    if (d->ui.autoscroll->isChecked())
+        d->ui.view->scrollToBottom();
 }
