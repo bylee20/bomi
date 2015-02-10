@@ -1,3 +1,49 @@
+0.9.1
+
+  * New: new default skin 'Ardis' designed by Kotus work
+  * New: new skin 'Numix' by varlesh
+  * New: new skin 'one'
+  * New: 'Audio > Equalizer' in menu
+  * New: 'Video > Interpolator/Chroma Upscaler > Advanced...' for advanced settings
+  * New: 'Video > Motion Interpolation' and related options
+  * New: 'Play > State' menu to display current playing state
+  * New: 'Play > Seek > To the Beginning' in menu
+  * New: 'Play > Seek > Next Black Frame' menu (#179)
+  * New: 'Tool > Log Viewer' in menu (#150)
+  * New: journald logging support (#218)
+  * New: option to select logging level for journald, stdout, stderr, external file
+  * New: option to specify file name format or use temporary file for downloaded subtitles
+  * New: option to use precise seeking in 'General > Play' tab of preferences (#199)
+  * New: option to ignore playback resume switching item in playlist (#201)
+  * New: use xcb_screensaver_suspend to disable screensaver
+  * New: SubRip subtitle parser works more tolerantly
+  * New: show playlist/history when mouse hovers on the right/left edge
+  * New: external audio file support
+  * New: open DVD by drag-and-drop of 'VIDEO_TS' folder
+  * New: open folder by drag-and-drop
+  * Fix: workaround for gray-out issue within Plasma 5
+  * Fix: couldn't click disc menu
+  * Fix: flush after requet XCB_SCREEN_SAVER_RESET (#152)
+  * Fix: crash on audio format change (#213)
+  * Fix: crash on reconstruction of audio filter chain during playback (#127)
+  * Fix: set screensaver interval for xcb (#152)
+  * Fix: set audio client name for PulseAudio
+  * Fix: sort generated playlists numerically
+  * Fix: implement loopStatus for Mpris
+  * Fix: enable 'Ok' and 'Apply' button in preferences only if options changed
+  * Fix: keep current row after list modified in SimpleListWidget (#205)
+  * Fix: wrong disabling condition of Up/Down button in language priorities
+  * Fix: reserve state on reloading(e.g., applying preferences)
+  * Fix: check subtitle file format instead of file extension
+  * Fix: closing window didn't work in full screen mode (#183)
+  * Fix: aspect ratio and crop ratio didn't apply immediately (#202)
+  * Fix: Auto-exit and Auto-shutdown didn't work (#200)
+  * Fix: video color wasn't restored on executed
+  * Fix: don't mix channels for identical input & output channel layouts
+  * Fix: handle percent encoding in URL more properly (#18)
+  * Fix: missing extension for ifo video file (#181)
+  * Fix: wrong playlist position on initial state
+
 0.9.0
 
   * New: new name for application 'bomi'
