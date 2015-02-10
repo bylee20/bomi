@@ -530,7 +530,7 @@ auto MainWindow::Data::applyPref() -> void
         cache.remotes = p.network_folders();
         return cache;
     };
-    const auto chardet = p.sub_enc_autodetection() ? -1 : p.sub_enc_accuracy() * 1e-2;
+    const auto chardet = p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1;
 
     e.lock();
     e.setResume_locked(p.remember_stopped());
