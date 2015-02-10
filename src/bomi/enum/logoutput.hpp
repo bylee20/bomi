@@ -2,14 +2,15 @@
 #define LOGOUTPUT_HPP
 
 #include "enums.hpp"
-#define LOGOUTPUT_IS_FLAG 1
+#define LOGOUTPUT_IS_FLAG 0
 
 enum class LogOutput : int {
     Off = (int)0,
     StdOut = (int)1,
     StdErr = (int)2,
-    File = (int)4,
-    Journal = (int)8
+    File = (int)3,
+    Journal = (int)4,
+    Viewer = (int)5
 };
 
 Q_DECLARE_METATYPE(LogOutput)
@@ -28,14 +29,14 @@ constexpr inline auto operator >= (int i, LogOutput e) -> bool { return i >= (in
 constexpr inline auto operator <= (int i, LogOutput e) -> bool { return i <= (int)e; }
 #if LOGOUTPUT_IS_FLAG
 #include "enumflags.hpp"
-using LogOutputs = EnumFlags<LogOutput>;
-constexpr inline auto operator | (LogOutput e1, LogOutput e2) -> LogOutputs
-{ return LogOutputs(LogOutputs::IntType(e1) | LogOutputs::IntType(e2)); }
+using  = EnumFlags<LogOutput>;
+constexpr inline auto operator | (LogOutput e1, LogOutput e2) -> 
+{ return (::IntType(e1) | ::IntType(e2)); }
 constexpr inline auto operator ~ (LogOutput e) -> EnumNot<LogOutput>
 { return EnumNot<LogOutput>(e); }
-constexpr inline auto operator & (LogOutput lhs, LogOutputs rhs) -> EnumAnd<LogOutput>
+constexpr inline auto operator & (LogOutput lhs,  rhs) -> EnumAnd<LogOutput>
 { return rhs & lhs; }
-Q_DECLARE_METATYPE(LogOutputs)
+Q_DECLARE_METATYPE()
 #endif
 
 template<>
@@ -49,9 +50,9 @@ public:
         QString name, key;
         QVariant data;
     };
-    using ItemList = std::array<Item, 5>;
+    using ItemList = std::array<Item, 6>;
     static constexpr auto size() -> int
-    { return 5; }
+    { return 6; }
     static constexpr auto typeName() -> const char*
     { return "LogOutput"; }
     static constexpr auto typeKey() -> const char*
@@ -59,12 +60,7 @@ public:
     static auto typeDescription() -> QString
     { return qApp->translate("EnumInfo", ""); }
     static auto item(Enum e) -> const Item*
-    { 
-    auto it = std::find_if(info.cbegin(), info.cend(),
-                            [e] (const Item &info)
-                            { return info.value == e; });
-    return it != info.cend() ? &(*it) : nullptr;
- }
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
     static auto name(Enum e) -> QString
     { auto i = item(e); return i ? i->name : QString(); }
     static auto key(Enum e) -> QString
@@ -77,10 +73,11 @@ public:
     {
         switch (e) {
         case Enum::Off: return qApp->translate("EnumInfo", "No Output");
-        case Enum::StdOut: return qApp->translate("EnumInfo", "Standard Output");
-        case Enum::StdErr: return qApp->translate("EnumInfo", "Standard Error");
-        case Enum::File: return qApp->translate("EnumInfo", "Plain Text File");
-        case Enum::Journal: return qApp->translate("EnumInfo", "Systemd Journal");
+        case Enum::StdOut: return qApp->translate("EnumInfo", "stdout");
+        case Enum::StdErr: return qApp->translate("EnumInfo", "stderr");
+        case Enum::File: return qApp->translate("EnumInfo", "Text File");
+        case Enum::Journal: return qApp->translate("EnumInfo", "journald");
+        case Enum::Viewer: return qApp->translate("EnumInfo", "Viewer");
         default: return QString();
         }
     }

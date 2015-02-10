@@ -20,6 +20,7 @@
 #include "opengl/opengllogger.hpp"
 #include "quick/themeobject.hpp"
 #include "misc/stepaction.hpp"
+#include "misc/logviewer.hpp"
 
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {
@@ -71,6 +72,7 @@ struct MainWindow::Data {
     QMenu contextMenu;
     PrefDialog *prefDlg = nullptr;
     SubtitleFindDialog *subFindDlg = nullptr;
+    LogViewer *logViewer = nullptr;
     SnapshotDialog *snapshot = nullptr;
     OpenGLLogger glLogger{"SG"};
     SubtitleView *sview = nullptr;

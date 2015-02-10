@@ -606,6 +606,7 @@ auto MainWindow::Data::plugMenu() -> void
         };
         toggleTool("playinfo", as.playinfo_visible);
     });
+    connect(tool[u"log"_q], &QAction::triggered, logViewer, &LogViewer::show);
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         if (!sview)
             sview = new SubtitleView(p);

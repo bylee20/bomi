@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     d->pref.initialize();
     d->pref.load();
     d->undo.setActive(false);
+    d->logViewer = new LogViewer(this);
     d->dontShowMsg = true;
 
     AppObject::setEngine(&d->e);

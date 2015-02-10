@@ -14,6 +14,8 @@ struct LogOption {
         { return m_levels.value(output, Log::Off); }
     auto setLevel(LogOutput output, Log::Level lv) -> void
         { m_levels[output] = lv; }
+    auto lines() const -> int { return m_lines; }
+    auto setLines(int lines) -> void { m_lines = lines; }
     auto file() const -> QString { return m_file; }
     auto setFile(const QString &file) { m_file = file; }
     auto toJson() const -> QJsonObject;
@@ -23,6 +25,7 @@ struct LogOption {
 private:
     QHash<LogOutput, Log::Level> m_levels;
     QString m_file;
+    int m_lines = 0;
 };
 
 Q_DECLARE_METATYPE(LogOption)

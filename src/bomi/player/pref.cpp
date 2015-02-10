@@ -140,6 +140,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"tool/pref"_q] << Qt::Key_P;
     keys[u"tool/reload-skin"_q] << Qt::Key_R + Qt::CTRL;
     keys[u"tool/playinfo"_q] << Qt::Key_Tab;
+    keys[u"tool/log"_q] << Qt::ALT + Qt::Key_L;
 
     keys[u"window/proper"_q] << Qt::Key_QuoteLeft;
     keys[u"window/100%"_q] << Qt::Key_1;

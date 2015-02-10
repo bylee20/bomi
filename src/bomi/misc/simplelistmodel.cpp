@@ -162,9 +162,7 @@ auto SimpleListModelBase::data(const QModelIndex &idx, int role) const -> QVaria
     } case Qt::FontRole:
         return fontData(row, col);
     default:
-        if (role >= Qt::UserRole)
-            return roleData(row, col, role);
-        return QVariant();
+        return roleData(row, col, role);
     }
 }
 
@@ -220,6 +218,11 @@ auto SimpleListModelBase::setSpecialRow(int row) -> void
 auto SimpleListModelBase::checkedList(int column) const -> QVector<bool>
 {
     return d->checked.value(column);
+}
+
+auto SimpleListModelBase::isChecked(int row, int column) const -> bool
+{
+    return d->checked.value(column).value(row, false);
 }
 
 auto SimpleListModelBase::setChecked(int r, int c, bool checked) -> bool

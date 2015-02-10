@@ -249,7 +249,8 @@ HEADERS += \
     video/motionintrploption.hpp \
     enum/logoutput.hpp \
     widget/pathbutton.hpp \
-	misc/logoption.hpp
+	misc/logoption.hpp \
+    misc/logviewer.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -432,7 +433,8 @@ SOURCES += \
     video/motionintrploption.cpp \
     enum/logoutput.cpp \
     widget/pathbutton.cpp \
-	misc/logoption.cpp
+	misc/logoption.cpp \
+    misc/logviewer.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -453,7 +455,9 @@ FORMS += \
     ui/audionormalizeroptionwidget.ui \
     ui/osdstylewidget.ui \
     ui/osdthemewidget.ui \
-    ui/autoloaderwidget.ui
+    ui/autoloaderwidget.ui \
+    ui/logoptionwidget.ui \
+    ui/logviewer.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \

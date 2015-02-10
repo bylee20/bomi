@@ -1,4 +1,5 @@
 #include "log.hpp"
+#include "dataevent.hpp"
 #include "logoption.hpp"
 #include "configure.hpp"
 #include "tmp/algorithm.hpp"
@@ -23,9 +24,13 @@ static Log::Level lvStdOut  = Log::Trace;
 static Log::Level lvStdErr  = Log::Off;
 static Log::Level lvJournal = Log::Off;
 static Log::Level lvFile    = Log::Off;
+static Log::Level lvViewer  = Log::Off;
 static Log::Level lvMax     = Log::Trace;
 
-QSharedPointer<FILE> file;
+static QReadWriteLock s_rwLock;
+static QHash<QObject*, int> s_subscribers;
+
+static QSharedPointer<FILE> s_file;
 
 const QStringList Log::m_options = QStringList()
         << u"off"_q   << u"fatal"_q << u"error"_q << u"warn"_q
@@ -47,8 +52,15 @@ auto Log::print(Level lv, const QByteArray &log) -> void
         ::print(stdout, log);
     if (lv <= lvStdErr)
         ::print(stderr, log);
-    if (lv <= lvFile && ::file)
-        ::print(file.data(), log);
+    if (lv <= lvFile && s_file)
+        ::print(s_file.data(), log);
+    if (lv <= lvViewer && !s_subscribers.isEmpty()) {
+        s_rwLock.lockForRead();
+        auto &s = _C(s_subscribers);
+        for (auto it = s.begin(); it != s.end(); ++it)
+            _PostEvent(it.key(), it.value(), lv, log);
+        s_rwLock.unlock();
+    }
     if (lv == Fatal)
         abort();
 }
@@ -67,14 +79,18 @@ auto Log::qt(QtMsgType type, const QMessageLogContext &, const QString &msg) -> 
     write("Qt", lvQt[type], msg.toLocal8Bit());
 }
 
+static LogOption s_option;
+
 auto Log::setOption(const LogOption &option) -> void
 {
+    s_option = option;
     // no thread safety!! should be called only once on initalization
     lvStdOut  = option.level(LogOutput::StdOut);
     lvStdErr  = option.level(LogOutput::StdErr);
     lvJournal = option.level(LogOutput::Journal);
     lvFile    = option.level(LogOutput::File);
-    lvMax = tmp::max(lvStdOut, lvStdErr, lvFile);
+    lvViewer  = option.level(LogOutput::Viewer);
+    lvMax = tmp::max(lvStdOut, lvStdErr, lvFile, lvViewer);
 #if HAVE_SYSTEMD
     lvMax = tmp::max(lvMax, lvJournal);
 #endif
@@ -87,10 +103,29 @@ auto Log::setOption(const LogOption &option) -> void
         qDebug("Cannot open file: %s\n", path.constData());
         return;
     }
-    ::file = QSharedPointer<FILE>(pf, fclose);
+    s_file = QSharedPointer<FILE>(pf, fclose);
+}
+
+auto Log::option() -> const LogOption&
+{
+    return s_option;
 }
 
 auto Log::maximumLevel() -> Level
 {
     return lvMax;
+}
+
+auto Log::subscribe(QObject *o, int event) -> void
+{
+    s_rwLock.lockForWrite();
+    s_subscribers.insert(o, event);
+    s_rwLock.unlock();
+}
+
+auto Log::unsubscribe(QObject *o) -> void
+{
+    s_rwLock.lockForWrite();
+    s_subscribers.remove(o);
+    s_rwLock.unlock();
 }

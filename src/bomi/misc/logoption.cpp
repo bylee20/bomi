@@ -15,6 +15,7 @@ auto LogOption::toJson() const -> QJsonObject
 {
     QJsonObject json;
     json.insert(u"file"_q, file());
+    json.insert(u"lines"_q, m_lines);
     QJsonObject map;
     for (auto it = m_levels.begin(); it != m_levels.end(); ++it)
         map.insert(_EnumName(it.key()), Log::name(it.value()));
@@ -26,6 +27,7 @@ auto LogOption::setFromJson(const QJsonObject &json) -> bool
 {
     if (!json.contains(u"file"_q) || !json.contains(u"levels"_q))
         return false;
+    m_lines = json[u"lines"_q].toDouble();
     m_file = json[u"file"_q].toString();
     auto map = json[u"levels"_q].toObject();
     m_levels.clear();
@@ -39,14 +41,10 @@ auto LogOption::default_() -> LogOption
     LogOption option;
 
 #if HAVE_SYSTEMD
-    option.m_levels[LogOutput::StdOut] = Log::Off;
     option.m_levels[LogOutput::Journal] = Log::Debug;
 #else
     option.m_levels[LogOutput::StdOut] = Log::Info;
-    option.m_levels[LogOutput::Journal] = Log::Off;
 #endif
-    option.m_levels[LogOutput::StdErr] = Log::Off;
-    option.m_levels[LogOutput::File] = Log::Off;
 
     option.m_file = _WritablePath(Location::Cache) % "/log"_a;
 
@@ -63,6 +61,7 @@ struct Line {
 struct LogOptionWidget::Data {
     QHash<LogOutput, Line> lines;
     QLineEdit *file = nullptr;
+    QSpinBox *viewer = nullptr;
     auto create(LogOutput output, QGridLayout *grid, int r, int c) -> Line*
     {
         auto &l = lines[output];
@@ -73,52 +72,73 @@ struct LogOptionWidget::Data {
             l.combo->addItem(names[i], (Log::Level)i);
         grid->addWidget(l.name, r, c);
         grid->addWidget(l.combo, r, c+1);
-        grid->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding), r, c+2);
         return &l;
+    }
+
+    auto sync(DataComboBox *) -> void { }
+    template<class... Args>
+    auto sync(DataComboBox *c, QWidget *w, Args... ws) -> void
+    {
+        connect(SIGNAL_V(c, currentDataChanged), w,
+                [=] () { w->setEnabled(c->currentValue<Log::Level>()); });
+        w->setEnabled(false);
+        sync(c, ws...);
     }
 };
 
 LogOptionWidget::LogOptionWidget(QWidget *parent)
     : QGroupBox(parent), d(new Data)
 {
-    auto vbox = new QVBoxLayout;
-
     auto grid = new QGridLayout;
-    auto l = d->create(LogOutput::Journal, grid, 0, 0);
-#if HAVE_SYSTEMD
-    Q_UNUSED(l);
-#else
-    l->name->setEnabled(false);
-    l->combo->setEnabled(false);
-#endif
+    auto space = [&] (int r, int c)
+        { grid->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding), r, c); };
 
-    auto file = d->create(LogOutput::File, grid, 1, 0)->combo;
-
+    d->create(LogOutput::Journal, grid, 0, 0);
+    space(0, 2);
     d->create(LogOutput::StdOut, grid, 0, 3);
-    d->create(LogOutput::StdErr, grid, 1, 3);
+    space(0, 5);
+    d->create(LogOutput::StdErr, grid, 0, 6);
+    space(0, 8);
 
-    vbox->addLayout(grid);
-
-    QWidget *fw = new QWidget;
-    auto hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(tr("File Path")));
-    hbox->setMargin(0);
+    d->create(LogOutput::File, grid, 1, 0);
+    grid->addWidget(new QLabel(tr("Path")), 1, 2);
     d->file = new QLineEdit;
-    hbox->addWidget(d->file);
-    fw->setLayout(hbox);
+    grid->addWidget(d->file, 1, 3, 1, -1);
 
-    vbox->addWidget(fw);
-    setLayout(vbox);
+    d->create(LogOutput::Viewer, grid, 2, 0);
+
+    QWidget *vw = new QWidget;
+    auto hbox = new QHBoxLayout;
+    hbox->setMargin(0);
+    hbox->addWidget(new QLabel(tr("Keep")));
+    d->viewer = new QSpinBox;
+    d->viewer->setSuffix(tr("Lines"));
+    d->viewer->setSpecialValueText(tr("No Limit"));
+    d->viewer->setRange(0, 9999999);
+    d->viewer->setAccelerated(true);
+    hbox->addWidget(d->viewer);
+    hbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
+    vw->setLayout(hbox);
+    grid->addWidget(vw, 2, 2, 1, -1);
+
+    setLayout(grid);
 
     auto signal = &LogOptionWidget::optionChanged;
     for (auto &l : d->lines)
         PLUG_CHANGED(l.combo);
     PLUG_CHANGED(d->file);
 
-    connect(SIGNAL_V(file, currentDataChanged), this,
-            [=] () { fw->setEnabled(file->currentValue<Log::Level>()); });
+    auto file = d->lines[LogOutput::File].combo;
+    d->sync(file, d->file);
 
-    fw->setEnabled(false);
+    auto viewer = d->lines[LogOutput::Viewer].combo;
+    d->sync(viewer, d->viewer);
+
+#if !HAVE_SYSTEMD
+    auto &l = d->lines[LogOutput::Journal];
+    l.name->setEnabled(false);
+    l.combo->setEnabled(false);
+#endif
 }
 
 LogOptionWidget::~LogOptionWidget()
@@ -132,6 +152,7 @@ auto LogOptionWidget::option() const -> LogOption
     for (auto it = d->lines.begin(); it != d->lines.end(); ++it)
         option.setLevel(it.key(), it->combo->currentValue<Log::Level>());
     option.setFile(d->file->text());
+    option.setLines(d->viewer->value());
     return option;
 }
 
@@ -140,4 +161,5 @@ auto LogOptionWidget::setOption(const LogOption &option) -> void
     for (auto it = d->lines.begin(); it != d->lines.end(); ++it)
         it->combo->setCurrentValue(option.level(it.key()));
     d->file->setText(option.file());
+    d->viewer->setValue(option.lines());
 }

@@ -21,6 +21,7 @@ public:
     auto setChecked(int column, const QVector<bool> &checked) -> bool;
     auto setCheckable(int column, bool checkable) -> void;
     auto checkedList(int column) const -> QVector<bool>;
+    auto isChecked(int row, int column) const -> bool;
     auto remove(int row) -> bool;
     auto remove(const QModelIndexList &indices) -> int;
     auto swap(int r1, int r2) -> bool;
@@ -31,6 +32,7 @@ signals:
     void specialRowChanged(int row);
     void dataChanged(int row);
     void contentsChanged();
+    void checkedChanged(int row, int column);
 protected:
     auto resize(int rows) -> void;
     auto reset(int rows) -> void;

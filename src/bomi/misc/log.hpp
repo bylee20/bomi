@@ -80,7 +80,10 @@ public:
     static auto print(Level lv, const QByteArray &log) -> void;
     static auto maximumLevel() -> Level;
     static auto setOption(const LogOption &option) -> void;
+    static auto option() -> const LogOption&;
     static auto qt(QtMsgType type, const QMessageLogContext &context, const QString &msg) -> void;
+    static auto subscribe(QObject *o, int event) -> void;
+    static auto unsubscribe(QObject *o) -> void;
 private:
     struct Helper {
         template<class... Args>

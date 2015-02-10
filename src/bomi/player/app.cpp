@@ -205,7 +205,7 @@ App::App(int &argc, char **argv)
 
     if (d->import())
         setLocale(Locale::fromVariant(d->read("locale", Locale().toVariant())));
-
+    d->logOption.setFromJson(_JsonFromString(d->read<QString>("log-option")));
     auto logOption = d->logOption;
     if (logOption.level(LogOutput::StdOut) < lvStdOut)
         logOption.setLevel(LogOutput::StdOut, lvStdOut);
