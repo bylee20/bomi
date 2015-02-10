@@ -180,9 +180,9 @@ setup_build() {
     local mk=
     printf "checking for cc ... "
     if check_cc __clang__; then
-        mkspec=linux-clang-libc++
+        mk=linux-clang-libc++
     elif check_cc __GNUC__; then
-        mkspec=linux-g++
+        mk=linux-g++
     else
         echo "no"
         echo "'$cc' is not supported."
@@ -193,8 +193,9 @@ setup_build() {
     check_qt5_or_exit qmake
     check_qt5_or_exit lrelease
 
+    if [ -z "$mkspec" ]; then mkspec=$mk; fi
     echo "checking for mkspec ... $mkspec"
-    if [ -n "$mkspec" ]; then qmake="$qmake -spec $mkspec"; fi
+    qmake="$qmake -spec $mkspec"
 }
 
 prefix=/usr/local
