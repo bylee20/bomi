@@ -204,7 +204,7 @@ template<class Check>
 auto Mpv::observeState(const char *name, Check ck) -> int
 {
     using T = std::remove_reference_t<tmp::func_arg_t<Check, 0>>;
-    return newObservation(name, [=] (int) { ck(get<T>(name)); return false; }, [](QEvent*){});
+    return newObservation(name, [=] (int) { ck(get<T>(name)); }, [](QEvent*){});
 }
 
 #endif // MPV_HPP

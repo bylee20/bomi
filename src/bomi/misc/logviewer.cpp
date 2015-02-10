@@ -95,13 +95,14 @@ struct LogViewer::Data {
             if (l->item(i)->checkState())
                 ++checked;
         }
-        QSignalBlocker sb(c);
+        const bool was = c->blockSignals(true);
         if (!checked)
             c->setCheckState(Qt::Unchecked);
         else if (checked < l->count())
             c->setCheckState(Qt::PartiallyChecked);
         else
             c->setCheckState(Qt::Checked);
+        c->blockSignals(was);
     }
 
     auto syncLevel() -> void
@@ -245,10 +246,10 @@ LogViewer::LogViewer(QWidget *parent)
 
 #define PLUG_FILTER(l, s) \
     connect(d->ui.l##Check, &QCheckBox::stateChanged, this, [=] (int checked) { \
-        QSignalBlocker sb(d->ui.l); \
+        auto was = d->ui.l->blockSignals(true); \
         for (auto i = 0; i < d->ui.l->count(); ++i) \
             d->chceck(d->ui.l->item(i), checked); \
-        d->s(); \
+        d->s(); d->ui.l->blockSignals(was); \
     });
     PLUG_FILTER(level, syncLevel);
     PLUG_FILTER(context, syncContext);

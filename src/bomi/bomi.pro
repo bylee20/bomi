@@ -20,8 +20,8 @@ include(configure.pro)
 QMAKE_CXXFLAGS_CXX11 = -std=c++1y
 
 contains(QMAKE_CXX, clang++) {
-CONFIG += release
 QMAKE_CXXFLAGS += -Wno-missing-braces
+QMAKE_CXXFLAGS -= -g
 } else {
 QMAKE_CXXFLAGS += -Wno-non-template-friend
 }

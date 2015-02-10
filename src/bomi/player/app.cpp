@@ -5,6 +5,7 @@
 #include "misc/logoption.hpp"
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
+#include <clocale>
 
 #if defined(Q_OS_MAC)
 #include "app_mac.hpp"

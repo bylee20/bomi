@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     d->dontShowMsg = false;
     d->undo.setActive(true);
-    QTimer::singleShot(1, this, [=] () { d->applyPref(); cApp.runCommands(); });
+    QTimer::singleShot(1, this, SLOT(postInitialize()));
 }
 
 MainWindow::~MainWindow() {
@@ -58,6 +58,12 @@ MainWindow::~MainWindow() {
     exit();
     delete d->view;
     delete d;
+}
+
+auto MainWindow::postInitialize() -> void
+{
+     d->applyPref();
+     cApp.runCommands();
 }
 
 auto MainWindow::openFromFileManager(const Mrl &mrl) -> void

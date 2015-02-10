@@ -177,9 +177,10 @@ setup_build() {
         macdeployqt=$qtsdk/bin/macdeployqt
     fi
 
+    local mk=
     printf "checking for cc ... "
     if check_cc __clang__; then
-        mkspec=linux-clang
+        mkspec=linux-clang-libc++
     elif check_cc __GNUC__; then
         mkspec=linux-g++
     else

@@ -25,6 +25,8 @@ signals:
     void cursorChanged(const QCursor &cursor);
     void fullscreenChanged(bool fs);
     void sceneGraphInitialized();
+private slots:
+    void postInitialize();
 private:
     auto showEvent(QShowEvent *event) -> void;
     auto hideEvent(QHideEvent *event) -> void;
