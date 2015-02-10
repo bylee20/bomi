@@ -82,7 +82,7 @@ public:
     static auto setOption(const LogOption &option) -> void;
     static auto option() -> const LogOption&;
     static auto qt(QtMsgType type, const QMessageLogContext &context, const QString &msg) -> void;
-    static auto subscribe(QObject *o, int event) -> void;
+    static auto subscribe(QObject *o, int event) -> int;
     static auto unsubscribe(QObject *o) -> void;
 private:
     struct Helper {

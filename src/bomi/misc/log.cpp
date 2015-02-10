@@ -116,11 +116,11 @@ auto Log::maximumLevel() -> Level
     return lvMax;
 }
 
-auto Log::subscribe(QObject *o, int event) -> void
+auto Log::subscribe(QObject *o, int event) -> int
 {
-    s_rwLock.lockForWrite();
+    QWriteLocker l(&s_rwLock);
     s_subscribers.insert(o, event);
-    s_rwLock.unlock();
+    return s_option.lines() ? s_option.lines() : _Max<int>();
 }
 
 auto Log::unsubscribe(QObject *o) -> void

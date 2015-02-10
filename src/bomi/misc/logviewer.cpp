@@ -59,6 +59,7 @@ public:
 };
 
 struct LogViewer::Data {
+    LogViewer *p = nullptr;
     Ui::LogViewer ui;
     std::set<QString> ctx;
     LogFilterModel proxy;
@@ -70,6 +71,46 @@ struct LogViewer::Data {
         QMap<QString, bool> context;
         QMap<Log::Level, bool> level;
     } state;
+
+    auto level(const QListWidgetItem *item) -> Log::Level
+    {
+        return item->data(Qt::UserRole).value<Log::Level>();
+    }
+
+    auto setLevel(QListWidgetItem *item, Log::Level lv) -> void
+    {
+        item->setData(Qt::UserRole, QVariant::fromValue(lv));
+    }
+
+    auto chceck(QListWidgetItem *item, bool c) -> void
+    {
+        item->setCheckState(c ? Qt::Checked : Qt::Unchecked);
+    }
+
+    auto setFilterChecked(QCheckBox *c, QListWidget *l) -> void
+    {
+        int checked = 0;
+        for (auto i = 0; i < l->count(); ++i) {
+            if (l->item(i)->checkState())
+                ++checked;
+        }
+        QSignalBlocker sb(c);
+        if (!checked)
+            c->setCheckState(Qt::Unchecked);
+        else if (checked < l->count())
+            c->setCheckState(Qt::PartiallyChecked);
+        else
+            c->setCheckState(Qt::Checked);
+    }
+
+    auto syncLevel() -> void
+    {
+        for (auto i = 0; i < ui.level->count(); ++i) {
+            const auto item = ui.level->item(i);
+            proxy.level[level(item)] = item->checkState();
+        }
+        proxy.invalidate();
+    }
 
     auto syncContext() -> void
     {
@@ -92,96 +133,123 @@ struct LogViewer::Data {
         return item;
     }
 
+    auto newContext(const QString &name, bool checked) -> QListWidgetItem*
+    {
+        if (ctx.find(name) != ctx.end())
+            return nullptr;
+        auto item = newItem(name, ui.context);
+        chceck(item, checked);
+        ctx.insert(name);
+        return item;
+    }
+    auto restore() -> QRect
+    {
+        QSettings s;
+        s.beginGroup(u"LogViewer"_q);
+        int len = s.beginReadArray(ui.context->objectName());
+        for (int i = 0; i < len; ++i) {
+            s.setArrayIndex(i);
+            auto &&name = s.value(u"name"_q).toString();
+            auto checked = s.value(u"checked"_q).toBool();
+            newContext(name, checked);
+        }
+        s.endArray();
+
+        QMap<Log::Level, bool> levels;
+        len = s.beginReadArray(ui.level->objectName());
+        for (int i = 0; i < len; ++i) {
+            s.setArrayIndex(i);
+            auto level = Log::level(s.value(u"name"_q).toString());
+            levels[level] = s.value(u"checked"_q).toBool();
+        }
+        s.endArray();
+        auto geometry = s.value(u"geometry"_q).toRect();
+        s.endGroup();
+
+        const auto max = Log::option().level(LogOutput::Viewer);
+        for (int lv = 1; lv <= Log::Trace; ++lv) {
+            auto level = (Log::Level)lv;
+            auto item = newItem(Log::name(level), ui.level);
+            setLevel(item, level);
+            if (level > max)
+                item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+            chceck(item, levels.contains(level) ? levels[level] : true);
+        }
+        syncContext();
+        syncLevel();
+        setFilterChecked(ui.contextCheck, ui.context);
+        setFilterChecked(ui.levelCheck, ui.level);
+        return geometry;
+    }
+
+    auto createMenu() -> void
+    {
+        menu = new QMenu(p);
+        auto copy = menu->addAction(tr("Copy"));
+        auto all  = menu->addAction(tr("Select All"));
+
+        copy->setShortcut(QKeySequence::Copy);
+        p->addAction(copy);
+        connect(copy, &QAction::triggered, p, [=] () {
+            auto rows = ui.view->selectionModel()->selectedRows();
+            std::sort(rows.begin(), rows.end(),
+                      [&] (auto &lhs, auto &rhs) { return lhs.row() < rhs.row(); });
+            QString text;
+            for (auto &row : rows)
+                text += row.data().toString() % '\n'_q;
+            auto c = qApp->clipboard();
+            c->setText(text);
+        });
+
+        all->setShortcut(QKeySequence::SelectAll);
+        p->addAction(all);
+        connect(all, &QAction::triggered, ui.view, &QTreeView::selectAll);
+        connect(p, &QWidget::customContextMenuRequested,
+                menu, [=] () { menu->popup(QCursor::pos()); });
+    }
 };
 
 LogViewer::LogViewer(QWidget *parent)
     : QDialog(parent), d(new Data)
 {
-    d->ui.setupUi(this);
+    d->p = this;
     std::fill(d->proxy.level.begin(), d->proxy.level.end(), true);
-
-    QSettings s;
-    s.beginGroup(u"LogViewer"_q);
-    int len = s.beginReadArray(d->ui.context->objectName());
-    for (int i = 0; i < len; ++i) {
-        s.setArrayIndex(i);
-        auto &&name = s.value(u"name"_q).toString();
-        auto checked = s.value(u"checked"_q).toBool();
-        if (d->ctx.find(name) != d->ctx.end())
-            continue;
-        auto item = d->newItem(name, d->ui.context);
-        item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
-        d->ctx.insert(name);
-    }
-    s.endArray();
-
-    QMap<Log::Level, bool> levels;
-    len = s.beginReadArray(d->ui.level->objectName());
-    for (int i = 0; i < len; ++i) {
-        s.setArrayIndex(i);
-        auto level = Log::level(s.value(u"name"_q).toString());
-        levels[level] = s.value(u"checked"_q).toBool();
-    }
-    s.endArray();
-    auto geometry = s.value(u"geometry"_q).toRect();
-    s.endGroup();
-
-    for (int lv = 1; lv <= Log::Trace; ++lv) {
-        auto level = (Log::Level)lv;
-        auto item = d->newItem(Log::name(level), d->ui.level);
-        item->setData(Qt::UserRole, QVariant::fromValue(level));
-        if (level > Log::option().level(LogOutput::Viewer))
-            item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
-        const auto checked = levels.contains(level) ? levels[level] : true;
-        item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
-        d->proxy.level[level] = checked;
-    }
-
-    Log::subscribe(this, LogEvent);
+    d->ui.setupUi(this);
     _SetWindowTitle(this, tr("Log Viewer"));
-    d->lines = Log::option().lines();
-    if (d->lines <= 0)
-        d->lines = _Max<int>();
 
+    const auto geometry = d->restore();
+
+    d->lines = Log::subscribe(this, LogEvent);
     d->proxy.setSourceModel(&d->model);
     d->ui.view->setModel(&d->proxy);
+    d->createMenu();
 
     const QFontMetrics fm(font());
     const int mw = fm.width('M'_q) * 12;
     d->ui.level->setFixedWidth(mw);
     d->ui.level->setMaximumHeight(fm.height() * 10);
-    connect(d->ui.level, &QListWidget::itemChanged, this, [=] (QListWidgetItem *item) {
-        const auto lv = item->data(Qt::UserRole).value<Log::Level>();
-        d->proxy.level[lv] = item->checkState();
+    connect(d->ui.level, &QListWidget::itemChanged, this, [=] (auto item) {
+        d->proxy.level[d->level(item)] = item->checkState();
         d->proxy.invalidate();
+        d->setFilterChecked(d->ui.levelCheck, d->ui.level);
     });
 
     d->ui.context->setFixedWidth(mw);
-    connect(d->ui.context, &QListWidget::itemChanged, this, [=] () { d->syncContext(); });
-
-    d->menu = new QMenu(this);
-    auto copy = d->menu->addAction(tr("Copy"));
-    auto all  = d->menu->addAction(tr("Select All"));
-
-    copy->setShortcut(QKeySequence::Copy);
-    addAction(copy);
-    connect(copy, &QAction::triggered, this, [=] () {
-        auto rows = d->ui.view->selectionModel()->selectedRows();
-        std::sort(rows.begin(), rows.end(),
-                  [&] (auto &lhs, auto &rhs) { return lhs.row() < rhs.row(); });
-        QString text;
-        for (auto &row : rows)
-            text += row.data().toString() % '\n'_q;
-        auto c = qApp->clipboard();
-        c->setText(text);
+    connect(d->ui.context, &QListWidget::itemChanged, this, [=] () {
+        d->syncContext();
+        d->setFilterChecked(d->ui.contextCheck, d->ui.context);
     });
 
-    all->setShortcut(QKeySequence::SelectAll);
-    addAction(all);
-    connect(all, &QAction::triggered, d->ui.view, &QTreeView::selectAll);
-    connect(this, &QWidget::customContextMenuRequested,
-            this, [=] () { d->menu->popup(QCursor::pos()); });
-    d->syncContext();
+#define PLUG_FILTER(l, s) \
+    connect(d->ui.l##Check, &QCheckBox::stateChanged, this, [=] (int checked) { \
+        QSignalBlocker sb(d->ui.l); \
+        for (auto i = 0; i < d->ui.l->count(); ++i) \
+            d->chceck(d->ui.l->item(i), checked); \
+        d->s(); \
+    });
+    PLUG_FILTER(level, syncLevel);
+    PLUG_FILTER(context, syncContext);
+
     if (!geometry.isEmpty())
         setGeometry(geometry);
 }

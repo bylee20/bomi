@@ -42,9 +42,12 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QCheckBox" name="levelCheck">
        <property name="text">
         <string>Level Filter</string>
+       </property>
+       <property name="tristate">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -52,9 +55,12 @@
       <widget class="QListWidget" name="level"/>
      </item>
      <item>
-      <widget class="QLabel" name="label_2">
+      <widget class="QCheckBox" name="contextCheck">
        <property name="text">
         <string>Context Filter</string>
+       </property>
+       <property name="tristate">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
