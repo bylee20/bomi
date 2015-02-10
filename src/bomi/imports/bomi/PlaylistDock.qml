@@ -10,24 +10,45 @@ Item {
     property alias selectedIndex: table.selectedIndex
     property real dest: 0
     property bool show: false
-    x: parent.width; y: 20; width: widthHint; height: parent.height-2*y; visible: false
-    states: State {
-        name: "show"; when: dock.show
-        PropertyChanges { target: dock; visible: true }
-        PropertyChanges { target: dock; x: dock.dest; explicit: true }
+    y: 20; width: widthHint; height: parent.height-2*y; visible: false
+
+    SequentialAnimation {
+        id: pull
+        PropertyAction { target: dock; property: "visible"; value: true }
+        NumberAnimation { target: dock; property: "x"; to: dock.dest }
     }
-    transitions: Transition {
-        reversible: true; to: "show"
-        SequentialAnimation {
-            PropertyAction { property: "visible" }
-            NumberAnimation { property: "x" }
+
+    SequentialAnimation {
+        id: push
+        NumberAnimation { target: dock; property: "x"; to: dock.parent.width }
+        PropertyAction { target: dock; property: "visible"; value: false }
+    }
+    function updateDestination() {
+        dock.dest = dock.parent.width - dock.width
+        push.running = pull.running = false
+        if (show)
+            dock.x = dest
+        else
+            dock.x = parent.width
+        dock.visible = show
+    }
+    Connections {
+        target: parent
+        onWidthChanged: {
+            updateDestination()
+
         }
     }
-    function updateDestination() { dock.dest = dock.parent.width-dock.width }
-    Component.onCompleted: updateDestination()
-    Connections { target: parent; onWidthChanged: { updateDestination() } }
     onWidthChanged: { updateDestination() }
-    onDestChanged: { if (dock.show) dock.x = dock.dest }
+    onShowChanged: {
+        if (show) {
+            push.running = false
+            pull.running = true
+        } else {
+            pull.running = false
+            push.running = true
+        }
+    }
 
     MouseArea {
         anchors.fill: parent
