@@ -196,23 +196,21 @@ auto Mpv::run() -> void
                 tell("hook_ack", when);
             }
             break;
-        } case MPV_EVENT_SET_PROPERTY_REPLY:
+        } case MPV_EVENT_SET_PROPERTY_REPLY: {
+            QScopedPointer<QByteArray> name(reinterpret_cast<QByteArray*>(ev->reply_userdata));
             if (!isSuccess(ev->error)) {
-                auto name = reinterpret_cast<QByteArray*>(ev->reply_userdata);
                 _Debug("Error %%: Couldn't set property %%.",
                        mpv_error_string(ev->error), *name);
-                delete name;
             }
             break;
-        case MPV_EVENT_COMMAND_REPLY:
+        } case MPV_EVENT_COMMAND_REPLY: {
+            QScopedPointer<QByteArray> name(reinterpret_cast<QByteArray*>(ev->reply_userdata));
             if (!isSuccess(ev->error)) {
-                auto name = reinterpret_cast<QByteArray*>(ev->reply_userdata);
                 _Debug("Error %%: Couldn't execute command %%.",
                        mpv_error_string(ev->error), *name);
-                delete name;
             }
             break;
-        case MPV_EVENT_GET_PROPERTY_REPLY: {
+        } case MPV_EVENT_GET_PROPERTY_REPLY: {
             auto event = static_cast<mpv_event_property*>(ev->data);
             _Error("Never requested reply: %%", event->name);
             break;
