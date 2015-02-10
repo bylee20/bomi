@@ -5,7 +5,7 @@
 
 class QUrl;                             class Mrl;
 class MainWindow;                       class QMenuBar;
-class Locale;                           class LogOption;
+class Locale;                           struct LogOption;
 
 class App : public QApplication {
     Q_OBJECT

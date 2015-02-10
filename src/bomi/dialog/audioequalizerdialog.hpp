@@ -1,7 +1,7 @@
 #ifndef AUDIOEQUALIZERWIDGET_HPP
 #define AUDIOEQUALIZERWIDGET_HPP
 
-struct AudioEqualizer;
+class AudioEqualizer;
 
 class AudioEqualizerDialog : public QDialog {
     Q_OBJECT

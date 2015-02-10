@@ -3,7 +3,7 @@
 
 #include "videofilter.hpp"
 
-class DeintOption;        class MpImage;
+struct DeintOption;                     class MpImage;
 
 class SoftwareDeinterlacer : public VideoFilter {
 public:

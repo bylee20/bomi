@@ -362,17 +362,6 @@ auto PlayEngine::speed() const -> double
     return d->params.play_speed() * 1e-2;
 }
 
-SIA _ChangeZ(double &the, double one) -> bool
-{
-    if (qFuzzyCompare(one, 1.0))
-        one = 1.0;
-    if (!qFuzzyCompare(the, one)) {
-        the = one;
-        return true;
-    }
-    return false;
-}
-
 auto PlayEngine::setSpeedPercent(int p) -> void
 {
     if (d->params.set_play_speed(qBound(1, p, 1000)))

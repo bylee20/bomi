@@ -3,7 +3,7 @@
 
 #include "videofilter.hpp"
 
-class DeintOption;        class MpImage;
+class MpImage;
 
 class MotionInterpolator : public VideoFilter {
 public:

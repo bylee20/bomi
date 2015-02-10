@@ -6,9 +6,6 @@
 
 using DeintMethodComboBox = EnumComboBox<DeintMethod>;
 
-static constexpr auto GPU = Processor::GPU;
-static constexpr auto CPU = Processor::CPU;
-
 struct Line {
     QMap<DeintMethod, DeintCaps> caps;
     DeintMethodComboBox *combo = nullptr;

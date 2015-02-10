@@ -6,7 +6,7 @@
 #include "enum/videoeffect.hpp"
 
 class VideoRenderer;                    class HistoryModel;
-class DeintOptionSet;                   class ChannelLayoutMap;
+struct DeintOptionSet;                  class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct OsdStyle;
 struct AudioNormalizerOption;
@@ -23,7 +23,7 @@ class YleDL;                            class AudioEqualizer;
 class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
-class Autoloader;                       struct CacheInfo;
+struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
 struct StringPair { QString s1, s2; };
 using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;

@@ -1,7 +1,7 @@
 #ifndef LOG_HPP
 #define LOG_HPP
 
-class LogOption;
+struct LogOption;
 
 SIA _ToLog(char n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(qint8 n) -> QByteArray { return QByteArray::number(n); }

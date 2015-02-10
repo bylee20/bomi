@@ -43,7 +43,7 @@ private:
         : m_value(value), m_min(min), m_max(max), m_available(true) { }
     IntrplParam(int value, std::initializer_list<int> &&values)
         : m_value(value), m_validValues(std::move(values)), m_available(true) { }
-    friend class IntrplParamSet;
+    friend struct IntrplParamSet;
     Type m_type;
     double m_value = -1, m_min = 0, m_max = 1;
     QVector<int> m_validValues;

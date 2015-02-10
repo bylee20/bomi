@@ -104,7 +104,7 @@ struct mpv_trait<QString> {
     }
     static auto set_free(mpv_type &str) { delete[]str; }
 private:
-    friend class mpv_trait<QStringList>;
+    friend struct mpv_trait<QStringList>;
     static auto node_fill(mpv_node &node, const QString &t)
     { node.format = format; set((const char*&)node.u.string, t); }
     static auto node_free(mpv_node &node) { set_free((const char*&)node.u.string); }

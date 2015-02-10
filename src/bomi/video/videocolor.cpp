@@ -4,8 +4,6 @@
 #include "misc/json.hpp"
 #include "misc/log.hpp"
 
-DECLARE_LOG_CONTEXT(Video)
-
 static auto makeNameArray() -> VideoColor::Array<QString>
 {
     VideoColor::Array<QString> names;

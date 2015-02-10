@@ -438,7 +438,7 @@ auto MainWindow::Data::plugMenu() -> void
         });
     });
     connect(video(u"color"_q)[u"reset"_q], &QAction::triggered, p, [this] () {
-        const VideoColor eq, old = e.params()->video_color();
+        const VideoColor eq{}, old = e.params()->video_color();
         if (old != eq)
             push(VideoColor(), e.params()->video_color(), [=] (const VideoColor &eq) {
                 e.setVideoEqualizer(eq);

@@ -274,11 +274,11 @@ struct Jsonkey<T, false, true>  {
 template<class T>
 SIA json_key_from(const T &t) -> QString { return detail::Jsonkey<T>::from(t); }
 template<>
-auto json_key_from<int>(const int &t) -> QString { return QString::number(t); }
+inline auto json_key_from<int>(const int &t) -> QString { return QString::number(t); }
 template<class T>
 SIA json_key_to(const QString &json) -> T { return detail::Jsonkey<T>::to(json); }
 template<>
-auto json_key_to<int>(const QString &json) -> int { return json.toInt(); }
+inline auto json_key_to<int>(const QString &json) -> int { return json.toInt(); }
 
 template<class Key, class T, class Container = QMap<Key, T>>
 struct JsonMapIO {
