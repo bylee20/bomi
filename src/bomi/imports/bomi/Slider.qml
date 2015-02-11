@@ -11,6 +11,7 @@ Item {
     property real range: slider.range
     property alias orientation: slider.orientation
     property alias rate: slider.rate
+    implicitHeight: slider.implicitHeight
     MouseArea {
         anchors.fill: parent
         Qc.Slider {

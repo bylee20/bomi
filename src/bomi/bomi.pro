@@ -483,7 +483,6 @@ OTHER_FILES += \
 	imports/bomi/VolumeSlider.qml \
 	imports/bomi/PlayInfoText.qml \
 	skins/GaN/bomi.qml \
-    skins/GaN/Button.qml \
 	imports/bomi/ItemColumn.qml \
 	imports/bomi/ModelView.qml \
 	imports/bomi/ScrollBar.qml \
@@ -518,4 +517,5 @@ DISTFILES += \
     skins/Ardis/MediaButton.qml \
     skins/Ardis/bomi.qml \
     imports/bomi/HideTimer.qml \
-    skins/Numix/bomi.qml
+    skins/Numix/bomi.qml \
+    skins/native/bomi.qml

@@ -71,7 +71,11 @@ Item {
     onWidthChanged: engine.screen.width = width
     onHeightChanged: engine.screen.height = height
 
-    function showOSD(msg) { msgosd.text = msg; msgosd.show(); }
+    property string osd
+    property bool autoOsd: true
+
+    function showOSD(msg) { osd = msg }
+    onOsdChanged: if (autoOsd) {msgosd.text = osd; msgosd.show();}
     function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
     function showTimeLine() { timeline.show(); }
 
