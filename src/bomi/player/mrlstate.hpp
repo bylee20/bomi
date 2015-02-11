@@ -2,6 +2,7 @@
 #define MRLSTATE_HPP
 
 #include "mrl.hpp"
+#include "tmp/type_traits.hpp"
 #include "player/streamtrack.hpp"
 #include "video/videocolor.hpp"
 #include "audio/audioequalizer.hpp"
@@ -44,8 +45,6 @@ class MrlState : public QObject {
     Q_PROPERTY(int audio_track READ __dummy_int WRITE __set_dummy)
     Q_PROPERTY(bool sub_visible READ __dummy_int WRITE __set_dummy)
     Q_PROPERTY(QString sub_track READ __dummy_string WRITE __set_dummy)
-    template<class T>
-    using cval_t = std::conditional_t<std::is_class<T>::value, const T&, T>;
 #define P_(type, name, def, desc, rev) \
     Q_INVOKABLE QString desc_ ## name() const { return tr(desc); } \
 private: \
@@ -54,7 +53,7 @@ private: \
 public: \
     Q_SIGNAL void name ## _changed(type); \
     type name() const { return m_##name; } \
-    bool set_##name(cval_t<type> t) \
+    bool set_##name(tmp::cval_t<type> t) \
     { \
         bool ret = false; \
         if (m_mutex) m_mutex->lock(); \

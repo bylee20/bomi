@@ -130,6 +130,9 @@ using remove_ptr_t = std::remove_pointer_t<T>;
 template<class T>
 using remove_cref_t = remove_const_t<remove_ref_t<T>>;
 
+template<class T, class U = remove_cref_t<T>>
+using cval_t = conditional_t<is_class<U>(), const U&, U>;
+
 template <int bits, bool sign> struct integer { /*using type = char;*/ };
 template <> struct integer<16, true>  { using type = std::int16_t ; };
 template <> struct integer<32, true>  { using type = std::int32_t ; };
