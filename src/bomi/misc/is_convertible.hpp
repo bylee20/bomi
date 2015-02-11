@@ -1,7 +1,7 @@
 #ifndef IS_CONVERTIBLE_HPP
 #define IS_CONVERTIBLE_HPP
 
-#include "tmp/type_test.hpp"
+#include "tmp/type_traits.hpp"
 
 template<class T>
 class EnumInfo;

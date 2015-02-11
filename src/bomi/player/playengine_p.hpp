@@ -8,11 +8,9 @@
 #include "avinfoobject.hpp"
 #include "streamtrack.hpp"
 #include "historymodel.hpp"
-#include "tmp/type_test.hpp"
-#include "tmp/type_info.hpp"
+#include "tmp/type_traits.hpp"
 #include "misc/autoloader.hpp"
 #include "misc/log.hpp"
-#include "misc/tmp.hpp"
 #include "misc/dataevent.hpp"
 #include "misc/youtubedl.hpp"
 #include "misc/osdstyle.hpp"
@@ -23,7 +21,6 @@
 #include "audio/audioformat.hpp"
 #include "video/hwacc.hpp"
 #include "video/deintoption.hpp"
-#include "video/videoformat.hpp"
 #include "video/videorenderer.hpp"
 #include "video/videoprocessor.hpp"
 #include "video/videocolor.hpp"
@@ -39,9 +36,6 @@
 #include "enum/autoselectmode.hpp"
 #include "enum/dithering.hpp"
 #include "opengl/openglframebufferobject.hpp"
-#include <libmpv/client.h>
-#include <libmpv/opengl_cb.h>
-#include <functional>
 
 #ifdef bool
 #undef bool

@@ -2,7 +2,7 @@
 #define MPV_PROPERTY_HPP
 
 #include <libmpv/client.h>
-#include "tmp/type_test.hpp"
+#include "tmp/type_traits.hpp"
 
 namespace detail {
 

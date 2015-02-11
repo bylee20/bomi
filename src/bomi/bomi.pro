@@ -193,10 +193,7 @@ HEADERS += \
     misc/jsonstorage.hpp \
     player/mrlstatesqlfield.hpp \
     tmp/algorithm.hpp \
-    tmp/arithmetic_type.hpp \
     tmp/static_for.hpp \
-    tmp/type_info.hpp \
-    tmp/type_test.hpp \
     misc/localconnection.hpp \
     player/abrepeatchecker.hpp \
     widget/openmediabehaviorgroupbox.hpp \
@@ -251,7 +248,8 @@ HEADERS += \
     enum/logoutput.hpp \
     widget/pathbutton.hpp \
 	misc/logoption.hpp \
-    misc/logviewer.hpp
+    misc/logviewer.hpp \
+    tmp/type_traits.hpp
 
 SOURCES += \
 	stdafx.cpp \

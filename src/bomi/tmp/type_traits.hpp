@@ -94,11 +94,59 @@ using conditional_t = typename std::conditional<b, T, S>::type;
 template<bool b, class T = void>
 using enable_if_t = typename std::enable_if<b, T>::type;
 
+template<bool b, class T = void>
+using enable_unless_t = typename std::enable_if<!b, T>::type;
+
 template<class T, class U = void>
 using enable_if_enum_class_t = enable_if_t<tmp::is_enum_class<T>(), U>;
 
 template<class T, class S, class U = void>
 using enable_if_same_t = enable_if_t<tmp::is_same<T, S>(), U>;
+
+template<class T, class S, class U = void>
+using enable_unless_same_t = enable_if_t<!tmp::is_same<T, S>(), U>;
+
+template<class T, class U = void>
+using enable_if_arithmetic_t = enable_if_t<tmp::is_arithmetic<T>(), U>;
+
+template<class T, class U = void>
+using enable_unless_arithmetic_t = enable_if_t<!tmp::is_arithmetic<T>(), U>;
+
+template<class T, class U = void>
+using enable_if_callable_t = enable_if_t<tmp::is_callable<T>(), U>;
+
+template<class T, class U = void>
+using enable_unless_callable_t = enable_if_t<!tmp::is_callable<T>(), U>;
+
+template<class T>
+using remove_const_t = std::remove_const_t<T>;
+
+template<class T>
+using remove_ref_t = std::remove_reference_t<T>;
+
+template<class T>
+using remove_ptr_t = std::remove_pointer_t<T>;
+
+template<class T>
+using remove_cref_t = remove_const_t<remove_ref_t<T>>;
+
+template <int bits, bool sign> struct integer { /*using type = char;*/ };
+template <> struct integer<16, true>  { using type = std::int16_t ; };
+template <> struct integer<32, true>  { using type = std::int32_t ; };
+template <> struct integer<64, true>  { using type = std::int64_t ; };
+template <> struct integer<16, false> { using type = std::uint16_t; };
+template <> struct integer<32, false> { using type = std::uint32_t; };
+template <> struct integer<64, false> { using type = std::uint64_t; };
+
+template<int bits, bool sign>
+using integer_t = typename integer<bits, sign>::type;
+
+template <int bits> struct floating_point { using type = char; };
+template <> struct floating_point<32> { using type = float ; };
+template <> struct floating_point<64> { using type = double; };
+
+template<int bits>
+using floating_point_t = typename floating_point<bits>::type;
 
 }
 

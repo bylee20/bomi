@@ -9,27 +9,37 @@ using it_type = std::conditional_t<std::is_const<Container>::value,
     typename Container::const_iterator, typename Container::iterator>;
 }
 
+template<class Iter, class Test>
+SIA find_if(Iter begin, Iter end, Test test) -> Iter
+{ return std::find_if(begin, end, test); }
+
 template<class Container, class Test>
 SIA find_if(Container &c, Test test) -> detail::it_type<Container>
 { return std::find_if(std::begin(c), std::end(c), test); }
 
+template<class Iter, class Test>
+SIA contains_if(Iter b, Iter e, Test test) -> bool
+{ return std::find_if(b, e, test) != e; }
+
 template<class Container, class Test>
 SIA contains_if(const Container &c, Test test) -> bool
-{
-    const auto end = std::end(c);
-    return std::find_if(std::begin(c), end, test) != end;
-}
+{ return contains_if(std::begin(c), std::end(c), test); }
+
+template<class Iter, class T>
+SIA find(Iter b, Iter e, const T &t) -> Iter
+{ return std::find(b, e, t); }
 
 template<class Container, class T>
 SIA find(Container &c, const T &t) -> detail::it_type<Container>
 { return std::find(std::begin(c), std::end(c), t); }
 
+template<class Iter, class T>
+SIA contains(Iter b, Iter e, const T &t) -> bool
+{ return std::find(b, e, t) != e; }
+
 template<class Container, class T>
 SIA contains(const Container &c, const T &t) -> bool
-{
-    const auto end = std::end(c);
-    return std::find(std::begin(c), end, t) != end;
-}
+{ return contains(std::begin(c), std::end(c), t); }
 
 template<class Container, class F>
 SIA transform(Container &c, F f) -> Container&

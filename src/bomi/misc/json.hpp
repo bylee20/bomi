@@ -1,7 +1,6 @@
 #ifndef JSON_HPP
 #define JSON_HPP
 
-#include "tmp/type_info.hpp"
 #include "tmp/static_for.hpp"
 #include "is_convertible.hpp"
 
@@ -83,7 +82,7 @@ struct JsonValueIO<bool> {
 
 template<class T>
 struct IOType {
-    using U = tmp::remove_all_t<T>;
+    using U = tmp::remove_cref_t<T>;
     template<class S>
     static auto checkIO(S *) -> decltype(::JsonIO<S>::io(), std::true_type());
     template<class>
@@ -97,19 +96,19 @@ struct JsonIOSelector;
 
 template<class T>
 struct JsonIOSelector<T, true, false> {
-    using U = tmp::remove_all_t<T>;
+    using U = tmp::remove_cref_t<T>;
     static auto select(const T*) { static const JsonValueIO<U> io{}; return &io; }
 };
 
 template<class T>
 struct JsonIOSelector<T, false, true> {
-    using U = tmp::remove_all_t<T>;
+    using U = tmp::remove_cref_t<T>;
     static auto select(const T*) { return ::JsonIO<U>::io(); }
 };
 
 template<class T>
 struct JsonIOSelector<T, false, false> {
-    using U = tmp::remove_all_t<T>;
+    using U = tmp::remove_cref_t<T>;
     static auto select(const T*) { static const JsonIO<U> io{}; return &io; }
 };
 
@@ -185,7 +184,7 @@ struct ReadFromJsonObject {
     {
         const auto it = json.constFind(entry.key);
         if (it != json.constEnd()) {
-            auto d = tmp::remove_all_t<decltype((to->*entry.get)())>();
+            auto d = tmp::remove_cref_t<decltype((to->*entry.get)())>();
             if (!json_io(&d)->fromJson(d, *it))
                 m_ok = false;
             else

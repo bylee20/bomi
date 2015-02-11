@@ -1,7 +1,7 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include "tmp/type_test.hpp"
+#include "tmp/type_traits.hpp"
 
 class QUrl;                             class Mrl;
 class MainWindow;                       class QMenuBar;

@@ -1,8 +1,7 @@
 #include "audioconverter.hpp"
 
 #include "misc/tmp.hpp"
-#include "tmp/type_test.hpp"
-#include "tmp/arithmetic_type.hpp"
+#include "tmp/type_traits.hpp"
 #include "enum/clippingmethod.hpp"
 extern "C" {
 #include <audio/format.h>

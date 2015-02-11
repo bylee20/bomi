@@ -66,9 +66,9 @@ public:
 
     auto setObserver(QObject *observer) -> void { m_observer = observer; }
     template<class Get, class Set>
-    auto observe(const char *name, Get get, Set set) -> std::enable_if_t<tmp::is_callable<Get>(), int>;
+    auto observe(const char *name, Get get, Set set) -> tmp::enable_if_callable_t<Get, int>;
     template<class T, class Update>
-    auto observe(const char *name, T &t, Update update) -> std::enable_if_t<!tmp::is_callable<T>(), int>;
+    auto observe(const char *name, T &t, Update update) -> tmp::enable_unless_callable_t<T, int>;
     template<class Update>
     auto observeTime(const char *name, int &t, Update update) -> int;
     template<class Set>
@@ -179,15 +179,15 @@ auto Mpv::tellAsync(const char (&name)[N], const Args&... args) -> bool
     { return tellAsync(QByteArray::fromRawData(name, N), args...); }
 
 template<class Get, class Set>
-auto Mpv::observe(const char *name, Get get, Set set) -> std::enable_if_t<tmp::is_callable<Get>(), int>
+auto Mpv::observe(const char *name, Get get, Set set) -> tmp::enable_if_callable_t<Get, int>
 {
-    using T = std::remove_const_t<std::remove_reference_t<decltype(get())>>;
+    using T = tmp::remove_cref_t<decltype(get())>;
     return newObservation(name, [=] (int e) { _PostEvent(m_observer, e, get()); },
                           [=] (QEvent *event) { set(_MoveData<T>(event)); });
 }
 
 template<class T, class Update>
-auto Mpv::observe(const char *name, T &t, Update update) -> std::enable_if_t<!tmp::is_callable<T>(), int>
+auto Mpv::observe(const char *name, T &t, Update update) -> tmp::enable_unless_callable_t<T, int>
 {
     return observe(name, [=] () { return get<T>(name); },
                    [=, &t] (T &&v) { if (_Change(t, v)) update(); });
@@ -202,14 +202,14 @@ auto Mpv::observeTime(const char *name, int &t, Update update) -> int
 
 template<class Set>
 auto Mpv::observe(const char *name, Set set) -> int {
-    using T = std::remove_reference_t<tmp::func_arg_t<Set, 0>>;
+    using T = tmp::remove_ref_t<tmp::func_arg_t<Set, 0>>;
     return observe(name, [=] () { return get<T>(name); }, set);
 }
 
 template<class Check>
 auto Mpv::observeState(const char *name, Check ck) -> int
 {
-    using T = std::remove_reference_t<tmp::func_arg_t<Check, 0>>;
+    using T = tmp::remove_ref_t<tmp::func_arg_t<Check, 0>>;
     return newObservation(name, [=] (int) { ck(get<T>(name)); }, [](QEvent*){});
 }
 
