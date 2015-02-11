@@ -73,7 +73,7 @@ imports: build/imports
 	$(install_all) src/bomi/imports build/imports
 
 translations: build/translations
-	$(lrelease) src/bomi/bomi.pro
+	$(lrelease) src/bomi/translations/*.ts
 	$(install_file) src/bomi/translations/*.qm build/translations
 
 build:

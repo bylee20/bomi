@@ -21,7 +21,10 @@ QMAKE_CXXFLAGS_CXX11 = -std=c++1y
 
 contains(QMAKE_CXX, clang++) {
 QMAKE_CXXFLAGS += -Wno-missing-braces
+# clang bug: cannot build in debug mode
 QMAKE_CXXFLAGS -= -g
+CONFIG -= debug
+CONFIG += release
 } else {
 QMAKE_CXXFLAGS += -Wno-non-template-friend
 }
@@ -507,7 +510,7 @@ DISTFILES += \
     imports/bomi/ChapterMarkerStyle.qml \
     imports/bomi/Text.qml \
     skins/Breeze/bomi.qml \
-    skins/Breeze Dark/bomi.qml \
+	"skins/Breeze Dark/bomi.qm"l \
     skins/GaN/TextButton.qml \
     imports/bomi/ButtonIcon.qml \
     skins/GaN/TimeText.qml \
