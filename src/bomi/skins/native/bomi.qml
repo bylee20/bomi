@@ -13,12 +13,19 @@ B.AppWithDock {
     Component.onCompleted: {
         var orig = player.showOsdFunc
         player.showOsdFunc = function(msg) {
+            osdTimer.running = false
             text.text = msg
             if (B.App.window.fullscreen)
                 orig(msg)
+            osdTimer.running = true
         }
     }
 
+    Timer {
+        id: osdTimer; repeat: false
+        interval: B.App.theme.osd.message.duration
+        onTriggered: text.text = ""
+    }
 
     controls: Item {
         width: parent.width; height: top.height + bottom.height

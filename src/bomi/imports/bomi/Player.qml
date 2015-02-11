@@ -15,7 +15,6 @@ Item {
     TextOsd {
         id: msgosd;
         duration: B.App.theme.osd.message.duration
-        onVisibleChanged: { if (!visible) showOSD("") }
     }
 
     Rectangle {
@@ -78,9 +77,7 @@ Item {
     onWidthChanged: engine.screen.width = width
     onHeightChanged: engine.screen.height = height
 
-    property var showOsdFunc: function(msg){
-        if (msg) { msgosd.text = msg; msgosd.show(); }
-    }
+    property var showOsdFunc: function(msg){ msgosd.text = msg; msgosd.show(); }
     function showOSD(msg) { showOsdFunc(msg) }
     function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
     function showTimeLine() { timeline.show(); }
