@@ -78,7 +78,7 @@ public:
     auto hook(const char *name, std::function<void(void)> &&run) -> void;
     auto request(mpv_event_id id, std::function<void(mpv_event*)> &&proc) -> void;
     template<class Proc>
-    auto request(mpv_event_id id, Proc proc) -> std::enable_if_t<!tmp::func_args<Proc>(), void>
+    auto request(mpv_event_id id, Proc proc) -> tmp::enable_if_t<!tmp::func_args<Proc>(), void>
         { request(id, [=] (mpv_event*) -> void { proc(); }); }
     auto setUpdateCallback(std::function<void(void)> &&cb) -> void;
     auto render(GLuint fbo, const QSize &size) -> int;

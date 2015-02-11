@@ -119,13 +119,13 @@ template<class T, class U = void>
 using enable_unless_callable_t = enable_if_t<!tmp::is_callable<T>(), U>;
 
 template<class T>
-using remove_const_t = std::remove_const_t<T>;
+using remove_const_t = typename std::remove_const<T>::type;
 
 template<class T>
-using remove_ref_t = std::remove_reference_t<T>;
+using remove_ref_t = typename std::remove_reference<T>::type;
 
 template<class T>
-using remove_ptr_t = std::remove_pointer_t<T>;
+using remove_ptr_t = typename std::remove_pointer<T>::type;
 
 template<class T>
 using remove_cref_t = remove_const_t<remove_ref_t<T>>;

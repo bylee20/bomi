@@ -180,7 +180,7 @@ setup_build() {
     local mk=
     printf "checking for cc ... "
     if check_cc __clang__; then
-        mk=linux-clang-libc++
+        mk=linux-clang
     elif check_cc __GNUC__; then
         mk=linux-g++
     else

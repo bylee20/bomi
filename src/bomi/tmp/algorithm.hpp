@@ -5,8 +5,8 @@ namespace tmp {
 
 namespace detail {
 template<class Container>
-using it_type = std::conditional_t<std::is_const<Container>::value,
-    typename Container::const_iterator, typename Container::iterator>;
+using it_type = typename std::conditional<std::is_const<Container>::value,
+    typename Container::const_iterator, typename Container::iterator>::type;
 }
 
 template<class Iter, class Test>
