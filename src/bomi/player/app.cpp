@@ -348,6 +348,11 @@ auto App::setAlwaysOnTop(QWidget *widget, bool onTop) -> void
     d->helper.setAlwaysOnTop(widget, onTop);
 }
 
+auto App::setFullScreen(QWidget *widget, bool fs) -> void
+{
+    d->helper.setFullScreen(widget, fs);
+}
+
 auto App::setHeartbeat(const QString &command, int interval) -> void
 {
     Q_UNUSED(command); Q_UNUSED(interval);

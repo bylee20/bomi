@@ -184,9 +184,12 @@ auto MainWindow::setFullScreen(bool full) -> void
         } else
 #endif
         {
-            constexpr auto minfull = Qt::WindowMinimized | Qt::WindowFullScreen;
-            setWindowState(full ? Qt::WindowFullScreen
-                                : (d->prevWinState & ~minfull));
+            if (full)
+                cApp.setFullScreen(this, true);
+            else if (d->prevWinState & Qt::WindowMaximized)
+                showMaximized();
+            else
+                showNormal();
         }
         d->setCursorVisible(!d->fullScreen);
         emit fullscreenChanged(d->fullScreen);

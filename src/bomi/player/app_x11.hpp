@@ -11,6 +11,7 @@ public:
     auto setScreensaverDisabled(bool disabled) -> void;
     auto setHeartbeat(const QString &command, int interval) -> void;
     auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
+    auto setFullScreen(QWidget *widget, bool fs) -> void;
     auto devices() const -> QStringList;
     auto shutdown() -> bool;
     auto refreshRate() const -> qreal;

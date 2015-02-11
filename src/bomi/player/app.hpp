@@ -32,6 +32,7 @@ public:
     auto setLogOption(const LogOption &option) -> void;
     auto logOption() const -> LogOption;
     auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
+    auto setFullScreen(QWidget *widget, bool fs) -> void;
     auto setScreensaverDisabled(bool disabled) -> void;
     auto setHeartbeat(const QString &command, int interval) -> void;
     auto setUnique(bool unique) -> void;

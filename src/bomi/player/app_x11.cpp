@@ -5,6 +5,7 @@ DECLARE_LOG_CONTEXT(App)
 
 #ifdef Q_OS_LINUX
 #include "app.hpp"
+#include "tmp/algorithm.hpp"
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusInterface>
@@ -17,6 +18,25 @@ extern "C" {
 #include <xcb/xproto.h>
 #include <xcb/screensaver.h>
 }
+
+enum XcbAtom {
+    _NET_WM_STATE,
+    _NET_WM_STATE_MODAL,
+    _NET_WM_STATE_STICKY,
+    _NET_WM_STATE_MAXIMIZED_VERT,
+    _NET_WM_STATE_MAXIMIZED_HORZ,
+    _NET_WM_STATE_SHADED,
+    _NET_WM_STATE_SKIP_TASKBAR,
+    _NET_WM_STATE_SKIP_PAGER,
+    _NET_WM_STATE_HIDDEN,
+    _NET_WM_STATE_FULLSCREEN,
+    _NET_WM_STATE_ABOVE,
+    _NET_WM_STATE_BELOW,
+    _NET_WM_STATE_DEMANDS_ATTENTION,
+    _NET_WM_STATE_STAYS_ON_TOP,
+    XcbAtomEnd,
+    XcbAtomBegin = _NET_WM_STATE
+};
 
 static auto getAtom(xcb_connection_t *conn, const char *name) -> xcb_atom_t
 {
@@ -38,12 +58,38 @@ struct AppX11::Data {
 
     xcb_connection_t *connection = nullptr;
     xcb_window_t root = 0;
+    Display *display = nullptr;
+
     xcb_atom_t aNetWmState = 0, aNetWmStateAbove = 0;
     xcb_atom_t aNetWmStateStaysOnTop = 0;
-    Display *display = nullptr;
+
+
+    xcb_atom_t atoms[XcbAtomEnd];
 
     auto getAtom(const char *name) -> xcb_atom_t
     { return ::getAtom(connection, name); }
+
+    auto sendState(QWidget *widget, bool on,
+                   XcbAtom a1, XcbAtom a2 = XcbAtomEnd) -> void
+    {
+        if (!widget)
+            return;
+        const auto window = widget->winId();
+        xcb_client_message_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.response_type = XCB_CLIENT_MESSAGE;
+        event.format = 32;
+        event.window = window;
+        event.type = atoms[_NET_WM_STATE];
+        event.data.data32[0] = on ? 1 : 0;
+        event.data.data32[1] = atoms[a1];
+        if (a2 != XcbAtomEnd)
+            event.data.data32[2] = atoms[a2];
+        const auto mask = XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY
+                          | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
+        xcb_send_event(connection, 0, root, mask, (const char *)&event);
+        xcb_flush(connection);
+    }
 };
 
 AppX11::AppX11(QObject *parent)
@@ -66,9 +112,28 @@ AppX11::AppX11(QObject *parent)
         } else
             _Error("No command for heartbeat");
     });
+
     d->connection = QX11Info::connection();
     d->display = QX11Info::display();
     d->root = QX11Info::appRootWindow();
+
+#define GET_ATOM(id) {d->atoms[id] = d->getAtom(#id);}
+    GET_ATOM(_NET_WM_STATE);
+    GET_ATOM(_NET_WM_STATE_MODAL);
+    GET_ATOM(_NET_WM_STATE_STICKY);
+    GET_ATOM(_NET_WM_STATE_MAXIMIZED_VERT);
+    GET_ATOM(_NET_WM_STATE_MAXIMIZED_HORZ);
+    GET_ATOM(_NET_WM_STATE_SHADED);
+    GET_ATOM(_NET_WM_STATE_SKIP_TASKBAR);
+    GET_ATOM(_NET_WM_STATE_SKIP_PAGER);
+    GET_ATOM(_NET_WM_STATE_HIDDEN);
+    GET_ATOM(_NET_WM_STATE_FULLSCREEN);
+    GET_ATOM(_NET_WM_STATE_ABOVE);
+    GET_ATOM(_NET_WM_STATE_BELOW);
+    GET_ATOM(_NET_WM_STATE_DEMANDS_ATTENTION);
+    GET_ATOM(_NET_WM_STATE_STAYS_ON_TOP);
+#undef GET_ATOM
+
     d->aNetWmState = d->getAtom("_NET_WM_STATE");
     d->aNetWmStateAbove = d->getAtom("_NET_WM_STATE_ABOVE");
     d->aNetWmStateStaysOnTop = d->getAtom("_NET_WM_STATE_STAYS_ON_TOP");
@@ -79,24 +144,24 @@ AppX11::~AppX11() {
     delete d;
 }
 
-template<class T, class Free>
-auto _MakeShared(T *t, Free f) { return QSharedPointer<T>(t, f); }
+template<class T>
+static inline QSharedPointer<T> _Reply(T *t) { return QSharedPointer<T>(t, free); }
 
 auto AppX11::refreshRate() const -> qreal
 {
-    auto sr = _MakeShared(xcb_randr_get_screen_resources_current_reply(
+    auto sr = _Reply(xcb_randr_get_screen_resources_current_reply(
         d->connection,
         xcb_randr_get_screen_resources_current_unchecked(d->connection, d->root),
-        nullptr), free);
+        nullptr));
     const auto len = xcb_randr_get_screen_resources_current_crtcs_length(sr.data());
     const int n = cApp.screenNumber();
     if (len < 1 || n >= len)
         return -1;
     auto crtc = xcb_randr_get_screen_resources_current_crtcs(sr.data())[n];
-    auto ci = _MakeShared(xcb_randr_get_crtc_info_reply(
+    auto ci = _Reply(xcb_randr_get_crtc_info_reply(
         d->connection,
         xcb_randr_get_crtc_info_unchecked(d->connection, crtc, XCB_CURRENT_TIME),
-        nullptr), free);
+        nullptr));
 
     auto mode_refresh = [] (xcb_randr_mode_info_t *mode_info) -> double
     {
@@ -197,23 +262,15 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
     d->inhibit = disabled;
 }
 
-auto AppX11::setAlwaysOnTop(QWidget *widget, bool onTop) -> void
+
+auto AppX11::setFullScreen(QWidget *widget, bool fs) -> void
 {
-    if (!widget)
-        return;
-    xcb_client_message_event_t event;
-    memset(&event, 0, sizeof(event));
-    event.response_type = XCB_CLIENT_MESSAGE;
-    event.format = 32;
-    event.window = widget->winId();
-    event.type = d->aNetWmState;
-    event.data.data32[0] = onTop ? 1 : 0;
-    event.data.data32[1] = d->aNetWmStateAbove;
-    event.data.data32[2] = d->aNetWmStateStaysOnTop;
-    const auto mask = XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY
-                      | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
-    xcb_send_event(d->connection, 0, d->root, mask, (const char *)&event);
-    xcb_flush(d->connection);
+    d->sendState(widget, fs, _NET_WM_STATE_FULLSCREEN);
+}
+
+auto AppX11::setAlwaysOnTop(QWidget *widget, bool on) -> void
+{
+    d->sendState(widget, on, _NET_WM_STATE_ABOVE, _NET_WM_STATE_STAYS_ON_TOP);
 }
 
 auto AppX11::devices() const -> QStringList
