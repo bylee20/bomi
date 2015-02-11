@@ -29,6 +29,16 @@ struct aligned : is_power_of_2<n> {
     SCIA get(int value) -> int { return (value + n_1) & ~n_1; }
 };
 
+template<class T, T N, int base = 10, bool last = N < (T)base>
+struct digits {
+    SCIA get() -> int { return digits<T, N/base, base>::get() + 1; }
+};
+
+template<class T, T N, int base>
+struct digits<T, N, base, true> {
+    SCIA get() -> int { return 1; }
+};
+
 }
 
 template <int n>
@@ -39,6 +49,11 @@ SCIA remainder(int n) -> int { CHECK_2(divisor); return n & (divisor - 1); }
 
 template <int n, int n1 = n-1>
 SCIA aligned(int value) -> int { return detail::aligned<n>::get(value); }
+
+template<class T, T n, int base = 10>
+SCIA digits() -> int { return detail::digits<T, n, base>::get(); }
+template<class T, int base = 10>
+SCIA max_digits() -> int { return digits<T, std::numeric_limits<T>::max(), base>(); }
 
 }
 

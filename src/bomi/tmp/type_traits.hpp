@@ -144,6 +144,9 @@ template <> struct integer<64, false> { using type = std::uint64_t; };
 template<int bits, bool sign>
 using integer_t = typename integer<bits, sign>::type;
 
+template<class T>
+using unsigned_t = integer_t<sizeof(T)*8, false>;
+
 template <int bits> struct floating_point { using type = char; };
 template <> struct floating_point<32> { using type = float ; };
 template <> struct floating_point<64> { using type = double; };
