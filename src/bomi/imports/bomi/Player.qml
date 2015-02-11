@@ -9,8 +9,15 @@ Item {
     property real dockZ: 0.0
     property real bottomPadding: 0.0
     readonly property QtObject engine: B.App.engine
+
     Logo { anchors.fill: parent }
-    TextOsd { id: msgosd; duration: B.App.theme.osd.message.duration }
+
+    TextOsd {
+        id: msgosd;
+        duration: B.App.theme.osd.message.duration
+        onVisibleChanged: { if (!visible) showOSD("") }
+    }
+
     Rectangle {
         id: msgbox
         color: Qt.rgba(0.86, 0.86, 0.86, 0.8)
@@ -71,11 +78,10 @@ Item {
     onWidthChanged: engine.screen.width = width
     onHeightChanged: engine.screen.height = height
 
-    property string osd
-    property bool autoOsd: true
-
-    function showOSD(msg) { osd = msg }
-    onOsdChanged: if (autoOsd) {msgosd.text = osd; msgosd.show();}
+    property var showOsdFunc: function(msg){
+        if (msg) { msgosd.text = msg; msgosd.show(); }
+    }
+    function showOSD(msg) { showOsdFunc(msg) }
     function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
     function showTimeLine() { timeline.show(); }
 

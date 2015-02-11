@@ -9,8 +9,15 @@ B.AppWithDock {
     readonly property QtObject engine: B.App.engine
 
     SystemPalette { id: palette }
-    player.autoOsd: B.App.window.fullscreen
-    player.onOsdChanged: { text.text = player.osd }
+
+    Component.onCompleted: {
+        var orig = player.showOsdFunc
+        player.showOsdFunc = function(msg) {
+            text.text = msg
+            if (B.App.window.fullscreen)
+                orig(msg)
+        }
+    }
 
 
     controls: Item {
