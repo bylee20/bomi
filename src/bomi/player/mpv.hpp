@@ -144,7 +144,7 @@ auto Mpv::setAsync(QByteArray &&name, const T &value) -> bool
     auto user = new QByteArray(std::move(name));
     MpvSetScopedData<T> data(value);
     int error = mpv_set_property_async(m_handle, (quint64)user,
-                                       name, data.format(), data.raw());
+                                       *user, data.format(), data.raw());
     return CHECK_MPV(error, "set_async %%", name);
 }
 

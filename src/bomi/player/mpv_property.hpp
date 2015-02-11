@@ -157,7 +157,6 @@ struct mpv_trait<QVariant> {
     static constexpr bool use_free = true;
     static auto get(QVariant &var, const mpv_type &data) { var = parse(data); }
     static auto get_free(mpv_type &data) { mpv_free_node_contents(&data); }
-private:
     static QVariant parse(const mpv_node &node) {
         switch (node.format) {
         case MPV_FORMAT_DOUBLE:
@@ -187,6 +186,14 @@ private:
     }
 };
 
+SIA operator<<(QDebug dbg, const mpv_node &node) -> QDebug
+{
+    dbg.nospace() << "mpv_node->" << mpv_trait<QVariant>::parse(node);;
+
+    return dbg.space();
+}
+
+
 template<class T>
 using mpv_t = typename mpv_trait<T>::mpv_type;
 
@@ -214,6 +221,7 @@ struct MpvGetScopedData : MpvScopedData<T> {
 
 template<class T>
 struct MpvSetScopedData : MpvScopedData<T> {
+    static_assert(!std::is_same<T, QString>::value, "!!!");
     MpvSetScopedData(const T &t): MpvScopedData<T>(mpv_trait<T>::set_free)
         { mpv_trait<T>::set(this->m_data, t); }
 };
