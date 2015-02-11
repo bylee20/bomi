@@ -272,7 +272,7 @@ auto PlayEngine::Data::onLoad() -> void
         if (edition >= 0)
             mpv.setAsync("file-local-options/edition", edition);
         if (start > 0)
-            mpv.setAsync("file-local-options/start", QString::number(start * 1e-3, 'f'));
+            mpv.setAsync("file-local-options/start", QByteArray::number(start * 1e-3, 'f'));
         t.start = -1;
     }
 
