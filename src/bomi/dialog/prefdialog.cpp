@@ -166,6 +166,8 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.sub_ext->addItem(QString(), QString());
     d->ui.sub_ext->addItemTextData(_ExtList(SubtitleExt));
     d->ui.app_style->addItems(cApp.availableStyleNames());
+    for (int i = 0; i < d->ui.app_style->count(); ++i)
+        d->ui.app_style->setItemData(i, d->ui.app_style->itemText(i).toLower());
 
     d->shortcutGroup = new QButtonGroup(this);
     d->shortcutGroup->addButton(d->ui.shortcut1, 0);

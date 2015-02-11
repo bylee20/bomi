@@ -153,7 +153,7 @@ public:
 
     P0(bool, app_unique, true);
     P1(Locale, app_locale, {}, "locale");
-    P1(QString, app_style, {}, "currentText");
+    P1(QString, app_style, {}, "value");
     P0(LogOption, app_log_option, LogOption::default_())
 
     static auto preset(KeyMapPreset id) -> Shortcuts;

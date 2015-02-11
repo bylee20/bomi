@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>7</number>
+        <number>17</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2244,7 +2244,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_20">
             <item>
-             <widget class="QComboBox" name="app_style"/>
+             <widget class="DataComboBox" name="app_style"/>
             </item>
             <item>
              <widget class="QLabel" name="label_27">

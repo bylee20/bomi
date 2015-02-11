@@ -237,7 +237,7 @@ auto Pref::load() -> void
     }
     m_app_unique = cApp.isUnique();
     m_app_locale = cApp.locale();
-    m_app_style = cApp.styleName();
+    m_app_style = cApp.styleName().toLower();
     m_app_log_option = cApp.logOption();
 }
 
