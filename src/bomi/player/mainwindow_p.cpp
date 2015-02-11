@@ -41,6 +41,7 @@ auto MainWindow::Data::restoreState() -> void
     pl[u"shuffle"_q]->setChecked(as.playlist_shuffled);
     pl[u"repeat"_q]->setChecked(as.playlist_repeat);
     tool[u"auto-exit"_q]->setChecked(as.auto_exit);
+    emit as.winStaysOnTopChanged(as.win_stays_on_top);
 
     as.state.set_video_tracks(StreamList(StreamVideo));
     as.state.set_audio_tracks(StreamList(StreamAudio));

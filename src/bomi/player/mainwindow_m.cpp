@@ -72,19 +72,18 @@ auto MainWindow::Data::plugAppEnumChild(Menu &parent, const char *prop,
     auto g = m->g(_L(EnumInfo<T>::typeKey()));
     connect(&as, sig, g, &ActionGroup::setChecked<T>);
     connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-        if (a->data().userType() != qMetaTypeId<T>()) { // cycle
-            triggerNextAction(g->actions());
-        } else {
-            const auto old = as.property(prop).value<T>();
-            const auto to = a->data().template value<T>();
-            showMessage(m->title(), EnumInfo<T>::description(to));
-            if (to != old)
-                push(to, old, [=] (T t) {
-                    as.setProperty(prop, QVariant::fromValue<T>(t));
-                    showMessage(m->title(), EnumInfo<T>::description(t));
-                });
-        }
+        const auto old = as.property(prop).value<T>();
+        const auto to = a->data().template value<T>();
+        showMessage(m->title(), EnumInfo<T>::description(to));
+        if (to != old)
+            push(to, old, [=] (T t) {
+                as.setProperty(prop, QVariant::fromValue<T>(t));
+                showMessage(m->title(), EnumInfo<T>::description(t));
+            });
     });
+    if (auto cycle = m->action(u"cycle"_q))
+        connect(cycle, &QAction::triggered,
+                p, [=] () { triggerNextAction(g->actions()); });
 }
 
 template<class T>

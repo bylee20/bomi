@@ -29,7 +29,13 @@ static const auto jio = JIO(
 
 #define APP_STATE_FILE QString(_WritablePath(Location::Config) % "/appstate.json"_a)
 
-AppState::AppState() {
+AppState::AppState()
+{
+    load();
+}
+
+auto AppState::load() -> void
+{
     JsonStorage storage(APP_STATE_FILE);
     const auto json = storage.read();
     if (storage.hasError())

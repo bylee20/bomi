@@ -28,6 +28,7 @@ public:
     bool ask_system_tray = true;
 
     QString dvd_device, bluray_device, sub_find_lang_code;
+    auto load() -> void;
     auto save() const -> void;
 signals:
     void winStaysOnTopChanged(StaysOnTop top);

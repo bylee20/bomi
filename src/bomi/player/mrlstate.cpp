@@ -93,7 +93,9 @@ auto MrlState::notifyAll() const -> void
     for (int i = 1; i < mo->propertyCount(); ++i) {
         auto p = mo->property(i);
         if (p.hasNotifySignal())
-            p.notifySignal().invoke(const_cast<MrlState*>(this));
+            p.notifySignal().invoke(const_cast<MrlState*>(this),
+                                    QGenericArgument(p.typeName(),
+                                                     p.read(this).constData()));
     }
 }
 
