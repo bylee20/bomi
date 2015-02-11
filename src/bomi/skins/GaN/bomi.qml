@@ -67,10 +67,10 @@ B.AppWithFloating {
                         handle: Item { Image { anchors { centerIn: parent; verticalCenter: parent.verticalCenter } source: "timeslide-handle.png" } }
                     }
                     markerStyle: B.ChapterMarkerStyle {
-                        marker: Button {
+                        marker: B.Button {
                             readonly property var chapter: parent.chapter
                             size: 6; x: -3; y: 0; z: hovered ? 1e10 : -1
-                            iconName: "marker"; tooltip: chapter.name; delay: 0
+                            icon.prefix: "marker"; tooltip: chapter.name; delay: 0
                             onClicked: control.time = chapter.time
                         }
                     }
@@ -115,7 +115,7 @@ B.AppWithFloating {
                                 }
                                 handle: Item {}
                             }
-                            Button {
+                            B.Button {
                                 width: 12; height: 12; checked: engine.muted; action: "audio/volume/mute"
                                 icon.source: pressed ? "mute-pressed.png" : (hovered || checked ? "mute-checked.png" : "mute.png")
                             }
