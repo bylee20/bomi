@@ -60,8 +60,8 @@ signals:
     void clicked();
     void doubleClicked();
     void maskAlphaChanged();
-    void pressedChanged();
-    void hoveredChanged();
+    void pressedChanged(bool pressed);
+    void hoveredChanged(bool hovered);
     void mouseXChanged();
     void mouseYChanged();
 private:

@@ -32,6 +32,9 @@ public:
     auto mouse() const -> MouseObject* { return &m_mouse; }
     Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos,
                                  const QString &text);
+    Q_INVOKABLE void showToolTip(QQuickItem *item, qreal x, qreal y,
+                                 const QString &text)
+        { showToolTip(item, {x, y}, text); }
     Q_INVOKABLE void hideToolTip();
 signals:
     void fullscreenChanged();

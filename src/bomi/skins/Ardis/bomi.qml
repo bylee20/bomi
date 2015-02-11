@@ -16,9 +16,9 @@ B.AppWithFloating {
         id: sliderstyle
         SliderStyle {
             groove: Rectangle {
-                width: control.width; height: control.height; color: "#282629"
+                width: control.width; height: 5; color: "#282629"
                 Rectangle {
-                    width: control.width * control.rate; height: control.height
+                    width: control.width * control.rate; height: parent.height
                     color: "#0078ad"
                 }
             }
@@ -120,7 +120,7 @@ B.AppWithFloating {
                 }
 
                 B.VolumeSlider {
-                    width: 65; height: 5; style: sliderstyle
+                    width: 65; height: 10; style: sliderstyle
                     anchors {
                         left: speaker.right; leftMargin: 15
                         verticalCenter: speaker.verticalCenter
@@ -128,8 +128,8 @@ B.AppWithFloating {
                 }
 
                 B.TimeSlider {
-                    id: seeker
-                    width: 300; height: 5; style: sliderstyle
+                    id: seeker; bind: td
+                    width: 300; height: 10; style: sliderstyle
                     anchors {
                         verticalCenter: speaker.verticalCenter
                         horizontalCenter: parent.horizontalCenter
@@ -141,20 +141,21 @@ B.AppWithFloating {
                             readonly property bool emph: hovered || pressed
                             width: 5; height: 5; z: emph ? 1e10 : -1
                             x: -width * 0.5;
-                            y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0)
+                            y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0) - 2.5
                             icon.source: emph ? "marker-filled.png" : "marker.png"
                             tooltip: parent.chapter.name; delay: 0
-                            onClicked: control.time = parent.chapter.time
                         }
                     }
                 }
 
                 B.TimeDuration {
+                    id: td
                     height: 13; spacing: 2
                     font.pixelSize: height; monospace: false; color: "black"
                     anchors {
                         horizontalCenter: parent.horizontalCenter
-                        bottom: seeker.top; bottomMargin: 8
+                        verticalCenter: parent.verticalCenter
+                        verticalCenterOffset: 7
                     }
                 }
             }

@@ -13,7 +13,7 @@ struct MaskAreaItem::Data {
     auto setPressed(bool r)
     {
         if (_Change(pressed, r))
-            emit p->pressedChanged();
+            emit p->pressedChanged(pressed);
     }
     auto checkHovered(const QPointF &pos) -> void
     {
@@ -27,7 +27,7 @@ struct MaskAreaItem::Data {
     auto setHovered(bool h) -> void
     {
         if (_Change(hovered, h)) {
-            emit p->hoveredChanged();
+            emit p->hoveredChanged(hovered);
             if (hovered)
                 emit p->entered();
             else

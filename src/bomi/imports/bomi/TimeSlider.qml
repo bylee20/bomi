@@ -5,7 +5,15 @@ Slider {
     id: seeker
     property Component markerStyle
     property alias time: seeker.value
+    property TimeDuration bind
+    property bool toolTip: !bind
+    property int target: -1
     min: d.engine.begin; max: d.engine.end
+
+    onBindChanged: {
+        if (bind)
+            bind.time = Qt.binding(function ( ) { return mouseArea.time; })
+    }
 
     Component {
         id: dummy;
@@ -13,6 +21,19 @@ Slider {
             property var marker
             property var chapter
             x: seeker.width * chapter.rate
+            function updateTarget() {
+                if (marker.hovered && seeker.bind)
+                    seeker.target = chapter.time
+                else
+                    seeker.target = -1
+            }
+            function seek() { seeker.time = chapter.time; }
+            onMarkerChanged: {
+                if (marker.hovered !== undefined)
+                    marker.hoveredChanged.connect(updateTarget)
+                if (marker.clicked !== undefined)
+                    marker.clicked.connect(seek)
+            }
         }
     }
 
@@ -41,7 +62,9 @@ Slider {
                 markers.push(wrap)
             }
         }
+        function target(x) { return min + (x/seeker.width)*(max - min); }
     }
+
     Connections {
         target: d.engine
         onTick: {
@@ -51,6 +74,26 @@ Slider {
         }
         onChaptersChanged: d.generateChapters()
     }
-    onValueChanged: if (!d.ticking) d.engine.seek(value)
+    onValueChanged: { if (!d.ticking) d.engine.seek(value); }
     Component.onCompleted: { d.generateChapters() }
+
+    MouseArea {
+        id: mouseArea
+        visible: bind || toolTip
+        anchors.fill: parent
+        hoverEnabled: true
+        property bool moving: pressed || containsMouse
+        property int time: seeker.target >= 0 ? seeker.target : moving ? d.target(mouseX) : d.engine.time
+        Text { id: t }
+        onMovingChanged: if (toolTip && !moving) App.window.hideToolTip()
+        onPositionChanged: {
+            var val = d.target(mouse.x)
+            if (toolTip)
+                App.window.showToolTip(seeker, mouse.x, mouse.y,
+                                       t.formatTime(val) + "/" + t.formatTime(max))
+            if (pressed)
+                value = val
+        }
+        onPressed: { value = d.target(mouse.x) }
+    }
 }
