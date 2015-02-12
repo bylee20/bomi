@@ -325,7 +325,7 @@ const struct gl_video_opts gl_video_opts_def = {
     .scalers = { "bilinear", "bilinear" },
     .scaler_params = {{NAN, NAN}, {NAN, NAN}},
     .scaler_radius = {3, 3},
-    .alpha_mode = 0,
+    .alpha_mode = 2,
     .background = {0, 0, 0, 255},
     .gamma = 1.0f,
 };
@@ -343,7 +343,7 @@ const struct gl_video_opts gl_video_opts_hq_def = {
     .dscaler = "mitchell",
     .scaler_params = {{NAN, NAN}, {NAN, NAN}},
     .scaler_radius = {3, 3},
-    .alpha_mode = 0,
+    .alpha_mode = 2,
     .background = {0, 0, 0, 255},
     .gamma = 1.0f,
 };
@@ -370,6 +370,7 @@ const struct m_sub_options gl_video_conf = {
         OPT_FLOATRANGE("scale-antiring", scaler_antiring[0], 0, 0.0, 1.0),
         OPT_FLOATRANGE("cscale-antiring", scaler_antiring[1], 0, 0.0, 1.0),
         OPT_FLAG("scaler-resizes-only", scaler_resizes_only, 0),
+        OPT_FLAG("linear-scaling", linear_scaling, 0),
         OPT_FLAG("fancy-downscaling", fancy_downscaling, 0),
         OPT_FLAG("sigmoid-upscaling", sigmoid_upscaling, 0),
         OPT_FLOATRANGE("sigmoid-center", sigmoid_center, 0, 0.0, 1.0),
@@ -905,6 +906,8 @@ static void compile_shaders(struct gl_video *p)
                              rg, tex1d, tex3d, arrays, shader_prelude, PRELUDE_END);
 
     bool use_cms = p->opts.srgb || p->use_lut_3d;
+    // 3DLUT overrides sRGB
+    bool use_srgb = p->opts.srgb && !p->use_lut_3d;
 
     float input_gamma = 1.0;
     float conv_gamma = 1.0;
@@ -912,12 +915,8 @@ static void compile_shaders(struct gl_video *p)
     bool is_xyz = p->image_desc.flags & MP_IMGFLAG_XYZ;
     if (is_xyz) {
         input_gamma *= 2.6;
-
-        // If we're using cms, we can treat it as proper linear input,
-        // otherwise we just scale back to 2.40 to match typical displays,
-        // as a reasonable approximation.
-        if (!use_cms)
-            conv_gamma *= 1.0 / 2.40;
+        // Note that this results in linear light, so we make sure to enable
+        // use_linear_light for XYZ inputs as well.
     }
 
     p->input_gamma = input_gamma;
@@ -929,10 +928,13 @@ static void compile_shaders(struct gl_video *p)
 
     enum mp_csp_trc gamma_fun = MP_CSP_TRC_NONE;
 
-    // Linear light scaling is only enabled when either color correction
-    // option (3dlut or srgb) is enabled, otherwise scaling is done in the
-    // source space.
-    if (use_cms) {
+    // If either color correction option (3dlut or srgb) is enabled, or if
+    // sigmoidal upscaling is requested, or if the source is linear XYZ, we
+    // always scale in linear light
+    bool use_linear_light = p->opts.linear_scaling || p->opts.sigmoid_upscaling
+                            || use_cms || is_xyz;
+
+    if (use_linear_light) {
         // We use the color level range to distinguish between PC
         // content like images, which are most likely sRGB, and TV content
         // like movies, which are most likely BT.1886. XYZ input is always
@@ -946,11 +948,19 @@ static void compile_shaders(struct gl_video *p)
         }
     }
 
-    bool use_linear_light = gamma_fun != MP_CSP_TRC_NONE;
+    // The inverse of the above transformation is normally handled by
+    // the CMS cases, but if CMS is disabled we need to go back manually
+    bool use_inv_bt1886 = false;
+    if (use_linear_light && !use_cms) {
+        if (gamma_fun == MP_CSP_TRC_SRGB) {
+            use_srgb = true;
+        } else {
+            use_inv_bt1886 = true;
+        }
+    }
 
-    // Optionally transform to sigmoidal color space if requested, but only
-    // when upscaling in linear light
-    p->sigmoid_enabled = p->opts.sigmoid_upscaling && use_linear_light;
+    // Optionally transform to sigmoidal color space if requested.
+    p->sigmoid_enabled = p->opts.sigmoid_upscaling;
     bool use_sigmoid = p->sigmoid_enabled && p->upscaling;
 
     // Figure out the right color spaces we need to convert, if any
@@ -995,8 +1005,7 @@ static void compile_shaders(struct gl_video *p)
                    use_cms && gamma_fun == MP_CSP_TRC_SRGB);
     shader_def_opt(&header_osd, "USE_OSD_CMS_MATRIX", use_cms_matrix);
     shader_def_opt(&header_osd, "USE_OSD_3DLUT", p->use_lut_3d);
-    // 3DLUT overrides SRGB
-    shader_def_opt(&header_osd, "USE_OSD_SRGB", !p->use_lut_3d && p->opts.srgb);
+    shader_def_opt(&header_osd, "USE_OSD_SRGB", use_cms && use_srgb);
 
     for (int n = 0; n < SUBBITMAP_COUNT; n++) {
         const char *name = osd_shaders[n];
@@ -1047,8 +1056,8 @@ static void compile_shaders(struct gl_video *p)
     shader_def_opt(&header_final, "USE_INV_GAMMA", p->user_gamma_enabled);
     shader_def_opt(&header_final, "USE_CMS_MATRIX", use_cms_matrix);
     shader_def_opt(&header_final, "USE_3DLUT", p->use_lut_3d);
-    // 3DLUT overrides SRGB
-    shader_def_opt(&header_final, "USE_SRGB", p->opts.srgb && !p->use_lut_3d);
+    shader_def_opt(&header_final, "USE_SRGB", use_srgb);
+    shader_def_opt(&header_final, "USE_INV_BT1886", use_inv_bt1886);
     shader_def_opt(&header_final, "USE_DITHER", p->dither_texture != 0);
     shader_def_opt(&header_final, "USE_TEMPORAL_DITHER", p->opts.temporal_dither);
 

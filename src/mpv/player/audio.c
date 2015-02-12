@@ -66,12 +66,13 @@ static int recreate_audio_filters(struct MPContext *mpctx)
 
     struct MPOpts *opts = mpctx->opts;
     struct af_stream *afs = mpctx->d_audio->afilter;
+    bool need_reinit = false;
 
     double speed = opts->playback_speed;
 
     if (speed != 1.0) {
         int method = AF_CONTROL_SET_PLAYBACK_SPEED_RESAMPLE;
-        if (speed > 1.0 && opts->pitch_correction)
+        if (opts->pitch_correction)
             method = AF_CONTROL_SET_PLAYBACK_SPEED;
         if (!af_control_any_rev(afs, method, &speed)) {
             if (af_remove_by_label(afs, "playback-speed") < 0)
@@ -89,8 +90,15 @@ static int recreate_audio_filters(struct MPContext *mpctx)
                 // Try again.
                 if (!af_control_any_rev(afs, method, &speed))
                     return -1;
+            } else {
+                method = AF_CONTROL_SET_PLAYBACK_SPEED;
             }
         }
+        // AF_CONTROL_SET_PLAYBACK_SPEED does not require reinitialization,
+        // while AF_CONTROL_SET_PLAYBACK_SPEED_RESAMPLE requires updating
+        // the samplerate on the resampler, and possibly inserting the
+        // resampler itself.
+        need_reinit |= (method == AF_CONTROL_SET_PLAYBACK_SPEED_RESAMPLE);
     } else {
         if (af_remove_by_label(afs, "playback-speed") < 0)
             return -1;
@@ -99,7 +107,9 @@ static int recreate_audio_filters(struct MPContext *mpctx)
         af_control_any_rev(afs, AF_CONTROL_SET_PLAYBACK_SPEED_RESAMPLE, &speed);
     }
 
-    if (af_init(afs) < 0) {
+    need_reinit |= afs->initialized < 1;
+
+    if (need_reinit && af_init(afs) < 0) {
         MP_ERR(mpctx, "Couldn't find matching filter/ao format!\n");
         return -1;
     }

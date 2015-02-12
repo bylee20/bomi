@@ -565,9 +565,9 @@ Available filters are:
              Scale tempo in sync with speed (default).
         pitch
              Reverses effect of filter. Scales pitch without altering tempo.
-             Add ``[ speed_mult 0.9438743126816935`` and ``] speed_mult
-             1.059463094352953`` to your ``input.conf`` to step by musical
-             semi-tones.
+             Add ``[ multiply speed 0.9438743126816935`` and
+             ``] multiply speed 1.059463094352953`` to your ``input.conf``
+             to step by musical semi-tones.
 
              .. warning::
 
@@ -599,6 +599,20 @@ Available filters are:
             Would play media at 1.2x normal speed, with audio at normal pitch.
             Changing playback speed would change pitch, leaving audio tempo at
             1.2x.
+
+``rubberband``
+    High quality pitch correction with librubberband. This can be used in place
+    of ``scaletempo``, and will be used to adjust audio pitch when playing
+    at speed different from normal.
+
+    This filter has a number of sub-options. You can list them with
+    ``mpv --af=rubberband=help``. This will also show the default values
+    for each option. The options are not documented here, because they are
+    merely passed to librubberband. Look at the librubberband documentation
+    to learn what each option does:
+    http://breakfastquay.com/rubberband/code-doc/classRubberBand_1_1RubberBandStretcher.html
+    (The mapping of the mpv rubberband filter sub-option names and values to
+    those of librubberband follows a simple pattern: ``"Option" + Name + Value``.)
 
 ``lavfi=graph``
     Filter audio using FFmpeg's libavfilter.

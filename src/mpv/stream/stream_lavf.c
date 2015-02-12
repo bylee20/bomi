@@ -134,6 +134,8 @@ static int control(stream_t *s, int cmd, void *arg)
         // avio doesn't seem to support this - emulate it by reopening
         close_f(s);
         s->priv = NULL;
+        stream_drop_buffers(s);
+        s->pos = 0;
         return open_f(s);
     }
     }
@@ -181,6 +183,12 @@ void mp_setup_av_network_options(AVDictionary **dict, struct mpv_global *global,
     if (strlen(cust_headers))
         av_dict_set(dict, "headers", cust_headers, 0);
     av_dict_set(dict, "icy", "1", 0);
+    // So far, every known protocol uses microseconds for this
+    if (opts->network_timeout > 0) {
+        char buf[80];
+        snprintf(buf, sizeof(buf), "%lld", (long long)(opts->network_timeout * 1e6));
+        av_dict_set(dict, "timeout", buf, 0);
+    }
 
     mp_set_avdict(dict, opts->stream_lavf_opts->avopts);
 
@@ -285,8 +293,6 @@ static int open_f(stream_t *stream)
     stream->close = close_f;
     // enable cache (should be avoided for files, but no way to detect this)
     stream->streaming = true;
-    stream->pos = 0; // reset specifically for STREAM_CTRL_RECONNECT
-    stream->buf_pos = stream->buf_len = 0;
     res = STREAM_OK;
 
 out:

@@ -4,7 +4,7 @@ mpv
 Overview
 --------
 
-**mpv** is a movie player based on MPlayer and mplayer2. It supports a wide
+**mpv** is a media player based on MPlayer and mplayer2. It supports a wide
 variety of video file formats, audio and video codecs, and subtitle types.
 
 If you are wondering what's different from mplayer2 and MPlayer you can read
@@ -46,6 +46,8 @@ Essential dependencies (incomplete list):
 - FFmpeg libraries (libavutil libavcodec libavformat libswscale libavfilter
   and either libswresample or libavresample)
   At least FFmpeg 2.1.4 or Libav 10 is required.
+- zlib
+- iconv (normally provided by the system libc)
 - libass
 - Lua (optional, required for the OSC pseudo-GUI and youtube-dl integration)
 - libjpeg (optional, used for screenshots only)

@@ -794,7 +794,7 @@ Audio
 -----
 
 ``--audio-pitch-correction=<yes|no>``
-    If this is enabled (default), playing with a speed higher than normal
+    If this is enabled (default), playing with a speed different from normal
     automatically inserts the ``scaletempo`` audio filter. For details, see
     audio filter section.
 
@@ -1041,11 +1041,11 @@ Audio
 
 ``--audio-file-auto=<no|exact|fuzzy|all>``, ``--no-audio-file-auto``
     Load additional audio files matching the video filename. The parameter
-    specifies how external audio files are matched. This is disabled by
+    specifies how external audio files are matched. ``exact`` is enabled by
     default.
 
-    :no:    Don't automatically load external audio files (default).
-    :exact: Load the media filename with audio file extension.
+    :no:    Don't automatically load external audio files.
+    :exact: Load the media filename with audio file extension (default).
     :fuzzy: Load all audio files containing media filename.
     :all:   Load all audio files in the current directory.
 
@@ -2745,7 +2745,7 @@ Terminal
 ``--no-msg-color``
     Disable colorful console output on terminals.
 
-``--msg-level=<module1=level1:module2=level2:...>``
+``--msg-level=<module1=level1,module2=level2,...>``
     Control verbosity directly for each module. The ``all`` module changes the
     verbosity of all the modules not explicitly specified on the command line.
 
@@ -3134,6 +3134,11 @@ Network
 
 ``--referrer=<string>``
     Specify a referrer path or URL for HTTP requests.
+
+``--network-timeout=<seconds>``
+    Specify the network timeout in seconds. This affects at least HTTP. The
+    special value 0 (default) uses the FFmpeg/Libav defaults. If a protocol
+    is used which does not support timeouts, this option is silently ignored.
 
 ``--rtsp-transport=<lavf|udp|tcp|http>``
     Select RTSP transport method (default: tcp). This selects the underlying

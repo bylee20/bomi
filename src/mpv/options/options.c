@@ -105,7 +105,7 @@ const m_option_t mp_opts[] = {
     OPT_FLAG("quiet", quiet, CONF_GLOBAL),
     OPT_FLAG_STORE("really-quiet", verbose, CONF_GLOBAL | CONF_PRE_PARSE, -10),
     OPT_FLAG("terminal", use_terminal, CONF_GLOBAL | CONF_PRE_PARSE),
-    OPT_GENERAL(char*, "msg-level", msglevels, CONF_GLOBAL|CONF_PRE_PARSE,
+    OPT_GENERAL(char**, "msg-level", msg_levels, CONF_GLOBAL|CONF_PRE_PARSE,
                 .type = &m_option_type_msglevels),
     OPT_STRING("dump-stats", dump_stats, CONF_GLOBAL | CONF_PRE_PARSE),
     OPT_FLAG("msg-color", msg_color, CONF_GLOBAL | CONF_PRE_PARSE),
@@ -173,6 +173,7 @@ const m_option_t mp_opts[] = {
                 {"http", 3})),
     OPT_FLAG("tls-verify", network_tls_verify, 0),
     OPT_STRING("tls-ca-file", network_tls_ca_file, M_OPT_FILE),
+    OPT_DOUBLE("network-timeout", network_timeout, M_OPT_MIN, .min = 0),
 
 // ------------------------- demuxer options --------------------
 
@@ -730,6 +731,7 @@ const struct MPOpts mp_default_opts = {
     .demuxer_min_bytes = 0,
     .demuxer_min_secs = 0.2,
     .network_rtsp_transport = 2,
+    .network_timeout = 0.0,
     .hls_bitrate = 2,
     .demuxer_min_secs_cache = 2,
     .cache_pausing = 1,
@@ -764,7 +766,7 @@ const struct MPOpts mp_default_opts = {
     .movie_aspect = -1.,
     .field_dominance = -1,
     .sub_auto = 0,
-    .audiofile_auto = -1,
+    .audiofile_auto = 0,
     .osd_bar_visible = 1,
 #if HAVE_LIBASS
     .ass_enabled = 1,

@@ -102,7 +102,7 @@ typedef struct mp_image {
     int plane_h[MP_MAX_PLANES];
 
     /* only inside filter chain */
-	double pts, pts_orig;
+    double pts, pts_orig;
     /* memory management */
     struct m_refcount *refcount;
     /* for private use */

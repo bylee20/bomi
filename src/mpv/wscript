@@ -84,6 +84,11 @@ build_options = [
         'name': '--test',
         'desc': 'test suite (using cmocka)',
         'func': check_pkg_config('cmocka >= 0.4.1'),
+    }, {
+        'name': '--clang-database',
+        'desc': 'generate a clang compilation database',
+        'func': check_true,
+        'default': 'disable',
     }
 ]
 
@@ -330,6 +335,10 @@ If you really mean to compile without libass support use --disable-libass."
         'name': '--ladspa',
         'desc': 'LADSPA plugin support',
         'func': check_statement('ladspa.h', 'LADSPA_Descriptor ld = {0}'),
+    }, {
+        'name': '--rubberband',
+        'desc': 'librubberband support',
+        'func': check_pkg_config('rubberband', '>= 1.8.0'),
     }, {
         'name': '--libbs2b',
         'desc': 'libbs2b audio filter support',
@@ -890,6 +899,9 @@ def configure(ctx):
 
     if not ctx.dependency_satisfied('build-date'):
         ctx.env.CFLAGS += ['-DNO_BUILD_TIMESTAMPS']
+
+    if ctx.dependency_satisfied('clang-database'):
+        ctx.load('clang_compilation_database')
 
     ctx.store_dependencies_lists()
 
