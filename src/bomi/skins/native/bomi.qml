@@ -7,6 +7,7 @@ import bomi 1.0 as B
 B.AppWithDock {
     id: app
     readonly property QtObject engine: B.App.engine
+    property bool fs: B.App.window.fullscreen
 
     SystemPalette { id: palette }
 
@@ -15,62 +16,44 @@ B.AppWithDock {
         player.showOsdFunc = function(msg) {
             osdTimer.running = false
             text.text = msg
-            if (B.App.window.fullscreen)
+            if (fs)
                 orig(msg)
             osdTimer.running = true
         }
+        text.text = engine.media.name
     }
 
     Timer {
         id: osdTimer; repeat: false
         interval: B.App.theme.osd.message.duration
-        onTriggered: text.text = ""
+        onTriggered: text.text = engine.media.name
     }
+    Connections { target: engine.media; onNameChanged: text.text = target.name }
 
     controls: Item {
         width: parent.width; height: top.height + bottom.height
         Rectangle {
             id: top
-            width: parent.width
-            height: layout.height
-            color: palette.window
-            anchors.bottom: bottom.top
+            width: parent.width; height: layout.height + 10
+            anchors.bottom: bottom.top; color: palette.window
             RowLayout {
-                id: layout
-                width: parent.width
-                height: implicitHeight
-                spacing: 0
-                ToolButton {
-                    id: prev
-                    iconName: "media-skip-backward"
-                    onClicked: B.App.execute("play/prev")
-                    anchors.verticalCenter: parent.verticalCenter
+                id: layout; spacing: 0
+                width: parent.width; height: implicitHeight
+                anchors.verticalCenter: parent.verticalCenter
+                MediaButton { icon: "media-skip-backward"; action: "play/prev" }
+                MediaButton {
+                    icon: "media-playback-" + (engine.playing ? "pause" : "start")
+                    action: "play/pause"
                 }
-                ToolButton {
-                    id: play
-                    iconName: engine.playing ? "media-playback-pause" : "media-playback-start"
-                    onClicked: B.App.execute("play/pause")
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-                ToolButton {
-                    id: stop
-                    iconName: "media-playback-stop"
-                    onClicked: B.App.execute("play/stop")
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-                ToolButton {
-                    id: next
-                    iconName: "media-skip-forward"
-                    onClicked: B.App.execute("play/next")
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                MediaButton { icon: "media-playback-stop"; action: "play/stop" }
+                MediaButton { icon: "media-skip-forward"; action: "play/next" }
                 B.TimeSlider {
                     id: timeslider; Layout.fillWidth: true;
                     anchors.verticalCenter: parent.verticalCenter
                 }
-                ToolButton {
+                MediaButton {
                     id: volume
-                    iconName: {
+                    icon: {
                         if (engine.muted)
                             return "audio-volume-muted"
                         if (engine.volume < 30)
@@ -79,8 +62,8 @@ B.AppWithDock {
                             return "audio-volume-medium"
                         return "audio-volume-high"
                     }
-                    onClicked: B.App.execute("audio/volume/mute")
-                    anchors.verticalCenter: parent.verticalCenter
+                    action: "audio/volume/mute"
+                    checkable: true; checked: engine.muted
                 }
 
                 B.VolumeSlider {
@@ -88,34 +71,25 @@ B.AppWithDock {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                ToolButton {
-                    id: full
-                    iconName: B.App.window.fullscreen ? "view-restore" : "view-fullscreen"
-                    onClicked: B.App.execute("window/full")
+                MediaButton {
+                    icon: "view-" + (fs ? "restore" : "fullscreen")
+                    action: "window/full"; checkable: true; checked: fs
                 }
             }
         }
         Rectangle {
             id: bottom
-            color: "black"
-            width: parent.width
-            height: timeText.implicitHeight + 4
-            anchors.bottom: parent.bottom
+            color: "black"; anchors.bottom: parent.bottom
+            width: parent.width; height: timeText.implicitHeight + 4
             Item {
-                anchors.fill: parent
-                anchors.margins: 2
+                anchors { fill: parent; margins: 2 }
                 Text {
-                    id: text
-                    width: parent.width
-                    height: parent.height
-                    color: "white"
+                    id: text; color: "white"; elide: Text.ElideRight
+                    anchors.fill: parent; anchors.rightMargin: timeText.width
                 }
                 B.TimeDuration {
-                    anchors.right: parent.right
-                    id: timeText
-                    font: text.font
-                    color: "white"
-
+                    id: timeText; anchors.right: parent.right
+                    font: text.font; color: text.color
                 }
             }
         }
