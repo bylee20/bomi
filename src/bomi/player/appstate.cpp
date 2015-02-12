@@ -1,4 +1,5 @@
 #include "appstate.hpp"
+#include "mainwindow.hpp"
 #include "misc/log.hpp"
 #include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
@@ -48,4 +49,38 @@ auto AppState::save() const -> void
 {
     JsonStorage storage(APP_STATE_FILE);
     storage.write(jio.toJson(*this));
+}
+
+static const QSize s_maximized{-759, -526};
+static const QSize s_fullScreen{-333, -333};
+
+auto AppState::updateWindowGeometry(const MainWindow *w) -> void
+{
+    if (w->isMinimized() || !w->isVisible())
+        return;
+    if (w->isFullScreen())
+        win_size = s_fullScreen;
+    else if (w->isMaximized())
+        win_size = s_maximized;
+    else {
+        win_size = w->size();
+        auto screen = w->screen()->availableVirtualSize();
+        win_pos.rx() = qBound(0.0, w->x()/(double)screen.width(), 1.0);
+        win_pos.ry() = qBound(0.0, w->y()/(double)screen.height(), 1.0);
+    }
+}
+
+auto AppState::restoreWindowGeometry(MainWindow *w) -> void
+{
+    if (win_size == s_maximized)
+        w->showMaximized();
+    else if (win_size == s_fullScreen)
+        w->setFullScreen(true);
+    else if (win_size.isValid()) {
+        w->resize(win_size);
+        auto screen = w->screen()->availableVirtualSize();
+        const int x = screen.width() * win_pos.x();
+        const int y = screen.height() * win_pos.y();
+        w->setGeometry(QRect({x, y}, win_size));
+    }
 }

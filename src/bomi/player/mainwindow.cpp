@@ -62,8 +62,9 @@ MainWindow::~MainWindow() {
 
 auto MainWindow::postInitialize() -> void
 {
-     d->applyPref();
-     cApp.runCommands();
+    d->as.restoreWindowGeometry(this);
+    d->applyPref();
+    cApp.runCommands();
 }
 
 auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
@@ -156,7 +157,6 @@ auto MainWindow::setFullScreen(bool full) -> void
     d->dontPause = true;
     if (full != d->fullScreen) {
         d->fullScreen = full;
-        d->updateWindowPosState();
 #ifdef Q_OS_MAC
         if (!d->pref.lion_style_fullscreen()) {
             static Qt::WindowFlags flags = windowFlags();
@@ -193,6 +193,7 @@ auto MainWindow::setFullScreen(bool full) -> void
             }
         }
         d->setCursorVisible(!d->fullScreen);
+        d->updateWindowPosState();
         emit fullscreenChanged(d->fullScreen);
     }
     d->dontPause = false;

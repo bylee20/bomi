@@ -4,6 +4,8 @@
 #include "mrlstate.hpp"
 #include "enum/staysontop.hpp"
 
+class MainWindow;
+
 class AppState : public QObject {
     Q_OBJECT
     Q_PROPERTY(StaysOnTop win_stays_on_top MEMBER win_stays_on_top NOTIFY winStaysOnTopChanged)
@@ -28,6 +30,10 @@ public:
     bool ask_system_tray = true;
 
     QString dvd_device, bluray_device, sub_find_lang_code;
+
+    auto updateWindowGeometry(const MainWindow *w) -> void;
+    auto restoreWindowGeometry(MainWindow *w) -> void;
+
     auto load() -> void;
     auto save() const -> void;
 signals:

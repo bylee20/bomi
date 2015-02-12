@@ -29,12 +29,6 @@ auto MainWindow::Data::restoreState() -> void
     updateRecentActions(recent.openList());
     history.setVisible(as.history_visible);
 
-    if (as.win_size.isValid()) {
-        auto screen = screenSize();
-        const int x = screen.width() * as.win_pos.x();
-        const int y = screen.height() * as.win_pos.y();
-        p->setGeometry(QRect({x, y}, as.win_size));
-    }
     winState = prevWinState = p->windowState();
 
     auto &tool = menu(u"tool"_q);
@@ -367,8 +361,7 @@ auto MainWindow::Data::showOSD(const QVariant &msg) -> void
 
 auto MainWindow::Data::updateWindowSizeState() -> void
 {
-    if (!p->isFullScreen() && !p->isMinimized() && p->isVisible())
-        as.win_size = p->size();
+    as.updateWindowGeometry(p);
 }
 
 auto MainWindow::Data::screenSize() const -> QSize
@@ -380,11 +373,7 @@ auto MainWindow::Data::screenSize() const -> QSize
 
 auto MainWindow::Data::updateWindowPosState() -> void
 {
-    if (!p->isFullScreen() && !p->isMinimized() && p->isVisible()) {
-        const auto screen = screenSize();
-        as.win_pos.rx() = qBound(0.0, p->x()/(double)screen.width(), 1.0);
-        as.win_pos.ry() = qBound(0.0, p->y()/(double)screen.height(), 1.0);
-    }
+    as.updateWindowGeometry(p);
 }
 
 auto MainWindow::Data::openDir(const QString &dir) -> void
