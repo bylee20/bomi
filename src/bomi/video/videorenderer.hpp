@@ -24,8 +24,6 @@ public:
     auto overlayOnLetterbox() const -> bool;
     auto mapToVideo(const QPointF &pos) -> QPointF;
     auto isOpaque() const -> bool override { return true; }
-
-
     auto setFlipped(bool horizontal, bool vertical) -> void;
     auto setAspectRatio(double ratio) -> void;
     auto setOverlay(GeometryItem *overlay) -> void;
@@ -33,7 +31,8 @@ public:
     auto setAlignment(Qt::Alignment alignment) -> void;
     auto setOffset(const QPoint &offset) -> void;
     auto setCropRatio(double ratio) -> void;
-
+    auto setRenderFrameFunction(const RenderFrameFunc &func) -> void;
+    auto updateForNewFrame(const QSize &displaySize) -> void;
 signals:
     void offsetChanged(const QPoint &pos);
     void screenRectChanged(const QRectF &rect);
@@ -42,9 +41,6 @@ signals:
 protected:
     auto updateVertexOnGeometryChanged() const -> bool override { return true; }
 private:
-    auto updateForNewFrame(const QSize &displaySize) -> void;
-    auto setRenderFrameFunction(const RenderFrameFunc &func) -> void;
-
     auto initializeGL() -> void override;
     auto finalizeGL() -> void override;
     auto customEvent(QEvent *event) -> void override;
@@ -54,7 +50,6 @@ private:
     auto updateTexture(OpenGLTexture2D *texture) -> void override;
     struct Data;
     Data *d;
-    friend class PlayEngine;
 };
 
 #endif // VIDEORENDERERITEM_HPP

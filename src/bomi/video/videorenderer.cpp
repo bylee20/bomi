@@ -8,13 +8,13 @@
 
 DECLARE_LOG_CONTEXT(Video)
 
-enum EventType {NewFrame = QEvent::User + 1, NewFrameImage };
+enum EventType {NewFrame = QEvent::User + 1 };
 
 struct VideoRenderer::Data {
     Data(VideoRenderer *p): p(p) {}
     VideoRenderer *p = nullptr;
     double crop = -1.0, aspect = -1.0, dar = 0.0;
-    bool take = false, onLetterbox = true, redraw = false;
+    bool onLetterbox = true, redraw = false;
     bool flip_h = false, flip_v = false;
     Qt::Alignment alignment = Qt::AlignCenter;
     QRectF vtx; QPoint offset = {0, 0};
@@ -310,22 +310,6 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
         }
     }
     *texture = !d->fboSize.isEmpty() && d->fbo ? d->fbo->texture() : d->black;
-
-    if (d->take) {
-        auto image = texture->toImage();
-        QImage osd;
-//        if (!image.isNull() && d->data.osd())
-//            osd = d->data.osd()->toImage();
-        auto scale = [] (QImage &image, const QSize &size) {
-            if (!image.isNull() && image.size() != size)
-                image = image.scaled(size, Qt::IgnoreAspectRatio,
-                                     Qt::SmoothTransformation);
-        };
-        scale(image, sizeHint());
-        scale(osd, image.size());
-        _PostEvent(this, NewFrameImage, image, osd);
-        d->take = false;
-    }
 }
 
 auto VideoRenderer::updateVertex(Vertex *vertex) -> void
