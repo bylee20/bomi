@@ -74,10 +74,7 @@ public:
     P0(QString, preserve_fallback_folder, defaultFallbackFolder())
     P0(bool, show_logo, true)
     P0(QColor, bg_color, Qt::black)
-    P0(bool, use_heartbeat, false)
     P0(bool, exclude_images, true)
-    P0(QString, heartbeat_command, {})
-    P0(int, heartbeat_interval, 60)
     P0(QStringList, sub_priority, {})
     P0(QStringList, audio_priority, {})
 

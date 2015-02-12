@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>17</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1996,92 +1996,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_27">
-           <property name="title">
-            <string>Screensaver</string>
+          <widget class="QCheckBox" name="disable_screensaver">
+           <property name="text">
+            <string>Disable screensaver while playing</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_28">
-            <item>
-             <widget class="QCheckBox" name="disable_screensaver">
-              <property name="text">
-               <string>Disable screensaver while playing</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="use_heartbeat">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Use external command</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QWidget" name="heartbeat_widget" native="true">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_26">
-               <property name="leftMargin">
-                <number>0</number>
-               </property>
-               <property name="topMargin">
-                <number>0</number>
-               </property>
-               <property name="rightMargin">
-                <number>0</number>
-               </property>
-               <property name="bottomMargin">
-                <number>0</number>
-               </property>
-               <item>
-                <spacer name="horizontalSpacer_23">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Fixed</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>15</width>
-                   <height>1</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QLineEdit" name="heartbeat_command"/>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_52">
-                 <property name="text">
-                  <string>Interval</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QSpinBox" name="heartbeat_interval">
-                 <property name="suffix">
-                  <string>sec</string>
-                 </property>
-                 <property name="minimum">
-                  <number>1</number>
-                 </property>
-                 <property name="maximum">
-                  <number>9999</number>
-                 </property>
-                 <property name="value">
-                  <number>60</number>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-           </layout>
           </widget>
          </item>
          <item>
@@ -3001,22 +2919,6 @@ Regular expression is supported.</string>
     <hint type="destinationlabel">
      <x>683</x>
      <y>425</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>disable_screensaver</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>use_heartbeat</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>313</x>
-     <y>68</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>313</x>
-     <y>68</y>
     </hint>
    </hints>
   </connection>

@@ -452,8 +452,6 @@ auto MainWindow::Data::applyPref() -> void
                                pref.preserve_file_name_format(),
                                pref.preserve_fallback_folder());
     SubtitleParser::setMsPerCharactor(p.ms_per_char());
-    cApp.setHeartbeat(p.use_heartbeat() ? p.heartbeat_command() : QString(),
-                      p.heartbeat_interval());
     cApp.setMprisActivated(p.use_mpris2());
 
     menu.retranslate();

@@ -133,16 +133,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->ui.enable_hwaccel->setEnabled(HwAcc::isAvailable());
 
-    void(QComboBox::*curIdxChanged)(int) = &QComboBox::currentIndexChanged;
-    auto checkHearbeat = [this] () {
-        const auto enable = d->ui.use_heartbeat->isChecked()
-                            && d->ui.disable_screensaver->isChecked();
-        d->ui.heartbeat_widget->setEnabled(enable);
-    };
-    const auto CheckBoxToggled = &QCheckBox::toggled;
-    connect(d->ui.use_heartbeat, CheckBoxToggled, this, checkHearbeat);
-    connect(d->ui.disable_screensaver, CheckBoxToggled, this, checkHearbeat);
-
     connect(d->ui.quick_snapshot_folder_browse, &QPushButton::clicked,
             this, [this] () {
         _SetLastOpenPath(d->ui.quick_snapshot_folder->text() % '/'_q, u"snapshot"_q);
@@ -177,7 +167,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->ui.mouse_action_map->setActionList(&d->ui.shortcuts->actionInfoList());
 
-    connect(d->ui.audio_device, curIdxChanged, [this] (int idx)
+    connect(SIGNAL_VT(d->ui.audio_device, currentIndexChanged, int), [this] (int idx)
         { d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(idx).toString()); });
 
     d->ui.network_folders->setAddingAndErasingEnabled(true);
@@ -205,7 +195,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.skin_name->addItems(Skin::names(true));
     updateSkinPath(d->ui.skin_name->currentIndex());
 
-    connect(d->ui.skin_name, curIdxChanged, this, updateSkinPath);
+    connect(SIGNAL_VT(d->ui.skin_name, currentIndexChanged, int), this, updateSkinPath);
 
     auto currentDataChanged = &DataComboBox::currentDataChanged;
     connect(d->ui.sub_autoselect, currentDataChanged, checkSubAutoselectMode);
