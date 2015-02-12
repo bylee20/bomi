@@ -32,15 +32,15 @@ B.AppWithDock {
     Connections { target: engine.media; onNameChanged: text.text = target.name }
 
     controls: Item {
-        width: parent.width; height: top.height + bottom.height
+        width: parent.width; height: top.height + (fs ? 0 : bottom.height)
         Rectangle {
             id: top
             width: parent.width; height: layout.height + 10
             anchors.bottom: bottom.top; color: palette.window
             RowLayout {
                 id: layout; spacing: 0
-                width: parent.width; height: implicitHeight
-                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - (fs ? 10 : 0); height: implicitHeight
+                anchors.centerIn: parent
                 MediaButton { icon: "media-skip-backward"; action: "play/prev" }
                 MediaButton {
                     icon: "media-playback-" + (engine.playing ? "pause" : "start")
@@ -76,13 +76,33 @@ B.AppWithDock {
                     icon: "view-" + (fs ? "restore" : "fullscreen")
                     action: "window/full"; checkable: true; checked: fs
                 }
+
+                Item { visible: fs; width: 5; Layout.fillHeight: true }
+
+                Rectangle {
+                    id: right
+                    color: "black"
+                    visible: fs
+                    width: fs ? (timeText2.implicitWidth + 10) : 0
+                    Layout.fillHeight: true
+                    B.TimeDuration {
+                        id: timeText2
+                        font.family: text.font.family;
+                        font.pixelSize: 14
+                        color: text.color
+                        height: parent.height
+                        anchors.centerIn: parent
+                    }
+                }
             }
         }
 
         Rectangle {
             id: bottom
+            visible: !fs
             color: "black"; anchors.bottom: parent.bottom
-            width: parent.width; height: timeText.implicitHeight + 4
+            width: parent.width;
+            height: fs ? 0 : (timeText.implicitHeight + 4)
             Item {
                 anchors { fill: parent; margins: 2 }
                 Text {
