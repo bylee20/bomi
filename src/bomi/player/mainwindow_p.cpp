@@ -171,10 +171,11 @@ auto MainWindow::Data::plugEngine() -> void
             showMessageBox(tr("Error!\nCannot open the media."));
         }
         const auto playing = e.isPlaying();
+        const auto running = e.isRunning();
         menu(u"play"_q)[u"pause"_q]->setText(playing ? tr("Pause") : tr("Play"));
-        menu(u"video"_q)(u"track"_q).setEnabled(playing);
-        menu(u"audio"_q)(u"track"_q).setEnabled(playing);
-        menu(u"subtitle"_q)(u"track"_q).setEnabled(playing);
+        menu(u"video"_q)(u"track"_q).setEnabled(running);
+        menu(u"audio"_q)(u"track"_q).setEnabled(running);
+        menu(u"subtitle"_q)(u"track"_q).setEnabled(running);
         cApp.setScreensaverDisabled(pref.disable_screensaver() && playing);
         updateStaysOnTop();
         stateChanging = false;
