@@ -314,7 +314,7 @@ PrefDialog::PrefDialog(QWidget *parent)
             d->sync();
             emit applyRequested();
             break;
-        case BBox::Cancel:
+        case BBox::Close:
             hide();
         case BBox::Reset:
             d->fillEditors(&d->orig);
