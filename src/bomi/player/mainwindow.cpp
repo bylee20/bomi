@@ -155,8 +155,7 @@ auto MainWindow::isSceneGraphInitialized() const -> bool
 auto MainWindow::setFullScreen(bool full) -> void
 {
     d->dontPause = true;
-    if (full != d->fullScreen) {
-        d->fullScreen = full;
+    if (isFullScreen() != full) {
 #ifdef Q_OS_MAC
         if (!d->pref.lion_style_fullscreen()) {
             static Qt::WindowFlags flags = windowFlags();
@@ -192,16 +191,15 @@ auto MainWindow::setFullScreen(bool full) -> void
                     showNormal();
             }
         }
-        d->setCursorVisible(!d->fullScreen);
-        d->updateWindowPosState();
-        emit fullscreenChanged(d->fullScreen);
+        d->setCursorVisible(!full);
+        emit fullscreenChanged(full);
     }
     d->dontPause = false;
 }
 
 auto MainWindow::isFullScreen() const -> bool
 {
-    return d->fullScreen || QWidget::isFullScreen();
+    return QWidget::isFullScreen();
 }
 
 auto MainWindow::resetMoving() -> void
@@ -359,8 +357,7 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 {
     QWidget::resizeEvent(event);
-    if (!d->fullScreen)
-        d->updateWindowSizeState();
+    d->as.updateWindowGeometry(this);
 }
 
 auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void
@@ -428,6 +425,5 @@ auto MainWindow::closeEvent(QCloseEvent *event) -> void
 auto MainWindow::moveEvent(QMoveEvent *event) -> void
 {
     QWidget::moveEvent(event);
-    if (!d->fullScreen)
-        d->updateWindowPosState();
+    d->as.updateWindowGeometry(this);
 }

@@ -51,8 +51,6 @@ struct MainWindow::Data {
 
     MainWindow *p = nullptr;
     MainQuickView *view = nullptr;
-    bool visible = false, sotChanging = false, fullScreen = false;
-    bool starting = false;
     QQuickItem *player = nullptr;
     RootMenu menu;
     RecentInfo recent;
@@ -140,9 +138,7 @@ struct MainWindow::Data {
     auto initContextMenu() -> void;
     auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;
     auto openDir(const QString &dir = QString()) -> void;
-    auto updateWindowSizeState() -> void;
     auto screenSize() const -> QSize;
-    auto updateWindowPosState() -> void;
     auto checkWindowState(Qt::WindowStates prev) -> void;
     auto updateWaitingMessage() -> void;
 

@@ -325,8 +325,7 @@ auto MainWindow::Data::commitData() -> void
         recent.setLastPlaylist(playlist.list());
         recent.setLastMrl(e.mrl());
         e.shutdown();
-        if (!p->isFullScreen())
-            updateWindowPosState();
+        as.updateWindowGeometry(p);
         as.playlist_visible = playlist.isVisible();
         as.playlist_shuffled = playlist.isShuffled();
         as.playlist_repeat = playlist.repeat();
@@ -359,21 +358,11 @@ auto MainWindow::Data::showOSD(const QVariant &msg) -> void
         QMetaObject::invokeMethod(player, "showOSD", Q_ARG(QVariant, msg));
 }
 
-auto MainWindow::Data::updateWindowSizeState() -> void
-{
-    as.updateWindowGeometry(p);
-}
-
 auto MainWindow::Data::screenSize() const -> QSize
 {
     if (desktop->isVirtualDesktop())
         return virtualDesktopSize;
     return desktop->availableGeometry(p).size();
-}
-
-auto MainWindow::Data::updateWindowPosState() -> void
-{
-    as.updateWindowGeometry(p);
 }
 
 auto MainWindow::Data::openDir(const QString &dir) -> void
@@ -551,7 +540,6 @@ auto MainWindow::Data::updateStaysOnTop() -> void
 {
     if (p->windowState() & Qt::WindowMinimized)
         return;
-    sotChanging = true;
     const auto id = as.win_stays_on_top;
     bool onTop = false;
     if (!p->isFullScreen()) {
@@ -563,7 +551,6 @@ auto MainWindow::Data::updateStaysOnTop() -> void
             onTop = e.isPlaying();
     }
     cApp.setAlwaysOnTop(p, onTop);
-    sotChanging = false;
 }
 
 auto MainWindow::Data::setVideoSize(double rate) -> void
@@ -678,7 +665,6 @@ auto MainWindow::Data::updateTitle() -> void
 
 auto MainWindow::Data::doVisibleAction(bool visible) -> void
 {
-    this->visible = visible;
     if (visible) {
         if (pausedByHiding && e.isPaused()) {
             e.unpause();
@@ -702,7 +688,6 @@ auto MainWindow::Data::checkWindowState(Qt::WindowStates prev) -> void
 {
     prevWinState = prev;
     winState = p->windowState();
-    updateWindowSizeState();
     p->setWindowFilePath(filePath);
     dontPause = true;
     p->resetMoving();
