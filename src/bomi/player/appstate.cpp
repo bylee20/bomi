@@ -77,7 +77,6 @@ auto AppState::restoreWindowGeometry(MainWindow *w) -> void
     else if (win_size == s_fullScreen)
         w->setFullScreen(true);
     else if (win_size.isValid()) {
-        w->resize(win_size);
         auto screen = w->screen()->availableVirtualSize();
         const int x = screen.width() * win_pos.x();
         const int y = screen.height() * win_pos.y();
