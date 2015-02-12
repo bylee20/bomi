@@ -29,7 +29,7 @@ auto MainWindow::Data::restoreState() -> void
     updateRecentActions(recent.openList());
     history.setVisible(as.history_visible);
 
-    winState = prevWinState = p->windowState();
+    prevWinState = p->windowState();
 
     auto &tool = menu(u"tool"_q);
     auto &pl = tool(u"playlist"_q);
@@ -75,25 +75,6 @@ auto MainWindow::Data::initContextMenu() -> void
     addMenuBar(menu(u"window"_q));
     addMenuBar(menu(u"help"_q));
 #endif
-}
-
-auto MainWindow::Data::initDesktop() -> void
-{
-    auto reset = [this] () {
-        if (!desktop->isVirtualDesktop())
-            virtualDesktopSize = QSize();
-        else {
-            const int count = desktop->screenCount();
-            QRect rect = desktop->availableGeometry(0);
-            for (int i=1; i<count; ++i)
-                rect |= desktop->availableGeometry(i);
-            virtualDesktopSize = rect.size();
-        }
-    };
-    connect(desktop, &QDesktopWidget::resized, p, reset);
-    connect(desktop, &QDesktopWidget::screenCountChanged, p, reset);
-    connect(desktop, &QDesktopWidget::workAreaResized, p, reset);
-    reset();
 }
 
 auto MainWindow::Data::initTray() -> void
@@ -299,11 +280,11 @@ auto MainWindow::Data::trigger(QAction *action) -> void
         return;
     if (view->topLevelItem()->isVisible()) {
         if (unblockedActions.isEmpty()) {
+            // allow only next actions when top level item shown
             unblockedActions += menu(u"window"_q).actions();
             tmp::sort(unblockedActions);
         }
-        const auto it = qBinaryFind(_C(unblockedActions), action);
-        if (it == unblockedActions.cend())
+        if (!tmp::contains_binary(unblockedActions, action))
             return;
     }
     action->trigger();
@@ -360,9 +341,7 @@ auto MainWindow::Data::showOSD(const QVariant &msg) -> void
 
 auto MainWindow::Data::screenSize() const -> QSize
 {
-    if (desktop->isVirtualDesktop())
-        return virtualDesktopSize;
-    return desktop->availableGeometry(p).size();
+    return p->screen()->availableVirtualSize();
 }
 
 auto MainWindow::Data::openDir(const QString &dir) -> void
@@ -454,7 +433,7 @@ auto MainWindow::Data::showMessage(const QString &msg, const bool *force) -> voi
             return;
     } else if (!pref.osd_theme().message.show_on_action)
         return;
-    if (!dontShowMsg)
+    if (sgInit)
         showOSD(msg);
 }
 
@@ -687,11 +666,13 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
 auto MainWindow::Data::checkWindowState(Qt::WindowStates prev) -> void
 {
     prevWinState = prev;
-    winState = p->windowState();
+    const auto winState = p->windowState();
+    const auto full = p->isFullScreen();
+    if (!((prev & winState) & Qt::WindowFullScreen))
+        emit p->fullscreenChanged(full);
     p->setWindowFilePath(filePath);
     dontPause = true;
     p->resetMoving();
-    const auto full = p->isFullScreen();
     if (full) {
         cApp.setAlwaysOnTop(p, false);
         p->setVisible(true);

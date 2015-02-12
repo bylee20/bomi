@@ -60,12 +60,11 @@ struct MainWindow::Data {
     YouTubeDL youtube;
     YleDL yle;
 
-    Qt::WindowStates winState = Qt::WindowNoState;
     Qt::WindowStates prevWinState = Qt::WindowNoState;
     Qt::MouseButton pressedButton = Qt::NoButton;
-    bool moving = false, changingSub = false;
-    bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
-    bool stateChanging = false, loading = false, sgInit = false;
+    bool moving = false;
+    bool pausedByHiding = false, dontPause = false;
+    bool stateChanging = false, sgInit = false;
     QTimer waiter, hider;
     ABRepeatChecker ab;
     QMenu contextMenu;
@@ -81,9 +80,6 @@ struct MainWindow::Data {
     TrayIcon *tray = nullptr;
     QString filePath;
     Pref pref;
-    QAction *subtrackSep = nullptr;
-    QDesktopWidget *desktop = nullptr;
-    QSize virtualDesktopSize;
     ThemeObject theme;
     QList<QAction*> unblockedActions;
     HistoryModel history;
@@ -114,23 +110,17 @@ struct MainWindow::Data {
         { showMessage(cmd, toMessage(value)); }
     auto doVisibleAction(bool visible) -> void;
     auto commitData() -> void;
-    auto initDesktop() -> void;
     auto initWindow() -> void;
     auto initTray() -> void;
     auto generatePlaylist(const Mrl &mrl) const -> Playlist;
     auto openMrl(const Mrl &mrl) -> void;
-    auto resume(const Mrl &mrl, int *edition) -> int;
-    auto cache(const Mrl &mrl) -> int;
     auto plugEngine() -> void;
     auto initItems() -> void;
     auto plugMenu() -> void;
     auto setVideoSize(const QSize &video) -> void;
     auto load(const Mrl &mrl, bool play = true, bool tryResume = true) -> void;
-    auto load(Subtitle &sub, const QString &file, const QString &enc) -> bool;
     auto reloadSkin() -> void;
     auto trigger(QAction *action) -> void;
-    auto tryToAutoselectMode(const QVector<SubComp> &loaded,
-                         const Mrl &mrl) -> QVector<int>;
     auto setCursorVisible(bool visible) -> void
         { view->setCursorVisible(visible); emit p->cursorChanged(view->cursor()); }
     auto cancelToHideCursor() -> void { hider.stop(); setCursorVisible(true); }

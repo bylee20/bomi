@@ -16,12 +16,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     d->p = this;
     d->view = new MainQuickView(this);
-    d->desktop = cApp.desktop();
     d->pref.initialize();
     d->pref.load();
     d->undo.setActive(false);
     d->logViewer = new LogViewer(this);
-    d->dontShowMsg = true;
 
     AppObject::setEngine(&d->e);
     AppObject::setHistory(&d->history);
@@ -37,7 +35,6 @@ MainWindow::MainWindow(QWidget *parent)
     d->e.run();
 
     d->initWindow();
-    d->initDesktop();
     d->initContextMenu();
     d->initItems();
     d->initTray();
@@ -47,7 +44,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     d->restoreState();
 
-    d->dontShowMsg = false;
     d->undo.setActive(true);
     QTimer::singleShot(1, this, SLOT(postInitialize()));
 }
@@ -192,7 +188,6 @@ auto MainWindow::setFullScreen(bool full) -> void
             }
         }
         d->setCursorVisible(!full);
-        emit fullscreenChanged(full);
     }
     d->dontPause = false;
 }

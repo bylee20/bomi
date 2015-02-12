@@ -41,6 +41,14 @@ template<class Container, class T>
 SIA contains(const Container &c, const T &t) -> bool
 { return contains(std::begin(c), std::end(c), t); }
 
+template<class Iter, class T>
+SIA contains_binary(Iter b, Iter e, const T &t) -> bool
+{ return std::binary_search(b, e, t); }
+
+template<class Container, class T>
+SIA contains_binary(const Container &c, const T &t) -> bool
+{ return contains_binary(std::begin(c), std::end(c), t); }
+
 template<class Container, class F>
 SIA transform(Container &c, F f) -> Container&
 { for (auto &item : c) f(item); return c; }
