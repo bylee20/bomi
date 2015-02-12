@@ -72,6 +72,10 @@ B.AppWithDock {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
+                MediaButton { icon: "audio-x-generic"; action: "audio/track" }
+
+                MediaButton { icon: "text-x-generic"; action: "subtitle/track" }
+
                 MediaButton {
                     icon: "view-" + (fs ? "restore" : "fullscreen")
                     action: "window/full"; checkable: true; checked: fs
@@ -116,4 +120,6 @@ B.AppWithDock {
             }
         }
     }
+
+    B.Text { id: fmt; visible: false }
 }

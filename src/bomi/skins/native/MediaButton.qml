@@ -6,9 +6,11 @@ ToolButton {
     property string icon
     property string action
     property string fallback: "oxygen"
+    property QtObject __action: B.App.action(action)
     iconName: icon
-    tooltip: B.App.action(action).text
+    tooltip: __action.text
     iconSource: fallback + "/" + icon + ".png"
     onClicked: B.App.execute(action)
     anchors.verticalCenter: parent.verticalCenter
+    enabled: __action.enabled
 }
