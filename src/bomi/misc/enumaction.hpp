@@ -1,6 +1,8 @@
 #ifndef ENUMACTION_HPP
 #define ENUMACTION_HPP
 
+#include <QAction>
+
 class BaseEnumAction : public QAction {
     Q_OBJECT
 public:

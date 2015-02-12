@@ -1,6 +1,8 @@
 #ifndef BUTTONBOXITEM_HPP
 #define BUTTONBOXITEM_HPP
 
+#include <QQuickItem>
+
 class ButtonBoxItem : public QQuickItem {
     Q_OBJECT
     Q_ENUMS(Button)

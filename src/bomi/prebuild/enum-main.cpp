@@ -245,7 +245,10 @@ static void generate() {
     replace(hpp, "__ENUM_TOTAL_COUNT", toString(enums.size()));
     overwrite("../enum/enums.hpp", hpp);
 
-    string enumIds = "const std::array<int, __ENUM_TOTAL_COUNT> EnumMetaTypeIds = {\n";
+    string enumIds = 
+	"auto _EnumMetaTypeIds() -> const std::array<int, __ENUM_TOTAL_COUNT>&\n"
+	"{\n"
+    "    static const std::array<int, __ENUM_TOTAL_COUNT> ids = {\n";
     replace(enumIds, "__ENUM_TOTAL_COUNT", toString(enums.size()));
     
     string enumConverter = "auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter\n{\n    EnumNameVariantConverter conv;\n";
@@ -261,11 +264,11 @@ static void generate() {
                       "        conv.nameToVariant = _EnumNameToEnumVariant<__ENUM_NAME>;\n"
                       "    } else";
         enumConverter += replace(conv, "__ENUM_NAME", type.name);
-        enumIds += "    qMetaTypeId<" + type.name  + ">(),\n";
+        enumIds += "        qMetaTypeId<" + type.name  + ">(),\n";
     }
     enumConverter += "\n        return EnumNameVariantConverter();\n    return conv;\n}\n";
     enumIds.erase(enumIds.size() - 2);
-    enumIds += "\n};\n";
+    enumIds += "\n    };\n    return ids;\n}";
     cpp += enumConverter;
     cpp += enumIds;
     overwrite("../enum/enums.cpp", cpp);

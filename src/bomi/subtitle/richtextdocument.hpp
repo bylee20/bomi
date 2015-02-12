@@ -3,6 +3,7 @@
 
 #include "richtextblock.hpp"
 #include "richtexthelper.hpp"
+#include <QTextLayout>
 
 class RichTextDocument : public RichTextHelper {
 public:

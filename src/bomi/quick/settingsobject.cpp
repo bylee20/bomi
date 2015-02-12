@@ -1,7 +1,7 @@
 #include "settingsobject.hpp"
 
 auto reg_settings_object() -> void {
-    qmlRegisterSingletonType<SettingsObject>(
+    ::qmlRegisterSingletonType<SettingsObject>(
         "bomi", 1, 0, "Settings", _QmlSingleton<SettingsObject>
     );
 }

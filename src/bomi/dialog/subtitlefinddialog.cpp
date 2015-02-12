@@ -5,6 +5,7 @@
 #include "misc/simplelistmodel.hpp"
 #include "subtitle/opensubtitlesfinder.hpp"
 #include "ui_subtitlefinddialog.h"
+#include <QFileDialog>
 
 enum CustomRole {
     UrlRole = Qt::UserRole + 1,

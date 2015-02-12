@@ -10,10 +10,12 @@ has_arg() {
     [ -n "`echo $arguments | grep "$1"`" ]
 }
 
+qtsdk=
 kern=`uname -s`
 njobs=
 mpv_args=
 os=
+win=64
 mkspec=
 if [ "$kern" = "Darwin" ]; then
     os="osx"
@@ -23,7 +25,14 @@ if [ "$kern" = "Darwin" ]; then
 elif [ "$kern" = "Linux" ]; then
     os="linux"
     mpv_args="$mpv_args --enable-alsa --enable-oss-audio" # --enable-vaapi-hwaccel  --enable-vdpau-hwaccel
+	mpv_args="$mpv_args --enable-gl-x11 --enable-x11 "
+	mpv_args="$mpv_args --enable-vdpau --enable-vdpau-gl-x11 --enable-vaapi --enable-vaapi-glx"
     njobs=$(nproc)
+elif [ $(echo "$kern" | cut -d "-" -sf1) = "MSYS_NT" ]; then
+	os="win"
+	mpv_args="$mpv_args --enable-gl-win32 --enable-dsound --enable-wasapi --enable-dxva2-hwaccel"
+	njobs=$(nproc)
+	mkspec=win32-g++
 else
     echo "Not supported!"
     exit
@@ -114,7 +123,6 @@ release=
 cc=gcc
 qmake=autodetect
 lrelease=autodetect
-qtsdk=
 macdeployqt=
 defaultskin=
 
@@ -125,6 +133,7 @@ mo() {
 config_opts="""
 --help|display this help and exit
 --cc=COMPILER|C compiler (corresponding C++ compiler will be detected)|$cc
+--win=ARCH|32 for 32bit or 64 for 64bit(only Windows)|$win
 --qtsdk=QTSDK|directory for Qt SDK|
 --qmake=QMAKE|qmake executable|$qmake
 --mkspec=MKSPEC|make spec for qmake|$mkspec
@@ -391,6 +400,12 @@ check_pkg_or_exit() {
     fi
     true
 }
+	
+if [ "$os" = "win" ]; then
+	export PKG_CONFIG_PATH="/mingw$win/lib/pkgconfig:${PKG_CONFIG_PATH}"
+	export PATH="/mingw$win/bin:${PATH}"
+	qtsdk="/mingw$win"
+fi
 
 if has_arg "developer"; then
     if [ "$os" = "linux" ]; then
@@ -486,9 +501,13 @@ parse_file() {
 rootdir=`pwd`
 
 parse_file "src/bomi/configure.pro" config libs cflags rootdir
-parse_file "Makefile" os qmake lrelease PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
+if [ "$os" = "win" ]; then
+	sed -i 's#'"$(pwd)"'#../..#g' "src/bomi/configure.pro"
+fi
+
+parse_file "Makefile" os qmake lrelease PATH PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
     transdir skindir importdir parallel qtsdk macdeployqt
-parse_file "build-mpv" cc mpv_args parallel os njobs PKG_CONFIG_PATH
+parse_file "build-mpv" cc mpv_args parallel os njobs PKG_CONFIG_PATH PATH
 chmod +x build-mpv
 
 printf "\nbomi has been configured successfully!\n\n"

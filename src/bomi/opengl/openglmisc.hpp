@@ -11,6 +11,8 @@
 #define GL_UNSIGNED_SHORT_8_8_REV_MESA  0x85BB
 #endif
 
+#include <QOpenGLFunctions>
+
 class OpenGLTextureBase;
 class OpenGLTexture1D;
 class OpenGLTexture2D;

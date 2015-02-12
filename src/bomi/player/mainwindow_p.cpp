@@ -14,6 +14,7 @@
 #include "dialog/openmediafolderdialog.hpp"
 #include "dialog/subtitlefinddialog.hpp"
 #include "avinfoobject.hpp"
+#include <QSessionManager>
 
 auto MainWindow::Data::restoreState() -> void
 {

@@ -6,18 +6,35 @@ args="--prefix=../../build --disable-manpage-build --enable-libmpv-static --disa
   --disable-encoding --disable-joystick --disable-lirc --enable-libbluray --enable-dvdread --enable-dvdnav \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-libavdevice --disable-libavresample --disable-vapoursynth --disable-vapoursynth-lazy \
-  --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi \
-  --disable-cocoa --disable-wayland --enable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama --disable-xrandr \
-  --disable-gl-cocoa --enable-gl-x11 --disable-gl-wayland --disable-gl-win32 --enable-gl \
-  --enable-vdpau --enable-vdpau-gl-x11 --enable-vaapi --disable-vaapi-vpp --enable-vaapi-glx --disable-caca \
+  --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal \
+  --disable-cocoa --disable-wayland --disable-xss --disable-xext --disable-xv --disable-xinerama --disable-xrandr \
+  --disable-gl-cocoa --disable-gl-wayland --enable-gl \
+  --disable-vaapi-vpp --disable-caca \
   --disable-dvb --disable-dvbin --disable-jpeg --disable-direct3d --disable-vda-gl \
   --disable-tv --disable-tv-v4l2 --disable-libv4l2 --disable-pvr --disable-audio-input --disable-lua \
   @mpv_args@"
 
 os=@os@
 njobs=@parallel@
+export PATH="@PATH@"
 export PKG_CONFIG_PATH="@PKG_CONFIG_PATH@"
 export CC="@cc@"
 
-cd src/mpv && ./bootstrap.py && ./waf clean; ./waf distclean; ./waf configure $args
-./waf build -j $njobs && ./waf install
+py=
+if [ "$os" = "win" ]; then
+	py=/usr/bin/python
+fi
+
+orig="$(pwd)"
+
+cd src/mpv && $py ./bootstrap.py && $py ./waf clean; $py ./waf distclean; $py ./waf configure $args
+$py ./waf build -j $njobs && $py ./waf install
+
+cd "$orig"
+
+if [ "$os" = "win" ]; then
+	mv -f build/bin/pkgconfig/mpv.pc build/lib/pkgconfig/
+	mv -f build/bin/libmpv.a build/lib/
+	sed -i 's_build/bin_build/lib_' build/lib/pkgconfig/mpv.pc
+	rmdir build/bin/pkgconfig
+fi

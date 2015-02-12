@@ -1,4 +1,5 @@
 #include <zlib.h>
+#include <QFileDialog>
 
 namespace Pch {
 

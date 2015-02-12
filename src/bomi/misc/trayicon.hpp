@@ -1,6 +1,8 @@
 #ifndef TRAYICON_HPP
 #define TRAYICON_HPP
 
+#include <QSystemTrayIcon>
+
 class TrayIcon : public QObject {
     Q_OBJECT
 public:

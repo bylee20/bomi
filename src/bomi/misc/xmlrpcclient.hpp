@@ -1,6 +1,8 @@
 #ifndef XMLRPCCLIENT_HPP
 #define XMLRPCCLIENT_HPP
 
+#include <QNetworkReply>
+
 class XmlRpcClient : public QObject {
     Q_OBJECT
 public:

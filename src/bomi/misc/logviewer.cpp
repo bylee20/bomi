@@ -5,6 +5,8 @@
 #include "log.hpp"
 #include "dialog/mbox.hpp"
 #include "ui_logviewer.h"
+#include <QMenu>
+#include <QClipboard>
 
 static const int LogEvent = QEvent::User + 10;
 

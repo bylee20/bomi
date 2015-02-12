@@ -1,6 +1,8 @@
 #ifndef SKIN_HPP
 #define SKIN_HPP
 
+class QQuickView;
+
 class Skin {
 public:
     ~Skin() {}

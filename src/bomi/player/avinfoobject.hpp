@@ -3,6 +3,7 @@
 
 #include "enum/colorrange.hpp"
 #include "enum/colorspace.hpp"
+#include <QQmlListProperty>
 
 class AudioFormat;                      class StreamTrack;
 class StreamList;

@@ -2,6 +2,7 @@
 #include "player/rootmenu.hpp"
 #include "tmp/algorithm.hpp"
 #include "enum/mousebehavior.hpp"
+#include <QHeaderView>
 
 PrefMenuTreeItem::PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent)
     : QTreeWidgetItem(parent)

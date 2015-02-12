@@ -2,6 +2,9 @@
 #include "enum/deintmethod.hpp"
 #include "misc/log.hpp"
 #include <functional>
+
+#ifdef Q_OS_LINUX
+
 #include <va/va.h>
 #if VA_CHECK_VERSION(0, 34, 0)
 #include <va/va_compat.h>
@@ -39,6 +42,8 @@ static const HwAccCodec codecs[] = {
       {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple},
       {VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE} }
 };
+
+#endif
 
 class HwAccInfo {
 public:
@@ -84,6 +89,8 @@ private:
     bool m_native = false;
     QString m_name, m_desc;
 };
+
+#ifdef Q_OS_LINUX
 
 class VaApiInfo : public HwAccInfo {
 public:
@@ -219,6 +226,8 @@ public:
     auto type() const -> HwAcc::Type { return HwAcc::VdpauX11; }
 };
 
+#endif
+
 static HwAccInfo *api = nullptr;
 
 DECLARE_LOG_CONTEXT(HwAcc)
@@ -296,6 +305,7 @@ auto HwAcc::fullDeintList() -> QList<DeintMethod>
 
 auto HwAcc::fullCodecList() -> QStringList
 {
+#ifdef Q_OS_LINUX
     static const QStringList codecs = [] () {
         QStringList list;
         for (auto &codec : ::codecs)
@@ -303,13 +313,19 @@ auto HwAcc::fullCodecList() -> QStringList
         return list;
     }();
     return codecs;
+#endif
+    return QStringList();
 }
 
 auto HwAcc::codecDescription(const QString &codec) -> QString
 {
+#ifdef Q_OS_LINUX
     for (auto &c : codecs) {
         if (c.name == codec)
             return c.desc;
     }
+    return QString();
+#endif
+    Q_UNUSED(codec);
     return QString();
 }

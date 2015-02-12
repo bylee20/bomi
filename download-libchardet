@@ -2,9 +2,23 @@
 
 install -d src
 
+orig="$(pwd)"
+
 url=http://ftp.oops.org/pub/oops/libchardet/libchardet-1.0.4.tar.bz2
 out=libchardet.tar.bz2
-if ! [ -f ${out} ]; then
+if ! [ -f src/${out} ]; then
   curl -o src/${out} "${url}"
   cd src && tar xvfj ${out} && mv libchardet-* libchardet && rm ${out}
+  cd "$orig"
 fi
+
+update() {
+	local target=$1
+	local url="http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=$target;hb=HEAD"
+	local dest="src/libchardet/tools/$target"
+	rm $dest
+	curl -o "$dest" "$url"
+}
+
+update config.guess
+update config.sub

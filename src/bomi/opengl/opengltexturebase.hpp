@@ -3,6 +3,7 @@
 
 #include "openglmisc.hpp"
 #include "opengltexturetransferinfo.hpp"
+#include <QOpenGLShaderProgram>
 
 class OpenGLTextureBase {
 public:
@@ -18,7 +19,7 @@ public:
     auto bind(QOpenGLShaderProgram *prog, int location, int index) const -> void
     {
         prog->setUniformValue(location, index);
-        glActiveTexture(GL_TEXTURE0 + index);
+        OGL::func()->glActiveTexture(GL_TEXTURE0 + index);
         bind();
     }
     auto setFilter(OGL::Filter filter) -> void;

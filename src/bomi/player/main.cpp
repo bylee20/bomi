@@ -6,6 +6,7 @@
 #include "misc/json.hpp"
 #include "quick/circularimageitem.hpp"
 #include "quick/maskareaitem.hpp"
+#include <QImageWriter>
 
 DECLARE_LOG_CONTEXT(Main)
 

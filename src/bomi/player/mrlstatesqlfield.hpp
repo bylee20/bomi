@@ -30,6 +30,8 @@ private:
     friend class MrlStateSqlFieldList;
 };
 
+class QSqlQuery;                        class QSqlDatabase;
+
 class MrlStateSqlFieldList {
     using Field = MrlStateSqlField;
 public:

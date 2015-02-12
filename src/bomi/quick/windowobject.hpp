@@ -1,6 +1,8 @@
 #ifndef WINDOWOBJECT_HPP
 #define WINDOWOBJECT_HPP
 
+#include <QQuickItem>
+
 class MainWindow;
 
 class MouseObject : public QObject {

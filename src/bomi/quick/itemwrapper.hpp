@@ -1,6 +1,8 @@
 #ifndef ITEMWRAPPER_HPP
 #define ITEMWRAPPER_HPP
 
+#include <QQuickItem>
+
 class QtItem : public QObject {
     Q_OBJECT
 public:

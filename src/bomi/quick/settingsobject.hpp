@@ -1,6 +1,8 @@
 #ifndef SETTINGSOBJECT_HPP
 #define SETTINGSOBJECT_HPP
 
+#include <QQuickItem>
+
 class SettingsObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString name READ name)

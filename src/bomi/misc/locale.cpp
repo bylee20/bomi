@@ -90,7 +90,7 @@ auto ::Locale::isoToNativeName(const QString &_iso) -> QString
         icu::UnicodeString str;
         icu::Locale locale(iso.toLatin1());
         locale.getDisplayLanguage(data().icu, str);
-        name.setUtf16(str.getBuffer(), str.length());
+        name.setUtf16((const ushort*)str.getBuffer(), str.length());
         if (iso == name)
             _Error("Cannot find locale for %%", iso);
     }
@@ -106,7 +106,7 @@ auto ::Locale::nativeName() const -> QString
     auto l = ::icu::Locale::createFromName(m_locale->name().toLatin1().data());
     icu::UnicodeString str;
     l.getDisplayName(data().icu, str);
-    return QString::fromUtf16(str.getBuffer(), str.length());
+    return QString::fromUtf16((const ushort*)str.getBuffer(), str.length());
 }
 
 // dummy for pref

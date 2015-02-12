@@ -1,7 +1,16 @@
 #!/bin/bash
 
 path=`pwd`/build
+cd src/libchardet*
 
-cd src/libchardet* && make distclean; \
-./configure --prefix=$path --disable-shared --enable-static && \
-	make -j $(nproc) && make && make install
+if [ $(echo `uname -s` | cut -d "-" -sf1) = "MSYS_NT" ]; then
+	export PKG_CONFIG_PATH="/mingw64/lib/pkgconfig:${PKG_CONFIG_PATH}"
+	export PATH="/mingw64/bin:${PATH}"
+	sed -i 's/__declspec(dllexport)//g' src/chardet.h
+	sed -i 's/__declspec(dllimport)//g' src/chardet.h
+fi
+
+make distclean
+export CXXFLAGS=-DHAVE_DLL_EXPORT
+./configure --prefix=$path --disable-shared --enable-static
+make -j $(nproc) && make install

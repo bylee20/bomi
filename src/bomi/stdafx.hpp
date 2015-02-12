@@ -4,17 +4,53 @@
 #if defined(__cplusplus) && !defined(__OBJC__)
 
 #if __cplusplus > 201100L
+extern "C" {
 char *gets(char *str);
+}
 #endif
 
 #include <QtCore>
+#ifndef Q_OS_WIN
 #include <QtGui>
 #include <QtWidgets>
 #include <QtQuick>
-#include <QtSql>
 #include <QtXml>
+#include <QtSql>
+#include <QtNetwork>
+#else
+// large PCH makes g++ crashed on Windows
+// So split the component
+#include <QComboBox>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QButtonGroup>
+#include <QDoubleSpinBox>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QLabel>
+#include <QScrollArea>
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QListWidget>
+#include <QTreeWidget>
+#include <QTableWidget>
+#include <QRadioButton>
+#include <QQmlEngine>
+#include <QVector3D>
+#include <QMatrix4x4>
+#include <QPainter>
+#include <QDialogButtonBox>
+#include <QMessageBox>
+#include <QQmlProperty>
+#include <QGroupBox>
+#include <QSpacerItem>
+#include <QToolButton>
+#include <QFormLayout>
+#endif
 #include <set>
-#include <sys/time.h>
 #include <qmath.h>
 #include <type_traits>
 #include <array>
@@ -24,6 +60,10 @@ char *gets(char *str);
 #include <cstdint>
 #include <deque>
 #include <algorithm>
+
+extern "C" {
+int64_t mp_time_us();
+}
 
 #ifdef Q_OS_LINUX
     #include <QX11Info>
@@ -241,8 +281,13 @@ SIA _Renew(T *&t, Args... args) -> T* {delete t; return (t = new T(args...)); }
 template<class T>
 SIA _Delete(T *&t) -> void { if (t) { delete t; t = nullptr; } }
 
+#ifdef Q_OS_WIN
+SIA _SystemTime() -> quint64
+{ return mp_time_us(); }
+#else
 SIA _SystemTime() -> quint64
 { struct timeval t; gettimeofday(&t, 0); return t.tv_sec*1000000u + t.tv_usec; }
+#endif
 
 template<class T>
 SIA _Expand(T &t, int size, double extra = 1.2) -> bool

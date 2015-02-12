@@ -1,6 +1,8 @@
 #ifndef OPENGLLOGGER_HPP
 #define OPENGLLOGGER_HPP
 
+class QOpenGLContext;                   class QOpenGLDebugMessage;
+
 class OpenGLLogger : public QObject {
     Q_OBJECT
 public:

@@ -1,6 +1,8 @@
 #ifndef APPOBJECT_HPP
 #define APPOBJECT_HPP
 
+#include <QQuickItem>
+
 class PlayEngine;                       class HistoryModel;
 class PlaylistModel;                    class TopLevelItem;
 class Downloader;                       class ThemeObject;

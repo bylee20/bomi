@@ -5,6 +5,7 @@
 #ifdef Q_OS_LINUX
 #include <GL/glx.h>
 #endif
+#include <QOpenGLDebugLogger>
 
 static const QHash<QOpenGLDebugMessage::Type, Log::Level> lvGL = [] () {
     QHash<QOpenGLDebugMessage::Type, Log::Level> ret;

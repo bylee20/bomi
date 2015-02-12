@@ -6,6 +6,8 @@
 #include "misc/simplelistmodel.hpp"
 #include "misc/matchstring.hpp"
 #include "player/pref.hpp"
+#include <QAction>
+#include <QStyledItemDelegate>
 
 class Menu;
 

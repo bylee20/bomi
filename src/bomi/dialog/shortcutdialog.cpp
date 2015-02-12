@@ -1,5 +1,6 @@
 #include "shortcutdialog.hpp"
 #include "bbox.hpp"
+#include <QKeyEvent>
 
 struct ShortcutDialog::Data {
     QLineEdit *edit = nullptr;

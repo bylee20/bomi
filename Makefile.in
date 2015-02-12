@@ -22,6 +22,8 @@ njobs := @parallel@
 qt_sdk := @qtsdk@
 macdeployqt := @macdeployqt@
 
+export PATH := @PATH@
+
 ifeq ($(os),osx)
 	bomi_exec := bomi
 	bomi_exec_dir := build/$(bomi_exec).app/Contents/MacOS

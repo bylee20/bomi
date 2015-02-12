@@ -1,6 +1,9 @@
 #ifndef OPENGLOFFSCREENCONTEXT_HPP
 #define OPENGLOFFSCREENCONTEXT_HPP
 
+#include <QOpenGLContext>
+#include <QOffscreenSurface>
+
 class OpenGLOffscreenContext {
 public:
     OpenGLOffscreenContext();

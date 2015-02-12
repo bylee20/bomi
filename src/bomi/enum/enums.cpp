@@ -122,34 +122,38 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
         return EnumNameVariantConverter();
     return conv;
 }
-const std::array<int, 29> EnumMetaTypeIds = {
-    qMetaTypeId<TextThemeStyle>(),
-    qMetaTypeId<SpeakerId>(),
-    qMetaTypeId<ChannelLayout>(),
-    qMetaTypeId<ColorRange>(),
-    qMetaTypeId<ColorSpace>(),
-    qMetaTypeId<SubtitleDisplay>(),
-    qMetaTypeId<VideoRatio>(),
-    qMetaTypeId<Dithering>(),
-    qMetaTypeId<DeintMode>(),
-    qMetaTypeId<Processor>(),
-    qMetaTypeId<DeintMethod>(),
-    qMetaTypeId<Interpolator>(),
-    qMetaTypeId<AudioDriver>(),
-    qMetaTypeId<ClippingMethod>(),
-    qMetaTypeId<StaysOnTop>(),
-    qMetaTypeId<SeekingStep>(),
-    qMetaTypeId<GeneratePlaylist>(),
-    qMetaTypeId<OpenMediaBehavior>(),
-    qMetaTypeId<AutoloadMode>(),
-    qMetaTypeId<AutoselectMode>(),
-    qMetaTypeId<KeyModifier>(),
-    qMetaTypeId<VerticalAlignment>(),
-    qMetaTypeId<HorizontalAlignment>(),
-    qMetaTypeId<MoveToward>(),
-    qMetaTypeId<ChangeValue>(),
-    qMetaTypeId<VideoEffect>(),
-    qMetaTypeId<QuickSnapshotSave>(),
-    qMetaTypeId<MouseBehavior>(),
-    qMetaTypeId<LogOutput>()
-};
+auto _EnumMetaTypeIds() -> const std::array<int, 29>&
+{
+    static const std::array<int, 29> ids = {
+        qMetaTypeId<TextThemeStyle>(),
+        qMetaTypeId<SpeakerId>(),
+        qMetaTypeId<ChannelLayout>(),
+        qMetaTypeId<ColorRange>(),
+        qMetaTypeId<ColorSpace>(),
+        qMetaTypeId<SubtitleDisplay>(),
+        qMetaTypeId<VideoRatio>(),
+        qMetaTypeId<Dithering>(),
+        qMetaTypeId<DeintMode>(),
+        qMetaTypeId<Processor>(),
+        qMetaTypeId<DeintMethod>(),
+        qMetaTypeId<Interpolator>(),
+        qMetaTypeId<AudioDriver>(),
+        qMetaTypeId<ClippingMethod>(),
+        qMetaTypeId<StaysOnTop>(),
+        qMetaTypeId<SeekingStep>(),
+        qMetaTypeId<GeneratePlaylist>(),
+        qMetaTypeId<OpenMediaBehavior>(),
+        qMetaTypeId<AutoloadMode>(),
+        qMetaTypeId<AutoselectMode>(),
+        qMetaTypeId<KeyModifier>(),
+        qMetaTypeId<VerticalAlignment>(),
+        qMetaTypeId<HorizontalAlignment>(),
+        qMetaTypeId<MoveToward>(),
+        qMetaTypeId<ChangeValue>(),
+        qMetaTypeId<VideoEffect>(),
+        qMetaTypeId<QuickSnapshotSave>(),
+        qMetaTypeId<MouseBehavior>(),
+        qMetaTypeId<LogOutput>()
+    };
+    return ids;
+}

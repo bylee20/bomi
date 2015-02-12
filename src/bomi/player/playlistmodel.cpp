@@ -2,6 +2,7 @@
 #include "misc/downloader.hpp"
 #include <random>
 #include <chrono>
+#include <QQuickItem>
 
 auto reg_playlist_model() -> void {
     qmlRegisterType<PlaylistModel>();

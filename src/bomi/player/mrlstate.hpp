@@ -142,6 +142,8 @@ private:
 };
 #undef P_
 
+class QSqlDatabase;
+
 auto _ImportMrlStates(int version, QSqlDatabase db) -> QVector<MrlState*>;
 
 #endif // MRLSTATE_HPP

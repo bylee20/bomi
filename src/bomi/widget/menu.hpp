@@ -2,6 +2,7 @@
 #define MENU_HPP
 
 #include "misc/actiongroup.hpp"
+#include <QMenu>
 
 class StepActionPair;                   class StepAction;
 

@@ -1,6 +1,7 @@
 #include "skin.hpp"
 #include "misc/log.hpp"
 #include "configure.hpp"
+#include <QQuickView>
 
 DECLARE_LOG_CONTEXT(Skin)
 

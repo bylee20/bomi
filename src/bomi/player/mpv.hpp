@@ -8,6 +8,8 @@
 #include <libmpv/opengl_cb.h>
 #include <functional>
 
+class QOpenGLContext;
+
 SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
 
 #define CHECK_MPV(err, fmt, ...) \
@@ -81,7 +83,7 @@ public:
     auto request(mpv_event_id id, Proc proc) -> tmp::enable_if_t<!tmp::func_args<Proc>(), void>
         { request(id, [=] (mpv_event*) -> void { proc(); }); }
     auto setUpdateCallback(std::function<void(void)> &&cb) -> void;
-    auto render(GLuint fbo, const QSize &size) -> int;
+    auto render(quint32 fbo, const QSize &size) -> int;
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL() -> void;
 private:

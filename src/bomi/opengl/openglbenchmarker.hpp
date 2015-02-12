@@ -1,6 +1,8 @@
 #ifndef OPENGLBENCHMARKER_HPP
 #define OPENGLBENCHMARKER_HPP
 
+#include <QOpenGLTimerQuery>
+
 class OpenGLBenchmarker {
 public:
     OpenGLBenchmarker() = default;

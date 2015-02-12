@@ -1,4 +1,6 @@
 #include "downloader.hpp"
+#include <QQuickItem>
+#include <QNetworkReply>
 
 auto reg_downloader() -> void
 {

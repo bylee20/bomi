@@ -3,6 +3,8 @@
 
 #include "mrlstate.hpp"
 
+class QSqlError;
+
 class HistoryModel: public QAbstractTableModel {
     Q_OBJECT
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)

@@ -65,7 +65,7 @@ auto RichTextHelper::replace(const QStringRef &str, const QString &from,
 
 auto RichTextHelper::pixelSizeToPointSize(double pt) -> int
 {
-    const double dpi = QApplication::desktop()->logicalDpiY();
+    const double dpi = qApp->desktop()->logicalDpiY();
     return pt*dpi/72.0 + 0.5;
 }
 

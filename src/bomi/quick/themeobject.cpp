@@ -1,4 +1,5 @@
 #include "themeobject.hpp"
+#include <QQuickItem>
 
 auto reg_theme_object() -> void
 {

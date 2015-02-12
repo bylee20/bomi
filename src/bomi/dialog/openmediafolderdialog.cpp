@@ -1,6 +1,7 @@
 #include "openmediafolderdialog.hpp"
 #include "ui_openmediafolderdialog.h"
 #include "player/playlist.hpp"
+#include <QFileIconProvider>
 
 enum ListRole {
     Type = Qt::UserRole + 1, Path

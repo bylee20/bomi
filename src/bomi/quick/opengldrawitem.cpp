@@ -1,4 +1,5 @@
 #include "opengldrawitem.hpp"
+#include <QQuickWindow>
 
 OpenGLDrawItem::OpenGLDrawItem(QQuickItem *parent)
     : GeometryItem(parent)
@@ -19,6 +20,11 @@ OpenGLDrawItem::OpenGLDrawItem(QQuickItem *parent)
 
 OpenGLDrawItem::~OpenGLDrawItem() {
 
+}
+
+auto OpenGLDrawItem::devicePixelRatio() const -> double
+{
+    return m_win ? m_win->devicePixelRatio() : 1.0;
 }
 
 auto OpenGLDrawItem::updatePaintNode(QSGNode *old,

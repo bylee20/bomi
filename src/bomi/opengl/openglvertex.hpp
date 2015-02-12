@@ -1,6 +1,8 @@
 #ifndef OPENGLVERTEX_HPP
 #define OPENGLVERTEX_HPP
 
+#include <QSGGeometry>
+
 namespace OGL {
 
 using AttrData = QSGGeometry::Attribute;

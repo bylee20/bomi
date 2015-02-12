@@ -1,6 +1,9 @@
 #ifndef UNDOSTACK_HPP
 #define UNDOSTACK_HPP
 
+#include <QUndoStack>
+#include <QActionGroup>
+
 class UndoStack : public QObject {
     Q_OBJECT
 public:

@@ -6,12 +6,17 @@
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
 #include <clocale>
+#include <QStyleFactory>
+#include <QMenuBar>
+#include <QFileOpenEvent>
 
 #if defined(Q_OS_MAC)
 #include "app_mac.hpp"
 #elif defined(Q_OS_LINUX)
 #include "app_x11.hpp"
 #include "mpris.hpp"
+#elif defined(Q_OS_WIN)
+#include "app_win.hpp"
 #endif
 
 DECLARE_LOG_CONTEXT(App)
@@ -43,6 +48,8 @@ struct App::Data {
 #if defined(Q_OS_LINUX)
     AppX11 helper;
     mpris::RootObject *mpris = nullptr;
+#elif defined(Q_OS_WIN)
+    AppWin helper;
 #endif
     QMenuBar *mb = nullptr;
 #endif
@@ -355,10 +362,7 @@ auto App::setFullScreen(QWidget *widget, bool fs) -> void
 
 auto App::setHeartbeat(const QString &command, int interval) -> void
 {
-    Q_UNUSED(command); Q_UNUSED(interval);
-#ifdef Q_OS_LINUX
     d->helper.setHeartbeat(command, interval);
-#endif
 }
 
 auto App::setScreensaverDisabled(bool disabled) -> void

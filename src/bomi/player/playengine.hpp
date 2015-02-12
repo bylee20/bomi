@@ -4,12 +4,13 @@
 #include "mrl.hpp"
 #include "mediamisc.hpp"
 #include "enum/videoeffect.hpp"
+#include <QQmlListProperty>
 
 class VideoRenderer;                    class HistoryModel;
 struct DeintOptionSet;                  class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct OsdStyle;
-struct AudioNormalizerOption;
+struct AudioNormalizerOption;           class QQuickItem;
 enum class ClippingMethod;              enum class VideoEffect;
 enum class DeintMethod;                 enum class DeintMode;
 enum class ChannelLayout;               enum class Interpolator;
@@ -23,8 +24,10 @@ class YleDL;                            class AudioEqualizer;
 class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
+class QOpenGLContext;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
+
 struct StringPair { QString s1, s2; };
 using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;
 
@@ -217,7 +220,6 @@ public:
     auto unpause() -> void;
     auto relativeSeek(int pos) -> void;
     auto seekToNextBlackFrame() -> void;
-
 
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL(QOpenGLContext *ctx) -> void;

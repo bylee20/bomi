@@ -36,7 +36,7 @@ struct SimpleTextureShader : public SimpleTextureItem::ShaderIface {
         auto d = static_cast<const SimpleTextureData*>(data);
         if (d->texture->id() != GL_NONE && !d->texture->isEmpty()) {
             prog->setUniformValue(loc_tex, 0);
-            glActiveTexture(GL_TEXTURE0);
+            func()->glActiveTexture(GL_TEXTURE0);
             d->texture->bind();
         }
     }

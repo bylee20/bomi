@@ -1,4 +1,5 @@
 #include "toplevelitem.hpp"
+#include <QQuickWindow>
 
 auto reg_top_level_item() -> void
     { qmlRegisterType<TopLevelItem>(); }

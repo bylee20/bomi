@@ -1,4 +1,5 @@
 #include "mpv.hpp"
+#include <QOpenGLContext>
 
 static constexpr const int UpdateEventBegin = QEvent::User + 10000;
 
@@ -102,7 +103,12 @@ auto Mpv::initializeGL(QOpenGLContext *ctx) -> void
         auto gl = static_cast<QOpenGLContext*>(ctx);
         if (!gl)
             return nullptr;
-        return reinterpret_cast<void*>(gl->getProcAddress(QByteArray(name)));
+        auto res = gl->getProcAddress(QByteArray(name));
+#ifdef Q_OS_WIN
+        if (!res)
+            res = QLibrary::resolve(u"opengl32.dll"_q, name);
+#endif
+        return reinterpret_cast<void*>(res);
     };
     auto err = mpv_opengl_cb_init_gl(d->gl, nullptr, getProcAddr, ctx);
     Q_ASSERT(err >= 0);

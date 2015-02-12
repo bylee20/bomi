@@ -1,6 +1,8 @@
 #ifndef ACTIONGROUP_HPP
 #define ACTIONGROUP_HPP
 
+#include <QActionGroup>
+
 class ActionGroup : public QActionGroup {
     Q_OBJECT
 public:

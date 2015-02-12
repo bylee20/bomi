@@ -2,6 +2,7 @@
 #include "json.hpp"
 #include "ui_autoloaderwidget.h"
 #include "simplelistmodel.hpp"
+#include <QStyledItemDelegate>
 
 #define JSON_CLASS Autoloader
 static const auto jio = JIO(JE(enabled), JE(mode), JE(search_paths));

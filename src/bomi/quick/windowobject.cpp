@@ -1,5 +1,7 @@
 #include "windowobject.hpp"
 #include "player/mainwindow.hpp"
+#include <QQuickWindow>
+#include <QToolTip>
 
 auto MouseObject::updateCursor(Qt::CursorShape shape) -> void
 {

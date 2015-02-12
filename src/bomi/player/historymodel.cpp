@@ -1,6 +1,11 @@
 #include "historymodel.hpp"
 #include "mrlstatesqlfield.hpp"
 #include "misc/log.hpp"
+#include <QSqlDatabase>
+#include <QSqlError>
+#include <QQuickItem>
+#include <QSqlQuery>
+#include <QSqlRecord>
 
 DECLARE_LOG_CONTEXT(History)
 

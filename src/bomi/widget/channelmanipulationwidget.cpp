@@ -3,6 +3,7 @@
 #include "verticallabel.hpp"
 #include "audio/channellayoutmap.hpp"
 #include "audio/channelmanipulation.hpp"
+#include <QHeaderView>
 
 struct ChannelManipulationWidget::Data {
     ChannelComboBox *output, *input;

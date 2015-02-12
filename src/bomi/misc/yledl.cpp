@@ -1,7 +1,9 @@
 #include "yledl.hpp"
+#ifdef Q_OS_LINUX
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/signal.h>
+#endif
 
 struct YleDL::Data {
     YleDL *p = nullptr;
@@ -21,7 +23,9 @@ YleDL::YleDL(QObject *parent)
 {
     d->p = this;
     d->fifo = QDir::tempPath() % u"/bomi-yle-"_q % QString::number(qApp->applicationPid());
+#ifdef Q_OS_LINUX
     mkfifo(d->fifo.toLocal8Bit(), 0666);
+#endif
 }
 
 YleDL::~YleDL()
@@ -33,7 +37,11 @@ YleDL::~YleDL()
 
 auto YleDL::supports(const QString &url) const -> bool
 {
+#ifdef Q_OS_LINUX
     return url.startsWith(u"http://areena.yle.fi"_q, Qt::CaseInsensitive);
+#else
+    return false;
+#endif
 }
 
 auto YleDL::setProgram(const QString &program) -> void

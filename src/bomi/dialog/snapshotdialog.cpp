@@ -1,5 +1,7 @@
 #include "snapshotdialog.hpp"
 #include "ui_snapshotdialog.h"
+#include <QClipboard>
+#include <QScrollBar>
 
 struct SnapshotDialog::Data {
     SnapshotDialog *p = nullptr;

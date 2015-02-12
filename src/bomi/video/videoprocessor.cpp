@@ -10,8 +10,10 @@
 #include "opengl/opengloffscreencontext.hpp"
 extern "C" {
 #include <video/filter/vf.h>
+#ifdef Q_OS_LINUX
 #include <video/vdpau.h>
 #include <video/vaapi.h>
+#endif
 #include <video/hwdec.h>
 #include <video/mp_image_pool.h>
 extern vf_info vf_info_noformat;
@@ -58,6 +60,8 @@ protected:
     mp_image_pool *m_pool = nullptr;
 };
 
+#ifdef Q_OS_LINUX
+
 class VdpauTool: public HwDecTool {
 public:
     VdpauTool(mp_vdpau_ctx *ctx): m_ctx(ctx) { }
@@ -90,6 +94,8 @@ public:
 private:
     mp_vaapi_ctx *m_ctx = nullptr;
 };
+
+#endif
 
 vf_info vf_info_noformat = create_vf_info();
 
@@ -178,10 +184,12 @@ auto VideoProcessor::open(vf_instance *vf) -> int
     _Delete(d->hwdec);
     hwdec_request_api(vf->hwdec, HwAcc::name().toLatin1());
     if (vf->hwdec && vf->hwdec->hwctx) {
+#ifdef Q_OS_LINUX
         if (vf->hwdec->hwctx->vdpau_ctx)
             d->hwdec = new VdpauTool(vf->hwdec->hwctx->vdpau_ctx);
         else
             d->hwacc = new VaApiTool(vf->hwdec->hwctx->vaapi_ctx);
+#endif
     }
     mp_image_pool_clear(d->pool);
     p->vp->stopSkipping();
@@ -209,11 +217,13 @@ auto VideoProcessor::open() -> int
     _Delete(d->hwdec);
     hwdec_request_api(d->vf->hwdec, HwAcc::name().toLatin1());
     if (d->vf->hwdec && d->vf->hwdec->hwctx) {
+#ifdef Q_OS_LINUX
         auto hwctx = d->vf->hwdec->hwctx;
         if (hwctx->vdpau_ctx)
             d->hwdec = new VdpauTool(hwctx->vdpau_ctx);
         else
             d->hwacc = new VaApiTool(hwctx->vaapi_ctx);
+#endif
     }
     mp_image_pool_clear(d->pool);
     stopSkipping();

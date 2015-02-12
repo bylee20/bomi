@@ -156,7 +156,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(Locale);
     INSERT(LogOption);
 
-    for (auto type : EnumMetaTypeIds) {
+    for (auto type : _EnumMetaTypeIds()) {
         auto &ec = c[type];
         ec.enum_ = _EnumNameVariantConverter(type);
         ec.j2v = [] (const JVConvert *d, const QJsonValue &j, QVariant &var) {

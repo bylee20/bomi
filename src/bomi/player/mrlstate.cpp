@@ -3,6 +3,7 @@
 #include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
 #include "misc/log.hpp"
+#include <QSqlDatabase>
 
 DECLARE_LOG_CONTEXT(History)
 

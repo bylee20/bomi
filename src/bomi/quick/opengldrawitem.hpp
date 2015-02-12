@@ -2,6 +2,10 @@
 #define OPENGLDRAWITEM_HPP
 
 #include "geometryitem.hpp"
+#include <QOpenGLFunctions>
+#include <QSGGeometry>
+#include <QSGMaterial>
+#include <QSGGeometryNode>
 
 class OpenGLDrawItem : public GeometryItem {
     Q_OBJECT
@@ -42,9 +46,6 @@ private:
     QSGGeometryNode *m_node = nullptr;
     int m_updates = 0;
 };
-
-inline auto OpenGLDrawItem::devicePixelRatio() const -> double
-{ return m_win ? m_win->devicePixelRatio() : 1.0; }
 
 inline auto OpenGLDrawItem::logAt(const char *func) const -> QByteArray
 { return QByteArray(metaObject()->className()) + "::" + func; }

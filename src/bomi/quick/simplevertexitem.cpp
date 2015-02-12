@@ -1,4 +1,5 @@
 #include "simplevertexitem.hpp"
+#include <QSGFlatColorMaterial>
 
 SimpleVertexItem::SimpleVertexItem(QQuickItem *parent)
     : VertexDrawItem<OGL::PositionVertex>(parent)

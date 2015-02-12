@@ -1,6 +1,8 @@
 #include "maskareaitem.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"
+#include <QQmlFile>
+#include <QStyleHints>
 
 struct MaskAreaItem::Data {
     MaskAreaItem *p = nullptr;

@@ -2,6 +2,7 @@
 #include "bbox.hpp"
 #include "player/playlist.hpp"
 #include "widget/encodingcombobox.hpp"
+#include <QCompleter>
 
 struct UrlDialog::Data {
     UrlDialog *p;

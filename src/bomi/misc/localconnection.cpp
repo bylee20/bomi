@@ -1,5 +1,7 @@
 #include "localconnection.hpp"
-
+#include <QLocalServer>
+#include <QLockFile>
+#include <QLocalSocket>
 
 #if defined(Q_OS_WIN)
 #include <QtCore/QLibrary>
@@ -14,7 +16,7 @@ static PProcessIdToSessionId pProcessIdToSessionId = 0;
 static int getUid() {
 #if defined(Q_OS_WIN)
     if (!pProcessIdToSessionId) {
-        QLibrary lib("kernel32");
+        QLibrary lib(u"kernel32"_q);
         pProcessIdToSessionId = (PProcessIdToSessionId)lib.resolve("ProcessIdToSessionId");
     }
     if (pProcessIdToSessionId) {
@@ -22,6 +24,7 @@ static int getUid() {
         pProcessIdToSessionId(GetCurrentProcessId(), &sessionId);
         return sessionId;
     }
+    return 0;
 #else
     return ::getuid();
 #endif

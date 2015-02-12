@@ -1,5 +1,7 @@
 #include "openglmisc.hpp"
 #include "misc/log.hpp"
+#include <QOffscreenSurface>
+#include <QOpenGLFramebufferObject>
 #ifdef Q_OS_LINUX
 #include <GL/glx.h>
 #endif

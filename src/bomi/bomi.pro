@@ -50,6 +50,10 @@ macx {
 	LIBS += -ldl -lxcb-randr -lxcb-screensaver
 	HEADERS += player/app_x11.hpp player/mpris.hpp
 	SOURCES += player/app_x11.cpp player/mpris.cpp
+} else:win32 {
+#CONFIG += -shared
+    LIBS += -lopengl32 -lgdi32
+#    LIBS -= -lSDL -lSDLmain -lxvidcore -lspeex -lopus -lopencore-amrwb -lopencore-amrnb -lcelt0 -lgnutls -lfontconfig
 }
 
 QML_IMPORT_PATH += imports
@@ -252,7 +256,8 @@ HEADERS += \
     widget/pathbutton.hpp \
 	misc/logoption.hpp \
     misc/logviewer.hpp \
-    tmp/type_traits.hpp
+    tmp/type_traits.hpp \
+    player/app_win.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -436,7 +441,8 @@ SOURCES += \
     enum/logoutput.cpp \
     widget/pathbutton.cpp \
 	misc/logoption.cpp \
-    misc/logviewer.cpp
+    misc/logviewer.cpp \
+    player/app_win.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

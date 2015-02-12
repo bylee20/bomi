@@ -1,6 +1,7 @@
 #include "aboutdialog.hpp"
 #include "player/app.hpp"
 #include "ui_aboutdialog.h"
+#include <QTextBrowser>
 
 struct AboutDialog::Data {
     Ui::AboutDialog ui;

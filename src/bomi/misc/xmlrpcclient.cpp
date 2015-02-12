@@ -1,5 +1,6 @@
 #include "xmlrpcclient.hpp"
 #include "misc/log.hpp"
+#include <QDomNode>
 
 DECLARE_LOG_CONTEXT(XML-RPC)
 

@@ -4,6 +4,9 @@
 #include "player/rootmenu.hpp"
 #include <unistd.h>
 #include <fcntl.h>
+extern "C" {
+#include <libavutil/cpu.h>
+}
 
 static int getField(const char *file, const char *field) {
     Q_ASSERT(QThread::currentThread() == qApp->thread());
@@ -102,6 +105,7 @@ auto UtilObject::processTime() -> quint64
 CpuObject::CpuObject()
 {
     auto processTime = [] () -> quint64 {
+#ifdef Q_OS_LINUX
         static char buffer[BUFSIZ];
         static const quint64 tick = sysconf(_SC_CLK_TCK);
         int pid, ppid, pgrp, session, tty_nr, tpgid; uint flags;
@@ -119,6 +123,8 @@ CpuObject::CpuObject()
         }
         close(fd);
         return len > 0 ? quint64(utime + stime)*Q_UINT64_C(1000000)/tick : 0;
+#endif
+        return 0;
     };
 
     auto setUsage = [=] () {
@@ -141,8 +147,9 @@ CpuObject::CpuObject()
     };
     setUsage();
 
-    static int count = -1;
+    static int count = av_cpu_count();
     if (count < 0) {
+#ifdef Q_OS_LINUX
         QFile file(u"/proc/cpuinfo"_q);
         count = 0;
         if (!file.open(QFile::ReadOnly | QFile::Text))
@@ -156,6 +163,8 @@ CpuObject::CpuObject()
                     ++count;
             }
         }
+#endif
+        count = 1;
     }
     m_cores = count;
 

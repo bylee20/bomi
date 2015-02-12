@@ -1,6 +1,8 @@
 #include "mrlstatesqlfield.hpp"
 #include "mrl.hpp"
 #include "misc/jsonstorage.hpp"
+#include <QSqlQuery>
+#include <QSqlRecord>
 
 template<class T>
 SIA _Is(int type) -> bool { return qMetaTypeId<T>() == type; }
