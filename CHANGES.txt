@@ -1,14 +1,17 @@
 0.9.2
 
-  *New: new skin 'native' which supports native look & feel
-  *New: display time on mouse position changed over time slider (#221)
-  *Fix: chapter marker was not visible in GaN
-  *Fix: some menu checked state was not restored on start up
-  *Fix: set current window style when preferences opended
-  *Fix: restore maximized state from fullscreen
-  *Fix: bring back compatibility for C++14 compiler with non C++14 libstdc++
-  *Fix: memory leak in reply for async request
-  *Fix: crash on deselecting subtitle
+  * New: new skin 'native' which supports native look & feel
+  * New: display time on mouse position changed over time slider (#221)
+  * Fix: chapter marker was not visible in GaN
+  * Fix: some menu checked state was not restored on start up
+  * Fix: set current window style when preferences opended
+  * Fix: restore maximized state from fullscreen
+  * Fix: bring back compatibility for C++14 compiler with non C++14 libstdc++
+  * Fix: memory leak in reply for async request
+  * Fix: crash on deselecting subtitle
+  * Fix: couldn't select tracks in paused state
+  * Fix: restore maximized/fullscreen state on start up
+  * Fix: show Close button instead of Cancel in preferences dialog
 
 0.9.1
 
