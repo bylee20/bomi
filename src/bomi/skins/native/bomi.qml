@@ -28,6 +28,7 @@ B.AppWithDock {
         interval: B.App.theme.osd.message.duration
         onTriggered: text.text = engine.media.name
     }
+
     Connections { target: engine.media; onNameChanged: text.text = target.name }
 
     controls: Item {
@@ -77,6 +78,7 @@ B.AppWithDock {
                 }
             }
         }
+
         Rectangle {
             id: bottom
             color: "black"; anchors.bottom: parent.bottom
@@ -93,6 +95,5 @@ B.AppWithDock {
                 }
             }
         }
-
     }
 }
