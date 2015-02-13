@@ -11,10 +11,14 @@ auto isAlwaysOnTop(const QWidget *w) -> bool;
 auto setAlwaysOnTop(QWidget *w, bool onTop) -> void;
 auto setFullScreen(QWidget *w, bool fs) -> void;
 auto setScreensaverDisabled(bool disabled) -> void;
+
 auto shutdown() -> bool;
 auto canShutdown() -> bool;
-auto processTime() -> quint64;
-auto systemTime() -> quint64;
+
+auto processTime() -> quint64; // us
+auto systemTime()  -> quint64; // us
+auto totalMemory() -> double;
+auto usingMemory() -> double;
 
 auto opticalDrives() -> QStringList;
 auto refreshRate() -> qreal;

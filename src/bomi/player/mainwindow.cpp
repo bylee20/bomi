@@ -351,15 +351,16 @@ auto MainWindow::changeEvent(QEvent *ev) -> void
     QWidget::changeEvent(ev);
     if (ev->type() == QEvent::WindowStateChange) {
         auto event = static_cast<QWindowStateChangeEvent*>(ev);
-        event->accept(); // bogus to kill warning
         setWindowFilePath(d->filePath);
         resetMoving();
         d->readyToHideCursor();
-        if (!d->stateChanging)
-            d->doVisibleAction(isMinimized());
+        auto changed = [&] (Qt::WindowState state) -> bool
+            { return !((event->oldState() & windowState()) & state); };
+        if (!d->stateChanging && changed(Qt::WindowMinimized))
+            d->doVisibleAction(!isMinimized());
 #ifndef Q_OS_WIN // this doesn't work for windows because of fake fullscreen
-        if (!((event->oldState() & windowState()) & Qt::WindowFullScreen))
-            emit fullscreenChanged(full);
+        if (changed(Qt::WindowFullScreen))
+            emit fullscreenChanged(isFullScreen());
 #endif
     }
 }

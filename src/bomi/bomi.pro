@@ -257,7 +257,8 @@ HEADERS += \
 	misc/logoption.hpp \
     misc/logviewer.hpp \
 	tmp/type_traits.hpp \
-    os/os.hpp
+    os/os.hpp \
+    os/x11.hpp
 
 SOURCES += \
 	stdafx.cpp \

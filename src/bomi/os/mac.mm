@@ -271,3 +271,39 @@ auto MainWindow::setFullScreen(bool full) -> void
 #endif
 
 #endif
+
+
+#ifdef Q_OS_MAC
+#include <sys/sysctl.h>
+#include <mach/mach_host.h>
+#include <mach/task.h>
+#include <libproc.h>
+QString UtilObject::monospace() { return u"monaco"_q; }
+template<class T>
+static T getSysctl(int name, const T def) {
+    T ret; int names[] = {CTL_HW, name}; size_t len = sizeof(def);
+    return (sysctl(names, 2u, &ret, &len, NULL, 0) < 0) ? def : ret;
+}
+auto UtilObject::totalMemory(MemoryUnit unit) -> double
+{
+    static const quint64 total = getSysctl(HW_MEMSIZE, (quint64)0);
+    return total/(double)unit;
+}
+int UtilObject::cores() { static const int count = getSysctl(HW_NCPU, 1); return count; }
+auto UtilObject::usingMemory(MemoryUnit unit) -> double
+{
+    task_basic_info info; memset(&info, 0, sizeof(info));
+    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &count) != KERN_SUCCESS)
+        return 0.0;
+    return info.resident_size/(double)unit;
+}
+auto UtilObject::processTime() -> quint64
+{
+    static const pid_t pid = qApp->applicationPid();
+    struct proc_taskinfo info;
+    if (proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &info, sizeof(info)) < 0)
+        return 0;
+    return info.pti_total_user/1000 + info.pti_total_system/1000;
+}
+#endif

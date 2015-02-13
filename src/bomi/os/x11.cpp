@@ -9,6 +9,9 @@
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
 #include <QtX11Extras/QX11Info>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/time.h>
 
 extern "C" {
 #include <xcb/xcb.h>
@@ -237,11 +240,31 @@ auto setScreensaverDisabled(bool disabled) -> void
     s.inhibit = disabled;
 }
 
+auto isFullScreen(const QWidget *w) -> bool
+{
+    return w->isFullScreen();
+}
 
 auto setFullScreen(QWidget *widget, bool fs) -> void
 {
     if (widget->isFullScreen() != fs)
         d->sendState(widget, fs, _NET_WM_STATE_FULLSCREEN);
+}
+
+auto isAlwaysOnTop(const QWidget *w) -> bool
+{
+    const auto cookie = xcb_get_property_unchecked
+        (d->connection, 0, w->winId(), d->atoms[_NET_WM_STATE], XCB_ATOM_ATOM, 0, 1024);
+    auto reply = _Reply(xcb_get_property_reply(d->connection, cookie, nullptr));
+    if (!reply || reply->format != 32 || reply->type != XCB_ATOM_ATOM)
+        return false;
+    auto begin = static_cast<const xcb_atom_t *>(xcb_get_property_value(reply.data()));
+    auto end = begin + reply->length;
+    if (std::find(begin, end, d->atoms[_NET_WM_STATE_STAYS_ON_TOP]) != end)
+        return true;
+    if (std::find(begin, end, d->atoms[_NET_WM_STATE_ABOVE]) != end)
+        return true;
+    return false;
 }
 
 auto setAlwaysOnTop(QWidget *widget, bool on) -> void
@@ -258,6 +281,12 @@ auto opticalDrives() -> QStringList
     for (auto &dev : dir.entryList(filter, QDir::System))
         devices.append(u"/dev/"_q % dev);
     return devices;
+}
+
+auto canShutdown() -> bool
+{
+    // Can I check a dbus call is actually callable without calling it?
+    return true;
 }
 
 auto shutdown() -> bool
@@ -305,6 +334,70 @@ auto shutdown() -> bool
               "Sorry, there's no way to shutdown."))
         return true;
     return false;
+}
+
+auto systemTime() -> quint64
+{
+    struct timeval t;
+    gettimeofday(&t, 0);
+    return t.tv_sec*1000000u + t.tv_usec;
+}
+
+static int getField(const char *file, const char *field)
+{
+    Q_ASSERT(QThread::currentThread() == qApp->thread());
+    static char buffer[BUFSIZ]; // should be called in GUI thread!!
+    const auto fd = open(file, O_RDONLY);
+    if (fd < 0)
+        return 0;
+    int len = ::read(fd, buffer, BUFSIZ);
+    int ret = 0;
+    if (len > 0) {
+        buffer[len] = '\0';
+        auto pos = strstr(buffer, field);
+        if (pos) {
+            pos += strlen(field);
+            do {
+                if (!isspace(*pos) && *pos != ':')
+                    break;
+            } while (*(++pos));
+            sscanf(pos, "%d", &ret);
+        }
+    }
+    close(fd);
+    return ret;
+}
+
+
+auto processTime() -> quint64
+{
+    static char buffer[BUFSIZ];
+    static const quint64 tick = sysconf(_SC_CLK_TCK);
+    int pid, ppid, pgrp, session, tty_nr, tpgid; uint flags;
+    unsigned long int minflt, cminflt, majflt, cmajflt, utime, stime; char comm[256], state;
+    const auto fd = open("/proc/self/stat", O_RDONLY);
+    if (fd < 0)
+        return 0;
+    int len = ::read(fd, buffer, BUFSIZ);
+    if (len > 0) {
+        buffer[len] = '\0';
+        len = sscanf(buffer
+                     , "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu"
+                     , &pid, comm, &state, &ppid, &pgrp, &session, &tty_nr, &tpgid, &flags
+                     , &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime);
+    }
+    close(fd);
+    return len > 0 ? quint64(utime + stime)*Q_UINT64_C(1000000)/tick : 0;
+}
+
+auto totalMemory() -> double
+{
+    return getField("/proc/meminfo", "MemTotal")*1000.0 / (1024 * 1024);
+}
+
+auto usingMemory() -> double
+{
+    return getField("/proc/self/status", "VmRSS")*1000.0 / (1024 * 1024);
 }
 
 }
