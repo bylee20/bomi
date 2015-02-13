@@ -77,7 +77,7 @@ E-mail del desarrollador: %4</translation>
     <message>
         <location filename="../dialog/aboutdialog.cpp" line="18"/>
         <source>Lee, Byoung-young</source>
-        <translation type="unfinished"></translation>
+        <translation>Lee, Byoung-young</translation>
     </message>
     <message>
         <location filename="../dialog/aboutdialog.cpp" line="52"/>
@@ -1377,32 +1377,32 @@ Esta opción necesita mucho más uso de CPU o GPU.</translation>
     <message>
         <location filename="../enum/logoutput.hpp" line="75"/>
         <source>No Output</source>
-        <translation type="unfinished"></translation>
+        <translation>Sin salida</translation>
     </message>
     <message>
         <location filename="../enum/logoutput.hpp" line="76"/>
         <source>stdout</source>
-        <translation type="unfinished"></translation>
+        <translation>stdout</translation>
     </message>
     <message>
         <location filename="../enum/logoutput.hpp" line="77"/>
         <source>stderr</source>
-        <translation type="unfinished"></translation>
+        <translation>stderr</translation>
     </message>
     <message>
         <location filename="../enum/logoutput.hpp" line="78"/>
         <source>Text File</source>
-        <translation type="unfinished"></translation>
+        <translation>Archivo de texto</translation>
     </message>
     <message>
         <location filename="../enum/logoutput.hpp" line="79"/>
         <source>journald</source>
-        <translation type="unfinished"></translation>
+        <translation>journald</translation>
     </message>
     <message>
         <location filename="../enum/logoutput.hpp" line="80"/>
         <source>Viewer</source>
-        <translation type="unfinished"></translation>
+        <translation>Visor</translation>
     </message>
 </context>
 <context>
@@ -1578,22 +1578,22 @@ Esta opción necesita mucho más uso de CPU o GPU.</translation>
     <message>
         <location filename="../misc/logoption.cpp" line="104"/>
         <source>Path</source>
-        <translation type="unfinished"></translation>
+        <translation>Lugar</translation>
     </message>
     <message>
         <location filename="../misc/logoption.cpp" line="113"/>
         <source>Keep</source>
-        <translation type="unfinished"></translation>
+        <translation>Mantener</translation>
     </message>
     <message>
         <location filename="../misc/logoption.cpp" line="115"/>
         <source>Lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Lineas</translation>
     </message>
     <message>
         <location filename="../misc/logoption.cpp" line="116"/>
         <source>No Limit</source>
-        <translation type="unfinished"></translation>
+        <translation>Sin limites</translation>
     </message>
 </context>
 <context>
@@ -1601,43 +1601,43 @@ Esta opción necesita mucho más uso de CPU o GPU.</translation>
     <message>
         <location filename="../ui/logviewer.ui" line="44"/>
         <source>Level Filter</source>
-        <translation type="unfinished"></translation>
+        <translation>Nivel de filtrado</translation>
     </message>
     <message>
         <location filename="../ui/logviewer.ui" line="57"/>
         <source>Context Filter</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtro de contexto</translation>
     </message>
     <message>
         <location filename="../ui/logviewer.ui" line="72"/>
         <source>Autoscroll</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazamiento automático</translation>
     </message>
     <message>
         <location filename="../ui/logviewer.ui" line="79"/>
         <source>Clear</source>
-        <translation type="unfinished">Limpiar</translation>
+        <translation>Limpiar</translation>
     </message>
     <message>
         <location filename="../misc/logviewer.cpp" line="221"/>
         <location filename="../misc/logviewer.cpp" line="257"/>
         <source>Log Viewer</source>
-        <translation type="unfinished"></translation>
+        <translation>Visor de logs</translation>
     </message>
     <message>
         <location filename="../misc/logviewer.cpp" line="190"/>
         <source>Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Copiar</translation>
     </message>
     <message>
         <location filename="../misc/logviewer.cpp" line="191"/>
         <source>Select All</source>
-        <translation type="unfinished">Seleccionar todo</translation>
+        <translation>Seleccionar todo</translation>
     </message>
     <message>
         <location filename="../misc/logviewer.cpp" line="258"/>
         <source>Do you want remove all logs and contexts?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Desea eliminar todos los logs y contextos?</translation>
     </message>
 </context>
 <context>
@@ -3033,17 +3033,17 @@ Por favor, espere un momento.</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="322"/>
         <source>Subtitle finder</source>
-        <translation type="unfinished"></translation>
+        <translation>Buscador de subtítulos</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="328"/>
         <source>Preserve downloaded subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Preservar subtítulos descargados</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="337"/>
         <source>File Name Format</source>
-        <translation type="unfinished"></translation>
+        <translation>Formato de nombre de archivo</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="344"/>
@@ -3051,22 +3051,25 @@ Por favor, espere un momento.</translation>
 %MEDIA_NAME%: the name of media file (extension is excluded)
 %SUBTITLE_NAME%: the name of subtitle file (extension is excluded)
 %SUBTITLE_EXT%: the extension of subtitle file</source>
-        <translation type="unfinished"></translation>
+        <translation>Formato de marcadores de posición disponibles:
+%MEDIA_NAME%: el nombre del archivo del medio (la extensión es excluida)
+%SUBTITLE_NAME%: el nombre del archivo de subtítulos (la extensión es excluida)
+%SUBTITLE_EXT%: la extensión del archivo de subtítulos</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="354"/>
         <source>Fallback Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Carpeta de reserva</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="361"/>
         <source>This is a fallback folder to save downloaded subtitles when original folder is not writable.</source>
-        <translation type="unfinished"></translation>
+        <translation>Esta es la carpeta de reserva para guardar los subtítulos descargados cuando no se puede escribir en la carpeta original.</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="373"/>
         <source>Streaming</source>
-        <translation type="unfinished"></translation>
+        <translation>Transmisión</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="452"/>
@@ -3592,7 +3595,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="1994"/>
         <source>Logging (Restart required)</source>
-        <translation type="unfinished"></translation>
+        <translation>Registros (Requiere reiniciar programa)</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2194"/>
@@ -4569,7 +4572,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="573"/>
         <source>Log Viewer</source>
-        <translation type="unfinished"></translation>
+        <translation>Visor de logs</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="705"/>
@@ -5021,7 +5024,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../dialog/subtitlefinddialog.cpp" line="155"/>
         <source>Cannot write file!</source>
-        <translation type="unfinished"></translation>
+        <translation>¡No se pudo escribir el archivo!</translation>
     </message>
     <message>
         <location filename="../dialog/subtitlefinddialog.cpp" line="230"/>
