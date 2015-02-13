@@ -61,7 +61,6 @@ struct MainWindow::Data {
     YouTubeDL youtube;
     YleDL yle;
 
-    Qt::WindowStates prevWinState = Qt::WindowNoState;
     Qt::MouseButton pressedButton = Qt::NoButton;
     bool moving = false;
     bool pausedByHiding = false, dontPause = false;

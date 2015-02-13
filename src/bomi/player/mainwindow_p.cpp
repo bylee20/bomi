@@ -29,8 +29,6 @@ auto MainWindow::Data::restoreState() -> void
     updateRecentActions(recent.openList());
     history.setVisible(as.history_visible);
 
-    prevWinState = p->windowState();
-
     auto &tool = menu(u"tool"_q);
     auto &pl = tool(u"playlist"_q);
     pl[u"shuffle"_q]->setChecked(as.playlist_shuffled);
@@ -663,7 +661,6 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
 
 auto MainWindow::Data::checkWindowState(Qt::WindowStates prev) -> void
 {
-    prevWinState = prev;
     const auto winState = p->windowState();
     const auto full = p->isFullScreen();
     if (!((prev & winState) & Qt::WindowFullScreen))
@@ -682,4 +679,5 @@ auto MainWindow::Data::checkWindowState(Qt::WindowStates prev) -> void
     dontPause = false;
     if (!stateChanging)
         doVisibleAction(winState != Qt::WindowMinimized);
+    setCursorVisible(!full);
 }
