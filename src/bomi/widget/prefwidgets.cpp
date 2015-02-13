@@ -7,6 +7,7 @@ HwAccCodecBox::HwAccCodecBox(QWidget *parent)
 {
     auto vbox = new QVBoxLayout;
     auto api = OS::hwAcc();
+    auto signal = &HwAccCodecBox::valueChanged;
     for (const auto codec : api->fullCodecList()) {
         auto box = m_checks[codec] = new QCheckBox;
         const auto supported = api->supports(codec);
@@ -17,6 +18,7 @@ HwAccCodecBox::HwAccCodecBox(QWidget *parent)
             box->setText(desc % " ("_a % tr("Not supported") % ')'_q);
         box->setEnabled(supported);
         vbox->addWidget(box);
+        PLUG_CHANGED(box);
     }
     setLayout(vbox);
 }
