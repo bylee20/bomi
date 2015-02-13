@@ -180,7 +180,6 @@ public:
     auto setAudioSync(int sync) -> void;
     auto audioSync() const -> int;
     auto metaData() const -> const MetaData&;
-    auto mediaName() const -> QString;
     auto volume() const -> int;
     auto isMuted() const -> bool;
 

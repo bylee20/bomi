@@ -123,7 +123,6 @@ PlayEngine::PlayEngine()
 
     const auto hwdec = OS::hwAcc()->name().toLatin1();
     d->mpv.setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.data());
-    qDebug() << hwdec;
     d->mpv.setOption("fs", "no");
     d->mpv.setOption("input-cursor", "yes");
     d->mpv.setOption("softvol", "yes");
@@ -205,11 +204,6 @@ auto PlayEngine::setSubtitleDelay(int ms) -> void
 {
     if (d->params.set_sub_sync(ms))
         d->mpv.setAsync("sub-delay", ms * 1e-3);
-}
-
-auto PlayEngine::mediaName() const -> QString
-{
-    return d->mediaName;
 }
 
 auto PlayEngine::cacheSize() const -> int
@@ -625,6 +619,7 @@ auto PlayEngine::setMrl(const Mrl &mrl) -> void
     if (d->mrl != mrl) {
         stop();
         d->mrl = mrl;
+        d->updateMediaName();
         emit mrlChanged(d->mrl);
     }
 }

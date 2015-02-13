@@ -1,14 +1,18 @@
 #include "youtubedl.hpp"
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(YouTubeDL)
 
 struct YouTubeDL::Data {
     YouTubeDL *p = nullptr;
     QTemporaryDir cookieDir;
     QString userAgent, program = u"youtube-dl"_q;
-    QString input, output;
+    QString input;
     Error error = NoError;
     QProcess *proc = nullptr;
     int timeout = 60000;
     QMutex mutex;
+    Result result;
 };
 
 YouTubeDL::YouTubeDL(QObject *parent)
@@ -22,9 +26,9 @@ YouTubeDL::~YouTubeDL()
     delete d;
 }
 
-auto YouTubeDL::url() const -> QString
+auto YouTubeDL::result() const -> Result
 {
-    return d->output;
+    return d->result;
 }
 
 auto YouTubeDL::cookies() const -> QString
@@ -56,14 +60,18 @@ auto YouTubeDL::run(const QString &url) -> bool
 {
     QProcess proc;
     d->input = url;
-    d->output.clear();
+    d->result = Result();
     d->error = NoError;
     QFile(cookies()).remove();
     QStringList args;
     if (!d->userAgent.isEmpty())
         args << u"--user-agent"_q << d->userAgent;
     args << u"--cookies"_q << cookies();
-    args << u"--get-url"_q << d->input;
+    args << u"--flat-playlist"_q << u"--no-playlist"_q << u"--all-subs"_q;
+    args << u"--sub-format"_q
+         << (url.contains("crunchyroll.com"_a, QCI) ? u"ass"_q : u"srt"_q);
+    args << u"-J"_q << d->input;
+
     d->mutex.lock();
     d->proc = &proc;
     d->mutex.unlock();
@@ -92,9 +100,55 @@ auto YouTubeDL::run(const QString &url) -> bool
     }
     if (!d->error && (proc.exitStatus() != QProcess::NormalExit || proc.exitCode()))
         d->error = UnknownError;
-    if (d->error)
+    if (d->error) {
+        auto out = proc.readAllStandardOutput().trimmed();
+        if (!out.isEmpty())
+            _Warn(out);
+        auto err = proc.readAllStandardError().trimmed();
+        if (!err.isEmpty())
+            _Error(err);
         return false;
-    d->output = QString::fromLocal8Bit(proc.readAllStandardOutput().trimmed());
+    }
+    auto stdout = proc.readAllStandardOutput().trimmed();
+    const auto json =_JsonFromString(_L(std::move(stdout)));
+
+    // ported from mpv/player/lua/ytdl_hook.lua
+    if (json[u"direct"_q].toBool())
+        return false;
+    auto &r = d->result;
+    if (json[u"_type"_q].toString() == "playlist"_a) {
+        const auto entries = json[u"entries"_q].toArray();
+        if (entries.isEmpty()) {
+            _Warn("Empty playlist detected. Do nothing.");
+            return false;
+        }
+        const auto first = entries[0];
+        const auto test = first.toObject()[u"webpage_url"_q];
+        if (test.isString() && test.toString() == json[u"webpage_url"_q].toString()) {
+            r.url = "edl://"_a;
+            for (int i = 0; i < entries.size(); ++i)
+                r.url += entries[i].toObject()[u"url"_q].toString() % ';'_q;
+            r.title = json[u"title"_q].toString();
+        } else {
+            for (int i = 0; i < entries.size(); ++i) {
+                Mrl mrl;
+                const auto entry = entries[i].toObject();
+                auto it = entry.find(u"webpage_url"_q);
+                if (it != entry.end())
+                    r.playlist.push_back(Mrl(it.value().toString()));
+                else
+                    r.playlist.push_back(Mrl(entry[u"url"_q].toString()));
+            }
+        }
+    } else {
+        r.url = json[u"url"_q].toString();
+        if (r.url.isEmpty()) {
+            _Error("No URL found.");
+            return false;
+        }
+        r.title = json[u"title"_q].toString();
+        // handle subtitles
+    }
     return true;
 }
 

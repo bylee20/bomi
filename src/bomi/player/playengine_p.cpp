@@ -26,7 +26,7 @@ auto reg_play_engine() -> void
     qmlRegisterType<AudioFormatObject>();
     qmlRegisterType<AudioObject>();
     qmlRegisterType<CodecObject>();
-    qmlRegisterType<MediaObject>();
+    qmlRegisterType<MediaObject>("bomi", 1, 0, "Media");
     qmlRegisterType<SubtitleObject>();
     qmlRegisterType<PlayEngine>("bomi", 1, 0, "Engine");
 }
@@ -173,18 +173,17 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume) -> void
 
 auto PlayEngine::Data::updateMediaName(const QString &name) -> void
 {
-    mediaName = name;
-    QString category;
+    MediaObject::Type type = MediaObject::NoMedia;
     if (mrl.isLocalFile())
-        category = tr("File");
+        type = MediaObject::File;
     else if (mrl.isDvd())
-        category = u"DVD"_q;
+        type = MediaObject::Dvd;
     else if (mrl.isBluray())
-        category = tr("Blu-ray");
+        type = MediaObject::Bluray;
     else
-        category = u"URL"_q;
-    const QString display = name.isEmpty() ? mrl.displayName() : name;
-    info.media.setName(category % ": "_a % display);
+        type = MediaObject::Url;
+    info.media.setName(name.isEmpty() ? mrl.displayName() : name);
+    info.media.setType(type);
 }
 
 auto PlayEngine::Data::onLoad() -> void
@@ -314,7 +313,11 @@ auto PlayEngine::Data::onLoad() -> void
             mpv.setAsync("file-local-options/cookies", true);
             mpv.setAsync("file-local-options/cookies-file", youtube->cookies().toLocal8Bit());
             mpv.setAsync("file-local-options/user-agent", youtube->userAgent().toLocal8Bit());
-            mpv.setAsync("stream-open-filename", youtube->url().toLocal8Bit());
+            const auto r = youtube->result();
+            if (!r.url.isEmpty())
+                mpv.setAsync("stream-open-filename", r.url.toLocal8Bit());
+            if (!r.title.isEmpty())
+                mpv.setAsync("file-local-options/media-title", r.title.toLocal8Bit());
         } else
             mpv.setAsync("stream-open-filename", file.toLocal8Bit());
     }
@@ -441,8 +444,7 @@ auto PlayEngine::Data::observe() -> void
         if (_Change(metaData, md))
             emit p->metaDataChanged();
     });
-    mpv.observe("media-title", [=] (QString &&t)
-        { updateMediaName(params.mrl().isYouTube() ? params.mrl().toString() : t); });
+    mpv.observe("media-title", [=] (QString &&t) { updateMediaName(t); });
 
     mpv.observe("video-codec", [=] (QString &&c) { info.video.codec()->parse(c); });
     mpv.observe("fps", [=] (double fps) {

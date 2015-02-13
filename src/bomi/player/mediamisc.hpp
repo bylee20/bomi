@@ -32,16 +32,26 @@ private:
 
 class MediaObject : public QObject {
     Q_OBJECT
+    Q_ENUMS(Type)
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+    Q_PROPERTY(QString typeText READ typeText NOTIFY typeChanged)
+    Q_PROPERTY(Type type READ type NOTIFY typeChanged)
 public:
+    enum Type{ NoMedia, File, Url, Dvd, Bluray };
     MediaObject(QObject *parent = nullptr): QObject(parent) {}
-    auto name() const -> QString {return m_name;}
+    auto name() const -> QString { return m_name; }
+    auto type() const -> Type { return m_type; }
+    auto typeText() const -> QString;
     auto setName(const QString &name) -> void
         { if (_Change(m_name, name)) emit nameChanged(m_name); }
+    auto setType(Type type) -> void
+        { if (_Change(m_type, type)) emit typeChanged(m_type); }
 signals:
     void nameChanged(const QString &name);
+    void typeChanged(Type type);
 private:
     QString m_name;
+    Type m_type = NoMedia;
 };
 
 class EditionChapterObject : public QObject {

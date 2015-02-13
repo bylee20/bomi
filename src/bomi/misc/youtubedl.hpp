@@ -2,6 +2,7 @@
 #define YOUTUBEDL_HPP
 
 #include <QObject>
+#include "player/playlist.hpp"
 
 class YouTubeDL : public QObject
 {
@@ -11,6 +12,12 @@ public:
         NoError, Canceled, FailedToStart, Timeout, Crashed,
         ReadError, UnknownError, Unsupported
     };
+    struct Result {
+        bool direct = false;
+        Playlist playlist;
+        QString url, title;
+    };
+
     YouTubeDL(QObject *parent = nullptr);
     ~YouTubeDL();
     auto userAgent() const -> QString;
@@ -22,7 +29,7 @@ public:
     auto cookies() const -> QString;
     auto run(const QString &url) -> bool;
     auto error() const -> Error;
-    auto url() const -> QString;
+    auto result() const -> Result;
     auto cancel() -> void;
 private:
     struct Data;

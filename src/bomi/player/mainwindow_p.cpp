@@ -165,6 +165,8 @@ auto MainWindow::Data::plugEngine() -> void
         if (!next.isEmpty()) load(next, true, !pref.resume_ignore_in_playlist());
     });
 
+    connect(e.media(), &MediaObject::nameChanged, p, [=] () { updateTitle(); });
+
     connect(e.video()->renderer(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
         { if (pref.fit_to_video() && !s.isEmpty()) setVideoSize(s); });
     auto showSize = [this] {
@@ -609,30 +611,25 @@ auto MainWindow::Data::updateRecentActions(const QList<Mrl> &list) -> void
 
 auto MainWindow::Data::updateMrl(const Mrl &mrl) -> void
 {
-    updateTitle();
     const auto disc = mrl.isDisc();
     playlist.setLoaded(mrl);
     auto action = menu(u"play"_q)[u"disc-menu"_q];
     action->setEnabled(disc);
     action->setVisible(disc);
+
+    filePath.clear();
+    if (mrl.isLocalFile()) {
+        const QFileInfo file(mrl.toLocalFile());
+        filePath = file.absoluteFilePath();
+        if (p->isVisible())
+            p->setWindowFilePath(filePath);
+    } else
+        p->setWindowFilePath(QString());
 }
 
 auto MainWindow::Data::updateTitle() -> void
 {
-    const auto mrl = e.mrl();
-    p->setWindowFilePath(QString());
-    QString fileName;
-    if (!mrl.isEmpty()) {
-        if (mrl.isLocalFile()) {
-            const QFileInfo file(mrl.toLocalFile());
-            filePath = file.absoluteFilePath();
-            fileName = file.fileName();
-            if (p->isVisible())
-                p->setWindowFilePath(filePath);
-        } else
-            fileName = e.mediaName();
-    }
-    _SetWindowTitle(p, fileName);
+    _SetWindowTitle(p, e.media()->name());
 }
 
 auto MainWindow::Data::doVisibleAction(bool visible) -> void

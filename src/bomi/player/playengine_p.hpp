@@ -94,7 +94,6 @@ struct PlayEngine::Data {
     } info;
 
     MetaData metaData;
-    QString mediaName;
 
     HistoryModel *history = nullptr;
     YleDL *yle = nullptr;
