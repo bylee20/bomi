@@ -1,6 +1,6 @@
 #include "pref.hpp"
 #include "app.hpp"
-#include "video/hwacc.hpp"
+#include "enum/codecid.hpp"
 #include "misc/jsonstorage.hpp"
 #include "pref_helper.hpp"
 #include "configure.hpp"
@@ -27,7 +27,7 @@ auto Pref::initialize() -> void
     qRegisterMetaType<DeintCaps>();
     qRegisterMetaType<Shortcuts>();
     qRegisterMetaType<OsdStyle>();
-    qRegisterMetaType<HwAcc::Type>();
+    qRegisterMetaType<OS::HwAcc::Api>();
 }
 
 #define PREF_FILE_PATH QString(_WritablePath(Location::Config) % "/pref.json"_a)
@@ -244,26 +244,6 @@ auto Pref::load() -> void
     m_app_log_option = cApp.logOption();
 }
 
-auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>
-{
-    QVector<DeintMethod> deints;
-    for (auto deint : HwAcc::fullDeintList()) {
-        if (HwAcc::supports(deint))
-            deints << deint;
-    }
-    return deints;
-}
-
-auto Pref::defaultHwAccCodecs() -> QStringList
-{
-    QStringList codecs;
-    for (auto codec : HwAcc::fullCodecList()) {
-        if (HwAcc::supports(codec))
-            codecs.push_back(codec);
-    }
-    return codecs;
-}
-
 #undef PREF_GROUP
 
 auto Pref::defaultSubtitleEncoding() -> QString
@@ -330,11 +310,6 @@ auto Pref::defaultMouseActionMap() -> MouseActionMap
     map[MouseBehavior::Extra1Click][KeyModifier::None] = u"play/seek/backward1"_q;
     map[MouseBehavior::Extra2Click][KeyModifier::None] = u"play/seek/forward1"_q;
     return map;
-}
-
-auto Pref::defaultHwAccBackend() -> HwAcc::Type
-{
-    return HwAcc::VaApiGLX;
 }
 
 auto Pref::defaultSubtitleAutoload() -> Autoloader

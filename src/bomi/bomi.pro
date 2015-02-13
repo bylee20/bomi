@@ -70,7 +70,6 @@ HEADERS += \
 	audio/audiomixer.hpp \
 	audio/audionormalizeroption.hpp \
 	video/videoformat.hpp \
-	video/hwacc.hpp \
 	video/deintoption.hpp \
 	video/letterboxitem.hpp \
 	video/ffmpegfilters.hpp \
@@ -258,7 +257,8 @@ HEADERS += \
     misc/logviewer.hpp \
 	tmp/type_traits.hpp \
     os/os.hpp \
-    os/x11.hpp
+    os/x11.hpp \
+    enum/codecid.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -266,7 +266,6 @@ SOURCES += \
 	audio/channelmanipulation.cpp \
 	audio/audiomixer.cpp \
 	audio/audionormalizeroption.cpp \
-	video/hwacc.cpp \
 	video/videoformat.cpp \
 	video/deintoption.cpp \
 	video/letterboxitem.cpp \
@@ -443,7 +442,9 @@ SOURCES += \
     widget/pathbutton.cpp \
 	misc/logoption.cpp \
 	misc/logviewer.cpp \
-    os/x11.cpp
+    os/x11.cpp \
+    os/os.cpp \
+    enum/codecid.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

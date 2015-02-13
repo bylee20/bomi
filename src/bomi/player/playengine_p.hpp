@@ -19,7 +19,6 @@
 #include "misc/charsetdetector.hpp"
 #include "audio/audiocontroller.hpp"
 #include "audio/audioformat.hpp"
-#include "video/hwacc.hpp"
 #include "video/deintoption.hpp"
 #include "video/videorenderer.hpp"
 #include "video/videoprocessor.hpp"
@@ -35,7 +34,9 @@
 #include "enum/interpolator.hpp"
 #include "enum/autoselectmode.hpp"
 #include "enum/dithering.hpp"
+#include "enum/codecid.hpp"
 #include "opengl/openglframebufferobject.hpp"
+#include "os/os.hpp"
 
 #ifdef bool
 #undef bool

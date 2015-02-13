@@ -6,11 +6,6 @@
 
 //DECLARE_LOG_CONTEXT(Main)
 
-#ifdef Q_OS_MAC
-void qt_mac_set_dock_menu(QMenu *menu);
-#include <Carbon/Carbon.h>
-#endif
-
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent, Qt::Window), d(new Data)
 {

@@ -3,7 +3,6 @@
 
 #include "misc/json.hpp"
 #include "player/mrlstate.hpp"
-#include "video/hwacc.hpp"
 
 template<class T>
 struct PrefEditorProperty {

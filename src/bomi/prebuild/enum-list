@@ -281,3 +281,12 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -File[-Text File-]
 -Journal[-journald-]
 -Viewer[-Viewer-]
+
++CodecId[:QString:]
+-Invalid[-Not available-][:u""_q:]
+-Mpeg1[-MPEG-1 video-][:u"mpeg1video"_q:]
+-Mpeg2[-MPEG-2 video-][:u"mpeg2video"_q:]
+-Mpeg4[-MPEG-4 part 2-][:u"mpeg4"_q:]
+-H264[-H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10-][:u"h264"_q:]
+-Vc1[-SMPTE VC-1-][:u"vc1"_q:]
+-Wmv3[-Windows Media Video 9-][:u"wmv3"_q:]

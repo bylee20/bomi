@@ -1,6 +1,6 @@
 #include "deintcaps.hpp"
 #include "deintoption.hpp"
-#include "hwacc.hpp"
+#include "os/os.hpp"
 #include "misc/json.hpp"
 
 auto DeintCaps::list() -> const QList<DeintCaps>&
@@ -18,7 +18,7 @@ auto DeintCaps::list() -> const QList<DeintCaps>&
         cap.m_method = method;
         if (cpu)
             cap.m_procs |= Processor::CPU;
-        if (gpu && HwAcc::supports(method))
+        if (gpu && OS::hwAcc()->supports(method))
             cap.m_procs |= Processor::GPU;
         cap.m_doubler = doubler;
         return caps[(int)method];

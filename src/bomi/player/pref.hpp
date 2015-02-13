@@ -5,7 +5,6 @@
 #include "player/mrlstate.hpp"
 #include "audio/channellayoutmap.hpp"
 #include "audio/audionormalizeroption.hpp"
-#include "video/hwacc.hpp"
 #include "video/deintcaps.hpp"
 #include "video/deintoption.hpp"
 #include "video/motionintrploption.hpp"
@@ -21,8 +20,10 @@
 #include "enum/verticalalignment.hpp"
 #include "enum/quicksnapshotsave.hpp"
 #include "enum/mousebehavior.hpp"
+#include "enum/codecid.hpp"
 #include "quick/playlistthemeobject.hpp"
 #include "quick/osdthemeobject.hpp"
+#include "os/os.hpp"
 #include "pref_helper.hpp"
 
 using Shortcuts = QMap<QString, QList<QKeySequence>>;
@@ -122,7 +123,7 @@ public:
     P0(int, amp_step, 10)
     P0(int, sub_pos_step, 1)
     P0(bool, enable_hwaccel, false)
-    P0(QStringList, hwaccel_codecs, defaultHwAccCodecs())
+    P0(QList<CodecId>, hwaccel_codecs, OS::hwAcc()->fullCodecList())
     P0(DeintOptionSet, deinterlacing, {})
 
     P0(AudioNormalizerOption, audio_normalizer, AudioNormalizerOption::default_())
@@ -162,14 +163,11 @@ public:
 private:
     static auto defaultSubtitleAutoload() -> Autoloader;
     static auto defaultAutioAutoload() -> Autoloader;
-    static auto defaultHwAccBackend() -> HwAcc::Type;
     static auto defaultRestoreProperties() -> QStringList;
     static auto defaultOsdTheme() -> OsdTheme;
     static auto defaultSkinName() -> QString;
     static auto defaultSubtitleEncoding() -> QString;
     static auto defaultSubtitleEncodingDetectionAccuracy() -> int;
-    static auto defaultHwAccCodecs() -> QStringList;
-    static auto defaultHwAccDeints() -> QVector<DeintMethod>;
     static auto defaultShortcuts() -> Shortcuts;
     static auto defaultMouseActionMap() -> MouseActionMap;
     static auto defaultFileNameFormat() -> QString;

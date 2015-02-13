@@ -1,14 +1,16 @@
 #include "prefwidgets.hpp"
-#include "video/hwacc.hpp"
+#include "enum/codecid.hpp"
+#include "os/os.hpp"
 
 HwAccCodecBox::HwAccCodecBox(QWidget *parent)
     : QGroupBox(parent)
 {
     auto vbox = new QVBoxLayout;
-    for (const auto codec : HwAcc::fullCodecList()) {
+    auto api = OS::hwAcc();
+    for (const auto codec : api->fullCodecList()) {
         auto box = m_checks[codec] = new QCheckBox;
-        const auto supported = HwAcc::supports(codec);
-        const QString desc = HwAcc::codecDescription(codec);
+        const auto supported = api->supports(codec);
+        const QString desc = CodecIdInfo::description(codec);
         if (supported)
             box->setText(desc);
         else
@@ -19,16 +21,16 @@ HwAccCodecBox::HwAccCodecBox(QWidget *parent)
     setLayout(vbox);
 }
 
-auto HwAccCodecBox::value() const -> QStringList
+auto HwAccCodecBox::value() const -> QList<CodecId>
 {
-    QStringList list;
+    QList<CodecId> list;
     for (auto it = m_checks.begin(); it != m_checks.end(); ++it)
         if (it.value()->isChecked())
             list.push_back(it.key());
     return list;
 }
 
-auto HwAccCodecBox::setValue(const QStringList &list) -> void
+auto HwAccCodecBox::setValue(const QList<CodecId> &list) -> void
 {
     for (auto it = m_checks.begin(); it != m_checks.end(); ++it)
         it.value()->setChecked(list.contains(it.key()));

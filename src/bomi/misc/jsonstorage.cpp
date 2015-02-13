@@ -155,6 +155,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(StreamList);
     INSERT(Locale);
     INSERT(LogOption);
+    INSERT(QList<CodecId>);
 
     for (auto type : _EnumMetaTypeIds()) {
         auto &ec = c[type];

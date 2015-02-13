@@ -4,7 +4,7 @@
 #include "player/rootmenu.hpp"
 #include "os/os.hpp"
 extern "C" {
-#include <libavutil/cpu.h>
+int av_cpu_count(void);
 }
 
 auto reg_app_object() -> void {

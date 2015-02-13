@@ -22,7 +22,7 @@ public:
     auto isUnique() const -> bool;
     auto availableStyleNames() const -> QStringList;
 #ifdef Q_OS_MAC
-    QMenuBar *globalMenuBar() const;
+    auto globalMenuBar() const -> QMenuBar*;
 #endif
     auto setStyleName(const QString &name) -> void;
     auto setLocale(const Locale &locale) -> void;

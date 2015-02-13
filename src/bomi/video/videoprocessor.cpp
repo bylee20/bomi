@@ -1,5 +1,4 @@
 #include "videoprocessor.hpp"
-#include "hwacc.hpp"
 #include "videofilter.hpp"
 #include "mpimage.hpp"
 #include "softwaredeinterlacer.hpp"
@@ -8,6 +7,7 @@
 #include "deintoption.hpp"
 #include "player/mpv_helper.hpp"
 #include "opengl/opengloffscreencontext.hpp"
+#include "os/os.hpp"
 extern "C" {
 #include <video/filter/vf.h>
 #ifdef Q_OS_LINUX
@@ -53,49 +53,21 @@ auto create_vf_info() -> vf_info
 
 class HwDecTool {
 public:
-    HwDecTool() { m_pool = mp_image_pool_new(2); }
-    virtual ~HwDecTool() { talloc_free(m_pool); }
-    virtual auto download(const MpImage &src) -> MpImage = 0;
-protected:
-    mp_image_pool *m_pool = nullptr;
-};
-
-#ifdef Q_OS_LINUX
-
-class VdpauTool: public HwDecTool {
-public:
-    VdpauTool(mp_vdpau_ctx *ctx): m_ctx(ctx) { }
-    auto download(const MpImage &src) -> MpImage
+    HwDecTool(mp_hwdec_ctx *hwctx)
     {
-        auto img = MpImage::wrap(mp_image_pool_get(m_pool, IMGFMT_420P,
-                                                   src->w, src->h));
-        mp_image_copy_attributes(img.data(), (mp_image*)src.data());
-        const VdpVideoSurface surface = (intptr_t)src->planes[3];
-        if (m_ctx->vdp.video_surface_get_bits_y_cb_cr(
-                    surface, VDP_YCBCR_FORMAT_YV12, (void* const*)img->planes,
-                    (uint32_t*)img->stride) == VDP_STATUS_OK)
-            return img;
-        return MpImage();
+        m_ctx = hwctx;
+        m_pool = mp_image_pool_new(2);
     }
-private:
-    mp_vdpau_ctx *m_ctx = nullptr;
-};
-
-class VaApiTool : public HwDecTool {
-public:
-    VaApiTool(mp_vaapi_ctx *ctx): m_ctx(ctx) { }
-    auto download(const MpImage &src) -> MpImage
+    virtual ~HwDecTool() { talloc_free(m_pool); }
+    virtual auto download(const MpImage &src) -> MpImage
     {
-        auto img = va_surface_download((mp_image*)src.data(), m_pool);
-        if (img)
-            mp_image_copy_attributes(img, (mp_image*)src.data());
+        auto img = OS::hwAcc()->download(m_ctx, src.data(), m_pool);
         return img ? MpImage::wrap(img) : MpImage();
     }
-private:
-    mp_vaapi_ctx *m_ctx = nullptr;
+protected:
+    mp_hwdec_ctx *m_ctx = nullptr;
+    mp_image_pool *m_pool = nullptr;
 };
-
-#endif
 
 vf_info vf_info_noformat = create_vf_info();
 
@@ -182,15 +154,9 @@ auto VideoProcessor::open(vf_instance *vf) -> int
         { return priv(vf)->control(request, data); };
 
     _Delete(d->hwdec);
-    hwdec_request_api(vf->hwdec, HwAcc::name().toLatin1());
-    if (vf->hwdec && vf->hwdec->hwctx) {
-#ifdef Q_OS_LINUX
-        if (vf->hwdec->hwctx->vdpau_ctx)
-            d->hwdec = new VdpauTool(vf->hwdec->hwctx->vdpau_ctx);
-        else
-            d->hwacc = new VaApiTool(vf->hwdec->hwctx->vaapi_ctx);
-#endif
-    }
+    hwdec_request_api(vf->hwdec, OS::hwAcc()->name().toLatin1());
+    if (vf->hwdec && vf->hwdec->hwctx)
+        d->hwdec = new HwDecTool(vf->hwdec->hwctx);
     mp_image_pool_clear(d->pool);
     p->vp->stopSkipping();
     return true;
@@ -215,16 +181,9 @@ auto VideoProcessor::open() -> int
         { return priv(vf)->control(request, data); };
 
     _Delete(d->hwdec);
-    hwdec_request_api(d->vf->hwdec, HwAcc::name().toLatin1());
-    if (d->vf->hwdec && d->vf->hwdec->hwctx) {
-#ifdef Q_OS_LINUX
-        auto hwctx = d->vf->hwdec->hwctx;
-        if (hwctx->vdpau_ctx)
-            d->hwdec = new VdpauTool(hwctx->vdpau_ctx);
-        else
-            d->hwacc = new VaApiTool(hwctx->vaapi_ctx);
-#endif
-    }
+    hwdec_request_api(d->vf->hwdec, OS::hwAcc()->name().toLatin1());
+    if (d->vf->hwdec && d->vf->hwdec->hwctx)
+        d->hwdec = new HwDecTool(d->vf->hwdec->hwctx);
     mp_image_pool_clear(d->pool);
     stopSkipping();
     return true;

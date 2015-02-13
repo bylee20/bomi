@@ -131,7 +131,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Mouse actions"), d->ui.ui_mouse, u":/img/input-mouse-32.png"_q);
     addPage(tr("Control step"), d->ui.ui_step, u":/img/run-build-32.png"_q);
 
-    d->ui.enable_hwaccel->setEnabled(HwAcc::isAvailable());
+    d->ui.enable_hwaccel->setEnabled(OS::hwAcc()->isAvailable());
 
     connect(d->ui.quick_snapshot_folder_browse, &QPushButton::clicked,
             this, [this] () {

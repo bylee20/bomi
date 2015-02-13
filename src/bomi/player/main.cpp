@@ -1,7 +1,6 @@
 #include "app.hpp"
 #include "stdafx.hpp"
 #include "mainwindow.hpp"
-#include "video/hwacc.hpp"
 #include "misc/log.hpp"
 #include "misc/json.hpp"
 #include "quick/circularimageitem.hpp"
@@ -63,14 +62,12 @@ int main(int argc, char **argv) {
     }
 
     OGL::check();
-    HwAcc::initialize();
     MainWindow *mw = new MainWindow;
     _Debug("Show MainWindow.");
     mw->show();
     app.setMainWindow(mw);
     _Debug("Start main event loop.");
     auto ret = app.exec();
-    HwAcc::finalize();
     _Debug("Exit...");
     return ret;
 }

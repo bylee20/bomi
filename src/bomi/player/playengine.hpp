@@ -18,6 +18,7 @@ enum class ColorRange;                  enum class ColorSpace;
 enum class Dithering;                   enum class AutoselectMode;
 enum class VideoRatio;                  enum class SubtitleDisplay;
 enum class VerticalAlignment;           enum class HorizontalAlignment;
+enum class CodecId;
 class AudioObject;                      class VideoObject;
 class YouTubeDL;                        struct AudioDevice;
 class YleDL;                            class AudioEqualizer;
@@ -138,7 +139,7 @@ public:
     auto setSubtitleInclusiveTrackSelected(int id, bool s) -> void;
 
     auto lock() -> void;
-    auto setHwAcc_locked(bool use, const QStringList &codecs) -> void;
+    auto setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void;
     auto setSubtitleStyle_locked(const OsdStyle &style) -> void;
     auto setSubtitleEncoding_locked(const QString &enc, double accuracy) -> void;
     auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;

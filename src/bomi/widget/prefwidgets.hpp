@@ -4,17 +4,19 @@
 #include "misc/simplelistmodel.hpp"
 #include "player/mrlstate.hpp"
 
+enum class CodecId;
+
 class HwAccCodecBox : public QGroupBox {
     Q_OBJECT
-    Q_PROPERTY(QStringList value READ value WRITE setValue NOTIFY valueChanged)
+    Q_PROPERTY(QList<CodecId> value READ value WRITE setValue NOTIFY valueChanged)
 public:
     HwAccCodecBox(QWidget *parent = nullptr);
-    auto value() const -> QStringList;
-    auto setValue(const QStringList &list) -> void;
+    auto value() const -> QList<CodecId>;
+    auto setValue(const QList<CodecId> &list) -> void;
 signals:
     void valueChanged();
 private:
-    QMap<QString, QCheckBox*> m_checks;
+    QMap<CodecId, QCheckBox*> m_checks;
 };
 
 class DataButtonGroup : public QButtonGroup {

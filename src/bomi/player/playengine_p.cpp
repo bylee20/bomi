@@ -490,11 +490,10 @@ auto PlayEngine::Data::observe() -> void
         auto hwState = [&] () {
             if (!hwdec)
                 return Deactivated;
-            static QVector<QString> types = { u"vaapi"_q, u"vdpau"_q, u"vda"_q };
             const auto codec = video.codec()->type();
-            if (!HwAcc::supports(codec))
+            if (!OS::hwAcc()->supports(CodecIdInfo::fromData(codec)))
                 return Unavailable;
-            if (types.contains(info->type().toLower()))
+            if (OS::HwAcc::api(info->type().toLower()) != OS::HwAcc::NoApi)
                 return Activated;
             if (!hwcdc.contains(codec.toLatin1()))
                 return Unavailable;
