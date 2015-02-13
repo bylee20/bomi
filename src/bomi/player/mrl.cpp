@@ -52,8 +52,12 @@ auto Mrl::displayName() const -> QString
         disc = qApp->translate("Mrl", "DVD");
     else if (isBluray())
         disc = qApp->translate("Mrl", "Blu-ray");
-    if (disc.isEmpty())
-        return path();
+    if (disc.isEmpty()) {
+        const auto suffix = this->suffix();
+        if (_IsSuffixOf(MediaExt, suffix))
+            return path();
+        return m_loc;
+    }
     auto dev = device();
     if (dev.isEmpty())
         return disc;
