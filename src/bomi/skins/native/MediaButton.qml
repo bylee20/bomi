@@ -3,7 +3,8 @@ import QtQuick.Controls 1.0
 import bomi 1.0 as B
 
 ToolButton {
-    property string icon
+    id: button
+    property alias icon: button.iconName
     property string action
     property string fallback: "oxygen"
     property QtObject __action: B.App.action(action)

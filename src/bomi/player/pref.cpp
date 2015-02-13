@@ -151,6 +151,9 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"window/close"_q] << Qt::CTRL + Qt::Key_W;
 
 #ifndef Q_OS_MAC
+#ifdef Q_OS_WIN
+    keys[u"exit"_q] << Qt::ALT + Qt::Key_F4;
+#endif
     keys[u"exit"_q] << Qt::CTRL + Qt::Key_Q;
 #endif
     return keys;

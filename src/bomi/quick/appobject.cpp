@@ -4,6 +4,7 @@
 #include "player/rootmenu.hpp"
 #include <unistd.h>
 #include <fcntl.h>
+#include "os/os.hpp"
 extern "C" {
 #include <libavutil/cpu.h>
 }
@@ -124,18 +125,21 @@ CpuObject::CpuObject()
         close(fd);
         return len > 0 ? quint64(utime + stime)*Q_UINT64_C(1000000)/tick : 0;
 #endif
+#ifdef Q_OS_WIN
+        return OS::processTime();
+#endif
         return 0;
     };
 
     auto setUsage = [=] () {
         double usage = 0.0;
         if (!m_pt) {
-            m_pt = processTime();
-            m_st = _SystemTime();
+            m_pt = OS::processTime();
+            m_st = OS::systemTime();
             return;
         }
-        const auto pt = processTime();
-        const auto st = _SystemTime();
+        const auto pt = OS::processTime();
+        const auto st = OS::systemTime();
         static constexpr quint64 th = 10000;
         if (pt > m_pt + th && st > m_st + th) {
             usage = (pt - m_pt)/(double)(st - m_st)*100.0;
@@ -171,6 +175,7 @@ CpuObject::CpuObject()
     connect(&m_timer, &QTimer::timeout, this, setUsage);
     m_timer.setInterval(500);
     m_timer.start();
+    qDebug() << "CpuObject" << this;
 }
 
 CpuObject::~CpuObject()

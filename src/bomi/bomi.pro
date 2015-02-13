@@ -41,8 +41,8 @@ macx {
 		-framework IOSurface -framework Carbon -framework AudioUnit \
 		-framework CoreAudio -framework VideoDecodeAcceleration \
 		-framework AudioToolbox
-	HEADERS += player/mac.hpp
-	OBJECTIVE_SOURCES += player/mac.mm
+    HEADERS += os/mac.hpp
+    OBJECTIVE_SOURCES += os/mac.mm
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
 } else:unix {
     QT += dbus x11extras
@@ -52,8 +52,8 @@ macx {
 	SOURCES += player/mpris.cpp
 } else:win32 {
     LIBS += -lopengl32 -lgdi32
-	HEADERS += player/win.hpp
-	SOURCES += player/win.cpp
+    HEADERS += os/win.hpp
+    SOURCES += os/win.cpp
 }
 
 QML_IMPORT_PATH += imports

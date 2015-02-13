@@ -261,26 +261,41 @@ auto HwAcc::finalize() -> void
 
 auto HwAcc::isAvailable() -> bool
 {
+#ifdef Q_OS_WIN
+    return true;
+#endif
     return api && api->isOk();
 }
 
 auto HwAcc::type() -> Type
 {
+#ifdef Q_OS_WIN
+    return Dxva2;
+#endif
     return api ? api->type() : None;
 }
 
 auto HwAcc::name() -> QString
 {
+#ifdef Q_OS_WIN
+    return u"dxva2-copy"_q;
+#endif
     return api ? api->name() : QString();
 }
 
 auto HwAcc::description() -> QString
 {
+#ifdef Q_OS_WIN
+    return u"dxva2-copy"_q;
+#endif
     return api ? api->description() : QString();
 }
 
 auto HwAcc::supports(const QString &codec) -> bool
 {
+#ifdef Q_OS_WIN
+    return true;
+#endif
     return api && api->supports(codec);
 }
 

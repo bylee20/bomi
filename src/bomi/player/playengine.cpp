@@ -122,6 +122,7 @@ PlayEngine::PlayEngine()
 
     const auto hwdec = HwAcc::name().toLatin1();
     d->mpv.setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.data());
+    qDebug() << hwdec;
     d->mpv.setOption("fs", "no");
     d->mpv.setOption("input-cursor", "yes");
     d->mpv.setOption("softvol", "yes");
@@ -490,6 +491,10 @@ auto PlayEngine::setCache_locked(const CacheInfo &info) -> void
 auto PlayEngine::setHwAcc_locked(bool use, const QStringList &codecs) -> void
 {
     d->hwcdc = codecs.join(','_q).toLatin1();
+#ifdef Q_OS_WIN
+    d->hwdec = "h264,vc1,wmv3";
+    use = true;
+#endif
     d->hwdec = use;
     d->mpv.setAsync("options/hwdec-codecs", use ? d->hwcdc : ""_b);
 }

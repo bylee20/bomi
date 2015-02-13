@@ -5,6 +5,9 @@ src/libchardet*
 src/ffmpeg*
 src/build-*
 *~
+*.cpp.[a-z][a-z][0-9][0-9][0-9][0-9]
+*.hpp.[a-z][a-z][0-9][0-9][0-9][0-9]
+*.qml.[a-z][a-z][0-9][0-9][0-9][0-9]
 .qmake.cache
 *.o
 *.d

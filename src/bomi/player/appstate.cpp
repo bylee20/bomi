@@ -3,6 +3,8 @@
 #include "misc/log.hpp"
 #include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
+#include "os/os.hpp"
+#include <QScreen>
 
 static_assert(tmp::is_enum_class<StaysOnTop>(), "!!!");
 
@@ -81,5 +83,7 @@ auto AppState::restoreWindowGeometry(MainWindow *w) -> void
         const int x = screen.width() * win_pos.x();
         const int y = screen.height() * win_pos.y();
         w->setGeometry(QRect({x, y}, win_size));
-    }
+    } else
+        w->resize(400, 300);
+    w->setMinimumSize(QSize(400, 300));
 }

@@ -7,7 +7,7 @@ enum class DeintMethod;
 
 class HwAcc {
 public:
-    enum Type {None, VaApiGLX, VdpauX11};
+    enum Type {None, VaApiGLX, VdpauX11, Dxva2};
     static auto isAvailable() -> bool;
     static auto initialize() -> void;
     static auto finalize() -> void;

@@ -150,14 +150,17 @@ auto MainWindow::isSceneGraphInitialized() const -> bool
 
 auto MainWindow::setFullScreen(bool full) -> void
 {
-    d->dontPause = true;
+    if (OS::isFullScreen(this) == full)
+        return;
     OS::setFullScreen(this, full);
-    d->dontPause = false;
+#ifdef Q_OS_WIN // This should be checked in WindowStatesChange event for others
+    emit fullscreenChanged(full);
+#endif
 }
 
 auto MainWindow::isFullScreen() const -> bool
 {
-    return QWidget::isFullScreen();
+    return OS::isFullScreen(this);
 }
 
 auto MainWindow::resetMoving() -> void
@@ -315,7 +318,11 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 {
     QWidget::resizeEvent(event);
-    d->as.updateWindowGeometry(this);
+    if (OS::isFullScreen(this))
+        d->container->setGeometry(QRect(QPoint(0, 0), frameSize()));
+    else
+        d->container->setGeometry(QRect(QPoint(0, 0), size()));
+//    d->as.updateWindowGeometry(this);
 }
 
 auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void
@@ -344,7 +351,16 @@ auto MainWindow::changeEvent(QEvent *ev) -> void
     QWidget::changeEvent(ev);
     if (ev->type() == QEvent::WindowStateChange) {
         auto event = static_cast<QWindowStateChangeEvent*>(ev);
-        d->checkWindowState(event->oldState());
+        event->accept(); // bogus to kill warning
+        setWindowFilePath(d->filePath);
+        resetMoving();
+        d->readyToHideCursor();
+        if (!d->stateChanging)
+            d->doVisibleAction(isMinimized());
+#ifndef Q_OS_WIN // this doesn't work for windows because of fake fullscreen
+        if (!((event->oldState() & windowState()) & Qt::WindowFullScreen))
+            emit fullscreenChanged(full);
+#endif
     }
 }
 
@@ -383,5 +399,4 @@ auto MainWindow::closeEvent(QCloseEvent *event) -> void
 auto MainWindow::moveEvent(QMoveEvent *event) -> void
 {
     QWidget::moveEvent(event);
-    d->as.updateWindowGeometry(this);
 }

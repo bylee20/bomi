@@ -52,6 +52,7 @@ struct MainWindow::Data {
 
     MainWindow *p = nullptr;
     MainQuickView *view = nullptr;
+    QWidget *container = nullptr;
     QQuickItem *player = nullptr;
     RootMenu menu;
     RecentInfo recent;
@@ -63,7 +64,7 @@ struct MainWindow::Data {
 
     Qt::MouseButton pressedButton = Qt::NoButton;
     bool moving = false;
-    bool pausedByHiding = false, dontPause = false;
+    bool pausedByHiding = false;
     bool stateChanging = false, sgInit = false;
     QTimer waiter, hider;
     ABRepeatChecker ab;
@@ -129,7 +130,6 @@ struct MainWindow::Data {
     auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;
     auto openDir(const QString &dir = QString()) -> void;
     auto screenSize() const -> QSize;
-    auto checkWindowState(Qt::WindowStates prev) -> void;
     auto updateWaitingMessage() -> void;
 
     template<class T, class Func>

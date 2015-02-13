@@ -15,6 +15,7 @@
 #include "dialog/subtitlefinddialog.hpp"
 #include "avinfoobject.hpp"
 #include <QSessionManager>
+#include <QScreen>
 
 auto MainWindow::Data::restoreState() -> void
 {
@@ -102,16 +103,11 @@ auto MainWindow::Data::initWindow() -> void
     view->setPersistentOpenGLContext(true);
     view->setPersistentSceneGraph(true);
 
-    auto widget = createWindowContainer(view, p);
-    auto layout = new QVBoxLayout;
-    layout->addWidget(widget);
-    layout->setMargin(0);
-    p->setLayout(layout);
-    p->setFocusProxy(widget);
+    container = createWindowContainer(view, p);
+    container->setGeometry(0, 0, p->width(), p->height());
+    p->setFocusProxy(container);
     p->setFocus();
     p->setAcceptDrops(true);
-    p->resize(400, 300);
-    p->setMinimumSize(QSize(400, 300));
     _SetWindowTitle(p, QString());
 
     connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
@@ -128,6 +124,9 @@ auto MainWindow::Data::initWindow() -> void
         glLogger.finalize(context);
         e.finalizeGL(context);
     }, Qt::DirectConnection);
+
+    connect(p, &MainWindow::fullscreenChanged, p,
+            [=] (bool fs) { setCursorVisible(!fs); });
 
     connect(&cApp, &App::commitDataRequest, p, [=] () { commitData(); });
     connect(&cApp, &App::saveStateRequest, p, [=] (QSessionManager &session)
@@ -517,14 +516,12 @@ auto MainWindow::Data::updateStaysOnTop() -> void
         return;
     const auto id = as.win_stays_on_top;
     bool onTop = false;
-    if (!p->isFullScreen()) {
-        if (id == StaysOnTop::Always)
-            onTop = true;
-        else if (id == StaysOnTop::None)
-            onTop = false;
-        else
-            onTop = e.isPlaying();
-    }
+    if (id == StaysOnTop::Always)
+        onTop = true;
+    else if (id == StaysOnTop::None)
+        onTop = false;
+    else
+        onTop = e.isPlaying();
     OS::setAlwaysOnTop(p, onTop);
 }
 
@@ -650,34 +647,11 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
         p->setWindowIcon(cApp.defaultIcon());
 #endif
     } else {
-        if (!pref.pause_minimized() || dontPause)
+        if (!pref.pause_minimized())
             return;
         if (!e.isPlaying() || (pref.pause_video_only() && !e.hasVideo()))
             return;
         pausedByHiding = true;
         e.pause();
     }
-}
-
-auto MainWindow::Data::checkWindowState(Qt::WindowStates prev) -> void
-{
-    const auto winState = p->windowState();
-    const auto full = p->isFullScreen();
-    if (!((prev & winState) & Qt::WindowFullScreen))
-        emit p->fullscreenChanged(full);
-    p->setWindowFilePath(filePath);
-    dontPause = true;
-    p->resetMoving();
-    if (full) {
-        OS::setAlwaysOnTop(p, false);
-        p->setVisible(true);
-    } else {
-        updateStaysOnTop();
-        p->setVisible(true);
-    }
-    readyToHideCursor();
-    dontPause = false;
-    if (!stateChanging)
-        doVisibleAction(winState != Qt::WindowMinimized);
-    setCursorVisible(!full);
 }
