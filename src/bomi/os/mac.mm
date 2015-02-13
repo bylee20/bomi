@@ -221,4 +221,53 @@ bool AppMac::shutdown() {
 	return sendAE(kAEShutDown) != noErr;
 }
 
+#if 0
+
+// keep
+
+auto MainWindow::setFullScreen(bool full) -> void
+{
+    d->dontPause = true;
+    if (isFullScreen() != full) {
+#ifdef Q_OS_MAC
+        if (!d->pref.lion_style_fullscreen()) {
+            static Qt::WindowFlags flags = windowFlags();
+            static QRect geometry;
+            if (full) {
+                auto desktop = cApp.desktop();
+                const int screen = desktop->screenNumber(this);
+                if (screen >= 0) {
+                    flags = windowFlags();
+                    geometry = this->geometry();
+                    setWindowFlags(flags | Qt::FramelessWindowHint);
+                    SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
+                    show();
+                    setGeometry(QRect(QPoint(0, 0),
+                                      desktop->screenGeometry(this).size()));
+                }
+            } else {
+                setWindowFlags(flags);
+                setGeometry(geometry);
+                SetSystemUIMode(kUIModeNormal, 0);
+            }
+            d->checkWindowState(d->winState);
+            d->updateTitle();
+            d->updateStaysOnTop();
+        } else
+#endif
+        {
+            OS::setFullScreen(this, full);
+//            if (!full) {
+//                if (d->prevWinState & Qt::WindowMaximized)
+//                    showMaximized();
+//                else
+//                    showNormal();
+//            }
+        }
+    }
+    d->dontPause = false;
+}
+
+#endif
+
 #endif

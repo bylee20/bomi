@@ -1,5 +1,5 @@
 #include "motionintrploption.hpp"
-#include "player/app.hpp"
+#include "os/os.hpp"
 #include "misc/json.hpp"
 
 #define JSON_CLASS MotionIntrplOption
@@ -11,7 +11,7 @@ JSON_DECLARE_FROM_TO_FUNCTIONS
 auto MotionIntrplOption::fps() const -> double
 {
     if (sync_to_monitor)
-        return cApp.refreshRate();
+        return OS::refreshRate();
     return target_fps;
 }
 
@@ -89,7 +89,7 @@ auto MotionIntrplOptionWidget::showEvent(QShowEvent *e) -> void
 {
     QGroupBox::showEvent(e);
     const QString text = '('_q % tr("detected: %1Hz") % ')'_q;
-    auto rf = cApp.refreshRate();
+    auto rf = OS::refreshRate();
     d->g->button(Sync)->setEnabled(rf > 0);
     d->g->button(Target)->setChecked(rf < 0);
     d->detected->setText(text.arg(rf < 0 ? u"--"_q : QString::number(rf, 'f', 2)));

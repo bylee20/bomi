@@ -170,7 +170,7 @@ auto MainWindow::Data::plugMenu() -> void
         OpenDiscDialog dlg(p);
         dlg.setIsoEnabled(dvd);
         _SetWindowTitle(&dlg, title);
-        dlg.setDeviceList(cApp.devices());
+        dlg.setDeviceList(OS::opticalDrives());
         if (!device.isEmpty())
             dlg.setDevice(device);
         if (dlg.exec())
@@ -672,7 +672,7 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(&playlist, &PlaylistModel::finished, p, [=, &tool] () {
         if (tool[u"auto-exit"_q]->isChecked())     p->exit();
-        if (tool[u"auto-shutdown"_q]->isChecked()) cApp.shutdown();
+        if (tool[u"auto-shutdown"_q]->isChecked()) OS::shutdown();
     });
 
     Menu &win = menu(u"window"_q);

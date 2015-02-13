@@ -1,10 +1,8 @@
-#include "app_x11.hpp"
-#include "misc/log.hpp"
-
-DECLARE_LOG_CONTEXT(App)
+#include "os.hpp"
 
 #ifdef Q_OS_LINUX
-#include "app.hpp"
+
+#include "misc/log.hpp"
 #include "tmp/algorithm.hpp"
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
@@ -18,6 +16,10 @@ extern "C" {
 #include <xcb/xproto.h>
 #include <xcb/screensaver.h>
 }
+
+namespace OS {
+
+DECLARE_LOG_CONTEXT(X11)
 
 enum XcbAtom {
     _NET_WM_STATE,
@@ -49,25 +51,21 @@ static auto getAtom(xcb_connection_t *conn, const char *name) -> xcb_atom_t
     return ret;
 }
 
-struct AppX11::Data {
-    QTimer xssTimer, hbTimer;
-    QDBusInterface *iface = nullptr;
-    QDBusReply<uint> reply;
-    bool inhibit = false, xss = false, gnome = false;
-    QString hbCommand;
+struct X11 : public QObject {
+    X11();
+    ~X11();
+
+    struct {
+        QTimer reset;
+        QDBusInterface *iface = nullptr;
+        QDBusReply<uint> reply;
+        bool inhibit = false, xss = false, gnome = false;
+    } ss;
 
     xcb_connection_t *connection = nullptr;
     xcb_window_t root = 0;
     Display *display = nullptr;
-
-    xcb_atom_t aNetWmState = 0, aNetWmStateAbove = 0;
-    xcb_atom_t aNetWmStateStaysOnTop = 0;
-
-
     xcb_atom_t atoms[XcbAtomEnd];
-
-    auto getAtom(const char *name) -> xcb_atom_t
-    { return ::getAtom(connection, name); }
 
     auto sendState(QWidget *widget, bool on,
                    XcbAtom a1, XcbAtom a2 = XcbAtomEnd) -> void
@@ -86,38 +84,27 @@ struct AppX11::Data {
         if (a2 != XcbAtomEnd)
             event.data.data32[2] = atoms[a2];
         const auto mask = XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY
-                          | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
+                | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
         xcb_send_event(connection, 0, root, mask, (const char *)&event);
         xcb_flush(connection);
     }
 };
 
-AppX11::AppX11(QObject *parent)
-: QObject(parent), d(new Data) {
-    d->xssTimer.setInterval(20000);
-    connect(&d->xssTimer, &QTimer::timeout, this, [this] () {
-        if (d->xss && d->connection) {
-            _Trace("Call xcb_force_screen_saver().");
-            xcb_force_screen_saver(d->connection, XCB_SCREEN_SAVER_RESET);
-            xcb_flush(d->connection);
-        } else
-            _Error("Cannot run xcb_force_screen_saver().");
-    });
-    connect(&d->hbTimer, &QTimer::timeout, this, [this] () {
-        if (!d->hbCommand.isEmpty()) {
-            if (QProcess::startDetached(d->hbCommand))
-                _Trace("Run command: %%", d->hbCommand);
-            else
-                _Error("Cannot run command: %%", d->hbCommand);
-        } else
-            _Error("No command for heartbeat");
-    });
+static X11 *d = nullptr;
 
-    d->connection = QX11Info::connection();
-    d->display = QX11Info::display();
-    d->root = QX11Info::appRootWindow();
+auto initialize() -> void { _Renew(d); }
+auto finalize() -> void { _Delete(d); }
 
-#define GET_ATOM(id) {d->atoms[id] = d->getAtom(#id);}
+
+X11::X11()
+{
+    connection = QX11Info::connection();
+    display = QX11Info::display();
+    root = QX11Info::appRootWindow();
+
+    Q_ASSERT(connection);
+
+#define GET_ATOM(id) {atoms[id] = getAtom(connection, #id);}
     GET_ATOM(_NET_WM_STATE);
     GET_ATOM(_NET_WM_STATE_MODAL);
     GET_ATOM(_NET_WM_STATE_STICKY);
@@ -134,27 +121,31 @@ AppX11::AppX11(QObject *parent)
     GET_ATOM(_NET_WM_STATE_STAYS_ON_TOP);
 #undef GET_ATOM
 
-    d->aNetWmState = d->getAtom("_NET_WM_STATE");
-    d->aNetWmStateAbove = d->getAtom("_NET_WM_STATE_ABOVE");
-    d->aNetWmStateStaysOnTop = d->getAtom("_NET_WM_STATE_STAYS_ON_TOP");
+    ss.reset.setInterval(20000);
+    connect(&ss.reset, &QTimer::timeout, this, [=] () {
+        Q_ASSERT(ss.xss);
+        _Debug("Force XCB_SCREEN_SAVER_RESET.");
+        xcb_force_screen_saver(connection, XCB_SCREEN_SAVER_RESET);
+        xcb_flush(connection);
+    });
 }
 
-AppX11::~AppX11() {
-    delete d->iface;
-    delete d;
+X11::~X11()
+{
+    delete ss.iface;
 }
 
 template<class T>
 static inline QSharedPointer<T> _Reply(T *t) { return QSharedPointer<T>(t, free); }
 
-auto AppX11::refreshRate() const -> qreal
+auto refreshRate() -> qreal
 {
     auto sr = _Reply(xcb_randr_get_screen_resources_current_reply(
         d->connection,
         xcb_randr_get_screen_resources_current_unchecked(d->connection, d->root),
         nullptr));
     const auto len = xcb_randr_get_screen_resources_current_crtcs_length(sr.data());
-    const int n = cApp.screenNumber();
+    const int n = qApp->desktop()->screenNumber(qApp->topLevelWidgets().value(0));
     if (len < 1 || n >= len)
         return -1;
     auto crtc = xcb_randr_get_screen_resources_current_crtcs(sr.data())[n];
@@ -184,96 +175,81 @@ auto AppX11::refreshRate() const -> qreal
     return -1;
 }
 
-auto AppX11::setHeartbeat(const QString &command, int interval) -> void
+auto setScreensaverDisabled(bool disabled) -> void
 {
-    d->hbCommand = command;
-    d->hbTimer.setInterval(interval*1000);
-}
-
-auto AppX11::setScreensaverDisabled(bool disabled) -> void
-{
-    if (d->inhibit == disabled)
+    auto &s = d->ss;
+    if (s.inhibit == disabled)
         return;
-    const auto heartbeat = !d->hbCommand.isEmpty();
-    if (!heartbeat && !d->iface && !d->xss) {
+    if (!s.iface && !s.xss) {
         _Debug("Initialize screensaver functions.");
-        _Debug("Try to connect 'org.gnome.SessionManager'.");
-        _New(d->iface, u"org.gnome.SessionManager"_q,
+        _Debug("Trying to connect 'org.gnome.SessionManager'.");
+        _New(s.iface, u"org.gnome.SessionManager"_q,
              u"/org/gnome/SessionManager"_q, u"org.gnome.SessionManager"_q);
-        if (!(d->gnome = d->iface->isValid())) {
+        if (!(s.gnome = s.iface->isValid())) {
             _Debug("Failed to connect 'org.gnome.SessionManager'. "
                    "Fallback to 'org.freedesktop.ScreenSaver'.");
-            _Renew(d->iface, u"org.freedesktop.ScreenSaver"_q,
+            _Renew(s.iface, u"org.freedesktop.ScreenSaver"_q,
                    u"/ScreenSaver"_q, u"org.freedesktop.ScreenSaver"_q);
-            if (!d->iface->isValid()) {
+            if (!s.iface->isValid()) {
                 _Debug("Failed to connect 'org.freedesktop.ScreenSaver'. "
-                       "Fallback to xcb_force_screen_saver().");
-                _Delete(d->iface);
-                d->xss = true;
+                       "Fallback to XCB_SCREEN_SAVER_RESET.");
+                _Delete(s.iface);
+                s.xss = true;
             }
         }
     }
-    d->xssTimer.stop();
-    d->hbTimer.stop();
+    s.reset.stop();
     if (disabled) {
-        if (heartbeat) {
-            _Debug("Disable screensaver with external command.");
-            d->hbTimer.start();
-        } else {
-            if (d->iface) {
-                if (d->gnome)
-                    d->reply = d->iface->call(u"Inhibit"_q, u"bomi"_q, 0u,
-                                              u"Running player"_q, 4u | 8u);
-                else
-                    d->reply = d->iface->call(u"Inhibit"_q, u"bomi"_q,
-                                              u"Running player"_q);
-                if (!d->reply.isValid()) {
-                    _Error("DBus '%%' error: %%", d->iface->interface(),
-                           d->reply.error().message());
-                    _Error("Fallback to xcb_force_screen_saver().");
-                    _Delete(d->iface);
-                    d->xss = true;
-                } else
-                    _Debug("Disable screensaver with '%%'.",
-                           d->iface->interface());
-            }
-            if (d->xss) {
-                xcb_screensaver_suspend(d->connection, 1);
-                _Debug("Disable screensaver with xcb_force_screen_saver().");
-                d->xssTimer.start();
-            }
+        if (s.iface) {
+            if (s.gnome)
+                s.reply = s.iface->call(u"Inhibit"_q, u"bomi"_q, 0u,
+                                        u"Running player"_q, 4u | 8u);
+            else
+                s.reply = s.iface->call(u"Inhibit"_q, u"bomi"_q,
+                                        u"Running player"_q);
+            if (!s.reply.isValid()) {
+                _Error("DBus '%%' error: %%", s.iface->interface(),
+                       s.reply.error().message());
+                _Error("Fallback to XCB_SCREEN_SAVER_RESET.");
+                _Delete(s.iface);
+                s.xss = true;
+            } else
+                _Debug("Disable screensaver with '%%'.", s.iface->interface());
+        }
+        if (s.xss) {
+            xcb_screensaver_suspend(d->connection, 1);
+            _Debug("Disable screensaver with XCB_SCREEN_SAVER_RESET.");
+            s.reset.start();
         }
     } else {
-        if (d->iface) {
-            auto response = d->iface->call(d->gnome ? u"Uninhibit"_q
-                                                    : u"UnInhibit"_q,
-                                           d->reply.value());
-            if (response.type() == QDBusMessage::ErrorMessage)
-                _Error("DBus '%%' error: [%%] %%", d->iface->interface(),
-                       response.errorName(), response.errorMessage());
+        if (s.iface) {
+            auto res = s.iface->call(s.gnome ? u"Uninhibit"_q : u"UnInhibit"_q,
+                                     s.reply.value());
+            if (res.type() == QDBusMessage::ErrorMessage)
+                _Error("DBus '%%' error: [%%] %%", s.iface->interface(),
+                       res.errorName(), res.errorMessage());
             else
-                _Debug("Enable screensaver with '%%'.", d->iface->interface());
+                _Debug("Enable screensaver with '%%'.", s.iface->interface());
         }
-        if (d->xss) {
+        if (s.xss)
             xcb_screensaver_suspend(d->connection, 0);
-            d->xssTimer.start();
-        }
     }
-    d->inhibit = disabled;
+    s.inhibit = disabled;
 }
 
 
-auto AppX11::setFullScreen(QWidget *widget, bool fs) -> void
+auto setFullScreen(QWidget *widget, bool fs) -> void
 {
-    d->sendState(widget, fs, _NET_WM_STATE_FULLSCREEN);
+    if (widget->isFullScreen() != fs)
+        d->sendState(widget, fs, _NET_WM_STATE_FULLSCREEN);
 }
 
-auto AppX11::setAlwaysOnTop(QWidget *widget, bool on) -> void
+auto setAlwaysOnTop(QWidget *widget, bool on) -> void
 {
     d->sendState(widget, on, _NET_WM_STATE_ABOVE, _NET_WM_STATE_STAYS_ON_TOP);
 }
 
-auto AppX11::devices() const -> QStringList
+auto opticalDrives() -> QStringList
 {
     static const QStringList filter = QStringList() << u"sr*"_q
         << u"sg*"_q << u"scd*"_q << u"dvd*"_q << u"cd*"_q;
@@ -284,7 +260,7 @@ auto AppX11::devices() const -> QStringList
     return devices;
 }
 
-auto AppX11::shutdown() -> bool
+auto shutdown() -> bool
 {
     using Iface = QDBusInterface;
     auto bus = QDBusConnection::sessionBus();
@@ -329,6 +305,8 @@ auto AppX11::shutdown() -> bool
               "Sorry, there's no way to shutdown."))
         return true;
     return false;
+}
+
 }
 
 #endif

@@ -41,19 +41,19 @@ macx {
 		-framework IOSurface -framework Carbon -framework AudioUnit \
 		-framework CoreAudio -framework VideoDecodeAcceleration \
 		-framework AudioToolbox
-	HEADERS += player/app_mac.hpp
-	OBJECTIVE_SOURCES += player/app_mac.mm
+	HEADERS += player/mac.hpp
+	OBJECTIVE_SOURCES += player/mac.mm
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
 } else:unix {
     QT += dbus x11extras
 	TARGET = bomi
 	LIBS += -ldl -lxcb-randr -lxcb-screensaver
-	HEADERS += player/app_x11.hpp player/mpris.hpp
-	SOURCES += player/app_x11.cpp player/mpris.cpp
+	HEADERS += player/mpris.hpp
+	SOURCES += player/mpris.cpp
 } else:win32 {
     LIBS += -lopengl32 -lgdi32
-	HEADERS += player/app_win.hpp
-	SOURCES += player/app_win.cpp
+	HEADERS += player/win.hpp
+	SOURCES += player/win.cpp
 }
 
 QML_IMPORT_PATH += imports
@@ -256,7 +256,8 @@ HEADERS += \
     widget/pathbutton.hpp \
 	misc/logoption.hpp \
     misc/logviewer.hpp \
-	tmp/type_traits.hpp
+	tmp/type_traits.hpp \
+    os/os.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -440,7 +441,8 @@ SOURCES += \
     enum/logoutput.cpp \
     widget/pathbutton.cpp \
 	misc/logoption.cpp \
-	misc/logviewer.cpp
+	misc/logviewer.cpp \
+    os/x11.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

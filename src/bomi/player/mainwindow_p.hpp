@@ -21,6 +21,7 @@
 #include "quick/themeobject.hpp"
 #include "misc/stepaction.hpp"
 #include "misc/logviewer.hpp"
+#include "os/os.hpp"
 #include <QUndoCommand>
 
 template<class Func, class T>

@@ -61,7 +61,7 @@ auto MainWindow::Data::initContextMenu() -> void
     contextMenu.addAction(menu(u"help"_q)[u"about"_q]);
     contextMenu.addAction(menu[u"exit"_q]);
 #ifdef Q_OS_MAC
-////    qt_mac_set_dock_menu(&menu);
+////    qt_macOS::set_dock_menu(&menu);
     QMenuBar *mb = cApp.globalMenuBar();
     qDeleteAll(mb->actions());
     auto addMenuBar = [=] (Menu &menu)
@@ -151,7 +151,7 @@ auto MainWindow::Data::plugEngine() -> void
         menu(u"video"_q)(u"track"_q).setEnabled(running);
         menu(u"audio"_q)(u"track"_q).setEnabled(running);
         menu(u"subtitle"_q)(u"track"_q).setEnabled(running);
-        cApp.setScreensaverDisabled(pref.disable_screensaver() && playing);
+        OS::setScreensaverDisabled(pref.disable_screensaver() && playing);
         updateStaysOnTop();
         stateChanging = false;
     });
@@ -527,7 +527,7 @@ auto MainWindow::Data::updateStaysOnTop() -> void
         else
             onTop = e.isPlaying();
     }
-    cApp.setAlwaysOnTop(p, onTop);
+    OS::setAlwaysOnTop(p, onTop);
 }
 
 auto MainWindow::Data::setVideoSize(double rate) -> void
@@ -672,7 +672,7 @@ auto MainWindow::Data::checkWindowState(Qt::WindowStates prev) -> void
     dontPause = true;
     p->resetMoving();
     if (full) {
-        cApp.setAlwaysOnTop(p, false);
+        OS::setAlwaysOnTop(p, false);
         p->setVisible(true);
     } else {
         updateStaysOnTop();

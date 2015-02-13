@@ -96,7 +96,7 @@ auto MainWindow::exit() -> void
 {
     static bool done = false;
     if (!done) {
-        cApp.setScreensaverDisabled(false);
+        OS::setScreensaverDisabled(false);
         d->commitData();
         cApp.quit();
         done = true;
@@ -179,7 +179,7 @@ auto MainWindow::setFullScreen(bool full) -> void
         } else
 #endif
         {
-            cApp.setFullScreen(this, full);
+            OS::setFullScreen(this, full);
             if (!full) {
                 if (d->prevWinState & Qt::WindowMaximized)
                     showMaximized();

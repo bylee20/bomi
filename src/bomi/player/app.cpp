@@ -5,18 +5,14 @@
 #include "misc/logoption.hpp"
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
+#include "os/os.hpp"
 #include <clocale>
 #include <QStyleFactory>
 #include <QMenuBar>
 #include <QFileOpenEvent>
 
-#if defined(Q_OS_MAC)
-#include "app_mac.hpp"
-#elif defined(Q_OS_LINUX)
-#include "app_x11.hpp"
-#include "mpris.hpp"
-#elif defined(Q_OS_WIN)
-#include "app_win.hpp"
+#ifdef Q_OS_LINUX
+#include "player/mpris.hpp"
 #endif
 
 DECLARE_LOG_CONTEXT(App)
@@ -43,13 +39,9 @@ struct App::Data {
     Mrl pended;
 #ifdef Q_OS_MAC
     QMenuBar *mb = new QMenuBar;
-    AppMac helper;
 #else
 #if defined(Q_OS_LINUX)
-    AppX11 helper;
     mpris::RootObject *mpris = nullptr;
-#elif defined(Q_OS_WIN)
-    AppWin helper;
 #endif
     QMenuBar *mb = nullptr;
 #endif
@@ -191,6 +183,7 @@ App::App(int &argc, char **argv)
     setOrganizationDomain(u"xylosper.net"_q);
     setApplicationName(_L(name()));
     setApplicationVersion(_L(version()));
+    OS::initialize();
 
     setLocale(Locale::fromVariant(d->read("locale", Locale().toVariant())));
 
@@ -265,6 +258,7 @@ App::~App() {
     delete d->main;
     delete d->mb;
     delete d;
+    OS::finalize();
 }
 
 auto App::handleMessage(const QByteArray &message) -> void
@@ -350,21 +344,6 @@ auto App::defaultIcon() -> QIcon
     return icon;
 }
 
-auto App::setAlwaysOnTop(QWidget *widget, bool onTop) -> void
-{
-    d->helper.setAlwaysOnTop(widget, onTop);
-}
-
-auto App::setFullScreen(QWidget *widget, bool fs) -> void
-{
-    d->helper.setFullScreen(widget, fs);
-}
-
-auto App::setScreensaverDisabled(bool disabled) -> void
-{
-    d->helper.setScreensaverDisabled(disabled);
-}
-
 auto App::event(QEvent *event) -> bool
 {
     switch ((int)event->type()) {
@@ -380,11 +359,6 @@ auto App::event(QEvent *event) -> bool
     default:
         return QApplication::event(event);
     }
-}
-
-auto App::devices() const -> QStringList
-{
-    return d->helper.devices();
 }
 
 #ifdef Q_OS_MAC
@@ -427,19 +401,6 @@ auto App::availableStyleNames() const -> QStringList
     return d->styleNames;
 }
 
-auto App::refreshRate() const -> qreal
-{
-    if (!d->main)
-        return -1;
-    return d->helper.refreshRate();
-}
-
-auto App::screenNumber() const -> int
-{
-    auto desktop = this->desktop();
-    return d->main ? desktop->screenNumber(d->main) : desktop->primaryScreen();
-}
-
 auto App::setStyleName(const QString &name) -> void
 {
     if (!d->styleNames.contains(name, QCI))
@@ -463,11 +424,6 @@ auto App::styleName() const -> QString
 auto App::isUnique() const -> bool
 {
     return d->read("unique", true);
-}
-
-auto App::shutdown() -> bool
-{
-    return d->helper.shutdown();
 }
 
 auto App::logOption() const -> LogOption

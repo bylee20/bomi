@@ -18,7 +18,6 @@ public:
     auto setWindowTitle(QWidget *w, const QString &title) -> void;
     auto setMainWindow(MainWindow *mw) -> void;
     auto mainWindow() const -> MainWindow*;
-    auto devices() const -> QStringList;
     auto styleName() const -> QString;
     auto isUnique() const -> bool;
     auto availableStyleNames() const -> QStringList;
@@ -31,13 +30,8 @@ public:
     auto locale() const -> Locale;
     auto setLogOption(const LogOption &option) -> void;
     auto logOption() const -> LogOption;
-    auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
-    auto setFullScreen(QWidget *widget, bool fs) -> void;
-    auto setScreensaverDisabled(bool disabled) -> void;
     auto setUnique(bool unique) -> void;
-    auto shutdown() -> bool;
     auto runCommands() -> void;
-    auto screenNumber() const -> int;
     auto isOpenGLDebugLoggerRequested() const -> bool;
     auto setMprisActivated(bool activated) -> void;
     template<class T>
@@ -47,7 +41,6 @@ public:
     static constexpr auto name() -> const char* { return "bomi"; }
     static auto displayName() -> QString { return tr("bomi"); }
     static auto defaultIcon() -> QIcon;
-    auto refreshRate() const -> qreal;
 private:
     auto sendMessage(const QByteArray &message, int timeout = 5000) -> bool;
     auto handleMessage(const QByteArray &message) -> void;
