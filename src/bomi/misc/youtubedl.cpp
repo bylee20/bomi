@@ -161,3 +161,24 @@ auto YouTubeDL::setProgram(const QString &program) -> void
 {
     d->program = program;
 }
+
+auto YouTubeDL::supports(const QString &url) -> bool
+{
+    QProcess proc;
+    QStringList args;
+    args << u"-g"_q << url;
+
+//    proc.start(d->program, args, QProcess::ReadOnly);
+    proc.start(u"youtube-dl"_q, args, QProcess::ReadOnly);
+    if (!proc.waitForFinished(30000))
+        proc.kill();
+    if (proc.error() != QProcess::UnknownError)
+        return false;
+    if (proc.exitStatus() != QProcess::NormalExit)
+        return false;
+    if (proc.exitCode())
+        return false;
+    const auto out = proc.readAllStandardOutput().trimmed();
+    const auto err = proc.readAllStandardError().trimmed();
+    return !out.isEmpty() && err.isEmpty();
+}

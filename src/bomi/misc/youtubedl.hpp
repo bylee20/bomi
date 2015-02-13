@@ -20,6 +20,7 @@ public:
 
     YouTubeDL(QObject *parent = nullptr);
     ~YouTubeDL();
+    static auto supports(const QString &url) -> bool;
     auto userAgent() const -> QString;
     auto setUserAgent(const QString &ua) -> void;
     auto setProgram(const QString &program) -> void;

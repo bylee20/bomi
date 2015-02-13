@@ -115,6 +115,7 @@ struct MainWindow::Data {
     auto initTray() -> void;
     auto generatePlaylist(const Mrl &mrl) const -> Playlist;
     auto openMrl(const Mrl &mrl) -> void;
+    auto openMimeData(const QMimeData *md) -> void;
     auto plugEngine() -> void;
     auto initItems() -> void;
     auto plugMenu() -> void;

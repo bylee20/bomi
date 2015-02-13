@@ -371,6 +371,63 @@ auto MainWindow::Data::openMrl(const Mrl &mrl) -> void
     }
 }
 
+auto MainWindow::Data::openMimeData(const QMimeData *md) -> void
+{
+    auto urls = md->urls();
+    if (md->hasText()) {
+        const auto lines = md->text().split(QRegEx(uR"([\n\r]+)"_q), QString::SkipEmptyParts);
+        for (auto &line : lines) {
+            QUrl url(line.trimmed());
+            if (url.isValid() && !urls.contains(url))
+                urls.push_back(url);
+        }
+    }
+    Playlist playlist;
+    QStringList subList;
+
+    auto addPlaylist = [&] (const QUrl &url, const QString &suffix) -> bool {
+        if (_IsSuffixOf(PlaylistExt, suffix)) {
+            Playlist list;
+            list.load(url);
+            playlist += list;
+            return true;
+        }
+        const auto u = url.toString();
+        if (!_IsSuffixOf(VideoExt, suffix) && !_IsSuffixOf(AudioExt, suffix)
+                && !yle.supports(u) && !youtube.supports(u))
+            return false;
+        playlist.append(url);
+        return true;
+    };
+
+    for (auto &url : urls) {
+        if (url.isLocalFile()) {
+            const QFileInfo fileInfo(url.toLocalFile());
+            if (!fileInfo.exists())
+                continue;
+            auto path = fileInfo.absoluteFilePath();
+            if (fileInfo.isFile()) {
+                const auto suffix = fileInfo.suffix();
+                if (!addPlaylist(url, suffix) && _IsSuffixOf(SubtitleExt, suffix))
+                    subList << path;
+            } else if (fileInfo.isDir()) {
+                if (!fileInfo.fileName().compare("VIDEO_TS"_a, Qt::CaseInsensitive)
+                        && !QDir(path).entryList(QStringList(u"*.ifo"_q), QDir::Files).isEmpty()) {
+                    as.dvd_device = path;
+                    openMrl(Mrl::fromDisc(u"dvdnav"_q, as.dvd_device, -1, true));
+                } else
+                    openDir(path);
+                return;
+            }
+        } else
+            addPlaylist(url, QFileInfo(url.path()).suffix().toLower());
+    }
+    if (!playlist.isEmpty()) {
+        openWith(pref.open_media_by_drag_and_drop(), playlist);
+    } else if (!subList.isEmpty())
+        e.addSubtitleFiles(subList, pref.sub_enc());
+}
+
 auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
 {
     if (!mrl.isLocalFile() || !pref.enable_generate_playlist())

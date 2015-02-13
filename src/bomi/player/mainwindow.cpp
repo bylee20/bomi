@@ -263,51 +263,7 @@ auto MainWindow::dragEnterEvent(QDragEnterEvent *event) -> void
 
 auto MainWindow::dropEvent(QDropEvent *event) -> void
 {
-    const auto urls = event->mimeData()->urls();
-    if (!event->mimeData()->hasUrls() || urls.isEmpty())
-        return;
-    Playlist playlist;
-    QStringList subList;
-
-    auto addPlaylist = [&] (const QUrl &url, const QString &suffix) -> bool {
-        if (_IsSuffixOf(PlaylistExt, suffix)) {
-            Playlist list;
-            list.load(url);
-            playlist += list;
-        } else if (_IsSuffixOf(VideoExt, suffix)
-                   || _IsSuffixOf(AudioExt, suffix))
-            playlist.append(url);
-        else
-            return false;
-        return true;
-    };
-
-    for (auto &url : urls) {
-        if (url.isLocalFile()) {
-            const QFileInfo fileInfo(url.toLocalFile());
-            if (!fileInfo.exists())
-                continue;
-            auto path = fileInfo.absoluteFilePath();
-            if (fileInfo.isFile()) {
-                const auto suffix = fileInfo.suffix();
-                if (!addPlaylist(url, suffix) && _IsSuffixOf(SubtitleExt, suffix))
-                    subList << path;
-            } else if (fileInfo.isDir()) {
-                if (!fileInfo.fileName().compare("VIDEO_TS"_a, Qt::CaseInsensitive)
-                        && !QDir(path).entryList(QStringList(u"*.ifo"_q), QDir::Files).isEmpty()) {
-                    d->as.dvd_device = path;
-                    d->openMrl(Mrl::fromDisc(u"dvdnav"_q, d->as.dvd_device, -1, true));
-                } else
-                    d->openDir(path);
-                return;
-            }
-        } else
-            addPlaylist(url, QFileInfo(url.path()).suffix().toLower());
-    }
-    if (!playlist.isEmpty()) {
-        d->openWith(d->pref.open_media_by_drag_and_drop(), playlist);
-    } else if (!subList.isEmpty())
-        d->e.addSubtitleFiles(subList, d->pref.sub_enc());
+    d->openMimeData(event->mimeData());
 }
 
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
