@@ -17,6 +17,7 @@
 #include "enum/dithering.hpp"
 #include "enum/channellayout.hpp"
 #include "enum/subtitledisplay.hpp"
+#include <QMetaProperty>
 
 struct CacheInfo {
     auto get(const Mrl &mrl) const -> int

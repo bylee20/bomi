@@ -6,6 +6,9 @@
 #include "subtitle/opensubtitlesfinder.hpp"
 #include "ui_subtitlefinddialog.h"
 #include <QFileDialog>
+#include <QTemporaryDir>
+#include <QTemporaryFile>
+#include <QSortFilterProxyModel>
 
 enum CustomRole {
     UrlRole = Qt::UserRole + 1,

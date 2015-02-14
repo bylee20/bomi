@@ -1,5 +1,8 @@
 #include "youtubedl.hpp"
 #include "log.hpp"
+#include <QTemporaryDir>
+#include <QTemporaryFile>
+#include <QProcess>
 
 DECLARE_LOG_CONTEXT(YouTubeDL)
 
@@ -109,8 +112,8 @@ auto YouTubeDL::run(const QString &url) -> bool
             _Error(err);
         return false;
     }
-    auto stdout = proc.readAllStandardOutput().trimmed();
-    const auto json =_JsonFromString(_L(std::move(stdout)));
+    auto out = proc.readAllStandardOutput().trimmed();
+    const auto json =_JsonFromString(_L(std::move(out)));
 
     // ported from mpv/player/lua/ytdl_hook.lua
     if (json[u"direct"_q].toBool())

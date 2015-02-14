@@ -1,8 +1,6 @@
 #ifndef MPIMAGE_HPP
 #define MPIMAGE_HPP
 
-#include "stdafx.hpp"
-
 extern "C" {
 #include <video/mp_image.h>
 }

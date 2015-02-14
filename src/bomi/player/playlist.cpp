@@ -1,5 +1,8 @@
 #include "playlist.hpp"
 #include "tmp/algorithm.hpp"
+#include <QCollator>
+#include <QTextStream>
+#include <QTextCodec>
 
 Playlist::Playlist()
 : QList<Mrl>() {}

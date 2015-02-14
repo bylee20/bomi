@@ -24,12 +24,12 @@ auto DeintCaps::list() -> const QList<DeintCaps>&
         return caps[(int)method];
     };
     //  method                        cpu    gpu    doubler
-    push(DeintMethod::Bob           , false, true , true );
-    push(DeintMethod::LinearBob     , true , false, true );
-    push(DeintMethod::CubicBob      , true , false, true );
-    push(DeintMethod::LinearBlend   , true , false, false);
-    push(DeintMethod::Yadif         , true , false, true );
-    push(DeintMethod::Median        , true , false, true );
+    push(DeintMethod::Bob           , true , true, true );
+    push(DeintMethod::LinearBob     , true , true, true );
+    push(DeintMethod::CubicBob      , true , true, true );
+    push(DeintMethod::LinearBlend   , true , true, false);
+    push(DeintMethod::Yadif         , true , true, true );
+    push(DeintMethod::Median        , true , true, true );
     return caps;
 }
 

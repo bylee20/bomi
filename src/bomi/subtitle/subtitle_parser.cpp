@@ -1,4 +1,5 @@
 #include "subtitle_parser_p.hpp"
+#include <QTextStream>
 
 int SubtitleParser::msPerChar = -1;
 

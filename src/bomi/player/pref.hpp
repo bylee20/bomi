@@ -50,7 +50,7 @@ public:
     P0(OpenMediaInfo, open_media_from_file_manager, {OpenMediaBehavior::NewPlaylist})
     P0(OpenMediaInfo, open_media_by_drag_and_drop, {OpenMediaBehavior::Append})
     P1(QString, quick_snapshot_format, u"png"_q, "currentText")
-    P0(QString, quick_snapshot_folder, QDir::homePath())
+    P0(QString, quick_snapshot_folder, _WritablePath(Location::Pictures))
     P0(int, quick_snapshot_quality, -1)
     P0(QuickSnapshotSave, quick_snapshot_save, QuickSnapshotSave::Fixed)
 

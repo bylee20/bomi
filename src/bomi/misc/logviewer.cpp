@@ -8,6 +8,7 @@
 #include <QMenu>
 #include <QClipboard>
 #include <set>
+#include <QSortFilterProxyModel>
 
 static const int LogEvent = QEvent::User + 10;
 

@@ -24,13 +24,6 @@ auto HwAcc::fullCodecList() -> QList<CodecId>
     return ids;
 }
 
-auto HwAcc::fullDeintList() -> QList<DeintMethod>
-{
-    static const QList<DeintMethod> methods = QList<DeintMethod>()
-            << DeintMethod::Bob;
-    return methods;
-}
-
 struct ApiInfo {
     HwAcc::Api api;
     QString name, desc;
@@ -95,12 +88,16 @@ auto HwAcc::description() const -> QString
 
 auto HwAcc::name(Api api) -> QString
 {
-    return s_infos[api].name;
+    if (_InRange0(api, NoApi))
+        return s_infos[api].name;
+    return QString();
 }
 
 auto HwAcc::description(Api api) -> QString
 {
-    return s_infos[api].desc;
+    if (_InRange0(api, NoApi))
+        return s_infos[api].desc;
+    return QString();
 }
 
 auto HwAcc::api(const QString &name) -> Api

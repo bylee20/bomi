@@ -10,6 +10,8 @@
 #include <QStyleFactory>
 #include <QMenuBar>
 #include <QFileOpenEvent>
+#include <QJsonDocument>
+#include <QCommandLineParser>
 
 #ifdef Q_OS_LINUX
 #include "player/mpris.hpp"

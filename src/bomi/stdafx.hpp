@@ -38,11 +38,27 @@ char *gets(char *str);
 #include <QPainter>
 #include <QLabel>
 #include <QSharedPointer>
+#include <QMutex>
+#include <QThread>
+#include <QWaitCondition>
+#include <QReadWriteLock>
+#include <QReadLocker>
+#include <QWriteLocker>
+#include <QMutexLocker>
+#include <QTimer>
+#include <QLinkedList>
+#include <QVector>
+#include <QDir>
+#include <QJsonDocument>
+#include <QtMath>
+#include <QDebug>
 
 #include <utility>
 #include <array>
 #include <tuple>
 #include <deque>
+#include <cmath>
+#include <functional>
 
 #ifdef Q_OS_LINUX
 #include <QtDBus>

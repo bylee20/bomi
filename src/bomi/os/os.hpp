@@ -40,7 +40,6 @@ public:
     virtual auto download(mp_hwdec_ctx *ctx, const mp_image *mpi,
                           mp_image_pool *pool) -> mp_image*;
     static auto fullCodecList() -> QList<CodecId>;
-    static auto fullDeintList() -> QList<DeintMethod>;
     static auto name(Api api) -> QString;
     static auto description(Api api) -> QString;
     static auto api(const QString &name) -> Api;

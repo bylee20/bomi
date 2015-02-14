@@ -1,6 +1,7 @@
 #include "mrl.hpp"
 #include "tmp/algorithm.hpp"
 #include "misc/udf25.hpp"
+#include <QCryptographicHash>
 
 Mrl::Mrl(const QUrl &url) {
     if (url.isLocalFile())

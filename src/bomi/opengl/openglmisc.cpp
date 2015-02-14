@@ -2,6 +2,7 @@
 #include "misc/log.hpp"
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
+#include <QSet>
 #ifdef Q_OS_LINUX
 #include <GL/glx.h>
 #endif

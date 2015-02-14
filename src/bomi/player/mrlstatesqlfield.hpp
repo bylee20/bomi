@@ -1,7 +1,7 @@
 #ifndef MRLSTATESQLFIELD_HPP
 #define MRLSTATESQLFIELD_HPP
 
-#include <functional>
+#include <QMetaProperty>
 
 struct MrlStateSqlField;
 

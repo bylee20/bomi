@@ -23,6 +23,7 @@
 #include "misc/logviewer.hpp"
 #include "os/os.hpp"
 #include <QUndoCommand>
+#include <QMimeData>
 
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {

@@ -1,6 +1,9 @@
 #include "translator.hpp"
 #include "configure.hpp"
 #include "misc/log.hpp"
+#include <QTranslator>
+#include <QSet>
+#include <QLibraryInfo>
 
 DECLARE_LOG_CONTEXT(Translator)
 

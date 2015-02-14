@@ -1,4 +1,5 @@
 #include "playengine_p.hpp"
+#include <QTextCodec>
 
 template<class T>
 SIA findEnum(const QString &mpv) -> T
@@ -168,7 +169,7 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume) -> void
     OptionList opts;
     opts.add("pause"_b, p->isPaused() || hasImage);
     opts.add("resume-playback", resume);
-    mpv.tell("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
+    mpv.tell("loadfile"_b, file.toUtf8(), "replace"_b, opts.get());
 }
 
 auto PlayEngine::Data::updateMediaName(const QString &name) -> void
@@ -321,6 +322,8 @@ auto PlayEngine::Data::onLoad() -> void
         } else
             mpv.setAsync("stream-open-filename", file.toLocal8Bit());
     }
+
+    mpv.set("stream-open-filename", file.toUtf8());
     mpv.flush();
     _PostEvent(p, SyncMrlState, t.local, loads);
     t.local.clear();

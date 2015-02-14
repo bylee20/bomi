@@ -94,10 +94,10 @@ struct mpv_trait<QString> {
     static constexpr mpv_format format = MPV_FORMAT_STRING;
     static auto get_free(mpv_type &data) { mpv_free((void*)data); }
     static auto get(QString &s, const mpv_type &data)
-        { s = QString::fromLocal8Bit(data); }
+        { s = QString::fromUtf8(data); }
     static auto set(mpv_type &data, const QString &t)
     {
-        const auto buf = t.toLocal8Bit();
+        const auto buf = t.toUtf8();
         auto str = new char[buf.size() + 1];
         qstrncpy(str, buf.data(), buf.size() + 1);
         data = str;
@@ -166,7 +166,7 @@ struct mpv_trait<QVariant> {
         case MPV_FORMAT_INT64:
             return QVariant::fromValue<int>(node.u.int64);
         case MPV_FORMAT_STRING:
-            return QString::fromLocal8Bit(node.u.string);
+            return QString::fromUtf8(node.u.string);
         case MPV_FORMAT_NODE_ARRAY: {
             auto array = node.u.list;
             QVariantList list; list.reserve(array->num);
@@ -177,7 +177,7 @@ struct mpv_trait<QVariant> {
             auto list = node.u.list; QVariantMap map;
             for (int i=0; i<list->num; ++i) {
                 auto data = parse(list->values[i]);
-                map.insert(QString::fromLocal8Bit(list->keys[i]), data);
+                map.insert(_L(list->keys[i]), data);
             }
             return map;
         } default:

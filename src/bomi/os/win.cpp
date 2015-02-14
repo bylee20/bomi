@@ -2,8 +2,12 @@
 
 #ifdef Q_OS_WIN
 
+#include "enum/deintmethod.hpp"
+#include "enum/codecid.hpp"
 #include <qt_windows.h>
 #include <QScreen>
+#include <QDesktopWidget>
+#include <psapi.h>
 
 namespace OS {
 
@@ -13,6 +17,7 @@ static const auto REGISTRY_SCREENSAVER_KEY = u"SCRNSAVE.EXE"_q;
 struct Win : public QObject {
     Win() {
         originalScreensaver = isScreensaverEnabled();
+        proc = GetCurrentProcess();
     }
     auto isScreensaverEnabled() -> bool
     {
@@ -33,6 +38,8 @@ struct Win : public QObject {
 
     QHash<QWidget*, Window> windows;
     HANDLE shutdownToken = nullptr;
+    HANDLE proc = nullptr;
+    Dxva2Info dxva2;
 };
 
 static Win *d = nullptr;
@@ -72,6 +79,7 @@ auto setFullScreen(QWidget *w, bool fs) -> void
         win.prevGeometry = w->frameGeometry();
         win.prevStyle = GetWindowLong(hwnd, GWL_STYLE);
         g = qApp->desktop()->screenGeometry(w);
+        g.adjust(-1, -1, 1, 1);
         style = win.prevStyle & ~(WS_DLGFRAME | WS_THICKFRAME);
         layer = HWND_NOTOPMOST;
     }
@@ -89,8 +97,7 @@ auto setScreensaverDisabled(bool disabled) -> void
 auto processTime() -> quint64
 {
     ULARGE_INTEGER creation, exit, kernel, user;
-    if (!GetProcessTimes(GetCurrentProcess(),
-                         (LPFILETIME)&creation.u, (LPFILETIME)&exit.u,
+    if (!GetProcessTimes(d->proc, (LPFILETIME)&creation.u, (LPFILETIME)&exit.u,
                          (LPFILETIME)&kernel.u, (LPFILETIME)&user.u))
         return 0;
     return (kernel.QuadPart + user.QuadPart)/10;
@@ -105,13 +112,29 @@ auto systemTime() -> quint64
     return (idle.QuadPart + kernel.QuadPart + user.QuadPart)/10;
 }
 
+auto totalMemory() -> double
+{
+    MEMORYSTATUSEX memory;
+    memory.dwLength = sizeof(memory);
+    GlobalMemoryStatusEx(&memory);
+    return memory.ullTotalPhys/double(1024*1024);
+}
+
+auto usingMemory() -> double
+{
+    PROCESS_MEMORY_COUNTERS_EX counters;
+    if (!GetProcessMemoryInfo(d->proc, (PPROCESS_MEMORY_COUNTERS)&counters,
+                              sizeof(counters)))
+        return 0.0;
+    return counters.WorkingSetSize/double(1024*1024);
+}
+
 auto canShutdown() -> bool
 {
     if (d->shutdownToken)
         return true;
     HANDLE token = nullptr;
-    const auto proc = GetCurrentProcess();
-    if(!OpenProcessToken(proc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token))
+    if(!OpenProcessToken(d->proc, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token))
         return false;
 
     TOKEN_PRIVILEGES p;
@@ -147,6 +170,22 @@ auto opticalDrives() -> QStringList
 auto refreshRate() -> qreal
 {
     return qApp->primaryScreen()->refreshRate();
+}
+
+Dxva2Info::Dxva2Info()
+    : HwAcc(Dxva2Copy)
+{
+    setSupportedCodecs(QList<CodecId>() << CodecId::Mpeg2 << CodecId::H264
+                       << CodecId::Vc1 << CodecId::Wmv3);
+    setSupportedDeints(QList<DeintMethod>() << DeintMethod::Bob
+                       << DeintMethod::LinearBob << DeintMethod::CubicBob
+                       << DeintMethod::LinearBlend << DeintMethod::Yadif
+                       << DeintMethod::Median);
+}
+
+auto getHwAcc() -> HwAcc*
+{
+    return &d->dxva2;
 }
 
 }

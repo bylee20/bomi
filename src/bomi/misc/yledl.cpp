@@ -1,4 +1,5 @@
 #include "yledl.hpp"
+#include <QProcess>
 #ifdef Q_OS_LINUX
 #include <sys/types.h>
 #include <sys/stat.h>

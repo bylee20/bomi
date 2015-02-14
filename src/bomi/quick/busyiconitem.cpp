@@ -1,6 +1,7 @@
 #include "busyiconitem.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"
+#include <QVariantAnimation>
 
 auto reg_busy_icon_item() -> void {
     qmlRegisterType<BusyIconItem>("bomi", 1, 0, "BusyIcon");

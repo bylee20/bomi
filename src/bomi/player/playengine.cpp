@@ -122,6 +122,7 @@ PlayEngine::PlayEngine()
     d->request();
 
     const auto hwdec = OS::hwAcc()->name().toLatin1();
+    qDebug() << hwdec;
     d->mpv.setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.data());
     d->mpv.setOption("fs", "no");
     d->mpv.setOption("input-cursor", "yes");

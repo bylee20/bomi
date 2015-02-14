@@ -1,6 +1,8 @@
 #ifndef JSONSTORAGE_HPP
 #define JSONSTORAGE_HPP
 
+#include <QJsonParseError>
+
 class JsonStorage {
 public:
     enum Error { NoError, NoFile, OpenError, ParseError };
