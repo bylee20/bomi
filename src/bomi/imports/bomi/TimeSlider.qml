@@ -62,7 +62,7 @@ Slider {
                 markers.push(wrap)
             }
         }
-        function target(x) { return ~~(min + (x/seeker.width)*(max - min)); }
+        function target(x) { return (min + (x/seeker.width)*(max - min)); }
     }
 
     Connections {

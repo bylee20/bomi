@@ -25,7 +25,7 @@ Q.Text {
         text += mins < 10 ? ":0" : ":";
         text += mins.toString();
         text += secs < 10 ? ":0" : ":";
-        text += point ? secs.toFixed(3) : (secs | 0);
+        text += secs.toFixed(point ? 3 : 0);
         return text;
     }
     function formatNA(text) {
