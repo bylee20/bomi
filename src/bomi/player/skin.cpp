@@ -2,6 +2,7 @@
 #include "misc/log.hpp"
 #include "configure.hpp"
 #include <QQuickView>
+#include <QQmlEngine>
 
 DECLARE_LOG_CONTEXT(Skin)
 

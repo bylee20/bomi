@@ -12,13 +12,13 @@ Mrl::Mrl(const QUrl &url) {
 Mrl::Mrl(const QString &location, const QString &name) {
     if (location.isEmpty())
         return;
+    m_loc = location;
     const int idx = location.indexOf("://"_a);
     if (idx < 0)
         m_loc = "file://"_a % _ToAbsFilePath(location);
-    else if (location.startsWith("file://"_a, QCI))
+    else if (startsWith("file://"_a))
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
-    else if (location.startsWith("dvdnav://"_a, QCI)
-             || location.startsWith("bdnav://"_a, QCI))
+    else if (startsWith("dvdnav://"_a) || startsWith("bdnav://"_a))
         m_loc = location;
     else
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
@@ -86,13 +86,13 @@ static const QStringList discSchemes = QStringList()
 
 auto Mrl::isDisc() const -> bool
 {
-    return discSchemes.contains(scheme(), QCI);
+    return discSchemes.contains(scheme(), Qt::CaseInsensitive);
 }
 
 auto Mrl::device() const -> QString
 {
     const auto scheme = this->scheme();
-    if (!discSchemes.contains(scheme, QCI))
+    if (!discSchemes.contains(scheme, Qt::CaseInsensitive))
         return QString();
     auto path = m_loc.midRef(scheme.size() + 3);
     const int idx = path.indexOf('/'_q);
@@ -248,4 +248,9 @@ auto Mrl::isYouTube() const -> bool
 {
     QRegEx rx(uR"(^https?://(www\.)?youtube\.com)"_q, QRegEx::CaseInsensitiveOption);
     return rx.match(m_loc).hasMatch();
+}
+
+auto Mrl::isDir() const -> bool
+{
+    return QFileInfo(toLocalFile()).isDir();
 }

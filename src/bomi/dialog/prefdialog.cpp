@@ -8,6 +8,7 @@
 #include "player/mrlstate.hpp"
 #include "misc/simplelistmodel.hpp"
 #include "ui_prefdialog.h"
+#include <QQmlProperty>
 
 #ifdef None
 #undef None

@@ -3,6 +3,7 @@
 #include "mainwindow.hpp"
 #include "quick/appobject.hpp"
 #include "quick/toplevelitem.hpp"
+#include <QQmlEngine>
 
 struct MainQuickView::Data {
     MainWindow *main = nullptr;
@@ -29,9 +30,14 @@ MainQuickView::~MainQuickView()
     delete d;
 }
 
-auto MainQuickView::setSkin(const QString &name) -> bool
+auto MainQuickView::clear() -> void
 {
     engine()->clearComponentCache();
+}
+
+auto MainQuickView::setSkin(const QString &name) -> bool
+{
+    clear();
     Skin::apply(this, name);
     if (status() != QQuickView::Error)
         return true;

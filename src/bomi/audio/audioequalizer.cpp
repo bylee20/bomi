@@ -62,24 +62,24 @@ auto AudioEqualizer::prepare(Preset preset) -> std::initializer_list<double>
 auto AudioEqualizer::name(Preset preset) -> QString
 {
     switch (preset) {
-    case Flat:          return tr("Flat");
-    case Classic:       return tr("Classic");
-    case Club:          return tr("Club");
-    case Dance:         return tr("Dance");
-    case FullBass:      return tr("Full bass");
-    case FullBassTreble:return tr("Full bass treble");
-    case FullTreble:    return tr("Full treble");
-    case Headphones:    return tr("Headphones");
-    case LargeHall:     return tr("Large hall");
-    case Live:          return tr("Live");
-    case Party:         return tr("Party");
-    case Pop:           return tr("Pop");
-    case Reggae:        return tr("Reggae");
-    case Rock:          return tr("Rock");
-    case Ska:           return tr("Ska");
-    case Soft:          return tr("Soft");
-    case SoftRock:      return tr("Soft rock");
-    case Techno:        return tr("Techno");
+    case Flat:          return qApp->translate("AudioEqualizer", "Flat");
+    case Classic:       return qApp->translate("AudioEqualizer", "Classic");
+    case Club:          return qApp->translate("AudioEqualizer", "Club");
+    case Dance:         return qApp->translate("AudioEqualizer", "Dance");
+    case FullBass:      return qApp->translate("AudioEqualizer", "Full bass");
+    case FullBassTreble:return qApp->translate("AudioEqualizer", "Full bass treble");
+    case FullTreble:    return qApp->translate("AudioEqualizer", "Full treble");
+    case Headphones:    return qApp->translate("AudioEqualizer", "Headphones");
+    case LargeHall:     return qApp->translate("AudioEqualizer", "Large hall");
+    case Live:          return qApp->translate("AudioEqualizer", "Live");
+    case Party:         return qApp->translate("AudioEqualizer", "Party");
+    case Pop:           return qApp->translate("AudioEqualizer", "Pop");
+    case Reggae:        return qApp->translate("AudioEqualizer", "Reggae");
+    case Rock:          return qApp->translate("AudioEqualizer", "Rock");
+    case Ska:           return qApp->translate("AudioEqualizer", "Ska");
+    case Soft:          return qApp->translate("AudioEqualizer", "Soft");
+    case SoftRock:      return qApp->translate("AudioEqualizer", "Soft rock");
+    case Techno:        return qApp->translate("AudioEqualizer", "Techno");
     default:            return QString();
     }
 }

@@ -3,6 +3,8 @@
 #include "enum/colorspace.hpp"
 #include "misc/json.hpp"
 #include "misc/log.hpp"
+#include <QVector3D>
+#include <QMatrix4x4>
 
 static auto makeNameArray() -> VideoColor::Array<QString>
 {
@@ -132,15 +134,15 @@ auto VideoColor::formatText(Type type) -> QString
 {
     switch (type) {
     case Brightness:
-        return tr("Brightness %1%");
+        return qApp->translate("VideoColor", "Brightness %1%");
     case Saturation:
-        return tr("Saturation %1%");
+        return qApp->translate("VideoColor", "Saturation %1%");
     case Contrast:
-        return tr("Contrast %1%");
+        return qApp->translate("VideoColor", "Contrast %1%");
     case Hue:
-        return tr("Hue %1%");
+        return qApp->translate("VideoColor", "Hue %1%");
     default:
-        return tr("Reset");
+        return qApp->translate("VideoColor", "Reset");
     }
 }
 

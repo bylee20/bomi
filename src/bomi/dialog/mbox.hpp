@@ -2,6 +2,7 @@
 #define MBOX_HPP
 
 #include "bbox.hpp"
+#include <QMessageBox>
 
 class MBox : public QObject {
     Q_OBJECT

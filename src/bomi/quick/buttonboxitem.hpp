@@ -2,6 +2,7 @@
 #define BUTTONBOXITEM_HPP
 
 #include <QQuickItem>
+#include <QDialogButtonBox>
 
 class ButtonBoxItem : public QQuickItem {
     Q_OBJECT

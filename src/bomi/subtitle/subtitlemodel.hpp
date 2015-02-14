@@ -3,6 +3,7 @@
 
 #include "subtitle.hpp"
 #include "misc/simplelistmodel.hpp"
+#include <QTreeView>
 
 struct SubCompModelData {
     SubCompModelData(): m_end(-1) {}

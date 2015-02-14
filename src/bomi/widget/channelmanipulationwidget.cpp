@@ -4,6 +4,7 @@
 #include "audio/channellayoutmap.hpp"
 #include "audio/channelmanipulation.hpp"
 #include <QHeaderView>
+#include <QTableWidget>
 
 struct ChannelManipulationWidget::Data {
     ChannelComboBox *output, *input;

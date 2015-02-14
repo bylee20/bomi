@@ -1,6 +1,8 @@
 #ifndef MRL_HPP
 #define MRL_HPP
 
+#include "global.hpp"
+
 class Mrl {
 public:
     Mrl() {}
@@ -12,12 +14,17 @@ public:
     auto location() const -> QString
         { auto loc = toLocalFile(); return loc.isEmpty() ? m_loc : loc; }
     auto toString() const -> QString { return m_loc; }
-    auto isLocalFile() const -> bool {return m_loc.startsWith("file://"_a, QCI);}
-    auto isDvd() const -> bool {return m_loc.startsWith("dvdnav://"_a, QCI);}
-    auto isBluray() const -> bool { return m_loc.startsWith("bdnav://"_a, QCI); }
+    auto startsWith(const QString &s) const -> bool
+        { return m_loc.startsWith(s, Qt::CaseInsensitive); }
+    auto startsWith(const QLatin1String &s) const -> bool
+        { return m_loc.startsWith(s, Qt::CaseInsensitive); }
+    auto isLocalFile() const -> bool { return startsWith("file://"_a); }
+    auto isDvd() const -> bool { return startsWith("dvdnav://"_a); }
+    auto isBluray() const -> bool { return startsWith("bdnav://"_a); }
     auto isDisc() const -> bool;
     auto scheme() const -> QString {return m_loc.left(m_loc.indexOf("://"_a));}
-    auto toLocalFile() const -> QString {return isLocalFile() ? m_loc.right(m_loc.size() - 7) : QString();}
+    auto toLocalFile() const -> QString
+        {return isLocalFile() ? m_loc.right(m_loc.size() - 7) : QString();}
     auto fileName() const -> QString;
 //    auto isPlaylist() const -> bool;
     auto displayName() const -> QString;
@@ -33,7 +40,7 @@ public:
     auto updateHash() -> void;
     auto isUnique() const -> bool { return !isDisc() || !m_hash.isEmpty(); }
     auto toUnique() const -> Mrl;
-    auto isDir() const { return QFileInfo(toLocalFile()).isDir(); }
+    auto isDir() const -> bool;
     static auto fromString(const QString str) -> Mrl
         { Mrl mrl; mrl.m_loc = str; return mrl; }
     static auto fromDisc(const QString &scheme, const QString &device,

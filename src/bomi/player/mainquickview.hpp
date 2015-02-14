@@ -17,6 +17,7 @@ public:
     auto topLevelItem() const -> QQuickItem*;
     auto setCursorVisible(bool visible) -> void;
     auto setSkin(const QString &name) -> bool;
+    auto clear() -> void;
 private:
     auto event(QEvent *event) -> bool final;
     auto eventFilter(QObject *obj, QEvent *ev) -> bool final;

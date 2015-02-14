@@ -2,6 +2,7 @@
 #define ITEMWRAPPER_HPP
 
 #include <QQuickItem>
+#include <QQmlProperty>
 
 class QtItem : public QObject {
     Q_OBJECT

@@ -17,7 +17,7 @@
 
 DECLARE_LOG_CONTEXT(App)
 
-namespace Pch {
+namespace Global {
 auto open_folders() -> QMap<QString, QString>;
 auto set_open_folders(const QMap<QString, QString> &folders) -> void;
 auto _SetWindowTitle(QWidget *w, const QString &title) -> void
@@ -219,9 +219,9 @@ App::App(int &argc, char **argv)
 
     auto makeStyle = [&]() {
         auto name = d->read("style", styleName());
-        if (style()->objectName().compare(name, QCI) == 0)
+        if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
             return;
-        if (!d->styleNames.contains(name, QCI))
+        if (!d->styleNames.contains(name, Qt::CaseInsensitive))
             return;
         setStyle(QStyleFactory::create(name));
     };
@@ -229,7 +229,7 @@ App::App(int &argc, char **argv)
         auto names = QStyleFactory::keys();
         const auto defaultName = style()->objectName();
         for (auto it = ++names.begin(); it != names.end(); ++it) {
-            if (defaultName.compare(*it, QCI) == 0) {
+            if (defaultName.compare(*it, Qt::CaseInsensitive) == 0) {
                 const auto name = *it;
                 names.erase(it);
                 names.prepend(name);
@@ -250,7 +250,7 @@ App::App(int &argc, char **argv)
 
 App::~App() {
     setMprisActivated(false);
-    const auto folders = Pch::open_folders();
+    const auto folders = Global::open_folders();
     QMap<QString, QVariant> map;
     for (auto it = folders.begin(); it != folders.end(); ++it)
         map.insert(it.key(), *it);
@@ -267,7 +267,7 @@ auto App::handleMessage(const QByteArray &message) -> void
     const auto msg = QJsonDocument::fromJson(message, &error).object();
     Q_ASSERT(!error.error);
 
-    const auto type = _JsonToInt(msg[u"type"_q]);
+    const auto type = msg[u"type"_q].toInt();
     const auto contents = msg[u"contents"_q];
     switch (type) {
     case CommandLine:
@@ -373,9 +373,12 @@ auto App::runCommands() -> void
     d->execute(&d->cmdParser);
 }
 
-auto App::sendMessage(const QByteArray &message, int timeout) -> bool
+auto App::sendMessage(MessageType type, const QJsonValue &json, int timeout) -> bool
 {
-    return d->connection.sendMessage(message, timeout);
+    QJsonObject message;
+    message[u"type"_q] = (int)type;
+    message[u"contents"_q] = json;
+    return d->connection.sendMessage(QJsonDocument(message).toJson(), timeout);
 }
 
 auto App::setLocale(const Locale &locale) -> void
@@ -403,9 +406,9 @@ auto App::availableStyleNames() const -> QStringList
 
 auto App::setStyleName(const QString &name) -> void
 {
-    if (!d->styleNames.contains(name, QCI))
+    if (!d->styleNames.contains(name, Qt::CaseInsensitive))
         return;
-    if (style()->objectName().compare(name, QCI) == 0)
+    if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
         return;
     setStyle(QStyleFactory::create(name));
     d->write("style", name);

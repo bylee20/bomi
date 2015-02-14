@@ -1,6 +1,7 @@
 #include "qtcolorpicker.hpp"
 #include <QMouseEvent>
 #include <QColorDialog>
+#include <QDesktopWidget>
 
 /****************************************************************************
 **

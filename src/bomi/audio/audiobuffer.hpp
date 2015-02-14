@@ -1,7 +1,6 @@
 #ifndef AUDIOBUFFER_HPP
 #define AUDIOBUFFER_HPP
 
-#include <QSharedPointer>
 extern "C" {
 #include <audio/audio.h>
 }

@@ -1,5 +1,6 @@
 #include "richtexthelper.hpp"
 #include "misc/log.hpp"
+#include <QDesktopWidget>
 
 DECLARE_LOG_CONTEXT(RichText)
 

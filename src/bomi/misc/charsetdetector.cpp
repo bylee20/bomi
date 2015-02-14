@@ -29,7 +29,7 @@ auto CharsetDetector::encoding() const -> QString
 {
     if (d->detected) {
         const QString enc(_L(d->obj->encoding));
-        if (enc.compare("EUC-KR"_a, QCI) == 0)
+        if (enc.compare("EUC-KR"_a, Qt::CaseInsensitive) == 0)
             return u"CP949"_q;
         return enc;
     }

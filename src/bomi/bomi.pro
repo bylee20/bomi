@@ -258,7 +258,9 @@ HEADERS += \
 	tmp/type_traits.hpp \
     os/os.hpp \
     os/x11.hpp \
-    enum/codecid.hpp
+    enum/codecid.hpp \
+    global.hpp \
+    global_def.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -444,7 +446,8 @@ SOURCES += \
 	misc/logviewer.cpp \
     os/x11.cpp \
     os/os.cpp \
-    enum/codecid.cpp
+    enum/codecid.cpp \
+    global.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

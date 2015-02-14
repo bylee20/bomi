@@ -3,6 +3,12 @@
 
 #include "tmp/static_for.hpp"
 #include "is_convertible.hpp"
+#include <QJsonValue>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <deque>
+#include <vector>
+#include <list>
 
 template<class T>
 class EnumInfo;

@@ -1,4 +1,5 @@
 #include "fontoptionwidget.hpp"
+#include <QToolButton>
 
 struct FontOptionWidget::Data {
     FontOptionWidget *p = nullptr;

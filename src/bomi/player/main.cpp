@@ -20,7 +20,7 @@ auto reg_settings_object() -> void;
 auto reg_theme_object() -> void;
 auto reg_play_engine() -> void;
 
-namespace Pch {
+namespace Global {
 extern QStringList writableImageExts;
 }
 

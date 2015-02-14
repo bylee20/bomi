@@ -1,6 +1,7 @@
 #include "motionintrploption.hpp"
 #include "os/os.hpp"
 #include "misc/json.hpp"
+#include <QRadioButton>
 
 #define JSON_CLASS MotionIntrplOption
 

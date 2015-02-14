@@ -1,6 +1,9 @@
 #ifndef FFMPEGFILTERS_HPP
 #define FFMPEGFILTERS_HPP
 
+#include <QString>
+#include <QSize>
+
 extern "C" {
 #include <video/mp_image_pool.h>
 #include <video/img_format.h>

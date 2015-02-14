@@ -57,11 +57,6 @@ auto check() -> void
                "bomi requires OpenGL 2.1 or higher.");
 
     auto exts = gl.extensions();
-#ifdef Q_OS_LINUX
-    const auto glx = glXQueryExtensionsString(QX11Info::display(),
-                                              QX11Info::appScreen());
-    exts += QSet<QByteArray>::fromList(QByteArray(glx).split(' '));
-#endif
     QStringList extensions;
     auto checkExtension = [&] (const QByteArray &name, Extension ext,
                                int major = -1, int minor = 0) {

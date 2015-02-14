@@ -1,4 +1,5 @@
 #include "ffmpegfilters.hpp"
+#include "global.hpp"
 extern "C" {
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>

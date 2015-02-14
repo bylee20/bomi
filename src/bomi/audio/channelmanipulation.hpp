@@ -1,6 +1,8 @@
 #ifndef CHANNELMANIPULATION_HPP
 #define CHANNELMANIPULATION_HPP
 
+#include "global.hpp"
+
 extern "C" {
 #include <audio/chmap.h>
 }

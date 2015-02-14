@@ -7,6 +7,7 @@
 #include "ui_logviewer.h"
 #include <QMenu>
 #include <QClipboard>
+#include <set>
 
 static const int LogEvent = QEvent::User + 10;
 

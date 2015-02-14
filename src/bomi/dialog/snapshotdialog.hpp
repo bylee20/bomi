@@ -18,6 +18,8 @@ private:
     Data *d;
 };
 
+#include <QScrollArea>
+
 class ImageViewer : public QScrollArea {
     Q_OBJECT
 public:

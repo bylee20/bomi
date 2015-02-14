@@ -2,6 +2,7 @@
 #define SIMPLELISTWIDGET_HPP
 
 #include "misc/simplelistmodel.hpp"
+#include <QTreeView>
 
 class SimpleListWidgetBase : public QWidget {
     Q_OBJECT

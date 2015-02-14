@@ -5,6 +5,7 @@
 #include "opengl/opengltexturebinder.hpp"
 #include "misc/dataevent.hpp"
 #include "misc/log.hpp"
+#include <QQmlProperty>
 #include <QQuickWindow>
 
 DECLARE_LOG_CONTEXT(Video)

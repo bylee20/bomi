@@ -1,6 +1,8 @@
 #ifndef STATIC_FOR_HPP
 #define STATIC_FOR_HPP
 
+#include "global_def.hpp"
+
 namespace tmp {
 
 namespace detail {

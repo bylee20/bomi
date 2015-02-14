@@ -1,6 +1,8 @@
 #ifndef ENUMS_HPP
 #define ENUMS_HPP
 
+#include <QtGlobal>
+#include <QVariant>
 #include <QCoreApplication>
 #include <array>
 

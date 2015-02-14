@@ -8,6 +8,7 @@
 #include "player/pref.hpp"
 #include <QAction>
 #include <QStyledItemDelegate>
+#include <QTreeWidgetItem>
 
 class Menu;
 

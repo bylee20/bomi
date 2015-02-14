@@ -1,6 +1,10 @@
 #ifndef ENUMFLAGS_HPP
 #define ENUMFLAGS_HPP
 
+#include "global.hpp"
+#include <QJsonArray>
+#include <QDebug>
+
 template<class T>
 class EnumFlags;
 

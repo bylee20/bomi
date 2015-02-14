@@ -4,6 +4,7 @@
 
 #include "tmp/algorithm.hpp"
 #include "enum/codecid.hpp"
+#include <QDesktopWidget>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusInterface>

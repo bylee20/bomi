@@ -3,6 +3,8 @@
 
 class RichTextHelper {
 public:
+    static constexpr const auto QCI = Qt::CaseInsensitive;
+
     virtual ~RichTextHelper() {}
 
     SIA _Same(const QString &str, const char *latin1) -> bool

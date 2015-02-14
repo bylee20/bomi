@@ -69,7 +69,7 @@ auto YouTubeDL::run(const QString &url) -> bool
     args << u"--cookies"_q << cookies();
     args << u"--flat-playlist"_q << u"--no-playlist"_q << u"--all-subs"_q;
     args << u"--sub-format"_q
-         << (url.contains("crunchyroll.com"_a, QCI) ? u"ass"_q : u"srt"_q);
+         << (url.contains("crunchyroll.com"_a, Qt::CaseInsensitive) ? u"ass"_q : u"srt"_q);
     args << u"-J"_q << d->input;
 
     d->mutex.lock();

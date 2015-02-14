@@ -47,6 +47,8 @@
 **
 ****************************************************************************/
 
+#include <QToolButton>
+
 class QGridLayout;
 class QEventLoop;
 

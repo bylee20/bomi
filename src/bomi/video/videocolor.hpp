@@ -1,10 +1,13 @@
 #ifndef COLORPROPERTY_HPP
 #define COLORPROPERTY_HPP
 
+#include <array>
+#include <QString>
+
 enum class ColorRange;                  enum class ColorSpace;
+class QMatrix4x4;
 
 class VideoColor {
-    Q_DECLARE_TR_FUNCTIONS(VideoColor)
 public:
     enum Type {Brightness = 0, Contrast, Saturation, Hue, TypeMax};
     template<class T> using Array = std::array<T, TypeMax>;

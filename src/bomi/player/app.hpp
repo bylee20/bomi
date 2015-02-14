@@ -1,8 +1,6 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include "tmp/type_traits.hpp"
-
 class QUrl;                             class Mrl;
 class MainWindow;                       class QMenuBar;
 class Locale;                           struct LogOption;
@@ -34,15 +32,12 @@ public:
     auto runCommands() -> void;
     auto isOpenGLDebugLoggerRequested() const -> bool;
     auto setMprisActivated(bool activated) -> void;
-    template<class T>
-    auto sendMessage(MessageType type, const T &t, int timeout = 5000)
-    -> tmp::enable_if_t<tmp::is_one_of<T, QJsonObject, QJsonArray, QJsonValue>(), bool>;
+    auto sendMessage(MessageType type, const QJsonValue &t, int timeout = 5000) -> bool;
     static constexpr auto version() -> const char* { return "0.9.2"; }
     static constexpr auto name() -> const char* { return "bomi"; }
     static auto displayName() -> QString { return tr("bomi"); }
     static auto defaultIcon() -> QIcon;
 private:
-    auto sendMessage(const QByteArray &message, int timeout = 5000) -> bool;
     auto handleMessage(const QByteArray &message) -> void;
     static constexpr int ReopenEvent = QEvent::User + 1;
     auto event(QEvent *event) -> bool;
@@ -51,15 +46,5 @@ private:
 };
 
 #define cApp (*static_cast<App*>(qApp))
-
-template<class T>
-auto App::sendMessage(MessageType type, const T &t, int timeout)
--> tmp::enable_if_t<tmp::is_one_of<T, QJsonObject, QJsonArray, QJsonValue>(), bool>
-{
-    QJsonObject json;
-    json[u"type"_q] = _JsonFromInt(type);
-    json[u"contents"_q] = t;
-    return sendMessage(QJsonDocument(json).toJson(), timeout);
-}
 
 #endif // APPLICATION_HPP

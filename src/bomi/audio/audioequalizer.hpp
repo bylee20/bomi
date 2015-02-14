@@ -3,7 +3,6 @@
 
 class AudioEqualizer {
     static constexpr int BandCount = 10;
-    Q_DECLARE_TR_FUNCTIONS(AudioEqualizer)
 public:
     enum Preset {
         Flat, Classic, Club, Dance, FullBass, FullBassTreble,

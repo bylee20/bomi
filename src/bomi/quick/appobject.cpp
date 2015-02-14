@@ -3,6 +3,8 @@
 #include "windowobject.hpp"
 #include "player/rootmenu.hpp"
 #include "os/os.hpp"
+#include <QQmlEngine>
+
 extern "C" {
 int av_cpu_count(void);
 }

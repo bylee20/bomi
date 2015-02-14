@@ -2,6 +2,7 @@
 #define TYPE_TEST_HPP
 
 #include <type_traits>
+#include "global.hpp"
 
 namespace tmp {
 

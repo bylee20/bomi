@@ -1,4 +1,5 @@
 #include "simplelistmodel.hpp"
+#include <set>
 
 #define EMIT_DATA_CHANGED(...) emit QAbstractListModel::dataChanged(__VA_ARGS__)
 

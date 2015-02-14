@@ -1,8 +1,9 @@
 #ifndef SPEEDMEASURE_HPP
 #define SPEEDMEASURE_HPP
 
-#include "tmp/static_op.hpp"
+#include <QElapsedTimer>
 #include <functional>
+#include <deque>
 
 template<class T>
 class SpeedMeasure {
@@ -13,13 +14,17 @@ class SpeedMeasure {
         quint64 usec = 0;
     };
 public:
-    SpeedMeasure(int min, int max) { setDequeSize(min, max); }
+    SpeedMeasure(int min, int max)
+    {
+        setDequeSize(min, max);
+        m_watch.start();
+    }
     auto reset() -> void { m_records.clear(); m_last = 0; }
     auto get() const -> double
         { return ((int)m_records.size() < m_min) ? 0.0 : dvalue()/dsec(); }
     auto push(const T &t) -> void
     {
-        const auto usec = _SystemTime();
+        const quint64 usec = m_watch.nsecsElapsed() * 1e-3;
         m_records.emplace_back(usec, t);
         while ((int)m_records.size() > m_max)
             m_records.pop_front();
@@ -54,6 +59,7 @@ private:
     int m_min = 2, m_max = 20;
     quint64 m_last = 0, m_interval = 0;
     std::function<void(void)> m_timer;
+    QElapsedTimer m_watch;
 };
 
 #endif // SPEEDMEASURE_HPP

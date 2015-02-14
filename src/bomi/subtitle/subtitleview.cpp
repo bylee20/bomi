@@ -2,6 +2,7 @@
 #include "subtitlemodel.hpp"
 #include "subtitle.hpp"
 #include <QSplitter>
+#include <QScrollArea>
 
 class SubtitleView::CompView : public QWidget {
 public:

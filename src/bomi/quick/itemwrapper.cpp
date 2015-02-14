@@ -1,5 +1,6 @@
 #include "itemwrapper.hpp"
 #include "appobject.hpp"
+#include <QQmlEngine>
 
 static QHash<const QMetaObject*, QMap<QByteArray, QMetaProperty>> propertyHash;
 

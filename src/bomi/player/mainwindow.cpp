@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() {
     cApp.setMprisActivated(false);
-    d->view->engine()->clearComponentCache();
+    d->view->clear();
     exit();
     delete d->view;
     delete d;
