@@ -57,7 +57,7 @@ auto Playlist::load(QTextStream &in, QString enc, Type type,
     if (type == M3U8)
         enc = u"UTF-8"_q;
     if (!enc.isEmpty())
-        in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
+        in.setCodec(QTextCodec::codecForName(enc.toLatin1()));
     switch (type) {
     case PLS:
         return loadPLS(in, url);

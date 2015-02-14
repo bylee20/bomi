@@ -31,6 +31,16 @@ static QReadWriteLock s_rwLock;
 static QHash<QObject*, int> s_subscribers;
 
 static QSharedPointer<FILE> s_file;
+static bool s_local8BitIsUtf8 = false;
+
+SIA encodeForTerminal(const QByteArray &log) -> QByteArray
+{
+#ifndef Q_OS_WIN
+    if (s_local8BitIsUtf8)
+        return log;
+#endif
+    return QString::fromUtf8(log).toLocal8Bit();
+}
 
 const QStringList Log::m_options = QStringList()
         << u"off"_q   << u"fatal"_q << u"error"_q << u"warn"_q
@@ -49,16 +59,17 @@ auto Log::print(Level lv, const QByteArray &log) -> void
         sd_journal_print(jp[lv], log.constData());
 #endif
     if (lv <= lvStdOut)
-        ::print(stdout, log);
+        ::print(stdout, encodeForTerminal(log));
     if (lv <= lvStdErr)
-        ::print(stderr, log);
+        ::print(stderr, encodeForTerminal(log));
     if (lv <= lvFile && s_file)
         ::print(s_file.data(), log);
     if (lv <= lvViewer && !s_subscribers.isEmpty()) {
         s_rwLock.lockForRead();
         auto &s = _C(s_subscribers);
+        auto str = QString::fromUtf8(log); str.chop(1);
         for (auto it = s.begin(); it != s.end(); ++it)
-            _PostEvent(it.key(), it.value(), lv, log);
+            _PostEvent(it.key(), it.value(), lv, str);
         s_rwLock.unlock();
     }
     if (lv == Fatal)
@@ -76,7 +87,7 @@ static const std::array<Log::Level, 4> lvQt = []() {
 
 auto Log::qt(QtMsgType type, const QMessageLogContext &, const QString &msg) -> void
 {
-    write("Qt", lvQt[type], msg.toLocal8Bit());
+    write("Qt", lvQt[type], msg.toUtf8());
 }
 
 static LogOption s_option;
@@ -94,6 +105,8 @@ auto Log::setOption(const LogOption &option) -> void
 #if HAVE_SYSTEMD
     lvMax = tmp::max(lvMax, lvJournal);
 #endif
+
+    s_local8BitIsUtf8 = QTextCodec::codecForLocale()->mibEnum() == 106;
 
     if (!lvFile)
         return;

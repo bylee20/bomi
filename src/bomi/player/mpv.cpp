@@ -2,6 +2,13 @@
 #include <QOpenGLContext>
 #include <QLibrary>
 
+struct PropertyObservation {
+    int event;
+    const char *name = nullptr;
+    std::function<void(int)> notify = nullptr;      // post from mpv to qt
+    std::function<void(QEvent*)> process = nullptr; // handle posted event
+};
+
 static constexpr const int UpdateEventBegin = QEvent::User + 10000;
 
 auto Mpv::e2l(int error) -> Log::Level
@@ -190,7 +197,7 @@ auto Mpv::run() -> void
                 }
             };
             const auto lv = getLevel();
-            Log::print(lv, Log::parse(lv, "mpv/"_b + msg->prefix, QString::fromUtf8(msg->text).toLocal8Bit()));
+            Log::print(lv, Log::parse(lv, "mpv/"_b + msg->prefix, msg->text));
             break;
         } case MPV_EVENT_CLIENT_MESSAGE: {
             auto message = static_cast<mpv_event_client_message*>(ev->data);

@@ -6,6 +6,95 @@
 
 namespace detail {
 
+enum MpvEnc {
+    Utf8, Latin1, Local8Bit
+};
+
+template<MpvEnc me>
+struct mpv_str {
+    static inline auto str_to_mpv(const QString &str) -> QByteArray;
+    static inline auto str_from_mpv(const char *data, int len) -> QString;
+};
+
+#define DECL_MPV_STR(e) \
+template<> \
+struct mpv_str<e> { \
+    static inline auto str_to_mpv(const QString &str) -> QByteArray \
+        { return str.to##e(); } \
+    static inline auto str_from_mpv(const char *data, int len) -> QString \
+        { return QString::from##e(data, len); } \
+};
+
+DECL_MPV_STR(Utf8)
+DECL_MPV_STR(Latin1)
+DECL_MPV_STR(Local8Bit)
+
+template<MpvEnc me>
+struct MpvString {
+    using T = MpvString<me>;
+    MpvString() = default;
+    MpvString(const MpvString &other): data(other.data) { }
+    MpvString(MpvString &&other): data(std::move(other.data)) { }
+    MpvString(const QString &data): data(data) { }
+    MpvString(QString &&data): data(std::move(data)) { }
+    operator QString() const { return data; }
+    operator QString&() { return data; }
+    operator const QString&() const { return data; }
+    auto operator = (const T &rhs) -> T&
+        { data = rhs.data; return *this; }
+    auto operator = (T &&rhs) -> T&
+        { data = std::move(rhs.data); return *this; }
+    auto operator = (const QString &rhs) -> T&
+        { data = rhs; return *this; }
+    auto operator = (QString &&rhs) -> T&
+        { data = std::move(rhs); return *this; }
+    auto operator == (const T &rhs) const -> bool
+        { return data == rhs.data; }
+    auto operator != (const T &rhs) const -> bool
+        { return data != rhs.data; }
+    auto operator == (const QString &rhs) const -> bool
+        { return data == rhs; }
+    auto operator != (const QString &rhs) const -> bool
+        { return data != rhs; }
+    auto toMpv() const -> QByteArray
+        { return mpv_str<me>::str_to_mpv(data); }
+    static auto fromMpv(const char *mpv, int len = -1) -> MpvString<me>
+        { return mpv_str<me>::str_from_mpv(mpv, len); }
+    static auto fromMpv(const QByteArray &data) -> MpvString<me>
+        { return fromMpv(data.data(), data.size()); }
+    QString data;
+};
+
+}
+
+template<detail::MpvEnc me>
+auto operator == (const QString &lhs, const detail::MpvString<me> &rhs) -> bool
+    { return lhs == rhs.data; }
+template<detail::MpvEnc me>
+auto operator != (const QString &lhs, const detail::MpvString<me> &rhs) -> bool
+    { return lhs != rhs.data; }
+
+using MpvUtf8 = detail::MpvString<detail::Utf8>;
+using MpvLocal8Bit = detail::MpvString<detail::Local8Bit>;
+using MpvLatin1 = detail::MpvString<detail::Latin1>;
+
+#ifdef Q_OS_LINUX
+using MpvFile = MpvLocal8Bit;
+#else
+using MpvFile = MpvUtf8;
+#endif
+
+SIA _ToLog(const MpvFile &file) -> QByteArray { return _ToLog(file.data); }
+
+struct MpvFileList {
+    MpvFileList() = default;
+    MpvFileList(const QStringList &names): names(names) { }
+    MpvFileList(QStringList &&names): names(std::move(names)) { }
+    QStringList names;
+};
+
+namespace detail {
+
 enum MpvTraitType {
     Arithmetic,
     List,
@@ -31,6 +120,7 @@ struct mpv_trait_no_alloc {
     static auto set_free(S&) { };
     static auto node_free(mpv_node &) { };
 };
+
 }
 
 template<class T, detail::MpvTraitType type = detail::mpv_trait_type<T>()>
@@ -88,66 +178,77 @@ struct mpv_trait<const char*> : detail::mpv_trait_no_alloc {
     { node.format = format; set((const char*&)node.u.string, t); }
 };
 
-template<>
-struct mpv_trait<QString> {
+namespace detail {
+
+template<MpvEnc me>
+struct mpv_trait_string {
+    using T = MpvString<me>;
     using mpv_type = const char*;
     static constexpr mpv_format format = MPV_FORMAT_STRING;
     static auto get_free(mpv_type &data) { mpv_free((void*)data); }
-    static auto get(QString &s, const mpv_type &data)
-        { s = QString::fromUtf8(data); }
-    static auto set(mpv_type &data, const QString &t)
+    static auto get(T &s, const mpv_type &data) { s = T::fromMpv(data); }
+private:
+    static auto set(mpv_type &data, const T &t)
     {
-        const auto buf = t.toUtf8();
+        const auto buf = t.toMpv();
         auto str = new char[buf.size() + 1];
         qstrncpy(str, buf.data(), buf.size() + 1);
         data = str;
     }
     static auto set_free(mpv_type &str) { delete[]str; }
-private:
-    friend struct mpv_trait<QStringList>;
-    static auto node_fill(mpv_node &node, const QString &t)
+    friend struct mpv_trait<MpvFileList>;
+    static auto node_fill(mpv_node &node, const T &t)
     { node.format = format; set((const char*&)node.u.string, t); }
     static auto node_free(mpv_node &node) { set_free((const char*&)node.u.string); }
 };
 
+}
+
 template<>
-struct mpv_trait<QStringList> {
-    using ST = mpv_trait<QString>;
+struct mpv_trait<MpvLatin1> : detail::mpv_trait_string<detail::Latin1> { };
+template<>
+struct mpv_trait<MpvUtf8> : detail::mpv_trait_string<detail::Utf8> { };
+template<>
+struct mpv_trait<MpvLocal8Bit> : detail::mpv_trait_string<detail::Local8Bit> { };
+
+template<>
+struct mpv_trait<MpvFileList> {
+    using ST = mpv_trait<MpvFile>;
     using mpv_type = mpv_node;
     SCA format = MPV_FORMAT_NODE;
-    static auto get(QStringList &t, const mpv_node &data) {
+    static auto get(MpvFileList &t, const mpv_node &data) {
         if (data.format != MPV_FORMAT_NODE_ARRAY)
             return;
-        t.clear();
+        t.names.clear();
         auto array = data.u.list;
-        t.reserve(array->num);
+        t.names.reserve(array->num);
         for (int i = 0; i < array->num; ++i) {
             if (array->values[i].format == MPV_FORMAT_STRING)
-                t.push_back(toString(array->values[i]));
+                t.names.push_back(toFile(array->values[i]).data);
         }
     }
     static auto get_free(mpv_node &data) { mpv_free_node_contents(&data); }
-    static auto set(mpv_node &data, const QStringList &t) -> void
+    static auto set(mpv_node &data, const MpvFileList &t) -> void
     {
         data.format = MPV_FORMAT_NODE_ARRAY;
         data.u.list = new mpv_node_list;
         auto list = data.u.list;
-        list->num = t.size();
+        list->num = t.names.size();
         list->keys = nullptr;
-        list->values = new mpv_node[t.size()];
-        for (int i = 0; i < t.size(); ++i)
-            mpv_trait<QString>::node_fill(list->values[i], t[i]);
+        list->values = new mpv_node[t.names.size()];
+        for (int i = 0; i < t.names.size(); ++i)
+            mpv_trait<MpvFile>::node_fill(list->values[i], t.names[i]);
     }
     static auto set_free(mpv_node &data) -> void
     {
         for (int i = 0; i < data.u.list->num; ++i)
-            mpv_trait<QString>::node_free(data.u.list->values[i]);
+            mpv_trait<MpvFile>::node_free(data.u.list->values[i]);
         delete [] data.u.list->values;
         delete data.u.list;
     }
 private:
-    static auto toString(const mpv_node &node) -> QString
-        { QString t; ST::get(t, node.u.string); return t; }
+    static auto toFile(const mpv_node &node) -> MpvFile
+        { MpvFile t; ST::get(t, node.u.string); return t; }
 };
 
 template<>
@@ -189,10 +290,8 @@ struct mpv_trait<QVariant> {
 SIA operator<<(QDebug dbg, const mpv_node &node) -> QDebug
 {
     dbg.nospace() << "mpv_node->" << mpv_trait<QVariant>::parse(node);;
-
     return dbg.space();
 }
-
 
 template<class T>
 using mpv_t = typename mpv_trait<T>::mpv_type;

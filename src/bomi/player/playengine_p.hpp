@@ -148,11 +148,11 @@ struct PlayEngine::Data {
         { params.set_sub_tracks_inclusive(sr->toTrackList()); }
     static auto restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>;
     auto audio_add(const QString &file, bool select) -> void
-        { mpv.tellAsync("audio_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b); }
+        { mpv.tellAsync("audio_add", MpvFile(file), select ? "select"_b : "auto"_b); }
     auto sub_add(const QString &file, const QString &enc, bool select) -> void;
     auto autoselect(const MrlState *s, QVector<SubComp> &loads) -> void;
-    auto autoloadFiles(StreamType type) -> QStringList;
-    auto autoloadSubtitle(const MrlState *s) -> T<QStringList, QVector<SubComp>>;
+    auto autoloadFiles(StreamType type) -> MpvFileList;
+    auto autoloadSubtitle(const MrlState *s) -> T<MpvFileList, QVector<SubComp>>;
 
     auto af(const MrlState *s) const -> QByteArray;
     auto vf(const MrlState *s) const -> QByteArray;

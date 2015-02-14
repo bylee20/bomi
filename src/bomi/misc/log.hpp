@@ -18,8 +18,8 @@ SIA _ToLog(unsigned long long n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(float n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(double n) -> QByteArray { return QByteArray::number(n); }
 
-SIA _ToLog(const QString &str) -> QByteArray { return str.toLocal8Bit(); }
-SIA _ToLog(const QStringRef &str) -> QByteArray { return str.toLocal8Bit(); }
+SIA _ToLog(const QString &str) -> QByteArray { return str.toUtf8(); }
+SIA _ToLog(const QStringRef &str) -> QByteArray { return str.toUtf8(); }
 SIA _ToLog(const char *str) -> QByteArray { return QByteArray(str); }
 SIA _ToLog(const QByteArray &str) -> QByteArray { return str; }
 SIA _ToLog(bool b) -> QByteArray { return b ? "true"_b : "false"_b; }

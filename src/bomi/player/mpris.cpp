@@ -40,7 +40,7 @@ RootObject::~RootObject()
 static auto dbusTrackId(const Mrl &mrl) -> QString
 {
     using Hash = QCryptographicHash;
-    const auto hash = Hash::hash(mrl.toString().toLocal8Bit(), Hash::Md5);
+    const auto hash = Hash::hash(mrl.toString().toUtf8(), Hash::Md5);
     return "/net/xylosper/bomi/track_"_a % _L(hash.toHex().constData());
 }
 

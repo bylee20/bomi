@@ -226,7 +226,7 @@ auto Mrl::toUnique() const -> Mrl
     if (m_hash.isEmpty())
         return Mrl();
     Mrl mrl;
-    mrl.m_loc = scheme() % ":///"_a % QString::fromLatin1(m_hash);
+    mrl.m_loc = scheme() % ":///"_a % QString::fromUtf8(m_hash);
     mrl.m_hash = m_hash;
     mrl.m_name = m_name;
     return mrl;
@@ -238,7 +238,7 @@ auto Mrl::fromUniqueId(const QString &id, const QString &device) -> Mrl
     mrl.m_loc = id;
     if (!mrl.isDisc())
         return mrl;
-    mrl.m_hash = mrl.device().toLatin1();
+    mrl.m_hash = mrl.device().toUtf8();
     mrl.m_loc = mrl.scheme() % "://"_a;
     if (!device.isEmpty())
         mrl.m_loc += '/'_q % device;

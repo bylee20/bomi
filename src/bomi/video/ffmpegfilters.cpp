@@ -60,7 +60,7 @@ auto FFmpegFilterGraph::linkGraph(AVFilterInOut *&in,
                                   AVFilterInOut *&out) -> bool
 {
     QString tmp;
-#define    args (tmp.toLocal8Bit().constData())
+#define    args (tmp.toLatin1().constData())
     tmp.sprintf("width=%d:height=%d:pix_fmt=%d:time_base=1/%d:sar=1",
                 m_size.width(), m_size.height(),
                 imgfmt2pixfmt(m_imgfmt), AV_TIME_BASE);

@@ -36,6 +36,7 @@ public:
     auto titleMrl(int title) const -> Mrl;
     auto device() const -> QString;
     auto toLocal8Bit() const -> QByteArray { return m_loc.toLocal8Bit(); }
+    auto toUtf8() const -> QByteArray { return m_loc.toUtf8(); }
     auto hash() const -> QByteArray { return m_hash; }
     auto updateHash() -> void;
     auto isUnique() const -> bool { return !isDisc() || !m_hash.isEmpty(); }

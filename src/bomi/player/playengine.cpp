@@ -122,7 +122,6 @@ PlayEngine::PlayEngine()
     d->request();
 
     const auto hwdec = OS::hwAcc()->name().toLatin1();
-    qDebug() << hwdec;
     d->mpv.setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.data());
     d->mpv.setOption("fs", "no");
     d->mpv.setOption("input-cursor", "yes");
@@ -279,20 +278,20 @@ auto PlayEngine::setSubtitleTrackSelected(int id, bool s) -> void
 auto PlayEngine::autoloadSubtitleFiles() -> void
 {
     clearSubtitleFiles();
-    QStringList files; QVector<SubComp> loads;
+    MpvFileList files; QVector<SubComp> loads;
     d->mutex.lock();
     _R(files, loads) = d->autoloadSubtitle(&d->params);
     d->mutex.unlock();
-    for (auto &file : files) {
+    for (auto &file : files.names) {
         d->mpv.setAsync("options/subcp", d->assEncodings[file].toLatin1());
-        d->mpv.tellAsync("sub_add", file.toLocal8Bit(), "auto"_b);
+        d->mpv.tellAsync("sub_add", MpvFile(file), "auto"_b);
     }
     d->setInclusiveSubtitles(loads);
 }
 
 auto PlayEngine::autoloadAudioFiles() -> void
 {
-    setAudioFiles(d->autoloadFiles(StreamAudio));
+    setAudioFiles(d->autoloadFiles(StreamAudio).names);
 }
 
 auto PlayEngine::reloadSubtitleFiles() -> void
@@ -1026,7 +1025,7 @@ auto PlayEngine::setAudioFiles(const QStringList &files) -> void
 auto PlayEngine::addAudioFiles(const QStringList &files) -> void
 {
     for (auto file : files)
-        d->mpv.tellAsync("audio_add", file.toLocal8Bit(), "auto"_b);
+        d->mpv.tellAsync("audio_add", MpvFile(file), "auto"_b);
 }
 
 auto PlayEngine::clearAudioFiles() -> void
@@ -1139,7 +1138,7 @@ auto PlayEngine::addSubtitleFiles(const QVector<StringPair> &fileEncs) -> void
             }
         } else {
             d->mpv.setAsync("options/subcp", enc.toLatin1());
-            d->mpv.tellAsync("sub_add", file.toLocal8Bit(), "auto"_b);
+            d->mpv.tellAsync("sub_add", MpvFile(file), "auto"_b);
             d->mutex.lock();
             d->assEncodings[file] = enc;
             d->mutex.unlock();

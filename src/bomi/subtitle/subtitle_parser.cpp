@@ -18,7 +18,7 @@ auto SubtitleParser::parse(const QString &fileName,
         return Subtitle();
     QTextStream in;
     in.setDevice(&file);
-    in.setCodec(enc.toLocal8Bit());
+    in.setCodec(enc.toLatin1());
     const QString all = in.readAll();
     QFileInfo info(fileName);
     Subtitle sub;

@@ -189,7 +189,7 @@ auto PlayEngine::Data::updateMediaName(const QString &name) -> void
 
 auto PlayEngine::Data::onLoad() -> void
 {
-    auto file = mpv.get<QString>("stream-open-filename");
+    auto file = mpv.get<MpvFile>("stream-open-filename");
     t.local = localCopy();
     auto local = t.local.data();
 
@@ -221,16 +221,16 @@ auto PlayEngine::Data::onLoad() -> void
 
     auto setFiles = [&] (QByteArray &&name, QByteArray &&nid,
             const StreamList &list) {
-        QStringList files; int id = -1;
+        MpvFileList files; int id = -1;
         for (auto &track : list) {
             if (!track.isExclusive())
                 continue;
             if (track.isExternal())
-                files.push_back(track.file());
+                files.names.push_back(track.file());
             if (track.isSelected())
                 id = track.id();
         }
-        if (!files.isEmpty())
+        if (!files.names.isEmpty())
             mpv.setAsync(std::move(name), files);
         if (id != -1)
             mpv.setAsync(std::move(nid), id);
@@ -248,10 +248,10 @@ auto PlayEngine::Data::onLoad() -> void
         loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive());
     } else {
         QMutexLocker locker(&mutex);
-        QStringList files, encs;
+        MpvFileList files, encs;
         _R(files, loads) = autoloadSubtitle(local);
-        if (!files.isEmpty()) {
-            mpv.setAsync("options/subcp", assEncodings[files.front()].toLatin1());
+        if (!files.names.isEmpty()) {
+            mpv.setAsync("options/subcp", assEncodings[files.names.front()].toLatin1());
             mpv.setAsync("file-local-options/sub-file", files);
         }
     }
@@ -305,25 +305,24 @@ auto PlayEngine::Data::onLoad() -> void
         mpv.setAsync("file-local-options/cache", "no"_b);
 
 
-    if (file.startsWith("http://"_a) || file.startsWith("https://"_a)) {
+    if (file.data.startsWith("http://"_a) || file.data.startsWith("https://"_a)) {
         file = QUrl(file).toString(QUrl::FullyEncoded);
         if (yle && yle->supports(file)) {
             if (yle->run(file))
-                mpv.setAsync("stream-open-filename", yle->url().toLocal8Bit());
+                mpv.setAsync("stream-open-filename", MpvFile(yle->url()));
         } else if (youtube && youtube->run(file)) {
             mpv.setAsync("file-local-options/cookies", true);
-            mpv.setAsync("file-local-options/cookies-file", youtube->cookies().toLocal8Bit());
-            mpv.setAsync("file-local-options/user-agent", youtube->userAgent().toLocal8Bit());
+            mpv.setAsync("file-local-options/cookies-file", MpvFile(youtube->cookies()).toMpv());
+            mpv.setAsync("file-local-options/user-agent", youtube->userAgent().toUtf8());
             const auto r = youtube->result();
             if (!r.url.isEmpty())
-                mpv.setAsync("stream-open-filename", r.url.toLocal8Bit());
+                mpv.setAsync("stream-open-filename", MpvFile(r.url).toMpv());
             if (!r.title.isEmpty())
-                mpv.setAsync("file-local-options/media-title", r.title.toLocal8Bit());
+                mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
         } else
-            mpv.setAsync("stream-open-filename", file.toLocal8Bit());
+            mpv.setAsync("stream-open-filename", MpvFile(file).toMpv());
     }
 
-    mpv.set("stream-open-filename", file.toUtf8());
     mpv.flush();
     _PostEvent(p, SyncMrlState, t.local, loads);
     t.local.clear();
@@ -447,9 +446,9 @@ auto PlayEngine::Data::observe() -> void
         if (_Change(metaData, md))
             emit p->metaDataChanged();
     });
-    mpv.observe("media-title", [=] (QString &&t) { updateMediaName(t); });
+    mpv.observe("media-title", [=] (MpvUtf8 &&t) { updateMediaName(t); });
 
-    mpv.observe("video-codec", [=] (QString &&c) { info.video.codec()->parse(c); });
+    mpv.observe("video-codec", [=] (MpvLatin1 &&c) { info.video.codec()->parse(c); });
     mpv.observe("fps", [=] (double fps) {
         info.video.input()->setFps(fps);
         info.video.output()->setFps(fps);
@@ -466,7 +465,7 @@ auto PlayEngine::Data::observe() -> void
         input->setBppSize(input->size());
     });
     mpv.observe("video-bitrate", [=] (int bps) { info.video.input()->setBitrate(bps); });
-    mpv.observe("video-format", [=] (QString &&f) { info.video.input()->setType(f); });
+    mpv.observe("video-format", [=] (MpvLatin1 &&f) { info.video.input()->setType(f); });
     QRegularExpression rx(uR"(Video decoder: ([^\n]*))"_q);
     auto decoderOutput = [=] (const char *name) -> QString {
         auto m = rx.match(mpv.get_osd(name));
@@ -506,7 +505,7 @@ auto PlayEngine::Data::observe() -> void
         };
         auto hwacc = video.hwacc();
         hwacc->setState(hwState());
-        const auto hwdec = mpv.get<QString>("hwdec");
+        const QString hwdec = mpv.get<MpvLatin1>("hwdec");
         hwacc->setDriver(hwdec == "no"_a ? QString() : hwdec);
     });
     mpv.observe("video-out-params", [=] (QVariant &&var) {
@@ -517,14 +516,14 @@ auto PlayEngine::Data::observe() -> void
         info->setSpace(findEnum<ColorSpace>(params[u"colormatrix"_q].toString()));
     });
 
-    mpv.observe("audio-codec", [=] (QString &&c) { info.audio.codec()->parse(c); });
-    mpv.observe("audio-format", [=] (QString &&f) { info.audio.input()->setType(f); });
+    mpv.observe("audio-codec", [=] (MpvLatin1 &&c) { info.audio.codec()->parse(c); });
+    mpv.observe("audio-format", [=] (MpvLatin1 &&f) { info.audio.input()->setType(f); });
     mpv.observe("audio-bitrate", [=] (int bps) { info.audio.input()->setBitrate(bps); });
     mpv.observe("audio-samplerate", [=] (int s) { info.audio.input()->setSampleRate(s, false); });
     mpv.observe("audio-channels", [=] (int n)
         { info.audio.input()->setChannels(QString::number(n) % "ch"_a, n); });
-    mpv.observe("audio-device", [=] (QString &&d) { info.audio.setDevice(d); });
-    mpv.observe("current-ao", [=] (QString &&ao) { info.audio.setDriver(ao); });
+    mpv.observe("audio-device", [=] (MpvLatin1 &&d) { info.audio.setDevice(d); });
+    mpv.observe("current-ao", [=] (MpvLatin1 &&ao) { info.audio.setDriver(ao); });
 }
 
 auto PlayEngine::Data::request() -> void
@@ -756,12 +755,12 @@ auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks) -> QV
     return ret;
 }
 
-auto PlayEngine::Data::autoloadFiles(StreamType type) -> QStringList
+auto PlayEngine::Data::autoloadFiles(StreamType type) -> MpvFileList
 {
     auto &a = streams[type].autoloader;
-    if (a.enabled)
-        return a.autoload(mrl, streams[type].ext);
-    return QStringList();
+    if (!a.enabled)
+        return MpvFileList();
+    return a.autoload(mrl, streams[type].ext);
 }
 
 auto PlayEngine::Data::autoselect(const MrlState *s, QVector<SubComp> &loads) -> void
@@ -810,19 +809,19 @@ auto PlayEngine::Data::autoselect(const MrlState *s, QVector<SubComp> &loads) ->
         loads[selected[i]].selection() = true;
 }
 
-auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<QStringList, QVector<SubComp>>
+auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<MpvFileList, QVector<SubComp>>
 {
     const auto subs = autoloadFiles(StreamSubtitle);
-    QStringList files;
+    MpvFileList files;
     QVector<SubComp> loads;
-    for (auto &file : subs) {
+    for (auto &file : subs.names) {
         const auto enc = s->d->detect(file);
         Subtitle sub;
         if (sub.load(file, enc, -1)) {
             for (int i = 0; i < sub.size(); ++i)
                 loads.push_back(sub[i]);
         } else {
-            files.push_back(file);
+            files.names.push_back(file);
             assEncodings[file] = enc;
         }
     }
@@ -886,7 +885,7 @@ auto PlayEngine::Data::clearTimings() -> void
 auto PlayEngine::Data::sub_add(const QString &file, const QString &enc, bool select) -> void
 {
     mpv.setAsync("options/subcp", enc.toLatin1());
-    mpv.tellAsync("sub_add", file.toLocal8Bit(), select ? "select"_b : "auto"_b);
+    mpv.tellAsync("sub_add", MpvFile(file), select ? "select"_b : "auto"_b);
     mutex.lock();
     assEncodings[file] = enc;
     mutex.unlock();

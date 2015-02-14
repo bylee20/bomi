@@ -301,10 +301,7 @@ auto LogViewer::customEvent(QEvent *ev) -> void
     if (ev->type() != LogEvent)
         return;
     LogEntry entry;
-    QByteArray data;
-    _TakeData(ev, entry.level, data);
-    entry.message = QString::fromLocal8Bit(data);
-    entry.message.chop(1);
+    _TakeData(ev, entry.level, entry.message);
     Q_ASSERT(entry.message.at(3) == '['_q);
     const int idx = entry.message.indexOf(']'_q, 4);
     if (idx < 0) {
