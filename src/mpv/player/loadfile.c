@@ -548,6 +548,9 @@ void mp_switch_track_n(struct MPContext *mpctx, int order, enum stream_type type
     if (current)
         current->selected = false;
 
+    if (track && track->demuxer == mpctx->demuxer)
+        demux_set_enable_refresh_seeks(mpctx->demuxer, true);
+
     reselect_demux_streams(mpctx);
 
     mpctx->current_track[order][type] = track;
@@ -556,6 +559,8 @@ void mp_switch_track_n(struct MPContext *mpctx, int order, enum stream_type type
         track->selected = true;
 
     reselect_demux_streams(mpctx);
+
+    demux_set_enable_refresh_seeks(mpctx->demuxer, false);
 
     if (type == STREAM_VIDEO && order == 0) {
         reinit_video_chain(mpctx);
@@ -1317,26 +1322,24 @@ struct playlist_entry *mp_next_file(struct MPContext *mpctx, int direction,
         while (next && next->playback_short)
             next = next->prev;
         // Always allow jumping to first file
-        if (!next && mpctx->opts->loop_times < 0)
+        if (!next && mpctx->opts->loop_times == 1)
             next = mpctx->playlist->first;
     }
-    if (!next && mpctx->opts->loop_times >= 0) {
+    if (!next && mpctx->opts->loop_times != 1) {
         if (direction > 0) {
             if (mpctx->opts->shuffle)
                 playlist_shuffle(mpctx->playlist);
             next = mpctx->playlist->first;
-            if (next && mpctx->opts->loop_times > 1) {
+            if (next && mpctx->opts->loop_times > 1)
                 mpctx->opts->loop_times--;
-                if (mpctx->opts->loop_times == 1)
-                    mpctx->opts->loop_times = -1;
-            }
         } else {
             next = mpctx->playlist->last;
             // Don't jump to files that would immediately go to next file anyway
             while (next && next->playback_short)
                 next = next->prev;
         }
-        if (!force && next && next->init_failed) {
+        bool ignore_failures = mpctx->opts->loop_times == -2;
+        if (!force && next && next->init_failed && !ignore_failures) {
             // Don't endless loop if no file in playlist is playable
             bool all_failed = true;
             struct playlist_entry *cur;

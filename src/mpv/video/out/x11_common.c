@@ -541,6 +541,8 @@ int vo_x11_init(struct vo *vo)
 
     xrandr_read(x11);
 
+    vo_x11_update_geometry(vo);
+
     return 1;
 }
 
@@ -610,6 +612,13 @@ static int vo_x11_lookupkey(int key)
 
     if (!mpkey)
         mpkey = lookup_keymap_table(keymap, key);
+
+    // XFree86 keysym range; typically contains obscure "extra" keys
+    if (!mpkey && key >= 0x10080001 && key <= 0x1008FFFF) {
+        mpkey = MP_KEY_UNKNOWN_RESERVED_START + (key - 0x10080000);
+        if (mpkey > MP_KEY_UNKNOWN_RESERVED_LAST)
+            mpkey = 0;
+    }
 
     return mpkey;
 }
@@ -1532,14 +1541,15 @@ static void vo_x11_update_geometry(struct vo *vo)
     int dummy_int;
     Window dummy_win;
     Window win = x11->parent ? x11->parent : x11->window;
-    if (!win)
-        return;
-    XGetGeometry(x11->display, win, &dummy_win, &dummy_int, &dummy_int,
-                 &w, &h, &dummy_int, &dummy_uint);
-    if (w > INT_MAX || h > INT_MAX)
-        w = h = 0;
-    XTranslateCoordinates(x11->display, win, x11->rootwin, 0, 0,
-                          &x, &y, &dummy_win);
+    x11->winrc = (struct mp_rect){0, 0, 0, 0};
+    if (win) {
+        XGetGeometry(x11->display, win, &dummy_win, &dummy_int, &dummy_int,
+                     &w, &h, &dummy_int, &dummy_uint);
+        if (w > INT_MAX || h > INT_MAX)
+            w = h = 0;
+        XTranslateCoordinates(x11->display, win, x11->rootwin, 0, 0,
+                              &x, &y, &dummy_win);
+    }
     x11->winrc = (struct mp_rect){x, y, x + w, y + h};
     double fps = 1000.0;
     for (int n = 0; n < x11->num_displays; n++) {

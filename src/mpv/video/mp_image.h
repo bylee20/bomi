@@ -102,7 +102,14 @@ typedef struct mp_image {
     int plane_h[MP_MAX_PLANES];
 
     /* only inside filter chain */
-    double pts, pts_orig;
+    double pts;
+    // hack to use motion interpolation
+    struct {
+        int64_t pts;
+        int64_t next_vsync;
+        int64_t prev_vsync;
+    } frame_timing;
+    
     /* memory management */
     struct m_refcount *refcount;
     /* for private use */

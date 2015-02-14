@@ -618,9 +618,8 @@ Input Commands that are Possibly Subject to Change
     unseekable streams that are going out of sync.
     This command might be changed or removed in the future.
 
-Undocumented commands: ``tv_last_channel`` (TV/DVB only), ``get_property`` (?),
-``ao_reload`` (experimental/internal).
-
+Undocumented commands: ``tv_last_channel`` (TV/DVB only),
+``get_property`` (deprecated), ``ao_reload`` (experimental/internal).
 
 Hooks
 ~~~~~
@@ -1639,6 +1638,13 @@ Property list
     often a rather cryptic audio API-specific ID), while ``description`` is
     human readable free form text. The description is an empty string if none
     was received.
+
+    The special entry with the name set to ``auto`` selects the default audio
+    output driver and the default device.
+
+    The property can be watched with the property observation mechanism in
+    the client API and in Lua scripts. (Technically, change notification is
+    enabled the first time this property is read.)
 
 ``audio-device`` (RW)
     Set the audio device. This directly reads/writes the ``--audio-device``

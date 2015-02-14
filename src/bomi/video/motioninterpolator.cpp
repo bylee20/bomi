@@ -1,5 +1,8 @@
 #include "motioninterpolator.hpp"
 #include "mpimage.hpp"
+#include "misc/log.hpp"
+
+DECLARE_LOG_CONTEXT(Video)
 
 struct MotionInterpolator::Data {
     MotionInterpolator *p = nullptr;
@@ -12,12 +15,22 @@ struct MotionInterpolator::Data {
         return queue.back()->pts + dt;
     }
 
+    auto pts2us(double pts) -> int64_t
+    {
+        if (pts == MP_NOPTS_VALUE)
+            return 0;
+        return pts * 1e6;
+    }
+
     auto push(MpImage &&mpi, double pts, int additional) -> void
     {
-        mpi->pts_orig = mpi->pts;
+        auto &timing = mpi->frame_timing;
+        timing.pts = pts2us(mpi->pts);
+        timing.next_vsync = pts2us(pts);
+        timing.prev_vsync = timing.next_vsync - pts2us(dt > 0 ? dt : 0);
+
         mpi->pts = pts;
-        if (additional)
-            mpi->fields |= MP_IMGFIELD_ADDITIONAL;
+        mpi->fields |= additional;
         queue.push_back(std::move(mpi));
     }
 };
@@ -41,10 +54,10 @@ auto MotionInterpolator::push(MpImage &&mpi) -> void
     if (d->queue.empty() || d->dt < 0 || mpi->pts < d->next())
         d->push(std::move(mpi), mpi->pts, false);
     else {
-        bool additional = false;
+        int additional = 0;
         do {
             d->push(std::move(MpImage(mpi)), d->next(), additional);
-            additional = true;
+            additional = MP_IMGFIELD_ADDITIONAL;
         } while (d->next() < mpi->pts);
     }
 }

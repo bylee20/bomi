@@ -320,7 +320,7 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
             frame_queue_shrink(ctx, opts->frame_queue_size);
         }
         if (ctx->reconfigured || ctx->reset) {
-            p->ctx->last_timing.next_vsync = -1;
+            p->ctx->last_timing.next_vsync = 0;
             gl_video_reset(p->ctx->renderer);
         }
         ctx->reconfigured = false;
@@ -341,8 +341,10 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
     pthread_mutex_unlock(&ctx->lock);
 
     if (mpi) {
-        ctx->last_timing.pts = mpi->pts_orig * 1e6;
-        ctx->last_timing.next_vsync = mpi->pts * 1e6;
+        mpi->pts = mpi->frame_timing.pts * 1e-6;
+        ctx->last_timing.pts = mpi->frame_timing.pts;
+        ctx->last_timing.next_vsync = mpi->frame_timing.next_vsync;
+        ctx->last_timing.prev_vsync = mpi->frame_timing.prev_vsync;
         if (mpi->fields & MP_IMGFIELD_ADDITIONAL)
             talloc_free(mpi);
         else
@@ -350,7 +352,7 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
     }
     
     struct frame_timing *timing = NULL;
-    if (ctx->last_timing.next_vsync >= 0)
+    if (ctx->last_timing.next_vsync > 0)
         timing = &ctx->last_timing;
 
     gl_video_render_frame(ctx->renderer, fbo, timing);

@@ -294,7 +294,7 @@ auto VideoProcessor::filterIn(mp_image *_mpi) -> int
     }
 
     MpImage mpi = MpImage::wrap(_mpi);
-    mpi->pts_orig = -1;
+    Q_ASSERT(mpi->frame_timing.next_vsync == 0);
     if (d->skip) {
         d->mutex.lock();
         auto scan = d->skip;

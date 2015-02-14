@@ -273,9 +273,10 @@ static void *playback_thread(void *ctx_obj)
     mpthread_set_name("playback core (OSX)");
     @autoreleasepool {
         struct playback_thread_ctx *ctx = (struct playback_thread_ctx*) ctx_obj;
-        ctx->mpv_main(*ctx->argc, *ctx->argv);
-        cocoa_stop_runloop();
-        pthread_exit(NULL);
+        int r = ctx->mpv_main(*ctx->argc, *ctx->argv);
+        terminate_cocoa_application();
+        // normally never reached - unless the cocoa mainloop hasn't started yet
+        exit(r);
     }
 }
 
