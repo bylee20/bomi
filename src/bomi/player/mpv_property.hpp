@@ -203,7 +203,7 @@ struct mpv_trait<MpvFileList> {
         t.names.reserve(array->num);
         for (int i = 0; i < array->num; ++i) {
             if (array->values[i].format == MPV_FORMAT_STRING)
-                t.names.push_back(toFile(array->values[i]).data);
+                t.names.push_back(MpvFile::fromMpv(array->values[i].u.string).data);
         }
     }
     static auto get_free(mpv_node &data) { mpv_free_node_contents(&data); }
@@ -234,15 +234,12 @@ private:
         qstrncpy(node.u.string, buf.data(), buf.size() + 1);
     }
     static auto node_free(mpv_node &node) -> void { delete[] node.u.string; }
-    static auto toFile(const mpv_node &node) -> MpvFile
-        { MpvFile t; ST::get(t, node.u.string); return t; }
 };
 
 template<>
 struct mpv_trait<QVariant> {
     using mpv_type = mpv_node;
     static constexpr mpv_format format = MPV_FORMAT_NODE;
-    static constexpr bool use_free = true;
     static auto get(QVariant &var, const mpv_type &data) { var = parse(data); }
     static auto get_free(mpv_type &data) { mpv_free_node_contents(&data); }
     static QVariant parse(const mpv_node &node) {
