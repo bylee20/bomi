@@ -12,7 +12,10 @@
 #include <QtX11Extras/QX11Info>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/time.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 #include <xcb/xcb.h>
 #include <xcb/randr.h>
 #include <xcb/xproto.h>
@@ -74,6 +77,8 @@ struct X11 : public QObject {
     Display *display = nullptr;
     xcb_atom_t atoms[XcbAtomEnd];
     HwAccX11 *api = nullptr;
+
+    int statm = 0;
 
     auto sendState(QWidget *widget, bool on,
                    XcbAtom a1, XcbAtom a2 = XcbAtomEnd) -> void
@@ -153,12 +158,14 @@ X11::X11()
     else
         _Info("No available hardware acceleration API.");
 
+    statm = ::open("/proc/self/statm", O_RDONLY);
 }
 
 X11::~X11()
 {
     delete api;
     delete ss.iface;
+    ::close(statm);
 }
 
 auto getHwAcc() -> HwAcc* { return d->api; }
@@ -365,64 +372,36 @@ auto systemTime() -> quint64
 {
     struct timeval t;
     gettimeofday(&t, 0);
-    return t.tv_sec*1000000u + t.tv_usec;
+    return t.tv_sec*1000000llu + t.tv_usec;
 }
-
-static int getField(const char *file, const char *field)
-{
-    Q_ASSERT(QThread::currentThread() == qApp->thread());
-    static char buffer[BUFSIZ]; // should be called in GUI thread!!
-    const auto fd = open(file, O_RDONLY);
-    if (fd < 0)
-        return 0;
-    int len = ::read(fd, buffer, BUFSIZ);
-    int ret = 0;
-    if (len > 0) {
-        buffer[len] = '\0';
-        auto pos = strstr(buffer, field);
-        if (pos) {
-            pos += strlen(field);
-            do {
-                if (!isspace(*pos) && *pos != ':')
-                    break;
-            } while (*(++pos));
-            sscanf(pos, "%d", &ret);
-        }
-    }
-    close(fd);
-    return ret;
-}
-
 
 auto processTime() -> quint64
 {
-    static char buffer[BUFSIZ];
-    static const quint64 tick = sysconf(_SC_CLK_TCK);
-    int pid, ppid, pgrp, session, tty_nr, tpgid; uint flags;
-    unsigned long int minflt, cminflt, majflt, cmajflt, utime, stime; char comm[256], state;
-    const auto fd = open("/proc/self/stat", O_RDONLY);
-    if (fd < 0)
+    timespec ts;
+    if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts ) == -1)
         return 0;
-    int len = ::read(fd, buffer, BUFSIZ);
-    if (len > 0) {
-        buffer[len] = '\0';
-        len = sscanf(buffer
-                     , "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu"
-                     , &pid, comm, &state, &ppid, &pgrp, &session, &tty_nr, &tpgid, &flags
-                     , &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime);
-    }
-    close(fd);
-    return len > 0 ? quint64(utime + stime)*Q_UINT64_C(1000000)/tick : 0;
+    return ts.tv_sec*1000000llu + ts.tv_nsec / 1000;
 }
 
 auto totalMemory() -> double
 {
-    return getField("/proc/meminfo", "MemTotal")*1000.0 / (1024 * 1024);
+    return (sysconf(_SC_PHYS_PAGES) * sysconf(_SC_PAGESIZE)) / double(1024 * 1024);
 }
 
 auto usingMemory() -> double
 {
-    return getField("/proc/self/status", "VmRSS")*1000.0 / (1024 * 1024);
+    if (!d->statm)
+        return 0;
+    // this is not thread safe!!
+    Q_ASSERT(QThread::currentThread() == qApp->thread());
+    static char buffer[BUFSIZ];
+    ::lseek(d->statm, 0, SEEK_SET);
+    int len = ::read(d->statm, buffer, BUFSIZ);
+    if (len <= 0)
+        return 0;
+    int size = 0, resident = 0;
+    sscanf(buffer, "%d %d", &size, &resident);
+    return resident * sysconf(_SC_PAGESIZE) / double(1024*1024);
 }
 
 /******************************************************************************/
