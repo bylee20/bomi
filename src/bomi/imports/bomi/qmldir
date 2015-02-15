@@ -26,3 +26,4 @@ ChapterMarkerStyle	1.0 ChapterMarkerStyle.qml
 Text				1.0 Text.qml
 ButtonIcon			1.0	ButtonIcon.qml
 HideTimer			1.0 HideTimer.qml
+AutoDisplayZone		1.0 AutoDisplayZone.qml

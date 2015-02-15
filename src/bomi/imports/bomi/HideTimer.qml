@@ -5,7 +5,7 @@ Item {
     property var target
     property alias timeout: timer.interval
     property var hide: function () { return true }
-
+    property bool running: timer.running
     function run() {
         if (target && hide)
             timer.start()

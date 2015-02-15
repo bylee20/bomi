@@ -153,39 +153,18 @@ Item {
         }
     }
 
-    property var mouse: B.App.window.mouse
-
-    MouseArea {
+    B.AutoDisplayZone {
         id: rightEdge
+        width: 15; height: parent.height; anchors.right: parent.right
         visible: B.App.theme.playlist.showOnMouseOverEdge
-        anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
-        width: 15; z: 1e10; hoverEnabled: true
-        onContainsMouseChanged: {
-            if (containsMouse) {
-                B.App.playlist.visible = true
-                rightTimer.run()
-            }
-        }
-        B.HideTimer {
-            id: rightTimer
-            target: B.App.playlist
-            hide: function() { return !mouse.isIn(right) }
-        }
+        target: B.App.playlist; box: right;
     }
-    MouseArea {
+
+    B.AutoDisplayZone {
         id: leftEdge
+        width: 15; height: parent.height; anchors.left: parent.left
         visible: B.App.theme.history.showOnMouseOverEdge
-        anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
-        width: 15; z: 1e10; hoverEnabled: true
-        onContainsMouseChanged: {
-            if (containsMouse) {
-                B.App.history.visible = true
-                leftTimer.run()
-            }
-        }
-        B.HideTimer {
-            id: leftTimer; target: B.App.history
-            hide: function() { return !mouse.isIn(left) }
-        }
+        target: B.App.history; box: left;
     }
+
 }
