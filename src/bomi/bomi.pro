@@ -260,7 +260,8 @@ HEADERS += \
     os/x11.hpp \
     enum/codecid.hpp \
     global.hpp \
-    global_def.hpp
+    global_def.hpp \
+    player/shortcutmap.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -447,7 +448,8 @@ SOURCES += \
     os/x11.cpp \
     os/os.cpp \
     enum/codecid.cpp \
-    global.cpp
+    global.cpp \
+    player/shortcutmap.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -530,4 +532,5 @@ DISTFILES += \
     imports/bomi/HideTimer.qml \
     skins/Numix/bomi.qml \
     skins/native/bomi.qml \
-    skins/native/MediaButton.qml
+    skins/native/MediaButton.qml \
+    imports/bomi/AutoDisplayZone.qml

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>668</width>
+    <width>678</width>
     <height>693</height>
    </rect>
   </property>
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>14</number>
+        <number>13</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1851,7 +1851,7 @@
           </layout>
          </item>
          <item>
-          <widget class="PrefMenuTreeWidget" name="shortcuts">
+          <widget class="PrefMenuTreeWidget" name="shortcut_map">
            <property name="alternatingRowColors">
             <bool>true</bool>
            </property>
@@ -1953,6 +1953,13 @@
              </property>
              <property name="text">
               <string>Shortcut4</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="shortcut_default">
+             <property name="text">
+              <string>Default</string>
              </property>
             </widget>
            </item>

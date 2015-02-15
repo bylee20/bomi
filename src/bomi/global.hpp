@@ -108,7 +108,10 @@ SIA _Change(T &the, const T &one) -> bool
 { if (the != one) {the = one; return true;} return false; }
 
 template<class T>
-SIA _C(T& t) -> const T& { return t; }
+SIA _C(T &t) -> const T& { return t; }
+
+template<class T>
+SIA _C(T *t) -> const T* { return t; }
 
 SIA _MSecToTime(int ms) -> QTime { return QTime::fromMSecsSinceStartOfDay(ms); }
 

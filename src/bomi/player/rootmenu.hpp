@@ -3,7 +3,7 @@
 
 #include "widget/menu.hpp"
 
-using Shortcuts = QMap<QString, QList<QKeySequence>>;
+class ShortcutMap;
 
 class RootMenu : public Menu {
     Q_OBJECT
@@ -18,14 +18,11 @@ public:
     auto action(const QString &longId) const -> QAction*;
     auto action(const QKeySequence &shortcut) const -> QAction*
         { return m_keymap.value(shortcut); }
-    auto resetKeyMap() -> void { m_keymap.clear(); fillKeyMap(this); }
-    auto shortcuts() const -> Shortcuts;
-    auto setShortcuts(const Shortcuts &shortcuts) -> void;
+    auto setShortcutMap(const ShortcutMap &map) -> void;
     static auto instance() -> RootMenu& {return *obj;}
     static auto execute(const QString &longId,
                         const QString &argument = QString()) -> bool;
 private:
-    auto fillKeyMap(Menu *menu) -> void;
     static RootMenu *obj;
     QMap<QKeySequence, QAction*> m_keymap;
     struct Data;

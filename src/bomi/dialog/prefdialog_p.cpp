@@ -4,82 +4,84 @@
 #include "enum/mousebehavior.hpp"
 #include <QHeaderView>
 
-PrefMenuTreeItem::PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent)
-    : QTreeWidgetItem(parent)
-    , m_action(menu->menuAction())
-{
-    setText(Discription, menu->title());
-}
-
-PrefMenuTreeItem::PrefMenuTreeItem(QAction *action, PrefMenuTreeItem *parent)
-    : QTreeWidgetItem(parent)
-    , m_action(action)
-{
-    Q_ASSERT(action->menu() == 0);
-    setText(Discription, m_action->text());
-}
-
-auto PrefMenuTreeItem::setShortcut(int idx, const QKeySequence &key) -> void
-{
-    m_shortcuts[idx] = key;
-    setText(idx + Shortcut1, key.toString(QKeySequence::NativeText));
-}
-
-auto PrefMenuTreeItem::setShortcuts(const QList<QKeySequence> &keys) -> void
-{
-    for (int i = 0; i<(int)m_shortcuts.size(); ++i) {
-        m_shortcuts[i] = (i < keys.size()) ? keys[i] : QKeySequence();
-        setText(i+1, m_shortcuts[i].toString(QKeySequence::NativeText));
-    }
-}
-
-auto PrefMenuTreeItem::hasShortcut(const QKeySequence &key) -> bool
-{
-    return !key.isEmpty() && tmp::contains(m_shortcuts, key);
-}
-
-auto PrefMenuTreeItem::shortcuts() const -> QList<QKeySequence>
-{
-    QList<QKeySequence> shortcuts;
-    for (auto &key : m_shortcuts) {
-        if (!key.isEmpty())
-            shortcuts.push_back(key);
-    }
-    return shortcuts;
-}
-
-auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
-                              const QString &prefix, QVector<ActionInfo> &list)
--> PrefMenuTreeItem*
+PrefMenuTreeItem::PrefMenuTreeItem(QAction *action, QVector<PrefMenuTreeItem*> &items, QVector<ActionInfo> &list, PrefMenuTreeItem *parent)
+    : QTreeWidgetItem(parent, action->menu() ? Menu : action->isSeparator() ? Separator : Action)
 {
     RootMenu &root = RootMenu::instance();
-    const auto actions = menu->actions();
-    QList<QTreeWidgetItem*> children;
-    for (int i=0; i<actions.size(); ++i) {
-        const auto action = actions[i];
-        const auto id = root.id(action);
-        if (!id.isEmpty()) {
-            if (action->menu()) {
-                auto menu = qobject_cast<Menu*>(action->menu());
-                Q_ASSERT(menu);
-                const QString subprefix = prefix % menu->title()  % u" > "_q;
-                if (auto child = create(menu, items, subprefix, list))
-                    children.push_back(child);
-            } else {
-                auto child = new PrefMenuTreeItem(action, 0);
-                child->m_desc = prefix % action->text();
-                child->setText(Id, child->m_id = id);
-                items.push_back(child);
-                children.push_back(child);
-                list.append({ id, child->m_desc });
-            }
+    m_id = root.id(action);
+    if (action->menu())
+        m_name = action->menu()->title();
+    else if (!action->isSeparator())
+        m_name = action->text();
+    if (parent)
+        m_desc = parent->description() % " > "_a % m_name;
+    else
+        m_desc = m_name;
+
+    switch (type()) {
+    case Menu:
+        for (auto a : action->menu()->actions()) {
+            if (root.id(a).isEmpty())
+                continue;
+            new PrefMenuTreeItem(a, items, list, this);
         }
+        break;
+    case Action:
+        items.push_back(this);
+        list.append({ m_id, m_desc });
+        break;
+    case Separator:
+        break;
     }
-    if (children.isEmpty())
-        return 0;
-    PrefMenuTreeItem *item = new PrefMenuTreeItem(menu, 0);
-    item->addChildren(children);
-    return item;
+}
+
+auto PrefMenuTreeItem::setKey(int idx, const QKeySequence &key) -> void
+{
+    auto keys = m_shortcut.keys();
+    while (idx >= keys.size())
+        keys.push_back(Key());
+    keys[idx] = key;
+    m_shortcut.setKeys(keys);
+    emitDataChanged();
+}
+
+auto PrefMenuTreeItem::data(int column, int role) const -> QVariant
+{
+    if (role == Qt::FontRole) {
+        QFont font;
+        if (!m_shortcut.isDefault())
+            font.setItalic(!font.italic());
+        return font;
+    }
+    if (role != Qt::DisplayRole)
+        return QVariant();
+    switch (column) {
+    case Name:
+        return m_name;
+    case Shortcut1:
+    case Shortcut2:
+    case Shortcut3:
+    case Shortcut4:
+        return m_shortcut.key(column - Shortcut1);
+    case Id:
+        return m_shortcut.id();
+    default:
+        return QVariant();
+    }
+}
+
+auto PrefMenuTreeItem::reset() -> void
+{
+    if (m_shortcut.isDefault())
+        return;
+    m_shortcut.reset();
+    emitDataChanged();
+}
+
+auto PrefMenuTreeItem::setShortcut(const Shortcut &s) -> void
+{
+    if (_Change(m_shortcut, s))
+        emitDataChanged();
 }
 
 /******************************************************************************/
@@ -88,7 +90,7 @@ PrefMenuTreeWidget::PrefMenuTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
 {
     RootMenu &root = RootMenu::instance();
-    auto item = PrefMenuTreeItem::create(&root, m_actionItems, QString(), m_actionInfos);
+    auto item = new PrefMenuTreeItem(root.menuAction(), m_actionItems, m_actionInfos, nullptr);
     addTopLevelItems(item->takeChildren());
     delete item;
     m_actionInfos.prepend({QString(), tr("Unused")});

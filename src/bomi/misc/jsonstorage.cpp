@@ -147,7 +147,6 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(MouseActionMap);
     INSERT(DeintOptionSet);
     INSERT(AudioNormalizerOption);
-    INSERT(Shortcuts);
     INSERT(Mrl);
     INSERT(VideoEffects);
     INSERT(StreamList);
@@ -156,6 +155,8 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(Locale);
     INSERT(LogOption);
     INSERT(QList<CodecId>);
+    INSERT(Shortcuts);
+    INSERT(ShortcutMap);
 
     for (auto type : _EnumMetaTypeIds()) {
         auto &ec = c[type];

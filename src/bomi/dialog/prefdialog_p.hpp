@@ -1,6 +1,7 @@
 #ifndef PREFDIALOG_P_HPP
 #define PREFDIALOG_P_HPP
 
+#include "player/shortcutmap.hpp"
 #include "enum/mousebehavior.hpp"
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/simplelistmodel.hpp"
@@ -17,65 +18,66 @@ static const int WidgetRole = Qt::UserRole + CategoryRole;
 
 struct ActionInfo { QString key, description; };
 
+using Key = QKeySequence;
+
 class PrefMenuTreeItem : public QTreeWidgetItem {
 public:
-    enum Column {
-        Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4, Id
+    enum Type {
+        NoType = QTreeWidgetItem::Type,
+        Menu = UserType, Separator, Action
     };
-    auto isMenu() const -> bool { return m_action->menu() != 0; }
-    auto isSeparator() const -> bool { return m_action->isSeparator(); }
-    auto shortcut(int i) const -> QKeySequence {return m_shortcuts[i];}
-    auto setShortcut(int idx, const QKeySequence &key) -> void;
-    auto setShortcuts(const QList<QKeySequence> &keys) -> void;
-    auto shortcuts() const -> QList<QKeySequence>;
-    auto hasShortcut(const QKeySequence &key) -> bool;
+    enum Column {
+        Name = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4, Id
+    };
+    auto isMenu() const -> bool { return type() == Menu; }
+    auto isSeparator() const -> bool { return type() == Separator; }
+    auto key(int i) const -> Key {return m_shortcut.key(i);}
+    auto setKey(int idx, const QKeySequence &key) -> void;
+    auto setShortcut(const Shortcut &s) -> void;
+    auto shortcut() const -> Shortcut { return m_shortcut; }
+    auto contains(const Key &key) -> bool { return m_shortcut.contains(key); }
     auto id() const -> QString { return m_id; }
     auto description() const -> QString { return m_desc; }
+    auto reset() -> void;
 private:
+    auto data(int column, int role) const -> QVariant final;
     friend class PrefMenuTreeWidget;
-    static auto create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
-                       const QString &prefix,
-                       QVector<ActionInfo> &list) -> PrefMenuTreeItem*;
-    PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent);
-    PrefMenuTreeItem(QAction *action, PrefMenuTreeItem *parent);
-    QAction *m_action; QString m_id, m_desc;
-    std::array<QKeySequence, 4> m_shortcuts;
+    PrefMenuTreeItem(QAction *action, QVector<PrefMenuTreeItem*> &items,
+                     QVector<ActionInfo> &list, PrefMenuTreeItem *parent);
+    QString m_desc, m_name, m_id; Shortcut m_shortcut;
 };
 
 class PrefMenuTreeWidget : public QTreeWidget {
     Q_OBJECT
-    Q_PROPERTY(Shortcuts value READ get WRITE set NOTIFY changed)
+    Q_PROPERTY(ShortcutMap value READ get WRITE set NOTIFY changed)
 public:
     PrefMenuTreeWidget(QWidget *parent = nullptr);
     auto actionInfoList() const -> const QVector<ActionInfo>& { return m_actionInfos; }
-    auto set(const Shortcuts &shortcuts) -> void
+    auto set(const ShortcutMap &map) -> void
     {
         for (auto item : m_actionItems)
-            item->setShortcuts(shortcuts[item->id()]);
+            item->setShortcut(map.shortcut(item->id()));
     }
-    auto get() -> Shortcuts
+    auto get() -> ShortcutMap
     {
-        Shortcuts shortcuts;
-        for (auto item : m_actionItems) {
-            const auto keys = item->shortcuts();
-            if (!keys.isEmpty())
-                shortcuts[item->id()] = keys;
-        }
-        return shortcuts;
+        ShortcutMap map;
+        for (auto item : m_actionItems)
+            map.insert(item->shortcut());
+        return map;
     }
     auto item(const QKeySequence &key) const -> PrefMenuTreeItem*
     {
         for (auto item : m_actionItems) {
-            if (item->hasShortcut(key))
+            if (item->contains(key))
                 return item;
         }
         return nullptr;
     }
     auto compare(const QVariant &var) const -> bool
     {
-        const auto shortcuts = var.value<Shortcuts>();
+        const auto map = var.value<ShortcutMap>();
         for (auto item : m_actionItems) {
-            if (item->shortcuts() != shortcuts[item->id()])
+            if (item->shortcut() != map.shortcut(item->id()))
                 return false;
         }
         return true;
@@ -83,6 +85,7 @@ public:
 signals:
     void changed();
 private:
+//    auto recursive(QTreeWidgetItem *item)
     QVector<PrefMenuTreeItem*> m_actionItems;
     QVector<ActionInfo> m_actionInfos;
 };

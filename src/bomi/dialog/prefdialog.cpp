@@ -165,8 +165,9 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->shortcutGroup->addButton(d->ui.shortcut2, 1);
     d->shortcutGroup->addButton(d->ui.shortcut3, 2);
     d->shortcutGroup->addButton(d->ui.shortcut4, 3);
+    d->shortcutGroup->addButton(d->ui.shortcut_default, 4);
 
-    d->ui.mouse_action_map->setActionList(&d->ui.shortcuts->actionInfoList());
+    d->ui.mouse_action_map->setActionList(&d->ui.shortcut_map->actionInfoList());
 
     connect(SIGNAL_VT(d->ui.audio_device, currentIndexChanged, int), [this] (int idx)
         { d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(idx).toString()); });
@@ -202,23 +203,25 @@ PrefDialog::PrefDialog(QWidget *parent)
     connect(d->ui.sub_autoselect, currentDataChanged, checkSubAutoselectMode);
     void(QButtonGroup::*buttonClicked)(int) = &QButtonGroup::buttonClicked;
     connect(d->shortcutGroup, buttonClicked, [this] (int idx) {
-        auto treeItem = d->ui.shortcuts->currentItem();
+        auto treeItem = d->ui.shortcut_map->currentItem();
         auto item = static_cast<PrefMenuTreeItem*>(treeItem);
-        if (item && !item->isMenu()) {
-            ShortcutDialog dlg(item->shortcut(idx), this);
-            dlg.setQueryFunction([=] (const QString &id,
-                                      const QKeySequence &key)
-            {
-                auto item = d->ui.shortcuts->item(key);
+        if (!item || item->isMenu() || item->isSeparator())
+            return;
+        if (idx == 4)
+            item->reset();
+        else {
+            ShortcutDialog dlg(item->key(idx), this);
+            dlg.setQueryFunction([=] (const QString &id, const QKeySequence &key) {
+                auto item = d->ui.shortcut_map->item(key);
                 if (!item || item->id() == id)
                     return QString();
                 return item->description();
             }, item->id());
             if (dlg.exec())
-                item->setShortcut(idx, dlg.shortcut());
+                item->setKey(idx, dlg.shortcut());
         }
     });
-    connect(d->ui.shortcuts, &QTreeWidget::currentItemChanged,
+    connect(d->ui.shortcut_map, &QTreeWidget::currentItemChanged,
             [this] (QTreeWidgetItem *it) {
         auto item = static_cast<PrefMenuTreeItem*>(it);
         const auto buttons = d->shortcutGroup->buttons();
@@ -226,16 +229,16 @@ PrefDialog::PrefDialog(QWidget *parent)
             b->setEnabled(item && !item->isMenu());
     });
 
-    static constexpr auto bomi = static_cast<int>(KeyMapPreset::Bomi);
-    static constexpr auto movist = static_cast<int>(KeyMapPreset::Movist);
-    d->ui.shortcut_preset->addItem(cApp.displayName(), bomi);
+    static constexpr auto def = static_cast<int>(ShortcutMap::Default);
+    static constexpr auto movist = static_cast<int>(ShortcutMap::Movist);
+    d->ui.shortcut_preset->addItem(cApp.displayName(), def);
     d->ui.shortcut_preset->addItem(tr("Movist"), movist);
 
     connect(d->ui.load_preset, &QPushButton::clicked, [this] () {
         const int idx = d->ui.shortcut_preset->currentIndex();
         if (idx != -1) {
             const auto data = d->ui.shortcut_preset->itemData(idx).toInt();
-            d->ui.shortcuts->set(Pref::preset(static_cast<KeyMapPreset>(data)));
+            d->ui.shortcut_map->set(ShortcutMap::preset(static_cast<ShortcutMap::Preset>(data)));
         }
     });
 

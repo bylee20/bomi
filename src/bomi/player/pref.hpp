@@ -25,9 +25,9 @@
 #include "quick/osdthemeobject.hpp"
 #include "os/os.hpp"
 #include "pref_helper.hpp"
+#include "player/shortcutmap.hpp"
 
-using Shortcuts = QMap<QString, QList<QKeySequence>>;
-enum class KeyMapPreset {Bomi, Movist};
+using Shortcuts = QMap<QString, QList<QKeySequence>>; // keep for backward compat
 
 class Pref : public QObject {
     Q_OBJECT
@@ -130,7 +130,8 @@ public:
 
     P1(QString, skin_name, defaultSkinName(), "currentText")
 
-    P0(Shortcuts, shortcuts, defaultShortcuts())
+//    P0(Shortcuts, shortcuts, defaultShortcuts())
+    P0(ShortcutMap, shortcut_map, {})
 
     P1(QString, audio_device, u"auto"_q, "currentText")
     P0(ClippingMethod, clipping_method, ClippingMethod::Auto)
@@ -154,7 +155,7 @@ public:
     P1(QString, app_style, {}, "value");
     P0(LogOption, app_log_option, LogOption::default_())
 
-    static auto preset(KeyMapPreset id) -> Shortcuts;
+//    static auto preset(KeyMapPreset id) -> Shortcuts;
 
     auto save() const -> void;
     auto load() -> void;
@@ -168,7 +169,6 @@ private:
     static auto defaultSkinName() -> QString;
     static auto defaultSubtitleEncoding() -> QString;
     static auto defaultSubtitleEncodingDetectionAccuracy() -> int;
-    static auto defaultShortcuts() -> Shortcuts;
     static auto defaultMouseActionMap() -> MouseActionMap;
     static auto defaultFileNameFormat() -> QString;
     static auto defaultFallbackFolder() -> QString;

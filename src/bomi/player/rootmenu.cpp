@@ -1,4 +1,5 @@
 #include "rootmenu.hpp"
+#include "shortcutmap.hpp"
 #include "video/videocolor.hpp"
 #include "misc/log.hpp"
 #include "misc/stepactionpair.hpp"
@@ -18,6 +19,8 @@
 #include <functional>
 
 DECLARE_LOG_CONTEXT(Menu)
+
+#define BOMI_ID "bomi_id"
 
 auto root_menu_execute(const QString &longId, const QString &argument) -> bool
 {
@@ -72,6 +75,7 @@ struct RootMenu::Data {
         auto &info = infos[action];
         const auto &prefix = infos[parent->menuAction()].id;
         info.id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
+        action->setProperty(BOMI_ID, info.id);
         actions[info.id].action = action;
         this->info = &info;
         return &info;
@@ -618,7 +622,9 @@ RootMenu::~RootMenu()
 
 auto RootMenu::id(QAction *action) const -> QString
 {
-    return d->infos.value(action).id;
+    auto id = action->property(BOMI_ID).toString();
+    Q_ASSERT(id == d->infos.value(action).id);
+    return id;
 }
 
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
@@ -639,32 +645,20 @@ auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
     }
 }
 
-auto RootMenu::setShortcuts(const Shortcuts &shortcuts) -> void
+auto RootMenu::setShortcutMap(const ShortcutMap &map) -> void
 {
-    for (auto it = shortcuts.cbegin(); it != shortcuts.cend(); ++it) {
-        auto id = it.key();
-        if (id.startsWith(u"menu/"_q))
-            id = id.mid(5);
-        auto action = d->find(id);
-        if (action.action)
-            action.action->setShortcuts(it.value());
-        else
-            _Warn("Cannot set shortcuts for '%%'", id);
+    m_keymap.clear();
+    for (auto it = d->actions.cbegin(); it != d->actions.cend(); ++it) {
+        const auto &keys = map.keys(it.key());
+        it->action->setShortcuts(keys);
+        for (auto &key : keys) {
+            if (!key.isEmpty())
+                m_keymap[key] = it->action;
+        }
     }
 #ifdef Q_OS_MAC
     a(u"exit"_q)->setShortcut(QKeySequence());
 #endif
-}
-
-auto RootMenu::shortcuts() const -> Shortcuts
-{
-    Shortcuts keys;
-    for (auto it = d->actions.cbegin(); it != d->actions.cend(); ++it) {
-        auto shortcuts = it.value().action->shortcuts();
-        if (!shortcuts.isEmpty())
-            keys[it.key()] = shortcuts;
-    }
-    return keys;
 }
 
 auto RootMenu::retranslate() -> void
@@ -676,18 +670,6 @@ auto RootMenu::retranslate() -> void
             _Error("'%%' is not tranlsatable.", info.id);
         else
             info.trans();
-    }
-}
-
-auto RootMenu::fillKeyMap(Menu *menu) -> void
-{
-    for (auto action : menu->actions()) {
-        if (action->menu())
-            fillKeyMap(static_cast<Menu*>(action->menu()));
-        else {
-            for (auto key : action->shortcuts())
-                m_keymap[key] = action;
-        }
     }
 }
 

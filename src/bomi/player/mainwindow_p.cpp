@@ -511,7 +511,7 @@ auto MainWindow::Data::applyPref() -> void
     cApp.setMprisActivated(p.use_mpris2());
 
     menu.retranslate();
-    menu.setShortcuts(p.shortcuts());
+    menu.setShortcutMap(p.shortcut_map());
     menu(u"play"_q)(u"speed"_q).s()->setStep(p.speed_step());
     menu(u"play"_q)(u"seek"_q).s(u"seek1"_q)->setStep(p.seek_step1_sec() * 1000);
     menu(u"play"_q)(u"seek"_q).s(u"seek2"_q)->setStep(p.seek_step2_sec() * 1000);
@@ -525,7 +525,6 @@ auto MainWindow::Data::applyPref() -> void
     menu(u"audio"_q)(u"sync"_q).s()->setStep(p.audio_sync_step_sec() * 1000);
     menu(u"audio"_q)(u"volume"_q).s()->setStep(p.volume_step());
     menu(u"audio"_q)(u"amp"_q).s()->setStep(p.amp_step());
-    menu.resetKeyMap();
 
     theme.set(p.osd_theme());
     theme.set(p.playlist_theme());
