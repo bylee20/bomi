@@ -4,16 +4,15 @@
 #include "enum/mousebehavior.hpp"
 #include <QHeaderView>
 
-PrefMenuTreeItem::PrefMenuTreeItem(QAction *action, QVector<PrefMenuTreeItem*> &items, QVector<ActionInfo> &list, PrefMenuTreeItem *parent)
+PrefMenuTreeItem::PrefMenuTreeItem(QAction *action, QVector<ActionInfo> &list, PrefMenuTreeItem *parent)
     : QTreeWidgetItem(parent, action->menu() ? Menu : action->isSeparator() ? Separator : Action)
 {
-    RootMenu &root = RootMenu::instance();
-    m_id = root.id(action);
+    m_id = action->objectName();
     if (action->menu())
         m_name = action->menu()->title();
     else if (!action->isSeparator())
         m_name = action->text();
-    if (parent)
+    if (parent && !parent->description().isEmpty())
         m_desc = parent->description() % " > "_a % m_name;
     else
         m_desc = m_name;
@@ -21,13 +20,11 @@ PrefMenuTreeItem::PrefMenuTreeItem(QAction *action, QVector<PrefMenuTreeItem*> &
     switch (type()) {
     case Menu:
         for (auto a : action->menu()->actions()) {
-            if (root.id(a).isEmpty())
-                continue;
-            new PrefMenuTreeItem(a, items, list, this);
+            if (!a->objectName().isEmpty())
+                new PrefMenuTreeItem(a, list, this);
         }
         break;
     case Action:
-        items.push_back(this);
         list.append({ m_id, m_desc });
         break;
     case Separator:
@@ -90,7 +87,7 @@ PrefMenuTreeWidget::PrefMenuTreeWidget(QWidget *parent)
     : QTreeWidget(parent)
 {
     RootMenu &root = RootMenu::instance();
-    auto item = new PrefMenuTreeItem(root.menuAction(), m_actionItems, m_actionInfos, nullptr);
+    auto item = new PrefMenuTreeItem(root.menuAction(), m_actionInfos, nullptr);
     addTopLevelItems(item->takeChildren());
     delete item;
     m_actionInfos.prepend({QString(), tr("Unused")});
@@ -171,7 +168,7 @@ public:
             return nullptr;
         auto combo = new QComboBox(parent);
         for (int i = 0; i < actions->size(); ++i)
-            combo->addItem(actions->at(i).description);
+            combo->addItem(actions->at(i).desc);
         return combo;
     }
     auto setEditorData(QWidget *editor, const QModelIndex &index) const -> void
@@ -190,7 +187,7 @@ public:
         auto combo = static_cast<QComboBox*>(editor);
         const auto idx = combo->currentIndex();
         model->setData(index, idx, ActionIndexRole);
-        model->setData(index, actions->at(idx).description);
+        model->setData(index, actions->at(idx).desc);
     }
     auto updateEditorGeometry(QWidget *w, const QStyleOptionViewItem &opt,
                               const QModelIndex &/*index*/) const -> void
@@ -230,7 +227,7 @@ public:
     {
         for (int i = 0; i < mods.size(); ++i) {
             const auto idx = child(i)->data(1, ActionIndexRole).toInt();
-            if (map[mods[i]] != m_actions->at(idx).key)
+            if (map[mods[i]] != m_actions->at(idx).id)
                 return false;
         }
         return true;
@@ -241,13 +238,13 @@ public:
             const auto id = map[mods[i]];
             int idx = 0;
             for (int j = 0; j < m_actions->size(); ++j) {
-                if (m_actions->at(j).key == id) {
+                if (m_actions->at(j).id == id) {
                     idx = j;
                     break;
                 }
             }
             auto sub = child(i);
-            sub->setText(1, m_actions->at(idx).description);
+            sub->setText(1, m_actions->at(idx).desc);
             sub->setData(1, ActionIndexRole, idx);
         }
     }
@@ -256,7 +253,7 @@ public:
         KeyModifierActionMap map;
         for (int i = 0; i < mods.size(); ++i) {
             const auto idx = child(i)->data(1, ActionIndexRole).toInt();
-            map[mods[i]] = m_actions->at(idx).key;
+            map[mods[i]] = m_actions->at(idx).id;
         }
         return map;
     }

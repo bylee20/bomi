@@ -13,7 +13,6 @@ public:
     RootMenu(const RootMenu &) = delete;
     ~RootMenu();
     auto retranslate() -> void;
-    auto id(QAction *action) const -> QString;
     auto description(const QString &longId) const -> QString;
     auto action(const QString &longId) const -> QAction*;
     auto action(const QKeySequence &shortcut) const -> QAction*

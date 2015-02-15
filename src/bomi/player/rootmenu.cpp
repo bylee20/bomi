@@ -20,8 +20,6 @@
 
 DECLARE_LOG_CONTEXT(Menu)
 
-#define BOMI_ID "bomi_id"
-
 auto root_menu_execute(const QString &longId, const QString &argument) -> bool
 {
     return RootMenu::execute(longId, argument);
@@ -35,8 +33,7 @@ using Translate = std::function<void(void)>;
 struct MenuActionInfo
 {
     MenuActionInfo() = default;
-    MenuActionInfo(const QString &id): id(id) { }
-    QString id; Translate trans; const char *desc = nullptr;
+    Translate trans; const char *desc = nullptr;
 };
 
 struct ArgAction { QString argument; QAction *action = nullptr; };
@@ -73,10 +70,10 @@ struct RootMenu::Data {
     auto newInfo(QAction *action, const QString &key) -> MenuActionInfo*
     {
         auto &info = infos[action];
-        const auto &prefix = infos[parent->menuAction()].id;
-        info.id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
-        action->setProperty(BOMI_ID, info.id);
-        actions[info.id].action = action;
+        const auto &prefix = parent->menuAction()->objectName();
+        const QString id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
+        action->setObjectName(id);
+        actions[id].action = action;
         this->info = &info;
         return &info;
     }
@@ -315,7 +312,7 @@ RootMenu::RootMenu()
     ALIAS(video/deinterlacing/toggle, video/deinterlacing/cycle);
 #undef ALIAS
 
-    setTitle(u"Root Menu"_q);
+//    setTitle(u"Root Menu"_q);
 
     d->parent = this;
     d->infos[menuAction()] = { };
@@ -620,13 +617,6 @@ RootMenu::~RootMenu()
     obj = nullptr;
 }
 
-auto RootMenu::id(QAction *action) const -> QString
-{
-    auto id = action->property(BOMI_ID).toString();
-    Q_ASSERT(id == d->infos.value(action).id);
-    return id;
-}
-
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
 {
     ArgAction aa = RootMenu::instance().d->find(longId);
@@ -663,13 +653,13 @@ auto RootMenu::setShortcutMap(const ShortcutMap &map) -> void
 
 auto RootMenu::retranslate() -> void
 {
-    for (auto &info : d->infos) {
-        if (info.id.isEmpty())
+    for (auto it = d->infos.begin(); it != d->infos.end(); ++it) {
+        if (it.key()->objectName().isEmpty())
             continue;
-        if (!info.trans)
-            _Error("'%%' is not tranlsatable.", info.id);
+        if (!it->trans)
+            _Error("'%%' is not tranlsatable.", it.key()->objectName());
         else
-            info.trans();
+            it->trans();
     }
 }
 

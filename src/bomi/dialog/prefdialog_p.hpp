@@ -16,7 +16,7 @@ class Menu;
 static const int CategoryRole = Qt::UserRole + 1;
 static const int WidgetRole = Qt::UserRole + CategoryRole;
 
-struct ActionInfo { QString key, description; };
+struct ActionInfo { QString id, desc; };
 
 using Key = QKeySequence;
 
@@ -42,51 +42,59 @@ public:
 private:
     auto data(int column, int role) const -> QVariant final;
     friend class PrefMenuTreeWidget;
-    PrefMenuTreeItem(QAction *action, QVector<PrefMenuTreeItem*> &items,
-                     QVector<ActionInfo> &list, PrefMenuTreeItem *parent);
+    PrefMenuTreeItem(QAction *action, QVector<ActionInfo> &list, PrefMenuTreeItem *parent);
     QString m_desc, m_name, m_id; Shortcut m_shortcut;
 };
 
 class PrefMenuTreeWidget : public QTreeWidget {
     Q_OBJECT
     Q_PROPERTY(ShortcutMap value READ get WRITE set NOTIFY changed)
+    using Item = PrefMenuTreeItem;
 public:
     PrefMenuTreeWidget(QWidget *parent = nullptr);
     auto actionInfoList() const -> const QVector<ActionInfo>& { return m_actionInfos; }
     auto set(const ShortcutMap &map) -> void
-    {
-        for (auto item : m_actionItems)
-            item->setShortcut(map.shortcut(item->id()));
-    }
+        { for_recursive([&] (auto i) { i->setShortcut(map.shortcut(i->id())); }); }
     auto get() -> ShortcutMap
     {
         ShortcutMap map;
-        for (auto item : m_actionItems)
-            map.insert(item->shortcut());
+        for_recursive([&] (auto i) { map.insert(i->shortcut()); });
         return map;
     }
     auto item(const QKeySequence &key) const -> PrefMenuTreeItem*
     {
-        for (auto item : m_actionItems) {
-            if (item->contains(key))
-                return item;
-        }
-        return nullptr;
+        PrefMenuTreeItem *ret = nullptr;
+        for_recursive_br([&] (auto i) { if (i->contains(key)) { ret = i; } return !ret; });
+        return ret;
     }
     auto compare(const QVariant &var) const -> bool
     {
         const auto map = var.value<ShortcutMap>();
-        for (auto item : m_actionItems) {
-            if (item->shortcut() != map.shortcut(item->id()))
-                return false;
-        }
-        return true;
+        return for_recursive_br([&] (auto i)
+            { return i->shortcut() == map.shortcut(i->id()); });
     }
 signals:
     void changed();
 private:
-//    auto recursive(QTreeWidgetItem *item)
-    QVector<PrefMenuTreeItem*> m_actionItems;
+    template<class F>
+    static auto for_recursive(QTreeWidgetItem *item, F func) -> bool
+    {
+        if (item->type() == Item::Action) {
+            if (!func(static_cast<Item*>(item)))
+                return false;
+        }
+        for (int i = 0; i < item->childCount(); ++i) {
+            if (!for_recursive(item->child(i), func))
+                return false;
+        }
+        return true;
+    }
+    template<class F>
+    auto for_recursive_br(F func) const -> bool
+        { return for_recursive(invisibleRootItem(), std::move(func)); }
+    template<class F>
+    auto for_recursive(F f) const -> void
+        { for_recursive_br([&] (auto i) { f(i); return true; }); }
     QVector<ActionInfo> m_actionInfos;
 };
 
