@@ -127,7 +127,7 @@ auto Mpv::finalizeGL() -> void
     mpv_opengl_cb_uninit_gl(d->gl);
 }
 
-auto Mpv::hook(const char *when, std::function<void ()> &&run) -> void
+auto Mpv::hook(const QByteArray &when, std::function<void ()> &&run) -> void
 {
     Q_ASSERT(!d->hooks.contains(when));
     tell("hook_add", when, d->hookId++, 0);

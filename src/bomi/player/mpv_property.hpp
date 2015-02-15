@@ -169,15 +169,6 @@ struct mpv_trait<QByteArray> : detail::mpv_trait_no_alloc {
     { node.format = format; set((const char*&)node.u.string, t); }
 };
 
-template<>
-struct mpv_trait<const char*> : detail::mpv_trait_no_alloc {
-    using mpv_type = const char*;
-    static constexpr mpv_format format = MPV_FORMAT_STRING;
-    static auto set(const char *&data, const char *t) { data = t; }
-    static auto node_fill(mpv_node &node, const char *t)
-    { node.format = format; set((const char*&)node.u.string, t); }
-};
-
 namespace detail {
 
 template<MpvEnc me>
@@ -187,19 +178,7 @@ struct mpv_trait_string {
     static constexpr mpv_format format = MPV_FORMAT_STRING;
     static auto get_free(mpv_type &data) { mpv_free((void*)data); }
     static auto get(T &s, const mpv_type &data) { s = T::fromMpv(data); }
-private:
-    static auto set(mpv_type &data, const T &t)
-    {
-        const auto buf = t.toMpv();
-        auto str = new char[buf.size() + 1];
-        qstrncpy(str, buf.data(), buf.size() + 1);
-        data = str;
-    }
-    static auto set_free(mpv_type &str) { delete[]str; }
-    friend struct mpv_trait<MpvFileList>;
-    static auto node_fill(mpv_node &node, const T &t)
-    { node.format = format; set((const char*&)node.u.string, t); }
-    static auto node_free(mpv_node &node) { set_free((const char*&)node.u.string); }
+// never set string directly
 };
 
 }
@@ -237,16 +216,24 @@ struct mpv_trait<MpvFileList> {
         list->keys = nullptr;
         list->values = new mpv_node[t.names.size()];
         for (int i = 0; i < t.names.size(); ++i)
-            mpv_trait<MpvFile>::node_fill(list->values[i], t.names[i]);
+            node_fill(list->values[i], t.names[i]);
     }
     static auto set_free(mpv_node &data) -> void
     {
         for (int i = 0; i < data.u.list->num; ++i)
-            mpv_trait<MpvFile>::node_free(data.u.list->values[i]);
+            node_free(data.u.list->values[i]);
         delete [] data.u.list->values;
         delete data.u.list;
     }
 private:
+    static auto node_fill(mpv_node &node, const MpvFile &t) -> void
+    {
+        node.format = MPV_FORMAT_STRING;
+        const auto buf = t.toMpv();
+        node.u.string = new char[buf.size() + 1];
+        qstrncpy(node.u.string, buf.data(), buf.size() + 1);
+    }
+    static auto node_free(mpv_node &node) -> void { delete[] node.u.string; }
     static auto toFile(const mpv_node &node) -> MpvFile
         { MpvFile t; ST::get(t, node.u.string); return t; }
 };

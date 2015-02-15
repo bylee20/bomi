@@ -1,8 +1,8 @@
 #ifndef MPV_HPP
 #define MPV_HPP
 
-#include "tmp/type_traits.hpp"
 #include "mpv_property.hpp"
+#include "tmp/type_traits.hpp"
 #include "misc/log.hpp"
 #include "misc/dataevent.hpp"
 #include <libmpv/client.h>
@@ -61,7 +61,9 @@ public:
         { return setAsync<T>(QByteArray::fromRawData(name, N), value); }
 
     template<class... Args>
-    auto tell(const char *name, const Args&... args) -> bool;
+    auto tell(QByteArray &&name, const Args&... args) -> bool;
+    template<int N, class... Args>
+    auto tell(const char (&name)[N], const Args&... args) -> bool;
     template<int N, class... Args>
     auto tellAsync(const char (&name)[N], const Args&... args) -> bool;
     template<class... Args>
@@ -79,7 +81,7 @@ public:
     auto observe(const char *name, Set set) -> int;
     template<class Check>
     auto observeState(const char *name, Check ck) -> int;
-    auto hook(const char *name, std::function<void(void)> &&run) -> void;
+    auto hook(const QByteArray &name, std::function<void(void)> &&run) -> void;
     auto request(mpv_event_id id, std::function<void(mpv_event*)> &&proc) -> void;
     template<class Proc>
     auto request(mpv_event_id id, Proc proc) -> tmp::enable_if_t<!tmp::func_args<Proc>(), void>
@@ -106,7 +108,7 @@ private:
     static auto error(int err) -> const char* { return mpv_error_string(err); }
     static auto isSuccess(int error) -> bool { return error >=0 ; }
     template<class Func, class... Args>
-    auto command(const char *name, Func &&f, const Args&... args) -> bool
+    auto command(QByteArray &&name, Func &&f, const Args&... args) -> bool
     {
         std::array<mpv_node, sizeof...(args) + 1> nodes;
         mpv_node_list list = { nodes.size(), nodes.data(), nullptr };
@@ -167,17 +169,21 @@ auto Mpv::_set(const char *name, const T &value) -> bool
 }
 
 template<class... Args>
-auto Mpv::tell(const char *name, const Args&... args) -> bool
+auto Mpv::tell(QByteArray &&name, const Args&... args) -> bool
 {
-    return command(name, [&] (auto *node) {
+    return command(std::move(name), [&] (auto *node) {
         return mpv_command_node(m_handle, node, nullptr);
     }, pass(args)...);
 }
 
+template<int N, class... Args>
+auto Mpv::tell(const char (&name)[N], const Args&... args) -> bool
+    { return tell(QByteArray::fromRawData(name, N), args...); }
+
 template<class... Args>
 auto Mpv::tellAsync(QByteArray &&name, const Args&... args) -> bool
 {
-    return command(name, [&] (auto *node) {
+    return command(std::move(name), [&] (auto *node) {
         auto user = new QByteArray(std::move(name));
         return mpv_command_node_async(m_handle, (quint64)user, node);
     }, pass(args)...);

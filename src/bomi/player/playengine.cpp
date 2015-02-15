@@ -611,7 +611,7 @@ auto PlayEngine::setResume_locked(bool resume) -> void
 auto PlayEngine::setPreciseSeeking_locked(bool on) -> void
 {
     if (_Change(d->preciseSeeking, on))
-        d->mpv.setAsync("options/hr-seek", on ? "yes" : "absolute");
+        d->mpv.setAsync("options/hr-seek", on ? "yes"_b : "absolute"_b);
 }
 
 auto PlayEngine::setMrl(const Mrl &mrl) -> void
