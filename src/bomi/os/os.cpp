@@ -124,4 +124,17 @@ auto HwAcc::download(mp_hwdec_ctx *, const mp_image *, mp_image_pool *) -> mp_im
     return nullptr;
 }
 
+#ifndef Q_OS_WIN
+auto setImeEnabled(QWindow *w, bool enabled) -> void
+{
+    Q_UNUSED(w); Q_UNUSED(enabled);
+}
+#endif
+
+auto setImeEnabled(QWidget *w, bool enabled) -> void
+{
+    setImeEnabled(w->window()->windowHandle(), enabled);
+}
+
+
 }

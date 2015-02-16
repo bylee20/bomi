@@ -51,7 +51,7 @@ macx {
 	HEADERS += player/mpris.hpp
 	SOURCES += player/mpris.cpp
 } else:win32 {
-    LIBS += -lopengl32 -lgdi32
+    LIBS += -lopengl32 -lgdi32 -lImm32
     HEADERS += os/win.hpp
     SOURCES += os/win.cpp
 }

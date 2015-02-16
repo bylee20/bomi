@@ -8,6 +8,7 @@
 #include <QScreen>
 #include <QDesktopWidget>
 #include <psapi.h>
+#include <QWindow>
 
 namespace OS {
 
@@ -37,6 +38,7 @@ struct Win : public QObject {
     };
 
     QHash<QWidget*, Window> windows;
+    QHash<QWindow*, HIMC> imes;
     HANDLE shutdownToken = nullptr;
     HANDLE proc = nullptr;
     Dxva2Info dxva2;
@@ -46,6 +48,18 @@ static Win *d = nullptr;
 
 auto initialize() -> void { _Renew(d); }
 auto finalize() -> void { _Delete(d); }
+
+auto setImeEnabled(QWindow *w, bool enabled) -> void
+{
+    auto &ime = d->imes[w];
+    if (enabled) {
+        if (ime) {
+            ImmAssociateContext((HWND)w->winId(), ime);
+            ime = nullptr;
+        }
+    } else
+        ime = ImmAssociateContext((HWND)w->winId(), nullptr);
+}
 
 auto setAlwaysOnTop(QWidget *w, bool onTop) -> void
 {

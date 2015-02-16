@@ -15,6 +15,8 @@ auto isAlwaysOnTop(const QWidget *w) -> bool;
 auto setAlwaysOnTop(QWidget *w, bool onTop) -> void;
 auto setFullScreen(QWidget *w, bool fs) -> void;
 auto setScreensaverDisabled(bool disabled) -> void;
+auto setImeEnabled(QWindow *w, bool enabled) -> void;
+auto setImeEnabled(QWidget *w, bool enabled) -> void;
 
 auto shutdown() -> bool;
 auto canShutdown() -> bool;

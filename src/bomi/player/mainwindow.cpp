@@ -54,6 +54,8 @@ MainWindow::~MainWindow() {
 auto MainWindow::postInitialize() -> void
 {
     d->as.restoreWindowGeometry(this);
+    OS::setImeEnabled(this, false);
+    OS::setImeEnabled(d->view, false);
     d->applyPref();
     cApp.runCommands();
 }
