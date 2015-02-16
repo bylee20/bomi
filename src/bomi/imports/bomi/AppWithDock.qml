@@ -1,11 +1,10 @@
 import QtQuick 2.0
 import bomi 1.0
 
-Item {
+BaseApp {
     id: root
-    property string name
-    property Player player: Player {}
     property Item controls: Item {}
+
     Binding { target: player; property: "width"; value: root.width }
     Binding {
         target: player; property: "height";

@@ -535,4 +535,5 @@ DISTFILES += \
     skins/Numix/bomi.qml \
     skins/native/bomi.qml \
     skins/native/MediaButton.qml \
-    imports/bomi/AutoDisplayZone.qml
+    imports/bomi/AutoDisplayZone.qml \
+    imports/bomi/BaseApp.qml

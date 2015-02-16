@@ -58,6 +58,23 @@ auto MainWindow::postInitialize() -> void
     cApp.runCommands();
 }
 
+auto MainWindow::setupSkinPlayer() -> void
+{
+    d->player = d->view->rootObject()->property("player").value<QQuickItem*>();
+    if (!d->player)
+        return;
+    d->e.screen()->setParentItem(d->player);
+    d->e.screen()->setWidth(d->player->width());
+    d->e.screen()->setHeight(d->player->height());
+    d->player->setProperty("screen", QVariant::fromValue(d->e.screen()));
+    if (auto item = d->view->findItem(u"playinfo"_q))
+        item->setProperty("show", d->as.playinfo_visible);
+    if (auto item = d->view->findItem(u"logo"_q)) {
+        item->setProperty("show", d->pref.show_logo());
+        item->setProperty("color", d->pref.bg_color());
+    }
+}
+
 auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
 {
     if (mrl.isDir())

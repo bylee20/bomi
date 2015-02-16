@@ -2,7 +2,7 @@
 #define MAINWINDOW_HPP
 
 class Mrl;                              class PlaylistModel;
-class PlayEngine;
+class PlayEngine;                       class QQuickItem;
 
 class MainWindow : public QWidget {
     Q_OBJECT
@@ -27,6 +27,7 @@ signals:
     void sceneGraphInitialized();
 private slots:
     void postInitialize();
+    void setupSkinPlayer();
 private:
     auto showEvent(QShowEvent *event) -> void;
     auto hideEvent(QHideEvent *event) -> void;

@@ -71,7 +71,6 @@ class PlayEngine : public QObject {
     Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
 
     Q_PROPERTY(qreal speed READ speed NOTIFY speedChanged)
-    Q_PROPERTY(QQuickItem *screen READ screen CONSTANT FINAL)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(EditionChapterObject* chapter READ chapter NOTIFY chapterChanged)
     Q_PROPERTY(EditionChapterObject* edition READ edition NOTIFY editionChanged)

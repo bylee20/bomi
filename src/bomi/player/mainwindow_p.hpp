@@ -24,6 +24,7 @@
 #include "os/os.hpp"
 #include <QUndoCommand>
 #include <QMimeData>
+#include <QQmlProperty>
 
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {

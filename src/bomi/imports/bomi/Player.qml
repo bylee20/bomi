@@ -9,6 +9,7 @@ Item {
     property real dockZ: 0.0
     property real bottomPadding: 0.0
     readonly property QtObject engine: B.App.engine
+    property Item screen
 
     Logo { anchors.fill: parent }
 
@@ -69,13 +70,8 @@ Item {
             height: parent.height-2*y - bottomPadding
         }
     }
-    Component.onCompleted: {
-        engine.screen.parent = player
-        engine.screen.width = width
-        engine.screen.height = height
-    }
-    onWidthChanged: engine.screen.width = width
-    onHeightChanged: engine.screen.height = height
+    onWidthChanged: if (screen) screen.width = width
+    onHeightChanged: if (screen) screen.height = height
 
     property var showOsdFunc: function(msg){ msgosd.text = msg; msgosd.show(); }
     function showOSD(msg) { showOsdFunc(msg) }
@@ -85,8 +81,7 @@ Item {
     B.MessageBox {
         id: downloadMBox
         parent: B.App.topLevelItem
-        width: 300
-        height: 100
+        width: 300; height: 100
         anchors.centerIn: parent
         title.text: qsTr("Download")
         message.text: B.App.download.url

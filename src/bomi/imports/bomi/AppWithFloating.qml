@@ -1,10 +1,11 @@
 import QtQuick 2.0
 import bomi 1.0
 
-Item {
+BaseApp {
     id: root
-    Player {
+    player: Player {
         id: player
+        parent: root
         anchors.fill: parent
         dockZ: 1
         MouseArea {
@@ -63,7 +64,6 @@ Item {
     }
 
     property Item controls
-    property string name: undefined
 
     property real initCx: 0.5
     property real initCy: 0.0

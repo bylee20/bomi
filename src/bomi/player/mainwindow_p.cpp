@@ -608,12 +608,12 @@ auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void
 
 auto MainWindow::Data::reloadSkin() -> void
 {
-    player = nullptr;
+    this->player = nullptr;
     view->setSkin(pref.skin_name());
-    auto root = view->rootObject();
-    if (!root)
+    auto app = view->rootObject();
+    if (!app)
         return;
-    auto min = root->property("minimumSize").toSize();
+    auto min = app->property("minimumSize").toSize();
     if (min.width() < 400)
         min.rwidth() = 400;
     if (min.height() < 300)
@@ -621,17 +621,10 @@ auto MainWindow::Data::reloadSkin() -> void
     p->setMinimumSize(min);
     if (p->width() < min.width() || p->height() < min.height())
         p->resize(min);
-    if (root->objectName() == "player"_a)
-        player = qobject_cast<QQuickItem*>(root);
-    if (!player)
-        player = root->findChild<QQuickItem*>(u"player"_q);
-    if (player) {
-        if (auto item = view->findItem(u"playinfo"_q))
-            item->setProperty("show", as.playinfo_visible);
-        if (auto item = view->findItem(u"logo"_q)) {
-            item->setProperty("show", pref.show_logo());
-            item->setProperty("color", pref.bg_color());
-        }
+    QQmlProperty pplayer(app, u"player"_q);
+    if (pplayer.isValid()) {
+        pplayer.connectNotifySignal(p, SLOT(setupSkinPlayer()));
+        p->setupSkinPlayer();
     }
 }
 

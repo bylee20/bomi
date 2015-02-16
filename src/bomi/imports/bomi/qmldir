@@ -27,3 +27,4 @@ Text				1.0 Text.qml
 ButtonIcon			1.0	ButtonIcon.qml
 HideTimer			1.0 HideTimer.qml
 AutoDisplayZone		1.0 AutoDisplayZone.qml
+BaseApp				1.0 BaseApp.qml
