@@ -10,6 +10,8 @@ public:
     SubtitleView(QWidget *parent = 0);
     ~SubtitleView();
     auto setModels(const QVector<SubCompModel*> &model) -> void;
+signals:
+    void seekRequested(int time);
 private:
     auto setTimeVisible(bool visible) -> void;
     auto setAutoScrollEnabled(bool enabled) -> void;

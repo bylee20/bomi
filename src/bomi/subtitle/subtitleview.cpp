@@ -36,18 +36,26 @@ auto SubtitleView::CompView::setModel(SubCompModel *model) -> void
 /******************************************************************************/
 
 struct SubtitleView::Data {
+    SubtitleView *p = nullptr;
     QVector<SubCompModel*> models;
     QList<CompView*> comp;
     QSplitter *splitter;
     QCheckBox *timeVisible, *autoScroll;
     bool needToUpdate = false;
     ObjectStorage storage;
+    auto seekIndex(const QModelIndex &idx) -> void
+    {
+        if (auto model = qobject_cast<const SubCompModel*>(idx.model()))
+            emit p->seekRequested(model->at(idx.row()).start());
+    };
 };
 
 SubtitleView::SubtitleView(QWidget *parent)
     : QDialog(parent)
     , d(new Data)
 {
+    d->p = this;
+
     QScrollArea *area = new QScrollArea(this);
     d->splitter = new QSplitter(Qt::Horizontal, area);
     d->timeVisible = new QCheckBox(tr("Show start/end time"), this);
@@ -97,6 +105,8 @@ auto SubtitleView::updateModels() -> void
             CompView *comp = new CompView(d->splitter);
             d->splitter->addWidget(comp);
             d->comp.push_back(comp);
+            connect(comp->view(), &QTreeView::doubleClicked, this,
+                    [=] (auto &idx) { d->seekIndex(idx); });
         }
         for (int i=0; i<d->comp.size(); ++i) {
             d->comp[i]->setModel(d->models[i]);

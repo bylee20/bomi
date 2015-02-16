@@ -2,9 +2,9 @@
 #include <QScrollBar>
 
 struct SubCompModel::Data {
-    bool visible;
-    const SubComp *comp;
-    const SubCapt *pended;
+    bool visible = false;
+    const SubComp *comp = nullptr;
+    const SubCapt *pended = nullptr;
 };
 
 SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
@@ -12,8 +12,6 @@ SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
     , d(new Data)
 {
     d->comp = comp;
-    d->visible = false;
-    d->pended = 0;
     QFont font; font.setBold(true); font.setItalic(true);
     setSpecialFont(font);
 
@@ -98,24 +96,24 @@ auto SubCompModel::setCurrentCaption(const SubCapt *caption) -> void
 /******************************************************************************/
 
 struct SubCompView::Data {
-    SubCompModel *model;
-    bool autoScroll;
+    SubCompModel *model = nullptr;
+    bool autoScroll = false;
 };
 
 SubCompView::SubCompView(QWidget *parent)
     : QTreeView(parent)
     , d(new Data)
 {
-    d->model = 0;
-    d->autoScroll = false;
     setAlternatingRowColors(true);
     setRootIsDecorated(false);
+    setHorizontalScrollMode(ScrollPerPixel);
+    setAutoScroll(false);
 }
 
 auto SubCompView::setModelToNull() -> void
 {
     if (sender() == d->model)
-        d->model = 0;
+        d->model = nullptr;
 }
 
 auto SubCompView::setModel(QAbstractItemModel *model) -> void

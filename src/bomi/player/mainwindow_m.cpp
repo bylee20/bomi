@@ -610,8 +610,10 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(tool[u"log"_q], &QAction::triggered, logViewer, &LogViewer::show);
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
-        if (!sview)
+        if (!sview) {
             sview = new SubtitleView(p);
+            connect(sview, &SubtitleView::seekRequested, &e, &PlayEngine::seek);
+        }
         if (!sview->isVisible())
             sview->setModels(e.subtitleModels());
         sview->setVisible(!sview->isVisible());
