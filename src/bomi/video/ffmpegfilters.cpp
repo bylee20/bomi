@@ -60,10 +60,11 @@ auto FFmpegFilterGraph::linkGraph(AVFilterInOut *&in,
                                   AVFilterInOut *&out) -> bool
 {
     QString tmp;
+    const auto pixfmt = imgfmt2pixfmt(m_imgfmt);
 #define    args (tmp.toLatin1().constData())
     tmp.sprintf("width=%d:height=%d:pix_fmt=%d:time_base=1/%d:sar=1",
                 m_size.width(), m_size.height(),
-                imgfmt2pixfmt(m_imgfmt), AV_TIME_BASE);
+                pixfmt, AV_TIME_BASE);
     const auto avbuffer = avfilter_get_by_name("buffer");
     if (avfilter_graph_create_filter(&m_src, avbuffer, "src",
                                      args, nullptr, m_graph) < 0)
@@ -72,16 +73,17 @@ auto FFmpegFilterGraph::linkGraph(AVFilterInOut *&in,
     if (avfilter_graph_create_filter(&m_sink, avsink, "sink",
                                      nullptr, nullptr, m_graph) < 0)
         return false;
-    tmp = u"pix_fmts="_q;
-    for (int imgfmt = IMGFMT_START; imgfmt < IMGFMT_END; ++imgfmt) {
-        if (!IMGFMT_IS_HWACCEL(imgfmt)
-                && query_video_format(imgfmt)) {
-            const char *name = av_get_pix_fmt_name(imgfmt2pixfmt(imgfmt));
-            if (name)
-                tmp += _L(name) % '|'_q;
-        }
-    }
-    tmp.chop(1);
+    tmp.sprintf("pix_fmts=%d", pixfmt);
+//    tmp = u"pix_fmts="_q;
+//    for (int imgfmt = IMGFMT_START; imgfmt < IMGFMT_END; ++imgfmt) {
+//        if (!IMGFMT_IS_HWACCEL(imgfmt)
+//                && query_video_format(imgfmt)) {
+//            const char *name = av_get_pix_fmt_name(imgfmt2pixfmt(imgfmt));
+//            if (name)
+//                tmp += _L(name) % '|'_q;
+//        }
+//    }
+//    tmp.chop(1);
     AVFilterContext *format = nullptr;
     const auto avformat = avfilter_get_by_name("format");
     if (avfilter_graph_create_filter(&format, avformat, "format",
