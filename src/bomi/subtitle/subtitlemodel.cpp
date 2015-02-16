@@ -1,4 +1,5 @@
 #include "subtitlemodel.hpp"
+#include <QScrollBar>
 
 struct SubCompModel::Data {
     bool visible;
@@ -139,8 +140,12 @@ auto SubCompView::updateCurrentRow(int row) -> void
     if (!d->model || !d->autoScroll)
         return;
     const QModelIndex idx = d->model->index(row, SubCompModel::Text);
-    if (idx.isValid())
+    if (idx.isValid()) {
+        auto h = horizontalScrollBar();
+        const int prev = h->value();
         scrollTo(idx);
+        h->setValue(prev); // restore previous horizontal scroll bar position
+    }
 }
 
 auto SubCompView::setAutoScrollEnabled(bool enabled) -> void
