@@ -3,6 +3,7 @@
 #include "player/mrl.hpp"
 #include "misc/downloader.hpp"
 #include "misc/simplelistmodel.hpp"
+#include "misc/objectstorage.hpp"
 #include "subtitle/opensubtitlesfinder.hpp"
 #include "ui_subtitlefinddialog.h"
 #include <QFileDialog>
@@ -69,6 +70,7 @@ struct SubtitleFindDialog::Data {
         bool preserve;
         QString format, fallback;
     } options;
+    ObjectStorage storage;
     void updateState() {
         const bool ok = finder->isAvailable() && !downloader.isRunning();
         ui.open->setEnabled(ok);
@@ -165,13 +167,17 @@ struct SubtitleFindDialog::Data {
         file->close();
         emit p->loadRequested(file->fileName());
     }
+    auto setLangCode(const QString &code) -> void
+    {
+        langCode = code;
+        proxy.setFilterFixedString(code);
+    }
 };
 
 SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->p = this;
     d->ui.setupUi(this);
-    _SetWindowTitle(this, tr("Find Subtitle from OpenSubtitles.org"));
 
     d->proxy.setSourceModel(&d->model);
     d->proxy.setFilterKeyColumn(d->model.Language);
@@ -198,10 +204,10 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         if (!file.isEmpty())
             find(QUrl::fromLocalFile(file));
     });
-    Signal<QComboBox, int> changed = &QComboBox::currentIndexChanged;
-    connect(d->ui.language, changed, [this] (int i) {
-        d->langCode = i > 0 ? d->ui.language->itemData(i).toString() : QString();
-        d->proxy.setFilterFixedString(d->langCode);
+    connect(SIGNAL_VT(d->ui.language, currentIndexChanged, int), [this] (int i) {
+        if (d->ui.language->count() == 0)
+            return;
+        d->setLangCode(i > 1 ? d->ui.language->itemData(i).toString() : QString());
     });
     connect(d->ui.get, &QPushButton::clicked, [this] () {
         const auto index = d->ui.view->currentIndex();
@@ -228,16 +234,27 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         // Select first entry of list
         d->ui.view->setCurrentIndex(d->ui.view->indexAt(QPoint()));
         d->languages.clear();
-        for (auto &it : links)
-            d->languages[it.langCode] = it.language;
         d->ui.language->clear();
-        d->ui.language->addItem(tr("All"), QString());
-        d->ui.language->insertSeparator(1);
-        for (auto it = d->languages.cbegin(); it != d->languages.cend(); ++it)
-            d->ui.language->addItem(it.value(), it.key());
-        setSelectedLangCode(prev);
+        if (!links.isEmpty()) {
+            for (auto &it : links)
+                d->languages[it.langCode] = it.language;
+            d->ui.language->addItem(tr("All"), QString());
+            d->ui.language->insertSeparator(1);
+            for (auto it = d->languages.cbegin(); it != d->languages.cend(); ++it)
+                d->ui.language->addItem(it.value(), it.key());
+            const int idx = qMax(0, d->ui.language->findData(prev));
+            if (idx > 0)
+                d->ui.language->setCurrentIndex(idx == 1 ? 0 : idx);
+            else
+                d->setLangCode(QString());
+        }
     });
     d->updateState();
+
+    _SetWindowTitle(this, tr("Find Subtitle from OpenSubtitles.org"));
+    d->storage.setObject(this, u"subtitle_find_dialog"_q, true);
+    d->storage.add("language", &d->langCode);
+    d->storage.restore();
 }
 
 SubtitleFindDialog::~SubtitleFindDialog() {
@@ -265,18 +282,4 @@ auto SubtitleFindDialog::find(const Mrl &mrl) -> void
                    tr("Cannot find subtitles for %1.").arg(name),
                    { BBox::Ok });
     }
-}
-
-auto SubtitleFindDialog::selectedLangCode() const -> QString
-{
-    return d->langCode;
-}
-
-auto SubtitleFindDialog::setSelectedLangCode(const QString &langCode) -> void
-{
-    d->langCode = langCode;
-    const int idx = d->ui.language->findData(langCode);
-    if (d->ui.language->count() > 0)
-        d->ui.language->setCurrentIndex(idx < 1 ? 0 : idx);
-    d->proxy.setFilterFixedString(d->ui.language->currentData().toString());
 }

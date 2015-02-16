@@ -29,7 +29,7 @@ public:
     // misc
     bool ask_system_tray = true;
 
-    QString dvd_device, bluray_device, sub_find_lang_code;
+    QString dvd_device, bluray_device;
 
     auto updateWindowGeometry(const MainWindow *w) -> void;
     auto restoreWindowGeometry(MainWindow *w) -> void;

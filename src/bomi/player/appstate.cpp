@@ -26,7 +26,6 @@ static const auto jio = JIO(
     JE(ask_system_tray),
     JE(dvd_device),
     JE(bluray_device),
-    JE(sub_find_lang_code),
     JE(state)
 );
 

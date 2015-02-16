@@ -310,8 +310,6 @@ auto MainWindow::Data::commitData() -> void
         as.playlist_shuffled = playlist.isShuffled();
         as.playlist_repeat = playlist.repeat();
         as.history_visible = history.isVisible();
-        if (subFindDlg)
-            as.sub_find_lang_code = subFindDlg->selectedLangCode();
         as.state.copyFrom(e.params());
         as.save();
         e.waitUntilTerminated();

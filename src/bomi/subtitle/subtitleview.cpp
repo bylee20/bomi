@@ -1,6 +1,7 @@
 #include "subtitleview.hpp"
 #include "subtitlemodel.hpp"
 #include "subtitle.hpp"
+#include "misc/objectstorage.hpp"
 #include <QSplitter>
 #include <QScrollArea>
 
@@ -40,6 +41,7 @@ struct SubtitleView::Data {
     QSplitter *splitter;
     QCheckBox *timeVisible, *autoScroll;
     bool needToUpdate = false;
+    ObjectStorage storage;
 };
 
 SubtitleView::SubtitleView(QWidget *parent)
@@ -70,6 +72,11 @@ SubtitleView::SubtitleView(QWidget *parent)
             this, &SubtitleView::setAutoScrollEnabled);
 
     _SetWindowTitle(this, tr("Subtitle Viewer"));
+
+    d->storage.setObject(this, u"subtitle-viewer"_q, true);
+    d->storage.add("time_visible", d->timeVisible, "checked");
+    d->storage.add("auto_scroll", d->autoScroll, "checked");
+    d->storage.restore();
 }
 
 SubtitleView::~SubtitleView()

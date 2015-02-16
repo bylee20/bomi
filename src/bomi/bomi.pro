@@ -261,7 +261,8 @@ HEADERS += \
     enum/codecid.hpp \
     global.hpp \
     global_def.hpp \
-    player/shortcutmap.hpp
+    player/shortcutmap.hpp \
+    misc/objectstorage.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -449,7 +450,8 @@ SOURCES += \
     os/os.cpp \
     enum/codecid.cpp \
     global.cpp \
-    player/shortcutmap.cpp
+    player/shortcutmap.cpp \
+    misc/objectstorage.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
