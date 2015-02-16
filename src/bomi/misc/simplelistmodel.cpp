@@ -21,10 +21,13 @@ SimpleListModelBase::SimpleListModelBase(int columns, QObject *parent)
             emit rowChanged(br.row());
     });
 
-    connect(this, &SimpleListModelBase::dataChanged, this, [=] (int row)
+    connect(this, &SimpleListModelBase::dataChanged, this,
+            [=] (int row, const QVector<int> &roles)
     {
+        if (!isValidRow(row))
+            return;
         const auto tl = index(row, 0), br = index(row, d->columns - 1);
-        emit QAbstractListModel::dataChanged(tl, br);
+        emit QAbstractListModel::dataChanged(tl, br, roles);
     });
 
     auto signal = &SimpleListModelBase::contentsChanged;
@@ -222,8 +225,13 @@ auto SimpleListModelBase::reset(int rows) -> void
 
 auto SimpleListModelBase::setSpecialRow(int row) -> void
 {
-    if (_Change(d->special, row))
-        emit specialRowChanged(d->special);
+    if (d->special == row)
+        return;
+    const int prev = d->special;
+    d->special = row;
+    emit dataChanged(prev, { Qt::FontRole });
+    emit dataChanged(d->special, { Qt::FontRole });
+    emit specialRowChanged(d->special);
 }
 
 auto SimpleListModelBase::checkedList(int column) const -> QVector<bool>
@@ -242,7 +250,7 @@ auto SimpleListModelBase::setChecked(int r, int c, bool checked) -> bool
     if (it == d->checked.end() || !_Change((*it)[r], checked))
         return false;
     const auto idx = index(r, c);
-    EMIT_DATA_CHANGED(idx, idx, QVector<int>() << Qt::CheckStateRole);
+    EMIT_DATA_CHANGED(idx, idx, {Qt::CheckStateRole});
     return true;
 }
 
@@ -253,7 +261,7 @@ auto SimpleListModelBase::setChecked(int c, const QVector<bool> &checked) -> boo
         return false;
     *it = checked;
     const auto tl = index(0, c), br = index(checked.size()-1, c);
-    EMIT_DATA_CHANGED(tl, br, QVector<int>() << Qt::CheckStateRole);
+    EMIT_DATA_CHANGED(tl, br, {Qt::CheckStateRole});
     return true;
 }
 

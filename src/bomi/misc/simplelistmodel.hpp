@@ -31,7 +31,7 @@ signals:
     void rowChanged(int row);
     void rowsChanged(int rows);
     void specialRowChanged(int row);
-    void dataChanged(int row);
+    void dataChanged(int row, const QVector<int> &roles = QVector<int>());
     void contentsChanged();
     void checkedChanged(int row, int column);
 protected:
