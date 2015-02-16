@@ -489,10 +489,6 @@ auto PlayEngine::setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void
     for (auto c : codecs)
         d->hwcdc += _EnumData(c).toLatin1() + ',';
     d->hwcdc.chop(1);
-#ifdef Q_OS_WIN
-    d->hwdec = "h264,vc1,wmv3";
-    use = true;
-#endif
     d->hwdec = use;
     d->mpv.setAsync("options/hwdec-codecs", use ? d->hwcdc : ""_b);
 }

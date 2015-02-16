@@ -492,22 +492,20 @@ auto PlayEngine::Data::observe() -> void
         setParams(info, params, u"w"_q, u"h"_q);
         info->setRange(findEnum<ColorRange>(decoderOutput("colormatrix-input-range")));
         info->setSpace(findEnum<ColorSpace>(decoderOutput("colormatrix")));
+        const QString api = mpv.get<MpvLatin1>("hwdec");
         auto hwState = [&] () {
             if (!hwdec)
                 return Deactivated;
             const auto codec = video.codec()->type();
-            if (!OS::hwAcc()->supports(CodecIdInfo::fromData(codec)))
-                return Unavailable;
-            if (OS::HwAcc::api(info->type().toLower()) != OS::HwAcc::NoApi)
+            if (api == OS::hwAcc()->name())
                 return Activated;
-            if (!hwcdc.contains(codec.toLatin1()))
+            if (!OS::hwAcc()->supports(CodecIdInfo::fromData(codec)))
                 return Unavailable;
             return Deactivated;
         };
         auto hwacc = video.hwacc();
         hwacc->setState(hwState());
-        const QString hwdec = mpv.get<MpvLatin1>("hwdec");
-        hwacc->setDriver(hwdec == "no"_a ? QString() : hwdec);
+        hwacc->setDriver(api == "no"_a ? QString() : api);
     });
     mpv.observe("video-out-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
