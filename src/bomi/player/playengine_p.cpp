@@ -265,7 +265,7 @@ auto PlayEngine::Data::onLoad() -> void
         edition = local->edition();
         start = local->resume_position();
     }
-    if (mrl.isDisc()) {
+    if (local->d->disc) {
         file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
         t.start = start;
     } else {
@@ -320,8 +320,9 @@ auto PlayEngine::Data::onLoad() -> void
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
         } else
-            mpv.setAsync("stream-open-filename", MpvFile(file).toMpv());
-    }
+            mpv.setAsync("stream-open-filename", file.toMpv());
+    } else if (local->d->disc)
+        mpv.setAsync("stream-open-filename", file.toMpv());
 
     mpv.flush();
     _PostEvent(p, SyncMrlState, t.local, loads);
