@@ -69,7 +69,7 @@ SubtitleView::SubtitleView(QWidget *parent)
     connect(d->autoScroll, &QCheckBox::toggled,
             this, &SubtitleView::setAutoScrollEnabled);
 
-    _SetWindowTitle(this, tr("Subtitle View"));
+    _SetWindowTitle(this, tr("Subtitle Viewer"));
 }
 
 SubtitleView::~SubtitleView()

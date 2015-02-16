@@ -569,7 +569,7 @@ RootMenu::RootMenu()
             d->action(u"clear"_q, QT_TR_NOOP("Clear"));
         });
         d->action(u"find-subtitle"_q, QT_TR_NOOP("Find Subtitle"));
-        d->action(u"subtitle"_q, QT_TR_NOOP("Subtitle View"));
+        d->action(u"subtitle"_q, QT_TR_NOOP("Subtitle Viewer"));
         d->action(u"playinfo"_q, QT_TR_NOOP("Playback Information"));
         d->action(u"log"_q, QT_TR_NOOP("Log Viewer"));
         d->separator();
