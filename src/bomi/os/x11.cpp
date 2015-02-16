@@ -210,8 +210,9 @@ auto refreshRate() -> qreal
     return -1;
 }
 
-auto setScreensaverDisabled(bool disabled) -> void
+auto setScreensaverEnable(bool enabled) -> void
 {
+    const auto disabled = !enabled;
     auto &s = d->ss;
     if (s.inhibit == disabled)
         return;

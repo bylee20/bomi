@@ -110,7 +110,7 @@ auto MainWindow::exit() -> void
 {
     static bool done = false;
     if (!done) {
-        OS::setScreensaverDisabled(false);
+        OS::setScreensaverEnabled(true);
         d->commitData();
         cApp.quit();
         done = true;

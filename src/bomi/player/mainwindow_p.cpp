@@ -148,7 +148,7 @@ auto MainWindow::Data::plugEngine() -> void
         menu(u"video"_q)(u"track"_q).setEnabled(running);
         menu(u"audio"_q)(u"track"_q).setEnabled(running);
         menu(u"subtitle"_q)(u"track"_q).setEnabled(running);
-        OS::setScreensaverDisabled(pref.disable_screensaver() && playing);
+        OS::setScreensaverEnabled(!pref.disable_screensaver() || !playing);
         updateStaysOnTop();
         stateChanging = false;
     });

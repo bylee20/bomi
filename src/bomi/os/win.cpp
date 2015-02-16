@@ -102,9 +102,9 @@ auto setFullScreen(QWidget *w, bool fs) -> void
                  SWP_FRAMECHANGED | SWP_SHOWWINDOW);
 }
 
-auto setScreensaverDisabled(bool disabled) -> void
+auto setScreensaverEnabled(bool enabled) -> void
 {
-    const auto active = disabled ? false : d->originalScreensaver;
+    const auto active = enabled ? d->originalScreensaver : false;
     SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, active, 0, SPIF_SENDWININICHANGE);
 }
 
