@@ -8,7 +8,6 @@ Slider {
     property TimeDuration bind
     property bool toolTip: !bind
     property int target: -1
-    min: d.engine.begin; max: d.engine.end
 
     onBindChanged: {
         if (bind)
@@ -69,6 +68,18 @@ Slider {
         target: d.engine
         onTick: {
             d.ticking = true;
+            seeker.value = d.engine.time
+            d.ticking = false;
+        }
+        onEndChanged: {
+            d.ticking = true;
+            seeker.max = d.engine.end
+            seeker.value = d.engine.time
+            d.ticking = false;
+        }
+        onBeginChanged: {
+            d.ticking = true;
+            seeker.min = d.engine.begin
             seeker.value = d.engine.time
             d.ticking = false;
         }

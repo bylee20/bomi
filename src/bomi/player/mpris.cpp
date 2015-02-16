@@ -149,6 +149,10 @@ struct Player::Data {
     PlaylistModel *playlist = nullptr;
     QString playbackStatus;
     QVariantMap metaData;
+    struct {
+        QTimer timer;
+        bool flag = false;
+    } started;
     auto toDBus(PlayEngine::State state) -> QString
     {
         switch (state) {
@@ -219,6 +223,14 @@ Player::Player(QObject *parent)
     });
     connect(d->engine, &PlayEngine::sought, this,
             [this] () { emit Seeked(time()); });
+
+    // hack for nonsense interfere from MPRIS
+    d->started.timer.setSingleShot(true);
+    d->started.timer.setInterval(500);
+    connect(d->engine, &PlayEngine::started, this, [=] () { d->started.timer.start(); });
+    connect(d->engine, &PlayEngine::finished, this,
+            [=] () { d->started.timer.stop(); d->started.flag = false; });
+    connect(&d->started.timer, &QTimer::timeout, this, [=] () { d->started.flag = true; });
 }
 
 Player::~Player() {
@@ -362,9 +374,12 @@ auto Player::OpenUri(const QString &url) -> void
 
 auto Player::SetPosition(const QDBusObjectPath &track, qint64 position) -> void
 {
+    if (!d->started.flag)
+        return;
     position /= 1000;
-    if (track.path() == dbusTrackId(d->engine->mrl()))
+    if (track.path() == dbusTrackId(d->engine->mrl())) {
         d->engine->seek(position + d->engine->begin());
+    }
 }
 
 }
