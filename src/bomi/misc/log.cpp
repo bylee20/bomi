@@ -3,6 +3,7 @@
 #include "logoption.hpp"
 #include "configure.hpp"
 #include "tmp/algorithm.hpp"
+#include <QTextCodec>
 #include <cstdlib>
 
 #if HAVE_SYSTEMD

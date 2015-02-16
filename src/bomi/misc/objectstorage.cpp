@@ -1,5 +1,6 @@
 #include "objectstorage.hpp"
 #include "misc/log.hpp"
+#include <QMetaProperty>
 
 DECLARE_LOG_CONTEXT(ObjectStorage)
 
