@@ -341,7 +341,8 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
     pthread_mutex_unlock(&ctx->lock);
 
     if (mpi) {
-        mpi->pts = mpi->frame_timing.pts * 1e-6;
+		if (mpi->frame_timing.pts > 0)
+			mpi->pts = mpi->frame_timing.pts * 1e-6;
         ctx->last_timing.pts = mpi->frame_timing.pts;
         ctx->last_timing.next_vsync = mpi->frame_timing.next_vsync;
         ctx->last_timing.prev_vsync = mpi->frame_timing.prev_vsync;
