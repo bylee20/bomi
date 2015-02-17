@@ -609,7 +609,13 @@ auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void
 auto MainWindow::Data::reloadSkin() -> void
 {
     this->player = nullptr;
-    view->setSkin(pref.skin_name());
+    if (!view->setSkin(pref.skin_name())) {
+        QString msg;
+        for (auto &error : view->errors())
+            msg += error.toString() % '\n'_q;
+        MBox::error(p, tr("Error on loading skin"), msg, {BBox::Ok});
+        return;
+    }
     auto app = view->rootObject();
     if (!app)
         return;

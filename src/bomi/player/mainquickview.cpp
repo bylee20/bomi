@@ -39,10 +39,7 @@ auto MainQuickView::setSkin(const QString &name) -> bool
 {
     clear();
     Skin::apply(this, name);
-    if (status() != QQuickView::Error)
-        return true;
-    setSource(QUrl(u"qrc:/emptyskin.qml"_q));
-    return false;
+    return status() != QQuickView::Error;
 }
 
 auto MainQuickView::setCursorVisible(bool visible) -> void
