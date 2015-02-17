@@ -539,4 +539,5 @@ DISTFILES += \
     skins/native/bomi.qml \
     skins/native/MediaButton.qml \
     imports/bomi/AutoDisplayZone.qml \
-    imports/bomi/BaseApp.qml
+    imports/bomi/BaseApp.qml \
+    imports/bomi/PlaylistView.qml

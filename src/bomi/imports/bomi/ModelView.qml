@@ -8,7 +8,7 @@ Item { id: view
     property bool headerVisible: true
     property alias count: list.count
     readonly property real scrollArea: 10
-    readonly property real margins: 15
+    property real margins: 15
     property list<ItemColumn> columns
     property alias model: list.model
     readonly property real contentWidth: {

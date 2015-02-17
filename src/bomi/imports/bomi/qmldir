@@ -28,3 +28,4 @@ ButtonIcon			1.0	ButtonIcon.qml
 HideTimer			1.0 HideTimer.qml
 AutoDisplayZone		1.0 AutoDisplayZone.qml
 BaseApp				1.0 BaseApp.qml
+PlaylistView		1.0 PlaylistView.qml
