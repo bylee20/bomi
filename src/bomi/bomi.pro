@@ -55,6 +55,8 @@ macx {
     LIBS += -lopengl32 -lgdi32 -limm32 -lwinmm -lole32
     HEADERS += os/win.hpp
     SOURCES += os/win.cpp
+    CONFIG -= debug
+    CONFIG += release
 }
 
 QML_IMPORT_PATH += imports
