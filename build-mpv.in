@@ -33,6 +33,7 @@ $py ./waf build -j $njobs && $py ./waf install
 cd "$orig"
 
 if [ "$os" = "win" ]; then
+	install -d build/lib/pkgconfig/
 	mv -f build/bin/pkgconfig/mpv.pc build/lib/pkgconfig/
 	mv -f build/bin/libmpv.a build/lib/
 	sed -i 's_build/bin_build/lib_' build/lib/pkgconfig/mpv.pc
