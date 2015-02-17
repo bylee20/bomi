@@ -27,6 +27,10 @@ extern "C" {
 #include <video/mp_image_pool.h>
 }
 
+#ifdef bool
+#undef bool
+#endif
+
 namespace OS {
 
 DECLARE_LOG_CONTEXT(X11)
@@ -210,7 +214,7 @@ auto refreshRate() -> qreal
     return -1;
 }
 
-auto setScreensaverEnable(bool enabled) -> void
+auto setScreensaverEnabled(bool enabled) -> void
 {
     const auto disabled = !enabled;
     auto &s = d->ss;
