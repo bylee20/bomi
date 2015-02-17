@@ -23,7 +23,16 @@ struct Translator::Data {
     bool succ = false;
     QTranslator trans, qt;
     QString path, def, file;
+    QStringList dirs;
     QSet<Locale> locales;
+    auto tryLoad(QTranslator *tr, const QString &file) -> bool
+    {
+        for (auto &dir : dirs) {
+            if (!dir.isEmpty() && tr->load(file, dir))
+                return true;
+        }
+        return false;
+    }
 };
 
 SIA qHash(const Locale &key) -> uint
@@ -48,15 +57,17 @@ auto getLocales(const QString &path, const QString &filter,
 
 Translator::Translator()
 : d(new Data) {
-    d->def = u"" BOMI_TRANSLATIONS_PATH ""_q;
+    auto push = [&] (const QString &dir)
+        { if (!dir.isEmpty()) d->dirs.push_back(dir); };
+    push(QString::fromLocal8Bit(qgetenv("BOMI_TRANSLATION_PATH")));
+    push(qApp->applicationDirPath() % "/translations"_a);
+    push(QDir::homePath() % "/.bomi/translations"_a);
+    push(u"" BOMI_TRANSLATIONS_PATH ""_q);
+
     qApp->installTranslator(&d->trans);
     qApp->installTranslator(&d->qt);
-    d->locales += getLocales(d->def, u"*.qm"_q, u"(.*).qm"_q);
-    d->path = QString::fromLocal8Bit(qgetenv("BOMI_TRANSLATION_PATH"));
-    if (!d->path.isEmpty())
-        d->locales += getLocales(d->path, u"*.qm"_q, u"(.*).qm"_q);
-
-
+    for (auto &dir : d->dirs)
+        d->locales += getLocales(dir, u"*.qm"_q, u"(.*).qm"_q);
 }
 
 Translator::~Translator() {
@@ -90,22 +101,16 @@ auto Translator::load(const Locale &locale) -> bool
     if (file == d->file)
         return d->succ;
     d->file = file;
-    auto loadQt = [&] () {
-        auto path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
-        const QString qm = "qt_"_a % l.name();
-        if (path.isEmpty() || !d->qt.load(qm, path))
-            _Error("Cannot find translations for Qt, %% in %%", qm, path);
-    };
-
     if (l.language() == QLocale::English) {
-        d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
+        d->tryLoad(&d->trans, file);
         d->succ = true;
     } else
-        d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
+        d->succ = d->tryLoad(&d->trans, file);
     if (d->succ) {
-        loadQt();
+        d->tryLoad(&d->qt, "qt_"_a % l.name());
         Locale::setNative(l);
-    }
+    } else
+        _Warn("Failed to load translation file: %%", file, d->def);
     return d->succ;
 }
 
