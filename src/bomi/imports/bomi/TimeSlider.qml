@@ -14,35 +14,26 @@ Slider {
             bind.time = Qt.binding(function ( ) { return mouseArea.time; })
     }
 
-    Component {
-        id: dummy;
-        Item {
-            property var marker
-            property var chapter
-            x: seeker.width * chapter.rate
-            function updateTarget() {
-                if (marker.hovered && seeker.bind)
-                    seeker.target = chapter.time
-                else
-                    seeker.target = -1
-            }
-            function seek() { seeker.time = chapter.time; }
-            onMarkerChanged: {
-                if (marker.hovered !== undefined)
-                    marker.hoveredChanged.connect(updateTarget)
-                if (marker.clicked !== undefined)
-                    marker.clicked.connect(seek)
-            }
-        }
-    }
-
     Repeater {
         model: d.engine.chapters
         Loader {
             readonly property Chapter chapter: modelData
             readonly property Slider control: seeker
+            function seek() { seeker.time = chapter.time; }
             x: seeker.width * chapter.rate
             sourceComponent: markerStyle
+            function updateTarget() {
+                if (item.hovered && seeker.bind)
+                    seeker.target = chapter.time
+                else
+                    seeker.target = -1
+            }
+            onItemChanged: {
+                if (item.hovered !== undefined)
+                    item.hoveredChanged.connect(updateTarget)
+                if (item.clicked !== undefined)
+                    item.clicked.connect(seek)
+            }
         }
     }
 
@@ -51,29 +42,21 @@ Slider {
         readonly property Engine engine: App.engine
         property bool ticking: false
         function target(x) { return (min + (x/seeker.width)*(max - min)); }
+        function sync() {
+            seeker.min = engine.begin
+            seeker.max = engine.end
+            seeker.value = engine.time
+        }
     }
 
     Connections {
         target: d.engine
-        onTick: {
-            d.ticking = true;
-            seeker.value = d.engine.time
-            d.ticking = false;
-        }
-        onEndChanged: {
-            d.ticking = true;
-            seeker.max = d.engine.end
-            seeker.value = d.engine.time
-            d.ticking = false;
-        }
-        onBeginChanged: {
-            d.ticking = true;
-            seeker.min = d.engine.begin
-            seeker.value = d.engine.time
-            d.ticking = false;
-        }
+        onTick: { d.ticking = true; time = d.engine.time; d.ticking = false; }
+        onEndChanged: { d.ticking = true; d.sync(); d.ticking = false; }
+        onBeginChanged: { d.ticking = true; d.sync(); d.ticking = false; }
     }
     onValueChanged: { if (!d.ticking) d.engine.seek(value); }
+    Component.onCompleted: d.sync()
 
     MouseArea {
         id: mouseArea
@@ -81,7 +64,7 @@ Slider {
         anchors.fill: parent
         hoverEnabled: true
         property bool moving: pressed || containsMouse
-        property int time: seeker.target >= 0 ? seeker.target : moving ? d.target(mouseX) : d.engine.time
+        property int time: target >= 0 ? target : moving ? d.target(mouseX) : d.engine.time
         Text { id: t }
         onMovingChanged: if (toolTip && !moving) App.window.hideToolTip()
         onPositionChanged: {
