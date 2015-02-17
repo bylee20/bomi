@@ -63,6 +63,7 @@ class EditionChapterObject : public QObject {
 public:
     struct Data { int number = -2, time = 0; qreal rate = 0.0; QString name; };
     EditionChapterObject() = default;
+    ~EditionChapterObject();
     EditionChapterObject(const Data &d): m(d) { }
     EditionChapterObject(Data &&d): m(std::move(d)) { }
     auto number() const -> int { return m.number; }
@@ -85,8 +86,8 @@ using ChapterObject = EditionChapterObject;
 using EditionData = EditionObject::Data;
 using ChapterData = ChapterObject::Data;
 using EditionChapterData = EditionChapterObject::Data;
-using EditionPtr = QSharedPointer<EditionObject>;
-using ChapterPtr = QSharedPointer<ChapterObject>;
+//using EditionPtr = QSharedPointer<EditionObject>;
+//using ChapterPtr = QSharedPointer<ChapterObject>;
 using EditionChapterPtr = QSharedPointer<EditionChapterObject>;
 
 #endif // MEDIAMISC_HPP

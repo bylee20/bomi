@@ -16,6 +16,11 @@ auto MediaObject::typeText() const -> QString
     }
 }
 
+EditionChapterObject::~EditionChapterObject()
+{
+
+}
+
 auto EditionChapterObject::setRate(qreal rate) -> void
 {
     if (_Change(m.rate, rate))

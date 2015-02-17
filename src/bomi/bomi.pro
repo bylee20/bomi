@@ -524,7 +524,6 @@ DISTFILES += \
     imports/bomi/Circle.qml \
     skins/one/IconButton.qml \
     imports/bomi/TimeDuration.qml \
-    imports/bomi/ChapterMarkerStyle.qml \
     imports/bomi/Text.qml \
     skins/Breeze/bomi.qml \
 	"skins/Breeze Dark/bomi.qm"l \

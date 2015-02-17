@@ -136,15 +136,13 @@ B.AppWithFloating {
                         horizontalCenterOffset: 22
                     }
 
-                    markerStyle: B.ChapterMarkerStyle {
-                        marker: B.Button {
+                    markerStyle: B.Button {
                             readonly property bool emph: hovered || pressed
                             width: 5; height: 5; z: emph ? 1e10 : -1
                             x: -width * 0.5;
                             y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0) - 2.5
                             icon.source: emph ? "marker-filled.png" : "marker.png"
-                            tooltip: parent.chapter.name; delay: 0
-                        }
+                            tooltip: chapter.name; delay: 0
                     }
                 }
 

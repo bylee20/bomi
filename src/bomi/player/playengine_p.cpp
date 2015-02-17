@@ -1,4 +1,5 @@
 #include "playengine_p.hpp"
+#include <QQmlEngine>
 #include <QTextCodec>
 
 template<class T>
@@ -19,7 +20,8 @@ auto reg_play_engine() -> void
     qRegisterMetaType<QVector<int>>("QVector<int>");
     qRegisterMetaType<StreamList>("StreamList");
     qRegisterMetaType<AudioFormat>("AudioFormat");
-    qmlRegisterType<EditionChapterObject>();
+    qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Chapter");
+    qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Edition");
     qmlRegisterType<VideoObject>();
     qmlRegisterType<AvTrackObject>();
     qmlRegisterType<VideoFormatObject>();
@@ -401,16 +403,15 @@ auto PlayEngine::Data::observe() -> void
         }
         return data;
     }, [=] (auto &&data) {
-        auto tmp = info.chapters;
+        for (auto chapter : info.chapters)
+            QQmlEngine::setObjectOwnership(chapter, QQmlEngine::JavaScriptOwnership);
         info.chapters.resize(data.size());
         for (int i = 0; i < data.size(); ++i) {
-            if (!info.chapters[i].data())
-                info.chapters[i]  = ChapterPtr::create();
+            info.chapters[i] = new ChapterObject;
             info.chapters[i]->set(data[i]);
         }
         emit p->chaptersChanged();
         updateChapter(mpv.get<int>("chapter"));
-        tmp.clear();
     });
     mpv.observe("chapter", updateChapter);
     mpv.observe("track-list", [=] () {
@@ -604,10 +605,10 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         clearTimings();
         QVector<EditionData> editions; EditionData edition;
         _TakeData(event, editions, edition);
+        qDeleteAll(info.editions);
         info.editions.resize(editions.size());
         for (int i = 0; i < info.editions.size(); ++i) {
-            if (!info.editions[i])
-                info.editions[i] = EditionPtr::create();
+            info.editions[i] = new EditionObject;
             info.editions[i]->set(editions[i]);
         }
         info.edition.set(edition);

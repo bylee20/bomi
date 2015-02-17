@@ -174,6 +174,8 @@ PlayEngine::PlayEngine()
 
 PlayEngine::~PlayEngine()
 {
+    qDeleteAll(d->info.chapters);
+    qDeleteAll(d->info.editions);
     d->params.m_mutex = nullptr;
     d->mpv.destroy();
     d->vr->setOverlay(nullptr);
@@ -236,12 +238,12 @@ auto PlayEngine::edition() const -> EditionChapterObject*
     return &d->info.edition;
 }
 
-auto PlayEngine::editions() const -> const QVector<EditionPtr>&
+auto PlayEngine::editions() const -> const QVector<EditionObject*>&
 {
     return d->info.editions;
 }
 
-auto PlayEngine::chapters() const -> const QVector<ChapterPtr>&
+auto PlayEngine::chapters() const -> const QVector<ChapterObject*>&
 {
     return d->info.chapters;
 }
@@ -976,7 +978,7 @@ template<class L, class T = EditionChapterObject>
 SIA makePtrList(const QObject *o, const L *list) -> QQmlListProperty<T>
 {
     auto at = [] (QQmlListProperty<T> *p, int index) -> T*
-        { return static_cast<const L*>(p->data)->value(index).data(); };
+        { return static_cast<const L*>(p->data)->value(index); };
     auto count = [] (QQmlListProperty<T> *p) -> int
         { return static_cast<const L*>(p->data)->size(); };
     return QQmlListProperty<T>(const_cast<QObject*>(o), const_cast<L*>(list), count, at);

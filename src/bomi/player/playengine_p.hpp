@@ -89,7 +89,7 @@ struct PlayEngine::Data {
         VideoObject video; QTimer frameTimer; int delayed = 0;
         AudioObject audio;
         SubtitleObject subtitle;
-        QVector<EditionChapterPtr> chapters, editions;
+        QVector<EditionChapterObject*> chapters, editions;
         EditionChapterObject chapter, edition;
     } info;
 

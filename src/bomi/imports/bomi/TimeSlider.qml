@@ -36,31 +36,20 @@ Slider {
         }
     }
 
+    Repeater {
+        model: d.engine.chapters
+        Loader {
+            readonly property Chapter chapter: modelData
+            readonly property Slider control: seeker
+            x: seeker.width * chapter.rate
+            sourceComponent: markerStyle
+        }
+    }
+
     QtObject {
         id: d;
         readonly property Engine engine: App.engine
         property bool ticking: false
-        property var markers: []
-        property var style
-        function generateChapters() {
-            var i;
-            for (i=0; i<markers.length; ++i)
-                App.delete_(markers[i])
-            markers = []
-            if (style)
-                style.destroy()
-            if (!markerStyle)
-                return
-            style = markerStyle.createObject(seeker)
-            style.control = seeker
-            var chapters = engine.chapters
-            for (i=0; i<chapters.length; ++i) {
-                var chapter = chapters[i]
-                var wrap = dummy.createObject(seeker, { "chapter" : chapter })
-                wrap.marker = style.marker.createObject(wrap, { "parent" : wrap })
-                markers.push(wrap)
-            }
-        }
         function target(x) { return (min + (x/seeker.width)*(max - min)); }
     }
 
@@ -83,10 +72,8 @@ Slider {
             seeker.value = d.engine.time
             d.ticking = false;
         }
-        onChaptersChanged: d.generateChapters()
     }
     onValueChanged: { if (!d.ticking) d.engine.seek(value); }
-    Component.onCompleted: { d.generateChapters() }
 
     MouseArea {
         id: mouseArea

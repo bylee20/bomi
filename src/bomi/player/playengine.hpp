@@ -107,10 +107,10 @@ public:
     auto state() const -> State;
     auto load(const Mrl &mrl, bool tryResume = true) -> void;
     auto setMrl(const Mrl &mrl) -> void;
-    auto editions() const -> const QVector<EditionPtr>&;
     auto edition() const -> EditionObject*;
     auto chapter() const -> ChapterObject*;
-    auto chapters() const -> const QVector<ChapterPtr>&;
+    auto editions() const -> const QVector<EditionObject*>&;
+    auto chapters() const -> const QVector<ChapterObject*>&;
     auto seekEdition(int number, int from = 0) -> void;
     auto seekChapter(int number) -> void;
 
