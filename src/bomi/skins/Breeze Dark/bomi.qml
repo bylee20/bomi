@@ -73,7 +73,10 @@ Cp.AppWithDock {
 
             Cp.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 
-            Cp.TimeDuration { height: parent.height; color: "#fff" }
+            Cp.TimeDuration {
+                height: parent.height
+                textStyle { color: "#fff"; monospace: true; font.pixelSize: 10 }
+            }
 
             Row {
                 Cp.Button {

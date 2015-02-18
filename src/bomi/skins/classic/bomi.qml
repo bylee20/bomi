@@ -92,16 +92,17 @@ B.AppWithDock {
                             anchors.margins: 3; anchors.fill: parent; spacing: 0
                             B.Text {
                                 id: medianumber
-                                text: "[%1/%2](%3) ".arg(B.App.playlist.loaded+1).arg(B.App.playlist.count).arg(engine.stateText)
-                                font.pixelSize: 11
+                                content: "[%1/%2](%3) ".arg(B.App.playlist.loaded+1).arg(B.App.playlist.count).arg(engine.stateText)
+                                textStyle.font.pixelSize: 11
                             }
                             B.Text {
                                 id: medianame
                                 width: undefined; Layout.fillWidth: true
-                                text: engine.media.name; elide: Text.ElideMiddle
-                                font.pixelSize: 11
+                                content: engine.media.name;
+                                textStyle: medianumber.textStyle
+                                onTextStyleChanged: { textStyle.elide = Text.ElideMiddle }
                             }
-                            B.TimeDuration { font.pixelSize: 11; color: "black" }
+                            B.TimeDuration { textStyle: medianumber.textStyle }
                         }
                     }
                     RowLayout {

@@ -108,7 +108,7 @@ B.AppWithFloating {
                     anchors { bottom: parent.bottom; right: fs.left; rightMargin: 7 }
                     icon.source: "audio.png";
                     action: "audio/track/next"; action2: "audio/track"
-                    text.content: text.formatTrackInfo(engine.audio)
+                    text.content: B.Format.trackInfo(engine.audio)
                 }
 
                 SmallButton {
@@ -116,7 +116,7 @@ B.AppWithFloating {
                     anchors { right: parent.right; bottom: parent.bottom }
                     icon.source: "sub.png"
                     action: "subtitle/track/next"; action2: "subtitle/track"
-                    text.content: text.formatTrackInfo(engine.subtitle)
+                    text.content: B.Format.trackInfo(engine.subtitle)
                 }
 
                 B.VolumeSlider {
@@ -149,7 +149,10 @@ B.AppWithFloating {
                 B.TimeDuration {
                     id: td
                     height: 13; spacing: 2
-                    font.pixelSize: height; monospace: false; color: "black"
+                    textStyle {
+                        font.pixelSize: height
+                        color: "black"
+                    }
                     anchors {
                         horizontalCenter: parent.horizontalCenter
                         verticalCenter: parent.verticalCenter

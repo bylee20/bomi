@@ -13,5 +13,5 @@ B.Button {
         anchors.horizontalCenterOffset: icon.anchors.verticalCenterOffset
     }
 
-    text { color: "white"; font.pixelSize: 9 }
+    textStyle { color: "white"; font.pixelSize: 9 }
 }

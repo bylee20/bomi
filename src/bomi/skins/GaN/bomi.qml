@@ -23,7 +23,7 @@ B.AppWithFloating {
                             anchors.verticalCenter: parent.verticalCenter
                             icon.prefix: "audios"
                             action: "audio/track/next"; action2: "audio/track"
-                            text.content: text.formatTrackInfo(engine.audio)
+                            text.content: B.Format.trackInfo(engine.audio)
                         }
                         TextButton {
                             anchors.left: audio.right
@@ -31,7 +31,7 @@ B.AppWithFloating {
                             anchors.leftMargin: 5
                             icon.prefix: "subs"
                             action: "subtitle/track/next"; action2: "subtitle/track"
-                            text.content: text.formatTrackInfo(engine.subtitle)
+                            text.content: B.Format.trackInfo(engine.subtitle)
                         }
 
                         TextButton {
@@ -39,7 +39,7 @@ B.AppWithFloating {
                             anchors.verticalCenter: parent.verticalCenter
                             icon.prefix: "playlist"
                             action: "tool/playlist/toggle"; action2: "tool/playlist"
-                            text.content: text.formatFraction(B.App.playlist.loaded+1, B.App.playlist.count)
+                            text.content: B.Format.listNumber(B.App.playlist.loaded+1, B.App.playlist.count)
                         }
                     }
                     Item {
@@ -66,13 +66,10 @@ B.AppWithFloating {
                         }
                         handle: Item { Image { anchors { centerIn: parent; verticalCenter: parent.verticalCenter } source: "timeslide-handle.png" } }
                     }
-                    markerStyle: B.ChapterMarkerStyle {
-                        marker: B.Button {
-                            readonly property var chapter: parent.chapter
-                            size: 6; x: -3; y: 0; z: hovered ? 1e10 : -1
-                            icon.prefix: "marker"; tooltip: chapter.name; delay: 0
-                            onClicked: control.time = chapter.time
-                        }
+                    markerStyle: B.Button {
+                        size: 6; x: -3; y: 0; z: hovered ? 1e10 : -1
+                        icon.prefix: "marker"; tooltip: chapter.name; delay: 0
+                        onClicked: control.time = chapter.time
                     }
                 }
                 Item {

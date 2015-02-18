@@ -7,7 +7,6 @@ B.Text {
     property bool msec: false
 
     QtObject { id: s; property int time: (item.time/1000) | 0 }
-    width: text.contentWidth; height: parent.height; color: "white"
-    font.pixelSize: 10; monospace: true
-    content: formatTime(msec ? time : s.time * 1000, msec)
+    width: contentWidth; height: parent.height;
+    content: B.Format.time(msec ? time : s.time * 1000, msec)
 }

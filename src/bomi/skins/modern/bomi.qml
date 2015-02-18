@@ -45,15 +45,27 @@ B.AppWithFloating {
             id: inner; width: parent.width-50; anchors.centerIn: parent; spacing: 5
             RowLayout {
                 id: texts; width: parent.width; height: 15; spacing: 5
-                B.TimeText { id: position; time: engine.time; Layout.alignment: Qt.AlignBottom; verticalAlignment: Text.AlignBottom }
-                Text {
+                B.TimeText {
+                    id: position; time: engine.time; Layout.alignment: Qt.AlignBottom;
+                    textStyle {
+                        font.pixelSize: 10; color: "white"; monospace: true
+                        verticalAlignment: Text.AlignBottom
+                    }
+                }
+                B.Text {
                     id: name
                     Layout.alignment: Qt.AlignBottom; Layout.fillWidth: true
-                    text: engine.media.name; elide: Text.ElideMiddle;
-                    color: "white"; font { bold: true; pixelSize: 12 }
-                    horizontalAlignment: Text.AlignHCenter
+                    content: engine.media.name;
+                    textStyle {
+                        elide: Text.ElideMiddle; color: "white";
+                        font { bold: true; pixelSize: 12 }
+                        horizontalAlignment: Text.AlignHCenter
+                    }
                 }
-                B.TimeText { id: duration; time: engine.end; Layout.alignment: Qt.AlignBottom; verticalAlignment: Text.AlignBottom }
+                B.TimeText {
+                    id: duration; time: engine.end; Layout.alignment: Qt.AlignBottom;
+                    textStyle: position.textStyle
+                }
             }
             RowLayout {
                 id: seekbarwrapper; width: parent.width; height: 10; spacing: 10

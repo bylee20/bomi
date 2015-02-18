@@ -7,7 +7,7 @@ Item {
     property string name
     Component {
         id: playerComponent
-        Player { }
+        Player { anchors.fill: parent; z: -1 }
     }
 
     Component.onCompleted: {

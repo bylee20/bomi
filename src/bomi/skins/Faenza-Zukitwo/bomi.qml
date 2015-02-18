@@ -73,7 +73,10 @@ B.AppWithDock {
 
             B.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 
-            B.TimeDuration { color: "#1e1e1e"; height: parent.height }
+            B.TimeDuration {
+                height: parent.height
+                textStyle { color: "#1e1e1e"; font.pixelSize: 10; monospace: true }
+            }
 
             Row {
                 B.Button {

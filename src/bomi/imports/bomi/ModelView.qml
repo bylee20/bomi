@@ -25,7 +25,7 @@ Item { id: view
                     : alternating ? Qt.rgba(0.0, 0.0, 0.0, 0.5) : Qt.rgba(0.25, 0.25, 0.25, 0.5)
         }
     }
-    property Component itemDelegate: Component { Text { text: value } }
+    property Component itemDelegate: Component { Q.Text { text: value } }
     property Component headerItemDelegate: Component {
         Item {
             Q.Text {

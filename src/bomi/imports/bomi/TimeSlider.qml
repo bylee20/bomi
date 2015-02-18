@@ -71,7 +71,7 @@ Slider {
             var val = d.target(mouse.x)
             if (toolTip)
                 App.window.showToolTip(seeker, mouse.x, mouse.y,
-                                       t.formatTime(val) + "/" + t.formatTime(max))
+                                       Format.time(val) + "/" + Format.time(max))
             if (pressed)
                 value = val
         }

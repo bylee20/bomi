@@ -3,15 +3,13 @@ import bomi 1.0 as B
 
 Item {
     id: item
-    property alias color: slash.color
-    property alias font: slash.font
-    property alias monospace: slash.monospace
+    property alias textStyle: slash.textStyle
     property real spacing: 0
     property bool msec: false
     property alias time: timeText.time
     property alias duration: endText.time
-    implicitWidth: timeText.paintedWidth + slash.paintedWidth + endText.paintedWidth
-    implicitHeight: Math.max(timeText.paintedHeight, slash.paintedHeight, endText.paintedHeight)
+    implicitWidth: timeText.contentWidth + slash.contentWidth + endText.contentWidth
+    implicitHeight: Math.max(timeText.contentHeight, slash.contentHeight, endText.contentHeight)
 
     QtObject {
         id: d
@@ -25,14 +23,16 @@ Item {
             verticalCenter: slash.verticalCenter
         }
         time: d.engine.time
-        font: slash.font; color: slash.color
-        monospace: slash.monospace
-        verticalAlignment: slash.verticalAlignment
+        textStyle: item.textStyle
+        msec: item.msec
     }
     B.Text {
         id: slash;
         height: parent.height; anchors.centerIn: parent
-        text: "/"; verticalAlignment: Text.AlignVCenter
+        content: "/";
+        textStyle {
+            verticalAlignment: Text.AlignVCenter
+        }
     }
     B.TimeText {
         id: endText; height: parent.height
@@ -41,8 +41,7 @@ Item {
             verticalCenter: slash.verticalCenter
         }
         time: d.engine.end
-        font: slash.font; color: slash.color
-        monospace: slash.monospace
-        verticalAlignment: slash.verticalAlignment
+        textStyle: item.textStyle
+        msec: item.msec
     }
 }

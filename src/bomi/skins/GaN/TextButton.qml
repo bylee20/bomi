@@ -5,8 +5,10 @@ B.Button {
     width: icon.width + text.contentWidth + spacing; height: 12;
     adjustIconSize: false
     spacing: 2; icon { width: 20; height: 12 }
-    text.color: pressed ? "#0ef" : (hovered ? "#0cf" : "white")
+    textStyle {
+        color: pressed ? "#0ef" : (hovered ? "#0cf" : "white")
+        font.pixelSize: 12
+    }
     text.width: text.contentWidth
-    text.font.pixelSize: 12
     layout: leftIcon
 }

@@ -1,4 +1,5 @@
 #include "appobject.hpp"
+#include "formatobject.hpp"
 #include "tmp/algorithm.hpp"
 #include "windowobject.hpp"
 #include "player/rootmenu.hpp"
@@ -12,6 +13,8 @@ int av_cpu_count(void);
 auto reg_app_object() -> void {
     qmlRegisterSingletonType<AppObject>("bomi", 1, 0, "App",
                                         _QmlSingleton<AppObject>);
+    qmlRegisterSingletonType<FormatObject>("bomi", 1, 0, "Format",
+                                           _QmlSingleton<FormatObject>);
     qmlRegisterType<WindowObject>();
     qmlRegisterType<MemoryObject>();
     qmlRegisterType<CpuObject>();

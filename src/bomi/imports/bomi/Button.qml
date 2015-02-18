@@ -5,6 +5,7 @@ Item {
     id: item
     property alias icon: icon
     property alias text: _text
+    property alias textStyle: _text.textStyle
     property alias background: bg
     property url mask
 
@@ -112,8 +113,10 @@ Item {
                         return parent.height - icon.height - box.sp
                     return parent.height
                 }
-                horizontalAlignment: layout === leftIcon ? Text.AlignLeft : Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+                textStyle {
+                    horizontalAlignment: layout === leftIcon ? Text.AlignLeft : Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                }
             }
             B.MaskArea {
                 id: area; anchors.fill: parent;

@@ -265,7 +265,8 @@ HEADERS += \
     global.hpp \
     global_def.hpp \
     player/shortcutmap.hpp \
-    misc/objectstorage.hpp
+    misc/objectstorage.hpp \
+    quick/formatobject.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -454,7 +455,8 @@ SOURCES += \
     enum/codecid.cpp \
     global.cpp \
     player/shortcutmap.cpp \
-    misc/objectstorage.cpp
+    misc/objectstorage.cpp \
+    quick/formatobject.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -510,7 +512,6 @@ OTHER_FILES += \
 	imports/bomi/PlayInfoVideoOutput.qml \
 	imports/bomi/PlayInfoAudioOutput.qml \
 	imports/bomi/PlayInfoTrack.qml \
-	imports/bomi/PlayInfoSubtitleList.qml \
 	skins/one/bomi.qml
 
 evil_hack_to_fool_lupdate {
@@ -539,4 +540,5 @@ DISTFILES += \
     skins/native/MediaButton.qml \
     imports/bomi/AutoDisplayZone.qml \
     imports/bomi/BaseApp.qml \
-    imports/bomi/PlaylistView.qml
+    imports/bomi/PlaylistView.qml \
+    imports/bomi/TextStyle.qml

@@ -1,10 +1,13 @@
 import QtQuick 2.0
-import bomi 1.0 as Q
+import bomi 1.0 as B
 
-Q.Text {
+B.Text {
     id: item
-    font.pixelSize: parent.fontSize
-    color: "yellow"
-    styleColor: "black"
-    style: Text.Outline;
+    textStyle {
+        font.pixelSize: parent.fontSize
+        color: "yellow"
+        styleColor: "black"
+        style: Text.Outline;
+        monospace: true
+    }
 }

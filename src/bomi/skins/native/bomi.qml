@@ -15,21 +15,21 @@ B.AppWithDock {
         var orig = player.showOsdFunc
         player.showOsdFunc = function(msg) {
             osdTimer.running = false
-            text.text = msg
+            text.content = msg
             if (fs)
                 orig(msg)
             osdTimer.running = true
         }
-        text.text = engine.media.name
+        text.content = engine.media.name
     }
 
     Timer {
         id: osdTimer; repeat: false
         interval: B.App.theme.osd.message.duration
-        onTriggered: text.text = engine.media.name
+        onTriggered: text.content = engine.media.name
     }
 
-    Connections { target: engine.media; onNameChanged: text.text = target.name }
+    Connections { target: engine.media; onNameChanged: text.content = target.name }
 
     controls: Item {
         width: parent.width; height: top.height + (fs ? 0 : bottom.height)
@@ -91,11 +91,10 @@ B.AppWithDock {
                     Layout.fillHeight: true
                     B.TimeDuration {
                         id: timeText2
-                        font.family: text.font.family;
-                        font.pixelSize: 14
-                        color: text.color
-                        height: parent.height
                         anchors.centerIn: parent
+                        height: parent.height
+                        textStyle: text.textStyle
+                        onTextStyleChanged: textStyle.font.pixelSize = 14
                     }
                 }
             }
@@ -109,13 +108,18 @@ B.AppWithDock {
             height: fs ? 0 : (timeText.implicitHeight + 4)
             Item {
                 anchors { fill: parent; margins: 2 }
-                Text {
-                    id: text; color: "white"; elide: Text.ElideRight
-                    anchors.fill: parent; anchors.rightMargin: timeText.width
+                B.Text {
+                    id: text;
+                    anchors { fill: parent; rightMargin: timeText.width }
+                    textStyle {
+                        elide: Text.ElideRight
+                        color: "white";
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
                 B.TimeDuration {
                     id: timeText; anchors.right: parent.right
-                    font: text.font; color: text.color
+                    textStyle: text.textStyle
                 }
             }
         }

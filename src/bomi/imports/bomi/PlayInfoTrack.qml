@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import bomi 1.0 as B
 
 PlayInfoText {
     id: self
@@ -8,10 +9,10 @@ PlayInfoText {
         if (name.length <= 0) return ""
         return qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5")
             .arg(name)
-            .arg(formatNumberNA(info.track.number))
-            .arg(formatNA(info.codec.family))
-            .arg(formatNA(info.track.title))
-            .arg(formatNA(info.track.language))
+            .arg(B.Format.integerNA(info.track.number))
+            .arg(B.Format.textNA(info.codec.family))
+            .arg(B.Format.textNA(info.track.title))
+            .arg(B.Format.textNA(info.track.language))
     }
-    text: format(name, info)
+    content: format(name, info)
 }

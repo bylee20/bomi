@@ -10,6 +10,6 @@ TextButton {
 
     property int time: 0
     property bool msec: false
-    text.content: text.formatTime(time, msec)
+    text.content: B.Format.time(time, msec)
     onClicked: checked = !checked
 }
