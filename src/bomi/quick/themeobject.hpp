@@ -21,6 +21,7 @@ private:
 private:
     Q_PROPERTY(OsdThemeObject *osd READ __osd NOTIFY osdChanged)
     Q_PROPERTY(QString monospace READ monospace CONSTANT FINAL)
+    Q_PROPERTY(QFont font READ font CONSTANT FINAL)
     OsdThemeObject m_osd;
 public:
     Q_SIGNAL void osdChanged();
@@ -31,6 +32,7 @@ public:
         m_osd.m.message.m = t.message;
         emit osdChanged();
     }
+    auto font() const -> QFont;
     auto monospace() const -> QString;
 };
 
