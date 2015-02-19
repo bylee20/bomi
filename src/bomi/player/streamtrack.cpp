@@ -120,12 +120,14 @@ auto StreamTrack::toJson() const -> QJsonObject
     json.insert(u"lang"_q, m_lang);
     json.insert(u"file"_q, m_file);
     json.insert(u"codec"_q, m_codec);
-    json.insert(u"encoding"_q, m_encoding.toJson());
     json.insert(u"displayLang"_q, m_displayLang);
     json.insert(u"selected"_q, m_selected);
     json.insert(u"default"_q, m_default);
     json.insert(u"albumart"_q, m_albumart);
-    json.insert(u"fpsBased"_q, m_fpsBased);
+    if (m_type == StreamInclusiveSubtitle || m_type == StreamSubtitle) {
+        json.insert(u"fpsBased"_q, m_fpsBased);
+        json.insert(u"encoding"_q, m_encoding.toJson());
+    }
     return json;
 }
 
@@ -141,12 +143,14 @@ auto StreamTrack::setFromJson(const QJsonObject &json) -> bool
     m_lang = json[u"lang"_q].toString();
     m_file = json[u"file"_q].toString();
     m_codec = json[u"codec"_q].toString();
-    m_encoding.setFromJson(json[u"encoding"_q].toString());
     m_displayLang = json[u"displayLang"_q].toString();
     m_selected = json[u"selected"_q].toBool();
     m_default = json[u"default"_q].toBool();
     m_albumart = json[u"albumart"_q].toBool();
-    m_fpsBased = json[u"fpsBased"_q].toBool();
+    if (type == StreamInclusiveSubtitle || type == StreamSubtitle) {
+        m_fpsBased = json[u"fpsBased"_q].toBool();
+        m_encoding.setFromJson(json[u"encoding"_q]);
+    }
     return true;
 }
 
