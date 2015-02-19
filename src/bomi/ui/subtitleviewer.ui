@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1004</width>
-    <height>442</height>
+    <width>677</width>
+    <height>249</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,9 +32,15 @@
      </item>
      <item>
       <widget class="QLineEdit" name="start">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
-         <width>80</width>
+         <width>100</width>
          <height>16777215</height>
         </size>
        </property>
@@ -55,9 +61,15 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
-         <width>80</width>
+         <width>100</width>
          <height>16777215</height>
         </size>
        </property>
@@ -71,7 +83,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="caption"/>
+      <widget class="QLineEdit" name="caption">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="regex">
@@ -99,8 +118,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>988</width>
-        <height>346</height>
+        <width>661</width>
+        <height>153</height>
        </rect>
       </property>
      </widget>
