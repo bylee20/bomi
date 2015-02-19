@@ -1,7 +1,7 @@
 #include "mainwindow_p.hpp"
 #include "app.hpp"
 #include "enum/movetoward.hpp"
-#include "subtitle/subtitleview.hpp"
+#include "subtitle/subtitleviewer.hpp"
 #include "subtitle/subtitlemodel.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/audioequalizerdialog.hpp"
@@ -619,8 +619,8 @@ auto MainWindow::Data::plugMenu() -> void
     connect(tool[u"log"_q], &QAction::triggered, logViewer, &LogViewer::show);
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         if (!sview) {
-            sview = new SubtitleView(p);
-            connect(sview, &SubtitleView::seekRequested, &e, &PlayEngine::seek);
+            sview = new SubtitleViewer(p);
+            connect(sview, &SubtitleViewer::seekRequested, &e, &PlayEngine::seek);
         }
         if (!sview->isVisible())
             sview->setModels(e.subtitleModels());

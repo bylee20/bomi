@@ -44,7 +44,7 @@ enum SnapshotMode {
 using MSig = Signal<MrlState>;
 
 class SubtitleFindDialog;               class SnapshotDialog;
-class PrefDialog;                       class SubtitleView;
+class PrefDialog;                       class SubtitleViewer;
 class TrayIcon;                         class AudioEqualizerDialog;
 class IntrplDialog;
 
@@ -76,7 +76,7 @@ struct MainWindow::Data {
     LogViewer *logViewer = nullptr;
     SnapshotDialog *snapshot = nullptr;
     OpenGLLogger glLogger{"SG"};
-    SubtitleView *sview = nullptr;
+    SubtitleViewer *sview = nullptr;
     PlaylistModel playlist;
     QUndoStack undo;
     Downloader downloader;

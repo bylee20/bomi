@@ -82,7 +82,6 @@ HEADERS += \
 	video/kernel3x3.hpp \
 	subtitle/subtitle.hpp \
 	subtitle/subtitle_parser.hpp \
-	subtitle/subtitleview.hpp \
 	subtitle/subtitlemodel.hpp \
 	subtitle/subtitle_parser_p.hpp \
 	subtitle/richtexthelper.hpp \
@@ -268,7 +267,8 @@ HEADERS += \
     misc/objectstorage.hpp \
     quick/formatobject.hpp \
     misc/encodinginfo.hpp \
-    widget/checklistwidget.hpp
+    widget/checklistwidget.hpp \
+    subtitle/subtitleviewer.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -286,7 +286,6 @@ SOURCES += \
 	video/kernel3x3.cpp \
 	subtitle/subtitle.cpp \
 	subtitle/subtitle_parser.cpp \
-	subtitle/subtitleview.cpp \
 	subtitle/subtitlemodel.cpp \
 	subtitle/subtitle_parser_p.cpp \
 	subtitle/richtexthelper.cpp \
@@ -460,7 +459,8 @@ SOURCES += \
     misc/objectstorage.cpp \
     quick/formatobject.cpp \
     misc/encodinginfo.cpp \
-    widget/checklistwidget.cpp
+    widget/checklistwidget.cpp \
+    subtitle/subtitleviewer.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

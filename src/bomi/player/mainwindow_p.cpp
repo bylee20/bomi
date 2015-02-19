@@ -7,7 +7,7 @@
 #include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
 #include "audio/audionormalizeroption.hpp"
-#include "subtitle/subtitleview.hpp"
+#include "subtitle/subtitleviewer.hpp"
 #include "subtitle/subtitlemodel.hpp"
 #include "subtitle/subtitle_parser.hpp"
 #include "dialog/mbox.hpp"
