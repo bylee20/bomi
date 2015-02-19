@@ -42,28 +42,28 @@ auto CharsetDetector::confidence() const -> double
 }
 
 
-auto CharsetDetector::detect(const QByteArray &data, double confidence) -> QString
+auto CharsetDetector::detect(const QByteArray &data, double confidence) -> EncodingInfo
 {
     CharsetDetector chardet(data);
     if (!chardet.isDetected()) {
         _Info("Failed to detect encoding.");
-        return QString();
+        return EncodingInfo();
     }
     const auto enc = chardet.encoding();
     const auto conf = chardet.confidence();
     _Info("Encoding detected: %% (confidence: %%)", enc, conf);
     if (conf >= confidence)
-        return enc;
+        return EncodingInfo::fromName(enc);
     _Info("Through away detected encoding for low confidence < %%.", confidence);
-    return QString();
+    return EncodingInfo();
 }
 
-auto CharsetDetector::detect(const QString &fileName, double confidence, int size) -> QString
+auto CharsetDetector::detect(const QString &fileName, double confidence, int size) -> EncodingInfo
 {
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly)) {
         _Error("Cannot open file: %%", fileName);
-        return QString();
+        return EncodingInfo();
     }
     _Info("Trying encoding autodetection: %%", fileName);
     return detect(file.read(size), confidence);

@@ -4,7 +4,7 @@
 #include "playlist.hpp"
 #include "misc/simplelistmodel.hpp"
 
-class Downloader;
+class Downloader;                       class EncodingInfo;
 
 class PlaylistModel : public SimpleListModel<Mrl, Playlist> {
     Q_OBJECT
@@ -42,7 +42,7 @@ public:
     Q_INVOKABLE QString number(int row) const;
     Q_INVOKABLE bool isLoaded(int row) const {return loaded() == row;}
 
-    auto open(const Mrl &mrl, const QString &enc) -> void;
+    auto open(const Mrl &mrl, const EncodingInfo &enc) -> void;
     auto setLoaded(const Mrl &mrl) -> void;
     auto setFillChar(QChar c) -> void;
     auto setVisible(bool visible) -> void;
@@ -76,7 +76,7 @@ private:
     bool m_visible = false;
     int m_selected = -1;
     Downloader *m_downloader = nullptr;
-    QString m_enc;
+    EncodingInfo m_enc;
     bool m_shuffled = false, m_repeat = false;
     mutable QVector<int> m_shuffledIdx;
 };

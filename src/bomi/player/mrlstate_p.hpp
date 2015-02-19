@@ -12,7 +12,8 @@ struct MrlState::Data {
     double autodetect = -1;
     bool autoselect = false, disc = false;
     AutoselectMode autoselectMode = AutoselectMode::Matched;
-    QString autoselectExt, subtitleEncoding;
+    QString autoselectExt;
+    EncodingInfo subtitleEncoding;
     DeintOptionSet deint;
     QString audioDevice = _L("auto");
     IntrplParamSetMap intrpl, chroma;

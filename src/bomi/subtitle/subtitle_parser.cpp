@@ -14,14 +14,14 @@ auto SubtitleParser::append(Subtitle &s, SubComp::SyncType b) -> SubComp&
 }
 
 auto SubtitleParser::parse(const QString &fileName,
-                           const QString &enc) -> Subtitle
+                           const EncodingInfo &enc) -> Subtitle
 {
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly) || file.size() > (1 << 20))
         return Subtitle();
     QTextStream in;
     in.setDevice(&file);
-    in.setCodec(enc.toLatin1());
+    in.setCodec(enc.codec());
     const QString all = in.readAll();
     QFileInfo info(fileName);
     Subtitle sub;
@@ -46,7 +46,7 @@ auto SubtitleParser::parse(const QString &fileName,
         p->m_encoding = enc;
         const bool parsable = p->isParsable();
         _Info("Trying (parser: %%, encoding: %%, file: %%): %%",
-               name(p->type()), enc, file.fileName(), parsable);
+               name(p->type()), enc.name(), file.fileName(), parsable);
         if (parsable)
             p->_parse(sub);
         delete p;

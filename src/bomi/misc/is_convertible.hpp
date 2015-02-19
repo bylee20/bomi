@@ -55,12 +55,16 @@ class convert_json {
     DEC_CHECK(_from1, p->setFromJson(QJsonObject()))
     DEC_CHECK(_from2, S::fromJson(QJsonObject()))
     DEC_CHECK(_from3, p->setFromJson(QJsonArray()))
+    DEC_CHECK(_fromv, p->setFromJson(QJsonValue()))
 //    DEC_CHECK(_io, json_io(p)->toJson(*p))
 public:
-    SCA array = EXISTS(T, _from3);
-    SCA object = EXISTS(T, _from1) || EXISTS(T, _from2);
-    SCA available = (EXISTS(T, _to1) && (array || object));// || EXISTS(T, _io);
-    using JsonType = tmp::conditional_t<array, QJsonArray, QJsonObject>;
+    SCA value = EXISTS(T, _fromv);
+    SCA array = !value && EXISTS(T, _from3);
+    SCA object = !value && (EXISTS(T, _from1) || EXISTS(T, _from2));
+    SCA available = (EXISTS(T, _to1) && (value || array || object));// || EXISTS(T, _io);
+    using JsonType = tmp::conditional_t<array,  QJsonArray,
+                     tmp::conditional_t<object, QJsonObject,
+                                                QJsonValue>>;
     template<class S = T>
     static auto to(S &t, const JsonType &json) -> tmp::enable_if_t<EXISTS(S, _from1) || array, void>
     { t.setFromJson(json); }

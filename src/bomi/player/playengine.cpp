@@ -285,7 +285,7 @@ auto PlayEngine::autoloadSubtitleFiles() -> void
     _R(files, loads) = d->autoloadSubtitle(&d->params);
     d->mutex.unlock();
     for (auto &file : files.names) {
-        d->mpv.setAsync("options/subcp", d->assEncodings[file].toLatin1());
+        d->mpv.setAsync("options/subcp", d->assEncodings[file].name().toLatin1());
         d->mpv.tellAsync("sub_add", MpvFile(file), "auto"_b);
     }
     d->setInclusiveSubtitles(loads);
@@ -296,7 +296,7 @@ auto PlayEngine::autoloadAudioFiles() -> void
     setAudioFiles(d->autoloadFiles(StreamAudio).names);
 }
 
-auto PlayEngine::reloadSubtitleFiles(const QString &enc, double acc) -> void
+auto PlayEngine::reloadSubtitleFiles(const EncodingInfo &enc, double acc) -> void
 {
     d->mutex.lock();
     auto old1 = d->params.sub_tracks();
@@ -1039,7 +1039,7 @@ auto PlayEngine::params() const -> const MrlState*
     return &d->params;
 }
 
-auto PlayEngine::setSubtitleEncoding_locked(const QString &enc, double accuracy) -> void
+auto PlayEngine::setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void
 {
     d->params.d->subtitleEncoding = enc;
     d->params.d->autodetect = accuracy;
@@ -1097,53 +1097,21 @@ auto PlayEngine::setSubtitleDisplay(SubtitleDisplay sd) -> void
 }
 
 auto PlayEngine::setSubtitleFiles(const QStringList &files,
-                                  const QString &encoding) -> void
+                                  const EncodingInfo &encoding) -> void
 {
     clearSubtitleFiles();
     addSubtitleFiles(files, encoding);
 }
 
-auto PlayEngine::setSubtitleFiles(const QVector<StringPair> &fileEnc) -> void
-{
-    clearSubtitleFiles();
-    addSubtitleFiles(fileEnc);
-}
-
 auto PlayEngine::addSubtitleFiles(const QStringList &files,
-                                  const QString &encoding) -> void
+                                  const EncodingInfo &encoding) -> void
 {
-    QVector<StringPair> fileEnc(files.size());
+    QVector<SubtitleWithEncoding> subs(files.size());
     for (int i = 0; i < files.size(); ++i) {
-        fileEnc[i].s1 = files[i];
-        fileEnc[i].s2 = encoding;
+        subs[i].file = files[i];
+        subs[i].encoding = encoding;
     }
-    addSubtitleFiles(fileEnc);
-}
-
-auto PlayEngine::addSubtitleFiles(const QVector<StringPair> &fileEncs) -> void
-{
-    if (fileEncs.isEmpty())
-        return;
-    QVector<SubComp> loaded;
-    for (auto &fe : fileEncs) {
-        const auto &file = fe.s1;
-        const auto enc = d->detect(file, fe.s2, d->params.d->autodetect);
-        Subtitle sub;
-        if (sub.load(file, enc)) {
-            for (int i = 0; i < sub.size(); ++i) {
-                loaded.push_back(sub[i]);
-                loaded.back().selection() = true;
-            }
-        } else {
-            d->mpv.setAsync("options/subcp", enc.toLatin1());
-            d->mpv.tellAsync("sub_add", MpvFile(file), "auto"_b);
-            d->mutex.lock();
-            d->assEncodings[file] = enc;
-            d->mutex.unlock();
-        }
-    }
-    d->sr->addComponents(loaded);
-    d->syncInclusiveSubtitles();
+    d->addSubtitleFiles(subs);
 }
 
 auto PlayEngine::clearSubtitleFiles() -> void

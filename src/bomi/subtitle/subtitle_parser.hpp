@@ -6,7 +6,7 @@
 class SubtitleParser : public RichTextHelper {
 public:
     virtual ~SubtitleParser() {}
-    static auto parse(const QString &file, const QString &enc) -> Subtitle;
+    static auto parse(const QString &file, const EncodingInfo &enc) -> Subtitle;
     static auto setMsPerCharactor(int msPerChar) -> void
         { SubtitleParser::msPerChar = msPerChar; }
 protected:
@@ -38,7 +38,8 @@ protected:
         { append(c, t, start); c[end]; }
 private:
     static int msPerChar;
-    QString m_all, m_encoding;
+    QString m_all;
+    EncodingInfo m_encoding;
     QFileInfo m_file;
     mutable int m_pos = 0;
 };

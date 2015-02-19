@@ -1,6 +1,8 @@
 #ifndef STREAMTRACK_HPP
 #define STREAMTRACK_HPP
 
+#include "misc/encodinginfo.hpp"
+
 enum StreamType { StreamAudio = 0, StreamVideo, StreamSubtitle, StreamInclusiveSubtitle, StreamUnknown };
 
 class SubComp;
@@ -37,7 +39,8 @@ private:
     friend class StreamList;
     StreamType m_type = StreamUnknown;
     int m_id = -1;
-    QString m_title, m_lang, m_file, m_codec, m_displayLang, m_encoding;
+    QString m_title, m_lang, m_file, m_codec, m_displayLang;
+    EncodingInfo m_encoding;
     bool m_selected = false, m_default = false, m_albumart = false;
     bool m_fpsBased = false;
 };

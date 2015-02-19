@@ -1,7 +1,7 @@
 #ifndef URLDIALOG_HPP
 #define URLDIALOG_HPP
 
-class Playlist;
+class Playlist;                         class EncodingInfo;
 
 class UrlDialog : public QDialog {
     Q_OBJECT
@@ -11,7 +11,7 @@ public:
     auto setUrl(const QUrl &url) -> void;
     auto url() const -> QUrl;
     auto isPlaylist() const -> bool;
-    auto encoding() const -> QString;
+    auto encoding() const -> EncodingInfo;
 private:
     auto accept() -> void final;
     struct Data;

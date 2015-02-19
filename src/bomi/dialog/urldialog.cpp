@@ -23,7 +23,7 @@ UrlDialog::UrlDialog(QWidget *parent, const QString &key)
     QSettings settings;
     settings.beginGroup(GROUP % d->key);
     auto urls = settings.value(u"open_url_list"_q).toStringList();
-    auto enc  = settings.value(u"open_url_enc"_q).toString();
+    auto enc  = EncodingInfo::fromMib(settings.value(u"open_url_enc"_q).toInt());
     settings.endGroup();
 
     d->c = new QCompleter(urls, this);
@@ -71,7 +71,7 @@ auto UrlDialog::accept() -> void
     QSettings settings;
     settings.beginGroup(GROUP % d->key);
     settings.setValue(u"open_url_list"_q, urls);
-    settings.setValue(u"open_url_enc"_q, d->enc->encoding());
+    settings.setValue(u"open_url_enc"_q, d->enc->encoding().mib());
     settings.endGroup();
     QDialog::accept();
 }
@@ -87,7 +87,7 @@ auto UrlDialog::isPlaylist() const -> bool
            && _IsSuffixOf(PlaylistExt, QFileInfo(url().path()).suffix());
 }
 
-auto UrlDialog::encoding() const -> QString
+auto UrlDialog::encoding() const -> EncodingInfo
 {
     return d->enc->encoding();
 }

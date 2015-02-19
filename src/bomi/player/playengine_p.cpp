@@ -247,13 +247,13 @@ auto PlayEngine::Data::onLoad() -> void
     QVector<SubComp> loads;
     if (found && local->sub_tracks().isValid()) {
         setFiles("file-local-options/sub-file"_b, "file-local-options/sid"_b, local->sub_tracks());
-        loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive(), QString(), -1);
+        loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive(), EncodingInfo(), -1);
     } else {
         QMutexLocker locker(&mutex);
         MpvFileList files, encs;
         _R(files, loads) = autoloadSubtitle(local);
         if (!files.names.isEmpty()) {
-            mpv.setAsync("options/subcp", assEncodings[files.names.front()].toLatin1());
+            mpv.setAsync("options/subcp", assEncodings[files.names.front()].name().toLatin1());
             mpv.setAsync("file-local-options/sub-file", files);
         }
     }
@@ -731,7 +731,7 @@ auto PlayEngine::Data::toTracks(const QVariant &var) -> QVector<StreamList>
     return streams;
 }
 
-auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks, const QString &enc, double acc) -> QVector<SubComp>
+auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks, const EncodingInfo &enc, double acc) -> QVector<SubComp>
 {
     Q_ASSERT(tracks.type() == StreamInclusiveSubtitle);
     QVector<SubComp> ret;
@@ -882,11 +882,43 @@ auto PlayEngine::Data::clearTimings() -> void
     frames.drawn = 0;
 }
 
-auto PlayEngine::Data::sub_add(const QString &file, const QString &enc, bool select) -> void
+auto PlayEngine::Data::sub_add(const QString &file, const EncodingInfo &enc, bool select) -> void
 {
-    mpv.setAsync("options/subcp", enc.toLatin1());
+    mpv.setAsync("options/subcp", enc.name().toLatin1());
     mpv.tellAsync("sub_add", MpvFile(file), select ? "select"_b : "auto"_b);
     mutex.lock();
     assEncodings[file] = enc;
     mutex.unlock();
+}
+
+auto PlayEngine::Data::setSubtitleFiles(const QVector<SubtitleWithEncoding> &subs) -> void
+{
+    p->clearSubtitleFiles();
+    addSubtitleFiles(subs);
+}
+
+
+auto PlayEngine::Data::addSubtitleFiles(const QVector<SubtitleWithEncoding> &subs) -> void
+{
+    if (subs.isEmpty())
+        return;
+    QVector<SubComp> loaded;
+    for (auto &s : subs) {
+        const auto enc = detect(s.file, s.encoding, params.d->autodetect);
+        Subtitle sub;
+        if (sub.load(s.file, enc)) {
+            for (int i = 0; i < sub.size(); ++i) {
+                loaded.push_back(sub[i]);
+                loaded.back().selection() = true;
+            }
+        } else {
+            mpv.setAsync("options/subcp", enc.name().toLatin1());
+            mpv.tellAsync("sub_add", MpvFile(s.file), "auto"_b);
+            mutex.lock();
+            assEncodings[s.file] = enc;
+            mutex.unlock();
+        }
+    }
+    sr->addComponents(loaded);
+    syncInclusiveSubtitles();
 }

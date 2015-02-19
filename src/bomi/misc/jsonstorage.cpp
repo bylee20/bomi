@@ -157,6 +157,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(QList<CodecId>);
     INSERT(Shortcuts);
     INSERT(ShortcutMap);
+    INSERT(EncodingInfo);
 
     for (auto type : _EnumMetaTypeIds()) {
         auto &ec = c[type];

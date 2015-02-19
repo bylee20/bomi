@@ -1,4 +1,5 @@
 #include "playlist.hpp"
+#include "misc/encodinginfo.hpp"
 #include "tmp/algorithm.hpp"
 #include <QCollator>
 #include <QTextStream>
@@ -14,7 +15,7 @@ Playlist::Playlist(const Mrl &mrl): QList<Mrl>() {
     push_back(mrl);
 }
 
-Playlist::Playlist(const Mrl &mrl, const QString &enc) {
+Playlist::Playlist(const Mrl &mrl, const EncodingInfo &enc) {
     load(mrl, enc);
 }
 
@@ -50,14 +51,15 @@ auto Playlist::save(const QString &filePath, Type type) const -> bool
     }
 }
 
-auto Playlist::load(QTextStream &in, QString enc, Type type,
-                    const QUrl &url) -> bool
+auto Playlist::load(QTextStream &in, const EncodingInfo &_enc,
+                    Type type, const QUrl &url) -> bool
 {
     clear();
+    EncodingInfo enc = _enc;
     if (type == M3U8)
-        enc = u"UTF-8"_q;
-    if (!enc.isEmpty())
-        in.setCodec(QTextCodec::codecForName(enc.toLatin1()));
+        enc = EncodingInfo::fromName(u"UTF-8"_q);
+    if (enc.isValid())
+        in.setCodec(enc.codec());
     switch (type) {
     case PLS:
         return loadPLS(in, url);
@@ -70,13 +72,13 @@ auto Playlist::load(QTextStream &in, QString enc, Type type,
 }
 
 auto Playlist::load(const QUrl &url, QByteArray *data,
-                    const QString &enc, Type type) -> bool
+                    const EncodingInfo &enc, Type type) -> bool
 {
     QTextStream in(data);
     return load(in, enc, type, url);
 }
 
-auto Playlist::load(const QString &filePath, const QString &enc, Type type) -> bool
+auto Playlist::load(const QString &filePath, const EncodingInfo &enc, Type type) -> bool
 {
     QFile file(filePath);
     if (!file.open(QFile::ReadOnly))
@@ -87,7 +89,7 @@ auto Playlist::load(const QString &filePath, const QString &enc, Type type) -> b
     return load(in, enc, type);
 }
 
-auto Playlist::load(const Mrl &mrl, const QString &enc, Type type) -> bool
+auto Playlist::load(const Mrl &mrl, const EncodingInfo &enc, Type type) -> bool
 {
     if (mrl.isLocalFile())
         return load(mrl.toLocalFile(), enc, type);

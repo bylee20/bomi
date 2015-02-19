@@ -404,8 +404,8 @@ RootMenu::RootMenu()
             d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
                     QT_TR_NOOP("Auto-load Subtitle File"));
             d->menu(u"reload"_q, QT_TR_NOOP("Reload File"), [=] () {
-                d->actionToGroup(u"current"_q, QT_TR_NOOP("Current Encoding"))->setData(QString());
-                d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(u"auto"_q);
+                d->actionToGroup(u"current"_q, QT_TR_NOOP("Current Encoding"))->setData(-1);
+                d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(0);
                 d->separator();
                 auto g = d->group();
                 for (auto &c : EncodingInfo::categorized()) {
@@ -422,7 +422,7 @@ RootMenu::RootMenu()
                         for (auto &e : c) {
                             auto a = d->action(e.name().toLower(), "");
                             a->setText(e.name());
-                            a->setData(e.name());
+                            a->setData(e.mib());
                             g->addAction(a);
                         }
                     })->setTitle(title);

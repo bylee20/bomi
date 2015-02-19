@@ -507,16 +507,20 @@ auto MainWindow::Data::plugMenu() -> void
         QString dir;
         if (e.mrl().isLocalFile())
             dir = _ToAbsPath(e.mrl().toLocalFile());
-        QString enc = pref.sub_enc();
+        auto enc = pref.sub_enc();
         const auto files = EncodingFileDialog::getOpenFileNames(
             p, tr("Open Subtitle"), dir, _ToFilter(SubtitleExt), &enc);
         e.addSubtitleFiles(files, enc);
     });
     connect(strack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadSubtitleFiles);
     connect(strack(u"reload"_q).g(), &ActionGroup::triggered, p, [=] (QAction *a) {
-        auto enc = a->data().toString();
-        double acc = enc == "auto"_a ? 0.001 : -1;
-        e.reloadSubtitleFiles(enc, acc);
+        auto mib = a->data().toInt();
+        if (mib > 0)
+            e.reloadSubtitleFiles(EncodingInfo::fromMib(mib), -1);
+        else {
+            double acc = mib < 0 ? -1 : 0.001;
+            e.reloadSubtitleFiles(EncodingInfo(), acc);
+        }
     });
     connect(strack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearSubtitleFiles);
 
@@ -529,7 +533,7 @@ auto MainWindow::Data::plugMenu() -> void
     auto &pl = tool(u"playlist"_q);
     connect(pl[u"toggle"_q], &QAction::triggered, &playlist, &PlaylistModel::toggle);
     connect(pl[u"open"_q], &QAction::triggered, p, [this] () {
-        QString enc;
+        EncodingInfo enc;
         const auto filter = _ToFilter(PlaylistExt);
         const auto file = EncodingFileDialog::getOpenFileName
                 (p, tr("Open File"), QString(), filter, &enc);

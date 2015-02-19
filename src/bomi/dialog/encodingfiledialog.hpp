@@ -2,6 +2,7 @@
 #define ENCODINGFILEDIALOG_HPP
 
 #include <QFileDialog>
+#include "misc/encodinginfo.hpp"
 
 class EncodingComboBox;
 
@@ -12,21 +13,21 @@ public:
                                 const QString &caption = QString(),
                                 const QString &dir = QString(),
                                 const QString &filter = QString(),
-                                QString *enc = 0) -> QString;
+                                EncodingInfo *enc = 0) -> QString;
     static auto getOpenFileNames(QWidget *parent = 0,
                                  const QString &caption = QString(),
                                  const QString &dir = QString(),
                                  const QString &filter = QString(),
-                                 QString *enc = 0,
+                                 EncodingInfo *enc = 0,
                                  FileMode = ExistingFiles) -> QStringList;
 private:
     EncodingFileDialog(QWidget *parent = 0,
                        const QString &caption = QString(),
                        const QString &directory = QString(),
                        const QString &filter = QString(),
-                       const QString &encoding = QString());
-    auto setEncoding(const QString &encoding) -> void;
-    auto encoding() const -> QString;
+                       const EncodingInfo &encoding = EncodingInfo());
+    auto setEncoding(const EncodingInfo &encoding) -> void;
+    auto encoding() const -> EncodingInfo;
     EncodingComboBox *combo = nullptr;
 };
 

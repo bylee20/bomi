@@ -2,6 +2,7 @@
 #define SUBTITLE_HPP
 
 #include "richtextdocument.hpp"
+#include "misc/encodinginfo.hpp"
 
 class StreamTrack;
 
@@ -75,13 +76,14 @@ public:
     auto id() const -> int { return m_id; }
     auto type() const -> SubType { return m_type; }
     auto toTrack() const -> StreamTrack;
-    auto encoding() const -> QString { return m_enc; }
+    auto encoding() const -> EncodingInfo { return m_enc; }
     static auto msec(int frame, double fps) -> int {return qRound(frame/fps*1e3);}
     static auto frame(int msec, double fps) -> int {return qRound(msec*1e-3*fps);}
 private:
-    SubComp(SubType type, const QFileInfo &file, const QString &enc, int id, SyncType base);
+    SubComp(SubType type, const QFileInfo &file, const EncodingInfo &enc, int id, SyncType base);
     friend class SubtitleParser;
-    QString m_file, m_klass, m_path, m_enc;
+    QString m_file, m_klass, m_path;
+    EncodingInfo m_enc;
     SyncType m_base = Time;
     Map m_capts;
     bool m_selection = false;
@@ -103,10 +105,10 @@ public:
 //    auto start(int time, double frameRate) const -> int;
 //    auto end(int time, double frameRate) const -> int;
     auto caption(int time, double frameRate) const -> RichTextDocument;
-    auto load(const QString &file, const QString &enc) -> bool;
+    auto load(const QString &file, const EncodingInfo &enc) -> bool;
     auto clear() -> void {m_comp.clear();}
     auto append(const SubComp &comp) -> void {m_comp.append(comp);}
-    static auto parse(const QString &fileName, const QString &enc) -> Subtitle;
+    static auto parse(const QString &fileName, const EncodingInfo &enc) -> Subtitle;
 private:
     friend class SubtitleParser;
     QList<SubComp> m_comp;

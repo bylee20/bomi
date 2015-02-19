@@ -25,7 +25,7 @@ class YleDL;                            class AudioEqualizer;
 class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
-class QOpenGLContext;
+class QOpenGLContext;                   class EncodingInfo;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
 
@@ -122,10 +122,8 @@ public:
     auto setSubtitleDisplay(SubtitleDisplay sd) -> void;
     auto setSubtitlePosition(int pos) -> void;
     auto setSubtitleAlignment(VerticalAlignment a) -> void;
-    auto setSubtitleFiles(const QStringList &files, const QString &enc) -> void;
-    auto addSubtitleFiles(const QStringList &files, const QString &enc) -> void;
-    auto setSubtitleFiles(const QVector<StringPair> &fileEnc) -> void;
-    auto addSubtitleFiles(const QVector<StringPair> &fileEnc) -> void;
+    auto setSubtitleFiles(const QStringList &files, const EncodingInfo &enc) -> void;
+    auto addSubtitleFiles(const QStringList &files, const EncodingInfo &enc) -> void;
     auto clearSubtitleFiles() -> void;
     auto captionBeginTime() -> int;
     auto captionEndTime() -> int;
@@ -140,7 +138,7 @@ public:
     auto lock() -> void;
     auto setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void;
     auto setSubtitleStyle_locked(const OsdStyle &style) -> void;
-    auto setSubtitleEncoding_locked(const QString &enc, double accuracy) -> void;
+    auto setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void;
     auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;
     auto setCache_locked(const CacheInfo &info) -> void;
     auto setVolumeNormalizerOption_locked(const AudioNormalizerOption &option) -> void;
@@ -172,7 +170,7 @@ public:
     auto setSubtitleHidden(bool hidden) -> void;
     auto autoloadSubtitleFiles() -> void;
     auto autoloadAudioFiles() -> void;
-    auto reloadSubtitleFiles(const QString &enc = QString(), double acc = -1) -> void;
+    auto reloadSubtitleFiles(const EncodingInfo &enc, double acc = -1) -> void;
     auto reloadAudioFiles() -> void;
 
     auto setSpeedPercent(int p) -> void;

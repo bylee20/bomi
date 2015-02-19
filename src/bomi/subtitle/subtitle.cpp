@@ -24,7 +24,7 @@ SubComp::SubComp() {
     m_capts[0].index = 0;
 }
 
-SubComp::SubComp(SubType type, const QFileInfo &file, const QString &enc, int id, SyncType b)
+SubComp::SubComp(SubType type, const QFileInfo &file, const EncodingInfo &enc, int id, SyncType b)
     : m_file(file.fileName())
     , m_path(file.absoluteFilePath())
     , m_enc(enc)
@@ -131,14 +131,14 @@ auto Subtitle::caption(int time, double fps) const -> RichTextDocument
     return caption;
 }
 
-auto Subtitle::load(const QString &file, const QString &enc) -> bool
+auto Subtitle::load(const QString &file, const EncodingInfo &enc) -> bool
 {
     *this = parse(file, enc);
-    _Info("Load %% with %%: %%", file, enc, isEmpty() ? "failed" : "succeeded");
+    _Info("Load %% with %%: %%", file, enc.name(), isEmpty() ? "failed" : "succeeded");
     return !isEmpty();
 }
 
-auto Subtitle::parse(const QString &file, const QString &enc) -> Subtitle
+auto Subtitle::parse(const QString &file, const EncodingInfo &enc) -> Subtitle
 {
     return SubtitleParser::parse(file, enc);
 }

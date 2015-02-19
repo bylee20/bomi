@@ -103,9 +103,9 @@ auto Pref::load() -> void
 
 #undef PREF_GROUP
 
-auto Pref::defaultSubtitleEncoding() -> QString
+auto Pref::defaultSubtitleEncoding() -> EncodingInfo
 {
-    return translator_default_encoding();
+    return EncodingInfo::fromName(translator_default_encoding());
 }
 
 auto Pref::defaultSkinName() -> QString

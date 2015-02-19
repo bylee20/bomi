@@ -1,5 +1,6 @@
 #include "playlistmodel.hpp"
 #include "misc/downloader.hpp"
+#include "misc/encodinginfo.hpp"
 #include <random>
 #include <chrono>
 #include <QQuickItem>
@@ -167,7 +168,7 @@ auto PlaylistModel::setDownloader(Downloader *downloader) -> void
     });
 }
 
-auto PlaylistModel::open(const Mrl &mrl, const QString &enc) -> void
+auto PlaylistModel::open(const Mrl &mrl, const EncodingInfo &enc) -> void
 {
     if (mrl.isLocalFile()) {
         setList({mrl, enc});

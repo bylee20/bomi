@@ -83,7 +83,7 @@ auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
         d->openDir(mrl.toLocalFile());
     else {
         if (mrl.isLocalFile() && _IsSuffixOf(PlaylistExt, mrl.suffix()))
-            d->playlist.open(mrl, QString());
+            d->playlist.open(mrl, EncodingInfo());
         else {
             const auto mode = d->pref.open_media_from_file_manager();
             d->openWith(mode, QList<Mrl>() << mrl);

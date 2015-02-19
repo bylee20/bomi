@@ -98,7 +98,7 @@ public:
     P0(bool, sub_enable_autoselect, true)
     P0(bool, sub_enc_autodetection, true)
     P0(AutoselectMode, sub_autoselect, AutoselectMode::Matched)
-    P1(QString, sub_enc, defaultSubtitleEncoding(), "encoding")
+    P1(EncodingInfo, sub_enc, defaultSubtitleEncoding(), "encoding")
     P1(QString, sub_ext, {}, "value")
     P0(int, sub_enc_accuracy, defaultSubtitleEncodingDetectionAccuracy())
     P0(int, ms_per_char, 500)
@@ -167,7 +167,7 @@ private:
     static auto defaultRestoreProperties() -> QStringList;
     static auto defaultOsdTheme() -> OsdTheme;
     static auto defaultSkinName() -> QString;
-    static auto defaultSubtitleEncoding() -> QString;
+    static auto defaultSubtitleEncoding() -> EncodingInfo;
     static auto defaultSubtitleEncodingDetectionAccuracy() -> int;
     static auto defaultMouseActionMap() -> MouseActionMap;
     static auto defaultFileNameFormat() -> QString;
