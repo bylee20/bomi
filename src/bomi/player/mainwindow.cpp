@@ -169,6 +169,7 @@ auto MainWindow::setFullScreen(bool full) -> void
     OS::setFullScreen(this, full);
 #ifdef Q_OS_WIN // This should be checked in WindowStatesChange event for others
     emit fullscreenChanged(full);
+    d->updateStaysOnTop();
 #endif
 }
 
@@ -332,6 +333,7 @@ auto MainWindow::changeEvent(QEvent *ev) -> void
         if (changed(Qt::WindowFullScreen))
             emit fullscreenChanged(isFullScreen());
 #endif
+        d->updateStaysOnTop();
     }
 }
 

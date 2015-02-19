@@ -571,13 +571,9 @@ auto MainWindow::Data::updateStaysOnTop() -> void
     if (p->windowState() & Qt::WindowMinimized)
         return;
     const auto id = as.win_stays_on_top;
-    bool onTop = false;
-    if (id == StaysOnTop::Always)
-        onTop = true;
-    else if (id == StaysOnTop::None)
-        onTop = false;
-    else
-        onTop = e.isPlaying();
+    bool onTop = !p->isFullScreen();
+    onTop &= (id == StaysOnTop::Always)
+          || (id == StaysOnTop::Playing && e.isPlaying());
     OS::setAlwaysOnTop(p, onTop);
 }
 
