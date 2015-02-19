@@ -1,5 +1,8 @@
 #include "subtitle_parser_p.hpp"
+#include "misc/log.hpp"
 #include <QTextStream>
+
+DECLARE_LOG_CONTEXT(Subtitle)
 
 int SubtitleParser::msPerChar = -1;
 
@@ -23,11 +26,27 @@ auto SubtitleParser::parse(const QString &fileName,
     QFileInfo info(fileName);
     Subtitle sub;
 
-    auto tryIt = [enc, &sub, &all, &info] (SubtitleParser *p) {
+    auto name = [] (SubType type) -> QString {
+        switch (type) {
+        case SubType::SAMI:
+            return u"SAMI"_q;
+        case SubType::SubRip:
+            return u"SubRip"_q;
+        case SubType::TMPlayer:
+            return u"TMPlayer"_q;
+        case SubType::MicroDVD:
+            return u"MicroDVD"_q;
+        default:
+            return u"Unknown"_q;
+        }
+    };
+    auto tryIt = [&] (SubtitleParser *p) {
         p->m_all = all;
         p->m_file = info;
         p->m_encoding = enc;
         const bool parsable = p->isParsable();
+        _Info("Trying (parser: %%, encoding: %%, file: %%): %%",
+               name(p->type()), enc, file.fileName(), parsable);
         if (parsable)
             p->_parse(sub);
         delete p;

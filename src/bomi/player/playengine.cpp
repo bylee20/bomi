@@ -296,7 +296,7 @@ auto PlayEngine::autoloadAudioFiles() -> void
     setAudioFiles(d->autoloadFiles(StreamAudio).names);
 }
 
-auto PlayEngine::reloadSubtitleFiles() -> void
+auto PlayEngine::reloadSubtitleFiles(const QString &enc, double acc) -> void
 {
     d->mutex.lock();
     auto old1 = d->params.sub_tracks();
@@ -305,9 +305,9 @@ auto PlayEngine::reloadSubtitleFiles() -> void
     clearSubtitleFiles();
     for (auto &track : old1) {
         if (track.isExternal())
-            d->sub_add(track.file(), track.encoding(), track.isSelected());
+            d->sub_add(track.file(), d->detect(track, enc, acc), track.isSelected());
     }
-    d->setInclusiveSubtitles(d->restoreInclusiveSubtitles(old2));
+    d->setInclusiveSubtitles(d->restoreInclusiveSubtitles(old2, enc, acc));
 }
 
 auto PlayEngine::reloadAudioFiles() -> void
@@ -1127,9 +1127,9 @@ auto PlayEngine::addSubtitleFiles(const QVector<StringPair> &fileEncs) -> void
     QVector<SubComp> loaded;
     for (auto &fe : fileEncs) {
         const auto &file = fe.s1;
-        const auto enc = d->params.d->detect(file, fe.s2);
+        const auto enc = d->detect(file, fe.s2, d->params.d->autodetect);
         Subtitle sub;
-        if (sub.load(file, enc, -1)) {
+        if (sub.load(file, enc)) {
             for (int i = 0; i < sub.size(); ++i) {
                 loaded.push_back(sub[i]);
                 loaded.back().selection() = true;

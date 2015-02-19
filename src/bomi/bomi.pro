@@ -266,7 +266,8 @@ HEADERS += \
     global_def.hpp \
     player/shortcutmap.hpp \
     misc/objectstorage.hpp \
-    quick/formatobject.hpp
+    quick/formatobject.hpp \
+    misc/encodinginfo.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -456,7 +457,8 @@ SOURCES += \
     global.cpp \
     player/shortcutmap.cpp \
     misc/objectstorage.cpp \
-    quick/formatobject.cpp
+    quick/formatobject.cpp \
+    misc/encodinginfo.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

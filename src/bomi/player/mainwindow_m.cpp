@@ -513,7 +513,11 @@ auto MainWindow::Data::plugMenu() -> void
         e.addSubtitleFiles(files, enc);
     });
     connect(strack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadSubtitleFiles);
-    connect(strack[u"reload"_q], &QAction::triggered, &e, &PlayEngine::reloadSubtitleFiles);
+    connect(strack(u"reload"_q).g(), &ActionGroup::triggered, p, [=] (QAction *a) {
+        auto enc = a->data().toString();
+        double acc = enc == "auto"_a ? 0.001 : -1;
+        e.reloadSubtitleFiles(enc, acc);
+    });
     connect(strack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearSubtitleFiles);
 
     PLUG_ENUM_CHILD(sub, sub_display, setSubtitleDisplay);

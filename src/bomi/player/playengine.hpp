@@ -172,7 +172,7 @@ public:
     auto setSubtitleHidden(bool hidden) -> void;
     auto autoloadSubtitleFiles() -> void;
     auto autoloadAudioFiles() -> void;
-    auto reloadSubtitleFiles() -> void;
+    auto reloadSubtitleFiles(const QString &enc = QString(), double acc = -1) -> void;
     auto reloadAudioFiles() -> void;
 
     auto setSpeedPercent(int p) -> void;

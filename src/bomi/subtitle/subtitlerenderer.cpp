@@ -1,7 +1,6 @@
 #include "subtitlerenderer.hpp"
 #include "subtitlerenderingthread.hpp"
 #include "misc/dataevent.hpp"
-#include "misc/charsetdetector.hpp"
 #include "enum/autoselectmode.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"

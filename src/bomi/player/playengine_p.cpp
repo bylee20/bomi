@@ -247,7 +247,7 @@ auto PlayEngine::Data::onLoad() -> void
     QVector<SubComp> loads;
     if (found && local->sub_tracks().isValid()) {
         setFiles("file-local-options/sub-file"_b, "file-local-options/sid"_b, local->sub_tracks());
-        loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive());
+        loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive(), QString(), -1);
     } else {
         QMutexLocker locker(&mutex);
         MpvFileList files, encs;
@@ -731,7 +731,7 @@ auto PlayEngine::Data::toTracks(const QVariant &var) -> QVector<StreamList>
     return streams;
 }
 
-auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>
+auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks, const QString &enc, double acc) -> QVector<SubComp>
 {
     Q_ASSERT(tracks.type() == StreamInclusiveSubtitle);
     QVector<SubComp> ret;
@@ -741,7 +741,7 @@ auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks) -> QV
         if (it == subMap.end()) {
             it = subMap.insert(track.file(), QMap<QString, SubComp>());
             Subtitle sub;
-            if (!sub.load(track.file(), track.encoding(), -1))
+            if (!sub.load(track.file(), detect(track, enc, acc)))
                 continue;
             for (int i = 0; i < sub.size(); ++i)
                 it->insert(sub[i].language(), sub[i]);
@@ -815,9 +815,9 @@ auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<MpvFileList, QVe
     MpvFileList files;
     QVector<SubComp> loads;
     for (auto &file : subs.names) {
-        const auto enc = s->d->detect(file);
         Subtitle sub;
-        if (sub.load(file, enc, -1)) {
+        const auto enc = detect(file, s);
+        if (sub.load(file, enc)) {
             for (int i = 0; i < sub.size(); ++i)
                 loads.push_back(sub[i]);
         } else {

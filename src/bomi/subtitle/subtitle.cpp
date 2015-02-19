@@ -1,7 +1,9 @@
 #include "subtitle.hpp"
 #include "subtitle_parser.hpp"
-#include "misc/charsetdetector.hpp"
+#include "misc/log.hpp"
 #include "player/streamtrack.hpp"
+
+DECLARE_LOG_CONTEXT(Subtitle)
 
 auto SubComp::name() const -> QString
 {
@@ -129,14 +131,10 @@ auto Subtitle::caption(int time, double fps) const -> RichTextDocument
     return caption;
 }
 
-auto Subtitle::load(const QString &file, const QString &enc, double acc) -> bool
+auto Subtitle::load(const QString &file, const QString &enc) -> bool
 {
-    QString encoding;
-    if (acc > 0.0)
-        encoding = CharsetDetector::detect(file, acc);
-    if (encoding.isEmpty())
-        encoding = enc;
-    *this = parse(file, encoding);
+    *this = parse(file, enc);
+    _Info("Load %% with %%: %%", file, enc, isEmpty() ? "failed" : "succeeded");
     return !isEmpty();
 }
 

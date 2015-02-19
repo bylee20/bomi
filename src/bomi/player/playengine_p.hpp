@@ -146,7 +146,8 @@ struct PlayEngine::Data {
         { sr->setComponents(loaded); s->set_sub_tracks_inclusive(sr->toTrackList()); }
     auto syncInclusiveSubtitles() -> void
         { params.set_sub_tracks_inclusive(sr->toTrackList()); }
-    static auto restoreInclusiveSubtitles(const StreamList &tracks) -> QVector<SubComp>;
+    static auto restoreInclusiveSubtitles(const StreamList &tracks,
+        const QString &enc = QString(), double acc = -1) -> QVector<SubComp>;
     auto audio_add(const QString &file, bool select) -> void
         { mpv.tellAsync("audio_add", MpvFile(file), select ? "select"_b : "auto"_b); }
     auto sub_add(const QString &file, const QString &enc, bool select) -> void;
@@ -189,6 +190,25 @@ struct PlayEngine::Data {
     auto onLoad() -> void;
     auto onUnload() -> void;
     auto request() -> void;
+
+    static auto detect(const StreamTrack &track, const QString &enc, double acc) -> QString
+    {
+        return detect(track.file(), enc.isEmpty() ? track.encoding() : enc, acc);
+    }
+    // acc < 0: fb (disable chardet)
+    // acc = 0: autodetect no fallback
+    // acc > 0: autodetect with fallback
+    static auto detect(const QString &file, const QString &fb, double acc) -> QString
+    {
+        if (acc < 0)
+            return fb;
+        const auto enc = CharsetDetector::detect(file, acc);
+        return enc.isEmpty() ? fb : enc;
+    }
+    static auto detect(const QString &file, const MrlState *s) -> QString
+    {
+        return detect(file, s->d->subtitleEncoding, s->d->autodetect);
+    }
 };
 
 #endif // PLAYENGINE_P_HPP

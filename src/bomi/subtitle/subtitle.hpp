@@ -103,7 +103,7 @@ public:
 //    auto start(int time, double frameRate) const -> int;
 //    auto end(int time, double frameRate) const -> int;
     auto caption(int time, double frameRate) const -> RichTextDocument;
-    auto load(const QString &file, const QString &enc, double accuracy) -> bool;
+    auto load(const QString &file, const QString &enc) -> bool;
     auto clear() -> void {m_comp.clear();}
     auto append(const SubComp &comp) -> void {m_comp.append(comp);}
     static auto parse(const QString &fileName, const QString &enc) -> Subtitle;

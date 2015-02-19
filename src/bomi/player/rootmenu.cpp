@@ -3,6 +3,7 @@
 #include "video/videocolor.hpp"
 #include "misc/log.hpp"
 #include "misc/stepactionpair.hpp"
+#include "misc/encodinginfo.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/dithering.hpp"
 #include "enum/movetoward.hpp"
@@ -80,9 +81,9 @@ struct RootMenu::Data {
     auto newInfo(QMenu *menu, const QString &key) -> MenuActionInfo*
         { return newInfo(menu->menuAction(), key); }
     static auto translate(QAction *action, const QString &text) -> void
-        { action->setText(text); }
+        { if (!text.isEmpty()) action->setText(text); }
     static auto translate(QMenu *menu, const QString &title) -> void
-        { menu->setTitle(title); }
+        { if (!title.isEmpty()) menu->setTitle(title); }
 
     template<class T>
     auto reg(T *o, const QString &id, GetText &&gt) -> T*
@@ -402,8 +403,31 @@ RootMenu::RootMenu()
                     QT_TR_NOOP("Open Subtitle File"));
             d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
                     QT_TR_NOOP("Auto-load Subtitle File"));
-            d->desc(d->action(u"reload"_q, QT_TR_NOOP("Reload File")),
-                    QT_TR_NOOP("Reload Subtitle File"));
+            d->menu(u"reload"_q, QT_TR_NOOP("Reload File"), [=] () {
+                d->actionToGroup(u"current"_q, QT_TR_NOOP("Current Encoding"))->setData(QString());
+                d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(u"auto"_q);
+                d->separator();
+                auto g = d->group();
+                for (auto &c : EncodingInfo::categorized()) {
+                    if (c.isEmpty())
+                        continue;
+                    const auto &e = c.front();
+                    auto mkey = e.group().toLower();
+                    auto title = e.group();
+                    if (!e.subgroup().isEmpty()) {
+                        mkey += '-'_q % e.subgroup().toLower();
+                        title += " ("_a % e.subgroup() % ')'_q;
+                    }
+                    d->menu(mkey, "", [&] () {
+                        for (auto &e : c) {
+                            auto a = d->action(e.name().toLower(), "");
+                            a->setText(e.name());
+                            a->setData(e.name());
+                            g->addAction(a);
+                        }
+                    })->setTitle(title);
+                }
+            });
             d->desc(d->action(u"clear"_q, QT_TR_NOOP("Clear File")),
                     QT_TR_NOOP("Clear Subtitle File"));
 
