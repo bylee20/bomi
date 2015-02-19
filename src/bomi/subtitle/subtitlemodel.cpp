@@ -112,8 +112,7 @@ SubCompView::SubCompView(QWidget *parent)
 
 auto SubCompView::setModelToNull() -> void
 {
-    if (sender() == d->model)
-        QTreeView::setModel(d->model = nullptr);
+    QTreeView::setModel(d->model = nullptr);
 }
 
 auto SubCompView::setModel(QAbstractItemModel *model) -> void
@@ -123,6 +122,7 @@ auto SubCompView::setModel(QAbstractItemModel *model) -> void
     d->model = qobject_cast<SubCompModel*>(model);
     QTreeView::setModel(d->model);
     if (d->model) {
+        d->model->setVisible(isVisible());
         connect(d->model, &SubCompModel::destroyed,
                 this, &SubCompView::setModelToNull, Qt::DirectConnection);
         connect(d->model, &SubCompModel::specialRowChanged,
@@ -163,9 +163,13 @@ auto SubCompView::setTimeVisible(bool visible) -> void
 auto SubCompView::showEvent(QShowEvent *event) -> void
 {
     QTreeView::showEvent(event);
+    if (d->model)
+        d->model->setVisible(true);
 }
 
 auto SubCompView::hideEvent(QHideEvent *event) -> void
 {
     QTreeView::hideEvent(event);
+    if (d->model)
+        d->model->setVisible(false);
 }

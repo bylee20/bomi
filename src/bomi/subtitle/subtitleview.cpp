@@ -99,6 +99,7 @@ auto SubtitleView::updateModels() -> void
         for (int i=0; i<d->comp.size(); ++i)
             d->comp[i]->setModel(nullptr);
     } else  {
+        d->splitter->setVisible(true);
         while (d->comp.size() > d->models.size())
             delete d->comp.takeLast();
         while (d->comp.size() < d->models.size()) {
