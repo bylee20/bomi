@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>13</number>
+        <number>17</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2107,7 +2107,7 @@
             <item>
              <widget class="QRadioButton" name="show_logo">
               <property name="text">
-               <string>Show default C&amp;MPlayer logo</string>
+               <string>Show default bomi logo</string>
               </property>
              </widget>
             </item>

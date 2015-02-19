@@ -128,6 +128,7 @@ public:
 };
 
 class SearchPathDelegate : public QStyledItemDelegate {
+    Q_DECLARE_TR_FUNCTIONS(Autoloader)
 public:
     SearchPathDelegate(QObject *parent): QStyledItemDelegate(parent) { }
     auto createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/,
