@@ -98,6 +98,7 @@ struct MainWindow::Data {
             _SetLastOpenPath(mrl.toLocalFile());
         playlist.setLoaded(mrl);
     }
+    auto deleteDialogs() -> void;
     auto restoreState() -> void;
     auto applyPref() -> void;
     auto updateStaysOnTop() -> void;

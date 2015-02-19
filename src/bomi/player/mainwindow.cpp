@@ -47,7 +47,8 @@ MainWindow::~MainWindow() {
     cApp.setMprisActivated(false);
     d->view->clear();
     exit();
-    delete d->view;
+    _Delete(d->view);
+    d->deleteDialogs();
     delete d;
 }
 

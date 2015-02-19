@@ -621,13 +621,13 @@ auto MainWindow::Data::plugMenu() -> void
         if (!sview) {
             sview = new SubtitleViewer(p);
             connect(sview, &SubtitleViewer::seekRequested, &e, &PlayEngine::seek);
+            connect(&e, &PlayEngine::subtitleModelsChanged, sview, [=] (auto &m)
+                { if (sview->isVisible()) sview->setModels(m); });
         }
         if (!sview->isVisible())
             sview->setModels(e.subtitleModels());
         sview->setVisible(!sview->isVisible());
     });
-    connect(&e, &PlayEngine::subtitleModelsChanged, p, [=] (auto &m)
-        { if (sview && sview->isVisible()) sview->setModels(m); });
     connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
         if (!prefDlg) {
             prefDlg = new PrefDialog(p);
@@ -728,3 +728,13 @@ auto MainWindow::Data::plugMenu() -> void
     a->setEnabled(undo.can##UR()); }
     PLUG_UR(undo, Undo); PLUG_UR(redo, Redo);
 }
+
+auto MainWindow::Data::deleteDialogs() -> void
+{
+    _Delete(sview);
+    _Delete(prefDlg);
+    _Delete(subFindDlg);
+    _Delete(snapshot);
+    _Delete(logViewer);
+}
+
