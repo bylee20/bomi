@@ -3,13 +3,16 @@ import bomi 1.0
 
 BaseApp {
     id: root
+    player: playerItem
+
+    Player {
+        id: playerItem
+        width: parent.width
+        height: App.window.fullscreen ? root.height : root.height - controls.height
+    }
+
     property Item controls: Item {}
 
-    Binding { target: player; property: "width"; value: root.width }
-    Binding {
-        target: player; property: "height";
-        value: App.window.fullscreen ? root.height : root.height - controls.height
-    }
     Connections {
         id: conn
         function update() {
@@ -43,7 +46,6 @@ BaseApp {
         }
     }
     Component.onCompleted: {
-        player.parent = root;
         controls.parent = catcher
         conn.update()
     }
