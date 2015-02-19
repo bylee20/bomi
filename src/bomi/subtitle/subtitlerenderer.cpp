@@ -192,6 +192,8 @@ auto SubtitleRenderer::setStyle(const OsdStyle &style) -> void
 
 auto SubtitleRenderer::draw(const QRectF &rect, QRectF *put) const -> QImage
 {
+    if (d->hidden)
+        return QImage();
     QImage sub; int gap = 0;
     auto boxes = d->drawer.draw(sub, gap, text(), rect, 1.0);
     if (sub.isNull())
