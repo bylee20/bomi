@@ -81,6 +81,8 @@ auto ::Locale::setNative(const Locale &l) -> void
 
 auto ::Locale::isoToNativeName(const QString &_iso) -> QString
 {
+    if (_iso.size() > 3)
+        return QString();
     QString iso = _iso.toLower();
     auto it = data().b2t.constFind(iso);
     if (it != data().b2t.cend())

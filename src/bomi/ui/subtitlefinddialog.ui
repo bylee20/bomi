@@ -6,12 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>746</width>
-    <height>367</height>
+    <width>555</width>
+    <height>286</height>
    </rect>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QCheckBox" name="languageCheckBox">
+     <property name="text">
+      <string>Select language</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="open">
@@ -32,7 +39,17 @@
      </item>
     </layout>
    </item>
-   <item>
+   <item row="1" column="0" rowspan="2">
+    <widget class="CheckListWidget" name="language">
+     <property name="maximumSize">
+      <size>
+       <width>150</width>
+       <height>16777215</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
     <widget class="QTreeView" name="view">
      <property name="alternatingRowColors">
       <bool>true</bool>
@@ -42,11 +59,8 @@
      </property>
     </widget>
    </item>
-   <item>
+   <item row="2" column="1">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="DataComboBox" name="language"/>
-     </item>
      <item>
       <widget class="QProgressBar" name="prog">
        <property name="invertedAppearance">
@@ -77,9 +91,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>DataComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widget/datacombobox.hpp</header>
+   <class>CheckListWidget</class>
+   <extends>QListWidget</extends>
+   <header>widget/checklistwidget.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -5,6 +5,7 @@
 #include "misc/simplelistmodel.hpp"
 #include "misc/objectstorage.hpp"
 #include "subtitle/opensubtitlesfinder.hpp"
+#include "misc/locale.hpp"
 #include "ui_subtitlefinddialog.h"
 #include <QFileDialog>
 #include <QTemporaryDir>
@@ -47,10 +48,26 @@ public:
     }
 };
 
+class LanguageFilterModel : public QSortFilterProxyModel {
+public:
+    auto filterAcceptsRow(int srow, const QModelIndex &) const -> bool final
+    {
+        auto m = static_cast<SubtitleLinkModel*>(sourceModel());
+        return std::binary_search(langCodes.begin(), langCodes.end(), m->at(srow).langCode);
+    }
+    QStringList langCodes;
+};
+
 struct DownloadInfo {
     bool temp = false;
     QString fileName;
 };
+
+SIA language(const QString &langCode) -> QString
+{
+    const auto lang = Locale::isoToNativeName(langCode);
+    return lang.isEmpty() ? langCode : lang;
+}
 
 struct SubtitleFindDialog::Data {
     SubtitleFindDialog *p = nullptr;
@@ -59,11 +76,10 @@ struct SubtitleFindDialog::Data {
     OpenSubtitlesFinder *finder = nullptr;
     Mrl pending;
     SubtitleLinkModel model;
-    QSortFilterProxyModel proxy;
+    LanguageFilterModel proxy;
     QString fileName;
     QMap<QUrl, DownloadInfo> downloads;
     QMap<QString, QString> languages; // code, name
-    QString langCode;
     QTemporaryDir temp;
     QFileInfo mediaFile;
     struct {
@@ -71,6 +87,30 @@ struct SubtitleFindDialog::Data {
         QString format, fallback;
     } options;
     ObjectStorage storage;
+
+    auto fillLanguage(QVector<SubtitleLink> &links) -> bool
+    {
+        auto find = [&] (const QString &lang) -> bool {
+            for (int i = 0; i < ui.language->count(); ++i) {
+                if (ui.language->data(i).toString() == lang)
+                    return true;
+            }
+            return false;
+        };
+
+        auto size = ui.language->count();
+        for (auto &link : links) {
+            link.language = language(link.langCode);
+            if (find(link.langCode))
+                continue;
+            ui.language->addItem(link.language, link.langCode.toLower());
+            ui.language->setChecked(ui.language->count() - 1, true);
+        }
+        if (size != ui.language->count())
+            ui.language->sortItems();
+        return size != ui.language->count();
+    }
+
     void updateState() {
         const bool ok = finder->isAvailable() && !downloader.isRunning();
         ui.open->setEnabled(ok);
@@ -167,11 +207,6 @@ struct SubtitleFindDialog::Data {
         file->close();
         emit p->loadRequested(file->fileName());
     }
-    auto setLangCode(const QString &code) -> void
-    {
-        langCode = code;
-        proxy.setFilterFixedString(code);
-    }
 };
 
 SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
@@ -204,10 +239,13 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         if (!file.isEmpty())
             find(QUrl::fromLocalFile(file));
     });
-    connect(SIGNAL_VT(d->ui.language, currentIndexChanged, int), [this] (int i) {
-        if (d->ui.language->count() == 0)
-            return;
-        d->setLangCode(i > 1 ? d->ui.language->itemData(i).toString() : QString());
+    connect(d->ui.language, &CheckListWidget::checkedItemsChanged, [=] () {
+        auto langs = d->ui.language->checkedData();
+        d->proxy.langCodes.clear();
+        for (auto &lang : langs)
+            d->proxy.langCodes.push_back(lang.toString());
+        d->proxy.langCodes.sort();
+        d->proxy.invalidate();
     });
     connect(d->ui.get, &QPushButton::clicked, [this] () {
         const auto index = d->ui.view->currentIndex();
@@ -228,33 +266,26 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     connect(d->finder, &OpenSubtitlesFinder::stateChanged,
             [this] () { d->updateState(); });
     connect(d->finder, &OpenSubtitlesFinder::found,
-            [this] (const QVector<SubtitleLink> &links) {
-        auto prev = d->langCode;
-        d->model.setList(links);
+            [this] (QVector<SubtitleLink> links) {
         // Select first entry of list
         d->ui.view->setCurrentIndex(d->ui.view->indexAt(QPoint()));
-        d->languages.clear();
-        d->ui.language->clear();
-        if (!links.isEmpty()) {
-            for (auto &it : links)
-                d->languages[it.langCode] = it.language;
-            d->ui.language->addItem(tr("All"), QString());
-            d->ui.language->insertSeparator(1);
-            for (auto it = d->languages.cbegin(); it != d->languages.cend(); ++it)
-                d->ui.language->addItem(it.value(), it.key());
-            const int idx = qMax(0, d->ui.language->findData(prev));
-            if (idx > 0)
-                d->ui.language->setCurrentIndex(idx == 1 ? 0 : idx);
-            else
-                d->setLangCode(QString());
-        }
+        d->fillLanguage(links);
+        d->model.setList(links);
+        d->proxy.invalidate();
     });
     d->updateState();
 
     _SetWindowTitle(this, tr("Find Subtitle from OpenSubtitles.org"));
     d->storage.setObject(this, u"subtitle_find_dialog"_q, true);
-    d->storage.add("language", &d->langCode);
+    d->storage.add("language", [=] () { return d->ui.language->toVariant(CheckListData); },
+                   [=] (auto &var) { d->ui.language->setFromVariant(var, CheckListData); });
     d->storage.restore();
+    for (int i = 0; i < d->ui.language->count(); ++i) {
+        auto item = d->ui.language->item(i);
+        item->setText(language(d->ui.language->data(i).toString()));
+    }
+    d->ui.language->setHeaderCheckBox(d->ui.languageCheckBox);
+    d->ui.view->setSortingEnabled(true);
 }
 
 SubtitleFindDialog::~SubtitleFindDialog() {

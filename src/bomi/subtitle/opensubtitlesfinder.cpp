@@ -114,9 +114,7 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
                 if (link.langCode.isEmpty())
                     link.langCode = map[u"ISO639"_q].toString();
                 if (link.langCode.isEmpty())
-                    link.langCode = link.language = map[u"LanguageName"_q].toString();
-                else
-                    link.language = Locale::isoToNativeName(link.langCode);
+                    link.langCode = map[u"LanguageName"_q].toString();
                 links.append(link);
             }
             emit found(links);
