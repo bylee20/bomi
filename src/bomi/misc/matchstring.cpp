@@ -18,12 +18,35 @@ auto MatchString::setFromJson(const QJsonObject &json) -> bool
     return true;
 }
 
+auto MatchString::isValid() const -> bool
+{
+    return !m_regex || checkRegEx();
+}
+
+auto MatchString::checkRegEx() const -> bool
+{
+    if (m_cache.pattern().isEmpty()) {
+        m_cache.setPattern(m_text);
+        m_cache.setPatternOptions(m_caseSensitive ? QRegEx::NoPatternOption
+                                                  : QRegEx::CaseInsensitiveOption);
+    }
+    return m_cache.isValid();
+}
+
 auto MatchString::match(const QString &path) const -> bool
 {
     if (m_regex) {
-        QRegEx rx(m_text, m_caseSensitive ? QRegEx::NoPatternOption
-                                          : QRegEx::CaseInsensitiveOption);
-        return rx.match(path).hasMatch();
+        checkRegEx();
+        return m_cache.match(path).hasMatch();
     } else
         return !m_text.compare(path, caseSensitivity());
+}
+
+auto MatchString::contains(const QString &text) const -> bool
+{
+    if (m_regex) {
+        checkRegEx();
+        return text.contains(m_cache);
+    } else
+        return text.contains(m_text, caseSensitivity());
 }

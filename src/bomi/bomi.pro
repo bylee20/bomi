@@ -482,7 +482,8 @@ FORMS += \
     ui/osdstylewidget.ui \
     ui/osdthemewidget.ui \
     ui/autoloaderwidget.ui \
-    ui/logviewer.ui
+    ui/logviewer.ui \
+    ui/subtitleviewer.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \

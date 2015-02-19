@@ -13,8 +13,6 @@ public:
 signals:
     void seekRequested(int time);
 private:
-    auto setTimeVisible(bool visible) -> void;
-    auto setAutoScrollEnabled(bool enabled) -> void;
     auto showEvent(QShowEvent *event) -> void;
     auto updateModels() -> void;
     class CompView;

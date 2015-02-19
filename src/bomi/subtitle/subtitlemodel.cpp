@@ -1,8 +1,9 @@
 #include "subtitlemodel.hpp"
+#include "misc/matchstring.hpp"
 #include <QScrollBar>
 
 struct SubCompModel::Data {
-    bool visible = false;
+    bool visible = false, ms = false;
     const SubComp *comp = nullptr;
     const SubCapt *pended = nullptr;
 };
@@ -47,13 +48,22 @@ auto SubCompModel::header(int column) const -> QString
     }
 }
 
+auto SubCompModel::setTimeInMilliseconds(bool ms) -> void
+{
+    if (d->ms == ms)
+        return;
+    beginResetModel();
+    d->ms = ms;
+    endResetModel();
+}
+
 auto SubCompModel::displayData(int row, int column) const -> QVariant
 {
     auto &data = at(row);
     switch (column) {
-    case Start: return _MSecToString(data.start());
-    case End:   return _MSecToString(data.end());
-    case Text:  return data.m_it->toPlainText();
+    case Start: return d->ms ? _N(data.start()) : _MSecToString(data.start());
+    case End:   return d->ms ? _N(data.end())   : _MSecToString(data.end());
+    case Text:  return data.text();
     default:    return QVariant();
     }
 }
@@ -95,24 +105,54 @@ auto SubCompModel::setCurrentCaption(const SubCapt *caption) -> void
 
 /******************************************************************************/
 
+class SubCompFilterModel : public QSortFilterProxyModel {
+    auto filterAcceptsRow(int srow, const QModelIndex &) const -> bool final
+    {
+        auto m = static_cast<SubCompModel*>(sourceModel());
+        if (start >= 0 && m->at(srow).start() < start)
+            return false;
+        if (end >= 0 && m->at(srow).start() > end)
+            return false;
+        if (caption.string().isEmpty() || !caption.isValid())
+            return true;
+        return caption.contains(m->at(srow).text());
+    }
+public:
+    int start = -1, end = -1;
+    MatchString caption;
+};
+
 struct SubCompView::Data {
+    SubCompView *p = nullptr;
     SubCompModel *model = nullptr;
+    SubCompFilterModel proxy;
     bool autoScroll = false;
+    bool ms = false, time = false;
+    auto updateHeader()
+    {
+        p->setColumnHidden(SubCompModel::Start, !time);
+        p->setColumnHidden(SubCompModel::End, !time);
+        if (model)
+            model->setTimeInMilliseconds(ms);
+    }
 };
 
 SubCompView::SubCompView(QWidget *parent)
     : QTreeView(parent)
     , d(new Data)
 {
+    d->p = this;
     setAlternatingRowColors(true);
     setRootIsDecorated(false);
     setHorizontalScrollMode(ScrollPerPixel);
     setAutoScroll(false);
+    d->updateHeader();
+    QTreeView::setModel(&d->proxy);
 }
 
 auto SubCompView::setModelToNull() -> void
 {
-    QTreeView::setModel(d->model = nullptr);
+    d->proxy.setSourceModel(nullptr);
 }
 
 auto SubCompView::setModel(QAbstractItemModel *model) -> void
@@ -120,8 +160,9 @@ auto SubCompView::setModel(QAbstractItemModel *model) -> void
     if (d->model)
         d->model->disconnect(this);
     d->model = qobject_cast<SubCompModel*>(model);
-    QTreeView::setModel(d->model);
+    d->proxy.setSourceModel(d->model);
     if (d->model) {
+        d->model->setTimeInMilliseconds(d->ms);
         d->model->setVisible(isVisible());
         connect(d->model, &SubCompModel::destroyed,
                 this, &SubCompView::setModelToNull, Qt::DirectConnection);
@@ -136,7 +177,7 @@ auto SubCompView::updateCurrentRow(int row) -> void
 {
     if (!d->model || !d->autoScroll)
         return;
-    const QModelIndex idx = d->model->index(row, SubCompModel::Text);
+    const QModelIndex idx = d->proxy.mapFromSource(d->model->index(row, SubCompModel::Text));
     if (idx.isValid()) {
         auto h = horizontalScrollBar();
         const int prev = h->value();
@@ -156,8 +197,8 @@ auto SubCompView::setAutoScrollEnabled(bool enabled) -> void
 
 auto SubCompView::setTimeVisible(bool visible) -> void
 {
-    setColumnHidden(SubCompModel::Start, !visible);
-    setColumnHidden(SubCompModel::End, !visible);
+    if (_Change(d->time, visible))
+        d->updateHeader();
 }
 
 auto SubCompView::showEvent(QShowEvent *event) -> void
@@ -172,4 +213,18 @@ auto SubCompView::hideEvent(QHideEvent *event) -> void
     QTreeView::hideEvent(event);
     if (d->model)
         d->model->setVisible(false);
+}
+
+auto SubCompView::setFilter(int start, int end, const MatchString &caption) -> void
+{
+    d->proxy.start = start;
+    d->proxy.end = end;
+    d->proxy.caption = caption;
+    d->proxy.invalidate();
+}
+
+auto SubCompView::setTimeInMilliseconds(bool ms) -> void
+{
+    if (_Change(d->ms, ms))
+        d->updateHeader();
 }

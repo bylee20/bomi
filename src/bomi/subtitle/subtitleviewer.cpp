@@ -1,7 +1,9 @@
 #include "subtitleviewer.hpp"
 #include "subtitlemodel.hpp"
 #include "subtitle.hpp"
+#include "misc/matchstring.hpp"
 #include "misc/objectstorage.hpp"
+#include "ui_subtitleviewer.h"
 #include <QSplitter>
 #include <QScrollArea>
 
@@ -37,15 +39,71 @@ auto SubtitleViewer::CompView::setModel(SubCompModel *model) -> void
 
 struct SubtitleViewer::Data {
     SubtitleViewer *p = nullptr;
+    Ui::SubtitleViewer ui;
     QVector<SubCompModel*> models;
     QList<CompView*> comp;
     QSplitter *splitter;
-    QCheckBox *timeVisible, *autoScroll;
     bool needToUpdate = false;
     ObjectStorage storage;
+    QRegEx rxFormatTime, rxMSec;
+    QString toolTip;
+
+    static constexpr int InvalidFormat = -1;
+    static constexpr int EmptyText = -2;
+
+    auto time(const QLineEdit *edit) -> int
+    {
+        const auto text = edit->text();
+        if (text.isEmpty())
+            return EmptyText;
+        auto m = rxFormatTime.match(text);
+        if (m.hasMatch()) {
+            const int hh = m.capturedRef(1).toInt();
+            const int mm = m.capturedRef(2).toInt();
+            const int ms = m.capturedRef(3).toDouble() * 1000;
+            return (hh * 60 + mm) * 60 * 1000 + ms;
+        }
+        m = rxMSec.match(text);
+        if (m.hasMatch())
+            return m.capturedRef(0).toInt();
+        return InvalidFormat;
+    }
+
+#define SET_ALL(func, ...) setAll(&SubCompView::func, __VA_ARGS__)
+
+    template<class R, class... Args, class... Values>
+    auto setAll(R(SubCompView::*set)(Args...), Values... args) -> void
+        { for (auto v : comp) (v->view()->*set)(args...); }
+
+    auto filter() -> void
+    {
+        const int start = time(ui.start);
+        const int end = time(ui.end);
+        MatchString caption;
+        caption.setCaseSensitive(ui.case_sensitive->isChecked());
+        caption.setRegEx(ui.regex->isChecked());
+        caption.setString(ui.caption->text());
+        SET_ALL(setFilter, start, end, caption);
+    }
+    auto validate(QLineEdit *edit) -> void
+    {
+        auto p = edit->palette();
+        const QString text = edit->text();
+        if (text.isEmpty() || rxFormatTime.match(text).hasMatch()
+                           || rxMSec.match(text).hasMatch())
+            p.setColor(QPalette::Text, Qt::black);
+        else
+            p.setColor(QPalette::Text, Qt::red);
+        edit->setPalette(p);
+    }
     auto seekIndex(const QModelIndex &idx) -> void
     {
-        if (auto model = qobject_cast<const SubCompModel*>(idx.model()))
+        auto proxy = qobject_cast<const QSortFilterProxyModel*>(idx.model());
+        if (!proxy)
+            return;
+        const auto src = proxy->mapToSource(idx);
+        auto model = qobject_cast<const SubCompModel*>(src.model());
+        if (model && src.isValid())
             emit p->seekRequested(model->at(idx.row()).start());
     };
 };
@@ -55,35 +113,47 @@ SubtitleViewer::SubtitleViewer(QWidget *parent)
     , d(new Data)
 {
     d->p = this;
+    d->rxFormatTime = QRegEx(uR"(^(\d+):([0-5]?\d):([0-5]?\d(\.\d*)?)$)"_q);
+    d->rxMSec = QRegEx(uR"(^\d+$)"_q);
+    d->toolTip = tr("Next formats are allowed:\n"
+                    "Decimal digits only\n - translated into milliseconds\n"
+                    "h:m:s\n - hours:min:sec where s can contain decimal point.");
 
-    QScrollArea *area = new QScrollArea(this);
-    d->splitter = new QSplitter(Qt::Horizontal, area);
-    d->timeVisible = new QCheckBox(tr("Show start/end time"), this);
-    d->autoScroll = new QCheckBox(tr("Scroll to current time"), this);
+    d->ui.setupUi(this);
+    d->ui.bbox->button(BBox::Close)->setAutoDefault(false);
+    delete d->ui.area->takeWidget();
+    d->splitter = new QSplitter(Qt::Horizontal, d->ui.area);
+    d->ui.area->setWidget(d->splitter);
 
-    area->setWidget(d->splitter);
-    area->setWidgetResizable(true);
-    d->autoScroll->setChecked(true);
-    d->timeVisible->setChecked(false);
+    connect(d->ui.time_visible, &QCheckBox::toggled, this,
+            [=] (bool visible) { d->SET_ALL(setTimeVisible, visible); });
+    connect(d->ui.autoscroll, &QCheckBox::toggled, this,
+            [=] (bool as) { d->SET_ALL(setAutoScrollEnabled, as); });
+    connect(d->ui.start, &QLineEdit::textEdited, this, [=] () { d->validate(d->ui.start); });
+    connect(d->ui.end,   &QLineEdit::textEdited, this, [=] () { d->validate(d->ui.end); });
 
-    QVBoxLayout *vbox = new QVBoxLayout(this);
-    vbox->addWidget(area);
-    vbox->addWidget(d->timeVisible);
-    vbox->addWidget(d->autoScroll);
-
-    setAutoScrollEnabled(d->autoScroll->isChecked());
-    setTimeVisible(d->timeVisible->isChecked());
-
-    connect(d->timeVisible, &QCheckBox::toggled,
-            this, &SubtitleViewer::setTimeVisible);
-    connect(d->autoScroll, &QCheckBox::toggled,
-            this, &SubtitleViewer::setAutoScrollEnabled);
+    auto filter = [=] () { d->filter(); };
+    connect(d->ui.start, &QLineEdit::editingFinished, this, filter);
+    connect(d->ui.end,   &QLineEdit::editingFinished, this, filter);
+    connect(d->ui.caption, &QLineEdit::textChanged, this, filter);
+    connect(d->ui.regex, &QCheckBox::toggled, this, filter);
+    connect(d->ui.case_sensitive, &QCheckBox::toggled, this, filter);
+    connect(d->ui.time_ms, &QCheckBox::toggled, this,
+            [=] (bool ms) { d->SET_ALL(setTimeInMilliseconds, ms); });
+    d->ui.start->setToolTip(d->toolTip);
+    d->ui.end->setToolTip(d->toolTip);
 
     _SetWindowTitle(this, tr("Subtitle Viewer"));
 
     d->storage.setObject(this, u"subtitle-viewer"_q, true);
-    d->storage.add("time_visible", d->timeVisible, "checked");
-    d->storage.add("auto_scroll", d->autoScroll, "checked");
+    d->storage.add(d->ui.autoscroll);
+    d->storage.add(d->ui.time_visible);
+    d->storage.add(d->ui.time_ms);
+    d->storage.add(d->ui.regex);
+    d->storage.add(d->ui.case_sensitive);
+    d->storage.add(d->ui.start);
+    d->storage.add(d->ui.end);
+    d->storage.add(d->ui.caption);
     d->storage.restore();
 }
 
@@ -111,10 +181,13 @@ auto SubtitleViewer::updateModels() -> void
         }
         for (int i=0; i<d->comp.size(); ++i) {
             d->comp[i]->setModel(d->models[i]);
-            d->comp[i]->view()->setAutoScrollEnabled(d->autoScroll->isChecked());
-            d->comp[i]->view()->setTimeVisible(d->timeVisible->isChecked());
+            const auto v = d->comp[i]->view();
+            v->setAutoScrollEnabled(d->ui.autoscroll->isChecked());
+            v->setTimeVisible(d->ui.time_visible->isChecked());
+            v->setTimeInMilliseconds(d->ui.time_ms->isChecked());
         }
         d->models.clear();
+        d->filter();
     }
     d->needToUpdate = false;
 }
@@ -126,18 +199,6 @@ auto SubtitleViewer::setModels(const QVector<SubCompModel*> &models) -> void
         updateModels();
     else
         d->needToUpdate = true;
-}
-
-auto SubtitleViewer::setTimeVisible(bool visible) -> void
-{
-    for (int i=0; i<d->comp.size(); ++i)
-        d->comp[i]->view()->setTimeVisible(visible);
-}
-
-auto SubtitleViewer::setAutoScrollEnabled(bool enabled) -> void
-{
-    for (int i=0; i<d->comp.size(); ++i)
-        d->comp[i]->view()->setAutoScrollEnabled(enabled);
 }
 
 auto SubtitleViewer::showEvent(QShowEvent *event) -> void

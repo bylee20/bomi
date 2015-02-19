@@ -105,15 +105,19 @@ auto ObjectStorage::add(const char *name) -> void
     d->properties.push_back(name);
 }
 
-auto ObjectStorage::add(const char *alias, QObject *from, const char *src) -> bool
+auto ObjectStorage::add(QByteArray &&alias, QObject *from, const char *src) -> bool
 {
+    if (alias.isEmpty()) {
+        _Error("Empty alias name.");
+        return false;
+    }
     auto mo = from->metaObject();
     const int idx = mo->indexOfProperty(src);
     if (idx < 0) {
         _Error("Property '%%' does not exist in '%%'.", src, from->metaObject()->className());
         return false;
     }
-    d->aliases.push_back({alias, from, mo->property(idx)});
+    d->aliases.push_back({std::move(alias), from, mo->property(idx)});
     return true;
 }
 
@@ -121,4 +125,14 @@ auto ObjectStorage::add(const char *name, std::function<QVariant(void)> &&get,
                         std::function<void(const QVariant &var)> &&set) -> void
 {
     d->data.push_back({name, std::move(get), std::move(set)});
+}
+
+auto ObjectStorage::add(QLineEdit *le) -> bool
+{
+    return add(le->objectName().toLatin1(), le, "text");
+}
+
+auto ObjectStorage::add(QCheckBox *cb) -> bool
+{
+    return add(cb->objectName().toLatin1(), cb, "checked");
 }

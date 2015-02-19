@@ -5,11 +5,14 @@
 #include "misc/simplelistmodel.hpp"
 #include <QTreeView>
 
+class MatchString;
+
 struct SubCompModelData {
     SubCompModelData(): m_end(-1) {}
     SubCompModelData(SubComp::const_iterator it): m_end(-1), m_it(it) {}
     auto start() const -> int { return m_it.key() * m_mul; }
     auto end() const -> int { return m_end * m_mul; }
+    auto text() const -> QString { return m_it->toPlainText(); }
 private:
     int m_end;
     double m_mul = 1.0;
@@ -26,6 +29,7 @@ public:
     auto setFps(double fps) -> void;
     auto setCurrentCaption(const SubCapt *caption) -> void;
     auto setVisible(bool visible) -> void;
+    auto setTimeInMilliseconds(bool ms) -> void;
 private:
     auto header(int column) const -> QString final;
     auto displayData(int row, int column) const -> QVariant final;
@@ -40,6 +44,8 @@ public:
     auto setModel(QAbstractItemModel *model) -> void;
     auto setAutoScrollEnabled(bool enabled) -> void;
     auto setTimeVisible(bool visible) -> void;
+    auto setTimeInMilliseconds(bool ms) -> void;
+    auto setFilter(int start, int end, const MatchString &caption) -> void;
 private:
     auto updateCurrentRow(int row) -> void;
     auto setModelToNull() -> void;

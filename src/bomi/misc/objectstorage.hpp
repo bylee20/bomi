@@ -10,7 +10,9 @@ public:
     auto save() -> void;
     auto restore() -> void;
     auto add(const char *property) -> void;
-    auto add(const char *alias, QObject *src, const char *property) -> bool;
+    auto add(QByteArray &&alias, QObject *src, const char *property) -> bool;
+    auto add(QCheckBox *cb) -> bool;
+    auto add(QLineEdit *le) -> bool;
     template<class T>
     auto add(const char *name, T *data) -> void
     {
