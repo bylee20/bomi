@@ -3,7 +3,7 @@
 
 pkgname=bomi
 pkgver=0.9.2
-pkgrel=2
+pkgrel=3
 pkgdesc="Powerful and easy-to-use GUI multimedia player based on mpv"
 arch=('i686' 'x86_64')
 url="http://$pkgname-player.github.io"
@@ -25,6 +25,7 @@ md5sums=('071e5c2b2e21581eb91aa67ff9630b78')
 build() {
   cd "$srcdir/$pkgname-$pkgver"
   ./configure --prefix=/usr --enable-jack --enable-cdda --enable-pulseaudio
+  sed -i 's/--disable-cplayer/--disable-cplayer --disable-rubberband/g' build-mpv
   make
 }
 

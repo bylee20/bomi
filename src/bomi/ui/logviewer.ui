@@ -49,7 +49,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QListWidget" name="level"/>
+      <widget class="CheckListWidget" name="level"/>
      </item>
      <item>
       <widget class="QCheckBox" name="contextCheck">
@@ -62,7 +62,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QListWidget" name="context"/>
+      <widget class="CheckListWidget" name="context"/>
      </item>
     </layout>
    </item>
@@ -70,6 +70,9 @@
     <widget class="QCheckBox" name="autoscroll">
      <property name="text">
       <string>Autoscroll</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -85,6 +88,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CheckListWidget</class>
+   <extends>QListWidget</extends>
+   <header>widget/checklistwidget.hpp</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

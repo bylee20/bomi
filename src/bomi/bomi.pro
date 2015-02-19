@@ -267,7 +267,8 @@ HEADERS += \
     player/shortcutmap.hpp \
     misc/objectstorage.hpp \
     quick/formatobject.hpp \
-    misc/encodinginfo.hpp
+    misc/encodinginfo.hpp \
+    widget/checklistwidget.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -458,7 +459,8 @@ SOURCES += \
     player/shortcutmap.cpp \
     misc/objectstorage.cpp \
     quick/formatobject.cpp \
-    misc/encodinginfo.cpp
+    misc/encodinginfo.cpp \
+    widget/checklistwidget.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

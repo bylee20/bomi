@@ -5,6 +5,7 @@
 #include "log.hpp"
 #include "dialog/mbox.hpp"
 #include "ui_logviewer.h"
+#include "misc/objectstorage.hpp"
 #include <QMenu>
 #include <QClipboard>
 #include <set>
@@ -15,6 +16,11 @@ static const int LogEvent = QEvent::User + 10;
 struct LogEntry {
     Log::Level level = Log::Off;
     QString context, message;
+};
+
+
+class EntryFilterWidget : public QWidget {
+public:
 };
 
 class LogEntryModel : public SimpleListModel<LogEntry>
@@ -59,8 +65,8 @@ public:
         const auto &e = m->at(srow);
         return level[e.level] && std::binary_search(ctx.begin(), ctx.end(), e.context);
     }
-    QVector<QString> ctx;
-    std::array<bool, Log::Trace + 1> level;
+    QStringList ctx;
+    QVector<bool> level = QVector<bool>(Log::Trace + 1);
 };
 
 struct LogViewer::Data {
@@ -70,123 +76,25 @@ struct LogViewer::Data {
     LogFilterModel proxy;
     LogEntryModel model;
     int lines = 0;
+    bool stop = false;
     QMenu *menu = nullptr;
-
-    struct {
-        QMap<QString, bool> context;
-        QMap<Log::Level, bool> level;
-    } state;
-
-    auto level(const QListWidgetItem *item) -> Log::Level
-    {
-        return item->data(Qt::UserRole).value<Log::Level>();
-    }
-
-    auto setLevel(QListWidgetItem *item, Log::Level lv) -> void
-    {
-        item->setData(Qt::UserRole, QVariant::fromValue(lv));
-    }
-
-    auto chceck(QListWidgetItem *item, bool c) -> void
-    {
-        item->setCheckState(c ? Qt::Checked : Qt::Unchecked);
-    }
-
-    auto setFilterChecked(QCheckBox *c, QListWidget *l) -> void
-    {
-        int checked = 0;
-        for (auto i = 0; i < l->count(); ++i) {
-            if (l->item(i)->checkState())
-                ++checked;
-        }
-        const bool was = c->blockSignals(true);
-        if (!checked)
-            c->setCheckState(Qt::Unchecked);
-        else if (checked < l->count())
-            c->setCheckState(Qt::PartiallyChecked);
-        else
-            c->setCheckState(Qt::Checked);
-        c->blockSignals(was);
-    }
-
-    auto syncLevel() -> void
-    {
-        for (auto i = 0; i < ui.level->count(); ++i) {
-            const auto item = ui.level->item(i);
-            proxy.level[level(item)] = item->checkState();
-        }
-        proxy.invalidate();
-    }
+    ObjectStorage storage;
 
     auto syncContext() -> void
     {
-        QVector<QString> ctx;
-        for (int i = 0; i < ui.context->count(); ++i) {
-            auto item = ui.context->item(i);
-            if (item->checkState())
-                ctx.push_back(item->text());
-        }
-        proxy.ctx = ctx;
+        proxy.ctx = ui.context->checkedTexts();
+        proxy.ctx.sort();
         proxy.invalidate();
     }
 
-    auto newItem(const QString &text, QListWidget *w) -> QListWidgetItem*
-    {
-        auto item = new QListWidgetItem;
-        item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-        item->setText(text);
-        w->addItem(item);
-        return item;
-    }
-
-    auto newContext(const QString &name, bool checked) -> QListWidgetItem*
+    auto newContext(const QString &name, bool checked) -> bool
     {
         if (ctx.find(name) != ctx.end())
-            return nullptr;
-        auto item = newItem(name, ui.context);
-        chceck(item, checked);
+            return false;
+        ui.context->addItem(name);
+        ui.context->setChecked(ui.context->count()-1, checked);
         ctx.insert(name);
-        return item;
-    }
-    auto restore() -> QRect
-    {
-        QSettings s;
-        s.beginGroup(u"LogViewer"_q);
-        int len = s.beginReadArray(ui.context->objectName());
-        for (int i = 0; i < len; ++i) {
-            s.setArrayIndex(i);
-            auto &&name = s.value(u"name"_q).toString();
-            auto checked = s.value(u"checked"_q).toBool();
-            newContext(name, checked);
-        }
-        s.endArray();
-
-        QMap<Log::Level, bool> levels;
-        len = s.beginReadArray(ui.level->objectName());
-        for (int i = 0; i < len; ++i) {
-            s.setArrayIndex(i);
-            auto level = Log::level(s.value(u"name"_q).toString());
-            levels[level] = s.value(u"checked"_q).toBool();
-        }
-        s.endArray();
-        auto geometry = s.value(u"geometry"_q).toRect();
-        ui.autoscroll->setChecked(s.value(u"autoscroll"_q, true).toBool());
-        s.endGroup();
-
-        const auto max = Log::option().level(LogOutput::Viewer);
-        for (int lv = 1; lv <= Log::Trace; ++lv) {
-            auto level = (Log::Level)lv;
-            auto item = newItem(Log::name(level), ui.level);
-            setLevel(item, level);
-            if (level > max)
-                item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
-            chceck(item, levels.contains(level) ? levels[level] : true);
-        }
-        syncContext();
-        syncLevel();
-        setFilterChecked(ui.contextCheck, ui.context);
-        setFilterChecked(ui.levelCheck, ui.level);
-        return geometry;
+        return true;
     }
 
     auto createMenu() -> void
@@ -220,12 +128,15 @@ LogViewer::LogViewer(QWidget *parent)
     : QDialog(parent), d(new Data)
 {
     d->p = this;
-    std::fill(d->proxy.level.begin(), d->proxy.level.end(), true);
     d->ui.setupUi(this);
+    std::fill(d->proxy.level.begin(), d->proxy.level.end(), true);
+    for (int i = 0; i < d->proxy.level.size(); ++i) {
+        d->ui.level->addItem(Log::name((Log::Level)i), i);
+        d->ui.level->setChecked(i, true);
+    }
+    d->ui.level->item(0)->setHidden(true);
     d->ui.view->viewport()->setStyleSheet("background-color: rgb(0, 0, 0);"_a);
     _SetWindowTitle(this, tr("Log Viewer"));
-
-    const auto geometry = d->restore();
 
     d->lines = Log::subscribe(this, LogEvent);
     d->proxy.setSourceModel(&d->model);
@@ -236,28 +147,31 @@ LogViewer::LogViewer(QWidget *parent)
     const int mw = fm.width('M'_q) * 12;
     d->ui.level->setFixedWidth(mw);
     d->ui.level->setMaximumHeight(fm.height() * 10);
-    connect(d->ui.level, &QListWidget::itemChanged, this, [=] (auto item) {
-        d->proxy.level[d->level(item)] = item->checkState();
-        d->proxy.invalidate();
-        d->setFilterChecked(d->ui.levelCheck, d->ui.level);
-    });
-
     d->ui.context->setFixedWidth(mw);
-    connect(d->ui.context, &QListWidget::itemChanged, this, [=] () {
-        d->syncContext();
-        d->setFilterChecked(d->ui.contextCheck, d->ui.context);
-    });
 
-#define PLUG_FILTER(l, s) \
-    connect(d->ui.l##Check, &QCheckBox::stateChanged, this, [=] (int checked) { \
-        auto was = d->ui.l->blockSignals(true); \
-        for (auto i = 0; i < d->ui.l->count(); ++i) \
-            d->chceck(d->ui.l->item(i), checked); \
-        d->s(); d->ui.l->blockSignals(was); \
-    });
-    PLUG_FILTER(level, syncLevel);
-    PLUG_FILTER(context, syncContext);
+    d->storage.setObject(this, u"log-viewer"_q, true);
+    d->storage.add("autoscroll", d->ui.autoscroll, "checked");
+    d->storage.add(d->ui.level->objectName().toLatin1(),
+                   [=] () { return d->ui.level->toVariant(0); },
+                   [=] (auto &var) { d->ui.level->setFromVariant(var, 0, false); });
+    d->storage.add(d->ui.context->objectName().toLatin1(),
+                   [=] () { return d->ui.context->toVariant(CheckListText); },
+                   [=] (auto &var) { d->ui.context->setFromVariant(var, CheckListText); });
+    d->storage.restore();
+    for (auto i = 0; i < d->ui.context->count(); ++i)
+        d->ctx.insert(d->ui.context->item(i)->text());
+    d->ui.context->sortItems();
+    d->syncContext();
 
+    d->ui.level->setHeaderCheckBox(d->ui.levelCheck);
+    d->ui.context->setHeaderCheckBox(d->ui.contextCheck);
+
+    connect(d->ui.level, &CheckListWidget::checkedItemsChanged, this, [=] () {
+        d->proxy.level = d->ui.level->checkedStates().toVector();
+        d->proxy.invalidate();
+    });
+    connect(d->ui.context, &CheckListWidget::checkedItemsChanged,
+            this, [=] () { d->syncContext(); });
     connect(d->ui.clear, &QPushButton::clicked, this, [=] () {
         if (MBox::ask(this, tr("Log Viewer"),
                       tr("Do you want remove all logs and contexts?"),
@@ -268,37 +182,20 @@ LogViewer::LogViewer(QWidget *parent)
             d->syncContext();
         }
     });
-
-    if (!geometry.isEmpty())
-        setGeometry(geometry);
 }
 
 LogViewer::~LogViewer()
 {
+    d->stop = true;
     Log::unsubscribe(this);
-    QSettings s;
-    s.beginGroup(u"LogViewer"_q);
-    auto save = [&] (QListWidget *list) {
-        s.beginWriteArray(list->objectName(), d->ui.context->count());
-        for (int i = 0; i < list->count(); ++i) {
-            auto item = list->item(i);
-            s.setArrayIndex(i);
-            s.setValue(u"name"_q, item->text());
-            s.setValue(u"checked"_q, !!item->checkState());
-        }
-        s.endArray();
-    };
-    save(d->ui.level);
-    save(d->ui.context);
-    s.setValue(u"geometry"_q, geometry());
-    s.setValue(u"autoscroll"_q, d->ui.autoscroll->isChecked());
-    s.endGroup();
     delete d;
 }
 
 auto LogViewer::customEvent(QEvent *ev) -> void
 {
     if (ev->type() != LogEvent)
+        return;
+    if (d->stop)
         return;
     LogEntry entry;
     _TakeData(ev, entry.level, entry.message);

@@ -6,7 +6,6 @@ public:
     ObjectStorage(QObject *parent = nullptr);
     ~ObjectStorage();
     auto setAutoSave(bool save) -> void;
-    auto setObject(QObject *object, const QString &name) -> bool;
     auto setObject(QObject *object, const QString &name, bool autosave) -> bool;
     auto save() -> void;
     auto restore() -> void;
