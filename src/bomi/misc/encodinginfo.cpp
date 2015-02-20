@@ -36,7 +36,7 @@ EncodingInfo::~EncodingInfo()
 
 auto EncodingInfo::fromMib(int mib) -> EncodingInfo
 {
-    if (mib < 0)
+    if (mib <= 0)
         return EncodingInfo();
     for (auto &e : all()) {
         if (e.mib() == mib)
@@ -60,9 +60,11 @@ auto EncodingInfo::fromName(const QString &name) -> EncodingInfo
 
 auto EncodingInfo::fromCodec(const QTextCodec *codec) -> EncodingInfo
 {
-    for (auto &e : all()) {
-        if (e.codec() == codec)
-            return e;
+    if (codec) {
+        for (auto &e : all()) {
+            if (e.codec() == codec)
+                return e;
+        }
     }
     return EncodingInfo();
 }
