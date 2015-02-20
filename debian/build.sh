@@ -20,15 +20,12 @@ if ! [ -e bomi-$ver.tar.gz ]; then
   mv v$ver.tar.gz bomi-$ver.tar.gz
   tar xvfz bomi-$ver.tar.gz
   cd bomi-$ver
-  ./download-ffmpeg
-  ./download-libchardet
   cd src/mpv
   ./bootstrap.py
-  
-    ./waf --help &> /dev/null
-    mv .waf-*/* .
-    sed -i '/^#==>$/,$d' waf
-    rmdir .waf-*
+  ./waf --help &> /dev/null
+  mv .waf-*/* .
+  sed -i '/^#==>$/,$d' waf
+  rmdir .waf-*
 fi
 
 cd $orig
@@ -51,10 +48,10 @@ cp ../COPYING.txt copyright
 mkdir source
 echo "3.0 (native)" > source/format
 
-trusty_bdeps=
+trusty_bdeps=ffmpeg-bomi
 trusty_deps=libqt5qml-quickcontrols
 
-utopic_bdeps=
+utopic_bdeps=ffmpeg-bomi
 utopic_deps=qml-module-qtquick-controls
 
 bdeps=

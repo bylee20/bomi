@@ -19,8 +19,6 @@ build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	./build-libchardet
-	./build-ffmpeg
 	./configure --prefix=/usr --cc=clang \
 		--actiondir=/usr/share/kde4/apps/solid/actions
 	make
@@ -35,8 +33,6 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	[ ! -f Makefile ] || make clean
-	cd src/libchardet*; [ ! -f Makefile ] || make distclean
-	cd src/ffmpeg; [ ! -f config.h ] || make distclean
 	cd src/mpv; ./waf distclean
 	rm -rf build
 

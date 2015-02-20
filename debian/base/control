@@ -8,7 +8,7 @@ Build-Depends: clang (>= 3.3), debhelper (>= 7), pkg-config
  , libqt5x11extras5-dev, python, libicu-dev, libbluray-dev
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
- , libasound2-dev, libva-dev, libvdpau-dev
+ , libasound2-dev, libva-dev, libvdpau-dev, libchardet
  , libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
  , libpulse-dev, libxcb-icccm4-dev, libgnutls-dev
  , libxcb-util0-dev, libxcb-randr0-dev, libxcb-screensaver0-dev

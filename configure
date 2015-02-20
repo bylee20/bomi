@@ -2,6 +2,9 @@
 
 SED=sed
 
+#special case for build in ubuntu using bomi ppa
+PKG_CONFIG_PATH=/opt/ffmpeg-bomi/lib/pkgconfig:${PKG_CONFIG_PATH}
+
 export PKG_CONFIG_PATH="`pwd`/build/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 arguments="$@"
