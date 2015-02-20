@@ -8,6 +8,11 @@ Credit
 
     designer of some skins
 
+* Oxygen Team (https://techbase.kde.org/Projects/Oxygen)
+
+    developers of application icons mainly in preferences dialog
+    see ICON-AUTHORS.txt and ICON-COPYING.txt for defails
+
 Special Thanks
 
 * Mingyu Jo and Donhyun Ha
