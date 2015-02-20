@@ -4,6 +4,7 @@
 #include "misc/matchstring.hpp"
 #include "misc/objectstorage.hpp"
 #include "ui_subtitleviewer.h"
+#include <QSortFilterProxyModel>
 #include <QSplitter>
 #include <QScrollArea>
 

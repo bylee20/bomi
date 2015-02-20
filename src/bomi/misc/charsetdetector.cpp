@@ -1,5 +1,6 @@
 #include "charsetdetector.hpp"
 #include "misc/log.hpp"
+#define HAVE_DLL_EXPORT
 #include <chardet.h>
 
 DECLARE_LOG_CONTEXT(Charset)

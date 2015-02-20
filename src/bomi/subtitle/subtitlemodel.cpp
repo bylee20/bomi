@@ -1,6 +1,7 @@
 #include "subtitlemodel.hpp"
 #include "misc/matchstring.hpp"
 #include <QScrollBar>
+#include <QSortFilterProxyModel>
 
 struct SubCompModel::Data {
     bool visible = false, ms = false;
