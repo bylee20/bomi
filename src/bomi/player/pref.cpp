@@ -32,7 +32,7 @@ auto Pref::initialize() -> void
 
 #define PREF_FILE_PATH QString(_WritablePath(Location::Config) % "/pref.json"_a)
 
-auto translator_default_encoding() -> QString;
+auto translator_default_encoding() -> EncodingInfo;
 
 template<class T>
 static QStringList toStringList(const QList<T> &list) {
@@ -105,7 +105,7 @@ auto Pref::load() -> void
 
 auto Pref::defaultSubtitleEncoding() -> EncodingInfo
 {
-    return EncodingInfo::fromName(translator_default_encoding());
+    return translator_default_encoding();
 }
 
 auto Pref::defaultSkinName() -> QString

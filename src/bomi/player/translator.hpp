@@ -3,7 +3,7 @@
 
 #include "misc/locale.hpp"
 
-using LocaleList = QVector<Locale>;
+using LocaleList = QVector<Locale>;     class EncodingInfo;
 
 class Translator : public QObject {
     Q_OBJECT
@@ -11,7 +11,7 @@ public:
     ~Translator();
     static auto load(const Locale &locale = Locale::system()) -> bool;
     static auto availableLocales() -> LocaleList;
-    static auto defaultEncoding() -> QString;
+    static auto defaultEncoding() -> EncodingInfo;
 private:
     Translator();
     static Translator &get();

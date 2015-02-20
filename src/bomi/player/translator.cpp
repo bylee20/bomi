@@ -1,6 +1,7 @@
 #include "translator.hpp"
 #include "configure.hpp"
 #include "misc/log.hpp"
+#include "misc/encodinginfo.hpp"
 #include <QTranslator>
 #include <QSet>
 #include <QLibraryInfo>
@@ -12,7 +13,7 @@ auto translator_load(const Locale &locale) -> bool
     return Translator::load(locale);
 }
 
-auto translator_default_encoding() -> QString
+auto translator_default_encoding() -> EncodingInfo
 {
     return Translator::defaultEncoding();
 }
@@ -114,9 +115,10 @@ auto Translator::load(const Locale &locale) -> bool
     return d->succ;
 }
 
-auto Translator::defaultEncoding() -> QString
+auto Translator::defaultEncoding() -> EncodingInfo
 {
-    auto enc = tr("UTF-8",
-                  "Specify most popular encoding here in target localization.");
-    return enc.isEmpty() ? u"UTF-8"_q : enc;
+    const auto name = tr("UTF-8",
+        "Specify most popular encoding here in target localization.");
+    const auto e = EncodingInfo::fromName(name);
+    return e.isValid() ? e : EncodingInfo::fromName(u"UTF-8"_q);
 }
