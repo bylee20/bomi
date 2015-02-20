@@ -4,22 +4,27 @@
 #include <QSortFilterProxyModel>
 
 struct SubCompModel::Data {
-    bool visible = false, ms = false;
-    const SubComp *comp = nullptr;
+    bool visible = false, ms = false, fps = false;
+    QString name;
     const SubCapt *pended = nullptr;
 };
 
-SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
+SubCompModel::SubCompModel(QObject *parent)
     : Super(ColumnCount, parent)
     , d(new Data)
 {
-    d->comp = comp;
     QFont font; font.setBold(true); font.setItalic(true);
     setSpecialFont(font);
+}
 
-    auto it = comp->begin();
+auto SubCompModel::setComponent(const SubComp &comp) -> void
+{
+    d->name = comp.name();
+    d->fps = comp.isBasedOnFrame();
+
+    auto it = comp.begin();
     QList<SubCompModelData> list;
-    for (; it != comp->end(); ++it) {
+    for (; it != comp.end(); ++it) {
         if (it->hasWords()) {
             it->index = 0;
             list.append(it);
@@ -27,7 +32,7 @@ SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
         }
     }
     if (!list.isEmpty()) {
-        for (++it; it != comp->end(); ++it) {
+        for (++it; it != comp.end(); ++it) {
             auto &last = list.last();
             if (last.m_end < 0)
                 last.m_end = it.key();
@@ -71,12 +76,12 @@ auto SubCompModel::displayData(int row, int column) const -> QVariant
 
 auto SubCompModel::name() const -> QString
 {
-    return d->comp->name();
+    return d->name;
 }
 
 auto SubCompModel::setFps(double fps) -> void
 {
-    if (d->comp->isBasedOnFrame()) {
+    if (d->fps) {
         beginResetModel();
         const auto mul = 1000.0/fps;
         for (auto &data : getList())
@@ -178,7 +183,10 @@ auto SubCompView::updateCurrentRow(int row) -> void
 {
     if (!d->model || !d->autoScroll)
         return;
-    const QModelIndex idx = d->proxy.mapFromSource(d->model->index(row, SubCompModel::Text));
+    auto m = qobject_cast<SubCompModel*>(d->proxy.sourceModel());
+    if (!m)
+        return;
+    const QModelIndex idx = d->proxy.mapFromSource(m->index(row, SubCompModel::Text));
     if (idx.isValid()) {
         auto h = horizontalScrollBar();
         const int prev = h->value();

@@ -103,8 +103,8 @@ PlayEngine::PlayEngine()
     connect(d->ac, &AudioController::gainChanged,
             &d->info.audio, &AudioObject::setNormalizer);
 
-    connect(d->sr, &SubtitleRenderer::modelsChanged,
-            this, &PlayEngine::subtitleModelsChanged);
+    connect(d->sr, &SubtitleRenderer::selectionChanged,
+            this, &PlayEngine::subtitleSelectionChanged);
 
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
@@ -1134,7 +1134,7 @@ auto PlayEngine::restore(const MrlState *params) -> void
     d->params.notifyAll();
 }
 
-auto PlayEngine::subtitleModels() const -> QVector<SubCompModel*>
+auto PlayEngine::subtitleSelection() const -> QVector<SubComp>
 {
-    return d->sr->models();
+    return d->sr->selection();
 }

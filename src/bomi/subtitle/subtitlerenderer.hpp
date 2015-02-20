@@ -23,7 +23,7 @@ public:
     auto fps() const -> double;
     auto pos() const -> double;
     auto isTopAligned() const -> bool;
-    auto models() const -> QVector<SubCompModel*>;
+    auto selection() const -> QVector<SubComp>;
     auto components() const -> QVector<const SubComp *>;
     auto addComponents(const QVector<SubComp> &components) -> void;
     auto setComponents(const QVector<SubComp> &components) -> void;
@@ -48,7 +48,7 @@ public:
     auto toTrackList() const -> StreamList;
 //    auto load(const QVector<StreamTrack> &tracks) -> void;
 signals:
-    void modelsChanged(const QVector<SubCompModel*> &models);
+    void selectionChanged();
 private:
     auto initializeGL() -> void;
     auto finalizeGL() -> void;

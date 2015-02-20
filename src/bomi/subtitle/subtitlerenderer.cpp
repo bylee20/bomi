@@ -101,7 +101,7 @@ struct SubtitleRenderer::Data {
     }
     void applySelection() {
         empty = selection.isEmpty();
-        emit p->modelsChanged(selection.models());
+        emit p->selectionChanged();
         if (!empty)
             render(SubCompSelection::Rerender);
         else
@@ -267,7 +267,7 @@ auto SubtitleRenderer::unload() -> void
     setVisible(false);
     d->empty = true;
     d->textChanged = true;
-    emit modelsChanged(models());
+    emit selectionChanged();
 }
 
 auto SubtitleRenderer::updateVertex(Vertex *vertex) -> void
@@ -554,9 +554,12 @@ auto SubtitleRenderer::setComponents(const QVector<SubComp> &components) -> void
     d->applySelection();
 }
 
-auto SubtitleRenderer::models() const -> QVector<SubCompModel*>
+auto SubtitleRenderer::selection() const -> QVector<SubComp>
 {
-    return d->selection.models();
+    QVector<SubComp> selection;
+    d->selection.forComponents([&] (const SubComp &comp)
+                               { selection.push_back(comp); });
+    return selection;
 }
 
 auto SubtitleRenderer::customEvent(QEvent *event) -> void

@@ -2,7 +2,6 @@
 #define SUBTITLERENDERINGTHREAD_HPP
 
 #include "subtitledrawer.hpp"
-#include "subtitlemodel.hpp"
 
 using SubCompItMap = QMap<int, SubComp::ConstIt>;
 using SubCompItMapIt = SubCompItMap::const_iterator;
@@ -38,13 +37,11 @@ private:
         Thread *thread  = nullptr;
         const SubComp *comp = nullptr;
         SubCompImage image{nullptr};
-        SubCompModel *model = nullptr;
     };
     using List = std::list<Item>;
 public:
     SubCompSelection(QObject *renderer);
     ~SubCompSelection();
-    QVector<SubCompModel*> models() const;
     auto remove(const SubComp *comp) -> void;
     const SubtitleDrawer &drawer() const;
     auto setDrawer(const SubtitleDrawer &drawer) -> void;
@@ -110,7 +107,6 @@ inline auto SubCompSelection::render(int ms, int flags) -> void
 inline auto SubCompSelection::Item::release() -> void
 {
     _Delete(thread);
-    _Delete(model);
     if (comp)
         const_cast<SubComp*>(comp)->selection() = false;
 }

@@ -26,6 +26,7 @@ class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
 class QOpenGLContext;                   class EncodingInfo;
+class SubComp;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
 
@@ -118,7 +119,7 @@ public:
     auto addAudioFiles(const QStringList &files) -> void;
     auto clearAudioFiles() -> void;
 
-    auto subtitleModels() const -> QVector<SubCompModel*>;
+    auto subtitleSelection() const -> QVector<SubComp>;
     auto setSubtitleDisplay(SubtitleDisplay sd) -> void;
     auto setSubtitlePosition(int pos) -> void;
     auto setSubtitleAlignment(VerticalAlignment a) -> void;
@@ -295,7 +296,7 @@ signals:
     void cacheSizeChanged();
     void messageRequested(const QString &message);
     void snapshotTaken();
-    void subtitleModelsChanged(const QVector<SubCompModel*> &models);
+    void subtitleSelectionChanged();
 private:
     auto customEvent(QEvent *event) -> void;
     struct Data; Data *d;

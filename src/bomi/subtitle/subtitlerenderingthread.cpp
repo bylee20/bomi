@@ -109,8 +109,8 @@ SubCompSelection::Thread::~Thread()
 
 auto SubCompSelection::Thread::setFPS(double fps) -> void
 {
-    this->fps = fps; flags |= Rebuild;
-    d->item->model->setFps(fps);
+    this->fps = fps;
+    flags |= Rebuild;
 }
 
 auto SubCompSelection::Thread::finish() -> void
@@ -180,14 +180,6 @@ SubCompSelection::~SubCompSelection()
     delete d;
 }
 
-auto SubCompSelection::models() const -> QVector<SubCompModel*>
-{
-    QVector<SubCompModel*> models;
-    for (auto &item : items)
-        models.push_back(item.model);
-    return models;
-}
-
 auto SubCompSelection::remove(const SubComp *comp) -> void
 {
     auto it = find(comp);
@@ -243,7 +235,6 @@ auto SubCompSelection::prepend(const SubComp *comp) -> bool
     items.push_front(Item());
     auto &item = items.front();
     item.comp = comp;
-    item.model = new SubCompModel(comp, d->renderer);
     item.thread = new Thread(&mutex, &wait, &item, this, d->renderer);
     item.thread->setFPS(d->fps);
     item.thread->setDrawer(d->drawer);
@@ -269,7 +260,6 @@ auto SubCompSelection::update(const SubCompImage &image) -> bool
     if (!item)
         return false;
     item->image = image;
-    item->model->setCurrentCaption(&(*image.iterator()));
     return true;
 }
 

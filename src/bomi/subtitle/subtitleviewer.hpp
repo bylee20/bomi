@@ -2,14 +2,14 @@
 #define SUBTITLEVIEWER_HPP
 
 class PlayEngine;                       class Subtitle;
-class SubCompModel;
+class SubCompModel;                     class SubComp;
 
 class SubtitleViewer : public QDialog {
     Q_OBJECT
 public:
     SubtitleViewer(QWidget *parent = 0);
     ~SubtitleViewer();
-    auto setModels(const QVector<SubCompModel*> &model) -> void;
+    auto setComponents(const QVector<SubComp> &comps) -> void;
 signals:
     void seekRequested(int time);
 private:

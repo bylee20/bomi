@@ -8,15 +8,16 @@
 class MatchString;
 
 struct SubCompModelData {
-    SubCompModelData(): m_end(-1) {}
-    SubCompModelData(SubComp::const_iterator it): m_end(-1), m_it(it) {}
-    auto start() const -> int { return m_it.key() * m_mul; }
+    SubCompModelData() = default;
+    SubCompModelData(SubComp::const_iterator it)
+        : m_start(it.key()), m_end(-1), m_text(it->toPlainText()) {}
+    auto start() const -> int { return m_start * m_mul; }
     auto end() const -> int { return m_end * m_mul; }
-    auto text() const -> QString { return m_it->toPlainText(); }
+    auto text() const -> QString { return m_text; }
 private:
-    int m_end;
+    int m_start = -1, m_end = -1;
     double m_mul = 1.0;
-    SubComp::const_iterator m_it;
+    QString m_text;
     friend class SubCompModel;
 };
 
@@ -24,12 +25,13 @@ class SubCompModel : public SimpleListModel<SubCompModelData> {
     Q_OBJECT
 public:
     enum Column {Start = 0, End, Text, ColumnCount};
-    SubCompModel(const SubComp *comp, QObject *parent = 0);
+    SubCompModel(QObject *parent = 0);
     auto name() const -> QString;
     auto setFps(double fps) -> void;
     auto setCurrentCaption(const SubCapt *caption) -> void;
     auto setVisible(bool visible) -> void;
     auto setTimeInMilliseconds(bool ms) -> void;
+    auto setComponent(const SubComp &comp) -> void;
 private:
     auto header(int column) const -> QString final;
     auto displayData(int row, int column) const -> QVariant final;

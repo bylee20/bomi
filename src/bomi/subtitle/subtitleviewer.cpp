@@ -11,10 +11,11 @@
 class SubtitleViewer::CompView : public QWidget {
 public:
     CompView(QWidget *parent = nullptr);
-    auto setModel(SubCompModel *model) -> void;
+    auto setComponent(const SubComp &comp) -> void;
     auto view() const -> SubCompView* {return m_view;}
 private:
     SubCompView *m_view;
+    SubCompModel m_model;
     QLabel *m_name;
 };
 
@@ -27,13 +28,14 @@ SubtitleViewer::CompView::CompView(QWidget *parent)
     QVBoxLayout *vbox = new QVBoxLayout(this);
     vbox->addWidget(m_name);
     vbox->addWidget(m_view);
+
+    m_view->setModel(&m_model);
 }
 
-auto SubtitleViewer::CompView::setModel(SubCompModel *model) -> void
+auto SubtitleViewer::CompView::setComponent(const SubComp &comp) -> void
 {
-    if (model)
-        m_name->setText(model->name());
-    m_view->setModel(model);
+    m_name->setText(comp.name());
+    m_model.setComponent(comp);
 }
 
 /******************************************************************************/
@@ -41,8 +43,8 @@ auto SubtitleViewer::CompView::setModel(SubCompModel *model) -> void
 struct SubtitleViewer::Data {
     SubtitleViewer *p = nullptr;
     Ui::SubtitleViewer ui;
-    QVector<SubCompModel*> models;
-    QList<CompView*> comp;
+    QVector<SubComp> comps;
+    QList<CompView*> views;
     QSplitter *splitter;
     bool needToUpdate = false;
     ObjectStorage storage;
@@ -74,7 +76,7 @@ struct SubtitleViewer::Data {
 
     template<class R, class... Args, class... Values>
     auto setAll(R(SubCompView::*set)(Args...), Values... args) -> void
-        { for (auto v : comp) (v->view()->*set)(args...); }
+        { for (auto v : views) (v->view()->*set)(args...); }
 
     auto filter() -> void
     {
@@ -165,37 +167,35 @@ SubtitleViewer::~SubtitleViewer()
 
 auto SubtitleViewer::updateModels() -> void
 {
-    if (d->models.isEmpty()) {
+    if (d->comps.isEmpty()) {
         d->splitter->setVisible(false);
-        for (int i=0; i<d->comp.size(); ++i)
-            d->comp[i]->setModel(nullptr);
     } else  {
         d->splitter->setVisible(true);
-        while (d->comp.size() > d->models.size())
-            delete d->comp.takeLast();
-        while (d->comp.size() < d->models.size()) {
+        while (d->views.size() > d->comps.size())
+            delete d->views.takeLast();
+        while (d->views.size() < d->comps.size()) {
             CompView *comp = new CompView(d->splitter);
             d->splitter->addWidget(comp);
-            d->comp.push_back(comp);
+            d->views.push_back(comp);
             connect(comp->view(), &QTreeView::doubleClicked, this,
                     [=] (auto &idx) { d->seekIndex(idx); });
         }
-        for (int i=0; i<d->comp.size(); ++i) {
-            d->comp[i]->setModel(d->models[i]);
-            const auto v = d->comp[i]->view();
+        for (int i=0; i<d->views.size(); ++i) {
+            d->views[i]->setComponent(d->comps[i]);
+            const auto v = d->views[i]->view();
             v->setAutoScrollEnabled(d->ui.autoscroll->isChecked());
             v->setTimeVisible(d->ui.time_visible->isChecked());
             v->setTimeInMilliseconds(d->ui.time_ms->isChecked());
         }
-        d->models.clear();
+        d->comps.clear();
         d->filter();
     }
     d->needToUpdate = false;
 }
 
-auto SubtitleViewer::setModels(const QVector<SubCompModel*> &models) -> void
+auto SubtitleViewer::setComponents(const QVector<SubComp> &comps) -> void
 {
-    d->models = models;
+    d->comps = comps;
     if (isVisible())
         updateModels();
     else

@@ -621,11 +621,13 @@ auto MainWindow::Data::plugMenu() -> void
         if (!sview) {
             sview = new SubtitleViewer(p);
             connect(sview, &SubtitleViewer::seekRequested, &e, &PlayEngine::seek);
-            connect(&e, &PlayEngine::subtitleModelsChanged, sview, [=] (auto &m)
-                { if (sview->isVisible()) sview->setModels(m); });
+            connect(&e, &PlayEngine::subtitleSelectionChanged, sview, [=] () {
+                if (sview->isVisible())
+                    sview->setComponents(e.subtitleSelection());
+            });
         }
         if (!sview->isVisible())
-            sview->setModels(e.subtitleModels());
+            sview->setComponents(e.subtitleSelection());
         sview->setVisible(!sview->isVisible());
     });
     connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
