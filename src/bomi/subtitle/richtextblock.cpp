@@ -33,7 +33,7 @@ auto RichTextBlockParser::parse(const QStringRef &text,
 {
     QList<RichTextBlock> ret;
 
-    auto add_format = [&ret] (const RichTextBlock::Style &style) {
+    auto add_format = [&ret] (RichTextBlock::Style style) {
         ret.last().formats.append(RichTextBlock::Format());
         ret.last().formats.last().begin = ret.last().text.size();
         ret.last().formats.last().end = -1;
@@ -41,7 +41,7 @@ auto RichTextBlockParser::parse(const QStringRef &text,
     };
 
     auto add_block = [&ret, &add_format] (bool paragraph,
-                                          const RichTextBlock::Style &style) {
+                                          RichTextBlock::Style style) {
         ret.append(RichTextBlock(paragraph));
         add_format(style);
     };
