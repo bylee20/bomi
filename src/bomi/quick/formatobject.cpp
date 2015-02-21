@@ -78,31 +78,3 @@ QString FormatObject::sizeNA(const QSizeF &s, int points, const QString &na)
 {
     return sizeNA(s.width(), s.height(), points, na);
 }
-
-QString FormatObject::sizeNA(const QQuickItem *item, const QString &na)
-{
-    return sizeNA(item->width(), item->height(), -1, na);
-}
-
-QString FormatObject::sizeNA(const QObject *o, const QString &na)
-{
-    auto size = o->property("size");
-    if (size.userType() == QMetaType::QSize)
-        return sizeNA(size.toSize(), na);
-    if (size.userType() == QMetaType::QSizeF)
-        return sizeNA(size.toSizeF(), 0, na);
-    auto w = o->property("width");
-    auto h = o->property("height");
-    if (_IsOneOf(w.userType(), QMetaType::Float, QMetaType::Double))
-        return sizeNA(w.toDouble(), h.toDouble(), -1, na);
-    return sizeNA(w.toInt(), h.toInt(), na);
-}
-
-QString FormatObject::trackInfo(QObject *o)
-{
-    auto av = qobject_cast<AvCommonObject*>(o);
-    if (!av)
-        return listNumber(0, 0);
-    QQmlProperty length(av, "tracks.length"_a);
-    return listNumber(av->track()->number(), length.read().toInt());
-}

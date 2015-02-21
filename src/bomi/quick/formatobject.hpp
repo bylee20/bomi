@@ -18,16 +18,8 @@ public slots:
     QString sizeNA(qreal w, qreal h, int points, const QString &na = "--"_a);
     QString sizeNA(const QSize &s, const QString &na = "--"_a);
     QString sizeNA(const QSizeF &s, int points, const QString &na = "--"_a);
-    QString sizeNA(const QQuickItem *item, const QString &na = "--"_a);
-    QString sizeNA(const QObject *o, const QString &na = "--"_a);
-    QString sizeNA(QObject *o, const QString &na = "--"_a)
-        { return sizeNA(_C(o), na); }
-    QString sizeNA(QQuickItem *item, const QString &na = "--"_a)
-        { return sizeNA(_C(item), na); }
     QString listNumber(int n) { return integerNA(n, 1, "-"_a); }
     QString listNumber(int n, int len) { return listNumber(n) % "/"_a % listNumber(len); }
-    QString trackInfo(QObject *o);
-    QString trackInfo(const QObject *o) { return trackInfo(const_cast<QObject*>(o)); }
 };
 
 #endif // FORMATOBJECT_HPP

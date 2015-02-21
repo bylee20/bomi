@@ -62,6 +62,9 @@ Item {
         return prefix;
     }
 
+    function formatTrackNumber(info) {
+        return B.Format.listNumber(info.track.number, info.tracks.length)
+    }
 
     Rectangle {
         id: bg; anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0)

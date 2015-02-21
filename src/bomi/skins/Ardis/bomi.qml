@@ -108,7 +108,7 @@ B.AppWithFloating {
                     anchors { bottom: parent.bottom; right: fs.left; rightMargin: 7 }
                     icon.source: "audio.png";
                     action: "audio/track/next"; action2: "audio/track"
-                    text.content: B.Format.trackInfo(engine.audio)
+                    text.content: formatTrackNumber(engine.audio)
                 }
 
                 SmallButton {
@@ -116,7 +116,7 @@ B.AppWithFloating {
                     anchors { right: parent.right; bottom: parent.bottom }
                     icon.source: "sub.png"
                     action: "subtitle/track/next"; action2: "subtitle/track"
-                    text.content: B.Format.trackInfo(engine.subtitle)
+                    text.content: formatTrackNumber(engine.subtitle)
                 }
 
                 B.VolumeSlider {
