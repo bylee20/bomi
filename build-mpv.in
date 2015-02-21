@@ -2,7 +2,7 @@
 
 args="--prefix=../../build --disable-manpage-build --enable-libmpv-static --disable-pdf-build \
   --disable-vf-dlopen-filters --disable-test --disable-cplayer --disable-rubberband \
-  --enable-iconv --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
+  --enable-iconv --disable-termios --disable-shm --disable-libguess \
   --disable-encoding --disable-joystick --disable-lirc --enable-libbluray --enable-dvdread --enable-dvdnav \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-libavdevice --disable-libavresample --disable-vapoursynth --disable-vapoursynth-lazy \
