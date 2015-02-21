@@ -12,8 +12,51 @@ DECLARE_LOG_CONTEXT(Video)
 
 enum EventType {NewFrame = QEvent::User + 1 };
 
+
+struct VideoRenderer::VideoShaderData : public VideoRenderer::ShaderData {
+    const OpenGLTexture2D *texture = nullptr;
+};
+
+struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
+    VideoShaderIface() {
+        vertexShader = R"(
+            uniform mat4 qt_Matrix;
+            attribute vec4 aPosition;
+            attribute vec2 aTexCoord;
+            varying vec2 texCoord;
+            void main() {
+                texCoord = aTexCoord;
+                gl_Position = qt_Matrix * aPosition;
+            }
+        )";
+        fragmentShader = R"(
+            varying vec2 texCoord;
+            uniform float qt_Opacity;
+            uniform sampler2D tex;
+            void main() {
+                gl_FragColor = texture2D(tex, texCoord) * qt_Opacity;
+            }
+        )";
+        attributes << "aPosition" << "aTexCoord";
+    }
+    void resolve(QOpenGLShaderProgram *prog) override {
+        Q_ASSERT(prog->isLinked());
+        loc_tex = prog->uniformLocation("tex");
+    }
+    void update(QOpenGLShaderProgram *prog,
+                const VideoRenderer::ShaderData *data) override {
+        auto d = static_cast<const VideoShaderData*>(data);
+        if (d->texture->id() != GL_NONE && !d->texture->isEmpty()) {
+            prog->setUniformValue(loc_tex, 0);
+            func()->glActiveTexture(GL_TEXTURE0);
+            d->texture->bind();
+        }
+    }
+private:
+    int loc_tex = -1;
+};
+
 struct VideoRenderer::Data {
-    Data(VideoRenderer *p): p(p) {}
     VideoRenderer *p = nullptr;
     double crop = -1.0, aspect = -1.0, dar = 0.0;
     bool onLetterbox = true, redraw = false;
@@ -103,9 +146,9 @@ struct VideoRenderer::Data {
 };
 
 VideoRenderer::VideoRenderer(QQuickItem *parent)
-    : SimpleTextureItem(parent)
-    , d(new Data(this))
+    : ShaderRenderItem<OGL::TextureVertex>(parent), d(new Data)
 {
+    d->p = this;
     d->letterbox = new LetterboxItem(this);
     const QQmlProperty property(d->letterbox, u"anchors.centerIn"_q);
     property.write(QVariant::fromValue(this));
@@ -152,7 +195,7 @@ auto VideoRenderer::overlayOnLetterbox() const -> bool
 
 auto VideoRenderer::initializeGL() -> void
 {
-    SimpleTextureItem::initializeGL();
+    ShaderRenderItem<OGL::TextureVertex>::initializeGL();
     d->black.create(OGL::Repeat);
     OpenGLTextureBinder<OGL::Target2D> binder(&d->black);
     const quint32 p = 0x0;
@@ -161,7 +204,7 @@ auto VideoRenderer::initializeGL() -> void
 
 auto VideoRenderer::finalizeGL() -> void
 {
-    SimpleTextureItem::finalizeGL();
+    ShaderRenderItem<OGL::TextureVertex>::finalizeGL();
     d->black.destroy();
     _Delete(d->fbo);
 }
@@ -287,7 +330,7 @@ auto VideoRenderer::sizeHint() const -> QSize
 
 auto VideoRenderer::updatePolish() -> void
 {
-    SimpleTextureItem::updatePolish();
+    ShaderRenderItem<OGL::TextureVertex>::updatePolish();
     QRectF letter;
     if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
         d->sizeChecker.start();
@@ -301,34 +344,10 @@ auto VideoRenderer::updatePolish() -> void
     }
 }
 
-auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
-{
-    if (!d->redraw) {
-        _Trace("VideoRendererItem::updateTexture(): no queued frame");
-    } else if (!d->fboSize.isEmpty()) {
-        d->redraw = false;
-        if (!d->fbo || d->fbo->size() != d->fboSize)
-            _Renew(d->fbo, d->fboSize);
-        auto w = window();
-        if (w && d->render) {
-            w->resetOpenGLState();
-            d->render(d->fbo);
-            w->resetOpenGLState();
-        }
-    }
-    *texture = !d->fboSize.isEmpty() && d->fbo ? d->fbo->texture() : d->black;
-}
+//auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
+//{
 
-auto VideoRenderer::updateVertex(Vertex *vertex) -> void
-{
-    double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
-    if (d->flip_v)
-        std::swap(top, bottom);
-    if (d->flip_h)
-        std::swap(left, right);
-    Vertex::fillAsTriangleStrip(vertex, d->vtx.topLeft(), d->vtx.bottomRight(),
-                                {left, top}, {right, bottom});
-}
+//}
 
 auto VideoRenderer::setFlipped(bool horizontal, bool vertical) -> void
 {
@@ -343,7 +362,57 @@ auto VideoRenderer::mapToVideo(const QPointF &pos) -> QPointF
 
 auto VideoRenderer::geometryChanged(const QRectF &new_, const QRectF& old) -> void
 {
-    SimpleTextureItem::geometryChanged(new_, old);
+    ShaderRenderItem<OGL::TextureVertex>::geometryChanged(new_, old);
     if (new_.size().toSize() != old.size().toSize())
         polish();
 }
+
+
+auto VideoRenderer::createShader() const -> ShaderIface*
+{
+    return new VideoShaderIface;
+}
+
+auto VideoRenderer::createData() const -> ShaderData*
+{
+    auto data = new VideoShaderData;
+    data->texture = &d->black;
+    return data;
+}
+
+auto VideoRenderer::updateData(ShaderData *_data) -> void
+{
+    auto data = static_cast<VideoShaderData*>(_data);
+    if (!d->redraw) {
+        _Trace("VideoRendererItem::updateTexture(): no queued frame");
+    } else if (!d->fboSize.isEmpty()) {
+        d->redraw = false;
+        if (!d->fbo || d->fbo->size() != d->fboSize)
+            _Renew(d->fbo, d->fboSize);
+        auto w = window();
+        if (w && d->render) {
+            w->resetOpenGLState();
+            d->render(d->fbo);
+            w->resetOpenGLState();
+        }
+    }
+    data->texture = !d->fboSize.isEmpty() && d->fbo ? &d->fbo->texture() : &d->black;
+}
+
+auto VideoRenderer::updateVertex(Vertex *vertex) -> void
+{
+    double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
+    if (d->flip_v)
+        std::swap(top, bottom);
+    if (d->flip_h)
+        std::swap(left, right);
+    Vertex::fillAsTriangleStrip(vertex, d->vtx.topLeft(), d->vtx.bottomRight(),
+                                {left, top}, {right, bottom});
+}
+
+auto VideoRenderer::initializeVertex(Vertex *vertex) const -> void
+{
+    Vertex::fillAsTriangleStrip(vertex, {0, 0}, {0, 0}, {0, 0}, {1, 1});
+}
+
+
