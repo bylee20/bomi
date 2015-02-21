@@ -76,6 +76,9 @@ Item {
         }
 
         PlayInfoText {
+            content: qsTr("Est. Frame Number: %1/%2").arg(video.frameNumber).arg(video.frameCount);
+        }
+        PlayInfoText {
             content: qsTr("Dropped Frames: %1 (%2fps)").arg(video.droppedFrames).arg(video.droppedFps.toFixed(3));
         }
         PlayInfoText {
