@@ -148,7 +148,7 @@ SubtitleViewer::SubtitleViewer(QWidget *parent)
 
     _SetWindowTitle(this, tr("Subtitle Viewer"));
 
-    d->storage.setObject(this, u"subtitle-viewer"_q, true);
+    d->storage.setObject(this, u"subtitle-viewer"_q);
     d->storage.add(d->ui.autoscroll);
     d->storage.add(d->ui.time_visible);
     d->storage.add(d->ui.time_ms);
@@ -162,6 +162,7 @@ SubtitleViewer::SubtitleViewer(QWidget *parent)
 
 SubtitleViewer::~SubtitleViewer()
 {
+    d->storage.save();
     delete d;
 }
 

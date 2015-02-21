@@ -43,4 +43,7 @@ private:
 
 Q_DECLARE_METATYPE(Locale)
 
+auto operator << (QDataStream &out, const ::Locale &l) -> QDataStream&;
+auto operator >> (QDataStream &in, ::Locale &l) -> QDataStream&;
+
 #endif // LOCALE_HPP

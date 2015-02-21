@@ -5,6 +5,7 @@
 #include "misc/logoption.hpp"
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
+#include "misc/objectstorage.hpp"
 #include "os/os.hpp"
 #include <clocale>
 #include <QStyleFactory>
@@ -15,6 +16,10 @@
 
 #ifdef Q_OS_LINUX
 #include "player/mpris.hpp"
+#endif
+
+#ifdef main
+#undef main
 #endif
 
 DECLARE_LOG_CONTEXT(App)
@@ -38,6 +43,9 @@ struct App::Data {
     App *p = nullptr;
     bool gldebug = false;
     QStringList styleNames;
+    QString styleName = qApp->style()->objectName();
+    bool unique = true;
+    QMap<QString, QVariant> openFolders;
     Mrl pended;
 #ifdef Q_OS_MAC
     QMenuBar *mb = new QMenuBar;
@@ -48,6 +56,7 @@ struct App::Data {
     QMenuBar *mb = nullptr;
 #endif
     MainWindow *main = nullptr;
+    ObjectStorage storage;
 
     LogOption logOption = LogOption::default_();
     Locale locale;
@@ -122,24 +131,6 @@ struct App::Data {
         return parser;
     }
 
-    const QString APP_GROUP{u"application"_q};
-    template<class T>
-    auto read(const char *key, const T &t = T()) -> T
-    {
-        QSettings s;
-        s.beginGroup(APP_GROUP);
-        auto ret = s.value(_L(key), t).template value<T>();
-        s.endGroup();
-        return ret;
-    }
-    template<class T>
-    auto write(const char *key, const T &t) -> void
-    {
-        QSettings s;
-        s.beginGroup(APP_GROUP);
-        s.setValue(_L(key), t);
-        s.endGroup();
-    }
     auto import() -> bool
     {
         auto copy = [] (const QString &from, const QString &to) -> bool
@@ -187,8 +178,6 @@ App::App(int &argc, char **argv)
     setApplicationVersion(_L(version()));
     OS::initialize();
 
-    setLocale(Locale::fromVariant(d->read("locale", Locale().toVariant())));
-
     d->addOption(LineCmd::Open, u"open"_q,
                  tr("Open given %1 for file path or URL."), u"mrl"_q);
     d->addOption(LineCmd::Wake, u"wake"_q,
@@ -206,9 +195,18 @@ App::App(int &argc, char **argv)
     d->getCommandParser(&d->msgParser);
     auto lvStdOut = d->execute(&d->cmdParser);
 
-    if (d->import())
-        setLocale(Locale::fromVariant(d->read("locale", Locale().toVariant())));
-    d->logOption.setFromJson(_JsonFromString(d->read<QString>("log-option")));
+    d->import();
+
+    d->storage.setObject(this, u"application"_q);
+    d->storage.add("locale", &d->locale);
+    d->storage.json("log-option", &d->logOption);
+    d->storage.add("style-name", &d->styleName);
+    d->storage.add("unique", &d->unique);
+    d->storage.add("open-folders", open_folders, set_open_folders);
+    d->storage.restore();
+
+    setLocale(d->locale);
+
     auto logOption = d->logOption;
     if (logOption.level(LogOutput::StdOut) < lvStdOut)
         logOption.setLevel(LogOutput::StdOut, lvStdOut);
@@ -219,14 +217,6 @@ App::App(int &argc, char **argv)
     setWindowIcon(defaultIcon());
 #endif
 
-    auto makeStyle = [&]() {
-        auto name = d->read("style", styleName());
-        if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
-            return;
-        if (!d->styleNames.contains(name, Qt::CaseInsensitive))
-            return;
-        setStyle(QStyleFactory::create(name));
-    };
     d->styleNames = [this] () {
         auto names = QStyleFactory::keys();
         const auto defaultName = style()->objectName();
@@ -240,27 +230,36 @@ App::App(int &argc, char **argv)
         }
         return names;
     }();
+    auto makeStyle = [&]() {
+        auto name = d->styleName;
+        if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
+            return;
+        if (!d->styleNames.contains(name, Qt::CaseInsensitive))
+            return;
+        setStyle(QStyleFactory::create(name));
+    };
     makeStyle();
     connect(&d->connection, &LocalConnection::messageReceived,
-             this, &App::handleMessage);
-    const auto map = d->read<QMap<QString, QVariant>>("open_folders");
-    QMap<QString, QString> folders;
-    for (auto it = map.begin(); it != map.end(); ++it)
-        folders.insert(it.key(), it->toString());
-    set_open_folders(folders);
+            this, &App::handleMessage);
 }
 
 App::~App() {
     setMprisActivated(false);
-    const auto folders = Global::open_folders();
-    QMap<QString, QVariant> map;
-    for (auto it = folders.begin(); it != folders.end(); ++it)
-        map.insert(it.key(), *it);
-    d->write("open_folders", map);
+    d->storage.save();
     delete d->main;
     delete d->mb;
     delete d;
     OS::finalize();
+}
+
+auto App::save() const -> void
+{
+    d->storage.save();
+}
+
+auto App::load() -> void
+{
+    d->storage.restore();
 }
 
 auto App::handleMessage(const QByteArray &message) -> void
@@ -387,7 +386,7 @@ auto App::setLocale(const Locale &locale) -> void
 {
     if (translator_load(locale)) {
         d->locale = locale;
-        d->write("locale", d->locale.toVariant());
+        d->storage.save();
     }
 }
 
@@ -413,12 +412,14 @@ auto App::setStyleName(const QString &name) -> void
     if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
         return;
     setStyle(QStyleFactory::create(name));
-    d->write("style", name);
+    d->styleName = style()->objectName();
+    d->storage.save();
 }
 
 auto App::setUnique(bool unique) -> void
 {
-    d->write("unique", unique);
+    if (_Change(d->unique, unique))
+        d->storage.save();
 }
 
 auto App::styleName() const -> QString
@@ -428,7 +429,7 @@ auto App::styleName() const -> QString
 
 auto App::isUnique() const -> bool
 {
-    return d->read("unique", true);
+    return d->unique;
 }
 
 auto App::logOption() const -> LogOption
@@ -439,5 +440,5 @@ auto App::logOption() const -> LogOption
 auto App::setLogOption(const LogOption &option) -> void
 {
     if (_Change(d->logOption, option))
-        d->write("log-option", _JsonToString(option.toJson()));
+        d->storage.save();
 }

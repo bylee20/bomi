@@ -43,7 +43,7 @@ macx {
 		-framework AudioToolbox
     HEADERS += os/mac.hpp
     OBJECTIVE_SOURCES += os/mac.mm
-    INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
+    INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcode
 } else:unix {
     QT += dbus x11extras
 	TARGET = bomi
@@ -55,6 +55,8 @@ macx {
     LIBS += -lopengl32 -lgdi32 -limm32 -lwinmm -lole32
     HEADERS += os/win.hpp
     SOURCES += os/win.cpp
+    CONFIG -= debug
+    CONFIG += release
 }
 
 QML_IMPORT_PATH += imports

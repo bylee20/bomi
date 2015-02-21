@@ -1,6 +1,7 @@
 #include "openmediafolderdialog.hpp"
 #include "ui_openmediafolderdialog.h"
 #include "player/playlist.hpp"
+#include "misc/objectstorage.hpp"
 #include <QFileIconProvider>
 
 enum ListRole {
@@ -12,26 +13,7 @@ struct OpenMediaFolderDialog::Data {
     Ui::OpenMediaFolderDialog ui;
     bool generating = false;
     QFileIconProvider icons;
-    QString key;
-
-    auto setCheckedTypes(const QString &types) -> void
-    {
-        ui.videos->setChecked(types.contains('v'_q));
-        ui.images->setChecked(types.contains('i'_q));
-        ui.audios->setChecked(types.contains('a'_q));
-    }
-
-    auto checkedTypes() const -> QString
-    {
-        QString types;
-        if (ui.videos->isChecked())
-            types.append('v'_q);
-        if (ui.audios->isChecked())
-            types.append('a'_q);
-        if (ui.images->isChecked())
-            types.append('i'_q);
-        return types;
-    }
+    ObjectStorage storage;
 
     auto updateOpenButton() -> void
     {
@@ -89,8 +71,6 @@ struct OpenMediaFolderDialog::Data {
     }
 };
 
-#define GROUP "OpenMediaFolderDialog_"_a
-
 OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key)
     : QDialog(parent)
     , d(new Data)
@@ -112,15 +92,18 @@ OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key
     d->ui.dbb->button(QDialogButtonBox::Open)->setEnabled(false);
     adjustSize();
 
-    d->key = key;
-    QSettings settings;
-    settings.beginGroup(GROUP % d->key);
-    d->setCheckedTypes(settings.value(u"checked_types"_q, u"vi"_q).toString());
-    settings.endGroup();
+    d->ui.videos->setChecked(true);
+    d->ui.images->setChecked(true);
 
+    d->storage.setObject(this, "OpenMediaFolderDialog-"_a % key);
+    d->storage.add(d->ui.videos);
+    d->storage.add(d->ui.audios);
+    d->storage.add(d->ui.images);
+    d->storage.restore();
 }
 
 OpenMediaFolderDialog::~OpenMediaFolderDialog() {
+    d->storage.save();
     delete d;
 }
 
@@ -149,10 +132,7 @@ auto OpenMediaFolderDialog::exec() -> int
         d->getFolder();
     if (d->ui.folder->text().isEmpty())
         return Rejected;
-    QSettings settings;
-    settings.beginGroup(GROUP % d->key);
-    settings.setValue(u"checked_types"_q, d->checkedTypes());
-    settings.endGroup();
+    d->storage.save();
     return QDialog::exec();
 
 }

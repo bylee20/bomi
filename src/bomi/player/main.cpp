@@ -1,8 +1,12 @@
 #include "app.hpp"
+#include "player/playlist.hpp"
+#include "misc/objectstorage.hpp"
 #include "stdafx.hpp"
 #include "mainwindow.hpp"
 #include "misc/log.hpp"
 #include "misc/json.hpp"
+#include "misc/locale.hpp"
+#include "misc/encodinginfo.hpp"
 #include "quick/circularimageitem.hpp"
 #include "quick/maskareaitem.hpp"
 #include <QImageWriter>
@@ -50,6 +54,11 @@ int main(int argc, char **argv) {
     reg_app_object();
     reg_settings_object();
     reg_play_engine();
+    ObjectStorage::registerTypes();
+    qRegisterMetaTypeStreamOperators<Mrl>();
+    qRegisterMetaTypeStreamOperators<Playlist>();
+    qRegisterMetaTypeStreamOperators<EncodingInfo>();
+    qRegisterMetaTypeStreamOperators<Locale>();
 
     App app(argc, argv);
     for (auto fmt : QImageWriter::supportedImageFormats())

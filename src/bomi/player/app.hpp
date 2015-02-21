@@ -33,6 +33,8 @@ public:
     auto isOpenGLDebugLoggerRequested() const -> bool;
     auto setMprisActivated(bool activated) -> void;
     auto sendMessage(MessageType type, const QJsonValue &t, int timeout = 5000) -> bool;
+    auto save() const -> void;
+    auto load() -> void;
     static constexpr auto version() -> const char* { return "0.9.2"; }
     static constexpr auto name() -> const char* { return "bomi"; }
     static auto displayName() -> QString { return tr("bomi"); }

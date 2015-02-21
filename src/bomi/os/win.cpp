@@ -9,6 +9,7 @@
 #include <QDesktopWidget>
 #include <psapi.h>
 #include <QWindow>
+#include <QSettings>
 
 namespace OS {
 

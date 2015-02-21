@@ -2,6 +2,19 @@
 #include <QTextCodec>
 #include "misc/log.hpp"
 
+auto operator << (QDataStream &out, const EncodingInfo &e) -> QDataStream&
+{
+    out << e.mib(); return out;
+}
+
+auto operator >> (QDataStream &in, EncodingInfo &e) -> QDataStream&
+{
+    int mib = 0;
+    in >> mib;
+    e = EncodingInfo::fromMib(mib);
+    return in;
+}
+
 DECLARE_LOG_CONTEXT(Encoding)
 
 EncodingInfo::EncodingInfo()

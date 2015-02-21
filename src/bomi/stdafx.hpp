@@ -16,7 +16,6 @@ char *gets(char *str);
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QObject>
-#include <QSettings>
 #include <QUrl>
 #include <QFileInfo>
 #include <QString>

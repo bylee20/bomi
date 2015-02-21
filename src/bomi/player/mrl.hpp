@@ -58,4 +58,7 @@ private:
 
 Q_DECLARE_METATYPE(Mrl)
 
+auto operator << (QDataStream &lhs, const Mrl &rhs) -> QDataStream&;
+auto operator >> (QDataStream &lhs, Mrl &rhs) -> QDataStream&;
+
 #endif // MRL_HPP

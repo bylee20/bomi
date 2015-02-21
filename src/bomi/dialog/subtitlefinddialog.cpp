@@ -276,7 +276,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     d->updateState();
 
     _SetWindowTitle(this, tr("Find Subtitle from OpenSubtitles.org"));
-    d->storage.setObject(this, u"subtitle_find_dialog"_q, true);
+    d->storage.setObject(this, u"subtitle_find_dialog"_q);
     d->storage.add("language", [=] () { return d->ui.language->toVariant(CheckListData); },
                    [=] (auto &var) { d->ui.language->setFromVariant(var, CheckListData); });
     d->storage.restore();
@@ -289,6 +289,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 }
 
 SubtitleFindDialog::~SubtitleFindDialog() {
+    d->storage.save();
     delete d->finder;
     delete d;
 }

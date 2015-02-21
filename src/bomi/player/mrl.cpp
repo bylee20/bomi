@@ -255,3 +255,17 @@ auto Mrl::isDir() const -> bool
 {
     return QFileInfo(toLocalFile()).isDir();
 }
+
+auto operator << (QDataStream &lhs, const Mrl &rhs) -> QDataStream&
+{
+    lhs << (qint32)0 << rhs.toString() << rhs.name();
+    return lhs;
+}
+
+auto operator >> (QDataStream &lhs, Mrl &rhs) -> QDataStream&
+{
+    qint32 ver = 0; QString loc, name;
+    lhs >> ver >> loc >> name;
+    rhs = Mrl(loc, name);
+    return lhs;
+}

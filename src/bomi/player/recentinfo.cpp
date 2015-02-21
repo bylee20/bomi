@@ -1,19 +1,27 @@
 #include "recentinfo.hpp"
 #include "playlist.hpp"
+#include "misc/objectstorage.hpp"
 
 struct RecentInfo::Data {
     int max = 10;
     Playlist openList, lastList;
     Mrl lastMrl;
+    ObjectStorage storage;
 };
 
 RecentInfo::RecentInfo()
 : d(new Data) {
-    load();
+    d->storage.setObject(this, u"recent-info"_q);
+    d->storage.add("last-mrl",
+                   [=] () { return QVariant::fromValue(d->lastMrl.location()); },
+                   [=] (auto &var) { return d->lastMrl = var.toString(); });
+    d->storage.add("recent-open-list", &d->openList);
+    d->storage.add("last-playlist", &d->lastList);
+    d->storage.restore();
 }
 
 RecentInfo::~RecentInfo() {
-    save();
+    d->storage.save();
     delete d;
 }
 
@@ -41,22 +49,12 @@ auto RecentInfo::clear() -> void
 
 auto RecentInfo::save() const -> void
 {
-    QSettings set;
-    set.beginGroup(u"recent-info"_q);
-    d->openList.save(u"recent-open-list"_q, &set);
-    d->lastList.save(u"last-playlist"_q, &set);
-    set.setValue(u"last-mrl"_q, d->lastMrl.location());
-    set.endGroup();
+    d->storage.save();
 }
 
 auto RecentInfo::load() -> void
 {
-    QSettings set;
-    set.beginGroup(u"recent-info"_q);
-    d->openList.load(u"recent-open-list"_q, &set);
-    d->lastList.load(u"last-playlist"_q, &set);
-    d->lastMrl = set.value(u"last-mrl"_q, QString()).toString();
-    set.endGroup();
+    d->storage.restore();
 }
 
 auto RecentInfo::setLastPlaylist(const Playlist &list) -> void

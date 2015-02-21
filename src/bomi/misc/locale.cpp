@@ -2,6 +2,19 @@
 #include <unicode/locid.h>
 #include "misc/log.hpp"
 
+auto operator << (QDataStream &out, const ::Locale &l) -> QDataStream&
+{
+    out << l.toVariant(); return out;
+}
+
+auto operator >> (QDataStream &in, ::Locale &l) -> QDataStream&
+{
+    QVariant var;
+    in >> var;
+    l = ::Locale::fromVariant(var);
+    return in;
+}
+
 DECLARE_LOG_CONTEXT(Locale)
 
 struct Data {

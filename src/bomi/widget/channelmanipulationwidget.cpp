@@ -3,6 +3,7 @@
 #include "verticallabel.hpp"
 #include "audio/channellayoutmap.hpp"
 #include "audio/channelmanipulation.hpp"
+#include "misc/objectstorage.hpp"
 #include <QHeaderView>
 #include <QTableWidget>
 
@@ -11,8 +12,10 @@ struct ChannelManipulationWidget::Data {
     QTableWidget *table;
     ChannelLayoutMap map = ChannelLayoutMap::default_();
 
-    ChannelLayout currentInput = ChannelLayout::Mono;
-    ChannelLayout currentOutput = ChannelLayout::Mono;
+    ChannelLayout currentInput = ChannelLayout::_2_0;
+    ChannelLayout currentOutput = ChannelLayout::_2_0;
+
+    ObjectStorage storage;
 
     void makeTable() {
         table->blockSignals(true);
@@ -135,23 +138,19 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     connect(d->output, &DataComboBox::currentDataChanged, this, onComboChanged);
     connect(d-> input, &DataComboBox::currentDataChanged, this, onComboChanged);
 
-    QSettings r;
-    r.beginGroup(u"channel_layouts"_q);
-    const auto src = _EnumFrom<ChannelLayout>(r.value("input"_a, _EnumName(ChannelLayout::_2_0)).toString());
-    const auto dst = _EnumFrom<ChannelLayout>(r.value("output"_a, _EnumName(ChannelLayout::_2_0)).toString());
-    r.endGroup();
-    setCurrentLayouts(src, dst);
+    d->storage.setObject(this, u"channel-layouts"_q);
+    d->storage.add("input", &d->currentInput);
+    d->storage.add("output", &d->currentOutput);
+    d->storage.restore();
+    setCurrentLayouts(d->currentInput, d->currentOutput);
 
     auto signal = &ChannelManipulationWidget::mapChanged;
     connect(d->table, &QTableWidget::itemChanged, this, signal);
 }
 
-ChannelManipulationWidget::~ChannelManipulationWidget() {
-    QSettings r;
-    r.beginGroup(u"channel_layouts"_q);
-    r.setValue("output"_a, _EnumName(d->output->currentEnum()));
-    r.setValue("input"_a, _EnumName(d->input->currentEnum()));
-    r.endGroup();
+ChannelManipulationWidget::~ChannelManipulationWidget()
+{
+    d->storage.save();
     delete d;
 }
 

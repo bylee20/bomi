@@ -5,7 +5,7 @@
 #include "misc/encodinginfo.hpp"
 
 class QFile;                            class QDir;
-class EncodingInfo;
+class EncodingInfo;                     class ObjectStorage;
 
 class Playlist : public QList<Mrl> {
 public:
@@ -16,8 +16,8 @@ public:
     Playlist(const QList<Mrl> &rhs);
     Playlist(const Mrl &mrl, const EncodingInfo &enc);
     auto sort() -> void;
-    auto save(const QString &prefix, QSettings *set) const -> void;
-    auto load(const QString &prefix, QSettings *set) -> void;
+    auto save(const QString &prefix, ObjectStorage *set) const -> void;
+    auto load(const QString &prefix, ObjectStorage *set) -> void;
     auto save(const QString &filePath, Type type = Unknown) const -> bool;
     bool load(const QString &filePath, const EncodingInfo &enc = EncodingInfo(), Type type = Unknown);
     bool load(const Mrl &url, const EncodingInfo &enc = EncodingInfo(), Type type = Unknown);
@@ -32,5 +32,10 @@ private:
     auto loadPLS(QTextStream &in, const QUrl &url = QUrl()) -> bool;
     auto loadM3U(QTextStream &in, const QUrl &url = QUrl()) -> bool;
 };
+
+Q_DECLARE_METATYPE(Playlist)
+
+auto operator << (QDataStream &out, const Playlist &pl) -> QDataStream&;
+auto operator >> (QDataStream &out, Playlist &pl) -> QDataStream&;
 
 #endif // PLAYLIST_HPP

@@ -2,6 +2,7 @@
 #define SETTINGSOBJECT_HPP
 
 #include <QQuickItem>
+#include <QSettings>
 
 class SettingsObject : public QObject {
     Q_OBJECT

@@ -1,6 +1,7 @@
 #include "objectstorage.hpp"
 #include "misc/log.hpp"
 #include <QMetaProperty>
+#include <QSettings>
 
 DECLARE_LOG_CONTEXT(ObjectStorage)
 
@@ -18,6 +19,7 @@ struct RawData {
 
 struct ObjectStorage::Data {
     QObject *object = nullptr;
+    QSettings *s = nullptr;
     QString name;
     QList<QByteArray> properties;
     QList<Alias> aliases;
@@ -34,6 +36,8 @@ ObjectStorage::~ObjectStorage()
 {
     if (d->autosave)
         save();
+    else
+        close();
     delete d;
 }
 
@@ -42,7 +46,12 @@ auto ObjectStorage::setAutoSave(bool save) -> void
     d->autosave = save;
 }
 
-auto ObjectStorage::setObject(QObject *object, const QString &name, bool autosave) -> bool {
+auto ObjectStorage::object() const -> QObject*
+{
+    return d->object;
+}
+
+auto ObjectStorage::setObject(QObject *object, const QString &name) -> bool {
     if (d->object && d->object != object) {
         _Error("Cannot change target object.");
         return false;
@@ -53,56 +62,88 @@ auto ObjectStorage::setObject(QObject *object, const QString &name, bool autosav
     }
     d->object = object;
     d->name = name;
-    d->autosave = autosave;
     return true;
+}
+
+auto ObjectStorage::open() -> void
+{
+    if (!d->s) {
+        d->s = new QSettings(file(), QSettings::IniFormat);
+        d->s->beginGroup(d->name);
+    }
+}
+
+auto ObjectStorage::close() -> void
+{
+    if (d->s)
+        d->s->endGroup();
+    _Delete(d->s);
+}
+
+auto ObjectStorage::write(const char *name, const QVariant &var) -> void
+{
+    Q_ASSERT(d->s);
+    if (d->s)
+        d->s->setValue(_L(name), var);
+}
+
+auto ObjectStorage::read(const char *name, const QVariant &def) const -> QVariant
+{
+    Q_ASSERT(d->s);
+    if (d->s)
+        return d->s->value(_L(name), def);
+    return QVariant();
 }
 
 auto ObjectStorage::save() -> void
 {
     if (!d->object)
         return;
-    QSettings s;
-    s.beginGroup(u"object-states"_q);
-    s.beginGroup(d->name);
+    const bool was = d->s;
+    if (!was)
+        open();
 
-    if (d->object->isWidgetType())
-        s.setValue(u"_b_geometry"_q, static_cast<QWidget*>(d->object)->saveGeometry());
+    if (d->object->isWidgetType()) {
+        auto w = static_cast<const QWidget*>(d->object);
+        if (!w->parentWidget())
+            d->s->setValue(u"_b_geometry"_q, w->saveGeometry());
+    }
     for (auto &name : d->properties)
-        s.setValue(_L(name), d->object->property(name));
+        d->s->setValue(_L(name), d->object->property(name));
     for (auto &alias : d->aliases)
-        s.setValue(_L(alias.name), alias.property.read(alias.object));
+        d->s->setValue(_L(alias.name), alias.property.read(alias.object));
     for (auto &data : d->data)
-        s.setValue(_L(data.name), data.get());
+        d->s->setValue(_L(data.name), data.get());
 
-    s.endGroup();
-    s.endGroup();
-
+    if (!was)
+        close();
 }
 
 auto ObjectStorage::restore() -> void
 {
     if (!d->object)
         return;
-    QSettings s;
-    s.beginGroup(u"object-states"_q);
-    s.beginGroup(d->name);
+    const bool was = d->s;
+    if (!was)
+        open();
 
-    if (d->object->isWidgetType())
-        static_cast<QWidget*>(d->object)->restoreGeometry(s.value(u"_b_geometry"_q).toByteArray());
+    if (d->object->isWidgetType()) {
+        auto w = static_cast<QWidget*>(d->object);
+        if (!w->parentWidget()) {
+            auto g = d->s->value(u"_b_geometry"_q).toByteArray();
+            if (!g.isEmpty())
+                w->restoreGeometry(g);
+        }
+    }
     for (auto &name : d->properties)
-        d->object->setProperty(name, s.value(_L(name), d->object->property(name)));
+        d->object->setProperty(name, d->s->value(_L(name), d->object->property(name)));
     for (auto &alias : d->aliases)
-        alias.property.write(alias.object, s.value(_L(alias.name), alias.property.read(alias.object)));
+        alias.property.write(alias.object, d->s->value(_L(alias.name), alias.property.read(alias.object)));
     for (auto &data : d->data)
-        data.set(s.value(_L(data.name), data.get()));
+        data.set(d->s->value(_L(data.name), data.get()));
 
-    s.endGroup();
-    s.endGroup();
-}
-
-auto ObjectStorage::add(const char *name) -> void
-{
-    d->properties.push_back(name);
+    if (!was)
+        close();
 }
 
 auto ObjectStorage::add(QByteArray &&alias, QObject *from, const char *src) -> bool
@@ -135,4 +176,34 @@ auto ObjectStorage::add(QLineEdit *le) -> bool
 auto ObjectStorage::add(QCheckBox *cb) -> bool
 {
     return add(cb->objectName().toLatin1(), cb, "checked");
+}
+
+auto ObjectStorage::file() const -> QString
+{
+    return _WritablePath(Location::Config) % "/objectstorage.ini"_a;
+}
+
+auto ObjectStorage::registerTypes() -> void
+{
+    qRegisterMetaTypeStreamOperators<QMap<QString, QString>>();
+}
+
+auto operator << (QDataStream &out, const QMap<QString, QString> &map) -> QDataStream&
+{
+    out << map.size();
+    for (auto it = map.begin(); it != map.end(); ++it)
+        out << it.key() << it.value();
+    return out;
+}
+
+auto operator >> (QDataStream &in, QMap<QString, QString> &map) -> QDataStream&
+{
+    map.clear();
+    int size = 0; QString key, value;
+    in >> size;
+    for (int i = 0; i < size; ++i) {
+        in >> key >> value;
+        map.insert(key, value);
+    }
+    return in;
 }

@@ -32,4 +32,7 @@ private:
 
 Q_DECLARE_METATYPE(EncodingInfo)
 
+auto operator << (QDataStream &out, const EncodingInfo &e) -> QDataStream&;
+auto operator >> (QDataStream &in, EncodingInfo &e) -> QDataStream&;
+
 #endif // ENCODINGINFO_HPP

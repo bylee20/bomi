@@ -149,7 +149,7 @@ LogViewer::LogViewer(QWidget *parent)
     d->ui.level->setMaximumHeight(fm.height() * 10);
     d->ui.context->setFixedWidth(mw);
 
-    d->storage.setObject(this, u"log-viewer"_q, true);
+    d->storage.setObject(this, u"log-viewer"_q);
     d->storage.add("autoscroll", d->ui.autoscroll, "checked");
     d->storage.add(d->ui.level->objectName().toLatin1(),
                    [=] () { return d->ui.level->toVariant(0); },
@@ -188,6 +188,7 @@ LogViewer::~LogViewer()
 {
     d->stop = true;
     Log::unsubscribe(this);
+    d->storage.save();
     delete d;
 }
 

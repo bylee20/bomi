@@ -1,6 +1,7 @@
 #include "playlist.hpp"
 #include "misc/encodinginfo.hpp"
 #include "tmp/algorithm.hpp"
+#include "misc/objectstorage.hpp"
 #include <QCollator>
 #include <QTextStream>
 #include <QTextCodec>
@@ -197,27 +198,12 @@ auto Playlist::resolve(const QString &location, const QUrl &url) -> QString
     return str.left(idx + 1) % location;
 }
 
-auto Playlist::save(const QString &name, QSettings *set) const -> void
+auto operator << (QDataStream &out, const Playlist &pl) -> QDataStream&
 {
-    set->beginWriteArray(name, size());
-    for (int i=0; i<size(); ++i) {
-        set->setArrayIndex(i);
-        set->setValue(u"mrl"_q, at(i).toString());
-        set->setValue(u"name"_q, at(i).name());
-    }
-    set->endArray();
+    return out << static_cast<const QList<Mrl>&>(pl);
 }
 
-auto Playlist::load(const QString &name, QSettings *set) -> void
+auto operator >> (QDataStream &in, Playlist &pl) -> QDataStream&
 {
-    clear();
-    const int size = set->beginReadArray(name);
-    for (int i=0; i<size; ++i) {
-        set->setArrayIndex(i);
-        const Mrl mrl(set->value(u"mrl"_q).toString(),
-                      set->value(u"name"_q).toString());
-        if (!mrl.isEmpty())
-            push_back(mrl);
-    }
-    set->endArray();
+    return in >> static_cast<QList<Mrl>&>(pl);
 }
