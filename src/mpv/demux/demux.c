@@ -245,6 +245,15 @@ void free_demuxer(demuxer_t *demuxer)
     talloc_free(demuxer);
 }
 
+void free_demuxer_and_stream(struct demuxer *demuxer)
+{
+    if (!demuxer)
+        return;
+    struct stream *s = demuxer->stream;
+    free_demuxer(demuxer);
+    free_stream(s);
+}
+
 // Start the demuxer thread, which reads ahead packets on its own.
 void demux_start_thread(struct demuxer *demuxer)
 {
@@ -309,8 +318,8 @@ int demux_add_packet(struct sh_stream *stream, demux_packet_t *dp)
     if (ds->refreshing) {
         // Resume reading once the old position was reached (i.e. we start
         // returning packets where we left off before the refresh).
-        drop = true;
-        if (dp->pos == ds->last_pos)
+        drop = dp->pos <= ds->last_pos;
+        if (dp->pos >= ds->last_pos)
             ds->refreshing = false;
     }
 
@@ -802,7 +811,7 @@ static void demux_export_replaygain(demuxer_t *demuxer)
 static void demux_copy(struct demuxer *dst, struct demuxer *src)
 {
     if (src->events & DEMUX_EVENT_INIT) {
-        // Note that we do as shallow copies as possible. We expect the date
+        // Note that we do as shallow copies as possible. We expect the data
         // that is not-copied (only referenced) to be immutable.
         // This implies e.g. that no chapters are added after initialization.
         dst->chapters = src->chapters;
@@ -813,7 +822,6 @@ static void demux_copy(struct demuxer *dst, struct demuxer *src)
         dst->attachments = src->attachments;
         dst->num_attachments = src->num_attachments;
         dst->matroska_data = src->matroska_data;
-        dst->file_contents = src->file_contents;
         dst->playlist = src->playlist;
         dst->seekable = src->seekable;
         dst->partially_seekable = src->partially_seekable;
@@ -821,7 +829,9 @@ static void demux_copy(struct demuxer *dst, struct demuxer *src)
         dst->ts_resets_possible = src->ts_resets_possible;
         dst->rel_seeks = src->rel_seeks;
         dst->allow_refresh_seeks = src->allow_refresh_seeks;
+        dst->fully_read = src->fully_read;
         dst->start_time = src->start_time;
+        dst->priv = src->priv;
     }
     if (src->events & DEMUX_EVENT_STREAMS) {
         // The stream structs themselves are immutable.
@@ -900,7 +910,6 @@ static struct demuxer *open_given_type(struct mpv_global *global,
     struct demuxer *demuxer = talloc_ptrtype(NULL, demuxer);
     *demuxer = (struct demuxer) {
         .desc = desc,
-        .type = desc->type,
         .stream = stream,
         .seekable = stream->seekable,
         .filepos = -1,
@@ -942,8 +951,6 @@ static struct demuxer *open_given_type(struct mpv_global *global,
     mp_verbose(log, "Trying demuxer: %s (force-level: %s)\n",
                desc->name, d_level(check));
 
-    in->d_thread->params = params; // temporary during open()
-
     if (stream->seekable) // not for DVD/BD/DVB in particular
         stream_seek(stream, 0);
 
@@ -951,6 +958,7 @@ static struct demuxer *open_given_type(struct mpv_global *global,
     // or stream filters will flush previous peeked data.
     stream_peek(stream, STREAM_BUFFER_SIZE);
 
+    in->d_thread->params = params; // temporary during open()
     int ret = demuxer->desc->open(in->d_thread, check);
     if (ret >= 0) {
         in->d_thread->params = NULL;
@@ -981,14 +989,15 @@ static const int d_normal[]  = {DEMUX_CHECK_NORMAL, DEMUX_CHECK_UNSAFE, -1};
 static const int d_request[] = {DEMUX_CHECK_REQUEST, -1};
 static const int d_force[]   = {DEMUX_CHECK_FORCE, -1};
 
-struct demuxer *demux_open(struct stream *stream, char *force_format,
-                           struct demuxer_params *params,
+// params can be NULL
+struct demuxer *demux_open(struct stream *stream, struct demuxer_params *params,
                            struct mpv_global *global)
 {
     const int *check_levels = d_normal;
     const struct demuxer_desc *check_desc = NULL;
     struct mp_log *log = mp_log_new(NULL, global->log, "!demux");
     struct demuxer *demuxer = NULL;
+    char *force_format = params ? params->force_format : NULL;
 
     if (!force_format)
         force_format = stream->demuxer;
@@ -1028,6 +1037,26 @@ struct demuxer *demux_open(struct stream *stream, char *force_format,
 done:
     talloc_free(log);
     return demuxer;
+}
+
+// Convenience function: open the stream, enable the cache (according to params
+// and global opts.), open the demuxer.
+// (use free_demuxer_and_stream() to free the underlying stream too)
+struct demuxer *demux_open_url(const char *url,
+                                struct demuxer_params *params,
+                                struct mp_cancel *cancel,
+                                struct mpv_global *global)
+{
+    struct MPOpts *opts = global->opts;
+    struct stream *s = stream_create(url, STREAM_READ, cancel, global);
+    if (!s)
+        return NULL;
+    if (!(params && params->disable_cache))
+        stream_enable_cache(&s, &opts->stream_cache);
+    struct demuxer *d = demux_open(s, params, global);
+    if (!d)
+        free_stream(s);
+    return d;
 }
 
 static void flush_locked(demuxer_t *demuxer)
@@ -1459,7 +1488,8 @@ struct demux_chapter *demux_copy_chapter_data(struct demux_chapter *c, int num)
     for (int n = 0; n < num; n++) {
         new[n] = c[n];
         new[n].name = talloc_strdup(new, new[n].name);
-        new[n].metadata = mp_tags_dup(new, new[n].metadata);
+        if (new[n].metadata)
+            new[n].metadata = mp_tags_dup(new, new[n].metadata);
     }
     return new;
 }

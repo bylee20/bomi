@@ -438,7 +438,8 @@ Program Behavior
     Enable the youtube-dl hook-script. It will look at the input URL, and will
     play the video located on the website. This works with many streaming sites,
     not just the one that the script is named after. This requires a recent
-    version of youtube-dl to be installed on the system. (Enabled by default.)
+    version of youtube-dl to be installed on the system. (Enabled by default,
+    except when the client API / libmpv is used.)
 
     If the script can't do anything with an URL, it will do nothing.
 
@@ -551,7 +552,8 @@ Video
 
     The ``vaapi-copy`` mode allows you to use vaapi with any VO. Because
     this copies the decoded video back to system RAM, it's likely less efficient
-    than the ``vaapi`` mode.
+    than the ``vaapi`` mode. But there are reports that this is actually faster
+    as well, and avoids many issues with ``vaapi``.
 
     .. note::
 
@@ -1155,12 +1157,21 @@ Subtitles
     doesn't covert the window fully, e.g. because screen aspect and window
     aspect mismatch (and the player adds black bars).
 
+    Default: yes.
+
     This option is misnamed. The difference to the confusingly similar sounding
     option ``--sub-scale-by-window`` is that ``--sub-scale-with-window`` still
     scales with the approximate window size, while the other option disables
     this scaling.
 
+    Affects plain text subtitles only (or ASS if ``--ass-style-override`` is
+    set high enough).
+
+``--ass-scale-with-window=<yes|no>``
+    Like ``--sub-scale-with-window``, but affects subtitles in ASS format only.
     Like ``--sub-scale``, this can break ASS subtitles.
+
+    Default: no.
 
 ``--embeddedfonts``, ``--no-embeddedfonts``
     Use fonts embedded in Matroska container files and ASS scripts (default:
@@ -1245,9 +1256,21 @@ Subtitles
             options. Requires a modified libass, can break rendering easily.
             Probably more reliable than ``force``.
 
-``--ass-use-margins``
+``--ass-force-margins``
     Enables placing toptitles and subtitles in black borders when they are
-    available.
+    available, if the subtitles are in the ASS format.
+
+    Default: no.
+
+``--sub-use-margins``
+    Enables placing toptitles and subtitles in black borders when they are
+    available, if the subtitles are in a plain text format  (or ASS if
+    ``--ass-style-override`` is set high enough).
+
+    Default: yes.
+
+    Renamed from ``--ass-use-margins``. To place ASS subtitles in the borders
+    too (like the old option did), also add ``--ass-force-margins``.
 
 ``--ass-vsfilter-aspect-compat=<yes|no>``
     Stretch SSA/ASS subtitles when playing anamorphic videos for compatibility
@@ -2539,6 +2562,17 @@ OSD
     subtitle position, use ``--sub-pos``.
 
     Default: 22.
+
+``--osd-align-x=<left|center|right>``,  ``--sub-text-align-x=...``
+    Control to which corner of the screen OSD or text subtitles should be
+    aligned to (default: ``center`` for subs, ``left`` for OSD).
+
+    Never applied to ASS subtitles, except in ``--no-sub-ass`` mode. Likewise,
+    this does not apply to image subtitles.
+
+``--osd-align-y=<top|center|bottom>`` ``--sub-text-align-y=...``
+    Vertical position (default: ``bottom`` for subs, ``top`` for OSD).
+    Details see ``--osd-align-x``.
 
 ``--osd-scale=<factor>``
     OSD font size multiplier, multiplied with ``--osd-font-size`` value.

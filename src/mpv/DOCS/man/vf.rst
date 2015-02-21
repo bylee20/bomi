@@ -143,8 +143,8 @@ Available filters are:
         Accurate rounding for the vertical scaler, which may be faster or
         slower than the default rounding.
 
-        :0: Disable accurate rounding (default).
-        :1: Enable accurate rounding.
+        :no:  Disable accurate rounding (default).
+        :yes: Enable accurate rounding.
 
 ``dsize[=w:h:aspect-method:r:aspect]``
     Changes the intended display size/aspect at an arbitrary point in the
@@ -445,9 +445,9 @@ Available filters are:
 
     ``<bottom-margin>``
         Adds a black band at the bottom of the frame. The SSA/ASS renderer can
-        place subtitles there (with ``--ass-use-margins``).
+        place subtitles there (with ``--sub-use-margins``).
     ``<top-margin>``
-        Black band on the top for toptitles  (with ``--ass-use-margins``).
+        Black band on the top for toptitles  (with ``--sub-use-margins``).
 
     .. admonition:: Examples
 

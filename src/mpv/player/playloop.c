@@ -915,13 +915,13 @@ static void handle_playback_restart(struct MPContext *mpctx, double endpts)
         mpctx->restart_complete = true;
         mp_notify(mpctx, MPV_EVENT_PLAYBACK_RESTART, NULL);
         if (!mpctx->playing_msg_shown) {
-            if (opts->playing_msg) {
+            if (opts->playing_msg && opts->playing_msg[0]) {
                 char *msg =
                     mp_property_expand_escaped_string(mpctx, opts->playing_msg);
                 MP_INFO(mpctx, "%s\n", msg);
                 talloc_free(msg);
             }
-            if (opts->osd_playing_msg) {
+            if (opts->osd_playing_msg && opts->osd_playing_msg[0]) {
                 char *msg =
                     mp_property_expand_escaped_string(mpctx, opts->osd_playing_msg);
                 set_osd_msg(mpctx, 1, opts->osd_duration, "%s", msg);
@@ -986,6 +986,7 @@ void run_playloop(struct MPContext *mpctx)
     handle_cursor_autohide(mpctx);
     handle_vo_events(mpctx);
     handle_heartbeat_cmd(mpctx);
+    handle_command_updates(mpctx);
 
     fill_audio_out_buffers(mpctx, endpts);
     write_video(mpctx, endpts);

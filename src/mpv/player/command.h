@@ -36,6 +36,8 @@ int mp_property_do(const char* name, int action, void* val,
 void mp_notify(struct MPContext *mpctx, int event, void *arg);
 void mp_notify_property(struct MPContext *mpctx, const char *property);
 
+void handle_command_updates(struct MPContext *mpctx);
+
 int mp_get_property_id(const char *name);
 uint64_t mp_get_property_event_mask(const char *name);
 
@@ -48,6 +50,7 @@ enum {
     MP_EVENT_WIN_RESIZE,
     MP_EVENT_WIN_STATE,
     MP_EVENT_AUDIO_DEVICES,
+    MP_EVENT_DETECTED_AUDIO_DEVICE,
 };
 
 bool mp_hook_test_completion(struct MPContext *mpctx, char *type);

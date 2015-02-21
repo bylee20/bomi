@@ -551,6 +551,7 @@ static const struct mp_keymap keymap[] = {
     {XK_Pause, MP_KEY_PAUSE}, {XK_Escape, MP_KEY_ESC},
     {XK_BackSpace, MP_KEY_BS}, {XK_Tab, MP_KEY_TAB}, {XK_Return, MP_KEY_ENTER},
     {XK_Menu, MP_KEY_MENU}, {XK_Print, MP_KEY_PRINT},
+    {XK_Cancel, MP_KEY_CANCEL},
 
     // cursor keys
     {XK_Left, MP_KEY_LEFT}, {XK_Right, MP_KEY_RIGHT}, {XK_Up, MP_KEY_UP},
@@ -932,6 +933,9 @@ int vo_x11_check_events(struct vo *vo)
         case LeaveNotify:
             x11->win_drag_button1_down = false;
             mp_input_put_key(vo->input_ctx, MP_KEY_MOUSE_LEAVE);
+            break;
+        case EnterNotify:
+            mp_input_put_key(vo->input_ctx, MP_KEY_MOUSE_ENTER);
             break;
         case ButtonPress:
             if (Event.xbutton.button == 1)
@@ -1331,7 +1335,7 @@ static void vo_x11_map_window(struct vo *vo, struct mp_rect rc)
 
     // map window
     int events = StructureNotifyMask | ExposureMask | PropertyChangeMask |
-                 LeaveWindowMask;
+                 LeaveWindowMask | EnterWindowMask;
     if (mp_input_mouse_enabled(vo->input_ctx))
         events |= PointerMotionMask | ButtonPressMask | ButtonReleaseMask;
     if (mp_input_vo_keyboard_enabled(vo->input_ctx))
@@ -1549,8 +1553,8 @@ static void vo_x11_update_geometry(struct vo *vo)
             w = h = 0;
         XTranslateCoordinates(x11->display, win, x11->rootwin, 0, 0,
                               &x, &y, &dummy_win);
+        x11->winrc = (struct mp_rect){x, y, x + w, y + h};
     }
-    x11->winrc = (struct mp_rect){x, y, x + w, y + h};
     double fps = 1000.0;
     for (int n = 0; n < x11->num_displays; n++) {
         struct xrandr_display *disp = &x11->displays[n];

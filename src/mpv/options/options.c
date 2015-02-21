@@ -99,7 +99,7 @@ const m_option_t mp_opts[] = {
     { "leak-report", CONF_TYPE_STORE, CONF_GLOBAL | CONF_NOCFG | M_OPT_FIXED,
       .offset = -1 },
 
-    OPT_FLAG("shuffle", shuffle, CONF_GLOBAL | CONF_NOCFG),
+    OPT_FLAG("shuffle", shuffle, 0),
 
 // ------------------------- common options --------------------
     OPT_FLAG("quiet", quiet, CONF_GLOBAL),
@@ -337,7 +337,8 @@ const m_option_t mp_opts[] = {
     OPT_FLAG("sub-ass", ass_enabled, 0),
     OPT_FLOATRANGE("sub-scale", sub_scale, 0, 0, 100),
     OPT_FLOATRANGE("ass-line-spacing", ass_line_spacing, 0, -1000, 1000),
-    OPT_FLAG("ass-use-margins", ass_use_margins, 0),
+    OPT_FLAG("sub-use-margins", sub_use_margins, 0),
+    OPT_FLAG("ass-force-margins", ass_use_margins, 0),
     OPT_FLAG("ass-vsfilter-aspect-compat", ass_vsfilter_aspect_compat, 0),
     OPT_CHOICE("ass-vsfilter-color-compat", ass_vsfilter_color_compat, 0,
                ({"no", 0}, {"basic", 1}, {"full", 2}, {"force-601", 3})),
@@ -353,6 +354,7 @@ const m_option_t mp_opts[] = {
                ({"no", 0}, {"yes", 1}, {"force", 3}, {"signfs", 4})),
     OPT_FLAG("sub-scale-by-window", sub_scale_by_window, 0),
     OPT_FLAG("sub-scale-with-window", sub_scale_with_window, 0),
+    OPT_FLAG("ass-scale-with-window", ass_scale_with_window, 0),
     OPT_FLAG("osd-bar", osd_bar_visible, 0),
     OPT_FLOATRANGE("osd-bar-align-x", osd_bar_align_x, 0, -1.0, +1.0),
     OPT_FLOATRANGE("osd-bar-align-y", osd_bar_align_y, 0, -1.0, +1.0),
@@ -360,7 +362,7 @@ const m_option_t mp_opts[] = {
     OPT_FLOATRANGE("osd-bar-h", osd_bar_h, 0, 0.1, 50),
     OPT_SUBSTRUCT("osd", osd_style, osd_style_conf, 0),
     OPT_FLAG("use-text-osd", use_text_osd, CONF_GLOBAL),
-    OPT_SUBSTRUCT("sub-text", sub_text_style, osd_style_conf, 0),
+    OPT_SUBSTRUCT("sub-text", sub_text_style, sub_style_conf, 0),
     OPT_FLAG("sub-clear-on-seek", sub_clear_on_seek, 0),
 
 //---------------------- libao/libvo options ------------------------
@@ -370,7 +372,7 @@ const m_option_t mp_opts[] = {
     OPT_SETTINGSLIST("ao-defaults", ao_defs, 0, &ao_obj_list),
     OPT_STRING("audio-device", audio_device, 0),
     OPT_STRING("audio-client-name", audio_client_name, 0),
-    OPT_FLAG("force-window", force_vo, CONF_GLOBAL),
+    OPT_FLAG("force-window", force_vo, 0),
     OPT_FLAG("ontop", vo.ontop, M_OPT_FIXED),
     OPT_FLAG("border", vo.border, M_OPT_FIXED),
     OPT_FLAG("on-all-workspaces", vo.all_workspaces, M_OPT_FIXED),
@@ -473,9 +475,7 @@ const m_option_t mp_opts[] = {
     OPT_FLAG("keepaspect", vo.keepaspect, 0),
     OPT_FLAG("keepaspect-window", vo.keepaspect_window, 0),
 
-//---------------------- mplayer-only options ------------------------
-
-    OPT_FLAG("use-filedir-conf", use_filedir_conf, M_OPT_GLOBAL),
+    OPT_FLAG("use-filedir-conf", use_filedir_conf, 0),
     OPT_CHOICE("osd-level", osd_level, 0,
                ({"0", 0}, {"1", 1}, {"2", 2}, {"3", 3})),
     OPT_INTRANGE("osd-duration", osd_duration, 0, 0, 3600000),
@@ -500,7 +500,7 @@ const m_option_t mp_opts[] = {
 
     OPT_FLAG("stop-playback-on-init-failure", stop_playback_on_init_failure, 0),
 
-    OPT_CHOICE_OR_INT("loop", loop_times, M_OPT_GLOBAL, 1, 10000,
+    OPT_CHOICE_OR_INT("loop", loop_times, 0, 1, 10000,
                       ({"no", 1},
                        {"inf", -1},
                        {"force", -2})),
@@ -658,6 +658,7 @@ const m_option_t mp_opts[] = {
     OPT_REMOVED("fixed-vo", "--fixed-vo=yes is now the default"),
     OPT_REPLACED("mkv-subtitle-preroll", "demuxer-mkv-subtitle-preroll"),
     OPT_REPLACED("dtshd", "ad-spdif-dtshd"),
+    OPT_REPLACED("ass-use-margins", "sub-use-margins"),
 
     {0}
 };
@@ -706,6 +707,10 @@ const struct MPOpts mp_default_opts = {
     .osd_scale = 1,
     .osd_scale_by_window = 1,
     .sub_scale_by_window = 1,
+    .ass_use_margins = 0,
+    .sub_use_margins = 1,
+    .ass_scale_with_window = 0,
+    .sub_scale_with_window = 1,
     .use_text_osd = 1,
 #if HAVE_LUA
     .lua_load_osc = 1,

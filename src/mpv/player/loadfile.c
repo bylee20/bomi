@@ -59,6 +59,30 @@
 #include "command.h"
 #include "libmpv/client.h"
 
+static void close_unused_demuxers(struct MPContext *mpctx)
+{
+    for (int i = mpctx->num_sources - 1; i >= 0; i--) {
+        struct demuxer *d = mpctx->sources[i];
+
+        if (i == 0 || d == mpctx->track_layout)
+            goto skip;
+        for (int t = 0; t < mpctx->num_tracks; t++) {
+            if (d == mpctx->tracks[t]->demuxer)
+                goto skip;
+        }
+        for (int t = 0; t < mpctx->num_timeline_parts; t++) {
+            if (mpctx->timeline[t].source == d)
+                goto skip;
+        }
+
+        uninit_stream_sub_decoders(d);
+        free_demuxer_and_stream(d);
+        MP_TARRAY_REMOVE_AT(mpctx->sources, mpctx->num_sources, i);
+
+    skip:;
+    }
+}
+
 static void uninit_demuxer(struct MPContext *mpctx)
 {
     assert(!mpctx->d_video && !mpctx->d_audio &&
@@ -71,22 +95,27 @@ static void uninit_demuxer(struct MPContext *mpctx)
         for (int t = 0; t < STREAM_TYPE_COUNT; t++)
             mpctx->current_track[r][t] = NULL;
     }
+    mpctx->track_layout = NULL;
     mpctx->master_demuxer = NULL;
-    for (int i = 0; i < mpctx->num_sources; i++) {
-        uninit_stream_sub_decoders(mpctx->sources[i]);
-        struct demuxer *demuxer = mpctx->sources[i];
-        struct stream *stream = demuxer->stream;
-        free_demuxer(demuxer);
-        if (stream != mpctx->stream)
-            free_stream(stream);
-    }
-    talloc_free(mpctx->sources);
-    mpctx->sources = NULL;
     mpctx->demuxer = NULL;
-    mpctx->num_sources = 0;
-    talloc_free(mpctx->timeline);
+    if (!mpctx->tl)
+        mpctx->num_timeline_parts = 0;
+    for (int i = 0; i < mpctx->num_sources; i++)
+        uninit_stream_sub_decoders(mpctx->sources[i]);
+    close_unused_demuxers(mpctx);
+    if (mpctx->tl) {
+        timeline_destroy(mpctx->tl);
+    } else {
+        talloc_free(mpctx->timeline);
+    }
     mpctx->timeline = NULL;
     mpctx->num_timeline_parts = 0;
+    mpctx->tl = NULL;
+    if (mpctx->num_sources > 0)
+        free_demuxer(mpctx->sources[0]);
+    talloc_free(mpctx->sources);
+    mpctx->sources = NULL;
+    mpctx->num_sources = 0;
     talloc_free(mpctx->chapters);
     mpctx->chapters = NULL;
     mpctx->num_chapters = 0;
@@ -260,8 +289,8 @@ static void enable_demux_thread(struct MPContext *mpctx)
         demux_start_thread(mpctx->demuxer);
         for (int n = 0; n < mpctx->num_tracks; n++) {
             struct track *track = mpctx->tracks[n];
-            if (track->is_external && track->stream &&
-                track->stream->type != STREAM_SUB)
+            if (track->is_external && track->stream && !track->preloaded &&
+                !track->demuxer->fully_read)
             {
                 demux_set_wakeup_cb(track->demuxer, wakeup_demux, mpctx);
                 demux_start_thread(track->demuxer);
@@ -441,9 +470,8 @@ static bool compare_track(struct track *t1, struct track *t2, char **langs,
     }
     return t1->user_tid <= t2->user_tid;
 }
-static struct track *select_track(struct MPContext *mpctx,
-                                  enum stream_type type, int tid, int ffid,
-                                  char **langs)
+struct track *select_track(struct MPContext *mpctx, enum stream_type type,
+                           int tid, int ffid, char **langs)
 {
     if (ffid != -1)
         tid = -1; // prefer selecting ffid
@@ -624,10 +652,9 @@ struct track *mp_track_by_tid(struct MPContext *mpctx, enum stream_type type,
 
 bool mp_remove_track(struct MPContext *mpctx, struct track *track)
 {
-    if (track->under_timeline)
-        return false;
     if (!track->is_external)
         return false;
+    assert(!track->under_timeline);
 
     mp_deselect_track(mpctx, track);
     if (track->selected)
@@ -636,13 +663,10 @@ bool mp_remove_track(struct MPContext *mpctx, struct track *track)
     int index = 0;
     while (index < mpctx->num_tracks && mpctx->tracks[index] != track)
         index++;
-    assert(index < mpctx->num_tracks);
-    while (index + 1 < mpctx->num_tracks) {
-        mpctx->tracks[index] = mpctx->tracks[index + 1];
-        index++;
-    }
-    mpctx->num_tracks--;
+    MP_TARRAY_REMOVE_AT(mpctx->tracks, mpctx->num_tracks, index);
     talloc_free(track);
+
+    close_unused_demuxers(mpctx);
 
     mp_notify(mpctx, MPV_EVENT_TRACKS_CHANGED, NULL);
 
@@ -660,30 +684,23 @@ struct track *mp_add_external_file(struct MPContext *mpctx, char *filename,
     if (strncmp(disp_filename, "memory://", 9) == 0)
         disp_filename = "memory://"; // avoid noise
 
-    struct stream *stream = stream_open(filename, mpctx->global);
-    if (!stream)
-        goto err_out;
-
-    char *demuxer_name = NULL;
-    switch (filter) {
-    case STREAM_SUB:
-        demuxer_name = opts->sub_demuxer_name;
-        break;
-    case STREAM_AUDIO:
-        demuxer_name = opts->audio_demuxer_name;
-        stream_enable_cache(&stream, &opts->stream_cache);
-        break;
-    }
-
     struct demuxer_params params = {
         .expect_subtitle = filter == STREAM_SUB,
     };
-    struct demuxer *demuxer =
-        demux_open(stream, demuxer_name, &params, mpctx->global);
-    if (!demuxer) {
-        free_stream(stream);
-        goto err_out;
+
+    switch (filter) {
+    case STREAM_SUB:
+        params.force_format = opts->sub_demuxer_name;
+        break;
+    case STREAM_AUDIO:
+        params.force_format = opts->audio_demuxer_name;
+        break;
     }
+
+    struct demuxer *demuxer =
+        demux_open_url(filename, &params, mpctx->playback_abort, mpctx->global);
+    if (!demuxer)
+        goto err_out;
 
     struct track *first = NULL;
     for (int n = 0; n < demuxer->num_streams; n++) {
@@ -697,19 +714,18 @@ struct track *mp_add_external_file(struct MPContext *mpctx, char *filename,
         }
     }
     if (!first) {
-        free_demuxer(demuxer);
-        free_stream(stream);
-        MP_WARN(mpctx, "No streams added from file %s.\n",
-                disp_filename);
+        free_demuxer_and_stream(demuxer);
+        MP_WARN(mpctx, "No streams added from file %s.\n", disp_filename);
         goto err_out;
     }
 
     MP_TARRAY_APPEND(NULL, mpctx->sources, mpctx->num_sources, demuxer);
+    if (mpctx->playback_initialized)
+        enable_demux_thread(mpctx);
     return first;
 
 err_out:
-    MP_ERR(mpctx, "Can not open external file %s.\n",
-           disp_filename);
+    MP_ERR(mpctx, "Can not open external file %s.\n", disp_filename);
     return false;
 }
 
@@ -727,7 +743,7 @@ static void open_subtitles_from_options(struct MPContext *mpctx)
         mp_add_external_file(mpctx, opts->sub_name[i], STREAM_SUB);
 }
 
-static void autoload_external_files(struct MPContext *mpctx)
+void autoload_external_files(struct MPContext *mpctx)
 {
     if (mpctx->opts->sub_auto < 0 && mpctx->opts->audiofile_auto < 0)
         return;
@@ -865,7 +881,7 @@ static void load_chapters(struct MPContext *mpctx)
         struct stream *stream = stream_create(chapter_file, STREAM_READ,
                                         mpctx->playback_abort, mpctx->global);
         if (stream) {
-            struct demuxer *demux = demux_open(stream, NULL, NULL, mpctx->global);
+            struct demuxer *demux = demux_open(stream, NULL, mpctx->global);
             if (demux) {
                 src = demux;
                 free_src = true;
@@ -911,8 +927,8 @@ static void open_stream_thread(void *pctx)
                                  args->cancel, args->global);
 }
 
-static struct stream *open_stream_async(struct MPContext *mpctx,
-                                        char *filename, int stream_flags)
+static struct stream *open_stream_reentrant(struct MPContext *mpctx,
+                                            char *filename, int stream_flags)
 {
     struct stream_open_args args = {
         .cancel = mpctx->playback_abort,
@@ -920,7 +936,7 @@ static struct stream *open_stream_async(struct MPContext *mpctx,
         .filename = filename,
         .stream_flags = stream_flags,
     };
-    mpctx_run_non_blocking(mpctx, open_stream_thread, &args);
+    mpctx_run_reentrant(mpctx, open_stream_thread, &args);
     if (args.stream) {
         talloc_steal(args.stream, args.global);
     } else {
@@ -932,7 +948,10 @@ static struct stream *open_stream_async(struct MPContext *mpctx,
 struct demux_open_args {
     struct stream *stream;
     struct mpv_global *global;
-    struct demuxer *demux;      // result
+    struct mp_log *log;
+    // results
+    struct demuxer *demux;
+    struct timeline *tl;
 };
 
 static void open_demux_thread(void *pctx)
@@ -940,20 +959,50 @@ static void open_demux_thread(void *pctx)
     struct demux_open_args *args = pctx;
     struct stream *s = args->stream;
     struct mpv_global *global = args->global;
-    args->demux = demux_open(s, global->opts->demuxer_name, NULL, global);
+    struct demuxer_params p = {.force_format = global->opts->demuxer_name};
+    args->demux = demux_open(s, &p, global);
+    if (args->demux)
+        args->tl = timeline_load(global, args->log, args->demux);
 }
 
-static struct demuxer *open_demux_async(struct MPContext *mpctx,
-                                        struct stream *stream)
+static void open_demux_reentrant(struct MPContext *mpctx)
 {
-    struct demux_open_args args = {stream, create_sub_global(mpctx)};
-    mpctx_run_non_blocking(mpctx, open_demux_thread, &args);
+    struct demux_open_args args = {
+        .global = create_sub_global(mpctx),
+        .stream = mpctx->stream,
+        .log = mpctx->log,
+    };
+    mpctx_run_reentrant(mpctx, open_demux_thread, &args);
     if (args.demux) {
         talloc_steal(args.demux, args.global);
+        mpctx->demuxer = args.demux;
+        mpctx->tl = args.tl;
     } else {
         talloc_free(args.global);
     }
-    return args.demux;
+}
+
+static void load_timeline(struct MPContext *mpctx)
+{
+    mpctx->track_layout = mpctx->demuxer;
+
+    MP_TARRAY_APPEND(NULL, mpctx->sources, mpctx->num_sources, mpctx->demuxer);
+
+    if (mpctx->tl) {
+        mpctx->timeline = mpctx->tl->parts;
+        mpctx->num_timeline_parts = mpctx->tl->num_parts;
+        mpctx->num_chapters = mpctx->tl->num_chapters;
+        mpctx->chapters = demux_copy_chapter_data(mpctx->tl->chapters,
+                                                  mpctx->tl->num_chapters);
+        mpctx->track_layout = mpctx->tl->track_layout;
+        mpctx->num_sources = 0;
+        for (int n = 0; n < mpctx->tl->num_sources; n++) {
+            MP_TARRAY_APPEND(NULL, mpctx->sources, mpctx->num_sources,
+                             mpctx->tl->sources[n]);
+        }
+    }
+
+    print_timeline(mpctx);
 }
 
 // Start playing the current playlist entry.
@@ -1034,8 +1083,8 @@ static void play_current_file(struct MPContext *mpctx)
     int stream_flags = STREAM_READ;
     if (!opts->load_unsafe_playlists)
         stream_flags |= mpctx->playing->stream_flags;
-    mpctx->stream = open_stream_async(mpctx, mpctx->stream_open_filename,
-                                      stream_flags);
+    mpctx->stream = open_stream_reentrant(mpctx, mpctx->stream_open_filename,
+                                          stream_flags);
     if (!mpctx->stream)
         goto terminate_playback;
 
@@ -1061,7 +1110,7 @@ goto_reopen_demuxer: ;
 
     mp_nav_reset(mpctx);
 
-    mpctx->demuxer = open_demux_async(mpctx, mpctx->stream);
+    open_demux_reentrant(mpctx);
     if (!mpctx->demuxer) {
         MP_ERR(mpctx, "Failed to recognize file format.\n");
         mpctx->error_playing = MPV_ERROR_UNKNOWN_FORMAT;
@@ -1069,7 +1118,7 @@ goto_reopen_demuxer: ;
     }
     mpctx->master_demuxer = mpctx->demuxer;
 
-    MP_TARRAY_APPEND(NULL, mpctx->sources, mpctx->num_sources, mpctx->demuxer);
+    load_timeline(mpctx);
 
     if (mpctx->demuxer->playlist) {
         int entry_stream_flags =
@@ -1084,18 +1133,6 @@ goto_reopen_demuxer: ;
         goto terminate_playback;
     }
 
-    mpctx->track_layout = mpctx->demuxer;
-
-    if (mpctx->demuxer->matroska_data.ordered_chapters)
-        build_ordered_chapter_timeline(mpctx);
-
-    if (mpctx->demuxer->type == DEMUXER_TYPE_EDL)
-        build_mpv_edl_timeline(mpctx);
-
-    if (mpctx->demuxer->type == DEMUXER_TYPE_CUE)
-        build_cue_timeline(mpctx);
-
-    print_timeline(mpctx);
     load_chapters(mpctx);
     add_demuxer_tracks(mpctx, mpctx->track_layout);
 

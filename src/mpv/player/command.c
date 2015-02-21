@@ -1549,6 +1549,19 @@ static int mp_property_audio_device(void *ctx, struct m_property *prop,
                                     int action, void *arg)
 {
     struct MPContext *mpctx = ctx;
+    struct command_ctx *cmd = mpctx->command_ctx;
+    if (action == M_PROPERTY_PRINT) {
+        if (!cmd->hotplug)
+            cmd->hotplug = ao_hotplug_create(mpctx->global, mpctx->input);
+        struct ao_device_list *list = ao_hotplug_get_device_list(cmd->hotplug);
+        for (int n = 0; n < list->num_devices; n++) {
+            struct ao_device_desc *dev = &list->devices[n];
+            if (dev->name && strcmp(dev->name, mpctx->opts->audio_device)) {
+                *(char **)arg = talloc_strdup(NULL, dev->desc ? dev->desc : "?");
+                return M_PROPERTY_OK;
+            }
+        }
+    }
     int r = mp_property_generic_option(mpctx, prop, action, arg);
     if (action == M_PROPERTY_SET)
         reload_audio_output(mpctx);
@@ -1578,10 +1591,12 @@ static int mp_property_ao(void *ctx, struct m_property *p, int action, void *arg
 static int mp_property_ao_detected_device(void *ctx,struct m_property *prop,
                                           int action, void *arg)
 {
-    MPContext *mpctx = ctx;
+    struct MPContext *mpctx = ctx;
+    struct command_ctx *cmd = mpctx->command_ctx;
     if (!mpctx->ao)
         return M_PROPERTY_UNAVAILABLE;
-    return m_property_strdup_ro(action, arg, ao_get_detected_device(mpctx->ao));
+    const char *d = ao_hotplug_get_detected_device(cmd->hotplug);
+    return m_property_strdup_ro(action, arg, d);
 }
 
 /// Audio delay (RW)
@@ -3446,7 +3461,8 @@ static const struct m_property mp_properties[] = {
     {"sub-visibility", property_osd_helper},
     {"sub-forced-only", property_osd_helper},
     {"sub-scale", property_osd_helper},
-    {"ass-use-margins", property_osd_helper},
+    {"sub-use-margins", property_osd_helper},
+    {"ass-force-margins", property_osd_helper},
     {"ass-vsfilter-aspect-compat", property_osd_helper},
     {"ass-style-override", property_osd_helper},
 
@@ -3524,7 +3540,7 @@ static const char *const *const mp_event_property_change[] = {
       "detected-hwdec"),
     E(MPV_EVENT_AUDIO_RECONFIG, "audio-format", "audio-codec", "audio-bitrate",
       "samplerate", "channels", "audio", "volume", "mute", "balance",
-      "volume-restore-data", "current-ao", "audio-out-detected-device"),
+      "volume-restore-data", "current-ao"),
     E(MPV_EVENT_SEEK, "seeking", "core-idle"),
     E(MPV_EVENT_PLAYBACK_RESTART, "seeking", "core-idle"),
     E(MPV_EVENT_METADATA_UPDATE, "metadata", "filtered-metadata"),
@@ -3534,6 +3550,7 @@ static const char *const *const mp_event_property_change[] = {
     E(MP_EVENT_WIN_RESIZE, "window-scale"),
     E(MP_EVENT_WIN_STATE, "window-minimized", "display-names"),
     E(MP_EVENT_AUDIO_DEVICES, "audio-device-list"),
+    E(MP_EVENT_DETECTED_AUDIO_DEVICE, "audio-out-detected-device"),
 };
 #undef E
 
@@ -3710,6 +3727,7 @@ static const struct property_osd_display {
     { "tv-contrast", "Contrast", .osd_progbar = OSD_CONTRAST },
     { "ab-loop-a", "A-B loop point A"},
     { "ab-loop-b", "A-B loop point B"},
+    { "audio-device", "Audio device"},
     // By default, don't display the following properties on OSD
     { "pause", NULL },
     { "fullscreen", NULL },
@@ -4618,6 +4636,24 @@ int run_command(MPContext *mpctx, mp_cmd_t *cmd)
         return -1;
     }
 
+    case MP_CMD_RESCAN_EXTERNAL_FILES: {
+        if (!mpctx->playing)
+            return -1;
+        autoload_external_files(mpctx);
+        if (cmd->args[0].v.i) {
+            // somewhat fuzzy and not ideal
+            struct track *a = select_track(mpctx, STREAM_AUDIO, opts->audio_id,
+                                           opts->audio_id_ff, opts->audio_lang);
+            if (a && a->is_external)
+                mp_switch_track(mpctx, STREAM_AUDIO, a);
+            struct track *s = select_track(mpctx, STREAM_SUB, opts->sub_id,
+                                           opts->sub_id_ff, opts->sub_lang);
+            if (s && s->is_external)
+                mp_switch_track(mpctx, STREAM_SUB, s);
+        }
+        break;
+    }
+
     case MP_CMD_SCREENSHOT:
         screenshot_request(mpctx, cmd->args[0].v.i, cmd->args[1].v.i, msg_osd);
         break;
@@ -4872,11 +4908,18 @@ static void command_event(struct MPContext *mpctx, int event, void *arg)
         // Update chapters - does nothing if something else is visible.
         set_osd_bar_chapters(mpctx, OSD_BAR_SEEK);
     }
+}
+
+void handle_command_updates(struct MPContext *mpctx)
+{
+    struct command_ctx *ctx = mpctx->command_ctx;
 
     // This is a bit messy: ao_hotplug wakes up the player, and then we have
     // to recheck the state. Then the client(s) will read the property.
-    if (ctx->hotplug && ao_hotplug_check_update(ctx->hotplug))
+    if (ctx->hotplug && ao_hotplug_check_update(ctx->hotplug)) {
         mp_notify_property(mpctx, "audio-device-list");
+        mp_notify_property(mpctx, "audio-out-detected-device");
+    }
 }
 
 void mp_notify(struct MPContext *mpctx, int event, void *arg)

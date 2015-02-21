@@ -36,13 +36,6 @@
 #define MAX_PACKS 16000
 #define MAX_PACK_BYTES (400 * 1024 * 1024)
 
-enum demuxer_type {
-    DEMUXER_TYPE_GENERIC = 0,
-    DEMUXER_TYPE_MATROSKA,
-    DEMUXER_TYPE_EDL,
-    DEMUXER_TYPE_CUE,
-};
-
 // DEMUXER control commands/answers
 #define DEMUXER_CTRL_NOTIMPL -1
 #define DEMUXER_CTRL_DONTKNOW 0
@@ -104,6 +97,7 @@ enum demux_event {
 #define MAX_SH_STREAMS 256
 
 struct demuxer;
+struct timeline;
 
 /**
  * Demuxer description structure
@@ -112,8 +106,6 @@ typedef struct demuxer_desc {
     const char *name;      // Demuxer name, used with -demuxer switch
     const char *desc;      // Displayed to user
 
-    enum demuxer_type type; // optional
-
     // Return 0 on success, otherwise -1
     int (*open)(struct demuxer *demuxer, enum demux_check check);
     // The following functions are all optional
@@ -121,6 +113,8 @@ typedef struct demuxer_desc {
     void (*close)(struct demuxer *demuxer);
     void (*seek)(struct demuxer *demuxer, double rel_seek_secs, int flags);
     int (*control)(struct demuxer *demuxer, int cmd, void *arg);
+    // See timeline.c
+    void (*load_timeline)(struct timeline *tl);
 } demuxer_desc_t;
 
 typedef struct demux_chapter
@@ -172,11 +166,13 @@ typedef struct demux_attachment
 } demux_attachment_t;
 
 struct demuxer_params {
+    char *force_format;
     int matroska_num_wanted_uids;
     struct matroska_segment_uid *matroska_wanted_uids;
     int matroska_wanted_segment;
     bool *matroska_was_valid;
     bool expect_subtitle;
+    bool disable_cache; // demux_open_url() only
 };
 
 typedef struct demuxer {
@@ -184,7 +180,6 @@ typedef struct demuxer {
     const char *filetype; // format name when not identified by demuxer (libavformat)
     int64_t filepos;  // input stream current pos.
     char *filename;  // same as stream->url
-    enum demuxer_type type;
     bool seekable;
     bool partially_seekable; // implies seekable=true
     double start_time;
@@ -195,9 +190,15 @@ typedef struct demuxer {
     bool rel_seeks;
     // Enable fast track switching hacks. This requires from the demuxer:
     // - seeking is somewhat reliable; packet contents must not change
-    // - packet position (demux_packet.pos) is set, not negative, and unique
+    // - packet position (demux_packet.pos) is set, not negative, unique, and
+    //   monotonically increasing
     // - seeking leaves packet positions invariant
     bool allow_refresh_seeks;
+    // The file data was fully read, and there is no need to keep the stream
+    // open, keep the cache active, or to run the demuxer thread. Generating
+    // packets is not slow either (unlike e.g. libavdevice pseudo-demuxers).
+    // Typical examples: text subtitles, playlists
+    bool fully_read;
 
     // Bitmask of DEMUX_EVENT_*
     int events;
@@ -216,8 +217,6 @@ typedef struct demuxer {
     int num_attachments;
 
     struct matroska_data matroska_data;
-    // for trivial demuxers which just read the whole file for codec to use
-    struct bstr file_contents;
 
     // If the file is a playlist file
     struct playlist *playlist;
@@ -245,6 +244,7 @@ typedef struct {
 } demux_program_t;
 
 void free_demuxer(struct demuxer *demuxer);
+void free_demuxer_and_stream(struct demuxer *demuxer);
 
 int demux_add_packet(struct sh_stream *stream, demux_packet_t *dp);
 
@@ -257,9 +257,14 @@ struct demux_packet *demux_read_any_packet(struct demuxer *demuxer);
 
 struct sh_stream *new_sh_stream(struct demuxer *demuxer, enum stream_type type);
 
-struct demuxer *demux_open(struct stream *stream, char *force_format,
-                           struct demuxer_params *params,
+struct demuxer *demux_open(struct stream *stream, struct demuxer_params *params,
                            struct mpv_global *global);
+
+struct mp_cancel;
+struct demuxer *demux_open_url(const char *url,
+                               struct demuxer_params *params,
+                               struct mp_cancel *cancel,
+                               struct mpv_global *global);
 
 void demux_start_thread(struct demuxer *demuxer);
 void demux_stop_thread(struct demuxer *demuxer);

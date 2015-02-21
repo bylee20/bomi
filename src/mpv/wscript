@@ -272,7 +272,7 @@ iconv support use --disable-iconv.",
     }, {
         'name': '--libass',
         'desc': 'SSA/ASS support',
-        'func': check_pkg_config('libass'),
+        'func': check_pkg_config('libass', '>= 0.12.1'),
         'req': True,
         'fmsg': "Unable to find development files for libass. Aborting. \
 If you really mean to compile without libass support use --disable-libass."
@@ -350,7 +350,7 @@ If you really mean to compile without libass support use --disable-libass."
     }, {
         'name': 'vapoursynth-core',
         'desc': 'VapourSynth filter bridge (core)',
-        'func': check_pkg_config('vapoursynth >= 23'),
+        'func': check_pkg_config('vapoursynth >= 24'),
     }, {
         'name': '--vapoursynth',
         'desc': 'VapourSynth filter bridge (Python)',
