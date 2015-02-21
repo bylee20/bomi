@@ -24,6 +24,16 @@ static constexpr VAProfile VAProfileNone = (VAProfile)-1;
 
 namespace OS {
 
+auto createAdapter(QWidget *w) -> WindowAdapter*;
+
+class X11WindowAdapter : public WindowAdapter {
+public:
+    X11WindowAdapter(QWidget* w): WindowAdapter(w) { }
+    auto setFullScreen(bool fs) -> void final;
+    auto isAlwaysOnTop() -> bool final;
+    auto setAlwaysOnTop(bool onTop) -> void final;
+};
+
 class HwAccX11 : public HwAcc {
 public:
     using GetErrorString = std::function<const char*(qint64)>;

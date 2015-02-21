@@ -1,6 +1,8 @@
 #ifndef OS_HPP
 #define OS_HPP
 
+#include <QWindow>
+
 enum class DeintMethod;                 enum class CodecId;
 struct mp_image_pool;                   struct mp_image;
 struct mp_hwdec_ctx;
@@ -10,13 +12,8 @@ namespace OS {
 auto initialize() -> void;
 auto finalize() -> void;
 
-auto isFullScreen(const QWidget *w) -> bool;
-auto isAlwaysOnTop(const QWidget *w) -> bool;
-auto setAlwaysOnTop(QWidget *w, bool onTop) -> void;
-auto setFullScreen(QWidget *w, bool fs) -> void;
 auto setScreensaverEnabled(bool enabled) -> void;
 auto setImeEnabled(QWindow *w, bool enabled) -> void;
-auto setImeEnabled(QWidget *w, bool enabled) -> void;
 
 auto shutdown() -> bool;
 auto canShutdown() -> bool;
@@ -28,6 +25,23 @@ auto usingMemory() -> double;
 
 auto opticalDrives() -> QStringList;
 auto refreshRate() -> qreal;
+
+class WindowAdapter : public QObject {
+    Q_OBJECT
+public:
+    virtual auto isFullScreen() -> bool;
+    virtual auto setFullScreen(bool fs) -> void;
+    virtual auto isAlwaysOnTop() -> bool = 0;
+    virtual auto setAlwaysOnTop(bool onTop) -> void = 0;
+    auto winId() const -> WId { return m_widget->winId(); }
+    auto widget() const -> QWidget* { return m_widget; }
+protected:
+    WindowAdapter(QWidget *parent);
+private:
+    QWidget *m_widget = nullptr;
+};
+
+auto adapter(QWidget *w) -> WindowAdapter*;
 
 class HwAcc {
 public:

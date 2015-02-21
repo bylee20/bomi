@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     d->pref.load();
     d->undo.setActive(false);
     d->logViewer = new LogViewer(this);
+    d->adapter = OS::adapter(this);
 
     AppObject::setEngine(&d->e);
     AppObject::setHistory(&d->history);
@@ -55,7 +56,7 @@ MainWindow::~MainWindow() {
 auto MainWindow::postInitialize() -> void
 {
     d->as.restoreWindowGeometry(this);
-    OS::setImeEnabled(this, false);
+    OS::setImeEnabled(windowHandle(), false);
     OS::setImeEnabled(d->view, false);
     d->applyPref();
     cApp.runCommands();
@@ -165,9 +166,9 @@ auto MainWindow::isSceneGraphInitialized() const -> bool
 
 auto MainWindow::setFullScreen(bool full) -> void
 {
-    if (OS::isFullScreen(this) == full)
+    if (d->adapter->isFullScreen() == full)
         return;
-    OS::setFullScreen(this, full);
+    d->adapter->setFullScreen(full);
 #ifdef Q_OS_WIN // This should be checked in WindowStatesChange event for others
     emit fullscreenChanged(full);
     d->updateStaysOnTop();
@@ -176,7 +177,7 @@ auto MainWindow::setFullScreen(bool full) -> void
 
 auto MainWindow::isFullScreen() const -> bool
 {
-    return OS::isFullScreen(this);
+    return d->adapter->isFullScreen();
 }
 
 auto MainWindow::resetMoving() -> void
@@ -290,7 +291,7 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 {
     QWidget::resizeEvent(event);
-    if (OS::isFullScreen(this))
+    if (d->adapter->isFullScreen())
         d->container->setGeometry(QRect(QPoint(0, 0), frameSize()));
     else
         d->container->setGeometry(QRect(QPoint(0, 0), size()));

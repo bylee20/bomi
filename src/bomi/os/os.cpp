@@ -131,10 +131,39 @@ auto setImeEnabled(QWindow *w, bool enabled) -> void
 }
 #endif
 
-auto setImeEnabled(QWidget *w, bool enabled) -> void
+WindowAdapter::WindowAdapter(QWidget *parent)
+    : QObject(parent)
 {
-    setImeEnabled(w->window()->windowHandle(), enabled);
+    m_widget = parent;
 }
 
+auto WindowAdapter::isFullScreen() -> bool
+{
+    return m_widget->isFullScreen();
+}
+
+auto WindowAdapter::setFullScreen(bool fs) -> void
+{
+    auto states = m_widget->windowState();
+    if (fs)
+        states |= Qt::WindowFullScreen;
+    else
+        states &= ~Qt::WindowFullScreen;
+    if (states != m_widget->windowState())
+        m_widget->setWindowState(states);
+}
+
+auto createAdapter(QWidget *w) -> WindowAdapter*;
+
+auto adapter(QWidget *w) -> WindowAdapter*
+{
+    static const constexpr char *property = "_b_window_adpater";
+    auto a = static_cast<WindowAdapter*>(w->property(property).value<WindowAdapter*>());
+    if (!a) {
+        a = createAdapter(w);
+        w->setProperty(property, QVariant::fromValue(a));
+    }
+    return a;
+}
 
 }

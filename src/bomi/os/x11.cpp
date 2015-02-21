@@ -277,21 +277,17 @@ auto setScreensaverEnabled(bool enabled) -> void
     s.inhibit = disabled;
 }
 
-auto isFullScreen(const QWidget *w) -> bool
+auto X11WindowAdapter::setFullScreen(bool fs) -> void
 {
-    return w->isFullScreen();
+    if (isFullScreen() != fs)
+        d->sendState(widget(), fs, _NET_WM_STATE_FULLSCREEN);
 }
 
-auto setFullScreen(QWidget *widget, bool fs) -> void
+auto X11WindowAdapter::isAlwaysOnTop() -> bool
 {
-    if (widget->isFullScreen() != fs)
-        d->sendState(widget, fs, _NET_WM_STATE_FULLSCREEN);
-}
-
-auto isAlwaysOnTop(const QWidget *w) -> bool
-{
+    const auto wid = widget()->winId();
     const auto cookie = xcb_get_property_unchecked
-        (d->connection, 0, w->winId(), d->atoms[_NET_WM_STATE], XCB_ATOM_ATOM, 0, 1024);
+        (d->connection, 0, wid, d->atoms[_NET_WM_STATE], XCB_ATOM_ATOM, 0, 1024);
     auto reply = _Reply(xcb_get_property_reply(d->connection, cookie, nullptr));
     if (!reply || reply->format != 32 || reply->type != XCB_ATOM_ATOM)
         return false;
@@ -304,9 +300,14 @@ auto isAlwaysOnTop(const QWidget *w) -> bool
     return false;
 }
 
-auto setAlwaysOnTop(QWidget *widget, bool on) -> void
+auto X11WindowAdapter::setAlwaysOnTop(bool on) -> void
 {
-    d->sendState(widget, on, _NET_WM_STATE_ABOVE, _NET_WM_STATE_STAYS_ON_TOP);
+    d->sendState(widget(), on, _NET_WM_STATE_ABOVE, _NET_WM_STATE_STAYS_ON_TOP);
+}
+
+auto createAdapter(QWidget *w) -> WindowAdapter*
+{
+    return new X11WindowAdapter(w);
 }
 
 auto opticalDrives() -> QStringList

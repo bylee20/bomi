@@ -90,6 +90,8 @@ struct MainWindow::Data {
     AudioEqualizerDialog *eq = nullptr;
     IntrplDialog *intrpl = nullptr, *chroma = nullptr;
 
+    OS::WindowAdapter *adapter = nullptr;
+
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
         { return pref.mouse_action_map()[mb][event->modifiers()]; }
     auto setOpen(const Mrl &mrl) -> void

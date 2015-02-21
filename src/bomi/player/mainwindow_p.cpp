@@ -577,7 +577,7 @@ auto MainWindow::Data::updateStaysOnTop() -> void
     bool onTop = !p->isFullScreen();
     onTop &= (id == StaysOnTop::Always)
           || (id == StaysOnTop::Playing && e.isPlaying());
-    OS::setAlwaysOnTop(p, onTop);
+    adapter->setAlwaysOnTop(onTop);
 }
 
 auto MainWindow::Data::setVideoSize(double rate) -> void
