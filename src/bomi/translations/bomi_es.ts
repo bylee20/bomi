@@ -265,22 +265,22 @@ E-mail del desarrollador: %4</translation>
     <message>
         <location filename="../misc/autoloader.cpp" line="144"/>
         <source>Text</source>
-        <translation type="unfinished">Texto</translation>
+        <translation>Texto</translation>
     </message>
     <message>
         <location filename="../misc/autoloader.cpp" line="144"/>
         <source>RegEx</source>
-        <translation type="unfinished">RegEx</translation>
+        <translation>RegEx</translation>
     </message>
     <message>
         <location filename="../misc/autoloader.cpp" line="148"/>
         <source>Yes</source>
-        <translation type="unfinished">Si</translation>
+        <translation>Si</translation>
     </message>
     <message>
         <location filename="../misc/autoloader.cpp" line="148"/>
         <source>No</source>
-        <translation type="unfinished">No</translation>
+        <translation>No</translation>
     </message>
 </context>
 <context>
@@ -1163,37 +1163,37 @@ Esta opción necesita mucho más uso de CPU o GPU.</translation>
     <message>
         <location filename="../enum/codecid.hpp" line="76"/>
         <source>Not available</source>
-        <translation type="unfinished"></translation>
+        <translation>No Disponible</translation>
     </message>
     <message>
         <location filename="../enum/codecid.hpp" line="77"/>
         <source>MPEG-1 video</source>
-        <translation type="unfinished"></translation>
+        <translation>MPEG-1 video</translation>
     </message>
     <message>
         <location filename="../enum/codecid.hpp" line="78"/>
         <source>MPEG-2 video</source>
-        <translation type="unfinished"></translation>
+        <translation>MPEG-2 video</translation>
     </message>
     <message>
         <location filename="../enum/codecid.hpp" line="79"/>
         <source>MPEG-4 part 2</source>
-        <translation type="unfinished"></translation>
+        <translation>MPEG-4 parte 2</translation>
     </message>
     <message>
         <location filename="../enum/codecid.hpp" line="80"/>
         <source>H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10</source>
-        <translation type="unfinished"></translation>
+        <translation>H.264 / AVC / MPEG-4 AVC / MPEG-4 parte 10</translation>
     </message>
     <message>
         <location filename="../enum/codecid.hpp" line="81"/>
         <source>SMPTE VC-1</source>
-        <translation type="unfinished"></translation>
+        <translation>SMPTE VC-1</translation>
     </message>
     <message>
         <location filename="../enum/codecid.hpp" line="82"/>
         <source>Windows Media Video 9</source>
-        <translation type="unfinished"></translation>
+        <translation>Windows Media Video 9</translation>
     </message>
 </context>
 <context>
@@ -1454,7 +1454,7 @@ Por favor, espere un momento.</translation>
     <message>
         <location filename="../player/mainwindow_p.cpp" line="612"/>
         <source>Error on loading skin</source>
-        <translation type="unfinished"></translation>
+        <translation>Error cargando la apariencia</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="182"/>
@@ -1641,27 +1641,27 @@ Por favor, espere un momento.</translation>
     <message>
         <location filename="../player/mediamisc.cpp" line="7"/>
         <source>File</source>
-        <translation type="unfinished">Archivo</translation>
+        <translation>Archivo</translation>
     </message>
     <message>
         <location filename="../player/mediamisc.cpp" line="9"/>
         <source>URL</source>
-        <translation type="unfinished">URL</translation>
+        <translation>URL</translation>
     </message>
     <message>
         <location filename="../player/mediamisc.cpp" line="11"/>
         <source>DVD</source>
-        <translation type="unfinished">DVD</translation>
+        <translation>DVD</translation>
     </message>
     <message>
         <location filename="../player/mediamisc.cpp" line="13"/>
         <source>Blu-ray</source>
-        <translation type="unfinished">Blu-ray</translation>
+        <translation>Blu-ray</translation>
     </message>
     <message>
         <location filename="../player/mediamisc.cpp" line="15"/>
         <source>No Media</source>
-        <translation type="unfinished"></translation>
+        <translation>Ningun medio</translation>
     </message>
 </context>
 <context>
@@ -2852,7 +2852,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2110"/>
         <source>Show default bomi logo</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar el logo bomi por defecto</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2119"/>
@@ -3313,12 +3313,12 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="407"/>
         <source>Current Encoding</source>
-        <translation type="unfinished"></translation>
+        <translation>Codificación de caracteres actual</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="408"/>
         <source>Autodetect Encoding</source>
-        <translation type="unfinished"></translation>
+        <translation>Autodetectar codificación de caracteres</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="457"/>
@@ -3715,7 +3715,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="596"/>
         <source>Subtitle Viewer</source>
-        <translation type="unfinished"></translation>
+        <translation>Visor de subtítulos</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="598"/>
@@ -4011,7 +4011,7 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="17"/>
         <source>Select language</source>
-        <translation type="unfinished"></translation>
+        <translation>Seleccionar idioma</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="26"/>
@@ -4110,47 +4110,47 @@ Soporta expresiónes regulares.</translation>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="19"/>
         <source>Filter:</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtro:</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="26"/>
         <source>Start</source>
-        <translation type="unfinished">Inicio</translation>
+        <translation>Inicio</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="49"/>
         <source>End</source>
-        <translation type="unfinished">Fin</translation>
+        <translation>Fin</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="78"/>
         <source>Caption</source>
-        <translation type="unfinished"></translation>
+        <translation>Cajonado</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="95"/>
         <source>RegEx</source>
-        <translation type="unfinished">RegEx</translation>
+        <translation>RegEx</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="102"/>
         <source>Case-sensitive</source>
-        <translation type="unfinished">Respetar mayúsculas y minúsculas</translation>
+        <translation>Respetar mayúsculas y minúsculas</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="130"/>
         <source>Scroll to current time</source>
-        <translation type="unfinished">Desplazar al tiempo actual</translation>
+        <translation>Desplazar al tiempo actual</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="137"/>
         <source>Show start/end time</source>
-        <translation type="unfinished">Mostrar tiempo de inicio/final</translation>
+        <translation>Mostrar tiempo de inicio/final</translation>
     </message>
     <message>
         <location filename="../ui/subtitleviewer.ui" line="144"/>
         <source>Time in milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Tiempo en milisegundos</translation>
     </message>
     <message>
         <location filename="../subtitle/subtitleviewer.cpp" line="118"/>
@@ -4159,12 +4159,16 @@ Decimal digits only
  - translated into milliseconds
 h:m:s
  - hours:min:sec where s can contain decimal point.</source>
-        <translation type="unfinished"></translation>
+        <translation>Los siguientes formatos son aceptados:
+Solo dígitos decimales
+ - pasados a milisegundos
+h:m:s
+ - horas:min:sec donde &apos;s&apos; puede contener decimales.</translation>
     </message>
     <message>
         <location filename="../subtitle/subtitleviewer.cpp" line="146"/>
         <source>Subtitle Viewer</source>
-        <translation type="unfinished"></translation>
+        <translation>Visor de subtítulos</translation>
     </message>
 </context>
 <context>
