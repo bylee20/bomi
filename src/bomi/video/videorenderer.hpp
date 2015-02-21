@@ -15,6 +15,7 @@ public:
     auto screenRect() const -> QRectF;
     auto offset() const -> QPoint;
     auto aspectRatio() const -> double;
+    auto outputAspectRatio() const -> double;
     auto cropRatio() const -> double;
     auto alignment() const -> Qt::Alignment;
     auto sizeHint() const -> QSize;

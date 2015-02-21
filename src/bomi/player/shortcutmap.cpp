@@ -99,6 +99,7 @@ auto ShortcutMap::preset(Preset p) -> ShortcutMap
 
 auto ShortcutMap::default_(const QString &id) -> QList<Key>
 {
+    using namespace Qt;
     static const QMap<QString, QList<Key>> def = [] () {
        QMap<QString, QList<Key>> map;
        map[u"open/file"_q] << Qt::CTRL + Qt::Key_F;
@@ -142,6 +143,8 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"video/snapshot/quick"_q] << Qt::CTRL + Qt::Key_S;
        map[u"video/snapshot/tool"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_S;
        map[u"video/move/reset"_q] << Qt::SHIFT + Qt::Key_X;
+       map[u"video/aspect/increase"_q] << CTRL+SHIFT+Key_A;
+       map[u"video/aspect/decrease"_q] << CTRL+SHIFT+Key_D;
        map[u"video/move/up"_q] << Qt::SHIFT + Qt::Key_W;
        map[u"video/move/down"_q] << Qt::SHIFT + Qt::Key_S;
        map[u"video/move/left"_q] << Qt::SHIFT + Qt::Key_A;

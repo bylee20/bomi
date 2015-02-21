@@ -22,35 +22,53 @@ auto ActionGroup::lastCheckedAction() const -> QAction*
     return nullptr;
 }
 
+static inline auto cmpFixed(double lhs, double rhs, double times = 1e6) -> bool
+{
+    return qRound(lhs * times) == qRound(rhs * times);
+}
+
 auto ActionGroup::find(const QVariant &data) const -> QAction*
 {
-    for (auto action : actions()) {
-        if (action->data() == data)
-            return action;
+    switch (data.userType()) {
+    case QMetaType::Double:
+    case QMetaType::Float:
+        for (auto action : actions()) {
+            if (cmpFixed(action->data().toDouble(), data.toDouble()))
+                return action;
+        }
+        return nullptr;
+    default:
+        for (auto action : actions()) {
+            if (action->data() == data)
+                return action;
+        }
+        return nullptr;
     }
+}
+
+auto ActionGroup::setChecked(const QVariant &data, bool checked) -> QAction*
+{
+    if (auto action = find(data)) {
+        action->setChecked(checked);
+        return action;
+    }
+    setAllChecked(false);
     return nullptr;
 }
 
-auto ActionGroup::setChecked(const QVariant &data, bool checked) -> void
+auto ActionGroup::setAllChecked(bool checked) -> void
 {
-    if (auto action = find(data))
-        action->setChecked(checked);
+    for (auto a : actions())
+        a->setChecked(checked);
 }
 
-auto ActionGroup::trigger(double data) -> void
+auto ActionGroup::trigger(const QVariant &data) -> QAction*
 {
-    for (auto action : actions()) {
-        if (qFuzzyCompare(action->data().toDouble(), data)) {
-            action->trigger();
-            return;
-        }
-    }
-}
-
-auto ActionGroup::trigger(const QVariant &data) -> void
-{
-    if (auto action = find(data))
+    if (auto action = find(data)) {
         action->trigger();
+        return action;
+    }
+    return nullptr;
 }
 
 auto ActionGroup::data() const -> QVariant

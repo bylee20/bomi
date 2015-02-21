@@ -1,6 +1,7 @@
 #include "mainwindow_p.hpp"
 #include "app.hpp"
 #include "enum/movetoward.hpp"
+#include "misc/actiongroup.hpp"
 #include "subtitle/subtitleviewer.hpp"
 #include "subtitle/subtitlemodel.hpp"
 #include "dialog/mbox.hpp"
@@ -150,6 +151,8 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
 
 auto MainWindow::Data::plugMenu() -> void
 {
+    ActionGroup *g = nullptr;
+
     Menu &open = menu(u"open"_q);
     connect(open[u"file"_q], &QAction::triggered, p, [this] () {
         const auto file = _GetOpenFile(p, tr("Open File"), MediaExt);
@@ -283,7 +286,29 @@ auto MainWindow::Data::plugMenu() -> void
 
     Menu &video = menu(u"video"_q);
 
-    PLUG_ENUM(video(u"aspect"_q), video_aspect_ratio, setVideoAspectRatio);
+    auto &aspect = video(u"aspect"_q);
+    g = aspect.g(u"preset"_q);
+    connect(e.params(), &MrlState::video_aspect_ratio_changed, p, [=] (double v) {
+        auto checked = g->setChecked(v);
+        const auto name = e.params()->desc_video_aspect_ratio();
+        if (checked)
+            showMessage(name, checked->text());
+        else
+            showMessage(name, tr("Custom(%1)").arg(v, 0, 'g', 6));
+    });
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+        push(a->data().toDouble(), e.params()->video_aspect_ratio(),
+             [=] (double v) { e.setVideoAspectRatio(v); });
+    });
+    connect(aspect[u"cycle"_q], &QAction::triggered, p, [=] () { triggerNextAction(g->actions()); });
+    g = aspect.g(u"adjust"_q);
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a)
+    {
+        const auto r = e.videoOutputAspectRatio();
+        push(r + static_cast<StepAction*>(a)->data() * 1e-2,
+             e.params()->video_aspect_ratio(),
+             [=] (double v) { e.setVideoAspectRatio(v); });
+    });
     PLUG_ENUM(video(u"crop"_q), video_crop_ratio, setVideoCropRatio);
 
     auto &snap = video(u"snapshot"_q);

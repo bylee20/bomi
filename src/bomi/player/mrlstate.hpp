@@ -47,12 +47,12 @@ class MrlState : public QObject {
     Q_PROPERTY(bool sub_visible READ __dummy_int WRITE __set_dummy)
     Q_PROPERTY(QString sub_track READ __dummy_string WRITE __set_dummy)
 #define P_(type, name, def, desc, rev) \
-    Q_INVOKABLE QString desc_ ## name() const { return tr(desc); } \
 private: \
     type m_##name = def; \
     Q_PROPERTY(type name READ name WRITE set_##name NOTIFY name ## _changed REVISION rev) \
 public: \
     Q_SIGNAL void name ## _changed(type); \
+    Q_INVOKABLE QString desc_ ## name() const { return tr(desc); } \
     type name() const { return m_##name; } \
     bool set_##name(tmp::cval_t<type> t) \
     { \
@@ -74,7 +74,7 @@ private:
 
     P_(Interpolator, video_interpolator, Interpolator::Bilinear, QT_TR_NOOP("Video Interpolator"), 0)
     P_(Interpolator, video_chroma_upscaler, Interpolator::Bilinear, QT_TR_NOOP("Video Chroma Upscaler"), 0)
-    P_(VideoRatio, video_aspect_ratio, VideoRatio::Source, QT_TR_NOOP("Video Aspect Ratio"), 0)
+    P_(double, video_aspect_ratio, -1.0, QT_TR_NOOP("Video Aspect Ratio"), 0)
     P_(VideoRatio, video_crop_ratio, VideoRatio::Source, QT_TR_NOOP("Video Crop Ratio"), 0)
     P_(DeintMode, video_deinterlacing, DeintMode::Auto, QT_TR_NOOP("Video Deinterlacing"), 0)
     P_(Dithering, video_dithering, Dithering::Fruit, QT_TR_NOOP("Video Dithering"), 0)

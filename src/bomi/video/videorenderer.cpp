@@ -268,6 +268,11 @@ auto VideoRenderer::cropRatio() const -> double
     return d->crop;
 }
 
+auto VideoRenderer::outputAspectRatio() const -> double
+{
+    return d->targetAspectRatio();
+}
+
 auto VideoRenderer::sizeHint() const -> QSize
 {
     if (!hasFrame())

@@ -148,6 +148,8 @@ auto MainWindow::Data::plugEngine() -> void
         menu(u"video"_q)(u"track"_q).setEnabled(running);
         menu(u"audio"_q)(u"track"_q).setEnabled(running);
         menu(u"subtitle"_q)(u"track"_q).setEnabled(running);
+        menu(u"video"_q)(u"aspect"_q)[u"increase"_q]->setEnabled(running);
+        menu(u"video"_q)(u"aspect"_q)[u"decrease"_q]->setEnabled(running);
         OS::setScreensaverEnabled(!pref.disable_screensaver() || !playing);
         updateStaysOnTop();
         stateChanging = false;
@@ -516,6 +518,7 @@ auto MainWindow::Data::applyPref() -> void
     menu(u"play"_q)(u"seek"_q).s(u"seek3"_q)->setStep(p.seek_step3_sec() * 1000);
     menu(u"subtitle"_q)(u"position"_q).s()->setStep(p.sub_pos_step());
     menu(u"subtitle"_q)(u"sync"_q).s()->setStep(p.sub_sync_step_sec() * 1000);
+    menu(u"video"_q)(u"aspect"_q).s()->setStep(p.aspect_ratio_step());
     menu(u"video"_q)(u"color"_q).s(u"brightness"_q)->setStep(p.brightness_step());
     menu(u"video"_q)(u"color"_q).s(u"contrast"_q)->setStep(p.contrast_step());
     menu(u"video"_q)(u"color"_q).s(u"saturation"_q)->setStep(p.saturation_step());

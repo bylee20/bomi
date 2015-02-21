@@ -23,7 +23,7 @@ B.AppWithFloating {
                             anchors.verticalCenter: parent.verticalCenter
                             icon.prefix: "audios"
                             action: "audio/track/next"; action2: "audio/track"
-                            text.content: B.Format.trackInfo(engine.audio)
+                            text.content: formatTrackNumber(engine.audio)
                         }
                         TextButton {
                             anchors.left: audio.right
@@ -31,7 +31,7 @@ B.AppWithFloating {
                             anchors.leftMargin: 5
                             icon.prefix: "subs"
                             action: "subtitle/track/next"; action2: "subtitle/track"
-                            text.content: B.Format.trackInfo(engine.subtitle)
+                            text.content: formatTrackNumber(engine.subtitle)
                         }
 
                         TextButton {

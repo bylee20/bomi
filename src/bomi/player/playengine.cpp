@@ -19,8 +19,7 @@ PlayEngine::PlayEngine()
     d->params.m_mutex = &d->mutex;
 
     connect(&d->params, &MrlState::video_offset_changed, d->vr, &VideoRenderer::setOffset);
-    connect(&d->params, &MrlState::video_aspect_ratio_changed, d->vr,
-            [=] (auto r) { d->vr->setAspectRatio(_EnumData(r)); });
+    connect(&d->params, &MrlState::video_aspect_ratio_changed, d->vr, &VideoRenderer::setAspectRatio);
     connect(&d->params, &MrlState::video_crop_ratio_changed, d->vr,
             [=] (auto r) { d->vr->setCropRatio(_EnumData(r)); });
     connect(&d->params, &MrlState::sub_display_changed, d->vr,
@@ -731,7 +730,12 @@ auto PlayEngine::setVideoOffset(const QPoint &offset) -> void
     d->params.set_video_offset(offset);
 }
 
-auto PlayEngine::setVideoAspectRatio(VideoRatio ratio) -> void
+auto PlayEngine::videoOutputAspectRatio() const -> double
+{
+    return d->vr->outputAspectRatio();
+}
+
+auto PlayEngine::setVideoAspectRatio(double ratio) -> void
 {
     d->params.set_video_aspect_ratio(ratio);
 }

@@ -122,6 +122,7 @@ public:
     P0(double, audio_sync_step_sec, 0.2)
     P0(int, amp_step, 10)
     P0(int, sub_pos_step, 1)
+    P0(int, aspect_ratio_step, 1)
     P0(bool, enable_hwaccel, false)
     P0(QList<CodecId>, hwaccel_codecs, OS::hwAcc()->fullCodecList())
     P0(DeintOptionSet, deinterlacing, {})

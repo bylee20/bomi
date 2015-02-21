@@ -467,7 +467,21 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->enumMenuCheckable<VideoRatio>(u"aspect"_q, QT_TR_NOOP("Aspect Ratio"), true);
+        d->menu(u"aspect"_q, QT_TR_NOOP("Aspect Ratio"), [=] () {
+            d->action(u"cycle"_q, QT_TR_NOOP("Select Next"));
+            d->separator();
+            auto g = u"preset"_q;
+            d->group(g)->setExclusive(true);
+            d->actionToGroup(u"source"_q, QT_TR_NOOP("Same as Source"), true, g)->setData(-1.0);
+            d->actionToGroup(u"window"_q, QT_TR_NOOP("Same as Window"), true, g)->setData(0.0);
+            d->actionToGroup(u"4:3"_q, QT_TR_NOOP("4:3 (TV)"), true, g)->setData(4./3.);
+            d->actionToGroup(u"16:10"_q, QT_TR_NOOP("16:10 (Wide Monitor)"), true, g)->setData(16./10.);
+            d->actionToGroup(u"16:9"_q, QT_TR_NOOP("16:9 (HDTV)"), true, g)->setData(16./9.);
+            d->actionToGroup(u"1.85:1"_q, QT_TR_NOOP("1.85:1 (Wide Vision)"), true, g)->setData(1.85);
+            d->actionToGroup(u"2.35:1"_q, QT_TR_NOOP("2.35:1 (CinemaScope)"), true, g)->setData(2.35);
+            d->separator();
+            d->stepPair("%1%", 1, 100, 1000, u"adjust"_q);
+        });
         d->enumMenuCheckable<VideoRatio>(u"crop"_q, QT_TR_NOOP("Crop"), true);
         d->menu(u"align"_q, QT_TR_NOOP("Screen Alignment"), [=] () {
             d->enumActionsCheckable<VerticalAlignment>(false);
