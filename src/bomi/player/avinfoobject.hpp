@@ -218,7 +218,7 @@ public:
             updateBitrate();
         }
     }
-    void setFps(double fps)
+    auto setFps(double fps) -> void
         { if (_Change(m_fps, fps)) { emit fpsChanged(fps); updateBitrate(); } }
 signals:
     void fpsChanged(double fps);
@@ -246,6 +246,8 @@ class VideoObject : public AvCommonObject {
     Q_PROPERTY(int delayedFrames READ delayedFrames NOTIFY delayedFramesChanged)
     Q_PROPERTY(int delayedTime READ delayedTime NOTIFY delayedTimeChanged)
     Q_PROPERTY(qreal droppedFps READ droppedFps NOTIFY droppedFpsChanged)
+    Q_PROPERTY(qint64 frameNumber READ frameNumber NOTIFY frameNumberChanged)
+    Q_PROPERTY(qint64 frameCount READ frameCount NOTIFY frameCountChanged)
 public:
     VideoObject();
     auto input() const -> const VideoFormatObject* { return &m_input; }
@@ -268,7 +270,15 @@ public:
     void setDroppedFrames(int f);
     void setDelayedFrames(int f)
         { if (_Change(m_delayed, f)) emit delayedFramesChanged(); }
+    auto setFrameCount(qint64 count) -> void
+        { if (_Change(m_frameCount, count)) emit frameCountChanged(); }
+    auto setFrameNumber(qint64 n) -> void
+        { if (_Change(m_frameNumber, n)) emit frameNumberChanged(); }
+    auto frameNumber() const -> qint64 { return m_frameNumber; }
+    auto frameCount() const -> qint64 { return m_frameCount; }
 signals:
+    void frameCountChanged();
+    void frameNumberChanged();
     void deinterlacerChanged();
     void droppedFramesChanged();
     void droppedFpsChanged();
@@ -279,6 +289,7 @@ private:
     VideoHwAccObject m_hwacc;
     int m_deint = 0, m_dropped = 0, m_delayed = 0;
     qreal m_droppedFps = 0.0, m_fpsMp = 1;
+    qint64 m_frameCount = 0, m_frameNumber = 0;
     QTime m_time;
 };
 

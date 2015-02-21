@@ -4,26 +4,24 @@ import bomi 1.0
 
 Item {
     id: wrapper
-    readonly property int fontSize: parent.height*0.022;
-    width: parent.width-fontSize*2;
-    height: parent.height-fontSize*2;
-    anchors.centerIn: parent
     property alias show: wrapper.visible
     readonly property Engine engine: App.engine
     readonly property var audio: engine.audio
     readonly property var video: engine.video
     readonly property var sub: engine.subtitle
 
-    onVisibleChanged: if (visible) bringIn.start()
+//    onVisibleChanged: if (visible) bringIn.start()
     NumberAnimation {
         id: bringIn; target: box; properties: "scale"; running: false
         from: 0.0;     to: 1.0; easing {type: Easing.OutBack; overshoot: 1.1}
     }
-    visible: false
+//    visible: false
+
+    Component.onCompleted: { bringIn.start() }
 
     ColumnLayout {
         id: box; spacing: 0
-        readonly property alias fontSize: wrapper.fontSize
+//        readonly property alias fontSize: wrapper.fontSize
         PlayInfoText { content: engine.media.name }
         PlayInfoText {
             readonly property int rate: engine.rate*1000
@@ -126,7 +124,6 @@ Item {
             model: engine.subtitle
             Loader {
                 readonly property var data: modelData
-                readonly property int fontSize: wrapper.fontSize
                 sourceComponent: subtitleTrack
                 onItemChanged: {
                     if (item)

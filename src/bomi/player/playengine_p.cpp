@@ -345,6 +345,11 @@ auto PlayEngine::Data::hook() -> void
     mpv.hook("on_unload", [=] () { onUnload(); });
 }
 
+SCA calcFrameCount(double fps, int ms) -> qint64
+{
+    return fps * (ms * 1e-3) + 0.5;
+}
+
 auto PlayEngine::Data::observe() -> void
 {
     mpv.setObserver(p);
@@ -376,6 +381,7 @@ auto PlayEngine::Data::observe() -> void
         if (_Change(time_s, time/1000))
             emit p->time_sChanged();
         sr->render(time);
+        info.video.setFrameNumber(calcFrameCount(info.video.input()->fps(), time - begin));
     });
     mpv.observeTime("time-start", begin, [=] () {
         emit p->beginChanged(begin);
@@ -388,6 +394,7 @@ auto PlayEngine::Data::observe() -> void
         if (_Change(duration_s, duration/1000))
             emit p->duration_sChanged();
         updateChapter(mpv.get<int>("chapter"));
+        info.video.setFrameCount(calcFrameCount(info.video.input()->fps(), duration));
     });
 
     mpv.observe("chapter-list", [=] () {
@@ -455,6 +462,8 @@ auto PlayEngine::Data::observe() -> void
         info.video.input()->setFps(fps);
         info.video.output()->setFps(fps);
         sr->setFPS(fps);
+        info.video.setFrameCount(calcFrameCount(fps, duration));
+        info.video.setFrameNumber(calcFrameCount(fps, time - begin));
     });
     mpv.observe("width", [=] (int w) {
         auto input = info.video.input();
