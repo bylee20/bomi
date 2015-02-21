@@ -1,6 +1,6 @@
 #!/bin/sh
 
-dir=build/win
+dir=build/bomi-win-$(date +%Y%m%d%H%M%S)
 
 #make skins
 #make imports
@@ -10,14 +10,15 @@ install -d $dir
 cp build/bomi.exe $dir
 cd $dir
 
-cp /mingw32/bin/libicudt54.dll icudt54.dll
-windeployqt --no-angle bomi.exe
-mv icudt54.dll libicudt54.dll
-
 cp -r ../skins .
 cp -r ../imports .
 cp -r ../translations .
-cp -r /mingw32/share/qt5/qml/QtQuick/Controls/Styles QtQuick/Controls/
+
+cp /mingw32/bin/libicudt54.dll icudt54.dll
+windeployqt --no-angle bomi.exe
+mv icudt54.dll libicudt54.dll
+cp -r /mingw32/share/qt5/qml/QtQuick/{Controls,Layouts,Window.2} QtQuick/
+find QtQuick -name '*d.dll' | xargs rm
 mv *.qm translations
 
 dlls=$(ldd bomi.exe | grep /mingw32/bin | sed 's#.*> \(/mingw.\+dll\).*#\1#g')
