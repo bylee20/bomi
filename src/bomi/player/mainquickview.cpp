@@ -5,6 +5,10 @@
 #include "quick/toplevelitem.hpp"
 #include <QQmlEngine>
 
+#ifdef main
+#undef main
+#endif
+
 struct MainQuickView::Data {
     MainWindow *main = nullptr;
 };

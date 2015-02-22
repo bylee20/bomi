@@ -32,11 +32,12 @@ B.BaseApp {
         }
     }
 
-    Item {
+    MouseArea {
         id: bottomItem
-        width: parent.width
-        height: 56
-        anchors.bottom: parent.bottom
+        width: parent.width; height: 56; anchors.bottom: parent.bottom
+        hoverEnabled: true
+        onContainsMouseChanged: B.App.window.mouse.hidingCursorBlocked = containsMouse
+        Component.onCompleted: B.App.registerToAccept(bottomItem, B.App.DoubleClickEvent)
 
         Rectangle {
             id: bottomBoundary
@@ -101,7 +102,6 @@ B.BaseApp {
                     textStyle {
                         color: "white"
                         style: Text.Outline
-                        font.bold: true
                         font.pixelSize: 12
                         styleColor: Qt.rgba(0, 0, 0, 0.5)
                     }

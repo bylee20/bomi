@@ -196,6 +196,20 @@ auto MainWindow::Data::initItems() -> void
     waiter.setInterval(500);
     waiter.setSingleShot(true);
     connect(&waiter, &QTimer::timeout, p, [=] () { updateWaitingMessage(); });
+
+    mouse = WindowObject::getMouse();
+    connect(mouse, &MouseObject::hidingCursorBlockedChanged, p, [=] (bool b) {
+        if (b) {
+            hider.stop();
+            setCursorVisible(true);
+        } else {
+            if (hidingCursorPended)
+                readyToHideCursor();
+            else
+                cancelToHideCursor();
+        }
+    });
+
 }
 
 auto MainWindow::Data::updateWaitingMessage() -> void
@@ -291,13 +305,30 @@ auto MainWindow::Data::trigger(QAction *action) -> void
     action->trigger();
 }
 
+auto MainWindow::Data::setCursorVisible(bool visible) -> void
+{
+    view->setCursorVisible(visible);
+    mouse->updateCursor(view->cursor().shape());
+    emit p->cursorChanged(view->cursor());
+}
+
 auto MainWindow::Data::readyToHideCursor() -> void
 {
     if (pref.hide_cursor()
-            && (p->isFullScreen() || !pref.hide_cursor_fs_only()))
-        hider.start(pref.hide_cursor_delay_sec() * 1000);
-    else
+            && (p->isFullScreen() || !pref.hide_cursor_fs_only())) {
+        if (mouse->isHidingCursorBlocked())
+            hidingCursorPended = true;
+        else
+            hider.start(pref.hide_cursor_delay_sec() * 1000);
+    } else
         cancelToHideCursor();
+}
+
+auto MainWindow::Data::cancelToHideCursor() -> void
+{
+    hidingCursorPended = false;
+    hider.stop();
+    setCursorVisible(true);
 }
 
 auto MainWindow::Data::commitData() -> void

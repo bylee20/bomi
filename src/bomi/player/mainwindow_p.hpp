@@ -19,6 +19,7 @@
 #include "subtitle/subtitlerenderer.hpp"
 #include "opengl/opengllogger.hpp"
 #include "quick/themeobject.hpp"
+#include "quick/windowobject.hpp"
 #include "misc/stepaction.hpp"
 #include "misc/logviewer.hpp"
 #include "os/os.hpp"
@@ -68,6 +69,9 @@ struct MainWindow::Data {
     bool moving = false;
     bool pausedByHiding = false;
     bool stateChanging = false, sgInit = false;
+    bool hidingCursorPended = true;
+    MouseObject *mouse = nullptr;
+
     QTimer waiter, hider;
     ABRepeatChecker ab;
     QMenu contextMenu;
@@ -128,9 +132,8 @@ struct MainWindow::Data {
     auto load(const Mrl &mrl, bool play = true, bool tryResume = true) -> void;
     auto reloadSkin() -> void;
     auto trigger(QAction *action) -> void;
-    auto setCursorVisible(bool visible) -> void
-        { view->setCursorVisible(visible); emit p->cursorChanged(view->cursor()); }
-    auto cancelToHideCursor() -> void { hider.stop(); setCursorVisible(true); }
+    auto setCursorVisible(bool visible) -> void;
+    auto cancelToHideCursor() -> void;
     auto readyToHideCursor() -> void;
     auto initContextMenu() -> void;
     auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;

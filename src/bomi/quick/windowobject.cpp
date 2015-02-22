@@ -29,8 +29,6 @@ auto WindowObject::set(MainWindow *mw) -> void
 {
     m = mw;
     connect(m, &MainWindow::fullscreenChanged, this, &WindowObject::fullscreenChanged);
-    connect(m, &MainWindow::cursorChanged, this,
-            [=] (const QCursor &c) { m_mouse.updateCursor(c.shape()); });
 }
 
 auto WindowObject::fullscreen() const -> bool
@@ -48,4 +46,10 @@ auto WindowObject::showToolTip(QQuickItem *item, const QPointF &pos,
 auto WindowObject::hideToolTip() -> void
 {
     QToolTip::hideText();
+}
+
+auto WindowObject::getMouse() -> MouseObject*
+{
+    static MouseObject mouse;
+    return &mouse;
 }
