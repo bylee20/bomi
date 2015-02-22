@@ -85,12 +85,12 @@ B.BaseApp {
 
                 B.TimeDuration {
                     id: timeText
-                    height: implicitHeight; spacing: 1; opacity: 0.8
+                    property bool showLeftTime: true
                     textStyle {
                         color: "white"; font.pixelSize: 12
                         style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.5)
                     }
-                    property bool showLeftTime: true
+                    spacing: 1; opacity: 0.8
                     duration: showLeftTime ? (engine.time - engine.end) : engine.end
 
                     B.Button {
