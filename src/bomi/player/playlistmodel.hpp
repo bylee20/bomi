@@ -10,6 +10,8 @@ class PlaylistModel : public SimpleListModel<Mrl, Playlist> {
     Q_OBJECT
     Q_PROPERTY(int loaded READ loaded NOTIFY loadedChanged)
     Q_PROPERTY(int count READ rows NOTIFY countChanged)
+    Q_PROPERTY(int length READ rows NOTIFY countChanged)
+    Q_PROPERTY(int currentNumber READ currentNumber NOTIFY loadedChanged)
     Q_PROPERTY(QChar fillChar READ fillChar WRITE setFillChar)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
     Q_PROPERTY(int selected READ selected WRITE select NOTIFY selectedChanged)
@@ -23,6 +25,7 @@ public:
 
     auto roleData(int row, int column, int role) const -> QVariant final;
     auto loaded() const -> int { return specialRow(); }
+    auto currentNumber() const -> int { return specialRow() + 1; }
     auto next() const -> int;
     auto previous() const -> int;
     auto checkNextMrl() const -> Mrl;
