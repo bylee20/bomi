@@ -9,6 +9,16 @@
 #undef main
 #endif
 
+static auto rejectInputMethodQuery(QEvent *event) -> bool
+{
+    if (event->type() != QEvent::InputMethodQuery)
+        return false;
+    auto e = static_cast<QInputMethodQueryEvent*>(event);
+    e->setValue(Qt::ImEnabled, false);
+    e->accept();
+    return true;
+}
+
 struct MainQuickView::Data {
     MainWindow *main = nullptr;
 };
@@ -56,6 +66,8 @@ auto MainQuickView::setCursorVisible(bool visible) -> void
 
 auto MainQuickView::eventFilter(QObject *obj, QEvent *ev) -> bool
 {
+    if (rejectInputMethodQuery(ev))
+        return true;
     if (obj != d->main)
         return false;
     switch (ev->type()) {
@@ -141,6 +153,8 @@ auto MainQuickView::keyPressEvent(QKeyEvent *event) -> void
 
 auto MainQuickView::event(QEvent *event) -> bool
 {
+    if (rejectInputMethodQuery(event))
+        return true;
     if (QQuickView::event(event))
         return true;
     if (event->type() == QEvent::DragMove) {

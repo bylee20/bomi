@@ -110,6 +110,8 @@ auto MainWindow::Data::initWindow() -> void
     p->setAcceptDrops(true);
     _SetWindowTitle(p, QString());
 
+    container->installEventFilter(view);
+
     connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
         auto context = view->openglContext();
         if (cApp.isOpenGLDebugLoggerRequested())
