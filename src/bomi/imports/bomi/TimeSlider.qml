@@ -19,8 +19,11 @@ Slider {
         Loader {
             readonly property Chapter chapter: modelData
             readonly property Slider control: seeker
+            property bool hCenter: true
+            property bool vCenter: false
             function seek() { seeker.time = chapter.time; }
-            x: seeker.width * chapter.rate
+            x: seeker.width * chapter.rate - (hCenter ? width * 0.5 : 0)
+            y: vCenter ? (control.height - height) * 0.5 : 0
             sourceComponent: markerStyle
             function updateTarget() {
                 if (item.hovered && seeker.bind)

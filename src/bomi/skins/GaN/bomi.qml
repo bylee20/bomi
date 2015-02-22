@@ -67,7 +67,7 @@ B.AppWithFloating {
                         handle: Item { Image { anchors { centerIn: parent; verticalCenter: parent.verticalCenter } source: "timeslide-handle.png" } }
                     }
                     markerStyle: B.Button {
-                        size: 6; x: -3; y: 0; z: hovered ? 1e10 : -1
+                        size: 6; z: hovered ? 1e10 : -1
                         icon.prefix: "marker"; tooltip: chapter.name; delay: 0
                         onClicked: control.time = chapter.time
                     }

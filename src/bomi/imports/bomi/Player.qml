@@ -8,6 +8,7 @@ Item {
     objectName: "player"
     property real dockZ: 0.0
     property real bottomPadding: 0.0
+    property real topPadding: 0.0
     readonly property QtObject engine: B.App.engine
     property Item screen
 
@@ -74,15 +75,17 @@ Item {
         anchors.fill: parent; z: dockZ
         PlaylistDock {
             id: right
+            y: topPadding
             show: B.App.playlist.visible
             width: Math.min(widthHint, player.width-(left.x+left.width)-20)
-            height: parent.height-2*y - bottomPadding
+            height: parent.height - bottomPadding - topPadding
         }
         HistoryDock {
             id: left
+            y: topPadding
             show: B.App.history.visible
             width: Math.min(widthHint, player.width*0.4)
-            height: parent.height-2*y - bottomPadding
+            height: parent.height - bottomPadding - topPadding
         }
     }
     onWidthChanged: if (screen) screen.width = width
@@ -165,14 +168,16 @@ Item {
 
     B.AutoDisplayZone {
         id: rightEdge
-        width: 15; height: parent.height; anchors.right: parent.right
+        y: right.y
+        width: 15; height: right.height; anchors.right: parent.right
         visible: B.App.theme.playlist.showOnMouseOverEdge
         target: B.App.playlist; box: right;
     }
 
     B.AutoDisplayZone {
         id: leftEdge
-        width: 15; height: parent.height; anchors.left: parent.left
+        y: left.y
+        width: 15; height: left.height; anchors.left: parent.left
         visible: B.App.theme.history.showOnMouseOverEdge
         target: B.App.history; box: left;
     }

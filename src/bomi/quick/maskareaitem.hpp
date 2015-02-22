@@ -57,7 +57,7 @@ signals:
     void exited();
     void entered();
     void canceled();
-    void clicked();
+    void clicked(MouseEventObject *mouse);
     void doubleClicked();
     void maskAlphaChanged();
     void pressedChanged(bool pressed);

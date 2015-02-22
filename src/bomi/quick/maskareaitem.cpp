@@ -120,8 +120,10 @@ auto MaskAreaItem::mouseReleaseEvent(QMouseEvent *event) -> void
     emit released(&mouse);
     const int th = qApp->styleHints()->startDragDistance();
     if (th >= qAbs(event->x() - d->pressedPos.x())
-            && th >= qAbs(event->y() - d->pressedPos.y()))
-        emit clicked();
+            && th >= qAbs(event->y() - d->pressedPos.y())) {
+        MouseEventObject mouse(event);
+        emit clicked(&mouse);
+    }
 }
 
 auto MaskAreaItem::mouseMoveEvent(QMouseEvent *event) -> void

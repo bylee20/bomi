@@ -546,4 +546,7 @@ DISTFILES += \
     imports/bomi/AutoDisplayZone.qml \
     imports/bomi/BaseApp.qml \
     imports/bomi/PlaylistView.qml \
-    imports/bomi/TextStyle.qml
+    imports/bomi/TextStyle.qml \
+    skins/air/bomi.qml \
+    skins/air/ImageButton.qml \
+    skins/air/IconTextButton.qml

@@ -41,7 +41,7 @@ Item {
     property int layout: centerIcon
     property real spacing: 0
 
-    signal clicked
+    signal clicked(var mouse)
 
     width: size; height: size
 
@@ -131,7 +131,7 @@ Item {
                     if (containsMouse && action)
                         B.App.execute(action)
                 }
-                onClicked: item.clicked();
+                onClicked: item.clicked(mouse);
                 onExited: B.App.window.hideToolTip();
                 onCanceled: B.App.window.hideToolTip()
                 Timer {
