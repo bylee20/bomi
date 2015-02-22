@@ -32,18 +32,20 @@ using Shortcuts = QMap<QString, QList<QKeySequence>>; // keep for backward compa
 class Pref : public QObject {
     Q_OBJECT
 /***************************************************************/
-#define P_(type, name, def, editor) \
+#define P_(type, name, def, editor_property, editor_name) \
 public: \
     auto name() const -> type { return m_##name; } \
 private: \
     type m_##name = def; \
     Q_PROPERTY(type name READ name WRITE set_##name) \
     auto set_##name(const type &t) { m_##name = t; } \
-    Q_INVOKABLE QString editor_##name() const { return QString::fromLatin1(editor); } \
+    Q_INVOKABLE QString editor_property_##name() const { return QString::fromLatin1(editor_property); } \
+    Q_INVOKABLE QString editor_name_##name() const { return QString::fromLatin1(editor_name); } \
     Q_INVOKABLE bool compare_##name(const QVariant &var) const { return m_##name == var.value<type>(); } \
 public:
-#define P0(type, var, def) P_(type, var, def, PrefEditorProperty<type>::name)
-#define P1(type, var, def, editor) P_(type, var, def, editor)
+#define P0(type, var, def) P_(type, var, def, PrefEditorProperty<type>::name, #var)
+#define P1(type, var, def, editor) P_(type, var, def, editor, #var)
+#define P2(type, var, def, editor) P_(type, var, def, #var, editor)
 /***************************************************************/
 public:
     Pref();
@@ -108,21 +110,22 @@ public:
     P0(bool, hide_rather_close, true)
     P0(MouseActionMap, mouse_action_map, defaultMouseActionMap())
     P0(bool, invert_wheel, false)
-    P0(int, seek_step1_sec, 5)
-    P0(int, seek_step2_sec, 30)
-    P0(int, seek_step3_sec, 60)
 
-    P0(int, speed_step, 10)
-    P0(int, brightness_step, 1)
-    P0(int, saturation_step, 1)
-    P0(int, contrast_step, 1)
-    P0(int, hue_step, 1)
-    P0(int, volume_step, 2)
-    P0(double, sub_sync_step_sec, 0.5)
-    P0(double, audio_sync_step_sec, 0.2)
-    P0(int, amp_step, 10)
-    P0(int, sub_pos_step, 1)
-    P0(int, aspect_ratio_step, 1)
+    P2(int, seek_step1_sec, 5, "steps")
+    P2(int, seek_step2_sec, 30, "steps")
+    P2(int, seek_step3_sec, 60, "steps")
+    P2(int, speed_step, 10, "steps")
+    P2(double, aspect_ratio_step, 0.0001, "steps")
+    P2(int, brightness_step, 1, "steps")
+    P2(int, saturation_step, 1, "steps")
+    P2(int, contrast_step, 1, "steps")
+    P2(int, hue_step, 1, "steps")
+    P2(int, volume_step, 2, "steps")
+    P2(double, sub_sync_step_sec, 0.5, "steps")
+    P2(double, audio_sync_step_sec, 0.2, "steps")
+    P2(int, amp_step, 10, "steps")
+    P2(int, sub_pos_step, 1, "steps")
+
     P0(bool, enable_hwaccel, false)
     P0(QList<CodecId>, hwaccel_codecs, OS::hwAcc()->fullCodecList())
     P0(DeintOptionSet, deinterlacing, {})

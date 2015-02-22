@@ -128,5 +128,35 @@ signals:
     void changed();
 };
 
+class PrefStepTreeWidget : public QTreeWidget {
+    Q_OBJECT
+#define P_(type, name) \
+    Q_PROPERTY(type name READ name WRITE set_##name NOTIFY changed) \
+    auto name() const -> type { return get(#name).value<type>(); } \
+    auto set_##name(type t) -> void { set(#name, t); }
+
+    P_(int, seek_step1_sec)
+    P_(int, seek_step2_sec)
+    P_(int, seek_step3_sec)
+    P_(int, speed_step)
+    P_(int, brightness_step)
+    P_(int, saturation_step)
+    P_(int, contrast_step)
+    P_(int, hue_step)
+    P_(int, volume_step)
+    P_(double, sub_sync_step_sec)
+    P_(double, audio_sync_step_sec)
+    P_(int, amp_step)
+    P_(int, sub_pos_step)
+    P_(double, aspect_ratio_step)
+public:
+    PrefStepTreeWidget(QWidget *parent = nullptr);
+    auto set(const char *name, const QVariant &var) -> void;
+    auto get(const char *name) const -> QVariant;
+signals:
+    void changed();
+private:
+    QMap<QByteArray, QTreeWidgetItem*> m_items;
+};
 
 #endif // PREFDIALOG_P_HPP

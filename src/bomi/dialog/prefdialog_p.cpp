@@ -309,3 +309,205 @@ auto PrefMouseActionTree::get() const -> MouseActionMap
         map[(MouseBehavior)i] = static_cast<MouseActionItem*>(topLevelItem(i))->get();
     return map;
 }
+
+/******************************************************************************/
+
+enum PrefStepColumn {
+    StepText = 0, StepValue = 1
+};
+
+enum PrefStepRole {
+    StepPrecisionRole = Qt::UserRole,
+    StepSuffixRole,
+    StepMinRole,
+    StepMaxRole,
+    StepSingleRole
+};
+
+class PrefStepItem : public QTreeWidgetItem {
+public:
+    PrefStepItem(const QString &desc, const QString &suffix,
+                 int min, int max, int step, int precision, QTreeWidgetItem *parent)
+        : QTreeWidgetItem(parent, UserType + 1)
+    {
+        setText(StepText, desc);
+        m_suffix = suffix;
+        m_precision = precision;
+        m_min = min;
+        m_max = max;
+        m_single = step;
+        setFlags(Qt::ItemIsEditable | Qt::ItemIsEnabled);
+    }
+    auto data(int column, int role) const -> QVariant
+    {
+        if (column != StepValue)
+            return QTreeWidgetItem::data(column, role);
+        switch (role) {
+        case Qt::DisplayRole:
+            return QString(m_value.toString() % m_suffix);
+        case Qt::EditRole:
+            return m_value;
+        case StepPrecisionRole:
+            return m_precision;
+        case StepSuffixRole:
+            return m_suffix;
+        case StepMinRole:
+            return m_min;
+        case StepMaxRole:
+            return m_max;
+        case StepSingleRole:
+            return m_single;
+        default:
+            return QVariant();
+        }
+    }
+    auto setValue(const QVariant &value) -> void
+    {
+        if (_Change(m_value, value)) {
+            emitDataChanged();
+            qDebug() << "emit data changed";
+        }
+    }
+    auto setData(int column, int role, const QVariant &value) -> void final
+    {
+        if (column != StepValue || role != Qt::EditRole)
+            QTreeWidgetItem::setData(column, role, value);
+        setValue(value);
+    }
+    auto isDouble() const -> bool { return m_precision; }
+    auto value() const -> QVariant { return m_value; }
+private:
+    QVariant m_value;
+    QString m_suffix;
+    int m_precision = 0;
+    int m_min = 0, m_max = 100, m_single = 1;
+};
+
+
+class PrefStepDelegate : public QStyledItemDelegate {
+public:
+    PrefStepDelegate(PrefStepTreeWidget *parent)
+        : QStyledItemDelegate(parent) {
+
+    }
+    auto createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/,
+                      const QModelIndex &index) const -> QWidget*
+    {
+        if (!index.parent().isValid() || index.column() != 1)
+            return nullptr;
+        const int prec = index.data(StepPrecisionRole).toInt();
+        const int min = index.data(StepMinRole).toInt();
+        const int max = index.data(StepMaxRole).toInt();
+        const int step = index.data(StepSingleRole).toInt();
+        const auto suffix = index.data(StepSuffixRole).toString();
+        QAbstractSpinBox *spin = nullptr;
+        if (prec) {
+            const double factor = pow(10, prec);
+            auto editor = new QDoubleSpinBox(parent);
+            editor->setMinimum(min/factor);
+            editor->setMaximum(max/factor);
+            editor->setSingleStep(step/factor);
+            editor->setSuffix(suffix);
+            editor->setDecimals(prec);
+            editor->setValue(index.data(Qt::EditRole).toDouble());
+            spin = editor;
+        } else {
+            auto editor = new QSpinBox(parent);
+            editor->setRange(min, max);
+            editor->setSingleStep(step);
+            editor->setSuffix(suffix);
+            editor->setValue(index.data(Qt::EditRole).toInt());
+            spin = editor;
+        }
+        spin->setAccelerated(true);
+        return spin;
+    }
+    auto setEditorData(QWidget *editor, const QModelIndex &index) const -> void
+    {
+        if (!editor)
+            return;
+        const int prec = index.data(StepPrecisionRole).toInt();
+        const auto data = index.data(Qt::EditRole);
+        if (prec)
+            static_cast<QDoubleSpinBox*>(editor)->setValue(data.toDouble());
+        else
+            static_cast<QSpinBox*>(editor)->setValue(data.toInt());
+    }
+    auto setModelData(QWidget *editor, QAbstractItemModel *model,
+                      const QModelIndex &index) const -> void
+    {
+        if (!editor)
+            return;
+        const int prec = index.data(StepPrecisionRole).toInt();
+        if (prec)
+            model->setData(index, static_cast<QDoubleSpinBox*>(editor)->value(), Qt::EditRole);
+        else
+            model->setData(index, static_cast<QSpinBox*>(editor)->value(), Qt::EditRole);
+    }
+    auto updateEditorGeometry(QWidget *w, const QStyleOptionViewItem &opt,
+                              const QModelIndex &/*index*/) const -> void
+        { if (w) w->setGeometry(opt.rect); }
+};
+
+PrefStepTreeWidget::PrefStepTreeWidget(QWidget *p)
+    : QTreeWidget(p)
+{
+    clear();
+    setColumnCount(2);
+    setHeaderLabels({tr("Item"), tr("Step")});
+
+#define add(name, suffix, desc, min, max, step, prec) { \
+    using T = tmp::remove_cref_t<decltype(name())>; \
+    static_assert(tmp::is_arithmetic<T>(), "!!!"); \
+    static_assert(tmp::is_integral<T>() == !prec, "!!!"); \
+    m_items[#name] = new PrefStepItem(desc, suffix, min, max, step, prec, parent); }
+
+    auto parent = new QTreeWidgetItem(this);
+    parent->setText(0, tr("Playback"));
+    add(seek_step1_sec, tr("sec"), tr("Seek Step 1"), 1, 999, 1, 0);
+    add(seek_step2_sec, tr("sec"), tr("Seek Step 2"), 1, 999, 1, 0);
+    add(seek_step3_sec, tr("sec"), tr("Seek Step 3"), 1, 999, 1, 0);
+    add(speed_step, "%"_a, tr("Speed"),  1, 99, 1, 0);
+
+    parent = new QTreeWidgetItem(this);
+    parent->setText(0, tr("Video"));
+    add(aspect_ratio_step, ""_a, tr("Aspect Ratio"), 1, 999999, 10, 5);
+    add(brightness_step, "%"_a, tr("Brightness"), 1, 99, 1, 0);
+    add(contrast_step, "%"_a, tr("Contrast"), 1, 99, 1, 0);
+    add(saturation_step, "%"_a, tr("Saturation"), 1, 99, 1, 0);
+    add(hue_step, "%"_a, tr("Hue"), 1, 99, 1, 0);
+
+    parent = new QTreeWidgetItem(this);
+    parent->setText(0, tr("Audio"));
+    add(volume_step, "%"_a, tr("Volume"), 1, 99, 1, 0);
+    add(amp_step, "%"_a, tr("Amp"), 1, 999, 1, 0);
+    add(audio_sync_step_sec, tr("sec"), tr("Sync Delay"), 1,  99999, 10, 3);
+
+    parent = new QTreeWidgetItem(this);
+    parent->setText(0, tr("Subtitle"));
+    add(sub_pos_step, "%"_a, tr("Position"), 1, 99, 1, 0);
+    add(sub_sync_step_sec, tr("sec"), tr("Sync Delay"), 1, 99999, 10, 3);
+
+    auto &mo = staticMetaObject;
+    for (int i = mo.propertyOffset(); i < mo.propertyCount(); ++i) {
+        if (!m_items.contains(mo.property(i).name()))
+            qDebug() << "missing property for step" << mo.property(i).name();
+    }
+
+    expandAll();
+    resizeColumnToContents(0);
+    setItemDelegate(new PrefStepDelegate(this));
+    connect(this, &QTreeWidget::itemChanged, this, &PrefStepTreeWidget::changed);
+}
+
+auto PrefStepTreeWidget::get(const char *name) const -> QVariant
+{
+    Q_ASSERT(m_items.contains(name));
+    return m_items[name]->data(1, Qt::EditRole);
+}
+
+auto PrefStepTreeWidget::set(const char *name, const QVariant &var) -> void
+{
+    Q_ASSERT(m_items.contains(name));
+    m_items[name]->setData(1, Qt::EditRole, var);
+}

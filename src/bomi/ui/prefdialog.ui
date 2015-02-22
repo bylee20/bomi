@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>17</number>
+        <number>20</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2107,7 +2107,7 @@
             <item>
              <widget class="QRadioButton" name="show_logo">
               <property name="text">
-               <string>Show default bomi logo</string>
+               <string>Show default bo&amp;mi logo</string>
               </property>
              </widget>
             </item>
@@ -2214,19 +2214,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <spacer name="verticalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
         </layout>
        </widget>
        <widget class="QWidget" name="language">
@@ -2311,367 +2298,21 @@ Regular expression is supported.</string>
        <widget class="QWidget" name="ui_step">
         <layout class="QVBoxLayout" name="verticalLayout_24">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_6">
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_22">
-             <item>
-              <widget class="QGroupBox" name="groupBox_17">
-               <property name="title">
-                <string>Seek</string>
-               </property>
-               <layout class="QFormLayout" name="formLayout">
-                <property name="fieldGrowthPolicy">
-                 <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-                </property>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="aLabel_7">
-                  <property name="text">
-                   <string>Step 1</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSpinBox" name="seek_step1_sec">
-                  <property name="suffix">
-                   <string>sec</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>300</number>
-                  </property>
-                  <property name="value">
-                   <number>5</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="aLabel_8">
-                  <property name="text">
-                   <string>Step 2</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QSpinBox" name="seek_step2_sec">
-                  <property name="suffix">
-                   <string>sec</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>600</number>
-                  </property>
-                  <property name="value">
-                   <number>30</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="aLabel_9">
-                  <property name="text">
-                   <string>Step 3</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QSpinBox" name="seek_step3_sec">
-                  <property name="suffix">
-                   <string>sec</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>600</number>
-                  </property>
-                  <property name="value">
-                   <number>60</number>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="groupBox_19">
-               <property name="title">
-                <string>Playback</string>
-               </property>
-               <layout class="QFormLayout" name="formLayout_12">
-                <property name="fieldGrowthPolicy">
-                 <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-                </property>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_9">
-                  <property name="text">
-                   <string>Speed</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSpinBox" name="speed_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>10</number>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="groupBox_21">
-               <property name="title">
-                <string>Subtitle</string>
-               </property>
-               <layout class="QFormLayout" name="formLayout_10">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_10">
-                  <property name="text">
-                   <string>Position</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSpinBox" name="sub_pos_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_11">
-                  <property name="text">
-                   <string>Sync Delay</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QDoubleSpinBox" name="sub_sync_step_sec">
-                  <property name="suffix">
-                   <string>sec</string>
-                  </property>
-                  <property name="minimum">
-                   <double>0.010000000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.100000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>0.500000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_23">
-             <item>
-              <widget class="QGroupBox" name="groupBox_20">
-               <property name="title">
-                <string>Audio</string>
-               </property>
-               <layout class="QFormLayout" name="formLayout_7">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_18">
-                  <property name="text">
-                   <string>Volume</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSpinBox" name="volume_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>50</number>
-                  </property>
-                  <property name="value">
-                   <number>2</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_19">
-                  <property name="text">
-                   <string>Amplifier</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QSpinBox" name="amp_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>50</number>
-                  </property>
-                  <property name="value">
-                   <number>10</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="label_39">
-                  <property name="text">
-                   <string>Sync Delay</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QDoubleSpinBox" name="audio_sync_step_sec">
-                  <property name="suffix">
-                   <string>sec</string>
-                  </property>
-                  <property name="minimum">
-                   <double>0.010000000000000</double>
-                  </property>
-                  <property name="singleStep">
-                   <double>0.100000000000000</double>
-                  </property>
-                  <property name="value">
-                   <double>0.500000000000000</double>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="groupBox_18">
-               <property name="title">
-                <string>Color</string>
-               </property>
-               <layout class="QFormLayout" name="formLayout_4">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_12">
-                  <property name="text">
-                   <string>Brightness</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSpinBox" name="brightness_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_14">
-                  <property name="text">
-                   <string>Contrast</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QSpinBox" name="contrast_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="label_13">
-                  <property name="text">
-                   <string>Saturation</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QSpinBox" name="saturation_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="label_20">
-                  <property name="text">
-                   <string>Hue</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QSpinBox" name="hue_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_6">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
+          <widget class="PrefStepTreeWidget" name="steps">
+           <property name="columnCount">
+            <number>2</number>
            </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>108</height>
-            </size>
-           </property>
-          </spacer>
+           <column>
+            <property name="text">
+             <string/>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string/>
+            </property>
+           </column>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -2828,27 +2469,16 @@ Regular expression is supported.</string>
    <header>misc/logoption.hpp</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>PrefStepTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>dialog/prefdialog_p.hpp</header>
+  </customwidget>
  </customwidgets>
  <resources>
   <include location="../rsclist.qrc"/>
  </resources>
  <connections>
-  <connection>
-   <sender>sub_enc_autodetection</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>sub_enc_accuracy</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>521</x>
-     <y>527</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>590</x>
-     <y>528</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>enable_generate_playlist</sender>
    <signal>toggled(bool)</signal>
@@ -2862,6 +2492,22 @@ Regular expression is supported.</string>
     <hint type="destinationlabel">
      <x>684</x>
      <y>130</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sub_enc_autodetection</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>sub_enc_accuracy</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>521</x>
+     <y>527</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>590</x>
+     <y>528</y>
     </hint>
    </hints>
   </connection>

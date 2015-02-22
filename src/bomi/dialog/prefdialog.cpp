@@ -28,7 +28,7 @@ struct PrefDialog::Data {
     MrlStatePropertyListModel *properties = nullptr;
     QVector<ValueWatcher> watchers;
     QSet<ValueWatcher*> modified;
-    QHash<QObject*, ValueWatcher*> editorToWatcher;
+    QHash<QObject*, QList<ValueWatcher*>> editorToWatcher;
     Pref orig;
 
     auto retranslate() -> void
@@ -266,20 +266,28 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     auto &mo = Pref::staticMetaObject;
     d->watchers.resize(mo.propertyCount() - mo.propertyOffset());
+
+    auto invoke = [&] (const char *funcName) -> QString
+    {
+        QString ret;
+        auto res = mo.invokeMethod(&d->orig, funcName, Q_RETURN_ARG(QString, ret));
+        if (!res)
+            qDebug() << "failed to invoke" << funcName;
+        Q_ASSERT(!ret.isEmpty());
+        return ret;
+    };
     for (int i = mo.propertyOffset(); i < mo.propertyCount(); ++i) {
         auto &w = d->watchers[i - mo.propertyOffset()];
         w.property = mo.property(i);
-        auto editor = findChild<QObject*>(_L(w.property.name()));
+        const auto editorName = invoke("editor_name_"_b + w.property.name());
+        const auto editorProp = invoke("editor_property_"_b + w.property.name());
+        auto editor = findChild<QObject*>(editorName);
         if (!editor) {
             qDebug() << "no editor for" << w.property.name();
             continue;
         }
-        d->editorToWatcher[editor] = &w;
-        const auto name = "editor_" + QByteArray(w.property.name()) ;
-        QString editor_p;
-        mo.invokeMethod(&d->orig, name.constData(), Q_RETURN_ARG(QString, editor_p));
-        Q_ASSERT(!editor_p.isEmpty());
-        w.editor = QQmlProperty(editor, editor_p);
+        d->editorToWatcher[editor].push_back(&w);
+        w.editor = QQmlProperty(editor, editorProp);
         if (!w.editor.hasNotifySignal())
             qDebug() << "No notify signal in" << editor->metaObject()->className() << "for" << w.property.name();
         else
@@ -329,13 +337,16 @@ PrefDialog::~PrefDialog() {
 
 auto PrefDialog::checkModified() -> void
 {
-    auto w = d->editorToWatcher.value(sender());
-    if (!w)
+    auto ws = d->editorToWatcher.value(sender());
+    if (ws.isEmpty())
         return;
-    if (w->isModified())
-        d->modified.insert(w);
-    else
-        d->modified.remove(w);
+    for (auto w : ws) {
+        Q_ASSERT(w);
+        if (w->isModified())
+            d->modified.insert(w);
+        else
+            d->modified.remove(w);
+    }
     setWindowModified(!d->modified.isEmpty());
 }
 

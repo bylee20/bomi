@@ -293,8 +293,10 @@ auto MainWindow::Data::plugMenu() -> void
         const auto name = e.params()->desc_video_aspect_ratio();
         if (checked)
             showMessage(name, checked->text());
-        else
-            showMessage(name, tr("Custom(%1)").arg(v, 0, 'g', 6));
+        else {
+            const auto size = e.videoSizeHint();
+            showMessage(name, u"%3:1 (%1x%2)"_q.arg(size.width()).arg(size.height()).arg(v, 0, 'g', 6));
+        }
     });
     connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
         push(a->data().toDouble(), e.params()->video_aspect_ratio(),
@@ -305,7 +307,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(g, &ActionGroup::triggered, p, [=] (QAction *a)
     {
         const auto r = e.videoOutputAspectRatio();
-        push(r + static_cast<StepAction*>(a)->data() * 1e-2,
+        push(r + static_cast<StepAction*>(a)->data() * 1e-5,
              e.params()->video_aspect_ratio(),
              [=] (double v) { e.setVideoAspectRatio(v); });
     });
