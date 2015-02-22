@@ -226,9 +226,6 @@ public:
 
     auto setColorRange(ColorRange range) -> void;
     auto setColorSpace(ColorSpace space) -> void;
-    auto colorRange() const -> ColorRange;
-    auto colorSpace() const -> ColorSpace;
-    auto videoEqualizer() const -> VideoColor;
     auto setVideoEqualizer(const VideoColor &eq) -> void;
     auto setInterpolator(Interpolator type) -> void;
     auto setChromaUpscaler(Interpolator type) -> void;
@@ -242,7 +239,6 @@ public:
     auto interpolatorMap() const -> IntrplParamSetMap;
     auto chromaUpscalerMap() const -> IntrplParamSetMap;
     auto setVideoDithering(Dithering dithering) -> void;
-    auto dithering() const -> Dithering;
     auto setVideoEffects(VideoEffects effects) -> void;
     auto takeSnapshot(Snapshot mode) -> void;
     auto snapshot(bool withOsd = true) -> QImage;

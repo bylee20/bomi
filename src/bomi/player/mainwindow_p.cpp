@@ -556,6 +556,9 @@ auto MainWindow::Data::applyPref() -> void
     menu(u"video"_q)(u"color"_q).s(u"contrast"_q)->setStep(p.contrast_step());
     menu(u"video"_q)(u"color"_q).s(u"saturation"_q)->setStep(p.saturation_step());
     menu(u"video"_q)(u"color"_q).s(u"hue"_q)->setStep(p.hue_step());
+    menu(u"video"_q)(u"color"_q).s(u"red"_q)->setStep(p.red_step());
+    menu(u"video"_q)(u"color"_q).s(u"green"_q)->setStep(p.green_step());
+    menu(u"video"_q)(u"color"_q).s(u"blue"_q)->setStep(p.blue_step());
     menu(u"audio"_q)(u"sync"_q).s()->setStep(p.audio_sync_step_sec() * 1000);
     menu(u"audio"_q)(u"volume"_q).s()->setStep(p.volume_step());
     menu(u"audio"_q)(u"amp"_q).s()->setStep(p.amp_step());

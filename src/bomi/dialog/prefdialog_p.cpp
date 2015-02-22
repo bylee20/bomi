@@ -363,10 +363,8 @@ public:
     }
     auto setValue(const QVariant &value) -> void
     {
-        if (_Change(m_value, value)) {
+        if (_Change(m_value, value))
             emitDataChanged();
-            qDebug() << "emit data changed";
-        }
     }
     auto setData(int column, int role, const QVariant &value) -> void final
     {
@@ -474,8 +472,11 @@ PrefStepTreeWidget::PrefStepTreeWidget(QWidget *p)
     add(aspect_ratio_step, ""_a, tr("Aspect Ratio"), 1, 999999, 10, 5);
     add(brightness_step, "%"_a, tr("Brightness"), 1, 99, 1, 0);
     add(contrast_step, "%"_a, tr("Contrast"), 1, 99, 1, 0);
-    add(saturation_step, "%"_a, tr("Saturation"), 1, 99, 1, 0);
     add(hue_step, "%"_a, tr("Hue"), 1, 99, 1, 0);
+    add(saturation_step, "%"_a, tr("Saturation"), 1, 99, 1, 0);
+    add(red_step, "%"_a, tr("Red"), 1, 99, 1, 0);
+    add(green_step, "%"_a, tr("Green"), 1, 99, 1, 0);
+    add(blue_step, "%"_a, tr("Blue"), 1, 99, 1, 0);
 
     parent = new QTreeWidgetItem(this);
     parent->setText(0, tr("Audio"));

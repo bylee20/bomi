@@ -533,6 +533,7 @@ RootMenu::RootMenu()
             d->enumAction(VideoEffect::Disable, u"disable"_q, QT_TR_NOOP("Disable Filters"), true);
         });
         d->menu(u"color"_q, QT_TR_NOOP("Adjust Color"), [=] () {
+            d->action(u"editor"_q, QT_TR_NOOP("Color Editor"), false);
             auto format = [] (VideoColor::Type type) -> GetText
                 { return [=] () { return VideoColor::formatText(type); }; };
             d->actionToGroup(u"reset"_q, format(VideoColor::TypeMax));

@@ -9,14 +9,13 @@ class QMatrix4x4;
 
 class VideoColor {
 public:
-    enum Type {Brightness = 0, Contrast, Saturation, Hue, TypeMax};
+    enum Type {Brightness = 0, Contrast, Hue, Saturation, Red, Green, Blue, TypeMax};
     template<class T> using Array = std::array<T, TypeMax>;
-    VideoColor(int b, int c, int s, int h): m{{b, c, s, h}} {}
+//    VideoColor(int b, int c, int s, int h): m{{b, c, s, h}} {}
     VideoColor() = default;
     auto operator == (const VideoColor &r) const -> bool { return m == r.m; }
     auto operator != (const VideoColor &r) const -> bool { return m != r.m; }
-    auto operator *= (int rhs) -> VideoColor&
-        { m[0] *= rhs; m[1] *= rhs; m[2] *= rhs; m[3] *= rhs; return *this; }
+    auto operator *= (int rhs) -> VideoColor&;
     auto operator * (int rhs) const -> VideoColor
         { return VideoColor(*this) *= rhs; }
     auto operator & (const VideoColor &rhs) const -> Type;
@@ -29,20 +28,24 @@ public:
     auto saturation() const -> int { return m[Saturation]; }
     auto contrast() const -> int { return m[Contrast]; }
     auto hue() const -> int { return m[Hue]; }
+    auto red() const -> int { return m[Red]; }
+    auto green() const -> int { return m[Green]; }
+    auto blue() const -> int { return m[Blue]; }
     auto set(Type p, int val) -> void { m[p] = clip(val); }
     auto add(Type p, int diff) -> void { m[p] = clip(m[p] + diff); }
     auto setBrightness(int v) -> void { m[Brightness] = clip(v); }
     auto setSaturation(int v) -> void { m[Saturation] = clip(v); }
     auto setContrast(int v) -> void { m[Contrast] = clip(v); }
     auto setHue(int v) -> void { m[Hue] = clip(v); }
-    auto isZero() const -> bool
-        { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
+    auto isZero() const -> bool;
     auto matrix() const -> QMatrix4x4;
     auto getText(Type type) const -> QString;
     auto packed() const -> qint64;
     auto toString() const -> QString;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
+    auto description() const -> QString;
+    static auto description(Type type) -> QString;
     static auto fromJson(const QJsonObject &json) -> VideoColor
         { VideoColor c; c.setFromJson(json); return c; }
     static auto fromString(const QString &str) -> VideoColor;
@@ -55,11 +58,12 @@ public:
     template<class F>
     static auto for_type(F func) -> void;
 private:
+    auto matRgbChannel() const -> QMatrix4x4;
     auto matBSHC() const -> QMatrix4x4;
     auto matYCbCrToRgb(ColorSpace c, ColorRange r) const -> QMatrix4x4;
     static auto clip(int v) -> int { return qBound(-100, v, 100); }
     static Array<QString> s_names;
-    Array<int> m{{0, 0, 0, 0}};
+    Array<int> m{{0, 0, 0, 0, 0, 0, 0}};
 
 };
 
@@ -78,10 +82,27 @@ inline auto VideoColor::operator & (const VideoColor &rhs) const -> Type
     return count == 1 ? type : TypeMax;
 }
 
+inline auto VideoColor::operator *= (int rhs) -> VideoColor&
+{
+    for (int i = 0; i < TypeMax; ++i)
+        m[i] *= rhs;
+    return *this;
+}
+
 inline auto VideoColor::operator += (const VideoColor &rhs) -> VideoColor&
 {
-    m[0] += rhs.m[0]; m[1] += rhs.m[1];
-    m[2] += rhs.m[2]; m[3] += rhs.m[3]; return *this;
+    for (int i = 0; i < TypeMax; ++i)
+        m[i] += rhs.m[i];
+    return *this;
+}
+
+inline auto VideoColor::isZero() const -> bool
+{
+    for (int i = 0; i < TypeMax; ++i) {
+        if (m[i])
+            return false;
+    }
+    return true;
 }
 
 template<class F>

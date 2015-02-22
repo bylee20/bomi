@@ -13,6 +13,9 @@ static auto makeNameArray() -> VideoColor::Array<QString>
     names[VideoColor::Contrast]   = u"contrast"_q;
     names[VideoColor::Saturation] = u"saturation"_q;
     names[VideoColor::Hue]        = u"hue"_q;
+    names[VideoColor::Red]        = u"red"_q;
+    names[VideoColor::Green]      = u"green"_q;
+    names[VideoColor::Blue]       = u"blue"_q;
     return names;
 }
 
@@ -106,29 +109,39 @@ auto VideoColor::matBSHC() const -> QMatrix4x4
     return mat;
 }
 
+auto VideoColor::matRgbChannel() const -> QMatrix4x4
+{
+    const float r = qBound(-1.0, red() * 1e-2, 1.0);
+    const float g = qBound(-1.0, green() * 1e-2, 1.0);
+    const float b = qBound(-1.0, blue() * 1e-2, 1.0);
+    QMatrix4x4 mat;
+    mat.setColumn(3, {r, g, b, 1.f});
+    return mat;
+}
+
 auto VideoColor::matrix() const -> QMatrix4x4
 {
     if (isZero())
         return QMatrix4x4();
     const auto rgbFromYCbCr = matYCbCrToRgb(ColorSpace::BT601, ColorRange::Full);
     const auto toYCbCr = matRgbToYCbCr(ColorSpace::BT601, ColorRange::Full);
-    return rgbFromYCbCr*toYCbCr;
+    return matRgbChannel()*rgbFromYCbCr*toYCbCr;
 }
 
-auto VideoColor::packed() const -> qint64
-{
-#define PACK(p, s) ((0xffu & ((quint32)p() + 100u)) << s)
-    return PACK(brightness, 24) | PACK(contrast, 16)
-           | PACK(saturation, 8) | PACK(hue, 0);
-#undef PACK
-}
+//auto VideoColor::packed() const -> qint64
+//{
+//#define PACK(p, s) ((0xffu & ((quint32)p() + 100u)) << s)
+//    return PACK(brightness, 24) | PACK(contrast, 16)
+//           | PACK(saturation, 8) | PACK(hue, 0);
+//#undef PACK
+//}
 
-auto VideoColor::fromPacked(qint64 packed) -> VideoColor
-{
-#define UNPACK(s) (((packed >> s) & 0xff) - 100)
-    return VideoColor(UNPACK(24), UNPACK(16), UNPACK(8), UNPACK(0));
-#undef UNPACK
-}
+//auto VideoColor::fromPacked(qint64 packed) -> VideoColor
+//{
+//#define UNPACK(s) (((packed >> s) & 0xff) - 100)
+//    return VideoColor(UNPACK(24), UNPACK(16), UNPACK(8), UNPACK(0));
+//#undef UNPACK
+//}
 
 auto VideoColor::formatText(Type type) -> QString
 {
@@ -141,9 +154,45 @@ auto VideoColor::formatText(Type type) -> QString
         return qApp->translate("VideoColor", "Contrast %1%");
     case Hue:
         return qApp->translate("VideoColor", "Hue %1%");
+    case Red:
+        return qApp->translate("VideoColor", "Red %1%");
+    case Green:
+        return qApp->translate("VideoColor", "Green %1%");
+    case Blue:
+        return qApp->translate("VideoColor", "Blue %1%");
     default:
         return qApp->translate("VideoColor", "Reset");
     }
+}
+
+auto VideoColor::description(Type type) -> QString
+{
+    switch (type) {
+    case Brightness:
+        return qApp->translate("VideoColor", "Brightness");
+    case Saturation:
+        return qApp->translate("VideoColor", "Saturation");
+    case Contrast:
+        return qApp->translate("VideoColor", "Contrast");
+    case Hue:
+        return qApp->translate("VideoColor", "Hue");
+    case Red:
+        return qApp->translate("VideoColor", "Red");
+    case Green:
+        return qApp->translate("VideoColor", "Green");
+    case Blue:
+        return qApp->translate("VideoColor", "Blue");
+    default:
+        return qApp->translate("VideoColor", "Reset");
+    }
+}
+
+auto VideoColor::description() const -> QString
+{
+    return qApp->translate("VideoColor", "B: %1%, C: %2%, H: %3%, S: %4%, "
+                                         "R:%5%, G: %6%, B: %7%")
+            .arg(brightness()).arg(contrast()).arg(hue()).arg(saturation())
+            .arg(red()).arg(green()).arg(blue());
 }
 
 auto VideoColor::getText(Type type) const -> QString

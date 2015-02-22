@@ -47,7 +47,7 @@ using MSig = Signal<MrlState>;
 class SubtitleFindDialog;               class SnapshotDialog;
 class PrefDialog;                       class SubtitleViewer;
 class TrayIcon;                         class AudioEqualizerDialog;
-class IntrplDialog;
+class IntrplDialog;                     class VideoColorDialog;
 
 struct MainWindow::Data {
     template<class T>
@@ -92,6 +92,7 @@ struct MainWindow::Data {
     HistoryModel history;
     SnapshotMode snapshotMode = NoSnapshot;
     AudioEqualizerDialog *eq = nullptr;
+    VideoColorDialog *color = nullptr;
     IntrplDialog *intrpl = nullptr, *chroma = nullptr;
 
     OS::WindowAdapter *adapter = nullptr;
@@ -143,6 +144,9 @@ struct MainWindow::Data {
 
     template<class T, class Func>
     auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*;
+    template<class T, class S>
+    auto push(const T &to, T(MrlState::*get)() const,
+              void(PlayEngine::*set)(S)) -> QUndoCommand*;
     template<class T, class S, class ToString>
     auto push(const T &to, const char *p, T(MrlState::*get)() const,
               void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*;

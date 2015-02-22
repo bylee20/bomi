@@ -6,6 +6,7 @@
 #include "subtitle/subtitlemodel.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/audioequalizerdialog.hpp"
+#include "dialog/videocolordialog.hpp"
 #include "dialog/urldialog.hpp"
 #include "dialog/prefdialog.hpp"
 #include "dialog/aboutdialog.hpp"
@@ -27,6 +28,17 @@ auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUn
         return nullptr;
     }
 }
+
+template<class T, class S>
+auto MainWindow::Data::push(const T &to, T(MrlState::*get)() const,
+          void(PlayEngine::*set)(S)) -> QUndoCommand*
+{
+    const auto old = (e.params()->*get)();
+    if (to == old)
+        return nullptr;
+    return push(to, old, [=] (const T &s) { (e.*set)(s); });
+}
+
 template<class T, class S, class ToString>
 auto MainWindow::Data::push(const T &to, const char *p, T(MrlState::*get)() const,
           void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*
@@ -454,27 +466,30 @@ auto MainWindow::Data::plugMenu() -> void
         for (auto a : menu(u"video"_q)(u"filter"_q).actions())
             a->setChecked(a->data().value<VideoEffect>() & effects);
     });
-    VideoColor::for_type([=, &video] (VideoColor::Type type) {
+    auto &vcolor = video(u"color"_q);
+    connect(vcolor[u"editor"_q], &QAction::triggered, p, [=] () {
+        if (!color) {
+            color = new VideoColorDialog(p);
+            connect(color, &VideoColorDialog::colorChanged, &e, &PlayEngine::setVideoEqualizer);
+        }
+        color->setColor(e.params()->video_color());
+        color->show();
+    });
+    VideoColor::for_type([=, &vcolor] (VideoColor::Type type) {
         const auto name = VideoColor::name(type);
-        connect(video(u"color"_q).g(name), &ActionGroup::triggered, p,
-                [=] (QAction *a) {
+        connect(vcolor.g(name), &ActionGroup::triggered, p, [=] (QAction *a) {
             const int diff = static_cast<StepAction*>(a)->data();
             auto color = e.params()->video_color();
             color.add(type, diff);
-            push(color, "video_color", &MrlState::video_color,
-                 &PlayEngine::setVideoEqualizer, [=] (const VideoColor &eq)
-                 { return eq.formatText(type).arg(eq.get(type)); });
+            push(color, &MrlState::video_color, &PlayEngine::setVideoEqualizer);
         });
     });
-    connect(video(u"color"_q)[u"reset"_q], &QAction::triggered, p, [this] () {
-        const VideoColor eq{}, old = e.params()->video_color();
-        if (old != eq)
-            push(VideoColor(), e.params()->video_color(), [=] (const VideoColor &eq) {
-                e.setVideoEqualizer(eq);
-                showProperty("video_color", eq.isZero() ? tr("Reset") : tr("Restore"));
-            });
-        showProperty("video_color", tr("Reset"));
+    connect(vcolor[u"reset"_q], &QAction::triggered, p, [this] () {
+        push(VideoColor(), &MrlState::video_color, &PlayEngine::setVideoEqualizer);
     });
+    connect(e.params(), &MrlState::video_color_changed, p,
+            [=] (auto eq) { this->showMessage(e.params()->desc_video_color(), eq.description()); });
+
     plugTrack(video, &MrlState::video_tracks_changed,
               &PlayEngine::setVideoTrackSelected, QT_TR_NOOP("Selected Video Track"));
 
@@ -765,5 +780,7 @@ auto MainWindow::Data::deleteDialogs() -> void
     _Delete(subFindDlg);
     _Delete(snapshot);
     _Delete(logViewer);
+    _Delete(eq);
+    _Delete(color);
 }
 

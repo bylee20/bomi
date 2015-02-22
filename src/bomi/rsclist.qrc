@@ -41,5 +41,12 @@
         <file>img/logo-center.svg</file>
         <file>img/audio-x-generic.png</file>
         <file>img/tool-animator.png</file>
+        <file>img/brightness.png</file>
+        <file>img/contrast.png</file>
+        <file>img/hue.png</file>
+        <file>img/saturation.png</file>
+        <file>img/red.png</file>
+        <file>img/blue.png</file>
+        <file>img/green.png</file>
     </qresource>
 </RCC>

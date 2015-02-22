@@ -268,7 +268,8 @@ HEADERS += \
     quick/formatobject.hpp \
     misc/encodinginfo.hpp \
     widget/checklistwidget.hpp \
-    subtitle/subtitleviewer.hpp
+    subtitle/subtitleviewer.hpp \
+    dialog/videocolordialog.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -460,7 +461,8 @@ SOURCES += \
     quick/formatobject.cpp \
     misc/encodinginfo.cpp \
     widget/checklistwidget.cpp \
-    subtitle/subtitleviewer.cpp
+    subtitle/subtitleviewer.cpp \
+    dialog/videocolordialog.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
