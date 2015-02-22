@@ -79,7 +79,7 @@ B.BaseApp {
             RowLayout {
                 id: sliders; spacing: 10
                 anchors {
-                    top: parent.top; topMargin: 0
+                    top: parent.top; topMargin: 3
                     left: parent.left; leftMargin: 10
                     right: parent.right; rightMargin: anchors.leftMargin
                 }
@@ -230,7 +230,7 @@ B.BaseApp {
                     }
                     IconTextButton {
                         icon.source: "sub.png"
-                        action: "audio/subtitle"
+                        action: "subtitle/track"
                         text.content: formatTrackNumber(engine.subtitle)
                     }
                 }
