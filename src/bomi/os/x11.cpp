@@ -283,7 +283,7 @@ auto X11WindowAdapter::setFullScreen(bool fs) -> void
         d->sendState(widget(), fs, _NET_WM_STATE_FULLSCREEN);
 }
 
-auto X11WindowAdapter::isAlwaysOnTop() -> bool
+auto X11WindowAdapter::isAlwaysOnTop() const -> bool
 {
     const auto wid = widget()->winId();
     const auto cookie = xcb_get_property_unchecked
