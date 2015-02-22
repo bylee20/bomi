@@ -4,7 +4,6 @@
 
 #include "enum/deintmethod.hpp"
 #include "enum/codecid.hpp"
-#include <qt_windows.h>
 #include <QScreen>
 #include <QDesktopWidget>
 #include <psapi.h>
@@ -62,45 +61,47 @@ auto setImeEnabled(QWindow *w, bool enabled) -> void
         ime = ImmAssociateContext((HWND)w->winId(), nullptr);
 }
 
-auto setAlwaysOnTop(QWidget *w, bool onTop) -> void
+auto WinWindowAdapter::setAlwaysOnTop(bool onTop) -> void
 {
-    auto &win = d->windows[w];
-    win.onTop = onTop;
-    SetWindowPos((HWND)w->winId(), win.layer(), 0, 0, 0, 0,
+    m_onTop = onTop;
+    SetWindowPos((HWND)winId(), layer(), 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
 }
 
-auto isFullScreen(const QWidget *w) -> bool
+auto WinWindowAdapter::isFullScreen() const -> bool
 {
-    return d->windows.value(const_cast<QWidget*>(w)).fullScreen;
+    return m_fs;
 }
 
-auto isAlwaysOnTop(const QWidget *w) -> bool
+auto WinWindowAdapter::isAlwaysOnTop() const -> bool
 {
-    return d->windows.value(const_cast<QWidget*>(w)).onTop;
+    return m_onTop;
 }
 
-auto setFullScreen(QWidget *w, bool fs) -> void
+auto WinWindowAdapter::setFullScreen(bool fs) -> void
 {
-    auto &win = d->windows[w];
-    if (win.fullScreen == fs)
+    if (!_Change(m_fs, fs))
         return;
-    win.fullScreen = fs;
-    auto g = win.prevGeometry;
-    auto style = win.prevStyle;
-    auto layer = win.layer();
-    const auto hwnd = (HWND)w->winId();
+    auto g = m_prevGeometry;
+    auto style = m_prevStyle;
+    auto layer = this->layer();
+    const auto hwnd = (HWND)winId();
     if (fs) {
-        win.prevGeometry = w->frameGeometry();
-        win.prevStyle = GetWindowLong(hwnd, GWL_STYLE);
-        g = qApp->desktop()->screenGeometry(w);
+        m_prevGeometry = widget()->frameGeometry();
+        m_prevStyle = GetWindowLong(hwnd, GWL_STYLE);
+        g = qApp->desktop()->screenGeometry(widget());
         g.adjust(-1, -1, 1, 1);
-        style = win.prevStyle & ~(WS_DLGFRAME | WS_THICKFRAME);
+        style = m_prevStyle & ~(WS_DLGFRAME | WS_THICKFRAME);
         layer = HWND_NOTOPMOST;
     }
     SetWindowLong(hwnd, GWL_STYLE, style);
     SetWindowPos(hwnd, layer, g.x(), g.y(), g.width(), g.height(),
                  SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+}
+
+auto createAdapter(QWidget *w) -> WindowAdapter*
+{
+    return new WinWindowAdapter(w);
 }
 
 auto setScreensaverEnabled(bool enabled) -> void

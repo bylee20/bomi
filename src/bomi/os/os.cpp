@@ -137,7 +137,7 @@ WindowAdapter::WindowAdapter(QWidget *parent)
     m_widget = parent;
 }
 
-auto WindowAdapter::isFullScreen() -> bool
+auto WindowAdapter::isFullScreen() const -> bool
 {
     return m_widget->isFullScreen();
 }

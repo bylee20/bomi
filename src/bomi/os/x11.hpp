@@ -30,7 +30,7 @@ class X11WindowAdapter : public WindowAdapter {
 public:
     X11WindowAdapter(QWidget* w): WindowAdapter(w) { }
     auto setFullScreen(bool fs) -> void final;
-    auto isAlwaysOnTop() -> bool final;
+    auto isAlwaysOnTop() const -> bool final;
     auto setAlwaysOnTop(bool onTop) -> void final;
 };
 

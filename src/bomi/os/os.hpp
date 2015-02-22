@@ -29,9 +29,9 @@ auto refreshRate() -> qreal;
 class WindowAdapter : public QObject {
     Q_OBJECT
 public:
-    virtual auto isFullScreen() -> bool;
+    virtual auto isFullScreen() const -> bool;
     virtual auto setFullScreen(bool fs) -> void;
-    virtual auto isAlwaysOnTop() -> bool = 0;
+    virtual auto isAlwaysOnTop() const -> bool = 0;
     virtual auto setAlwaysOnTop(bool onTop) -> void = 0;
     auto winId() const -> WId { return m_widget->winId(); }
     auto widget() const -> QWidget* { return m_widget; }
