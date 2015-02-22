@@ -11,13 +11,9 @@ auto StepAction::toString(bool sign, int value) const -> QString
     if (!m_textRate)
         return _NS(value, sign);
     int dec = 0;
-    const auto abs = qAbs(value* m_textRate);
-    if (abs < 0.01)
-        dec = 3;
-    else if (abs < 0.1)
-        dec = 2;
-    else if (abs < 1)
-        dec = 1;
+    const auto exp = std::log10(qAbs(m_step * m_textRate));
+    if (exp < 0)
+        dec = 1 + (int)-exp;
     return _NS(value*m_textRate, sign, dec);
 }
 
