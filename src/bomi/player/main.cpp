@@ -7,6 +7,7 @@
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
 #include "misc/encodinginfo.hpp"
+#include "quick/algorithmobject.hpp"
 #include "quick/circularimageitem.hpp"
 #include "quick/maskareaitem.hpp"
 #include <QImageWriter>
@@ -59,6 +60,7 @@ int main(int argc, char **argv) {
     qRegisterMetaTypeStreamOperators<Playlist>();
     qRegisterMetaTypeStreamOperators<EncodingInfo>();
     qRegisterMetaTypeStreamOperators<Locale>();
+    qmlRegisterSingletonType<AlgorithmObject>("bomi", 1, 0, "Alg", _QmlSingleton<AlgorithmObject>);
 
     App app(argc, argv);
     for (auto fmt : QImageWriter::supportedImageFormats())
