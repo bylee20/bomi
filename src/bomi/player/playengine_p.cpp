@@ -657,6 +657,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         QSharedPointer<MrlState> ms;
         QVector<SubComp> loads;
         _TakeData(event, ms, loads);
+        emit p->beginSyncMrlState();
         params.m_mutex = nullptr;
         sr->setComponents(loads);
         mutex.lock();
@@ -664,6 +665,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         params.set_sub_tracks_inclusive(sr->toTrackList());
         mutex.unlock();
         params.m_mutex = &mutex;
+        emit p->endSyncMrlState();
         history->update(&params, true);
         break;
     } default:

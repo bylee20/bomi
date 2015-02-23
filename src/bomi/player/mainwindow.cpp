@@ -60,6 +60,7 @@ auto MainWindow::postInitialize() -> void
     OS::setImeEnabled(d->view, false);
     d->applyPref();
     cApp.runCommands();
+    d->noMessage = false;
 }
 
 auto MainWindow::setupSkinPlayer() -> void

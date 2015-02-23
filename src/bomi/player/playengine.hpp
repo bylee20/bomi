@@ -260,6 +260,8 @@ signals:
     void begin_sChanged();
     void end_sChanged();
 
+    void beginSyncMrlState();
+    void endSyncMrlState();
     void seeked(int time);
     void sought();
     void started(Mrl mrl);

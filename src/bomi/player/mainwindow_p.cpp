@@ -162,6 +162,8 @@ auto MainWindow::Data::plugEngine() -> void
     });
     connect(&e, &PlayEngine::tick, p,
             [=] (int time) { if (ab.check(time)) e.seek(ab.a()); });
+    connect(&e, &PlayEngine::beginSyncMrlState, p, [=] () { noMessage = true; });
+    connect(&e, &PlayEngine::endSyncMrlState, p, [=] () { noMessage = false; });
     connect(&e, &PlayEngine::started, p, [=] (const Mrl &mrl) { setOpen(mrl); });
     connect(&e, &PlayEngine::finished, p, [=] (const Mrl &/*mrl*/, bool eof) {
         if (!eof) return;
@@ -517,6 +519,8 @@ auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
 
 auto MainWindow::Data::showMessage(const QString &msg, const bool *force) -> void
 {
+    if (noMessage)
+        return;
     if (force) {
         if (!*force)
             return;

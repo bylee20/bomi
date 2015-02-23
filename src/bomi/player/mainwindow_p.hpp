@@ -69,7 +69,7 @@ struct MainWindow::Data {
     bool moving = false;
     bool pausedByHiding = false;
     bool stateChanging = false, sgInit = false;
-    bool hidingCursorPended = true;
+    bool hidingCursorPended = true, noMessage = true;
     MouseObject *mouse = nullptr;
 
     QTimer waiter, hider;
