@@ -10,4 +10,16 @@ B.Text {
         style: Text.Outline;
         monospace: true
     }
+
+    function activationText(s) {
+        switch (s) {
+        case B.Engine.Unavailable: return qsTr("Unavailable")
+        case B.Engine.Deactivated: return qsTr("Deactivated")
+        case B.Engine.Activated:   return qsTr("Activated")
+        default:                 return ""
+        }
+    }
+    function formatBracket(name, text, inBracket) {
+        return name + ": " + text + '[' + inBracket + ']'
+    }
 }

@@ -174,7 +174,7 @@ void VideoObject::setDroppedFrames(int f)
         emit droppedFpsChanged();
 }
 
-auto VideoObject::delayedTime() const -> int
+auto VideoObject::delayedTime() const -> qreal
 {
     double fps = m_output.fps();
     if (m_fpsMp < 1)
@@ -183,7 +183,7 @@ auto VideoObject::delayedTime() const -> int
         fps *= m_fpsMp;
     else
         fps = m_fpsMp;
-    return fps > 1 ? (m_delayed / fps) * 1e3 + 0.5 : 0.0;
+    return fps > 1 ? (m_delayed / fps) * 1e3 : 0.0;
 }
 
 /******************************************************************************/

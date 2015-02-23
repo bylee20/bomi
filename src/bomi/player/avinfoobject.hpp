@@ -244,7 +244,7 @@ class VideoObject : public AvCommonObject {
     Q_PROPERTY(int deinterlacer READ deinterlacer NOTIFY deinterlacerChanged)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(int delayedFrames READ delayedFrames NOTIFY delayedFramesChanged)
-    Q_PROPERTY(int delayedTime READ delayedTime NOTIFY delayedTimeChanged)
+    Q_PROPERTY(qreal delayedTime READ delayedTime NOTIFY delayedTimeChanged)
     Q_PROPERTY(qreal droppedFps READ droppedFps NOTIFY droppedFpsChanged)
     Q_PROPERTY(qint64 frameNumber READ frameNumber NOTIFY frameNumberChanged)
     Q_PROPERTY(qint64 frameCount READ frameCount NOTIFY frameCountChanged)
@@ -266,7 +266,7 @@ public:
     auto delayedFrames() const -> int { return m_delayed; }
     auto setFpsManimulation(double fps) -> void
         { if (_Change(m_fpsMp, fps)) emit delayedTimeChanged(); }
-    auto delayedTime() const -> int;
+    auto delayedTime() const -> qreal;
     void setDroppedFrames(int f);
     void setDelayedFrames(int f)
         { if (_Change(m_delayed, f)) emit delayedFramesChanged(); }

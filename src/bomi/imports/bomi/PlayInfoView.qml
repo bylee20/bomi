@@ -10,53 +10,55 @@ Item {
     readonly property var video: engine.video
     readonly property var sub: engine.subtitle
 
-//    onVisibleChanged: if (visible) bringIn.start()
     NumberAnimation {
         id: bringIn; target: box; properties: "scale"; running: false
-        from: 0.0;     to: 1.0; easing {type: Easing.OutBack; overshoot: 1.1}
+        from: 0.0; to: 1.0; easing { type: Easing.OutBack; overshoot: 1.1 }
     }
-//    visible: false
 
     Component.onCompleted: { bringIn.start() }
 
     ColumnLayout {
         id: box; spacing: 0
-//        readonly property alias fontSize: wrapper.fontSize
         PlayInfoText { content: engine.media.name }
         PlayInfoText {
-            readonly property int rate: engine.rate*1000
-            content: qsTr("State: %2/%3(%4%) ×%5 [%1]").arg(engine.stateText)
-                .arg(Format.time(engine.time_s*1000)).arg(Format.time(engine.end_s*1000))
-                .arg(engine.time_s > 0 && engine.end_s > 0 ? (rate/10) : 0)
-                .arg(engine.speed.toFixed(2))
+            readonly property real percent: Alg.trunc(engine.rate*100, 1)
+            readonly property string name: qsTr("State")
+            readonly property string end: Format.time(engine.end_s*1000)
+            readonly property string speed: engine.speed.toFixed(2) + "x";
+            content: name + ": " + Format.time(engine.time_s*1000) + '/' + end
+                     + '(' + (engine.time_s > 0 && engine.end_s > 0 ? percent : 0).toFixed(1) + "%), "
+                     + speed + " [" + engine.stateText + ']'
         }
         PlayInfoText {
             readonly property int sync: engine.avSync
-            content: qsTr("Audio/Video Sync: %1%2ms")
-                .arg(sync < 0 ? "" : sync > 0 ? "+" : "±").arg(sync);
+            readonly property string sign: sync < 0 ? "" : sync > 0 ? "+" : "±"
+            readonly property string name: qsTr("Audio/Video Sync")
+            content: name + ": " + sign + engine.avSync + "ms"
         }
 
         PlayInfoText { }
 
         PlayInfoText {
-            property real usage: App.cpu.usage
-            content: qsTr("CPU Usage: %1%(avg. %2%/core)")
-                .arg(usage.toFixed(0)).arg((usage/App.cpu.cores).toFixed(1));
+            readonly property real usage: Alg.trunc(App.cpu.usage, 1)
+            readonly property real avg: usage/App.cpu.cores
+            readonly property string name: qsTr("CPU Usage")
+            readonly property string sub: qsTr("avg. per-core")
+            content: formatBracket(name, usage.toFixed(1) + "%", sub + ": " + avg.toFixed(1) + '%')
         }
         PlayInfoText {
-            property real usage: App.memory.usage
-            content: qsTr("RAM Usage: %3MiB(%4% of %5GiB)")
-                .arg(usage.toFixed(1)).arg((usage/App.memory.total*100.0).toFixed(1))
-                .arg((App.memory.total/1024.0).toFixed(2));
+            readonly property real usage: Alg.trunc(App.memory.usage, 1)
+            readonly property string name: qsTr("RAM Usage")
+            readonly property string suffix: "%/" + (App.memory.total/1024.0).toFixed(2) + "GiB"
+            content: formatBracket(name, usage.toFixed(1) + "MiB", (usage/App.memory.total*100.0).toFixed(1) + suffix)
         }
         PlayInfoText {
             readonly property int used: engine.cacheUsed
             readonly property int size: engine.cacheSize
-            readonly property real percent: 100.0*used/size
-            content: qsTr("Cache: %1")
-                .arg(!size ? qsTr("Unavailable")
-                           : qsTr("%1KiB(%3% of %2KiB)").arg(used).arg(size)
-                                .arg(percent.toFixed(1)))
+            readonly property real percent: size ? Alg.trunc(100.0*used/size, 1) : 0
+            readonly property string suffix: "%/" + Format.integerNA(size) + "KiB"
+            readonly property string name: qsTr("Cache")
+            content: formatBracket(name, !size ? qsTr("Unavailable") : (used + "KiB"),
+                                   Format.fixedNA(percent, 1) + suffix);
         }
 
         PlayInfoText { }
@@ -66,34 +68,29 @@ Item {
         PlayInfoVideoOutput { format: video.output; name: qsTr("Output  ") }
         PlayInfoVideoOutput { format: video.renderer; name: qsTr("Renderer") }
 
-        function activationText(s) {
-            switch (s) {
-            case Engine.Unavailable: return qsTr("Unavailable")
-            case Engine.Deactivated: return qsTr("Deactivated")
-            case Engine.Activated:   return qsTr("Activated")
-            default:                 return ""
-            }
+        PlayInfoText {
+            readonly property string name: qsTr("Est. Frame Number")
+            readonly property string count: '/' + video.frameCount
+            content: name + ": " + video.frameNumber + count
+        }
+        PlayInfoText {
+            readonly property string name: qsTr("Dropped Frames")
+            content: formatBracket(name, video.droppedFrames, video.droppedFps.toFixed(3) + "fps")
+        }
+        PlayInfoText {
+            readonly property string name: qsTr("Delayed Frames")
+            content: formatBracket(name, video.delayedFrames, video.delayedTime.toFixed(3) + "ms")
         }
 
         PlayInfoText {
-            content: qsTr("Est. Frame Number: %1/%2").arg(video.frameNumber).arg(video.frameCount);
-        }
-        PlayInfoText {
-            content: qsTr("Dropped Frames: %1 (%2fps)").arg(video.droppedFrames).arg(video.droppedFps.toFixed(3));
-        }
-        PlayInfoText {
-            content: qsTr("Delayed Frames: %1 (%2ms)").arg(video.delayedFrames).arg(video.delayedTime);
-        }
-
-        PlayInfoText {
+            readonly property string name: qsTr("Hardware Acceleration")
             readonly property var hw: video.hwacc
-            content: qsTr("Hardware Acceleration: %1[%2]")
-                .arg(box.activationText(hw.state)).arg(Format.textNA(hw.driver))
+            content: formatBracket(name, activationText(hw.state), Format.textNA(hw.driver))
         }
 
         PlayInfoText {
-            readonly property var hw: video.hwacc
-            content: qsTr("Deinterlacer: %3").arg(box.activationText(video.deinterlacer))
+            readonly property string name: qsTr("Deinterlacer")
+            content: name + ": " + activationText(video.deinterlacer)
         }
 
         PlayInfoText { }
@@ -103,24 +100,22 @@ Item {
         PlayInfoAudioOutput { format: audio.output; name: qsTr("Output  ") }
         PlayInfoAudioOutput { format: audio.renderer;  name: qsTr("Renderer") }
         PlayInfoText {
-            readonly property real gain: audio.normalizer * 100
-            content: qsTr("Normalizer: %1[%2%]")
-                .arg(gain < 0 ? qsTr("Deactivated") : qsTr("Activated"))
-                .arg(gain < 0 ? "--" : gain.toFixed(1))
+            readonly property real gain: Alg.trunc(audio.normalizer * 100, 1)
+            readonly property string name: qsTr("Normalizer")
+            content: name + ": "
+                     + (gain < 0 ? qsTr("Deactivated") : qsTr("Activated"))
+                     + '[' + Format.fixedNA(gain, 1, 0) + "%]"
         }
         PlayInfoText {
-            content: qsTr("Driver: %1[%2]")
-                .arg(audio.driver.length > 0 ? audio.driver : "--")
-                .arg(audio.device)
+            readonly property string name: qsTr("Driver")
+            content: formatBracket(name, Format.textNA(audio.driver), audio.device)
         }
 
         PlayInfoText { }
 
         Component {
             id: subtitleTrack
-            PlayInfoTrack {
-                name: qsTr("Subtitle Track")
-            }
+            PlayInfoTrack { name: qsTr("Subtitle Track") }
         }
 
         Repeater {
@@ -128,13 +123,8 @@ Item {
             Loader {
                 readonly property var data: modelData
                 sourceComponent: subtitleTrack
-                onItemChanged: {
-                    if (item)
-                        item.info = modelData
-                }
+                onItemChanged: { if (item) item.info = modelData }
             }
         }
-
-//        PlayInfoSubtitleList { list: sub.tracks; name: qsTr("Subtitle Track") }
     }
 }
