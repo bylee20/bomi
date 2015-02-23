@@ -94,13 +94,13 @@ PlayEngine::PlayEngine()
             &VideoObject::setFpsManimulation, Qt::QueuedConnection);
 
     connect(d->ac, &AudioController::inputFormatChanged, this,
-            [=] () { d->info.audio.output()->setFormat(d->ac->inputFormat()); });
+            [=] () { d->info.audio.filter()->setFormat(d->ac->inputFormat()); });
     connect(d->ac, &AudioController::outputFormatChanged, this,
-            [=] () { d->info.audio.renderer()->setFormat(d->ac->outputFormat()); });
+            [=] () { d->info.audio.output()->setFormat(d->ac->outputFormat()); });
     connect(d->ac, &AudioController::samplerateChanged, this,
             [=] (int sr) {
-        d->info.audio.input()->setBitrate(d->mpv.get<int>("packet-audio-bitrate"));
-        d->info.audio.renderer()->setSampleRate(sr, true);
+        d->info.audio.decoder()->setBitrate(d->mpv.get<int>("packet-audio-bitrate"));
+        d->info.audio.output()->setSampleRate(sr, true);
     });
     connect(d->ac, &AudioController::gainChanged,
             &d->info.audio, &AudioObject::setNormalizer);
@@ -110,9 +110,9 @@ PlayEngine::PlayEngine()
 
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
-        { d->info.video.renderer()->setFps(d->frames.measure.get()); }, 100000);
+        { d->info.video.output()->setFps(d->frames.measure.get()); }, 100000);
     connect(&d->info.frameTimer, &QTimer::timeout, this, [=] () {
-        d->info.video.input()->setBitrate(d->mpv.get<int>("packet-video-bitrate"));
+        d->info.video.decoder()->setBitrate(d->mpv.get<int>("packet-video-bitrate"));
         d->info.video.setDelayedFrames(d->info.delayed);
         d->info.video.setDroppedFrames(d->mpv.get<int64_t>("vo-drop-frame-count"));
     });
@@ -172,7 +172,7 @@ PlayEngine::PlayEngine()
     _Debug("Initialized");
     d->hook();
     d->mpv.setUpdateCallback([=] ()
-        { d->vr->updateForNewFrame(d->info.video.renderer()->size()); });
+        { d->vr->updateForNewFrame(d->info.video.output()->size()); });
 }
 
 PlayEngine::~PlayEngine()

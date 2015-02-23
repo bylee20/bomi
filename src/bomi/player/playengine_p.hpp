@@ -166,7 +166,7 @@ struct PlayEngine::Data {
     auto videoSubOptions(const MrlState *s) const -> QByteArray;
     auto updateVideoSubOptions() -> void;
     auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
-    auto displaySize() const { return info.video.renderer()->size(); }
+    auto displaySize() const { return info.video.output()->size(); }
     auto post(State state) -> void { _PostEvent(p, StateChange, state); }
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
 

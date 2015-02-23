@@ -173,7 +173,7 @@ auto MainWindow::Data::plugEngine() -> void
 
     connect(e.media(), &MediaObject::nameChanged, p, [=] () { updateTitle(); });
 
-    connect(e.video()->renderer(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
+    connect(e.video()->output(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
         { if (pref.fit_to_video() && !s.isEmpty()) setVideoSize(s); });
     auto showSize = [this] {
         const auto num = [] (qreal n) { return _N(qRound(n)); };

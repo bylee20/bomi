@@ -176,7 +176,7 @@ void VideoObject::setDroppedFrames(int f)
 
 auto VideoObject::delayedTime() const -> qreal
 {
-    double fps = m_output.fps();
+    double fps = m_filter.fps();
     if (m_fpsMp < 1)
         ;
     else if (m_fpsMp < 10)

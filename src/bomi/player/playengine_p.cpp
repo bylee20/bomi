@@ -381,7 +381,7 @@ auto PlayEngine::Data::observe() -> void
         if (_Change(time_s, time/1000))
             emit p->time_sChanged();
         sr->render(time);
-        info.video.setFrameNumber(calcFrameCount(info.video.input()->fps(), time - begin));
+        info.video.setFrameNumber(calcFrameCount(info.video.decoder()->fps(), time - begin));
     });
     mpv.observeTime("time-start", begin, [=] () {
         emit p->beginChanged(begin);
@@ -394,7 +394,7 @@ auto PlayEngine::Data::observe() -> void
         if (_Change(duration_s, duration/1000))
             emit p->duration_sChanged();
         updateChapter(mpv.get<int>("chapter"));
-        info.video.setFrameCount(calcFrameCount(info.video.input()->fps(), duration));
+        info.video.setFrameCount(calcFrameCount(info.video.decoder()->fps(), duration));
     });
 
     mpv.observe("chapter-list", [=] () {
@@ -459,26 +459,26 @@ auto PlayEngine::Data::observe() -> void
 
     mpv.observe("video-codec", [=] (MpvLatin1 &&c) { info.video.codec()->parse(c); });
     mpv.observe("fps", [=] (double fps) {
-        info.video.input()->setFps(fps);
-        info.video.output()->setFps(fps);
+        info.video.decoder()->setFps(fps);
+        info.video.filter()->setFps(fps);
         sr->setFPS(fps);
         info.video.setFrameCount(calcFrameCount(fps, duration));
         info.video.setFrameNumber(calcFrameCount(fps, time - begin));
     });
     mpv.observe("width", [=] (int w) {
-        auto input = info.video.input();
+        auto input = info.video.decoder();
         input->setWidth(w);
         input->setBppSize(input->size());
     });
     mpv.observe("height", [=] (int h) {
-        auto input = info.video.input();
+        auto input = info.video.decoder();
         input->setHeight(h);
         input->setBppSize(input->size());
     });
-    mpv.observe("video-bitrate", [=] (int bps) { info.video.input()->setBitrate(bps); });
-    mpv.observe("video-format", [=] (MpvLatin1 &&f) { info.video.input()->setType(f); });
+    mpv.observe("video-bitrate", [=] (int bps) { info.video.decoder()->setBitrate(bps); });
+    mpv.observe("video-format", [=] (MpvLatin1 &&f) { info.video.decoder()->setType(f); });
     QRegularExpression rx(uR"(Video decoder: ([^\n]*))"_q);
-    auto decoderOutput = [=] (const char *name) -> QString {
+    auto filterInput = [=] (const char *name) -> QString {
         auto m = rx.match(mpv.get_osd(name));
         if (!m.hasMatch() || m.capturedRef(1) == "unknown"_a)
             return u"Autoselect"_q;
@@ -498,10 +498,10 @@ auto PlayEngine::Data::observe() -> void
     mpv.observe("video-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
         auto &video = info.video;
-        auto info = video.output();
+        auto info = video.filter();
         setParams(info, params, u"w"_q, u"h"_q);
-        info->setRange(findEnum<ColorRange>(decoderOutput("colormatrix-input-range")));
-        info->setSpace(findEnum<ColorSpace>(decoderOutput("colormatrix")));
+        info->setRange(findEnum<ColorRange>(filterInput("colormatrix-input-range")));
+        info->setSpace(findEnum<ColorSpace>(filterInput("colormatrix")));
         const QString api = mpv.get<MpvLatin1>("hwdec");
         auto hwState = [&] () {
             if (!hwdec)
@@ -519,18 +519,18 @@ auto PlayEngine::Data::observe() -> void
     });
     mpv.observe("video-out-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
-        auto info = this->info.video.renderer();
+        auto info = this->info.video.output();
         setParams(info, params, u"dw"_q, u"dh"_q);
         info->setRange(findEnum<ColorRange>(params[u"colorlevels"_q].toString()));
         info->setSpace(findEnum<ColorSpace>(params[u"colormatrix"_q].toString()));
     });
 
     mpv.observe("audio-codec", [=] (MpvLatin1 &&c) { info.audio.codec()->parse(c); });
-    mpv.observe("audio-format", [=] (MpvLatin1 &&f) { info.audio.input()->setType(f); });
-    mpv.observe("audio-bitrate", [=] (int bps) { info.audio.input()->setBitrate(bps); });
-    mpv.observe("audio-samplerate", [=] (int s) { info.audio.input()->setSampleRate(s, false); });
+    mpv.observe("audio-format", [=] (MpvLatin1 &&f) { info.audio.decoder()->setType(f); });
+    mpv.observe("audio-bitrate", [=] (int bps) { info.audio.decoder()->setBitrate(bps); });
+    mpv.observe("audio-samplerate", [=] (int s) { info.audio.decoder()->setSampleRate(s, false); });
     mpv.observe("audio-channels", [=] (int n)
-        { info.audio.input()->setChannels(QString::number(n) % "ch"_a, n); });
+        { info.audio.decoder()->setChannels(QString::number(n) % "ch"_a, n); });
     mpv.observe("audio-device", [=] (MpvLatin1 &&d) { info.audio.setDevice(d); });
     mpv.observe("current-ao", [=] (MpvLatin1 &&ao) { info.audio.setDriver(ao); });
 }
@@ -712,7 +712,7 @@ auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
 
     _Trace("PlayEngine::Data::renderVideoFrame(): "
            "render queued frame(%%), avgfps: %%",
-           fbo->size(), info.video.renderer()->fps());
+           fbo->size(), info.video.output()->fps());
 
     if (snapshot) {
         this->takeSnapshot();
@@ -889,7 +889,7 @@ auto PlayEngine::Data::clearTimings() -> void
     frames.measure.reset();
     info.video.setDroppedFrames(0);
     info.video.setDelayedFrames(0);
-    info.video.renderer()->setFps(0);
+    info.video.output()->setFps(0);
     frames.drawn = 0;
 }
 

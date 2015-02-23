@@ -64,9 +64,9 @@ Item {
         PlayInfoText { }
 
         PlayInfoTrack { id: ti; name: qsTr("Video Track"); info: video }
-        PlayInfoVideoOutput { format: video.input; name: qsTr("Input   ") }
-        PlayInfoVideoOutput { format: video.output; name: qsTr("Output  ") }
-        PlayInfoVideoOutput { format: video.renderer; name: qsTr("Renderer") }
+        PlayInfoVideoOutput { format: video.decoder; name: qsTr("Decoder") }
+        PlayInfoVideoOutput { format: video.filter;  name: qsTr("Filter ") }
+        PlayInfoVideoOutput { format: video.output;  name: qsTr("Output ") }
 
         PlayInfoText {
             readonly property string name: qsTr("Est. Frame Number")
@@ -96,15 +96,14 @@ Item {
         PlayInfoText { }
 
         PlayInfoTrack { name: qsTr("Audio Track"); info: audio }
-        PlayInfoAudioOutput { format: audio.input; name: qsTr("Input   ") }
-        PlayInfoAudioOutput { format: audio.output; name: qsTr("Output  ") }
-        PlayInfoAudioOutput { format: audio.renderer;  name: qsTr("Renderer") }
+        PlayInfoAudioOutput { format: audio.decoder; name: qsTr("Decoder") }
+        PlayInfoAudioOutput { format: audio.filter;  name: qsTr("Filter ") }
+        PlayInfoAudioOutput { format: audio.output;  name: qsTr("Output ") }
         PlayInfoText {
             readonly property real gain: Alg.trunc(audio.normalizer * 100, 1)
+            readonly property int state: gain < 0 ? Engine.Deactivated : Engine.Activated
             readonly property string name: qsTr("Normalizer")
-            content: name + ": "
-                     + (gain < 0 ? qsTr("Deactivated") : qsTr("Activated"))
-                     + '[' + Format.fixedNA(gain, 1, 0) + "%]"
+            content: formatBracket(name, activationText(state), Format.fixedNA(gain, 1, 0) + "%")
         }
         PlayInfoText {
             readonly property string name: qsTr("Driver")

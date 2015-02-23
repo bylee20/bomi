@@ -130,19 +130,19 @@ private:
 
 class AudioObject : public AvCommonObject {
     Q_OBJECT
-    Q_PROPERTY(AudioFormatObject *input READ input CONSTANT FINAL)
+    Q_PROPERTY(AudioFormatObject *decoder READ decoder CONSTANT FINAL)
+    Q_PROPERTY(AudioFormatObject *filter READ filter CONSTANT FINAL)
     Q_PROPERTY(AudioFormatObject *output READ output CONSTANT FINAL)
-    Q_PROPERTY(AudioFormatObject *renderer READ renderer CONSTANT FINAL)
     Q_PROPERTY(double normalizer READ normalizer NOTIFY normalizerChanged)
     Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
     Q_PROPERTY(QString device READ device NOTIFY deviceChanged)
 public:
-    auto input() const -> const AudioFormatObject* { return &m_input; }
+    auto decoder() const -> const AudioFormatObject* { return &m_decoder; }
+    auto filter() const -> const AudioFormatObject* { return &m_filter; }
     auto output() const -> const AudioFormatObject* { return &m_output; }
-    auto renderer() const -> const AudioFormatObject* { return &m_renderer; }
-    auto input() -> AudioFormatObject* { return &m_input; }
+    auto decoder() -> AudioFormatObject* { return &m_decoder; }
+    auto filter() -> AudioFormatObject* { return &m_filter; }
     auto output() -> AudioFormatObject* { return &m_output; }
-    auto renderer() -> AudioFormatObject* { return &m_renderer; }
     auto normalizer() const -> double { return m_gain; }
     auto setNormalizer(double gain) -> void
         { if (_Change(m_gain, gain)) emit normalizerChanged(); }
@@ -156,7 +156,7 @@ signals:
     void driverChanged();
     void deviceChanged();
 private:
-    AudioFormatObject m_input, m_output, m_renderer;
+    AudioFormatObject m_decoder, m_filter, m_output;
     double m_gain = -1.0;
     QString m_driver, m_device;
 };
@@ -237,9 +237,9 @@ private:
 
 class VideoObject : public AvCommonObject {
     Q_OBJECT
-    Q_PROPERTY(VideoFormatObject *input READ input CONSTANT FINAL)
+    Q_PROPERTY(VideoFormatObject *decoder READ decoder CONSTANT FINAL)
+    Q_PROPERTY(VideoFormatObject *filter READ filter CONSTANT FINAL)
     Q_PROPERTY(VideoFormatObject *output READ output CONSTANT FINAL)
-    Q_PROPERTY(VideoFormatObject *renderer READ renderer CONSTANT FINAL)
     Q_PROPERTY(VideoHwAccObject *hwacc READ hwacc CONSTANT FINAL)
     Q_PROPERTY(int deinterlacer READ deinterlacer NOTIFY deinterlacerChanged)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
@@ -250,12 +250,12 @@ class VideoObject : public AvCommonObject {
     Q_PROPERTY(qint64 frameCount READ frameCount NOTIFY frameCountChanged)
 public:
     VideoObject();
-    auto input() const -> const VideoFormatObject* { return &m_input; }
-    auto renderer() const -> const VideoFormatObject* { return &m_renderer; }
+    auto decoder() const -> const VideoFormatObject* { return &m_decoder; }
     auto output() const -> const VideoFormatObject* { return &m_output; }
-    auto input() -> VideoFormatObject* { return &m_input; }
-    auto renderer() -> VideoFormatObject* { return &m_renderer; }
+    auto filter() const -> const VideoFormatObject* { return &m_filter; }
+    auto decoder() -> VideoFormatObject* { return &m_decoder; }
     auto output() -> VideoFormatObject* { return &m_output; }
+    auto filter() -> VideoFormatObject* { return &m_filter; }
     auto hwacc() -> VideoHwAccObject* { return &m_hwacc; }
     auto hwacc() const -> const VideoHwAccObject* { return &m_hwacc; }
     auto deinterlacer() const -> int { return m_deint; }
@@ -285,7 +285,7 @@ signals:
     void delayedFramesChanged();
     void delayedTimeChanged();
 private:
-    VideoFormatObject m_input, m_output, m_renderer;
+    VideoFormatObject m_decoder, m_filter, m_output;
     VideoHwAccObject m_hwacc;
     int m_deint = 0, m_dropped = 0, m_delayed = 0;
     qreal m_droppedFps = 0.0, m_fpsMp = 1;
