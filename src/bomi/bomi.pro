@@ -551,4 +551,5 @@ DISTFILES += \
     imports/bomi/TextStyle.qml \
     skins/air/bomi.qml \
     skins/air/ImageButton.qml \
-    skins/air/IconTextButton.qml
+    skins/air/IconTextButton.qml \
+    imports/bomi/PlayInfoAvOutput.qml

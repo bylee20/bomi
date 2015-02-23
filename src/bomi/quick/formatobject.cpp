@@ -78,3 +78,13 @@ QString FormatObject::sizeNA(const QSizeF &s, int points, const QString &na)
 {
     return sizeNA(s.width(), s.height(), points, na);
 }
+
+QString FormatObject::integerNA(int n, const QString &suffix, int min, const QString &na)
+{
+    return integerNA(n, min, na) % suffix;
+}
+
+QString FormatObject::fixedNA(qreal n, int points, const QString &suffix, qreal min, const QString &na)
+{
+    return fixedNA(n, points, min, na) % suffix;
+}
