@@ -572,12 +572,14 @@ RootMenu::RootMenu()
 
         d->separator();
 
+        d->action(u"override"_q, QT_TR_NOOP("Override ASS Style"), true);
         d->enumMenuCheckable<SubtitleDisplay>(true);
         d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Subtitle Alignment"),
                              {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
+        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"), "%1%", 0, 100, 100);
 
         d->separator();
-        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"), "%1%", 0, 100, 100);
+
         d->menuStepReset(u"sync"_q, QT_TR_NOOP("Subtitle Sync"), QT_TR_NOOP("%1sec"), 1e-3);
     });
 

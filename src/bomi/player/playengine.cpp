@@ -52,14 +52,27 @@ PlayEngine::PlayEngine()
 
     connect(&d->params, &MrlState::sub_sync_changed, d->sr, &SubtitleRenderer::setDelay);
     connect(&d->params, &MrlState::sub_hidden_changed, d->sr, &SubtitleRenderer::setHidden);
-    connect(&d->params, &MrlState::sub_position_changed, d->sr,
-            [=] (int pos) { d->sr->setPos(pos * 0.01); });
+    connect(&d->params, &MrlState::sub_position_changed, d->sr, [=] (int pos) {
+        d->sr->setPos(pos * 0.01);
+        if (d->params.sub_style_overriden())
+            d->mpv.setAsync("options/sub-pos", pos);
+        else
+            d->mpv.setAsync("options/sub-pos", 100);
+        d->mpv.update();
+    });
     connect(&d->params, &MrlState::sub_alignment_changed, d->sr, [=] (auto a) {
         d->sr->setTopAligned(a == VerticalAlignment::Top);
         auto orig = d->params.m_mutex;
         d->params.m_mutex = nullptr;
         d->params.set_sub_position(d->sr->pos() * 100);
         d->params.m_mutex = orig;
+    });
+    connect(&d->params, &MrlState::sub_style_overriden_changed, this, [=] (bool override) {
+        if (override)
+            d->mpv.setAsync("options/sub-pos", d->params.sub_position());
+        else
+            d->mpv.setAsync("options/sub-pos", 100);
+        d->mpv.update();
     });
 
     auto set_subs = [=] ()
@@ -389,7 +402,7 @@ auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
     if (!fontStyles.isEmpty())
         family += ":style="_a % fontStyles.join(' '_q);
     const double factor = font.size * 720.0;
-    d->mpv.setAsync("options/sub-text-font", family.toLatin1());
+    d->mpv.setAsync("options/sub-text-font", family.toUtf8());
     d->mpv.setAsync("options/sub-text-font-size", factor);
     const auto &outline = style.outline;
     const auto scaled = [factor] (double v)
@@ -1107,6 +1120,11 @@ auto PlayEngine::subtitleImage(const QRect &rect, QRectF *subRect) const -> QIma
 auto PlayEngine::setSubtitleDisplay(SubtitleDisplay sd) -> void
 {
     d->params.set_sub_display(sd);
+}
+
+auto PlayEngine::setSubtitleStyleOverriden(bool overriden) -> void
+{
+    d->params.set_sub_style_overriden(overriden);
 }
 
 auto PlayEngine::setSubtitleFiles(const QStringList &files,

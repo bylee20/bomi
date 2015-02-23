@@ -566,6 +566,7 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(strack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearSubtitleFiles);
 
+    PLUG_FLAG(sub[u"override"_q], sub_style_overriden, setSubtitleStyleOverriden);
     PLUG_ENUM_CHILD(sub, sub_display, setSubtitleDisplay);
     PLUG_ENUM(sub(u"align"_q), sub_alignment, setSubtitleAlignment);
     PLUG_STEP(sub(u"position"_q).g(), sub_position, setSubtitlePosition);

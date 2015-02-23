@@ -87,6 +87,7 @@ public:
     auto request(mpv_event_id id, Proc proc) -> tmp::enable_if_t<!tmp::func_args<Proc>(), void>
         { request(id, [=] (mpv_event*) -> void { proc(); }); }
     auto setUpdateCallback(std::function<void(void)> &&cb) -> void;
+    auto update() -> void;
     auto render(quint32 fbo, const QSize &size) -> int;
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL() -> void;

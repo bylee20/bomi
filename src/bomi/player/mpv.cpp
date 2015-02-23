@@ -91,6 +91,12 @@ auto Mpv::destroy() -> void
     }
 }
 
+auto Mpv::update() -> void
+{
+    if (d->update)
+        d->update();
+}
+
 auto Mpv::setUpdateCallback(std::function<void ()> &&cb) -> void
 {
     Q_ASSERT(cb);

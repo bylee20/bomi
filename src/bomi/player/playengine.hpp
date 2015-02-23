@@ -175,6 +175,7 @@ public:
     auto autoloadAudioFiles() -> void;
     auto reloadSubtitleFiles(const EncodingInfo &enc, double acc = -1) -> void;
     auto reloadAudioFiles() -> void;
+    auto setSubtitleStyleOverriden(bool override) -> void;
 
     auto setSpeedPercent(int p) -> void;
     auto setAudioSync(int sync) -> void;

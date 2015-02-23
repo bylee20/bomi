@@ -107,6 +107,7 @@ private:
     P_(StreamList, sub_tracks, {StreamSubtitle}, QT_TR_NOOP("Subtitle Tracks"), 1)
     P_(StreamList, sub_tracks_inclusive, {StreamInclusiveSubtitle}, "", 1)
     P_(bool, sub_hidden, false, QT_TR_NOOP("Subtitle Hiding"), 0)
+    P_(bool, sub_style_overriden, false, QT_TR_NOOP("Override ASS Style"), 0)
 public:
     static const int Version = 2;
     MrlState();
