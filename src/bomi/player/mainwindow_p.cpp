@@ -553,7 +553,7 @@ auto MainWindow::Data::applyPref() -> void
     menu(u"play"_q)(u"seek"_q).s(u"seek1"_q)->setStep(p.seek_step1_sec() * 1000);
     menu(u"play"_q)(u"seek"_q).s(u"seek2"_q)->setStep(p.seek_step2_sec() * 1000);
     menu(u"play"_q)(u"seek"_q).s(u"seek3"_q)->setStep(p.seek_step3_sec() * 1000);
-    menu(u"subtitle"_q)(u"position"_q).s()->setStep(p.sub_pos_step());
+    menu(u"subtitle"_q)(u"position"_q).s()->setStep(-p.sub_pos_step());
     menu(u"subtitle"_q)(u"sync"_q).s()->setStep(p.sub_sync_step_sec() * 1000);
     menu(u"video"_q)(u"aspect"_q).s()->setStep(p.aspect_ratio_step() * 100000);
     menu(u"video"_q)(u"color"_q).s(u"brightness"_q)->setStep(p.brightness_step());
