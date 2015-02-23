@@ -54,8 +54,13 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::sub_hidden_changed, d->sr, &SubtitleRenderer::setHidden);
     connect(&d->params, &MrlState::sub_position_changed, d->sr,
             [=] (int pos) { d->sr->setPos(pos * 0.01); });
-    connect(&d->params, &MrlState::sub_alignment_changed, d->sr,
-            [=] (auto a) { d->sr->setTopAligned(a == VerticalAlignment::Top); });
+    connect(&d->params, &MrlState::sub_alignment_changed, d->sr, [=] (auto a) {
+        d->sr->setTopAligned(a == VerticalAlignment::Top);
+        auto orig = d->params.m_mutex;
+        d->params.m_mutex = nullptr;
+        d->params.set_sub_position(d->sr->pos() * 100);
+        d->params.m_mutex = orig;
+    });
 
     auto set_subs = [=] ()
         { d->info.subtitle.setTracks(d->params.sub_tracks(), d->params.sub_tracks_inclusive()); };
