@@ -6,7 +6,7 @@ Rectangle {
     objectName: "logo"
     property bool show: false
     color: "black"
-    visible: App.engine.state === Engine.Stopped || !App.engine.hasVideo
+    visible: true
     Image {
         visible: logo.show
         anchors.fill: parent
@@ -20,5 +20,20 @@ Rectangle {
             width: Math.min(logo.width*0.5, logo.height*0.5, 256)
             height:width
         }
+    }
+    Timer {
+        id: timer
+        repeat: false
+        interval: 500
+        property bool visible: App.engine.state === Engine.Stopped || !App.engine.hasVideo
+        onVisibleChanged: {
+            if (visible) {
+                timer.start()
+            } else {
+                timer.stop()
+                logo.visible = false
+            }
+        }
+        onTriggered: { logo.visible = true }
     }
 }
