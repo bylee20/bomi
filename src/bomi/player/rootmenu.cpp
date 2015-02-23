@@ -394,66 +394,6 @@ RootMenu::RootMenu()
         d->action(u"state"_q, QT_TR_NOOP("Show State"));
     });
 
-    d->menu(u"subtitle"_q, QT_TR_NOOP("Subtitle"), [=] () {
-        d->menu(u"track"_q, QT_TR_NOOP("Subtitle Track"), [=] () {
-            d->group(u"exclusive"_q)->setExclusive(false);
-            d->group(u"inclusive"_q)->setExclusive(false);
-
-            d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
-                    QT_TR_NOOP("Open Subtitle File"));
-            d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
-                    QT_TR_NOOP("Auto-load Subtitle File"));
-            d->menu(u"reload"_q, QT_TR_NOOP("Reload File"), [=] () {
-                d->actionToGroup(u"current"_q, QT_TR_NOOP("Current Encoding"))->setData(-1);
-                d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(0);
-                d->separator();
-                auto g = d->group();
-                for (auto &c : EncodingInfo::categorized()) {
-                    if (c.isEmpty())
-                        continue;
-                    const auto &e = c.front();
-                    auto mkey = e.group().toLower();
-                    auto title = e.group();
-                    if (!e.subgroup().isEmpty()) {
-                        mkey += '-'_q % e.subgroup().toLower();
-                        title += " ("_a % e.subgroup() % ')'_q;
-                    }
-                    d->menu(mkey, "", [&] () {
-                        for (auto &e : c) {
-                            auto a = d->action(e.name().toLower(), "");
-                            a->setText(e.name());
-                            a->setData(e.mib());
-                            g->addAction(a);
-                        }
-                    })->setTitle(title);
-                }
-            });
-            d->desc(d->action(u"clear"_q, QT_TR_NOOP("Clear File")),
-                    QT_TR_NOOP("Clear Subtitle File"));
-
-            d->separator();
-
-            d->desc(d->action(u"cycle"_q, QT_TR_NOOP("Select Next")),
-                    QT_TR_NOOP("Select Next Subtitle"));
-            d->desc(d->action(u"all"_q, QT_TR_NOOP("Select All")),
-                    QT_TR_NOOP("Select All Subtitles"));
-            d->desc(d->action(u"hide"_q, QT_TR_NOOP("Hide"), true),
-                    QT_TR_NOOP("Hide Subtitles"));
-
-            d->separator();
-        })->setEnabled(false);
-
-        d->separator();
-
-        d->enumMenuCheckable<SubtitleDisplay>(true);
-        d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Subtitle Alignment"),
-                             {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
-
-        d->separator();
-        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"), "%1%", 0, 100, 100);
-        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Subtitle Sync"), QT_TR_NOOP("%1sec"), 1e-3);
-    });
-
     d->menu(u"video"_q, QT_TR_NOOP("Video"), [=] () {
         d->menu(u"track"_q, QT_TR_NOOP("Video Track"), [=] () { })->setEnabled(false);
 
@@ -578,6 +518,67 @@ RootMenu::RootMenu()
 
         d->action(u"normalizer"_q, QT_TR_NOOP("Volume Normalizer"), true);
         d->action(u"tempo-scaler"_q, QT_TR_NOOP("Tempo Scaler"), true);
+    });
+
+
+    d->menu(u"subtitle"_q, QT_TR_NOOP("Subtitle"), [=] () {
+        d->menu(u"track"_q, QT_TR_NOOP("Subtitle Track"), [=] () {
+            d->group(u"exclusive"_q)->setExclusive(false);
+            d->group(u"inclusive"_q)->setExclusive(false);
+
+            d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
+                    QT_TR_NOOP("Open Subtitle File"));
+            d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
+                    QT_TR_NOOP("Auto-load Subtitle File"));
+            d->menu(u"reload"_q, QT_TR_NOOP("Reload File"), [=] () {
+                d->actionToGroup(u"current"_q, QT_TR_NOOP("Current Encoding"))->setData(-1);
+                d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(0);
+                d->separator();
+                auto g = d->group();
+                for (auto &c : EncodingInfo::categorized()) {
+                    if (c.isEmpty())
+                        continue;
+                    const auto &e = c.front();
+                    auto mkey = e.group().toLower();
+                    auto title = e.group();
+                    if (!e.subgroup().isEmpty()) {
+                        mkey += '-'_q % e.subgroup().toLower();
+                        title += " ("_a % e.subgroup() % ')'_q;
+                    }
+                    d->menu(mkey, "", [&] () {
+                        for (auto &e : c) {
+                            auto a = d->action(e.name().toLower(), "");
+                            a->setText(e.name());
+                            a->setData(e.mib());
+                            g->addAction(a);
+                        }
+                    })->setTitle(title);
+                }
+            });
+            d->desc(d->action(u"clear"_q, QT_TR_NOOP("Clear File")),
+                    QT_TR_NOOP("Clear Subtitle File"));
+
+            d->separator();
+
+            d->desc(d->action(u"cycle"_q, QT_TR_NOOP("Select Next")),
+                    QT_TR_NOOP("Select Next Subtitle"));
+            d->desc(d->action(u"all"_q, QT_TR_NOOP("Select All")),
+                    QT_TR_NOOP("Select All Subtitles"));
+            d->desc(d->action(u"hide"_q, QT_TR_NOOP("Hide"), true),
+                    QT_TR_NOOP("Hide Subtitles"));
+
+            d->separator();
+        })->setEnabled(false);
+
+        d->separator();
+
+        d->enumMenuCheckable<SubtitleDisplay>(true);
+        d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Subtitle Alignment"),
+                             {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
+
+        d->separator();
+        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"), "%1%", 0, 100, 100);
+        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Subtitle Sync"), QT_TR_NOOP("%1sec"), 1e-3);
     });
 
     d->menu(u"tool"_q, QT_TR_NOOP("Tools"), [=] () {
