@@ -5,7 +5,6 @@ DECLARE_LOG_CONTEXT(Main)
 namespace OGL { auto check() -> void; }
 
 int main(int argc, char **argv) {
-    qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
 #ifdef Q_OS_LINUX
     auto gtk_disable_setlocale
             = (void(*)(void))QLibrary::resolve(u"gtk-x11-2.0"_q,
