@@ -5,10 +5,6 @@
 #include <chrono>
 #include <QQuickItem>
 
-auto reg_playlist_model() -> void {
-    qmlRegisterType<PlaylistModel>();
-}
-
 PlaylistModel::PlaylistModel(QObject *parent)
 : Super(parent) {
     connect(this, &PlaylistModel::modelReset, this, &PlaylistModel::contentWidthChanged);

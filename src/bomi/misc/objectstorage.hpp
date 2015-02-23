@@ -4,9 +4,6 @@
 #include "tmp/type_traits.hpp"
 #include "enum/enums.hpp"
 
-auto operator << (QDataStream &out, const QMap<QString, QString> &map) -> QDataStream&;
-auto operator >> (QDataStream &in, QMap<QString, QString> &map) -> QDataStream&;
-
 class ObjectStorage : public QObject {
 public:
     ObjectStorage(QObject *parent = nullptr);
@@ -86,7 +83,6 @@ public:
             [=] (auto &var) { data->setFromJson(QJsonValue::fromVariant(var)); });
     }
     auto file() const -> QString;
-    static auto registerTypes() -> void;
 private:
     auto checkType(const QMetaObject *mo) const -> bool;
     struct Data;

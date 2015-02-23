@@ -3,10 +3,6 @@
 #include "opengl/opengltexturebinder.hpp"
 #include <QVariantAnimation>
 
-auto reg_busy_icon_item() -> void {
-    qmlRegisterType<BusyIconItem>("bomi", 1, 0, "BusyIcon");
-}
-
 struct ColorRing {
     QColor color;
     QImage image;

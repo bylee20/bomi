@@ -2,11 +2,6 @@
 #include <QQuickItem>
 #include <QNetworkReply>
 
-auto reg_downloader() -> void
-{
-    qmlRegisterType<Downloader>();
-}
-
 struct Downloader::Data {
     Downloader *p = nullptr;
     QUrl url;

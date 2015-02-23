@@ -39,8 +39,6 @@ private:
     bool m_commit = true, m_doing = false;
 };
 
-auto reg_history_model() -> void { qmlRegisterType<HistoryModel>(); }
-
 struct RowCache { Mrl mrl; int row = -1; };
 
 static constexpr auto currentVersion = MrlState::Version + 1;

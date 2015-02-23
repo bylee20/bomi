@@ -1,10 +1,6 @@
 #include "buttonboxitem.hpp"
 #include "dialog/bbox.hpp"
 
-auto reg_button_box_item() -> void {
-    qmlRegisterType<ButtonBoxItem>("bomi", 1, 0, "ButtonBox");
-}
-
 static const char *code = R"(
 import QtQuick 2.2
 

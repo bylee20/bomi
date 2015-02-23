@@ -1,11 +1,5 @@
 #include "settingsobject.hpp"
 
-auto reg_settings_object() -> void {
-    qmlRegisterSingletonType<SettingsObject>(
-        "bomi", 1, 0, "Settings", _QmlSingleton<SettingsObject>
-    );
-}
-
 auto SettingsObject::open(const QString &name) -> void
 {
     if (m_name != name) {

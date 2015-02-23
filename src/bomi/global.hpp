@@ -118,9 +118,6 @@ SIA _MSecToTime(int ms) -> QTime { return QTime::fromMSecsSinceStartOfDay(ms); }
 SIA _MSecToString(int ms, const QString &fmt = u"hh:mm:ss"_q) -> QString
 { return _MSecToTime(ms).toString(fmt); }
 
-template<class T>
-SIA _QmlSingleton(QQmlEngine *, QJSEngine *) -> QObject* { return new T; }
-
 template<class T, typename S = T>
 constexpr SIA _Max() -> S { return (S)std::numeric_limits<T>::max(); }
 

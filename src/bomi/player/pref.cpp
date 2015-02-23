@@ -19,15 +19,6 @@ auto Pref::initialize() -> void
     if (init)
         return;
     init = true;
-    qRegisterMetaType<QVector<QMetaProperty>>();
-    qRegisterMetaType<ChannelLayoutMap>();
-    qRegisterMetaType<QList<MatchString>>();
-    qRegisterMetaType<MouseActionMap>();
-    qRegisterMetaType<AudioNormalizerOption>();
-    qRegisterMetaType<DeintCaps>();
-    qRegisterMetaType<ShortcutMap>();
-    qRegisterMetaType<OsdStyle>();
-    qRegisterMetaType<OS::HwAcc::Api>();
 }
 
 #define PREF_FILE_PATH QString(_WritablePath(Location::Config) % "/pref.json"_a)

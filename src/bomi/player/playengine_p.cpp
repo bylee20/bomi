@@ -13,27 +13,6 @@ SIA findEnum(const QString &mpv) -> T
     return EnumInfo<T>::default_();
 }
 
-auto reg_play_engine() -> void
-{
-    qRegisterMetaType<PlayEngine::State>("State");
-    qRegisterMetaType<Mrl>("Mrl");
-    qRegisterMetaType<QVector<int>>("QVector<int>");
-    qRegisterMetaType<StreamList>("StreamList");
-    qRegisterMetaType<AudioFormat>("AudioFormat");
-    qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Chapter");
-    qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Edition");
-    qmlRegisterType<VideoObject>();
-    qmlRegisterType<AvTrackObject>();
-    qmlRegisterType<VideoFormatObject>();
-    qmlRegisterType<VideoHwAccObject>();
-    qmlRegisterType<AudioFormatObject>();
-    qmlRegisterType<AudioObject>();
-    qmlRegisterType<CodecObject>();
-    qmlRegisterType<MediaObject>("bomi", 1, 0, "Media");
-    qmlRegisterType<SubtitleObject>();
-    qmlRegisterType<PlayEngine>("bomi", 1, 0, "Engine");
-}
-
 class OptionList {
 public:
     OptionList(char join = ',')

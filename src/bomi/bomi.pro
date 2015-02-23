@@ -270,7 +270,8 @@ HEADERS += \
     widget/checklistwidget.hpp \
     subtitle/subtitleviewer.hpp \
     dialog/videocolordialog.hpp \
-    quick/algorithmobject.hpp
+    quick/algorithmobject.hpp \
+    player/main.hpp
 
 SOURCES += \
 	stdafx.cpp \

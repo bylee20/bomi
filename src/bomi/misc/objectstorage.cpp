@@ -182,28 +182,3 @@ auto ObjectStorage::file() const -> QString
 {
     return _WritablePath(Location::Config) % "/objectstorage.ini"_a;
 }
-
-auto ObjectStorage::registerTypes() -> void
-{
-    qRegisterMetaTypeStreamOperators<QMap<QString, QString>>();
-}
-
-auto operator << (QDataStream &out, const QMap<QString, QString> &map) -> QDataStream&
-{
-    out << map.size();
-    for (auto it = map.begin(); it != map.end(); ++it)
-        out << it.key() << it.value();
-    return out;
-}
-
-auto operator >> (QDataStream &in, QMap<QString, QString> &map) -> QDataStream&
-{
-    map.clear();
-    int size = 0; QString key, value;
-    in >> size;
-    for (int i = 0; i < size; ++i) {
-        in >> key >> value;
-        map.insert(key, value);
-    }
-    return in;
-}
