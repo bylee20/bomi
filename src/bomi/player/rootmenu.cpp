@@ -420,7 +420,7 @@ RootMenu::RootMenu()
             d->actionToGroup(u"1.85:1"_q, QT_TR_NOOP("1.85:1 (Wide Vision)"), true, g)->setData(1.85);
             d->actionToGroup(u"2.35:1"_q, QT_TR_NOOP("2.35:1 (CinemaScope)"), true, g)->setData(2.35);
             d->separator();
-            d->stepPair("%1%", 1, 1000000, 10000000, u"adjust"_q)->setTextRate(1e-6);
+            d->stepPair("%1", 1, 1000000, 10000000, u"adjust"_q)->setTextRate(1e-5);
         });
         d->enumMenuCheckable<VideoRatio>(u"crop"_q, QT_TR_NOOP("Crop"), true);
         d->menu(u"align"_q, QT_TR_NOOP("Screen Alignment"), [=] () {

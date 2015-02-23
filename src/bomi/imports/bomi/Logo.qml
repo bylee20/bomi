@@ -36,4 +36,8 @@ Rectangle {
         }
         onTriggered: { logo.visible = true }
     }
+    Component.onCompleted: {
+        if (!timer.visible)
+            visible = false
+    }
 }
