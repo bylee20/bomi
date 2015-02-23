@@ -25,7 +25,7 @@ Rectangle {
         id: timer
         repeat: false
         interval: 500
-        property bool visible: App.engine.state === Engine.Stopped || !App.engine.hasVideo
+        property bool visible: App.engine.stopped || !App.engine.hasVideo
         onVisibleChanged: {
             if (visible) {
                 timer.start()
