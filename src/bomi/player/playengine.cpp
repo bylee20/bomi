@@ -60,13 +60,8 @@ PlayEngine::PlayEngine()
             d->mpv.setAsync("options/sub-pos", 100);
         d->mpv.update();
     });
-    connect(&d->params, &MrlState::sub_alignment_changed, d->sr, [=] (auto a) {
-        d->sr->setTopAligned(a == VerticalAlignment::Top);
-        auto orig = d->params.m_mutex;
-        d->params.m_mutex = nullptr;
-        d->params.set_sub_position(d->sr->pos() * 100);
-        d->params.m_mutex = orig;
-    });
+    connect(&d->params, &MrlState::sub_alignment_changed, d->sr, [=] (auto a)
+        { d->sr->setTopAligned(a == VerticalAlignment::Top); });
     connect(&d->params, &MrlState::sub_style_overriden_changed, this, [=] (bool override) {
         if (override)
             d->mpv.setAsync("options/sub-pos", d->params.sub_position());
@@ -1082,6 +1077,7 @@ auto PlayEngine::setAutoselectMode_locked(bool enable, AutoselectMode mode,
 auto PlayEngine::setSubtitleAlignment(VerticalAlignment a) -> void
 {
     d->params.set_sub_alignment(a);
+    d->params.set_sub_position(d->sr->pos() * 100);
 }
 
 auto PlayEngine::setSubtitlePosition(int pos) -> void
