@@ -549,23 +549,23 @@ auto MainWindow::Data::applyPref() -> void
 
     menu.retranslate();
     menu.setShortcutMap(p.shortcut_map());
-    menu(u"play"_q)(u"speed"_q).s()->setValue(p.steps().speed);
+    menu(u"play"_q)(u"speed"_q).s()->setValue(p.steps().speed_pct);
     menu(u"play"_q)(u"seek"_q).s(u"seek1"_q)->setValue(p.steps().seek1_sec);
     menu(u"play"_q)(u"seek"_q).s(u"seek2"_q)->setValue(p.steps().seek2_sec);
     menu(u"play"_q)(u"seek"_q).s(u"seek3"_q)->setValue(p.steps().seek3_sec);
-    menu(u"subtitle"_q)(u"position"_q).s()->setValue(p.steps().sub_pos);
+    menu(u"subtitle"_q)(u"position"_q).s()->setValue(p.steps().sub_pos_pct);
     menu(u"subtitle"_q)(u"sync"_q).s()->setValue(p.steps().sub_sync_sec);
     menu(u"video"_q)(u"aspect"_q).s()->setValue(p.steps().aspect_ratio);
-    menu(u"video"_q)(u"color"_q).s(u"brightness"_q)->setValue(p.steps().color);
-    menu(u"video"_q)(u"color"_q).s(u"contrast"_q)->setValue(p.steps().color);
-    menu(u"video"_q)(u"color"_q).s(u"saturation"_q)->setValue(p.steps().color);
-    menu(u"video"_q)(u"color"_q).s(u"hue"_q)->setValue(p.steps().color);
-    menu(u"video"_q)(u"color"_q).s(u"red"_q)->setValue(p.steps().color);
-    menu(u"video"_q)(u"color"_q).s(u"green"_q)->setValue(p.steps().color);
-    menu(u"video"_q)(u"color"_q).s(u"blue"_q)->setValue(p.steps().color);
+    menu(u"video"_q)(u"color"_q).s(u"brightness"_q)->setValue(p.steps().color_pct);
+    menu(u"video"_q)(u"color"_q).s(u"contrast"_q)->setValue(p.steps().color_pct);
+    menu(u"video"_q)(u"color"_q).s(u"saturation"_q)->setValue(p.steps().color_pct);
+    menu(u"video"_q)(u"color"_q).s(u"hue"_q)->setValue(p.steps().color_pct);
+    menu(u"video"_q)(u"color"_q).s(u"red"_q)->setValue(p.steps().color_pct);
+    menu(u"video"_q)(u"color"_q).s(u"green"_q)->setValue(p.steps().color_pct);
+    menu(u"video"_q)(u"color"_q).s(u"blue"_q)->setValue(p.steps().color_pct);
     menu(u"audio"_q)(u"sync"_q).s()->setValue(p.steps().audio_sync_sec);
-    menu(u"audio"_q)(u"volume"_q).s()->setValue(p.steps().volume);
-    menu(u"audio"_q)(u"amp"_q).s()->setValue(p.steps().amp);
+    menu(u"audio"_q)(u"volume"_q).s()->setValue(p.steps().volume_pct);
+    menu(u"audio"_q)(u"amp"_q).s()->setValue(p.steps().amp_pct);
 
     theme.set(p.osd_theme());
     theme.set(p.playlist_theme());

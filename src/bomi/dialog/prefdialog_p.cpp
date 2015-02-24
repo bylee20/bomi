@@ -440,22 +440,22 @@ PrefStepTreeWidget::PrefStepTreeWidget(QWidget *p)
     add(seek1_sec, tr("Seek Step 1"));
     add(seek2_sec, tr("Seek Step 2"));
     add(seek3_sec, tr("Seek Step 3"));
-    add(speed, tr("Speed"));
+    add(speed_pct, tr("Speed"));
 
     parent = new QTreeWidgetItem(this);
     parent->setText(0, tr("Video"));
     add(aspect_ratio, tr("Aspect Ratio"));
-    add(color, tr("Color Adjustment"));
+    add(color_pct, tr("Color Adjustment"));
 
     parent = new QTreeWidgetItem(this);
     parent->setText(0, tr("Audio"));
-    add(volume, tr("Volume"));
-    add(amp, tr("Amp"));
+    add(volume_pct, tr("Volume"));
+    add(amp_pct, tr("Amp"));
     add(audio_sync_sec, tr("Sync Delay"));
 
     parent = new QTreeWidgetItem(this);
     parent->setText(0, tr("Subtitle"));
-    add(sub_pos, tr("Position"));
+    add(sub_pos_pct, tr("Position"));
     add(sub_sync_sec, tr("Sync Delay"));
 
     expandAll();

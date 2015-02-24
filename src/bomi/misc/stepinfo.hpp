@@ -36,10 +36,10 @@ struct Steps {
     auto operator == (const Steps &rhs) const -> bool;
     auto operator != (const Steps &rhs) const -> bool
         { return !operator == (rhs); }
-    StepValue seek1_sec, seek2_sec, seek3_sec;
-    StepValue speed, aspect_ratio, color;
-    StepValue volume, amp, audio_sync_sec;
-    StepValue sub_sync_sec, sub_pos;
+    StepValue seek1_sec, seek2_sec, seek3_sec, speed_pct;
+    StepValue aspect_ratio, color_pct;
+    StepValue volume_pct, amp_pct, audio_sync_sec;
+    StepValue sub_sync_sec, sub_pos_pct;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };

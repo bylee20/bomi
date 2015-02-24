@@ -70,14 +70,14 @@ auto Pref::load() -> void
             RES_STEP(seek1_sec, seek_step1_sec);
             RES_STEP(seek2_sec, seek_step2_sec);
             RES_STEP(seek3_sec, seek_step3_sec);
-            RES_STEP(speed, speed_step);
+            RES_STEP(speed_pct, speed_step);
             RES_STEP(aspect_ratio,aspect_ratio_step);
-            RES_STEP(color, brightness_step);
-            RES_STEP(volume, volume_step);
-            RES_STEP(amp, amp_step);
+            RES_STEP(color_pct, brightness_step);
+            RES_STEP(volume_pct, volume_step);
+            RES_STEP(amp_pct, amp_step);
             RES_STEP(sub_sync_sec, sub_sync_step_sec);
             RES_STEP(audio_sync_sec, audio_sync_step_sec);
-            RES_STEP(sub_pos, sub_pos_step);
+            RES_STEP(sub_pos_pct, sub_pos_step);
 #undef RES_STEP
         }
 
