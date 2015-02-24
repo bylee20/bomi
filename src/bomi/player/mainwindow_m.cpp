@@ -260,7 +260,8 @@ auto MainWindow::Data::plugMenu() -> void
     connect(seek[u"begin"_q], &QAction::triggered, p, [=] () { e.seek(e.begin()); });
     connect(seek.g(u"relative"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
-        const int diff = static_cast<StepAction*>(a)->data();
+        const auto action = static_cast<StepAction*>(a);
+        const int diff = action->value().changed(0, action->enum_());
         if (diff && !e.isStopped() && e.isSeekable()) {
             e.relativeSeek(diff);
             showMessage(tr("Seeking"), a->text());
