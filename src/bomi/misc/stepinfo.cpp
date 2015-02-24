@@ -45,8 +45,10 @@ Steps::Steps() {
     TIME(seek3_sec, 60, 1);
     STEP(speed_pct, 10, 99, 1, 0, "%", false, 1e-2);
 
-    STEP(aspect_ratio, 0.0001, 9.99999, 0.0001, 5, "", false, 1);
+    STEP(aspect_ratio, 0.001, 9.99999, 0.001, 5, "", false, 1);
     STEP(color_pct, 1, 99, 1, 0, "%", true, 1);
+    STEP(zoom_pct, 0.1, 99.999, 0.1, 3, "%", false, 1e-2);
+    STEP(video_offset_pct, 0.1, 99.999, 0.1, 3, "%", true, 1e-2);
 
     STEP(volume_pct, 1, 99, 1, 0, "%", false, 1e-2);
     STEP(amp_pct, 10, 99, 1, 0, "%", false, 1e-2);

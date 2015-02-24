@@ -85,6 +85,7 @@ private:
     P_(double, video_crop_ratio, _EnumData(VideoRatio::Source), QT_TR_NOOP("Video Crop Ratio"), 0)
     P_(DeintMode, video_deinterlacing, DeintMode::Auto, QT_TR_NOOP("Video Deinterlacing"), 0)
     P_(Dithering, video_dithering, Dithering::Fruit, QT_TR_NOOP("Video Dithering"), 0)
+    PB(double, video_zoom, 1, 0.1, 10.0, QT_TR_NOOP("Video Screen Zoom"), 0);
     PB(QPointF, video_offset, {}, QPointF(-1, -1), QPointF(1, 1), QT_TR_NOOP("Video Screen Position"), 0)
     P_(VerticalAlignment, video_vertical_alignment, VerticalAlignment::Center, QT_TR_NOOP("Video Vertical Alignment"), 0)
     P_(HorizontalAlignment, video_horizontal_alignment, HorizontalAlignment::Center, QT_TR_NOOP("Video Horizontal Alignment"), 0)

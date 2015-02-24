@@ -23,7 +23,7 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::video_crop_ratio_changed, d->vr, &VideoRenderer::setCropRatio);
     connect(&d->params, &MrlState::sub_display_changed, d->vr,
             [=] (auto sd) { d->vr->setOverlayOnLetterbox(sd == SubtitleDisplay::OnLetterbox); });
-
+    connect(&d->params, &MrlState::video_zoom_changed, this, &PlayEngine::zoomChanged);
     auto setAlignment = [=] () {
         const auto v = _EnumData(d->params.video_vertical_alignment());
         const auto h = _EnumData(d->params.video_horizontal_alignment());
@@ -769,6 +769,16 @@ auto PlayEngine::setVideoVerticalAlignment(VerticalAlignment a) -> void
 auto PlayEngine::setVideoHorizontalAlignment(HorizontalAlignment a) -> void
 {
     d->params.set_video_horizontal_alignment(a);
+}
+
+auto PlayEngine::setVideoZoom(double zoom) -> void
+{
+    d->params.set_video_zoom(zoom);
+}
+
+auto PlayEngine::videoZoom() const -> double
+{
+    return d->params.video_zoom();
 }
 
 auto PlayEngine::setDeintMode(DeintMode mode) -> void

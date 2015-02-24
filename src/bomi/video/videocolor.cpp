@@ -147,19 +147,19 @@ auto VideoColor::formatText(Type type) -> QString
 {
     switch (type) {
     case Brightness:
-        return qApp->translate("VideoColor", "Brightness %1%");
+        return qApp->translate("VideoColor", "Brightness %1");
     case Saturation:
-        return qApp->translate("VideoColor", "Saturation %1%");
+        return qApp->translate("VideoColor", "Saturation %1");
     case Contrast:
-        return qApp->translate("VideoColor", "Contrast %1%");
+        return qApp->translate("VideoColor", "Contrast %1");
     case Hue:
-        return qApp->translate("VideoColor", "Hue %1%");
+        return qApp->translate("VideoColor", "Hue %1");
     case Red:
-        return qApp->translate("VideoColor", "Red %1%");
+        return qApp->translate("VideoColor", "Red %1");
     case Green:
-        return qApp->translate("VideoColor", "Green %1%");
+        return qApp->translate("VideoColor", "Green %1");
     case Blue:
-        return qApp->translate("VideoColor", "Blue %1%");
+        return qApp->translate("VideoColor", "Blue %1");
     default:
         return qApp->translate("VideoColor", "Reset");
     }

@@ -88,8 +88,19 @@ Item {
             height: parent.height - bottomPadding - topPadding
         }
     }
-    onWidthChanged: if (screen) screen.width = width
-    onHeightChanged: if (screen) screen.height = height
+
+    function updateScreenSize() {
+        if (!screen)
+            return
+        screen.width = width * engine.zoom
+        screen.height = height * engine.zoom
+        screen.x = (width - screen.width) * 0.5
+        screen.y = (height - screen.height) * 0.5
+    }
+
+    Connections { target: engine; onZoomChanged: updateScreenSize() }
+    onWidthChanged: updateScreenSize()
+    onHeightChanged: updateScreenSize()
 
     property var showOsdFunc: function(msg){ msgosd.text = msg; msgosd.show(); }
     function showOSD(msg) { showOsdFunc(msg) }

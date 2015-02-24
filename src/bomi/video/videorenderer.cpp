@@ -332,7 +332,7 @@ auto VideoRenderer::updatePolish() -> void
 {
     ShaderRenderItem<OGL::TextureVertex>::updatePolish();
     QRectF letter;
-    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
+    if (_Change(d->vtx, d->frameRect({0, 0, width(), height()}, d->offset, &letter))) {
         d->sizeChecker.start();
         reserve(UpdateGeometry, false);
     }

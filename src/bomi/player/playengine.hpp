@@ -55,6 +55,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(int duration_s READ duration_s NOTIFY duration_sChanged)
     Q_PROPERTY(int time_s READ time_s NOTIFY time_sChanged)
 
+    Q_PROPERTY(qreal zoom READ videoZoom NOTIFY zoomChanged)
     Q_PROPERTY(qreal volume READ volume WRITE setAudioVolume NOTIFY volumeChanged)
     Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
 
@@ -164,6 +165,8 @@ public:
     auto setVideoHighQualityDownscaling(bool on) -> void;
     auto setVideoVerticalAlignment(VerticalAlignment a) -> void;
     auto setVideoHorizontalAlignment(HorizontalAlignment a) -> void;
+    auto setVideoZoom(double zoom) -> void;
+    auto videoZoom() const -> double;
     auto hasVideoFrame() const -> bool;
     auto setVideoOffset(const QPointF &offset) -> void;
     auto videoSizeHint() const -> QSize;
@@ -277,6 +280,7 @@ signals:
     void endChanged();
     void volumeChanged();
     void mutedChanged();
+    void zoomChanged(double zoom);
     void avSyncChanged(int avSync);
     void chaptersChanged();
     void editionsChanged();

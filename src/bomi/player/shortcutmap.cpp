@@ -142,13 +142,17 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
 
        map[u"video/snapshot/quick"_q] << Qt::CTRL + Qt::Key_S;
        map[u"video/snapshot/tool"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_S;
-       map[u"video/move/reset"_q] << Qt::SHIFT + Qt::Key_X;
+       map[u"video/aspect/source"_q] << CTRL+SHIFT+Key_R;
        map[u"video/aspect/increase"_q] << CTRL+SHIFT+Key_A;
        map[u"video/aspect/decrease"_q] << CTRL+SHIFT+Key_D;
-       map[u"video/move/up"_q] << Qt::SHIFT + Qt::Key_W;
-       map[u"video/move/down"_q] << Qt::SHIFT + Qt::Key_S;
-       map[u"video/move/left"_q] << Qt::SHIFT + Qt::Key_A;
-       map[u"video/move/right"_q] << Qt::SHIFT + Qt::Key_D;
+       map[u"video/zoom/reset"_q] << SHIFT + Key_R;
+       map[u"video/zoom/increase"_q] << SHIFT + Key_T;
+       map[u"video/zoom/decrease"_q] << SHIFT + Key_G;
+       map[u"video/move/reset"_q] << Qt::SHIFT + Qt::Key_X;
+       map[u"video/move/vertical+"_q] << Qt::SHIFT + Qt::Key_W;
+       map[u"video/move/vertical-"_q] << Qt::SHIFT + Qt::Key_S;
+       map[u"video/move/horizontal-"_q] << Qt::SHIFT + Qt::Key_A;
+       map[u"video/move/horizontal+"_q] << Qt::SHIFT + Qt::Key_D;
        map[u"video/deinterlacing/cycle"_q] << Qt::CTRL + Qt::Key_D;
        map[u"video/color/editor"_q] << Key_K;
        map[u"video/color/reset"_q] << Qt::Key_O;

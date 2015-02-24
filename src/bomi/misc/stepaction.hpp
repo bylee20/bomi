@@ -13,9 +13,12 @@ public:
     auto setValue(const StepValue &value) -> void
         { if (_Change(m_value, value)) retranslate(); }
     auto value() const -> const StepValue& { return m_value; }
-    auto retranslate() -> void { setText(m_value.text(enum_())); }
+    auto setFormatter(std::function<QString(void)> &&formatter) -> void
+        { m_formatter = formatter; }
+    auto retranslate() -> void;
 private:
     StepValue m_value;
+    std::function<QString(void)> m_formatter;
 };
 
 #endif // STEPACTION_HPP

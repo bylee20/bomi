@@ -119,58 +119,30 @@ struct RootMenu::Data {
     { return reg(parent->addAction(id, checkable), id, tr); }
 
 
-    auto stepPair(const QString &inc, const QString &dec, GetText &&trans,
-                  const QString &pair, int min, int def, int max,
-                  const QString &g = QString()) -> StepActionPair*
+    auto stepPair(const QString &inc, const QString &dec,
+                  const QString &pair, const QString &g = QString()) -> StepActionPair*
     {
         auto p = parent->addStepActionPair(inc, dec, pair, g);
         reg(p->increase(), inc, [=] () { p->increase()->retranslate(); });
         reg(p->decrease(), dec, [=] () { p->decrease()->retranslate(); });
-//        p->setRange(min, def, max);
         return p;
     }
 
-    auto stepPair(const QString &inc, const QString &dec, const char *trans,
-                  const QString &pair, int min, int def, int max,
-                  const QString &g = QString()) -> StepActionPair*
-    {
-        auto p = parent->addStepActionPair(inc, dec, pair, g);
-        reg(p->increase(), inc, [=] () { p->increase()->retranslate(); });
-        reg(p->decrease(), dec, [=] () { p->decrease()->retranslate(); });
-//        p->setRange(min, def, max);
-        return p;
-    }
+    auto stepPair(const QString &g = QString()) -> StepActionPair*
+    { return stepPair(u"increase"_q, u"decrease"_q, QString(), g); }
 
-    auto stepPair(const QString &inc, const QString &dec, const char *trans, const QString &pair,
-                  const QString &g = QString()) -> StepActionPair*
-    { return stepPair(inc, dec, trans, pair, _Min<int>(), 0, _Max<int>(), g); }
-
-    auto stepPair(const char *f, int min, int def, int max,
-                  const QString &g = QString()) -> StepActionPair*
-    { return stepPair(u"increase"_q, u"decrease"_q, f, QString(), min, def, max, g); }
-
-    auto stepReset(const char *format, int min, int def, int max,
-                   const QString &g = u""_q) -> StepActionPair*
+    auto stepReset(const QString &g = u""_q) -> StepActionPair*
     {
         auto reset = new StepAction(ChangeValue::Reset);
-//        reset->setRange(min, def, max);
         parent->addActionToGroup(reset, u"reset"_q, g);
-        reg(reset, u"reset"_q, [=] () { reset->setText(tr(format)); });
+        reg(reset, u"reset"_q, [=] () { reset->setText(tr("Reset")); });
         separator();
-        return stepPair(format, min, def, max, g);
+        return stepPair(g);
     }
 
-    auto stepReset(const char *trans, const QString &g = QString()) -> StepActionPair*
-    { return stepReset(trans, _Min<int>(), 0, _Max<int>(), g); }
-
     auto menuStepReset(const QString &key, const char *tr,
-                       const char *format, int min, int def, int max,
                        const QString &g = u""_q) -> Menu*
-    { return menu(key, tr, [=] () { stepReset(format, min, def, max, g); }); }
-
-    auto menuStepReset(const QString &key, const char *tr, const char *format,
-                       qreal r = 0.0, const QString &g = QString()) -> Menu*
-    { return menu(key, tr, [=] () { stepReset(format, g); }); }
+    { return menu(key, tr, [=] () { stepReset(g); }); }
 
     template<class T>
     using EnumItemVector = QVector<const typename EnumInfo<T>::Item*>;
@@ -342,7 +314,7 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"), "%1%", 10, 100, 1000);
+        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"));
 
         d->menu(u"repeat"_q, QT_TR_NOOP("A-B Repeat"), [=] () {
             d->actionToGroup(u"range"_q, QT_TR_NOOP("Set Range to Current Time"))->setData(int('r'));
@@ -361,7 +333,7 @@ RootMenu::RootMenu()
             const QString forward(u"forward%1"_q), backward(u"backward%1"_q);
             const QString seekStep(u"seek%1"_q);
             for (int i = 1; i <= 3; ++i) {
-                d->stepPair(forward.arg(i), backward.arg(i), QT_TR_NOOP("%1sec"), seekStep.arg(i), u"relative"_q);
+                d->stepPair(forward.arg(i), backward.arg(i), seekStep.arg(i), u"relative"_q);
             }
 
             d->separator();
@@ -417,17 +389,29 @@ RootMenu::RootMenu()
             d->actionToGroup(u"1.85:1"_q, QT_TR_NOOP("1.85:1 (Wide Vision)"), true, g)->setData(1.85);
             d->actionToGroup(u"2.35:1"_q, QT_TR_NOOP("2.35:1 (CinemaScope)"), true, g)->setData(2.35);
             d->separator();
-            d->stepPair("%1", 1, 1000000, 10000000, u"adjust"_q);
+            d->stepPair(u"adjust"_q);
         });
         d->enumMenuCheckable<VideoRatio>(u"crop"_q, QT_TR_NOOP("Crop"), true);
-//        d->menuStepReset(u"zoom"_q, QT_TR_NOOP("Zoom"), 0, 100, 200, true);
+        d->menuStepReset(u"zoom"_q, QT_TR_NOOP("Zoom"));
+
+        d->menu(u"move"_q, QT_TR_NOOP("Screen Position"), [=] () {
+            d->action(u"reset"_q, QT_TR_NOOP("Reset"));
+            d->separator();
+            auto add = [&] (const QString &pre, const char *format) -> void
+            {
+                const auto p = d->stepPair(pre % '+'_q, pre % '-'_q, pre, pre);
+                p->setFormatter([=] () { return tr(format); });
+            };
+            add(u"horizontal"_q, QT_TR_NOOP("Horizontally %1"));
+            d->separator();
+            add(u"vertical"_q, QT_TR_NOOP("Vertically %1"));
+        });
 
         d->menu(u"align"_q, QT_TR_NOOP("Screen Alignment"), [=] () {
             d->enumActionsCheckable<VerticalAlignment>(false);
             d->separator();
             d->enumActionsCheckable<HorizontalAlignment>(false);
         });
-        d->menu(u"move"_q, QT_TR_NOOP("Screen Position"), [=] () { d->enumActions<MoveToward>(); });
 
         d->separator();
 
@@ -479,7 +463,8 @@ RootMenu::RootMenu()
             d->separator();
             VideoColor::for_type([=] (VideoColor::Type type) {
                 const auto str = VideoColor::name(type);
-                d->stepPair(str % '+'_q, str % '-'_q, format(type), str, -100, 0, 100, str);
+                const auto pair = d->stepPair(str % '+'_q, str % '-'_q, str, str);
+                pair->setFormatter([=]() { return VideoColor::formatText(type); });
             });
         });
     });
@@ -500,16 +485,16 @@ RootMenu::RootMenu()
                     QT_TR_NOOP("Select Next Audio Track"));
             d->separator();
         })->setEnabled(false);
-        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Audio Sync"), QT_TR_NOOP("%1sec"), 1e-3);
+        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Audio Sync"));
 
         d->separator();
 
         d->menu(u"volume"_q, QT_TR_NOOP("Volume"), [=] () {
             d->action(u"mute"_q, QT_TR_NOOP("Mute"), true);
             d->separator();
-            d->stepPair("%1%", 0, 100, 100);
+            d->stepPair();
         });
-        d->menuStepReset(u"amp"_q, QT_TR_NOOP("Amp"), "%1%", 10, 100, 1000);
+        d->menuStepReset(u"amp"_q, QT_TR_NOOP("Amp"));
         d->action(u"equalizer"_q, QT_TR_NOOP("Equalizer"));
         d->enumMenuCheckable<ChannelLayout>(true);
 
@@ -575,11 +560,11 @@ RootMenu::RootMenu()
         d->enumMenuCheckable<SubtitleDisplay>(true);
         d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Subtitle Alignment"),
                              {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
-        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"), "%1%", 0, 100, 100);
+        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"));
 
         d->separator();
 
-        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Subtitle Sync"), QT_TR_NOOP("%1sec"), 1e-3);
+        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Subtitle Sync"));
     });
 
     d->menu(u"tool"_q, QT_TR_NOOP("Tools"), [=] () {

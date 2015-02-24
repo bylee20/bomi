@@ -16,6 +16,9 @@ public:
     StepAction *decrease() const { return m_decrease; }
     auto setValue(const StepValue &var) -> void
         { m_increase->setValue(var); m_decrease->setValue(var); }
+    auto setFormatter(std::function<QString(void)> &&var) -> void
+        { m_increase->setFormatter(std::move(var));
+          m_decrease->setFormatter(std::move(var)); }
 private:
     template<class... Args>
     auto apply(void(StepAction::*set)(Args...), Args... t) -> void

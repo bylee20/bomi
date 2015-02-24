@@ -445,6 +445,8 @@ PrefStepTreeWidget::PrefStepTreeWidget(QWidget *p)
     parent = new QTreeWidgetItem(this);
     parent->setText(0, tr("Video"));
     add(aspect_ratio, tr("Aspect Ratio"));
+    add(zoom_pct, tr("Zoom"));
+    add(video_offset_pct, tr("Move Position"));
     add(color_pct, tr("Color Adjustment"));
 
     parent = new QTreeWidgetItem(this);

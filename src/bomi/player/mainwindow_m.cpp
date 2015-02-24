@@ -64,17 +64,17 @@ auto MainWindow::Data::plugStep(ActionGroup *g, const char *prop,
                                 T(MrlState::*get)() const,
                                 void(PlayEngine::*set)(S)) -> void
 {
+    auto &step = static_cast<StepAction*>(g->find(ChangeValue::Increase))->value();
     static_assert(tmp::is_same<T, tmp::remove_const_t<S>>(), "!!!");
-    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+    connect(g, &ActionGroup::triggered, p, [=, &step] (QAction *a) {
         auto action = qobject_cast<StepAction*>(a);
         Q_ASSERT(action);
-        const StepValue &step = action->value();
         T value = T();
         if (action->isReset())
             value = (e.default_()->*get)();
         else
             value = step.changed((e.params()->*get)(), action->enum_());
-        push(value, prop, get, set, [=] (auto) { return step.text((e.params()->*get)()); });
+        push(value, prop, get, set, [=, &step] (auto) { return step.text((e.params()->*get)()); });
     });
 }
 
@@ -321,7 +321,8 @@ auto MainWindow::Data::plugMenu() -> void
     connect(g, &ActionGroup::triggered, p, [=] (QAction *a)
     {
         const auto r = e.videoOutputAspectRatio();
-        push(r + static_cast<StepAction*>(a)->data() * 1e-5,
+        auto action = static_cast<StepAction*>(a);
+        push(action->value().changed(r, action->enum_()),
              e.params()->video_aspect_ratio(),
              [=] (double v) { e.setVideoAspectRatio(v); });
     });
@@ -333,8 +334,6 @@ auto MainWindow::Data::plugMenu() -> void
         push(_EnumData(a->data().value<VideoRatio>()), e.params()->video_aspect_ratio(),
              [=] (double v) { e.setVideoAspectRatio(v); });
     });
-
-//    PLUG_ENUM(video(u"crop"_q), video_crop_ratio, setVideoCropRatio);
 
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
@@ -419,14 +418,29 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_ENUM(video(u"align"_q), video_vertical_alignment, setVideoVerticalAlignment);
     PLUG_ENUM(video(u"align"_q), video_horizontal_alignment, setVideoHorizontalAlignment);
 
-    connect(&video(u"move"_q), &Menu::triggered, p, [=] (QAction *a) {
-        QPointF diff = static_cast<EnumAction<MoveToward>*>(a)->data();
-        diff /= 100.0;
-        if (diff.isNull())
-            e.setVideoOffset(diff);
-        else
-            e.setVideoOffset(e.params()->video_offset() + diff);
+    auto &move = video(u"move"_q);
+    connect(move[u"reset"_q], &QAction::triggered, p, [=] () {
+        push(QPointF(), &MrlState::video_offset, &PlayEngine::setVideoOffset);
     });
+    connect(move.g(u"horizontal"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
+        const auto action = static_cast<StepAction*>(a);
+        QPointF offset = e.params()->video_offset();
+        offset.rx() = action->value().changed(offset.x(), action->enum_());
+        push(offset, &MrlState::video_offset, &PlayEngine::setVideoOffset);
+    });
+    connect(move.g(u"vertical"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
+        const auto action = static_cast<StepAction*>(a);
+        QPointF offset = e.params()->video_offset();
+        offset.ry() = action->value().changed(offset.y(), action->enum_());
+        push(offset, &MrlState::video_offset, &PlayEngine::setVideoOffset);
+    });
+    connect(e.params(), &MrlState::video_offset_changed, p, [=] (const QPointF &offset) {
+        const auto &step = pref.steps().video_offset_pct;
+        showMessage(e.params()->desc_video_offset(),
+                    u"x: %1, y: %2"_q.arg(step.text(offset.x()), step.text(offset.y())));
+    });
+
+    PLUG_STEP(video(u"zoom"_q).g(), video_zoom, setVideoZoom);
 
     PLUG_ENUM_CHILD(video, video_deinterlacing, setDeintMode);
     PLUG_ENUM(video(u"interpolator"_q), video_interpolator, setInterpolator);
