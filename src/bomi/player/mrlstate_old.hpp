@@ -1,10 +1,11 @@
-#ifndef MRLSTATE_HPP
-#define MRLSTATE_HPP
+#ifndef MRLSTATE_OLD_HPP
+#define MRLSTATE_OLD_HPP
 
 #include "mrl.hpp"
 #include "tmp/type_traits.hpp"
 #include "player/streamtrack.hpp"
 #include "video/videocolor.hpp"
+#include "video/interpolatorparams.hpp"
 #include "audio/audioequalizer.hpp"
 #include "enum/interpolator.hpp"
 #include "enum/videoratio.hpp"
@@ -19,37 +20,11 @@
 #include "enum/subtitledisplay.hpp"
 #include <QMetaProperty>
 
-struct CacheInfo {
-    auto get(const Mrl &mrl) const -> int
-    {
-        if (mrl.isLocalFile()) {
-            auto path = mrl.toLocalFile();
-            for (auto &folder : remotes) {
-                if (path.startsWith(folder))
-                    return network;
-            }
-            return local;
-        }
-        if (mrl.isDisc())
-            return disc;
-        return network;
-    }
-    auto playback(int cache) const -> int { return cache * min_playback; }
-    auto seeking(int cache) const -> int { return cache * min_seeking; }
-    int local = 0, network = 25000, disc = 0;
-    double min_playback = 0, min_seeking = 2;
-    QStringList remotes;
-};
-
-SIA qBound(const QPointF &min, const QPointF &val, const QPointF &max) -> QPointF
-{
-    return QPointF(qBound(min.x(), val.x(), max.x()), qBound(min.y(), val.y(), max.y()));
-}
-
-class MrlStateV3;
-
-class MrlState : public QObject {
+class MrlStateV3 : public QObject {
     Q_OBJECT
+    Q_PROPERTY(int audio_track READ __dummy_int WRITE __set_dummy)
+    Q_PROPERTY(bool sub_visible READ __dummy_int WRITE __set_dummy)
+    Q_PROPERTY(QString sub_track READ __dummy_string WRITE __set_dummy)
 #define P_GEN(type, name, def, checked_t, desc, rev) \
 private: \
     type m_##name = def; \
@@ -61,9 +36,7 @@ public: \
     bool set_##name(tmp::cval_t<type> t) \
     { \
         bool ret = false; \
-        if (m_mutex) m_mutex->lock(); \
         ret = _Change(m_##name, checked_t); \
-        if (m_mutex) m_mutex->unlock(); \
         emit name##_changed(m_##name); \
         return ret; \
     } \
@@ -75,17 +48,17 @@ private:
     P_(QString, device, {}, "", 0)
     P_(QDateTime, last_played_date_time, {}, "", 0)
     P_(int, resume_position, 0, "", 0)
-
     P_(int, edition, -1, "", 0)
-    PB(double, play_speed, 1.0, 0.01, 10.0, QT_TR_NOOP("Playback Speed"), 0)
+
+    PB(int, play_speed, 100, 1, 1000, QT_TR_NOOP("Playback Speed"), 0)
 
     P_(Interpolator, video_interpolator, Interpolator::Bilinear, QT_TR_NOOP("Video Interpolator"), 0)
     P_(Interpolator, video_chroma_upscaler, Interpolator::Bilinear, QT_TR_NOOP("Video Chroma Upscaler"), 0)
-    P_(double, video_aspect_ratio, _EnumData(VideoRatio::Source), QT_TR_NOOP("Video Aspect Ratio"), 0)
-    P_(double, video_crop_ratio, _EnumData(VideoRatio::Source), QT_TR_NOOP("Video Crop Ratio"), 0)
+    P_(VideoRatio, video_aspect_ratio, VideoRatio::Source, QT_TR_NOOP("Video Aspect Ratio"), 0)
+    P_(VideoRatio, video_crop_ratio, VideoRatio::Source, QT_TR_NOOP("Video Crop Ratio"), 0)
     P_(DeintMode, video_deinterlacing, DeintMode::Auto, QT_TR_NOOP("Video Deinterlacing"), 0)
     P_(Dithering, video_dithering, Dithering::Fruit, QT_TR_NOOP("Video Dithering"), 0)
-    PB(QPointF, video_offset, {}, QPointF(-1, -1), QPointF(1, 1), QT_TR_NOOP("Video Screen Position"), 0)
+    P_(QPoint, video_offset, {}, QT_TR_NOOP("Video Screen Position"), 0)
     P_(VerticalAlignment, video_vertical_alignment, VerticalAlignment::Center, QT_TR_NOOP("Video Vertical Alignment"), 0)
     P_(HorizontalAlignment, video_horizontal_alignment, HorizontalAlignment::Center, QT_TR_NOOP("Video Horizontal Alignment"), 0)
     P_(VideoColor, video_color, {}, QT_TR_NOOP("Video Color Adjustment"), 0)
@@ -97,8 +70,8 @@ private:
     P_(VideoEffects, video_effects, 0, QT_TR_NOOP("Video Effects"), 0)
     P_(StreamList, video_tracks, {StreamVideo}, "", 0)
 
-    PB(double, audio_volume, 1.0, 0.0, 1.0, QT_TR_NOOP("Audio Volume"), 0)
-    PB(double, audio_amplifier, 1.0, 0.0, 10.0, QT_TR_NOOP("Audio Amp"), 0)
+    PB(int, audio_volume, 100, 0, 100, QT_TR_NOOP("Audio Volume"), 0)
+    PB(int, audio_amplifier, 100, 0, 1000, QT_TR_NOOP("Audio Amp"), 0)
     P_(AudioEqualizer, audio_equalizer, {}, QT_TR_NOOP("Audio Equalizer"), 0)
     P_(int, audio_sync, 0, QT_TR_NOOP("Audio Sync"), 1)
     P_(StreamList, audio_tracks, {StreamAudio},  QT_TR_NOOP("Audio Tracks"), 1)
@@ -109,54 +82,29 @@ private:
 
     P_(VerticalAlignment, sub_alignment, VerticalAlignment::Bottom, QT_TR_NOOP("Subtitle Alignment"), 0)
     P_(SubtitleDisplay, sub_display, SubtitleDisplay::OnLetterbox, QT_TR_NOOP("Subtitle Display"), 0)
-    PB(double, sub_position, 1.0, 0.0, 1.0, QT_TR_NOOP("Subtitle Position"), 0)
+    PB(int, sub_position, 100, 0, 100, QT_TR_NOOP("Subtitle Position"), 0)
     P_(int, sub_sync, 0, QT_TR_NOOP("Subtitle Sync"), 0)
     P_(StreamList, sub_tracks, {StreamSubtitle}, QT_TR_NOOP("Subtitle Tracks"), 1)
     P_(StreamList, sub_tracks_inclusive, {StreamInclusiveSubtitle}, "", 1)
     P_(bool, sub_hidden, false, QT_TR_NOOP("Subtitle Hiding"), 0)
     P_(bool, sub_style_overriden, false, QT_TR_NOOP("Override ASS Style"), 0)
+
+    P_(IntrplParamSetMap, video_interpolator_map, {}, "", 0)
+    P_(IntrplParamSetMap, video_chroma_upscaler_map, {}, "", 0)
 public:
-    static const int Version = 4;
-    MrlState();
-    ~MrlState();
-    struct PropertyInfo { QMetaProperty property; QString description; };
-    auto description(const char *property) const -> QString;
-    auto notifySignal(const char *property) const -> QMetaMethod;
-    auto metaProperty(const char *property) const -> QMetaProperty;
-    auto tracks(StreamType type) const -> const StreamList& { return *m_tracks[type].tracks; }
-    auto select(StreamType type, int id) -> void;
-    auto toJson() const -> QJsonObject;
+    static const int Version = 3;
+//    auto metaProperty(const char *property) const -> QMetaProperty;
     auto setFromJson(const QJsonObject &json) -> bool;
-    auto copyFrom(const MrlState *state) -> void;
-    static auto defaultProperties() -> QStringList;
-    static auto restorableProperties() -> QVector<PropertyInfo>;
     static auto table() -> QString { return "state"_a % _N(Version); }
-    auto import(const MrlStateV3 *v3) -> void;
 private:
     auto notifyAll() const -> void;
     template<class T>
     auto __set_dummy(const T &) { }
     auto __dummy_int() const -> int { return 0; }
     auto __dummy_string() const -> QString { return QString(); }
-    friend class PlayEngine;
-    struct TrackInfo {
-        StreamList *tracks;
-        void(MrlState::*signal)(StreamList);
-    };
-
-    struct Data;
-    Data *d;
-
-    QMutex *m_mutex = nullptr;
-
-    QVector<TrackInfo> m_tracks;
 };
 #undef P_
 #undef P_GEN
 #undef PB
 
-class QSqlDatabase;
-
-auto _ImportMrlStates(int version, QSqlDatabase db) -> QVector<MrlState*>;
-
-#endif // MRLSTATE_HPP
+#endif // MRLSTATE_OLD_HPP

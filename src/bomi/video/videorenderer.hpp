@@ -14,7 +14,7 @@ public:
     VideoRenderer(QQuickItem *parent = 0);
     ~VideoRenderer();
     auto screenRect() const -> QRectF;
-    auto offset() const -> QPoint;
+    auto offset() const -> QPointF;
     auto aspectRatio() const -> double;
     auto outputAspectRatio() const -> double;
     auto cropRatio() const -> double;
@@ -31,12 +31,12 @@ public:
     auto setOverlay(GeometryItem *overlay) -> void;
     auto setOverlayOnLetterbox(bool letterbox) -> void;
     auto setAlignment(Qt::Alignment alignment) -> void;
-    auto setOffset(const QPoint &offset) -> void;
+    auto setOffset(const QPointF &offset) -> void;
     auto setCropRatio(double ratio) -> void;
     auto setRenderFrameFunction(const RenderFrameFunc &func) -> void;
     auto updateForNewFrame(const QSize &displaySize) -> void;
 signals:
-    void offsetChanged(const QPoint &pos);
+    void offsetChanged(const QPointF &pos);
     void screenRectChanged(const QRectF &rect);
     void overlayOnLetterboxChanged(bool on);
     void alignmentChanged(int alignment);

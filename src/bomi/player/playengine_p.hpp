@@ -157,7 +157,7 @@ struct PlayEngine::Data {
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
 
     auto volume(const MrlState *s) const -> double
-        { return s->audio_volume() * s->audio_amplifier() * 1e-3; }
+        { return s->audio_volume() * 100 * s->audio_amplifier() * 100 * 1e-3; }
 
     auto loadfile(const Mrl &mrl, bool resume) -> void;
     auto updateMediaName(const QString &name = QString()) -> void;

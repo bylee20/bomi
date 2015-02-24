@@ -210,7 +210,7 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &play = menu(u"play"_q);
     connect(play[u"stop"_q], &QAction::triggered,
             p, [this] () {e.stop();});
-    PLUG_STEP(play(u"speed"_q).g(), play_speed, setSpeedPercent);
+    PLUG_STEP(play(u"speed"_q).g(), play_speed, setSpeed);
 
     connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
     connect(play(u"repeat"_q).g(), &ActionGroup::triggered,
@@ -325,7 +325,16 @@ auto MainWindow::Data::plugMenu() -> void
              e.params()->video_aspect_ratio(),
              [=] (double v) { e.setVideoAspectRatio(v); });
     });
-    PLUG_ENUM(video(u"crop"_q), video_crop_ratio, setVideoCropRatio);
+
+    auto &crop = video(u"crop"_q);
+    g = crop.g();
+    connect(crop[u"cycle"_q], &QAction::triggered, p, [=] () { triggerNextAction(g->actions()); });
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+        push(_EnumData(a->data().value<VideoRatio>()), e.params()->video_aspect_ratio(),
+             [=] (double v) { e.setVideoAspectRatio(v); });
+    });
+
+//    PLUG_ENUM(video(u"crop"_q), video_crop_ratio, setVideoCropRatio);
 
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
@@ -411,7 +420,8 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_ENUM(video(u"align"_q), video_horizontal_alignment, setVideoHorizontalAlignment);
 
     connect(&video(u"move"_q), &Menu::triggered, p, [=] (QAction *a) {
-        const auto diff = static_cast<EnumAction<MoveToward>*>(a)->data();
+        QPointF diff = static_cast<EnumAction<MoveToward>*>(a)->data();
+        diff /= 100.0;
         if (diff.isNull())
             e.setVideoOffset(diff);
         else
@@ -509,7 +519,7 @@ auto MainWindow::Data::plugMenu() -> void
         eq->show();
     });
     PLUG_STEP(audio(u"sync"_q).g(), audio_sync, setAudioSync);
-    PLUG_STEP(audio(u"amp"_q).g(), audio_amplifier, setAudioAmpPercent);
+    PLUG_STEP(audio(u"amp"_q).g(), audio_amplifier, setAudioAmp);
     PLUG_ENUM_CHILD(audio, audio_channel_layout, setChannelLayout);
     PLUG_FLAG(audio[u"normalizer"_q], audio_volume_normalizer, setAudioVolumeNormalizer);
     PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);

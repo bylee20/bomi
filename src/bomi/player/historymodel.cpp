@@ -41,7 +41,7 @@ private:
 
 struct RowCache { Mrl mrl; int row = -1; };
 
-static constexpr auto currentVersion = MrlState::Version + 1;
+static constexpr auto currentVersion = MrlState::Version;
 
 struct HistoryModel::Data {
     HistoryModel *p = nullptr;
@@ -52,7 +52,7 @@ struct HistoryModel::Data {
     MrlStateSqlFieldList fields, restores;
     MrlState cached;
     const MrlState default_{};
-    const QString table = "state"_a % _N(currentVersion);
+    const QString table = MrlState::table();
     bool rememberImage = false, reload = true, visible = false;
     int idx_mrl, idx_last, idx_device, rows = 0;
     QMutex mutex;

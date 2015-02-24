@@ -10,6 +10,7 @@
 #include "player/playengine.hpp"
 #include "player/pref.hpp"
 #include "audio/audioformat.hpp"
+#include "video/interpolatorparams.hpp"
 #include "misc/downloader.hpp"
 #include "quick/algorithmobject.hpp"
 #include "quick/circularimageitem.hpp"
@@ -82,6 +83,7 @@ auto registerType() -> void
     qRegisterMetaType<OsdStyle>();
     qRegisterMetaType<OS::HwAcc::Api>();
     qRegisterMetaType<QMap<QString, QString>>();
+    qRegisterMetaType<IntrplParamSetMap>("IntrplParamSetMap");
 
     qRegisterMetaTypeStreamOperators<Mrl>();
     qRegisterMetaTypeStreamOperators<Playlist>();

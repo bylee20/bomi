@@ -259,7 +259,7 @@ auto Player::rate() const -> double
 
 auto Player::setRate(double rate) -> void
 {
-    d->engine->setSpeedPercent(rate * 100 + 0.5);
+    d->engine->setSpeed(rate);
 }
 
 auto Player::isShuffled() const -> bool

@@ -272,7 +272,8 @@ HEADERS += \
     dialog/videocolordialog.hpp \
     quick/algorithmobject.hpp \
     player/main.hpp \
-    misc/stepinfo.hpp
+    misc/stepinfo.hpp \
+    player/mrlstate_old.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -467,7 +468,8 @@ SOURCES += \
     subtitle/subtitleviewer.cpp \
     dialog/videocolordialog.cpp \
     quick/algorithmobject.cpp \
-    misc/stepinfo.cpp
+    misc/stepinfo.cpp \
+    player/mrlstate_old.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

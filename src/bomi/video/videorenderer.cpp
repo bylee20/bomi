@@ -62,7 +62,7 @@ struct VideoRenderer::Data {
     bool onLetterbox = true, redraw = false;
     bool flip_h = false, flip_v = false;
     Qt::Alignment alignment = Qt::AlignCenter;
-    QRectF vtx; QPoint offset = {0, 0};
+    QRectF vtx; QPointF offset = {0, 0};
     LetterboxItem *letterbox = nullptr;
     GeometryItem *overlay = nullptr;
     OpenGLTexture2D black;
@@ -94,7 +94,7 @@ struct VideoRenderer::Data {
     auto targetCropRatio() const -> double
         { return targetCropRatio(targetAspectRatio()); }
     auto itemAspectRatio() const -> double { return p->width()/p->height(); }
-    auto frameRect(const QRectF &area, const QPoint &off = {0, 0},
+    auto frameRect(const QRectF &area, const QPointF &off = {0, 0},
                    QRectF *letterbox = nullptr) -> QRectF
     {
         if (!p->hasFrame())
@@ -114,8 +114,8 @@ struct VideoRenderer::Data {
         xy.ry() -= letter.height();
         xy *= 0.5;
         QPointF offset = off;
-        offset.rx() *= letter.width()/100.0;
-        offset.ry() *= letter.height()/100.0;
+        offset.rx() *= letter.width();
+        offset.ry() *= letter.height();
         if (alignment & Qt::AlignLeft)
             offset.rx() -= xy.x();
         else if (alignment & Qt::AlignRight)
@@ -265,7 +265,7 @@ auto VideoRenderer::setOverlay(GeometryItem *overlay) -> void
     }
 }
 
-auto VideoRenderer::setOffset(const QPoint &offset) -> void
+auto VideoRenderer::setOffset(const QPointF &offset) -> void
 {
     if (_Change(d->offset, offset)) {
         polish();
@@ -273,7 +273,7 @@ auto VideoRenderer::setOffset(const QPoint &offset) -> void
     }
 }
 
-auto VideoRenderer::offset() const -> QPoint
+auto VideoRenderer::offset() const -> QPointF
 {
     return d->offset;
 }

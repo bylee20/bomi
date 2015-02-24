@@ -50,10 +50,10 @@ struct StepInfo {
     StepInfo() { }
     StepInfo(const QByteArray &id, StepValue (Steps::*mem),
              double max, double single, int precision,
-             const char *suffix, bool sign = false, int mul = 1);
+             const char *suffix, bool sign, double mul);
     const QByteArray id;
-    const double max = 100, single = 1;
-    const int precision = 0, multiply = 1;
+    const double max = 100, single = 1, multiply = 1;
+    const int precision = 0;
     const bool sign = false;
     auto text(double prop) const -> QString;
     auto text(double step, ChangeValue direction, bool sign) const -> QString;

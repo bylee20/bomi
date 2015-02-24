@@ -3,6 +3,7 @@
 #include "misc/log.hpp"
 #include "player/pref.hpp"
 #include "player/mrlstate.hpp"
+#include "video/interpolatorparams.hpp"
 
 DECLARE_LOG_CONTEXT(JSON)
 
@@ -159,6 +160,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(ShortcutMap);
     INSERT(EncodingInfo);
     INSERT(Steps);
+    INSERT(IntrplParamSetMap);
 
     for (auto type : _EnumMetaTypeIds()) {
         auto &ec = c[type];

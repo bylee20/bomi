@@ -258,7 +258,7 @@ auto PlayEngine::Data::onLoad() -> void
     }
 
     const auto deint = local->video_deinterlacing() != DeintMode::None;
-    mpv.setAsync("speed", local->play_speed() * 1e-2);
+    mpv.setAsync("speed", local->play_speed());
 
     mpv.setAsync("options/vo", vo(local));
     mpv.setAsync("options/vf", vf(local));

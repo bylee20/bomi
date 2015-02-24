@@ -1,9 +1,14 @@
 #include "mrlstate.hpp"
+#include "mrlstatesqlfield.hpp"
+#include "mrlstate_old.hpp"
 #include "mrlstate_p.hpp"
 #include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
 #include "misc/log.hpp"
 #include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QSqlRecord>
 
 DECLARE_LOG_CONTEXT(History)
 
@@ -33,6 +38,7 @@ auto MrlState::select(StreamType type, int id) -> void
 auto MrlState::toJson() const -> QJsonObject
 {
     auto json = _JsonFromQObject(this);
+    json.insert(u"version"_q, Version);
     json.insert(u"video_interpolator_map"_q, _ToJson(d->intrpl));
     json.insert(u"video_chroma_upscaler_map"_q, _ToJson(d->chroma));
     return json;
@@ -40,21 +46,33 @@ auto MrlState::toJson() const -> QJsonObject
 
 auto MrlState::setFromJson(const QJsonObject &json) -> bool
 {
-    bool ret = _JsonToQObject(json, this);
-    auto set = [&] (const QString &key, IntrplParamSetMap &map) {
-        auto it = json.find(key);
-        if (it == json.end())
-            return false;
-        map = _FromJson<IntrplParamSetMap>(it.value());
-        for (auto &item : InterpolatorInfo::items()) {
-            if (!map.contains(item.value))
-                map[item.value] = IntrplParamSet::default_(item.value);
+    const int version = json.value(u"version"_q).toInt();
+    if (json.value(u"version"_q).toInt() == Version) {
+        bool ret = _JsonToQObject(json, this);
+        auto set = [&] (const QString &key, IntrplParamSetMap &map) {
+            auto it = json.find(key);
+            if (it == json.end())
+                return false;
+            map = _FromJson<IntrplParamSetMap>(it.value());
+            for (auto &item : InterpolatorInfo::items()) {
+                if (!map.contains(item.value))
+                    map[item.value] = IntrplParamSet::default_(item.value);
+            }
+            return true;
+        };
+        ret = set(u"video_interpolator_map"_q, d->intrpl) && ret;
+        ret = set(u"video_chroma_upscaler_map"_q, d->chroma) && ret;
+        return ret;
+    } else {
+        if (version <= 3) {
+            _Info("Importing version %% JSON.", 3);
+            MrlStateV3 v3;
+            _JsonToQObject(json, &v3);
+            import(&v3);
+            return true;
         }
-        return true;
-    };
-    ret = set(u"video_interpolator_map"_q, d->intrpl) && ret;
-    ret = set(u"video_chroma_upscaler_map"_q, d->chroma) && ret;
-    return ret;
+    }
+    return false;
 }
 
 auto MrlState::copyFrom(const MrlState *state) -> void
@@ -133,26 +151,62 @@ auto MrlState::restorableProperties() -> QVector<PropertyInfo>
     return properties;
 }
 
-//template<class F>
-//static auto _MrlFieldColumnListString(const QList<F> &list) -> QString
-//{
-//    QString columns;
-//    for (auto &f : list)
-//        columns += _L(f.property().name()) % ", "_a;
-//    columns.chop(2);
-//    return columns;
-//}
+auto MrlState::import(const MrlStateV3 *v3) -> void
+{
+    if (m_mutex)
+        m_mutex->lock();
+#define COPY(var) {static_assert(tmp::is_same<decltype(var()), decltype(v3->var())>(), "!!!"); set_##var(v3->var());}
+    COPY(mrl);
+    COPY(device);
+    COPY(last_played_date_time);
+    COPY(resume_position);
 
-//template<class T = MrlState, class F>
-//auto _FillMrlStateFromRecord(T *state, const QList<F> &fields,
-//                             const QSqlRecord &record) -> void {
-//    for (int i=0; i<fields.size(); ++i) {
-//        const auto &f = fields[i];
-//        const QMetaProperty p = f.property();
-//        Q_ASSERT(_L(p.name()) == record.fieldName(i));
-//        p.write(state, f.fromSql(record.value(i)));
-//    }
-//}
+    COPY(edition);
+    set_play_speed(v3->play_speed() * 1e-2);
+
+    COPY(video_interpolator);
+    COPY(video_chroma_upscaler);
+    set_video_aspect_ratio(_EnumData(v3->video_aspect_ratio()));
+    set_video_crop_ratio(_EnumData(v3->video_crop_ratio()));
+    COPY(video_deinterlacing);
+    COPY(video_dithering);
+    set_video_offset(QPointF(v3->video_offset()) * 1e-2);
+    COPY(video_vertical_alignment);
+    COPY(video_horizontal_alignment);
+    COPY(video_color);
+    COPY(video_range);
+    COPY(video_space);
+    COPY(video_hq_upscaling);
+    COPY(video_hq_downscaling);
+    COPY(video_motion_interpolation);
+    COPY(video_effects);
+    COPY(video_tracks);
+
+    set_audio_volume(v3->audio_volume() * 1e-2);
+    set_audio_amplifier(v3->audio_amplifier() * 1e-2);
+    COPY(audio_equalizer);
+    COPY(audio_sync);
+    COPY(audio_tracks);
+    COPY(audio_muted);
+    COPY(audio_volume_normalizer);
+    COPY(audio_tempo_scaler);
+    COPY(audio_channel_layout);
+
+    COPY(sub_alignment);
+    COPY(sub_display);
+    set_sub_position(v3->sub_position() * 1e-2);
+    COPY(sub_sync);
+    COPY(sub_tracks);
+    COPY(sub_tracks_inclusive);
+    COPY(sub_hidden);
+    COPY(sub_style_overriden);
+
+    d->intrpl = v3->video_interpolator_map();
+    d->chroma = v3->video_chroma_upscaler_map();
+
+    if (m_mutex)
+            m_mutex->unlock();
+}
 
 auto _ImportMrlStates(int version, QSqlDatabase db)
 -> QVector<MrlState*>
@@ -161,5 +215,40 @@ auto _ImportMrlStates(int version, QSqlDatabase db)
     QVector<MrlState*> states;
     if (version < 3)
         _Error("This version of history database is not supported.");
+    else if (version == 3) {
+        MrlStateV3 v3;
+        _Info("Importing from %%.", v3.table());
+        QSqlQuery query(db);
+        if (!query.exec("SELECT * FROM "_a % v3.table())) {
+            _Error("Failed to execute query to import.");
+            _Error("Query: %%", query.lastQuery());
+            _Error("Error: %%", query.lastError().text());
+            return states;
+        }
+        const auto record = query.record();
+        QVector<MrlStateSqlField> fields(record.count());
+        for (int i = 0; i < record.count(); ++i) {
+            const auto mo = v3.metaObject();
+            const int idx = mo->indexOfProperty(record.fieldName(i).toLatin1());
+            if (idx < 0) {
+                _Warn("Field %% is not a property of old MrlState.", record.fieldName(i));
+                continue;
+            }
+            const auto p = mo->property(idx);
+            fields[i] = MrlStateSqlField(p, p.read(&v3));
+        }
+
+        while (query.next()) {
+            MrlStateV3 v3;
+            for (int i = 0; i < record.count(); ++i) {
+                if (fields[i].isValid())
+                    fields[i].exportTo(&v3, query.value(i));
+            }
+            auto state = new MrlState;
+            state->import(&v3);
+            states.push_back(state);
+        }
+        _Info("%% records imported.", states.size());
+    }
     return states;
 }

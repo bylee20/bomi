@@ -66,6 +66,8 @@ struct IntrplParamSet {
 
 using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;
 
+Q_DECLARE_METATYPE(IntrplParamSetMap)
+
 class IntrplDialog : public QDialog {
     Q_OBJECT
 public:

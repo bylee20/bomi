@@ -4,9 +4,9 @@ static QList<const StepInfo*> s_info;
 
 StepInfo::StepInfo(const QByteArray &id, StepValue (Steps::*mem),
                      double max, double single, int precision,
-                     const char *suffix, bool sign, int mul)
-    : id(id), max(max), single(single), precision(precision)
-    , multiply(mul), sign(sign), m_suffix(suffix), m_mem(mem)
+                     const char *suffix, bool sign, double mul)
+    : id(id), max(max), single(single), multiply(mul)
+    , precision(precision), sign(sign), m_suffix(suffix), m_mem(mem)
 {
     s_info.push_back(this);
 }
@@ -43,17 +43,17 @@ Steps::Steps() {
     TIME(seek1_sec,  5, 1);
     TIME(seek2_sec, 30, 1);
     TIME(seek3_sec, 60, 1);
-    STEP(speed_pct, 10, 99, 1, 0, "%");
+    STEP(speed_pct, 10, 99, 1, 0, "%", false, 1e-2);
 
-    STEP(aspect_ratio, 0.0001, 9.99999, 0.0001, 5, "");
-    STEP(color_pct, 1, 99, 1, 0, "%", true);
+    STEP(aspect_ratio, 0.0001, 9.99999, 0.0001, 5, "", false, 1);
+    STEP(color_pct, 1, 99, 1, 0, "%", true, 1);
 
-    STEP(volume_pct, 1, 99, 1, 0, "%");
-    STEP(amp_pct, 10, 99, 1, 0, "%");
+    STEP(volume_pct, 1, 99, 1, 0, "%", false, 1e-2);
+    STEP(amp_pct, 10, 99, 1, 0, "%", false, 1e-2);
     TIME(audio_sync_sec, 0.2, 0.1);
 
     TIME(sub_sync_sec, 0.2, 0.1);
-    STEP(sub_pos_pct, 1, 99, 1, 0, "%");
+    STEP(sub_pos_pct, 1, 99, 1, 0, "%", false, 1e-2);
 
 #undef STEP
 #undef TIME

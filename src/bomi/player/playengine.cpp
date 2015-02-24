@@ -20,8 +20,7 @@ PlayEngine::PlayEngine()
 
     connect(&d->params, &MrlState::video_offset_changed, d->vr, &VideoRenderer::setOffset);
     connect(&d->params, &MrlState::video_aspect_ratio_changed, d->vr, &VideoRenderer::setAspectRatio);
-    connect(&d->params, &MrlState::video_crop_ratio_changed, d->vr,
-            [=] (auto r) { d->vr->setCropRatio(_EnumData(r)); });
+    connect(&d->params, &MrlState::video_crop_ratio_changed, d->vr, &VideoRenderer::setCropRatio);
     connect(&d->params, &MrlState::sub_display_changed, d->vr,
             [=] (auto sd) { d->vr->setOverlayOnLetterbox(sd == SubtitleDisplay::OnLetterbox); });
 
@@ -52,10 +51,10 @@ PlayEngine::PlayEngine()
 
     connect(&d->params, &MrlState::sub_sync_changed, d->sr, &SubtitleRenderer::setDelay);
     connect(&d->params, &MrlState::sub_hidden_changed, d->sr, &SubtitleRenderer::setHidden);
-    connect(&d->params, &MrlState::sub_position_changed, d->sr, [=] (int pos) {
-        d->sr->setPos(pos * 0.01);
+    connect(&d->params, &MrlState::sub_position_changed, d->sr, [=] (double pos) {
+        d->sr->setPos(pos);
         if (d->params.sub_style_overriden())
-            d->mpv.setAsync("options/sub-pos", pos);
+            d->mpv.setAsync("options/sub-pos", pos * 100);
         else
             d->mpv.setAsync("options/sub-pos", 100);
         d->mpv.update();
@@ -64,7 +63,7 @@ PlayEngine::PlayEngine()
         { d->sr->setTopAligned(a == VerticalAlignment::Top); });
     connect(&d->params, &MrlState::sub_style_overriden_changed, this, [=] (bool override) {
         if (override)
-            d->mpv.setAsync("options/sub-pos", d->params.sub_position());
+            d->mpv.setAsync("options/sub-pos", d->params.sub_position() * 100);
         else
             d->mpv.setAsync("options/sub-pos", 100);
         d->mpv.update();
@@ -95,7 +94,7 @@ PlayEngine::PlayEngine()
             d->mpv.setAsync("pause", false);
             d->mpv.setAsync("speed", 100.0);
         } else {
-            d->mpv.setAsync("speed", d->params.play_speed() / 100.0);
+            d->mpv.setAsync("speed", d->params.play_speed());
             d->mpv.setAsync("pause", d->pauseAfterSkip);
             d->mpv.setAsync("mute", d->params.audio_muted());
         }
@@ -373,12 +372,12 @@ auto PlayEngine::waitUntilTerminated() -> void
 
 auto PlayEngine::speed() const -> double
 {
-    return d->params.play_speed() * 1e-2;
+    return d->params.play_speed();
 }
 
-auto PlayEngine::setSpeedPercent(int p) -> void
+auto PlayEngine::setSpeed(double s) -> void
 {
-    if (d->params.set_play_speed(p))
+    if (d->params.set_play_speed(s))
         d->mpv.setAsync("speed", speed());
 }
 
@@ -584,7 +583,7 @@ auto PlayEngine::seekEdition(int number, int from) -> void
     }
 }
 
-auto PlayEngine::setAudioVolume(int volume) -> void
+auto PlayEngine::setAudioVolume(double volume) -> void
 {
     if (d->params.set_audio_volume(volume))
         d->mpv.setAsync("volume", d->volume(&d->params));
@@ -595,12 +594,12 @@ auto PlayEngine::isMuted() const -> bool
     return d->params.audio_muted();
 }
 
-auto PlayEngine::volume() const -> int
+auto PlayEngine::volume() const -> double
 {
     return d->params.audio_volume();
 }
 
-auto PlayEngine::setAudioAmpPercent(int amp) -> void
+auto PlayEngine::setAudioAmp(double amp) -> void
 {
     if (d->params.set_audio_amplifier(amp))
         d->mpv.setAsync("volume", d->volume(&d->params));
@@ -742,7 +741,7 @@ auto PlayEngine::videoSizeHint() const -> QSize
     return d->vr->sizeHint();
 }
 
-auto PlayEngine::setVideoOffset(const QPoint &offset) -> void
+auto PlayEngine::setVideoOffset(const QPointF &offset) -> void
 {
     d->params.set_video_offset(offset);
 }
@@ -757,7 +756,7 @@ auto PlayEngine::setVideoAspectRatio(double ratio) -> void
     d->params.set_video_aspect_ratio(ratio);
 }
 
-auto PlayEngine::setVideoCropRatio(VideoRatio ratio) -> void
+auto PlayEngine::setVideoCropRatio(double ratio) -> void
 {
     d->params.set_video_crop_ratio(ratio);
 }
@@ -1080,7 +1079,7 @@ auto PlayEngine::setSubtitleAlignment(VerticalAlignment a) -> void
     d->params.set_sub_position(d->sr->pos() * 100);
 }
 
-auto PlayEngine::setSubtitlePosition(int pos) -> void
+auto PlayEngine::setSubtitlePosition(double pos) -> void
 {
     d->params.set_sub_position(pos);
 }

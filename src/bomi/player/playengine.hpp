@@ -55,7 +55,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(int duration_s READ duration_s NOTIFY duration_sChanged)
     Q_PROPERTY(int time_s READ time_s NOTIFY time_sChanged)
 
-    Q_PROPERTY(int volume READ volume WRITE setAudioVolume NOTIFY volumeChanged)
+    Q_PROPERTY(qreal volume READ volume WRITE setAudioVolume NOTIFY volumeChanged)
     Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
 
     Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
@@ -121,7 +121,7 @@ public:
 
     auto subtitleSelection() const -> QVector<SubComp>;
     auto setSubtitleDisplay(SubtitleDisplay sd) -> void;
-    auto setSubtitlePosition(int pos) -> void;
+    auto setSubtitlePosition(double pos) -> void;
     auto setSubtitleAlignment(VerticalAlignment a) -> void;
     auto setSubtitleFiles(const QStringList &files, const EncodingInfo &enc) -> void;
     auto addSubtitleFiles(const QStringList &files, const EncodingInfo &enc) -> void;
@@ -159,13 +159,13 @@ public:
     auto videoOutputAspectRatio() const -> double;
     auto adjustVideoAspectRatio(double by) -> void;
     auto setVideoAspectRatio(double ratio) -> void;
-    auto setVideoCropRatio(VideoRatio ratio) -> void;
+    auto setVideoCropRatio(double ratio) -> void;
     auto setVideoHighQualityUpscaling(bool on) -> void;
     auto setVideoHighQualityDownscaling(bool on) -> void;
     auto setVideoVerticalAlignment(VerticalAlignment a) -> void;
     auto setVideoHorizontalAlignment(HorizontalAlignment a) -> void;
     auto hasVideoFrame() const -> bool;
-    auto setVideoOffset(const QPoint &offset) -> void;
+    auto setVideoOffset(const QPointF &offset) -> void;
     auto videoSizeHint() const -> QSize;
     auto hasVideo() const -> bool;
     auto setAudioVolumeNormalizer(bool on) -> void;
@@ -178,11 +178,11 @@ public:
     auto reloadAudioFiles() -> void;
     auto setSubtitleStyleOverriden(bool override) -> void;
 
-    auto setSpeedPercent(int p) -> void;
+    auto setSpeed(double speed) -> void;
     auto setAudioSync(int sync) -> void;
     auto audioSync() const -> int;
     auto metaData() const -> const MetaData&;
-    auto volume() const -> int;
+    auto volume() const -> double;
     auto isMuted() const -> bool;
 
     auto setDeintMode(DeintMode mode) -> void;
@@ -211,8 +211,8 @@ public:
     auto setNextMrl(const Mrl &Mrl) -> void;
     auto shutdown() -> void;
     auto stepFrame(int direction) -> void;
-    auto setAudioVolume(int volume) -> void;
-    auto setAudioAmpPercent(int amp) -> void;
+    auto setAudioVolume(double volume) -> void;
+    auto setAudioAmp(double amp) -> void;
     auto setAudioMuted(bool muted) -> void;
     auto setAudioEqualizer(const AudioEqualizer &eq) -> void;
     auto audioDeviceList() const -> QList<AudioDevice>;
