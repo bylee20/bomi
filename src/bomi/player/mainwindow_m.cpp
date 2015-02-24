@@ -59,21 +59,22 @@ auto MainWindow::Data::plugFlag(QAction *action, const char *property,
         { push(on, property, get, set, toMessage); });
 }
 
+template<class T, class S>
 auto MainWindow::Data::plugStep(ActionGroup *g, const char *prop,
-                                int(MrlState::*get)() const,
-                                void(PlayEngine::*set)(int)) -> void
+                                T(MrlState::*get)() const,
+                                void(PlayEngine::*set)(S)) -> void
 {
-    connect(g, &ActionGroup::triggered, p, [=] (QAction *action) {
-        auto step = qobject_cast<StepAction*>(action);
-        Q_ASSERT(step);
-        const auto old = (e.params()->*get)();
-        auto value = old;
-        if (step->isReset())
-            value = step->default_();
+    static_assert(tmp::is_same<T, tmp::remove_const_t<S>>(), "!!!");
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
+        auto action = qobject_cast<StepAction*>(a);
+        Q_ASSERT(action);
+        const StepValue &step = action->value();
+        T value = T();
+        if (action->isReset())
+            value = (e.default_()->*get)();
         else
-            value += step->data();
-        push(step->clamp(value), prop, get, set,
-             [=] (int v) { return step->format(v); });
+            value = step.changed((e.params()->*get)(), action->enum_());
+        push(value, prop, get, set, [=] (auto) { return step.text((e.params()->*get)()); });
     });
 }
 

@@ -13,6 +13,7 @@
 #include "misc/autoloader.hpp"
 #include "misc/locale.hpp"
 #include "misc/logoption.hpp"
+#include "misc/stepinfo.hpp"
 #include "enum/generateplaylist.hpp"
 #include "enum/autoselectmode.hpp"
 #include "enum/audiodriver.hpp"
@@ -49,6 +50,7 @@ public:
 /***************************************************************/
 public:
     Pref();
+private:
     P0(OpenMediaInfo, open_media_from_file_manager, {OpenMediaBehavior::NewPlaylist})
     P0(OpenMediaInfo, open_media_by_drag_and_drop, {OpenMediaBehavior::Append})
     P1(QString, quick_snapshot_format, u"png"_q, "currentText")
@@ -111,23 +113,7 @@ public:
     P0(MouseActionMap, mouse_action_map, defaultMouseActionMap())
     P0(bool, invert_wheel, false)
 
-    P2(int, seek_step1_sec, 5, "steps")
-    P2(int, seek_step2_sec, 30, "steps")
-    P2(int, seek_step3_sec, 60, "steps")
-    P2(int, speed_step, 10, "steps")
-    P2(double, aspect_ratio_step, 0.0001, "steps")
-    P2(int, brightness_step, 1, "steps")
-    P2(int, saturation_step, 1, "steps")
-    P2(int, contrast_step, 1, "steps")
-    P2(int, hue_step, 1, "steps")
-    P2(int, red_step, 1, "steps")
-    P2(int, green_step, 1, "steps")
-    P2(int, blue_step, 1, "steps")
-    P2(int, volume_step, 2, "steps")
-    P2(double, sub_sync_step_sec, 0.5, "steps")
-    P2(double, audio_sync_step_sec, 0.2, "steps")
-    P2(int, amp_step, 10, "steps")
-    P2(int, sub_pos_step, 1, "steps")
+    P0(Steps, steps, {})
 
     P0(bool, enable_hwaccel, false)
     P0(QList<CodecId>, hwaccel_codecs, OS::hwAcc()->fullCodecList())
@@ -163,7 +149,7 @@ public:
     P0(LogOption, app_log_option, LogOption::default_())
 
 //    static auto preset(KeyMapPreset id) -> Shortcuts;
-
+public:
     auto save() const -> void;
     auto load() -> void;
 

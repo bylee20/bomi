@@ -124,9 +124,9 @@ struct RootMenu::Data {
                   const QString &g = QString()) -> StepActionPair*
     {
         auto p = parent->addStepActionPair(inc, dec, pair, g);
-        reg(p->increase(), inc, [=] () { p->increase()->setFormat(trans()); });
-        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(trans()); });
-        p->setRange(min, def, max);
+        reg(p->increase(), inc, [=] () { p->increase()->retranslate(); });
+        reg(p->decrease(), dec, [=] () { p->decrease()->retranslate(); });
+//        p->setRange(min, def, max);
         return p;
     }
 
@@ -135,9 +135,9 @@ struct RootMenu::Data {
                   const QString &g = QString()) -> StepActionPair*
     {
         auto p = parent->addStepActionPair(inc, dec, pair, g);
-        reg(p->increase(), inc, [=] () { p->increase()->setFormat(tr(trans)); });
-        reg(p->decrease(), dec, [=] () { p->decrease()->setFormat(tr(trans)); });
-        p->setRange(min, def, max);
+        reg(p->increase(), inc, [=] () { p->increase()->retranslate(); });
+        reg(p->decrease(), dec, [=] () { p->decrease()->retranslate(); });
+//        p->setRange(min, def, max);
         return p;
     }
 
@@ -153,9 +153,9 @@ struct RootMenu::Data {
                    const QString &g = u""_q) -> StepActionPair*
     {
         auto reset = new StepAction(ChangeValue::Reset);
-        reset->setRange(min, def, max);
+//        reset->setRange(min, def, max);
         parent->addActionToGroup(reset, u"reset"_q, g);
-        reg(reset, u"reset"_q, [=] () { reset->setFormat(tr(format)); });
+        reg(reset, u"reset"_q, [=] () { reset->setText(tr(format)); });
         separator();
         return stepPair(format, min, def, max, g);
     }
@@ -170,7 +170,7 @@ struct RootMenu::Data {
 
     auto menuStepReset(const QString &key, const char *tr, const char *format,
                        qreal r = 0.0, const QString &g = QString()) -> Menu*
-    { return menu(key, tr, [=] () { stepReset(format, g)->setTextRate(r); }); }
+    { return menu(key, tr, [=] () { stepReset(format, g); }); }
 
     template<class T>
     using EnumItemVector = QVector<const typename EnumInfo<T>::Item*>;
@@ -361,10 +361,7 @@ RootMenu::RootMenu()
             const QString forward(u"forward%1"_q), backward(u"backward%1"_q);
             const QString seekStep(u"seek%1"_q);
             for (int i = 1; i <= 3; ++i) {
-                auto p = d->stepPair(forward.arg(i), backward.arg(i), QT_TR_NOOP("%1sec"),
-                                     seekStep.arg(i), u"relative"_q);
-                p->increase()->setTextRate(0.001);
-                p->decrease()->setTextRate(0.001);
+                d->stepPair(forward.arg(i), backward.arg(i), QT_TR_NOOP("%1sec"), seekStep.arg(i), u"relative"_q);
             }
 
             d->separator();
@@ -420,9 +417,11 @@ RootMenu::RootMenu()
             d->actionToGroup(u"1.85:1"_q, QT_TR_NOOP("1.85:1 (Wide Vision)"), true, g)->setData(1.85);
             d->actionToGroup(u"2.35:1"_q, QT_TR_NOOP("2.35:1 (CinemaScope)"), true, g)->setData(2.35);
             d->separator();
-            d->stepPair("%1", 1, 1000000, 10000000, u"adjust"_q)->setTextRate(1e-5);
+            d->stepPair("%1", 1, 1000000, 10000000, u"adjust"_q);
         });
         d->enumMenuCheckable<VideoRatio>(u"crop"_q, QT_TR_NOOP("Crop"), true);
+//        d->menuStepReset(u"zoom"_q, QT_TR_NOOP("Zoom"), 0, 100, 200, true);
+
         d->menu(u"align"_q, QT_TR_NOOP("Screen Alignment"), [=] () {
             d->enumActionsCheckable<VerticalAlignment>(false);
             d->separator();

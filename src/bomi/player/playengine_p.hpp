@@ -72,7 +72,7 @@ struct PlayEngine::Data {
     PlayEngine::Snapshot snapshot = PlayEngine::NoSnapshot;
 
     Mrl mrl;
-    MrlState params;
+    MrlState params, default_;
     QMutex mutex;
 
     struct {

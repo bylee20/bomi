@@ -271,7 +271,8 @@ HEADERS += \
     subtitle/subtitleviewer.hpp \
     dialog/videocolordialog.hpp \
     quick/algorithmobject.hpp \
-    player/main.hpp
+    player/main.hpp \
+    misc/stepinfo.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -465,7 +466,8 @@ SOURCES += \
     widget/checklistwidget.cpp \
     subtitle/subtitleviewer.cpp \
     dialog/videocolordialog.cpp \
-    quick/algorithmobject.cpp
+    quick/algorithmobject.cpp \
+    misc/stepinfo.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

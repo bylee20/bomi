@@ -155,6 +155,7 @@ public:
     auto unlock() -> void;
 
     auto params() const -> const MrlState*;
+    auto default_() const -> const MrlState*;
     auto videoOutputAspectRatio() const -> double;
     auto adjustVideoAspectRatio(double by) -> void;
     auto setVideoAspectRatio(double ratio) -> void;

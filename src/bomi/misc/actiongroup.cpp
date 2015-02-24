@@ -22,9 +22,9 @@ auto ActionGroup::lastCheckedAction() const -> QAction*
     return nullptr;
 }
 
-static inline auto cmpFixed(double lhs, double rhs, double times = 1e6) -> bool
+static inline auto cmpFixed(double lhs, double rhs, double times = 1e10) -> bool
 {
-    return qRound(lhs * times) == qRound(rhs * times);
+    return std::llround(lhs * times) == std::llround(rhs * times);
 }
 
 auto ActionGroup::find(const QVariant &data) const -> QAction*

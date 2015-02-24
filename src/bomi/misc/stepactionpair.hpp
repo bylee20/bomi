@@ -14,17 +14,8 @@ public:
     }
     StepAction *increase() const { return m_increase; }
     StepAction *decrease() const { return m_decrease; }
-    auto setRange(int min, int def, int max) -> void
-    {
-        m_increase->setRange(min, def, max);
-        m_decrease->setRange(min, def, max);
-    }
-#define DEC_SET(f, type) \
-    auto f(type var) -> void { m_increase->f(var); m_decrease->f(var); }
-    DEC_SET(setTextRate, qreal)
-    DEC_SET(setFormat, const QString&)
-    DEC_SET(setStep, int)
-#undef DEC_SET
+    auto setValue(const StepValue &var) -> void
+        { m_increase->setValue(var); m_decrease->setValue(var); }
 private:
     template<class... Args>
     auto apply(void(StepAction::*set)(Args...), Args... t) -> void

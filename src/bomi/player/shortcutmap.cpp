@@ -134,8 +134,8 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"subtitle/track/cycle"_q] << Qt::SHIFT + Qt::Key_N;
        map[u"subtitle/track/all"_q] << Qt::SHIFT + Qt::Key_B;
        map[u"subtitle/track/hide"_q] << Qt::SHIFT + Qt::Key_H;
-       map[u"subtitle/position/increase"_q] << Qt::Key_W;
-       map[u"subtitle/position/decrease"_q] << Qt::Key_S;
+       map[u"subtitle/position/increase"_q] << Qt::Key_S;
+       map[u"subtitle/position/decrease"_q] << Qt::Key_W;
        map[u"subtitle/sync/increase"_q] << Qt::Key_D;
        map[u"subtitle/sync/reset"_q] << Qt::Key_Q;
        map[u"subtitle/sync/decrease"_q] << Qt::Key_A;

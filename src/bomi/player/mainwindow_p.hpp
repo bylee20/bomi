@@ -164,8 +164,9 @@ struct MainWindow::Data {
                   bool(MrlState::*get)() const, void(MrlState::*sig)(bool),
                   void(PlayEngine::*set)(bool)) -> void;
 #define PLUG_FLAG(a, p, s) plugFlag(a, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
-    auto plugStep(ActionGroup *g, const char *prop, int(MrlState::*get)() const,
-                  void(PlayEngine::*set)(int)) -> void;
+    template<class T, class S>
+    auto plugStep(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
+                  void(PlayEngine::*set)(S)) -> void;
 #define PLUG_STEP(m, p, s) plugStep(m, #p, &MrlState::p, &PlayEngine::s)
     template<class T>
     auto plugEnum(ActionGroup *g, const char *prop, T(MrlState::*get)() const,

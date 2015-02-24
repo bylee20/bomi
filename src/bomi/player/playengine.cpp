@@ -378,7 +378,7 @@ auto PlayEngine::speed() const -> double
 
 auto PlayEngine::setSpeedPercent(int p) -> void
 {
-    if (d->params.set_play_speed(qBound(1, p, 1000)))
+    if (d->params.set_play_speed(p))
         d->mpv.setAsync("speed", speed());
 }
 
@@ -586,7 +586,7 @@ auto PlayEngine::seekEdition(int number, int from) -> void
 
 auto PlayEngine::setAudioVolume(int volume) -> void
 {
-    if (d->params.set_audio_volume(qBound(0, volume, 100)))
+    if (d->params.set_audio_volume(volume))
         d->mpv.setAsync("volume", d->volume(&d->params));
 }
 
@@ -602,7 +602,7 @@ auto PlayEngine::volume() const -> int
 
 auto PlayEngine::setAudioAmpPercent(int amp) -> void
 {
-    if (d->params.set_audio_amplifier(qBound(1, amp, 1000)))
+    if (d->params.set_audio_amplifier(amp))
         d->mpv.setAsync("volume", d->volume(&d->params));
 }
 
@@ -1164,4 +1164,9 @@ auto PlayEngine::restore(const MrlState *params) -> void
 auto PlayEngine::subtitleSelection() const -> QVector<SubComp>
 {
     return d->sr->selection();
+}
+
+auto PlayEngine::default_() const -> const MrlState*
+{
+    return &d->default_;
 }

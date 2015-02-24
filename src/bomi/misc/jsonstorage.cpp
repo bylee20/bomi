@@ -98,7 +98,7 @@ static const QHash<int, JVConvert> convs = [] () {
 #define INSERT(type) \
     c[qMetaTypeId<type>()] = { \
         [] (const JVConvert*, const QJsonValue &j, QVariant &var) -> bool { \
-            type t; \
+            type t = var.value<type>(); \
             if (json_io<type>()->fromJson(t, j)) { \
                 var.setValue<type>(t); \
                 return true; \
@@ -158,6 +158,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(Shortcuts);
     INSERT(ShortcutMap);
     INSERT(EncodingInfo);
+    INSERT(Steps);
 
     for (auto type : _EnumMetaTypeIds()) {
         auto &ec = c[type];
@@ -187,16 +188,21 @@ auto _JsonFromQVariant(const QVariant &var) -> QJsonValue
     return QJsonValue();
 }
 
-auto _JsonToQVariant(const QJsonValue &json, int metaType) -> QVariant
+auto _JsonToQVariant(const QJsonValue &json, int metaType, const QVariant &def) -> QVariant
 {
-    QVariant var;
+    QVariant var = def;
     const auto it = convs.find(metaType);
     if (it != convs.end()) {
         if (it->j2v(&it.value(), json, var))
             return var;
     } else
         _Error("Unknown type for conversion: %%", QMetaType::typeName(metaType));
-    return QVariant();
+    return def;
+}
+
+auto _JsonToQVariant(const QJsonValue &json, int metaType) -> QVariant
+{
+    return _JsonToQVariant(json, metaType, QVariant());
 }
 
 auto _JsonSetToQVariant(const QJsonValue &json, QVariant &var) -> bool

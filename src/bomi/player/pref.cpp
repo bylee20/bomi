@@ -65,6 +65,22 @@ auto Pref::load() -> void
         if (!res)
             _Warn("Failed to read some fields from JSON object.");
 
+        if (json.contains(u"seek_step1_sec"_q)) {
+#define RES_STEP(var, id) m_steps.var.set(json.value(u"" #id ""_q).toDouble(m_steps.var.get()))
+            RES_STEP(seek1_sec, seek_step1_sec);
+            RES_STEP(seek2_sec, seek_step2_sec);
+            RES_STEP(seek3_sec, seek_step3_sec);
+            RES_STEP(speed, speed_step);
+            RES_STEP(aspect_ratio,aspect_ratio_step);
+            RES_STEP(color, brightness_step);
+            RES_STEP(volume, volume_step);
+            RES_STEP(amp, amp_step);
+            RES_STEP(sub_sync_sec, sub_sync_step_sec);
+            RES_STEP(audio_sync_sec, audio_sync_step_sec);
+            RES_STEP(sub_pos, sub_pos_step);
+#undef RES_STEP
+        }
+
         if (json.contains(u"sub_enable_autoload"_q)) {
             m_sub_autoload_v2.enabled = json[u"sub_enable_autoload"_q].toBool();
             m_sub_autoload_v2.search_paths = _FromJson<QList<MatchString>>(json[u"sub_search_paths_v2"_q]);

@@ -46,7 +46,7 @@ class MrlState : public QObject {
     Q_PROPERTY(int audio_track READ __dummy_int WRITE __set_dummy)
     Q_PROPERTY(bool sub_visible READ __dummy_int WRITE __set_dummy)
     Q_PROPERTY(QString sub_track READ __dummy_string WRITE __set_dummy)
-#define P_(type, name, def, desc, rev) \
+#define P_GEN(type, name, def, checked_t, desc, rev) \
 private: \
     type m_##name = def; \
     Q_PROPERTY(type name READ name WRITE set_##name NOTIFY name ## _changed REVISION rev) \
@@ -58,19 +58,22 @@ public: \
     { \
         bool ret = false; \
         if (m_mutex) m_mutex->lock(); \
-        ret = _Change(m_##name, t); \
+        ret = _Change(m_##name, checked_t); \
         if (m_mutex) m_mutex->unlock(); \
         emit name##_changed(m_##name); \
         return ret; \
     } \
 private:
+#define P_(type, name, def, desc, rev) P_GEN(type, name, def, t, desc, rev)
+#define PB(type, name, def, min, max, desc, rev) P_GEN(type, name, def, qBound(min, t, max), desc, rev)
+
     P_(Mrl, mrl, {}, "", 0)
     P_(QString, device, {}, "", 0)
     P_(QDateTime, last_played_date_time, {}, "", 0)
     P_(int, resume_position, 0, "", 0)
     P_(int, edition, -1, "", 0)
 
-    P_(int, play_speed, 100, QT_TR_NOOP("Playback Speed"), 0)
+    PB(int, play_speed, 100, 1, 1000, QT_TR_NOOP("Playback Speed"), 0)
 
     P_(Interpolator, video_interpolator, Interpolator::Bilinear, QT_TR_NOOP("Video Interpolator"), 0)
     P_(Interpolator, video_chroma_upscaler, Interpolator::Bilinear, QT_TR_NOOP("Video Chroma Upscaler"), 0)
@@ -90,8 +93,8 @@ private:
     P_(VideoEffects, video_effects, 0, QT_TR_NOOP("Video Effects"), 0)
     P_(StreamList, video_tracks, {StreamVideo}, "", 0)
 
-    P_(int, audio_volume, 100, QT_TR_NOOP("Audio Volume"), 0)
-    P_(int, audio_amplifier, 100, QT_TR_NOOP("Audio Amp"), 0)
+    PB(int, audio_volume, 100, 0, 100, QT_TR_NOOP("Audio Volume"), 0)
+    PB(int, audio_amplifier, 100, 0, 1000, QT_TR_NOOP("Audio Amp"), 0)
     P_(AudioEqualizer, audio_equalizer, {}, QT_TR_NOOP("Audio Equalizer"), 0)
     P_(int, audio_sync, 0, QT_TR_NOOP("Audio Sync"), 1)
     P_(StreamList, audio_tracks, {StreamAudio},  QT_TR_NOOP("Audio Tracks"), 1)
@@ -102,7 +105,7 @@ private:
 
     P_(VerticalAlignment, sub_alignment, VerticalAlignment::Bottom, QT_TR_NOOP("Subtitle Alignment"), 0)
     P_(SubtitleDisplay, sub_display, SubtitleDisplay::OnLetterbox, QT_TR_NOOP("Subtitle Display"), 0)
-    P_(int, sub_position, 100, QT_TR_NOOP("Subtitle Position"), 0)
+    PB(int, sub_position, 100, 0, 100, QT_TR_NOOP("Subtitle Position"), 0)
     P_(int, sub_sync, 0, QT_TR_NOOP("Subtitle Sync"), 0)
     P_(StreamList, sub_tracks, {StreamSubtitle}, QT_TR_NOOP("Subtitle Tracks"), 1)
     P_(StreamList, sub_tracks_inclusive, {StreamInclusiveSubtitle}, "", 1)
