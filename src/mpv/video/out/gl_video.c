@@ -507,6 +507,13 @@ static void draw_quad(struct gl_video *p,
     debug_check_gl(p, "after rendering");
 }
 
+static void transpose3x3(float r[3][3])
+{
+    MPSWAP(float, r[0][1], r[1][0]);
+    MPSWAP(float, r[0][2], r[2][0]);
+    MPSWAP(float, r[1][2], r[2][1]);
+}
+
 static void update_uniforms(struct gl_video *p, GLuint program)
 {
     GL *gl = p->gl;
@@ -552,7 +559,8 @@ static void update_uniforms(struct gl_video *p, GLuint program)
         } else {
             mp_get_yuv2rgb_coeffs(&cparams, &m);
         }
-        gl->UniformMatrix3fv(loc, 1, GL_TRUE, &m.m[0][0]);
+        transpose3x3(m.m); // GLES2 can not transpose in glUniformMatrix3fv
+        gl->UniformMatrix3fv(loc, 1, GL_FALSE, &m.m[0][0]);
         loc = gl->GetUniformLocation(program, "colormatrix_c");
         gl->Uniform3f(loc, m.c[0], m.c[1], m.c[2]);
     }
@@ -815,30 +823,35 @@ static void shader_setup_scaler(char **shader, struct scaler *scaler, int pass)
         APPENDF(shader, "#define DEF_SCALER%d \\\n    ", unit);
         char lut_fn[40];
         if (scaler->kernel->polar) {
-            int radius = (int)scaler->kernel->radius;
+            double radius = scaler->kernel->radius;
+            int bound = (int)ceil(radius);
             // SAMPLE_CONVOLUTION_POLAR_R(NAME, R, LUT, WEIGHTS_FN, ANTIRING)
-            APPENDF(shader, "SAMPLE_CONVOLUTION_POLAR_R(%s, %d, %s, WEIGHTS%d, %f)\n",
+            APPENDF(shader, "SAMPLE_CONVOLUTION_POLAR_R(%s, %f, %s, WEIGHTS%d, %f)\n",
                     name, radius, lut_tex, unit, scaler->antiring);
 
             // Pre-compute unrolled weights matrix
             APPENDF(shader, "#define WEIGHTS%d(LUT) \\\n    ", unit);
-            for (int y = 1-radius; y <= radius; y++) {
-                for (int x = 1-radius; x <= radius; x++) {
+            for (int y = 1-bound; y <= bound; y++) {
+                for (int x = 1-bound; x <= bound; x++) {
                     // Since we can't know the subpixel position in advance,
                     // assume a worst case scenario.
                     int yy = y > 0 ? y-1 : y;
                     int xx = x > 0 ? x-1 : x;
                     double d = sqrt(xx*xx + yy*yy);
 
-                    // Samples outside the radius are unnecessary
-                    if (d < radius) {
+                    if (d < radius - 1) {
+                        // Samples definitely inside the main ring
                         APPENDF(shader, "SAMPLE_POLAR_%s(LUT, %f, %d, %d) \\\n    ",
                                 // The center 4 coefficients are the primary
                                 // contributors, used to clamp the result for
                                 // anti-ringing
                                 (x >= 0 && y >= 0 && x <= 1 && y <= 1)
                                   ? "PRIMARY" : "HELPER",
-                                (double)radius, x, y);
+                                radius, x, y);
+                    } else if (d < radius) {
+                        // Samples on the edge, these are potential values
+                        APPENDF(shader, "SAMPLE_POLAR_POTENTIAL(LUT, %f, %d, %d) \\\n    ",
+                                radius, x, y);
                     }
                 }
             }

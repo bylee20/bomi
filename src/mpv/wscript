@@ -83,7 +83,7 @@ build_options = [
     }, {
         'name': '--test',
         'desc': 'test suite (using cmocka)',
-        'func': check_pkg_config('cmocka >= 0.4.1'),
+        'func': check_pkg_config('cmocka', '>= 0.4.1'),
     }, {
         'name': '--clang-database',
         'desc': 'generate a clang compilation database',
@@ -274,8 +274,9 @@ iconv support use --disable-iconv.",
         'desc': 'SSA/ASS support',
         'func': check_pkg_config('libass', '>= 0.12.1'),
         'req': True,
-        'fmsg': "Unable to find development files for libass. Aborting. \
-If you really mean to compile without libass support use --disable-libass."
+        'fmsg': "Unable to find development files for libass, or the version " +
+                "found is too old. Aborting. If you really mean to compile " +
+                "without libass support use --disable-libass."
     }, {
         'name': '--libass-osd',
         'desc': 'libass OSD support',
@@ -531,7 +532,7 @@ audio_output_features = [
     }, {
         'name': '--alsa',
         'desc': 'ALSA audio output',
-        'func': check_pkg_config('alsa >= 1.0.18'),
+        'func': check_pkg_config('alsa', '>= 1.0.18'),
     }, {
         'name': '--coreaudio',
         'desc': 'CoreAudio audio output',

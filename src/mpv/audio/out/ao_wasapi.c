@@ -113,6 +113,58 @@ exit_label:
     return;
 }
 
+static void thread_resume(struct ao *ao)
+{
+    struct wasapi_state *state = (struct wasapi_state *)ao->priv;
+    HRESULT hr;
+
+    MP_DBG(state, "Thread Resume\n");
+    UINT32 padding = 0;
+    hr = IAudioClient_GetCurrentPadding(state->pAudioClient, &padding);
+    if (hr != S_OK) {
+        MP_ERR(state, "IAudioClient_GetCurrentPadding returned %s (0x%"PRIx32")\n",
+               wasapi_explain_err(hr), (uint32_t) hr);
+    }
+
+    /* Fill the buffer before starting, but only if there is no audio queued to play. */
+    /* This prevents overfilling the buffer, which leads to problems in exclusive mode */
+    if (padding < (UINT32)state->bufferFrameCount)
+        thread_feed(ao);
+
+    hr = IAudioClient_Start(state->pAudioClient);
+    if (hr != S_OK) {
+        MP_ERR(state, "IAudioClient_Start returned %s (0x%"PRIx32")\n",
+               wasapi_explain_err(hr), (uint32_t) hr);
+    }
+
+    return;
+}
+
+static void thread_reset(struct ao *ao)
+{
+    struct wasapi_state *state = (struct wasapi_state *)ao->priv;
+    HRESULT hr;
+    MP_DBG(state, "Thread Reset\n");
+    hr = IAudioClient_Stop(state->pAudioClient);
+    /* we may get S_FALSE if the stream is already stopped */
+    if (hr != S_OK &&
+        hr != S_FALSE) {
+        MP_ERR(state, "IAudioClient_Stop returned: %s (0x%"PRIx32")\n",
+               wasapi_explain_err(hr), (uint32_t) hr);
+    }
+
+    /* we may get S_FALSE if the stream is already reset */
+    hr = IAudioClient_Reset(state->pAudioClient);
+    if (hr != S_OK &&
+        hr != S_FALSE) {
+        MP_ERR(state, "IAudioClient_Reset returned: %s (0x%"PRIx32")\n",
+               wasapi_explain_err(hr), (uint32_t) hr);
+    }
+
+    atomic_store(&state->sample_count, 0);
+    return;
+}
+
 static DWORD __stdcall ThreadLoop(void *lpParameter)
 {
     struct ao *ao = lpParameter;
@@ -126,10 +178,10 @@ static DWORD __stdcall ThreadLoop(void *lpParameter)
 
     DWORD waitstatus;
     HANDLE playcontrol[] =
-        {state->hUninit, state->hFeed, state->hForceFeed, NULL};
+        {state->hUninit, state->hFeed, state->hReset, state->hResume, NULL};
     MP_DBG(ao, "Entering dispatch loop\n");
     while (true) { /* watch events */
-        waitstatus = MsgWaitForMultipleObjects(3, playcontrol, FALSE, INFINITE,
+        waitstatus = MsgWaitForMultipleObjects(4, playcontrol, FALSE, INFINITE,
                                                QS_POSTMESSAGE | QS_SENDMESSAGE);
         switch (waitstatus) {
         case WAIT_OBJECT_0: /*shutdown*/
@@ -138,16 +190,18 @@ static DWORD __stdcall ThreadLoop(void *lpParameter)
         case (WAIT_OBJECT_0 + 1): /* feed */
             thread_feed(ao);
             break;
-        case (WAIT_OBJECT_0 + 2): /* force feed */
-            thread_feed(ao);
-            SetEvent(state->hFeedDone);
+        case (WAIT_OBJECT_0 + 2): /* reset */
+            thread_reset(ao);
             break;
-        case (WAIT_OBJECT_0 + 3): /* messages to dispatch (COM marshalling) */
+        case (WAIT_OBJECT_0 + 3): /* resume */
+            thread_resume(ao);
+            break;
+        case (WAIT_OBJECT_0 + 4): /* messages to dispatch (COM marshalling) */
             MP_DBG(ao, "Dispatch\n");
             wasapi_dispatch();
             break;
         default:
-            MP_ERR(ao, "Unhandled case in thread loop");
+            MP_ERR(ao, "Unhandled case in thread loop\n");
             goto exit_label;
         }
     }
@@ -165,8 +219,8 @@ static void closehandles(struct ao *ao)
     if (state->init_done)  CloseHandle(state->init_done);
     if (state->hUninit)    CloseHandle(state->hUninit);
     if (state->hFeed)      CloseHandle(state->hFeed);
-    if (state->hForceFeed) CloseHandle(state->hForceFeed);
-    if (state->hFeedDone)  CloseHandle(state->hFeedDone);
+    if (state->hResume)    CloseHandle(state->hResume);
+    if (state->hReset)     CloseHandle(state->hReset);
     if (state->threadLoop) CloseHandle(state->threadLoop);
 }
 
@@ -220,10 +274,10 @@ static int init(struct ao *ao)
     state->init_done = CreateEventW(NULL, FALSE, FALSE, NULL);
     state->hUninit = CreateEventW(NULL, FALSE, FALSE, NULL);
     state->hFeed = CreateEventW(NULL, FALSE, FALSE, NULL); /* for wasapi event mode */
-    state->hForceFeed = CreateEventW(NULL, FALSE, FALSE, NULL);
-    state->hFeedDone = CreateEventW(NULL, FALSE, FALSE, NULL);
+    state->hResume = CreateEventW(NULL, FALSE, FALSE, NULL);
+    state->hReset = CreateEventW(NULL, FALSE, FALSE, NULL);
     if (!state->init_done || !state->hFeed || !state->hUninit ||
-        !state->hForceFeed || !state->hFeedDone)
+        !state->hResume || !state->hReset)
     {
         MP_ERR(ao, "Error initing events\n");
         uninit(ao);
@@ -335,19 +389,13 @@ static int control(struct ao *ao, enum aocontrol cmd, void *arg)
 static void audio_reset(struct ao *ao)
 {
     struct wasapi_state *state = (struct wasapi_state *)ao->priv;
-
-    IAudioClient_Stop(state->pAudioClientProxy);
-    IAudioClient_Reset(state->pAudioClientProxy);
-    atomic_store(&state->sample_count, 0);
+    SetEvent(state->hReset);
 }
 
 static void audio_resume(struct ao *ao)
 {
     struct wasapi_state *state = (struct wasapi_state *)ao->priv;
-
-    SetEvent(state->hForceFeed);
-    WaitForSingleObject(state->hFeedDone, INFINITE);
-    IAudioClient_Start(state->pAudioClientProxy);
+    SetEvent(state->hResume);
 }
 
 static void list_devs(struct ao *ao, struct ao_device_list *list)

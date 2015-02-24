@@ -56,7 +56,6 @@ void mp_ass_set_style(ASS_Style *style, double res_y,
     style->FontSize = opts->font_size * scale;
     style->PrimaryColour = MP_ASS_COLOR(opts->color);
     style->SecondaryColour = style->PrimaryColour;
-#if LIBASS_VERSION >= 0x01102001
     style->OutlineColour = MP_ASS_COLOR(opts->border_color);
     if (opts->back_color.a) {
         style->BackColour = MP_ASS_COLOR(opts->back_color);
@@ -65,16 +64,6 @@ void mp_ass_set_style(ASS_Style *style, double res_y,
         style->BackColour = MP_ASS_COLOR(opts->shadow_color);
         style->BorderStyle = 1; // outline
     }
-#else
-    if (opts->back_color.a) {
-        style->OutlineColour = MP_ASS_COLOR(opts->back_color);
-        style->BorderStyle = 3; // opaque box
-    } else {
-        style->OutlineColour = MP_ASS_COLOR(opts->border_color);
-        style->BorderStyle = 1; // outline
-    }
-    style->BackColour = MP_ASS_COLOR(opts->shadow_color);
-#endif
     style->Outline = opts->border_size * scale;
     style->Shadow = opts->shadow_offset * scale;
     style->Spacing = opts->spacing * scale;
@@ -84,9 +73,7 @@ void mp_ass_set_style(ASS_Style *style, double res_y,
     style->ScaleX = 1.;
     style->ScaleY = 1.;
     style->Alignment = 1 + (opts->align_x + 1) + (opts->align_y + 2) % 3 * 4;
-#if LIBASS_VERSION >= 0x01020000
     style->Blur = opts->blur;
-#endif
 }
 
 // Add default styles, if the track does not have any styles yet.
@@ -106,7 +93,6 @@ void mp_ass_add_default_styles(ASS_Track *track, struct MPOpts *opts)
         track->default_style = sid;
         ASS_Style *style = track->styles + sid;
         style->Name = strdup("Default");
-        style->Alignment = 2;
         mp_ass_set_style(style, track->PlayResY, opts->sub_text_style);
     }
 
@@ -124,67 +110,6 @@ ASS_Track *mp_ass_default_track(ASS_Library *library, struct MPOpts *opts)
     mp_ass_add_default_styles(track, opts);
 
     return track;
-}
-
-void mp_ass_configure(ASS_Renderer *priv, struct MPOpts *opts, bool is_ass,
-                      struct mp_osd_res *dim)
-{
-    ass_set_frame_size(priv, dim->w, dim->h);
-    ass_set_margins(priv, dim->mt, dim->mb, dim->ml, dim->mr);
-
-    bool set_use_margins = false;
-    int set_sub_pos = 0;
-    float set_line_spacing = 0;
-    float set_font_scale = 1;
-    int set_hinting = 0;
-    bool set_scale_with_window = false;
-    bool set_scale_by_window = true;
-    // With forced overrides, apply the --sub-* specific options
-    if (!is_ass || opts->ass_style_override == 3) {
-        set_scale_with_window = opts->sub_scale_with_window;
-        set_use_margins = opts->sub_use_margins;
-        set_scale_by_window = opts->sub_scale_by_window;
-    } else {
-        set_scale_with_window = opts->ass_scale_with_window;
-        set_use_margins = opts->ass_use_margins;
-    }
-    if (!is_ass || opts->ass_style_override) {
-        set_sub_pos = 100 - opts->sub_pos;
-        set_line_spacing = opts->ass_line_spacing;
-        set_hinting = opts->ass_hinting;
-        set_font_scale = opts->sub_scale;
-    }
-    if (set_scale_with_window) {
-        int vidh = dim->h - (dim->mt + dim->mb);
-        set_font_scale *= dim->h / (float)MPMAX(vidh, 1);
-    }
-    if (!set_scale_by_window) {
-        double factor = dim->h / 720.0;
-        if (factor != 0.0)
-            set_font_scale /= factor;
-    }
-    ass_set_use_margins(priv, set_use_margins);
-#if LIBASS_VERSION >= 0x01010000
-    ass_set_line_position(priv, set_sub_pos);
-#endif
-#if LIBASS_VERSION >= 0x01000000
-    ass_set_shaper(priv, opts->ass_shaper);
-#endif
-#if LIBASS_VERSION >= 0x01103001
-    int set_force_flags = 0;
-    if (opts->ass_style_override == 3)
-        set_force_flags |= ASS_OVERRIDE_BIT_STYLE | ASS_OVERRIDE_BIT_FONT_SIZE;
-    if (opts->ass_style_override == 4)
-        set_force_flags |= ASS_OVERRIDE_BIT_FONT_SIZE;
-    ass_set_selective_style_override_enabled(priv, set_force_flags);
-    ASS_Style style = {0};
-    mp_ass_set_style(&style, 288, opts->sub_text_style);
-    ass_set_selective_style_override(priv, &style);
-    free(style.FontName);
-#endif
-    ass_set_font_scale(priv, set_font_scale);
-    ass_set_hinting(priv, set_hinting);
-    ass_set_line_spacing(priv, set_line_spacing);
 }
 
 void mp_ass_configure_fonts(ASS_Renderer *priv, struct osd_style_opts *opts,

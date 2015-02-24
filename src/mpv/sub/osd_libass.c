@@ -111,7 +111,6 @@ static void create_ass_track(struct osd_state *osd, struct osd_object *obj,
         int sid = ass_alloc_style(track);
         track->default_style = sid;
         ASS_Style *style = track->styles + sid;
-        style->Alignment = 5; // top-title, left
         style->Name = strdup("OSD");
         // Set to neutral base direction, as opposed to VSFilter LTR default
         style->Encoding = -1;
@@ -301,7 +300,6 @@ static void get_osd_bar_box(struct osd_state *osd, struct osd_object *obj,
 {
     struct MPOpts *opts = osd->opts;
 
-    bool new_track = !obj->osd_track;
     create_ass_track(osd, obj, 0, 0);
     ASS_Track *track = obj->osd_track;
     ASS_Style *style = track->styles + track->default_style;
@@ -309,16 +307,16 @@ static void get_osd_bar_box(struct osd_state *osd, struct osd_object *obj,
     *o_w = track->PlayResX * (opts->osd_bar_w / 100.0);
     *o_h = track->PlayResY * (opts->osd_bar_h / 100.0);
 
-    if (new_track) {
-        float base_size = 0.03125;
-        style->Outline *= *o_h / track->PlayResY / base_size;
-        // So that the chapter marks have space between them
-        style->Outline = FFMIN(style->Outline, *o_h / 5.2);
-        // So that the border is not 0
-        style->Outline = FFMAX(style->Outline, *o_h / 32.0);
-        // Rendering with shadow is broken (because there's more than one shape)
-        style->Shadow = 0;
-    }
+    float base_size = 0.03125;
+    style->Outline *= *o_h / track->PlayResY / base_size;
+    // So that the chapter marks have space between them
+    style->Outline = FFMIN(style->Outline, *o_h / 5.2);
+    // So that the border is not 0
+    style->Outline = FFMAX(style->Outline, *o_h / 32.0);
+    // Rendering with shadow is broken (because there's more than one shape)
+    style->Shadow = 0;
+
+    style->Alignment = 5;
 
     *o_border = style->Outline;
 
@@ -442,9 +440,7 @@ static void update_sub(struct osd_state *osd, struct osd_object *obj)
     if (obj->type == OSDTYPE_SUB2)
         style->Alignment = 6;
 
-#if LIBASS_VERSION >= 0x01010000
     ass_set_line_position(obj->osd_render, 100 - opts->sub_pos);
-#endif
 
     add_osd_ass_event_escaped(obj->osd_track, obj->text);
 }

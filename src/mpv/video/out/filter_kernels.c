@@ -132,9 +132,11 @@ static double nearest(kernel *k, double x)
     return x > 0.5 ? 0.0 : 1.0;
 }
 
-static double bilinear(kernel *k, double x)
+static double triangle(kernel *k, double x)
 {
-    return 1.0 - x;
+    if (fabs(x) > 1.0)
+        return 0.0;
+    return 1.0 - fabs(x);
 }
 
 static double hanning(kernel *k, double x)
@@ -145,11 +147,6 @@ static double hanning(kernel *k, double x)
 static double hamming(kernel *k, double x)
 {
     return 0.54 + 0.46 * cos(M_PI * x);
-}
-
-static double hermite(kernel *k, double x)
-{
-    return (2.0 * x - 3.0) * x * x + 1.0;
 }
 
 static double quadric(kernel *k, double x)
@@ -190,23 +187,13 @@ static double bessel_i0(double epsilon, double x)
 static double kaiser(kernel *k, double x)
 {
     double a = k->params[0];
-    double b = k->params[1];
     double epsilon = 1e-12;
-    double i0a = 1 / bessel_i0(epsilon, b);
+    double i0a = 1 / bessel_i0(epsilon, a);
     return bessel_i0(epsilon, a * sqrt(1 - x * x)) * i0a;
 }
 
-static double catmull_rom(kernel *k, double x)
-{
-    if (x < 1.0)
-        return 0.5 * (2.0 + x * x * (-5.0 + x * 3.0));
-    if (x < 2.0)
-        return 0.5 * (4.0 + x * (-8.0 + x * (5.0 - x)));
-    return 0;
-}
-
-// Mitchell-Netravali
-static double mitchell(kernel *k, double x)
+// Family of cubic B/C splines
+static double cubic_bc(kernel *k, double x)
 {
     double b = k->params[0];
     double c = k->params[1];
@@ -260,11 +247,7 @@ static double spline64(kernel *k, double x)
 static double gaussian(kernel *k, double x)
 {
     double p = k->params[0];
-    if (p > 100.0)
-        p = 100.0;
-    if (p < 1.0)
-        p = 1.0;
-    return pow(2.0, -(p / 10.0) * x * x);
+    return pow(2.0, -(M_E / p) * x * x);
 }
 
 static double sinc(kernel *k, double x)
@@ -277,9 +260,9 @@ static double sinc(kernel *k, double x)
 
 static double jinc(kernel *k, double x)
 {
-    if (x == 0.0)
+    if (fabs(x) < 1e-8)
         return 1.0;
-    double pix = M_PI * x;
+    double pix = M_PI * x / k->params[0]; // blur factor
     return 2.0 * j1(pix) / pix;
 }
 
@@ -294,11 +277,9 @@ static double lanczos(kernel *k, double x)
     return radius * sin(pix) * sin(pix / radius) / (pix * pix);
 }
 
-static double ginseng(kernel *k, double x)
+static double ewa_ginseng(kernel *k, double x)
 {
     double radius = k->radius;
-    if (fabs(x) < 1e-8)
-        return 1.0;
     if (fabs(x) >= radius)
         return 0.0;
     return jinc(k, x) * sinc(k, x / radius);
@@ -307,43 +288,21 @@ static double ginseng(kernel *k, double x)
 static double ewa_lanczos(kernel *k, double x)
 {
     double radius = k->radius;
-    assert(radius >= 1.0);
-
-    // This is already three orders of magnitude slower than anything you could
-    // possibly hope to play back in realtime and results in tons of ringing
-    // artifacts, so I doubt anybody will complain.
-    if (radius > 16)
-        radius = 16;
-
-    if (fabs(x) < 1e-8)
-        return 1.0;
     if (fabs(x) >= radius)
         return 0.0;
+    // First zero of the jinc function. We simply scale it to fit into the
+    // given radius.
+    double jinc_zero = 1.2196698912665045;
+    return jinc(k, x) * jinc(k, x * jinc_zero / radius);
+}
 
-    // Precomputed zeros of the jinc() function, needed to adjust the
-    // window size. Computing this at runtime is nontrivial.
-    // Copied from: https://github.com/AviSynth/jinc-resize/blob/master/JincResize/JincFilter.cpp#L171
-    static double jinc_zeros[16] = {
-        1.2196698912665045,
-        2.2331305943815286,
-        3.2383154841662362,
-        4.2410628637960699,
-        5.2427643768701817,
-        6.2439216898644877,
-        7.2447598687199570,
-        8.2453949139520427,
-        9.2458926849494673,
-        10.246293348754916,
-        11.246622794877883,
-        12.246898461138105,
-        13.247132522181061,
-        14.247333735806849,
-        15.247508563037300,
-        16.247661874700962
-    };
-
-    double window = jinc_zeros[0] / jinc_zeros[(int)radius - 1];
-    return jinc(k, x) * jinc(k, x*window);
+static double ewa_hanning(kernel *k, double x)
+{
+    double radius = k->radius;
+    if (fabs(x) >= radius)
+        return 0.0;
+    // Jinc windowed by the hanning window
+    return jinc(k, x) * hanning(k, x / radius);
 }
 
 static double blackman(kernel *k, double x)
@@ -360,22 +319,29 @@ static double blackman(kernel *k, double x)
 
 const struct filter_kernel mp_filter_kernels[] = {
     {"nearest",        0.5, nearest},
-    {"bilinear_slow",  1,   bilinear},
+    {"triangle",       1,   triangle},
     {"hanning",        1,   hanning},
     {"hamming",        1,   hamming},
-    {"hermite",        1,   hermite},
     {"quadric",        1.5, quadric},
     {"bicubic",        2,   bicubic},
-    {"kaiser",         1,   kaiser, .params = {6.33, 6.33} },
-    {"catmull_rom",    2,   catmull_rom},
-    {"mitchell",       2,   mitchell, .params = {1.0/3.0, 1.0/3.0} },
+    {"kaiser",         1,   kaiser,   .params = {6.33, NAN} },
+    {"catmull_rom",    2,   cubic_bc, .params = {0.0, 0.5} },
+    {"mitchell",       2,   cubic_bc, .params = {1.0/3.0, 1.0/3.0} },
+    {"hermite",        1,   cubic_bc, .params = {0.0, 0.0} },
+    {"robidoux",       2,   cubic_bc, .params = {0.3782, 0.3109}, .polar = true},
+    {"robidouxsharp",  2,   cubic_bc, .params = {0.2620, 0.3690}, .polar = true},
     {"spline16",       2,   spline16},
     {"spline36",       3,   spline36},
     {"spline64",       4,   spline64},
-    {"gaussian",       -1,  gaussian, .params = {28.85390081777927, NAN} },
+    {"gaussian",       -1,  gaussian, .params = {1.0, NAN} },
     {"sinc",           -1,  sinc},
-    {"ewa_lanczos",    -1,  ewa_lanczos, .polar = true},
-    {"ginseng",        -1,  ginseng,     .polar = true},
+    {"ewa_lanczos",    -1,  ewa_lanczos, .params = {1.0, NAN}, .polar = true},
+    {"ewa_hanning",    -1,  ewa_hanning, .params = {1.0, NAN}, .polar = true},
+    {"ewa_ginseng",    -1,  ewa_ginseng, .params = {1.0, NAN}, .polar = true},
+    // Radius is based on the true jinc radius, slightly sharpened as per
+    // calculations by Nicolas Robidoux. Source: Imagemagick's magick/resize.c
+    {"ewa_lanczossharp", 3.2383154841662362, ewa_lanczos,
+                         .params = {0.9812505644269356, NAN}, .polar = true},
     {"lanczos",        -1,  lanczos},
     {"blackman",       -1,  blackman},
     {0}

@@ -310,34 +310,55 @@ Available video output drivers are:
 
         ``ewa_lanczos``
             Elliptic weighted average Lanczos scaling. Also known as Jinc.
-            Relatively slow, but very good quality. The number of taps can
-            be controlled with ``scale-radius``. Adding extra taps makes the
+            Relatively slow, but very good quality. The radius can be
+            controlled with ``scale-radius``. Increasing the radius makes the
             filter sharper but adds more ringing.
 
             This filter supports antiringing (see ``scale-antiring``).
 
+        ``ewa_lanczossharp``
+            A slightly sharpened version of ewa_lanczos, preconfigured to use
+            an ideal radius and parameter. If your hardware can run it, this is
+            probably what you should use by default.
+
+            Note: This filter has a fixed radius. Use ``ewa_lanczos`` if you
+            want to adjust it.
+
         ``mitchell``
-            Mitchell-Netravali. The ``b`` and ``c`` parameters can be set with
-            ``scale-param1`` and ``scale-param2``. Both are set to 1/3 by default.
-            This filter is very good at downscaling (see ``scale-down``).
+            Mitchell-Netravali. The ``B`` and ``C`` parameters can be set with
+            ``scale-param1`` and ``scale-param2``. This filter is very good at
+            downscaling (see ``scale-down``).
 
         There are some more filters, but most are not as useful. For a complete
         list, pass ``help`` as value, e.g.::
 
             mpv --vo=opengl:scale=help
 
-    ``scale-param1=<value>``
-        Set filter parameters. Ignored if the filter is not tunable. These are
-        unset by default, and use the filter specific default if applicable.
+    ``scale-param1=<value>``, ``scale-param2=<value>``
+        Set filter parameters. Ignored if the filter is not tunable.
+        Currently, this affects the following filter parameters:
 
-    ``scale-param2=<value>``
-        See ``scale-param1``.
+        ``kaiser``
+            Window parameter (``alpha``). Defaults to 6.33.
+
+        ``mitchell``
+            Spline parameters (``B`` and ``C``). Defaults to 1/3 for both.
+
+        ``gaussian``
+            Scale parameter (``t``). Increasing this makes the result blurrier.
+            Defaults to 1.
+
+        ``ewa_lanczos``, ``ewa_ginseng``, ``ewa_hanning``
+            Jinc function scaling factor (also known as a blur factor).
+            Decreasing this makes the result sharper, increasing it makes it
+            blurrier. Defaults to 1. Note that setting this too low (eg. 0.5)
+            leads to bad results. It's recommended to stay between 0.9 and 1.1.
 
     ``scale-radius=<r>``
         Set radius for filters listed below, must be a float number between 1.0
         and 16.0. Defaults to be 3.0 if not specified.
 
-            ``sinc``, ``lanczos``, ``ewa_lanczos``, ``ginseng``, ``blackman``, ``gaussian``
+            ``sinc``, ``lanczos``, ``blackman``, ``gaussian`` and all EWA filters (eg. ``ewa_lanczos``)
 
         Note that depending on filter implementation details and video scaling
         ratio, the radius that actually being used might be different
@@ -349,7 +370,7 @@ Available video output drivers are:
         between 0.0 and 1.0. The default value of 0.0 disables antiringing
         entirely.
 
-        Note that this currently only affects ``ewa_lanczos``.
+        Note that this currently only affects EWA filters (eg. ``ewa_lanczos``).
 
     ``scaler-resizes-only``
         Disable the scaler if the video image is not resized. In that case,

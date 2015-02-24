@@ -124,6 +124,71 @@ static void decode(struct sd *sd, struct demux_packet *packet)
     event->Text = strdup(text);
 }
 
+static void configure_ass(struct sd *sd, struct mp_osd_res *dim)
+{
+    struct sd_ass_priv *ctx = sd->priv;
+    struct MPOpts *opts = sd->opts;
+    ASS_Renderer *priv = sd->ass_renderer;
+    ASS_Track *track = ctx->ass_track;
+
+    ass_set_frame_size(priv, dim->w, dim->h);
+    ass_set_margins(priv, dim->mt, dim->mb, dim->ml, dim->mr);
+
+    bool set_use_margins = false;
+    int set_sub_pos = 0;
+    float set_line_spacing = 0;
+    float set_font_scale = 1;
+    int set_hinting = 0;
+    bool set_scale_with_window = false;
+    bool set_scale_by_window = true;
+    bool total_override = false;
+    // With forced overrides, apply the --sub-* specific options
+    if (ctx->is_converted || opts->ass_style_override == 3) {
+        set_scale_with_window = opts->sub_scale_with_window;
+        set_use_margins = opts->sub_use_margins;
+        set_scale_by_window = opts->sub_scale_by_window;
+        total_override = true;
+    } else {
+        set_scale_with_window = opts->ass_scale_with_window;
+        set_use_margins = opts->ass_use_margins;
+    }
+    if (ctx->is_converted || opts->ass_style_override) {
+        set_sub_pos = 100 - opts->sub_pos;
+        set_line_spacing = opts->ass_line_spacing;
+        set_hinting = opts->ass_hinting;
+        set_font_scale = opts->sub_scale;
+    }
+    if (set_scale_with_window) {
+        int vidh = dim->h - (dim->mt + dim->mb);
+        set_font_scale *= dim->h / (float)MPMAX(vidh, 1);
+    }
+    if (!set_scale_by_window) {
+        double factor = dim->h / 720.0;
+        if (factor != 0.0)
+            set_font_scale /= factor;
+    }
+    ass_set_use_margins(priv, set_use_margins);
+    ass_set_line_position(priv, set_sub_pos);
+    ass_set_shaper(priv, opts->ass_shaper);
+    int set_force_flags = 0;
+    if (total_override)
+        set_force_flags |= ASS_OVERRIDE_BIT_STYLE | ASS_OVERRIDE_BIT_FONT_SIZE;
+    if (opts->ass_style_override == 4)
+        set_force_flags |= ASS_OVERRIDE_BIT_FONT_SIZE;
+    ass_set_selective_style_override_enabled(priv, set_force_flags);
+    ASS_Style style = {0};
+    mp_ass_set_style(&style, 288, opts->sub_text_style);
+    ass_set_selective_style_override(priv, &style);
+    free(style.FontName);
+    if (ctx->is_converted && track->default_style < track->n_styles) {
+        mp_ass_set_style(track->styles + track->default_style,
+                         track->PlayResY, opts->sub_text_style);
+    }
+    ass_set_font_scale(priv, set_font_scale);
+    ass_set_hinting(priv, set_hinting);
+    ass_set_line_spacing(priv, set_line_spacing);
+}
+
 static void get_bitmaps(struct sd *sd, struct mp_osd_res dim, double pts,
                         struct sub_bitmaps *res)
 {
@@ -145,9 +210,8 @@ static void get_bitmaps(struct sd *sd, struct mp_osd_res dim, double pts,
         if (isnormal(par))
             scale = par;
     }
-    mp_ass_configure(renderer, opts, !ctx->is_converted, &dim);
+    configure_ass(sd, &dim);
     ass_set_aspect_ratio(renderer, scale, 1);
-#if LIBASS_VERSION >= 0x01020000
     if (!ctx->is_converted && (!opts->ass_style_override ||
                                opts->ass_vsfilter_blur_compat))
     {
@@ -155,7 +219,6 @@ static void get_bitmaps(struct sd *sd, struct mp_osd_res dim, double pts,
     } else {
         ass_set_storage_size(renderer, 0, 0);
     }
-#endif
     mp_ass_render_frame(renderer, ctx->ass_track, pts * 1000 + .5,
                         &ctx->parts, res);
     talloc_steal(ctx, ctx->parts);
@@ -336,7 +399,6 @@ static void mangle_colors(struct sd *sd, struct sub_bitmaps *parts)
     if (opts->ass_vsfilter_color_compat == 0) // "no"
         return;
     bool force_601 = opts->ass_vsfilter_color_compat == 3;
-#if LIBASS_VERSION >= 0x01020000
     ASS_Track *track = ctx->ass_track;
     static const int ass_csp[] = {
         [YCBCR_BT601_TV]        = MP_CSP_BT_601,
@@ -371,7 +433,6 @@ static void mangle_colors(struct sd *sd, struct sub_bitmaps *parts)
     // Unknown colorspace (either YCBCR_UNKNOWN, or a valid value unknown to us)
     if (!csp || !levels)
         return;
-#endif
 
     struct mp_image_params params = ctx->video_params;
 
