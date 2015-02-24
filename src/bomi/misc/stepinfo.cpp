@@ -30,7 +30,7 @@ auto StepValue::text(ChangeValue direction) const -> QString
 
 auto StepValue::text(double prop) const -> QString
 {
-    return m_info->text(prop);
+    return m_info->text(m_step, prop);
 }
 
 Steps::Steps() {
@@ -92,6 +92,16 @@ auto Steps::setFromJson(const QJsonObject &json) -> bool
     return true;
 }
 
+SIA decimals(double step) -> int
+{
+    if (step == 0)
+        return 0;
+    const auto exp = std::log10(qAbs(step + step*1e-10));
+    if (exp >= 0)
+        return 0;
+    return 1 + (int)-exp;
+}
+
 //auto StepInfo::text(double prop) const -> QString
 //{
 ////    qDebug() << m_suffix << suffix();
@@ -102,20 +112,16 @@ auto Steps::setFromJson(const QJsonObject &json) -> bool
 
 //auto StepInfo::text(ChangeValue direction) const -> QString
 //{
-////    int dec = 0;
-////    const auto exp = std::log10(qAbs(m_info.step()));
-////    if (exp < 0)
-////        dec = 1 + (int)-exp;
 //    const auto info = this->info();
 //    return _NS(_EnumData(direction) * m_step, true, info.prec) % info.suffix();
 //}
 
-auto StepInfo::text(double prop) const -> QString
+auto StepInfo::text(double step, double prop) const -> QString
 {
-    return _NS(prop/multiply, sign, precision) % suffix();
+    return _NS(prop/multiply, sign, decimals(step)) % suffix();
 }
 
 auto StepInfo::text(double step, ChangeValue direction, bool sign) const -> QString
 {
-    return _NS(_EnumData(direction) * step, sign, precision) % suffix();
+    return _NS(_EnumData(direction) * step, sign, decimals(step)) % suffix();
 }
