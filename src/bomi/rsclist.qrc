@@ -48,5 +48,6 @@
         <file>img/red.png</file>
         <file>img/blue.png</file>
         <file>img/green.png</file>
+        <file>img/preferences-system-network-sharing.png</file>
     </qresource>
 </RCC>

@@ -286,7 +286,8 @@ auto PlayEngine::Data::onLoad() -> void
         mpv.setAsync("file-local-options/cache", "no"_b);
 
 
-    if (file.data.startsWith("http://"_a) || file.data.startsWith("https://"_a)) {
+    static constexpr const auto QCI = Qt::CaseInsensitive;
+    if (file.data.startsWith("http://"_a, QCI) || file.data.startsWith("https://"_a, QCI)) {
         file = QUrl(file).toString(QUrl::FullyEncoded);
         if (yle && yle->supports(file)) {
             if (yle->run(file))
@@ -302,6 +303,20 @@ auto PlayEngine::Data::onLoad() -> void
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
         } else
             mpv.setAsync("stream-open-filename", file.toMpv());
+    } else if (file.data.startsWith("smb://"_a, QCI)) {
+//        file = QUrl(file).toString(QUrl::FullyEncoded);
+        const auto &samba = local->d->samba;
+        QUrl url(file);
+        if (url.userName().isEmpty())
+            url.setUserName(samba.username);
+        if (url.userName() == samba.username) {
+            if (!samba.workgroup.isEmpty())
+                url.setUserName(samba.workgroup % ';'_q % samba.username);
+            if (!samba.password.isEmpty())
+                url.setPassword(samba.password);
+        }
+        file = url.toString(QUrl::FullyEncoded);
+        mpv.setAsync("stream-open-filename", file.toMpv());
     } else if (local->d->disc)
         mpv.setAsync("stream-open-filename", file.toMpv());
 

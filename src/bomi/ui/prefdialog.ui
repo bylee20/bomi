@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>678</width>
-    <height>693</height>
+    <height>541</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>20</number>
+        <number>21</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -309,7 +309,7 @@
             <item>
              <widget class="QRadioButton" name="save_quick_snapshot_ask">
               <property name="text">
-               <string>Ask where to save snapshot</string>
+               <string>As&amp;k where to save snapshot</string>
               </property>
              </widget>
             </item>
@@ -363,45 +363,6 @@
                </widget>
               </item>
              </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_34">
-           <property name="title">
-            <string>Streaming</string>
-           </property>
-           <layout class="QFormLayout" name="formLayout_21">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_25">
-              <property name="text">
-               <string notr="true">youtube-dl</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="yt_program"/>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_59">
-              <property name="text">
-               <string notr="true">User-Agent</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="yt_user_agent"/>
-            </item>
-            <item row="1" column="1">
-             <widget class="QLineEdit" name="yle_program"/>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string notr="true">yle-dl</string>
-              </property>
-             </widget>
             </item>
            </layout>
           </widget>
@@ -758,30 +719,17 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_26">
-           <property name="title">
-            <string>Network folders</string>
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_9">
-            <item>
-             <widget class="QLabel" name="label_49">
-              <property name="text">
-               <string>Folders of network drives or NFS</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="StringListWidget" name="network_folders" native="true">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>
@@ -2312,6 +2260,138 @@ Regular expression is supported.</string>
              <string/>
             </property>
            </column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="network">
+        <layout class="QVBoxLayout" name="verticalLayout_22">
+         <item>
+          <widget class="QGroupBox" name="groupBox_34">
+           <property name="title">
+            <string>Streaming</string>
+           </property>
+           <layout class="QFormLayout" name="formLayout_21">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_25">
+              <property name="text">
+               <string notr="true">youtube-dl</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="yt_program"/>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_59">
+              <property name="text">
+               <string notr="true">User-Agent</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="yt_user_agent"/>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="yle_program"/>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string notr="true">yle-dl</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_8">
+           <property name="title">
+            <string>Samba</string>
+           </property>
+           <layout class="QFormLayout" name="formLayout">
+            <item row="0" column="0">
+             <widget class="QLabel" name="network_samba">
+              <property name="text">
+               <string>Username</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="samba_username">
+              <property name="toolTip">
+               <string>Username for SAMBA share. You don't need to specify to this if geust is allowed.</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Password</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="samba_password">
+              <property name="toolTip">
+               <string>Password for given username. You don't need to specify to this if geust is allowed.</string>
+              </property>
+              <property name="echoMode">
+               <enum>QLineEdit::Password</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Workgroup</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="samba_workgroup">
+              <property name="toolTip">
+               <string>Workgroup for SAMBA share.
+On Windows, you have to specify this if the client resides in different workgroup from that of host.
+On Linux, you don't have to specify this usually.</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>CAUTION: password will be stored in plain text!</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_26">
+           <property name="title">
+            <string>Network folders</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_9">
+            <item>
+             <widget class="QLabel" name="label_49">
+              <property name="text">
+               <string>Folders of network drives or NFS</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="StringListWidget" name="network_folders" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
         </layout>

@@ -593,12 +593,20 @@ auto MainWindow::Data::applyPref() -> void
         cache.remotes = p.network_folders();
         return cache;
     };
+    auto samba = [&] () {
+        SambaInfo samba;
+        samba.username = p.samba_username();
+        samba.password = p.samba_password();
+        samba.workgroup = p.samba_workgroup();
+        return samba;
+    };
     const auto chardet = p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1;
 
     e.lock();
     e.setResume_locked(p.remember_stopped());
     e.setPreciseSeeking_locked(p.precise_seeking());
     e.setCache_locked(cache());
+    e.setSamba_locked(samba());
     e.setPriority_locked(p.audio_priority(), p.sub_priority());
     e.setAutoloader_locked(p.audio_autoload(), p.sub_autoload_v2());
 

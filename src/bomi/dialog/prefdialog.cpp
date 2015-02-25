@@ -108,6 +108,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Playback"), d->ui.playback, u":/img/media-playback-start-32.png"_q);
     addPage(tr("Cache"), d->ui.cache, u":/img/preferences-web-browser-cache.png"_q);
     addPage(tr("Language"), d->ui.language, u":/img/preferences-desktop-locale.png"_q);
+    addPage(tr("Network"), d->ui.network, u":/img/preferences-system-network-sharing.png"_q);
     addPage(tr("Miscellaneous"), d->ui.misc, u":/img/applications-education-miscellaneous-32.png"_q);
 
     addCategory(tr("Appearance"));

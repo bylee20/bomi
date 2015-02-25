@@ -26,7 +26,7 @@ class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
 class QOpenGLContext;                   class EncodingInfo;
-class SubComp;
+class SubComp;                          struct SambaInfo;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
 
@@ -143,6 +143,7 @@ public:
     auto setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void;
     auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;
     auto setCache_locked(const CacheInfo &info) -> void;
+    auto setSamba_locked(const SambaInfo &samba) -> void;
     auto setVolumeNormalizerOption_locked(const AudioNormalizerOption &option) -> void;
     auto setDeintOptions_locked(const DeintOptionSet &set) -> void;
     auto setAudioDevice_locked(const QString &device) -> void;

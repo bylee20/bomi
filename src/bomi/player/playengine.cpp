@@ -500,6 +500,11 @@ auto PlayEngine::setCache_locked(const CacheInfo &info) -> void
     d->params.d->cache = info;
 }
 
+auto PlayEngine::setSamba_locked(const SambaInfo &samba) -> void
+{
+    d->params.d->samba = samba;
+}
+
 auto PlayEngine::setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void
 {
     d->hwcdc.clear();

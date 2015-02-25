@@ -9,6 +9,7 @@
 
 struct MrlState::Data {
     CacheInfo cache;
+    SambaInfo samba;
     double autodetect = -1;
     bool autoselect = false, disc = false;
     AutoselectMode autoselectMode = AutoselectMode::Matched;

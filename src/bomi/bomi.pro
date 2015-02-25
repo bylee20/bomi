@@ -559,4 +559,4 @@ DISTFILES += \
     skins/air/bomi.qml \
     skins/air/ImageButton.qml \
     skins/air/IconTextButton.qml \
-    imports/bomi/PlayInfoAvOutput.qml
+	imports/bomi/PlayInfoAvOutput.qml

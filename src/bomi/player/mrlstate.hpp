@@ -41,6 +41,10 @@ struct CacheInfo {
     QStringList remotes;
 };
 
+struct SambaInfo {
+    QString username, password, workgroup;
+};
+
 SIA qBound(const QPointF &min, const QPointF &val, const QPointF &max) -> QPointF
 {
     return QPointF(qBound(min.x(), val.x(), max.x()), qBound(min.y(), val.y(), max.y()));
