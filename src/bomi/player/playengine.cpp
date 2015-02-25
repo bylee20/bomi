@@ -482,9 +482,9 @@ auto PlayEngine::setCache_locked(const CacheInfo &info) -> void
     d->params.d->cache = info;
 }
 
-auto PlayEngine::setSamba_locked(const SambaInfo &samba) -> void
+auto PlayEngine::setSamba_locked(const SmbAuth &smb) -> void
 {
-    d->params.d->samba = samba;
+    d->params.d->smb = smb;
 }
 
 auto PlayEngine::setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void

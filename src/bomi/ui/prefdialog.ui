@@ -2321,7 +2321,9 @@ Regular expression is supported.</string>
             <item row="0" column="1">
              <widget class="QLineEdit" name="samba_username">
               <property name="toolTip">
-               <string>Username for SAMBA share. You don't need to specify to this if geust is allowed.</string>
+               <string>Username for SAMBA share.
+You don't need to specify to this if geust is allowed.
+You can specify workgroup in the form of 'workgroup;username'.</string>
               </property>
              </widget>
             </item>
@@ -2339,22 +2341,6 @@ Regular expression is supported.</string>
               </property>
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_6">
-              <property name="text">
-               <string>Workgroup</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="samba_workgroup">
-              <property name="toolTip">
-               <string>Workgroup for SAMBA share.
-On Windows, you have to specify this if the client resides in different workgroup from that of host.
-On Linux, you don't have to specify this usually.</string>
               </property>
              </widget>
             </item>

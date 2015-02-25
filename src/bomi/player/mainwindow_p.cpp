@@ -14,6 +14,7 @@
 #include "dialog/openmediafolderdialog.hpp"
 #include "dialog/subtitlefinddialog.hpp"
 #include "avinfoobject.hpp"
+#include "misc/smbauth.hpp"
 #include <QSessionManager>
 #include <QScreen>
 
@@ -595,11 +596,19 @@ auto MainWindow::Data::applyPref() -> void
         return cache;
     };
     auto samba = [&] () {
-        SambaInfo samba;
-        samba.username = p.samba_username();
-        samba.password = p.samba_password();
-        samba.workgroup = p.samba_workgroup();
-        return samba;
+        SmbAuth smb;
+        smb.setUsername(p.samba_username());
+        smb.setPassword(p.samba_password());
+        smb.setGetAuthInfo([=] (SmbAuth *smb) -> bool {
+            QMutex mutex; QWaitCondition cond;
+            bool res = false;
+            mutex.lock();
+            _PostEvent(this->p, GetSmbAuth, smb, &res, &cond);
+            cond.wait(&mutex);
+            mutex.unlock();
+            return res;
+        });
+        return smb;
     };
     const auto chardet = p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1;
 

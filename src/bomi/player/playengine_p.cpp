@@ -304,15 +304,23 @@ auto PlayEngine::Data::onLoad() -> void
         } else
             mpv.setAsync("stream-open-filename", file.toMpv());
     } else if (file.data.startsWith("smb://"_a, QCI)) {
-        const auto &samba = local->d->samba;
-        QUrl url(file);
-        if (!samba.username.isEmpty() && url.userName() == samba.username) {
-            if (!samba.workgroup.isEmpty())
-                url.setUserName(samba.workgroup % ';'_q % samba.username);
-            if (!samba.password.isEmpty())
-                url.setPassword(samba.password);
+        auto smb = local->d->smb;
+        QUrl url = smb.translate(QUrl(file));
+        for (;;) {
+            if (smb.process(url) == SmbAuth::NoError) {
+                file = url.toString(QUrl::FullyEncoded);
+                break;
+            }
+            _Error("Failed to access smb share: %%", smb.lastErrorString());
+            if (smb.lastError() != SmbAuth::NoPermission)
+                break;
+            if (!smb.getNewAuthInfo()) {
+                _Error("Failed to acquire new authentication for smb://.");
+                break;
+            }
+            url.setUserName(smb.username());
+            url.setPassword(smb.password());
         }
-        file = url.toString(QUrl::FullyEncoded);
         mpv.setAsync("stream-open-filename", file.toMpv());
     } else if (local->d->disc)
         mpv.setAsync("stream-open-filename", file.toMpv());

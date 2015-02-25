@@ -143,7 +143,6 @@ private:
 
     P0(QString, samba_username, {});
     P0(QString, samba_password, {});
-    P0(QString, samba_workgroup, {});
 
     QStringList sub_search_paths;
 

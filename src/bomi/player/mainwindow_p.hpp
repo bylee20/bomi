@@ -23,9 +23,15 @@
 #include "misc/stepaction.hpp"
 #include "misc/logviewer.hpp"
 #include "os/os.hpp"
+#include "misc/smbauth.hpp"
+#include "misc/dataevent.hpp"
 #include <QUndoCommand>
 #include <QMimeData>
 #include <QQmlProperty>
+
+enum MainWindowEvent {
+    GetSmbAuth = QEvent::User + 1
+};
 
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {

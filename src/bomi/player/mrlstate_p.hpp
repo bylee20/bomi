@@ -6,10 +6,11 @@
 #include "video/deintoption.hpp"
 #include "video/interpolatorparams.hpp"
 #include "misc/charsetdetector.hpp"
+#include "misc/smbauth.hpp"
 
 struct MrlState::Data {
     CacheInfo cache;
-    SambaInfo samba;
+    SmbAuth smb;
     double autodetect = -1;
     bool autoselect = false, disc = false;
     AutoselectMode autoselectMode = AutoselectMode::Matched;

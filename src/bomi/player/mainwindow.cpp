@@ -376,3 +376,21 @@ auto MainWindow::moveEvent(QMoveEvent *event) -> void
 {
     QWidget::moveEvent(event);
 }
+
+auto MainWindow::customEvent(QEvent *event) -> void
+{
+    if ((int)event->type() == GetSmbAuth) {
+        SmbAuth *smb = nullptr;
+        bool *res = nullptr;
+        QWaitCondition *cond = nullptr;
+        _TakeData(event, smb, res, cond);
+        Q_ASSERT(smb && res && cond);
+        SmbAuthDialog dlg(this);
+        dlg.setAuthInfo(*smb);
+        if (dlg.exec()) {
+            *res = true;
+            *smb = dlg.authInfo();
+        }
+        cond->wakeAll();
+    }
+}

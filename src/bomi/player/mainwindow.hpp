@@ -37,6 +37,7 @@ private:
     auto dragEnterEvent(QDragEnterEvent *event) -> void;
     auto resizeEvent(QResizeEvent *event) -> void;
     auto moveEvent(QMoveEvent *event) -> void;
+    auto customEvent(QEvent *event) -> void final;
     auto onKeyPressEvent(QKeyEvent *event) -> void;
     auto onMouseMoveEvent(QMouseEvent *event) -> void;
     auto onMouseDoubleClickEvent(QMouseEvent *event) -> void;
