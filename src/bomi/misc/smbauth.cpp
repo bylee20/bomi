@@ -13,7 +13,10 @@ SIA smb_auth_fn(const char */*server*/, const char */*share*/,
 auto SmbAuth::translate(const QUrl &input) -> QUrl
 {
     QUrl url = input;
-    if (url.userName() == m_username) {
+    if (url.userName().isEmpty()) {
+        url.setUserName(m_username);
+        url.setPassword(m_password);
+    } else if (url.userName() == m_username) {
         if (url.password().isEmpty())
             url.setPassword(m_password);
         else
@@ -29,6 +32,7 @@ auto SmbAuth::translate(const QUrl &input) -> QUrl
 
 auto SmbAuth::process(const QUrl &url) -> Error
 {
+    qDebug() << "try" << url;
     const int err = smbc_init(smb_auth_fn, 1);
     if (err < 0)
         return m_lastError = [&] () {
