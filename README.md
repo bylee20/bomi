@@ -28,7 +28,6 @@ You have to prepare next libraries, too:
   * libavcodec >= 55.34.1 (*)
   * libavutil >= 52.48.101 (*)
   * libavfilter (*)
-  * libpostproc (*)
   * libswresample (*)
   * libswscale (*)
 * chardet (*)

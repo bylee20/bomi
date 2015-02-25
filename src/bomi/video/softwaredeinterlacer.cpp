@@ -9,7 +9,7 @@ struct SoftwareDeinterlacer::Data {
     bool rebuild = true, pass = false;
     DeintOption deint;
     FFmpegFilterGraph graph;
-    FFmpegPostProc pp;
+    BobDeinterlacer bob;
     Type type = Pass;
     MpImage input;
     int processed = 0, count = 1;
@@ -17,28 +17,8 @@ struct SoftwareDeinterlacer::Data {
     double pts = MP_NOPTS_VALUE, prev = MP_NOPTS_VALUE;
     std::deque<MpImage> queue;
 
-    auto topField() const -> MpImage
-    {
-        auto out = pp.newImage(input);
-        pp.process(out, input);
-        return out;
-    }
-    auto bottomField() const -> MpImage
-    {
-        auto inm = const_cast<MpImage&>(input);
-        auto out = pp.newImage(input);
-        inm->planes[0] += inm->stride[0];
-        out->planes[0] += out->stride[0];
-        inm->h -= 2;
-        out->h -= 2;
-        pp.process(out, inm);
-        out->planes[0] -= out->stride[0];
-        inm->planes[0] -= inm->stride[0];
-        out->h += 2;
-        inm->h += 2;
-        return out;
-    }
-
+    auto bobField(bool top) const -> MpImage
+        { return bob.field(deint.method, input, top); }
     auto step(int split) const -> double
     {
         if (pts == MP_NOPTS_VALUE || prev == MP_NOPTS_VALUE)
@@ -86,18 +66,16 @@ auto SoftwareDeinterlacer::push(MpImage &&mpi) -> void
     d->processed = 0;
     d->pass = true;
     if (d->input->fields & MP_IMGFIELD_INTERLACED) {
+        d->pass = false;
         switch (d->type) {
-        case Mark: {
-            d->pass = false;
+        case Mark: case Bob:
             break;
-        } case Graph:
+        case Graph:
             if (!(d->pass = !d->graph.initialize(d->option, d->input)))
                 d->graph.push(d->input);
             break;
-        case PP:
-            d->pass = !d->pp.initialize(d->option, d->input);
-            break;
         default:
+            d->pass = true;
             break;
         }
     }
@@ -129,12 +107,9 @@ auto SoftwareDeinterlacer::pop() -> MpImage
                 ret->pts = d->nextPts();
             }
             break;
-        } case PP: {
+        } case Bob: {
             const bool topFirst = d->input->fields & MP_IMGFIELD_TOP_FIRST;
-            if (d->processed == 0)
-                ret = topFirst ? d->topField() : d->bottomField();
-            else if (d->processed == 1)
-                ret = topFirst ? d->bottomField() : d->topField();
+            ret = d->bobField(topFirst == !d->processed);
             break;
         } default:
             break;
@@ -162,20 +137,11 @@ auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
     } else if (deint.processor == Processor::GPU) {
         d->type = Mark;
     } else {
-        d->type = PP;
         switch (d->deint.method) {
         case DeintMethod::Bob:
         case DeintMethod::LinearBob:
-            d->option = u"li"_q;
-            break;
-        case DeintMethod::LinearBlend:
-            d->option = u"lb"_q;
-            break;
         case DeintMethod::CubicBob:
-            d->option = u"ci"_q;
-            break;
-        case DeintMethod::Median:
-            d->option = u"md"_q;
+            d->type = Bob;
             break;
         case DeintMethod::Yadif:
             d->option = "yadif"_a % (d->deint.doubler ? "=mode=1"_a : ""_a);

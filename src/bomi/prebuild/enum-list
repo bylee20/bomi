@@ -137,8 +137,6 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Bob
 -LinearBob
 -CubicBob
--Median
--LinearBlend
 -Yadif
 
 +Interpolator[:QByteArray:]

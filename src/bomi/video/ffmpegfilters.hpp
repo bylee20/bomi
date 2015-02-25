@@ -3,13 +3,13 @@
 
 #include <QString>
 #include <QSize>
-
 extern "C" {
 #include <video/mp_image_pool.h>
 #include <video/img_format.h>
 #include <libavfilter/avfiltergraph.h>
 #include <libpostproc/postprocess.h>
 }
+#include "enum/deintmethod.hpp"
 #include "mpimage.hpp"
 
 #ifdef bool
@@ -34,22 +34,13 @@ private:
     AVFilterContext *m_src = nullptr, *m_sink = nullptr;
 };
 
-class FFmpegPostProc {
+class BobDeinterlacer {
 public:
-    FFmpegPostProc() { m_pool = mp_image_pool_new(10); }
-    ~FFmpegPostProc() { release(); mp_image_pool_clear(m_pool); }
-    auto process(MpImage &dst, const MpImage &src) const -> bool;
-    auto initialize(const QString &opt, const QSize &s, mp_imgfmt fmt) -> bool;
-    auto initialize(const QString &opt, const MpImage &mpi) -> bool
-        { return initialize(opt, {mpi->w, mpi->h}, mpi->imgfmt); }
-    auto newImage(const MpImage &mpi) const -> MpImage;
+    BobDeinterlacer() { m_pool = mp_image_pool_new(10); }
+    ~BobDeinterlacer() { mp_image_pool_clear(m_pool); }
+    auto field(DeintMethod method, const MpImage &src, bool top) const -> MpImage;
 private:
-    auto release() -> void;
-    QString m_option;
-    mp_imgfmt m_imgfmt = IMGFMT_NONE;
-    QSize m_size = {0, 0};
-    pp_context *m_context = nullptr;
-    pp_mode *m_mode = nullptr;
+    auto newImage(const MpImage &mpi) const -> MpImage;
     mp_image_pool *m_pool = nullptr;
 };
 

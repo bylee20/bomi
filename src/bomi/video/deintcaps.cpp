@@ -27,9 +27,7 @@ auto DeintCaps::list() -> const QList<DeintCaps>&
     push(DeintMethod::Bob           , true , true, true );
     push(DeintMethod::LinearBob     , true , true, true );
     push(DeintMethod::CubicBob      , true , true, true );
-    push(DeintMethod::LinearBlend   , true , true, false);
     push(DeintMethod::Yadif         , true , true, true );
-    push(DeintMethod::Median        , true , true, true );
     return caps;
 }
 

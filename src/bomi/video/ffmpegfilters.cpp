@@ -137,56 +137,101 @@ auto FFmpegFilterGraph::release() -> void
 
 /******************************************************************************/
 
-auto FFmpegPostProc::process(MpImage &di, const MpImage&si) const -> bool
+auto BobDeinterlacer::field(DeintMethod method, const MpImage &src, bool top) const -> MpImage
 {
-    if (!m_context)
-        return false;
-    const uint8_t *src[3]  = {si->planes[0], si->planes[1], si->planes[2]};
-          uint8_t *dst[3]  = {di->planes[0], di->planes[1], di->planes[2]};
-    const int srcStride[3] = {si->stride[0], si->stride[1], si->stride[2]};
-    const int dstStride[3] = {di->stride[0], di->stride[1], di->stride[2]};
-    pp_postprocess(src, srcStride, dst, dstStride, si->w, si->h,
-                   nullptr, 0, m_mode, m_context, si->pict_type);
-    return true;
-}
+    if (src->num_planes < 1)
+        return src;
+    const int h = src->plane_h[0];
+    if (h < 4)
+        return src;
 
-auto FFmpegPostProc::initialize(const QString &option, const QSize &size,
-                                mp_imgfmt imgfmt) -> bool
-{
-    if (m_option == option && m_size == size && m_imgfmt == imgfmt)
-        return m_context;
-    release();
-    m_option = option;
-    m_size = size;
-    m_imgfmt = imgfmt;
-    if (m_option.isEmpty() || m_size.isEmpty())
-        return false;
-    int flags = PP_CPU_CAPS_AUTO;
-    switch (imgfmt) {
-    case IMGFMT_420P:
-        flags |= PP_FORMAT_420;
+    MpImage dst = std::move(newImage(src));
+    const int stride = src->stride[0];
+    auto in = src->planes[0], out = dst->planes[0];
+    auto copy = [=] (int src, int dst)
+        { memcpy(out + dst * stride, in + src * stride, stride); };
+
+    switch (method) {
+    case DeintMethod::Bob: {
+        const int srcOffset = !top;
+        const int count = src->plane_h[0] / 2;
+        for (int i = 0; i < count ; ++i) {
+            auto src = in + srcOffset * stride;
+            memcpy(out, src, stride);
+            out += stride;
+            memcpy(out, src, stride);
+            out += stride;
+            in += 2 * stride;
+        }
         break;
-    case IMGFMT_411P:
-        flags |= PP_FORMAT_411;
+    } case DeintMethod::LinearBob: {
+        const int count = h / 2 - 1;
+
+        if (top) {
+            copy(h - 2, h - 1);
+            copy(h - 2, h - 2);
+        } else {
+            copy(1, 0);
+            copy(h - 1, h - 1);
+            in += stride;
+            out += stride;
+        }
+
+        for (int i = 0; i < count ; ++i) {
+            memcpy(out, in, stride);
+            out += stride;
+            auto in1 = in;
+            auto in2 = in += stride * 2;
+            for (int x = 0; x < stride; ++x)
+                *out++ = (*in1++ + *in2++) / 2 ;
+        }
         break;
-    case IMGFMT_422P:
-        flags |= PP_FORMAT_422;
+    } case DeintMethod::CubicBob: {
+        const int count = h / 2 - 2;
+
+        if (top) {
+            copy(0, 0);
+            copy(0, 1);
+            copy(h - 2, h - 1);
+            copy(h - 2, h - 2);
+            in += stride * 2;
+            out += stride * 2;
+        } else {
+            copy(1, 0);
+            copy(1, 1);
+            copy(3, 2);
+            copy(h - 1, h - 1);
+            in += stride * 3;
+            out += stride * 3;
+        }
+
+        for (int i = 0; i < count ; ++i) {
+            memcpy(out, in, stride);
+            out += stride;
+            auto in0 = in - stride * 2;
+            auto in1 = in;
+            auto in2 = in += stride * 2;
+            auto in3 = in + stride * 2;
+            for (int x = 0; x < stride; ++x) {
+                const int p0 = *in0++, p1 = *in1++, p2 = *in2++, p3 = *in3++;
+                const auto a =  -p0 + 3*p1 - 3*p2 + p3;
+                const auto b = 2*p0 - 5*p1 + 4*p2 - p3;
+                const auto c =  -p0        +   p2;
+                const auto d =        2*p1;
+                *out++ = (uchar)qBound(0, (a + 2*b + 4*c + 8*d)/16, 255);
+            }
+        }
         break;
-    case IMGFMT_444P:
-        flags |= PP_FORMAT_444;
+    } default:
+        memcpy(dst->planes[0], src->planes[0], src->plane_h[0]*src->stride[0]);
         break;
-    default:
-        return false;
     }
-    m_mode = pp_get_mode_by_name_and_quality(m_option.toLatin1().constData(),
-                                             PP_QUALITY_MAX);
-    if (!m_mode)
-        return false;
-    m_context = pp_get_context(size.width(), size.height(), flags);
-    return m_context;
+    for (int i = 1; i < src->num_planes; ++i)
+        memcpy(dst->planes[i], src->planes[i], src->plane_h[i]*src->stride[i]);
+    return dst;
 }
 
-auto FFmpegPostProc::newImage(const MpImage &mpi) const -> MpImage
+auto BobDeinterlacer::newImage(const MpImage &mpi) const -> MpImage
 {
     auto tmp = mp_image_pool_get(m_pool, mpi->imgfmt, mpi->stride[0], mpi->h);
     auto img = mp_image_new_ref(tmp);
@@ -199,12 +244,4 @@ auto FFmpegPostProc::newImage(const MpImage &mpi) const -> MpImage
     img->stride[3] = mpi->stride[3];
     mp_image_copy_attributes(img, (mp_image*)mpi.data());
     return MpImage::wrap(img);
-}
-
-auto FFmpegPostProc::release() -> void
-{
-    if (m_context)
-        pp_free_context(m_context);
-    if (m_mode)
-        pp_free_mode(m_mode);
 }

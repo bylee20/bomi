@@ -39,10 +39,6 @@ struct DeintWidget::Data {
                        tr("Bob with linear interpolation.")) % '\n'_q %
             methodText(DeintMethod::CubicBob,
                        tr("Bob with cubic interpolation.")) % '\n'_q %
-            methodText(DeintMethod::LinearBlend,
-                       tr("Blend linearly each line with (1 2 1) filter."))%'\n'_q %
-            methodText(DeintMethod::Median,
-                       tr("Apply median filter to every second line.")) % '\n'_q %
             methodText(DeintMethod::Yadif,
                        tr("Use complicated temporal and spatial interpolation."))
         );
