@@ -2,6 +2,7 @@
 #include "streamtrack.hpp"
 #include "video/videoformat.hpp"
 #include "audio/audioformat.hpp"
+#include <QQmlEngine>
 
 template<class L, class T = typename std::remove_pointer<typename L::value_type>::type>
 static inline auto _MakeQmlList(const QObject *o, const L *list) -> QQmlListProperty<T>
@@ -37,6 +38,11 @@ auto AvTrackObject::fromTrack(int n, const StreamTrack &track) -> AvTrackObject*
     return info;
 }
 
+AvCommonObject::~AvCommonObject()
+{
+
+}
+
 auto AvCommonObject::track() const -> AvTrackObject*
 {
     if (m_track)
@@ -48,7 +54,10 @@ auto AvCommonObject::track() const -> AvTrackObject*
 auto AvCommonObject::update(const StreamList &tracks, bool clear) -> AvTrackObject*
 {
     if (clear) {
-        qDeleteAll(m_tracks);
+        for (auto track : m_tracks) {
+            QQmlEngine::setObjectOwnership(track, QQmlEngine::JavaScriptOwnership);
+        }
+//        qDeleteAll(m_tracks);
         m_tracks.clear();
     }
     m_tracks.reserve(m_tracks.size() + tracks.size());
@@ -69,16 +78,6 @@ auto AvCommonObject::tracks() const -> QQmlListProperty<AvTrackObject>
 auto AvCommonObject::setTracks(const StreamList &tracks) -> void
 {
     m_track = update(tracks);
-    emit tracksChanged();
-    emit trackChanged();
-}
-
-auto AvCommonObject::setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void
-{
-    auto sel = update(tracks1);
-    if (auto sel2 = update(tracks2, false))
-        sel = sel2;
-    m_track = sel;
     emit tracksChanged();
     emit trackChanged();
 }
@@ -190,4 +189,25 @@ auto VideoObject::delayedTime() const -> qreal
 
 SubtitleObject::SubtitleObject()
 {
+}
+
+auto SubtitleObject::setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void
+{
+    auto sel = update(tracks1);
+    if (auto sel2 = update(tracks2, false))
+        sel = sel2;
+    setTrack(sel);
+    m_selection.clear();
+    for (auto track : trackObjects()) {
+        if (track->isSelected())
+            m_selection.push_back(track);
+    }
+    emit tracksChanged();
+    emit trackChanged();
+    emit selectionChanged();
+}
+
+auto SubtitleObject::selection() const -> QQmlListProperty<AvTrackObject>
+{
+    return _MakeQmlList(this, &m_selection);
 }

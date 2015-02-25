@@ -114,15 +114,27 @@ Item {
 
         Component {
             id: subtitleTrack
-            PlayInfoTrack { name: qsTr("Subtitle Track") }
+            PlayInfoText {
+                readonly property string name: qsTr("Subtitle Track")
+                function format(name, track) {
+                    if (name.length <= 0) return ""
+                    return qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5")
+                        .arg(name)
+                        .arg(Format.integerNA(track.number))
+                        .arg(Format.textNA(track.codec))
+                        .arg(Format.textNA(track.title))
+                        .arg(Format.textNA(track.language))
+                }
+                content: format(name, track)
+            }
         }
 
         Repeater {
-            model: engine.subtitle
+            model: engine.subtitle.selection
             Loader {
-                readonly property var data: modelData
+                readonly property QtObject track: modelData
                 sourceComponent: subtitleTrack
-                onItemChanged: { if (item) item.info = modelData }
+//                onItemChanged: { if (item) item.info = modelData }
             }
         }
     }

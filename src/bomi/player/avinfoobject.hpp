@@ -83,15 +83,19 @@ class AvCommonObject : public QObject {
     Q_PROPERTY(AvTrackObject *track READ track NOTIFY trackChanged)
     Q_PROPERTY(QQmlListProperty<AvTrackObject> tracks READ tracks NOTIFY tracksChanged)
 public:
+    ~AvCommonObject();
     auto tracks() const -> QQmlListProperty<AvTrackObject>;
+    auto trackObjects() const -> const QVector<AvTrackObject*>& { return m_tracks; }
     auto track() const -> AvTrackObject*;
     auto codec() const -> const CodecObject* { return &m_codec; }
     auto codec() -> CodecObject* { return &m_codec; }
 signals:
     void tracksChanged();
     void trackChanged();
-private:
+protected:
+    void setTrack(AvTrackObject *track) { m_track = track; }
     auto update(const StreamList &tracks, bool clear = true) -> AvTrackObject*;
+private:
     auto setTracks(const StreamList &tracks) -> void;
     auto setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void;
     friend class PlayEngine;
@@ -297,8 +301,15 @@ private:
 
 class SubtitleObject : public AvCommonObject {
     Q_OBJECT
+    Q_PROPERTY(QQmlListProperty<AvTrackObject> selection READ selection NOTIFY selectionChanged)
 public:
     SubtitleObject();
+    auto selection() const -> QQmlListProperty<AvTrackObject>;
+    auto setTracks(const StreamList &tracks1, const StreamList &tracks2) -> void;
+signals:
+    void selectionChanged();
+private:
+    QList<AvTrackObject*> m_selection;
 };
 
 #endif // AVINFOOBJECT_HPP
