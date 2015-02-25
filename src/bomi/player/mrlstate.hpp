@@ -120,6 +120,7 @@ private:
     P_(StreamList, sub_tracks_inclusive, {StreamInclusiveSubtitle}, "", 1)
     P_(bool, sub_hidden, false, QT_TR_NOOP("Subtitle Hiding"), 0)
     P_(bool, sub_style_overriden, false, QT_TR_NOOP("Override ASS Style"), 0)
+    PB(double, sub_scale, 0.0, -1.0, 1.0, QT_TR_NOOP("Subtitle Scale"), 0)
 public:
     static const int Version = 4;
     MrlState();

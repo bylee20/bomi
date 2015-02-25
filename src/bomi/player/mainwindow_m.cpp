@@ -597,6 +597,7 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_ENUM(sub(u"align"_q), sub_alignment, setSubtitleAlignment);
     PLUG_STEP(sub(u"position"_q).g(), sub_position, setSubtitlePosition);
     PLUG_STEP(sub(u"sync"_q).g(), sub_sync, setSubtitleDelay);
+    PLUG_STEP(sub(u"scale"_q).g(), sub_scale, setSubtitleScale);
 
     Menu &tool = menu(u"tool"_q);
     auto &pl = tool(u"playlist"_q);

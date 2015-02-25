@@ -561,6 +561,7 @@ RootMenu::RootMenu()
         d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Subtitle Alignment"),
                              {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
         d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"));
+        d->menuStepReset(u"scale"_q, QT_TR_NOOP("Subtitle Scale"));
 
         d->separator();
 

@@ -39,7 +39,7 @@ struct Steps {
     StepValue seek1_sec, seek2_sec, seek3_sec, speed_pct;
     StepValue aspect_ratio, color_pct, zoom_pct, video_offset_pct;
     StepValue volume_pct, amp_pct, audio_sync_sec;
-    StepValue sub_sync_sec, sub_pos_pct;
+    StepValue sub_sync_sec, sub_pos_pct, sub_scale_pct;
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };

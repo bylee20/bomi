@@ -134,6 +134,9 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"subtitle/track/cycle"_q] << Qt::SHIFT + Qt::Key_N;
        map[u"subtitle/track/all"_q] << Qt::SHIFT + Qt::Key_B;
        map[u"subtitle/track/hide"_q] << Qt::SHIFT + Qt::Key_H;
+       map[u"subtitle/override"_q] << SHIFT + Key_O;
+       map[u"subtitle/scale/decrease"_q] << SHIFT + Key_K;
+       map[u"subtitle/scale/increase"_q] << SHIFT + Key_L;
        map[u"subtitle/position/increase"_q] << Qt::Key_S;
        map[u"subtitle/position/decrease"_q] << Qt::Key_W;
        map[u"subtitle/sync/increase"_q] << Qt::Key_D;
@@ -156,14 +159,6 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"video/deinterlacing/cycle"_q] << Qt::CTRL + Qt::Key_D;
        map[u"video/color/editor"_q] << Key_K;
        map[u"video/color/reset"_q] << Qt::Key_O;
-//       map[u"video/color/brightness+"_q] << Qt::Key_T;
-//       map[u"video/color/brightness-"_q] << Qt::Key_G;
-//       map[u"video/color/contrast+"_q] << Qt::Key_Y;
-//       map[u"video/color/contrast-"_q] << Qt::Key_H;
-//       map[u"video/color/saturation+"_q] << Qt::Key_U;
-//       map[u"video/color/saturation-"_q] << Qt::Key_J;
-//       map[u"video/color/hue+"_q] << Qt::Key_I;
-//       map[u"video/color/hue-"_q] << Qt::Key_K;
        map[u"video/interpolator/advanced"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_I;
        map[u"video/interpolator/cycle"_q] << Qt::CTRL + Qt::Key_I;
        map[u"video/dithering/cycle"_q] << Qt::CTRL + Qt::Key_T;

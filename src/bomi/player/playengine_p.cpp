@@ -927,3 +927,49 @@ auto PlayEngine::Data::addSubtitleFiles(const QVector<SubtitleWithEncoding> &sub
     sr->addComponents(loaded);
     syncInclusiveSubtitles();
 }
+
+auto PlayEngine::Data::updateSubtitleStyle() -> void
+{
+    auto style = subStyle;
+    style.font.size = qBound(0.0, style.font.size + params.sub_scale(), 1.0);
+
+    sr->setStyle(style);
+
+    const auto font = style.font;
+    mpv.setAsync("options/sub-text-color", font.color.name(QColor::HexArgb).toLatin1());
+    QStringList fontStyles;
+    if (font.bold())
+        fontStyles.append(u"Bold"_q);
+    if (font.italic())
+        fontStyles.append(u"Italic"_q);
+    QString family = font.family();
+    if (!fontStyles.isEmpty())
+        family += ":style="_a % fontStyles.join(' '_q);
+    const double factor = font.size * 720.0;
+    mpv.setAsync("options/sub-text-font", family.toUtf8());
+    mpv.setAsync("options/sub-text-font-size", factor);
+    const auto &outline = style.outline;
+    const auto scaled = [factor] (double v)
+        { return qBound(0., v*factor, 10.); };
+    const auto color = [] (const QColor &color)
+        { return color.name(QColor::HexArgb).toLatin1(); };
+    if (outline.enabled) {
+        mpv.setAsync("options/sub-text-border-size", scaled(outline.width));
+        mpv.setAsync("options/sub-text-border-color", color(outline.color));
+    } else
+        mpv.setAsync("options/sub-text-border-size", 0.0);
+    const auto &bbox = style.bbox;
+    if (bbox.enabled)
+        mpv.setAsync("options/sub-text-back-color", color(bbox.color));
+    else
+        mpv.setAsync("options/sub-text-back-color", color(Qt::transparent));
+    auto norm = [] (const QPointF &p) { return sqrt(p.x()*p.x() + p.y()*p.y()); };
+    const auto &shadow = style.shadow;
+    if (shadow.enabled) {
+        mpv.setAsync("options/sub-text-shadow-color", color(shadow.color));
+        mpv.setAsync("options/sub-text-shadow-offset", scaled(norm(shadow.offset)));
+    } else {
+        mpv.setAsync("options/sub-text-shadow-color", color(Qt::transparent));
+        mpv.setAsync("options/sub-text-shadow-offset", 0.0);
+    }
+}

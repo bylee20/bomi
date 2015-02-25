@@ -575,6 +575,7 @@ auto MainWindow::Data::applyPref() -> void
     auto &sub = menu(u"subtitle"_q);
     sub(u"position"_q).s()->setValue(p.steps().sub_pos_pct);
     sub(u"sync"_q).s()->setValue(p.steps().sub_sync_sec);
+    sub(u"scale"_q).s()->setValue(p.steps().sub_scale_pct);
 
     theme.set(p.osd_theme());
     theme.set(p.playlist_theme());

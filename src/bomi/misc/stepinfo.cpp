@@ -56,6 +56,7 @@ Steps::Steps() {
 
     TIME(sub_sync_sec, 0.2, 0.1);
     STEP(sub_pos_pct, 1, 99, 1, 0, "%", false, 1e-2);
+    STEP(sub_scale_pct, 0.1, 99.9, 0.1, 1, "%", true, 1e-2);
 
 #undef STEP
 #undef TIME
@@ -89,6 +90,7 @@ auto Steps::setFromJson(const QJsonObject &json) -> bool
             continue;
         info->value(this).set(step);
     }
+    sub_scale_pct.set(0.1);
     return true;
 }
 

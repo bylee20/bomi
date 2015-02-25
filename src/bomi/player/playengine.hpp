@@ -181,6 +181,7 @@ public:
     auto reloadSubtitleFiles(const EncodingInfo &enc, double acc = -1) -> void;
     auto reloadAudioFiles() -> void;
     auto setSubtitleStyleOverriden(bool override) -> void;
+    auto setSubtitleScale(double by) -> void;
 
     auto setSpeed(double speed) -> void;
     auto setAudioSync(int sync) -> void;

@@ -81,6 +81,7 @@ PlayEngine::PlayEngine()
         }
         d->mpv.update();
     });
+    connect(&d->params, &MrlState::sub_scale_changed, this, [=] () { d->updateSubtitleStyle(); });
 
     auto set_subs = [=] ()
         { d->info.subtitle.setTracks(d->params.sub_tracks(), d->params.sub_tracks_inclusive()); };
@@ -394,47 +395,15 @@ auto PlayEngine::setSpeed(double s) -> void
         d->mpv.setAsync("speed", speed());
 }
 
+auto PlayEngine::setSubtitleScale(double by) -> void
+{
+    d->params.set_sub_scale(by);
+}
+
 auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
 {
-    d->sr->setStyle(style);
-
-    const auto font = style.font;
-    d->mpv.setAsync("options/sub-text-color", font.color.name(QColor::HexArgb).toLatin1());
-    QStringList fontStyles;
-    if (font.bold())
-        fontStyles.append(u"Bold"_q);
-    if (font.italic())
-        fontStyles.append(u"Italic"_q);
-    QString family = font.family();
-    if (!fontStyles.isEmpty())
-        family += ":style="_a % fontStyles.join(' '_q);
-    const double factor = font.size * 720.0;
-    d->mpv.setAsync("options/sub-text-font", family.toUtf8());
-    d->mpv.setAsync("options/sub-text-font-size", factor);
-    const auto &outline = style.outline;
-    const auto scaled = [factor] (double v)
-        { return qBound(0., v*factor, 10.); };
-    const auto color = [] (const QColor &color)
-        { return color.name(QColor::HexArgb).toLatin1(); };
-    if (outline.enabled) {
-        d->mpv.setAsync("options/sub-text-border-size", scaled(outline.width));
-        d->mpv.setAsync("options/sub-text-border-color", color(outline.color));
-    } else
-        d->mpv.setAsync("options/sub-text-border-size", 0.0);
-    const auto &bbox = style.bbox;
-    if (bbox.enabled)
-        d->mpv.setAsync("options/sub-text-back-color", color(bbox.color));
-    else
-        d->mpv.setAsync("options/sub-text-back-color", color(Qt::transparent));
-    auto norm = [] (const QPointF &p) { return sqrt(p.x()*p.x() + p.y()*p.y()); };
-    const auto &shadow = style.shadow;
-    if (shadow.enabled) {
-        d->mpv.setAsync("options/sub-text-shadow-color", color(shadow.color));
-        d->mpv.setAsync("options/sub-text-shadow-offset", scaled(norm(shadow.offset)));
-    } else {
-        d->mpv.setAsync("options/sub-text-shadow-color", color(Qt::transparent));
-        d->mpv.setAsync("options/sub-text-shadow-offset", 0.0);
-    }
+    d->subStyle = style;
+    d->updateSubtitleStyle();
 }
 
 auto PlayEngine::seek(int pos) -> void

@@ -85,7 +85,7 @@ struct PlayEngine::Data {
     } info;
 
     MetaData metaData;
-
+    OsdStyle subStyle;
     HistoryModel *history = nullptr;
     YleDL *yle = nullptr;
     YouTubeDL *youtube = nullptr;
@@ -127,6 +127,7 @@ struct PlayEngine::Data {
     struct { QImage screen, video; } ss;
     QPoint mouse;
 
+    auto updateSubtitleStyle() -> void;
     auto updateState(State s) -> void;
     auto setWaitings(Waitings w, bool set) -> void;
     auto clearTimings() -> void;
