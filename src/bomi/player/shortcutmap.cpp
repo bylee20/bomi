@@ -149,8 +149,8 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"video/zoom/increase"_q] << SHIFT + Key_T;
        map[u"video/zoom/decrease"_q] << SHIFT + Key_G;
        map[u"video/move/reset"_q] << Qt::SHIFT + Qt::Key_X;
-       map[u"video/move/vertical+"_q] << Qt::SHIFT + Qt::Key_W;
-       map[u"video/move/vertical-"_q] << Qt::SHIFT + Qt::Key_S;
+       map[u"video/move/vertical+"_q] << Qt::SHIFT + Qt::Key_S;
+       map[u"video/move/vertical-"_q] << Qt::SHIFT + Qt::Key_W;
        map[u"video/move/horizontal-"_q] << Qt::SHIFT + Qt::Key_A;
        map[u"video/move/horizontal+"_q] << Qt::SHIFT + Qt::Key_D;
        map[u"video/deinterlacing/cycle"_q] << Qt::CTRL + Qt::Key_D;
