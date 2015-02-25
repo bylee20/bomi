@@ -231,6 +231,7 @@ auto MainWindow::onMouseReleaseEvent(QMouseEvent *event) -> void
         if (mb != MsBh::DoubleClick)
             d->trigger(d->menu.action(d->actionId(mb, event)));
     }
+    d->pressedButton = Qt::NoButton;
 }
 
 auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
