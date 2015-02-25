@@ -13,35 +13,30 @@ B.BaseApp {
     B.Player {
         id: playerItem
         anchors.fill: parent
-        bottomPadding: bottomItem.height
+        topPadding: controls.height + controls.anchors.topMargin
     }
 
     player: playerItem
 
     states: State {
         name: "hidden"; when: !B.App.window.mouse.cursor
-        PropertyChanges { target: bottomItem; anchors.bottomMargin: -bottomItem.height }
+        PropertyChanges { target: controls; anchors.topMargin: -controls.height }
     }
 
     transitions: Transition {
         reversible: true; to: "hidden"
-        NumberAnimation { target: bottomItem; property: "anchors.bottomMargin"; duration: 200 }
+        NumberAnimation { target: controls; property: "anchors.topMargin"; duration: 200 }
     }
 
     MouseArea {
-        id: bottomItem
-        width: parent.width; height: 56; anchors.bottom: parent.bottom
+        id: controls
+        width: parent.width; height: 56; anchors.top: parent.top
         hoverEnabled: true
         onContainsMouseChanged: B.App.window.mouse.hidingCursorBlocked = containsMouse
-        Component.onCompleted: B.App.registerToAccept(bottomItem, B.App.DoubleClickEvent)
+        Component.onCompleted: B.App.registerToAccept(controls, B.App.DoubleClickEvent)
 
         Rectangle {
-            id: bottomBoundary; anchors.top: parent.top
-            width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.5)
-        }
-
-        Rectangle {
-            anchors { top: bottomBoundary.bottom; bottom: parent.bottom }
+            anchors { bottom: boundary.top; top: parent.top }
             width: parent.width; color: Qt.rgba(0, 0, 0, 0.5)
 
             Component {
@@ -65,56 +60,9 @@ B.BaseApp {
                 }
             }
 
-            RowLayout {
-                id: sliders;
-                anchors {
-                    top: parent.top; topMargin: 3
-                    left: parent.left; leftMargin: 10
-                    right: parent.right; rightMargin: anchors.leftMargin
-                }
-                height: timeSlider.height; spacing: 10
-                B.TimeSlider {
-                    id: timeSlider; bind: timeText; style: sliderStyle
-                    Layout.fillWidth: true; height: 8
-                    markerStyle: B.Button {
-                        size: 4; y: (control.height - height)*0.5
-                        background { radius: width*0.5; color: Qt.rgba(1, 1, 1, 0.8) }
-                        tooltip: chapter.name; delay: 0
-                    }
-                }
-
-                B.TimeDuration {
-                    id: timeText
-                    property bool showLeftTime: true
-                    textStyle {
-                        color: "white"; font.pixelSize: 12
-                        style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.5)
-                    }
-                    spacing: 1; opacity: 0.8
-                    duration: showLeftTime ? (engine.time - engine.end) : engine.end
-
-                    B.Button {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onClicked: {
-                            if (mouse.button & Qt.RightButton) {
-                                timeText.showLeftTime = !timeText.showLeftTime
-                            } else {
-                                timeText.msec = !timeText.msec
-                            }
-                        }
-                    }
-                }
-
-                B.VolumeSlider {
-                    style: sliderStyle; width: 80; height: timeSlider.height
-                }
-            }
-
             Item {
                 anchors {
-                    top: sliders.bottom; topMargin: 0
-                    bottom: parent.bottom; bottomMargin: sliders.y
+                    top: parent.top; bottom: sliders.top; topMargin: timeSlider.y
                 }
                 width: parent.width
 
@@ -192,6 +140,58 @@ B.BaseApp {
                     }
                 }
             }
+
+
+            RowLayout {
+                id: sliders;
+                anchors {
+                    bottom: parent.bottom; bottomMargin: 3
+                    left: parent.left; leftMargin: 10
+                    right: parent.right; rightMargin: anchors.leftMargin
+                }
+                height: 20; spacing: 10
+                B.TimeSlider {
+                    id: timeSlider; bind: timeText; style: sliderStyle
+                    Layout.fillWidth: true; height: 8
+                    markerStyle: B.Button {
+                        size: 4; y: (control.height - height)*0.5
+                        background { radius: width*0.5; color: Qt.rgba(1, 1, 1, 0.8) }
+                        tooltip: chapter.name; delay: 0
+                    }
+                }
+
+                B.TimeDuration {
+                    id: timeText
+                    property bool showLeftTime: true
+                    textStyle {
+                        color: "white"; font.pixelSize: 12
+                        style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.5)
+                    }
+                    spacing: 1; opacity: 0.8
+                    duration: showLeftTime ? (engine.time - engine.end) : engine.end
+
+                    B.Button {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onClicked: {
+                            if (mouse.button & Qt.RightButton) {
+                                timeText.showLeftTime = !timeText.showLeftTime
+                            } else {
+                                timeText.msec = !timeText.msec
+                            }
+                        }
+                    }
+                }
+
+                B.VolumeSlider {
+                    style: sliderStyle; width: 80; height: timeSlider.height
+                }
+            }
+        }
+
+        Rectangle {
+            id: boundary; anchors.bottom: parent.bottom
+            width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.5)
         }
     }
 
