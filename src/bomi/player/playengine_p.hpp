@@ -127,7 +127,6 @@ struct PlayEngine::Data {
     struct { QImage screen, video; } ss;
     QPoint mouse;
 
-
     auto updateState(State s) -> void;
     auto setWaitings(Waitings w, bool set) -> void;
     auto clearTimings() -> void;

@@ -53,19 +53,32 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::sub_hidden_changed, d->sr, &SubtitleRenderer::setHidden);
     connect(&d->params, &MrlState::sub_position_changed, d->sr, [=] (double pos) {
         d->sr->setPos(pos);
-        if (d->params.sub_style_overriden())
-            d->mpv.setAsync("options/sub-pos", pos * 100);
-        else
-            d->mpv.setAsync("options/sub-pos", 100);
+        if (d->params.sub_style_overriden()) {
+            d->mpv.setAsync("options/sub-pos", qRound(pos * 100));
+        } else {
+            auto track = d->params.sub_tracks().selection();
+            if (track && track->codec().toLower() != "ass"_a)
+                d->mpv.setAsync("options/sub-pos", qRound(pos * 100));
+            else
+                d->mpv.setAsync("options/sub-pos", 100);
+        }
         d->mpv.update();
     });
     connect(&d->params, &MrlState::sub_alignment_changed, d->sr, [=] (auto a)
         { d->sr->setTopAligned(a == VerticalAlignment::Top); });
     connect(&d->params, &MrlState::sub_style_overriden_changed, this, [=] (bool override) {
-        if (override)
-            d->mpv.setAsync("options/sub-pos", d->params.sub_position() * 100);
-        else
-            d->mpv.setAsync("options/sub-pos", 100);
+        const int pos = qRound(d->params.sub_position() * 100);
+        if (override) {
+            d->mpv.setAsync("options/sub-pos", pos);
+            d->mpv.setAsync("options/ass-style-override", "force"_b);
+        } else {
+            auto track = d->params.sub_tracks().selection();
+            if (track && track->codec().toLower() != "ass"_a)
+                d->mpv.setAsync("options/sub-pos", pos);
+            else
+                d->mpv.setAsync("options/sub-pos", 100);
+            d->mpv.setAsync("options/ass-style-override", "no"_b);
+        }
         d->mpv.update();
     });
 
