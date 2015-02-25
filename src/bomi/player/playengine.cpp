@@ -482,7 +482,7 @@ auto PlayEngine::setCache_locked(const CacheInfo &info) -> void
     d->params.d->cache = info;
 }
 
-auto PlayEngine::setSamba_locked(const SmbAuth &smb) -> void
+auto PlayEngine::setSmbAuth_locked(const SmbAuth &smb) -> void
 {
     d->params.d->smb = smb;
 }

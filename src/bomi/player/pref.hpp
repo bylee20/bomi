@@ -141,8 +141,8 @@ private:
     P0(QString, yle_program, u"yle-dl"_q)
     int yt_timeout = 60000;
 
-    P0(QString, samba_username, {});
-    P0(QString, samba_password, {});
+    P0(QString, smb_username, {});
+    P0(QString, smb_password, {});
 
     QStringList sub_search_paths;
 

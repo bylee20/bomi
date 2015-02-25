@@ -2308,20 +2308,20 @@ Regular expression is supported.</string>
          <item>
           <widget class="QGroupBox" name="groupBox_8">
            <property name="title">
-            <string>Samba</string>
+            <string notr="true">SMB/CIFS</string>
            </property>
            <layout class="QFormLayout" name="formLayout">
             <item row="0" column="0">
-             <widget class="QLabel" name="network_samba">
+             <widget class="QLabel" name="label_6">
               <property name="text">
                <string>Username</string>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="samba_username">
+             <widget class="QLineEdit" name="smb_username">
               <property name="toolTip">
-               <string>Username for SAMBA share.
+               <string>Username for SMB/CIFS protocol.
 You don't need to specify to this if geust is allowed.
 You can specify workgroup in the form of 'workgroup;username'.</string>
               </property>
@@ -2335,9 +2335,10 @@ You can specify workgroup in the form of 'workgroup;username'.</string>
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QLineEdit" name="samba_password">
+             <widget class="QLineEdit" name="smb_password">
               <property name="toolTip">
-               <string>Password for given username. You don't need to specify to this if geust is allowed.</string>
+               <string>Password for given username.
+You don't need to specify to this if geust is allowed.</string>
               </property>
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>

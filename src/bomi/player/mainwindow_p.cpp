@@ -595,10 +595,10 @@ auto MainWindow::Data::applyPref() -> void
         cache.remotes = p.network_folders();
         return cache;
     };
-    auto samba = [&] () {
+    auto smb = [&] () {
         SmbAuth smb;
-        smb.setUsername(p.samba_username());
-        smb.setPassword(p.samba_password());
+        smb.setUsername(p.smb_username());
+        smb.setPassword(p.smb_password());
         smb.setGetAuthInfo([=] (SmbAuth *smb) -> bool {
             QMutex mutex; QWaitCondition cond;
             bool res = false;
@@ -616,7 +616,7 @@ auto MainWindow::Data::applyPref() -> void
     e.setResume_locked(p.remember_stopped());
     e.setPreciseSeeking_locked(p.precise_seeking());
     e.setCache_locked(cache());
-    e.setSamba_locked(samba());
+    e.setSmbAuth_locked(smb());
     e.setPriority_locked(p.audio_priority(), p.sub_priority());
     e.setAutoloader_locked(p.audio_autoload(), p.sub_autoload_v2());
 

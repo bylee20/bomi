@@ -143,7 +143,7 @@ public:
     auto setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void;
     auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;
     auto setCache_locked(const CacheInfo &info) -> void;
-    auto setSamba_locked(const SmbAuth &smb) -> void;
+    auto setSmbAuth_locked(const SmbAuth &smb) -> void;
     auto setVolumeNormalizerOption_locked(const AudioNormalizerOption &option) -> void;
     auto setDeintOptions_locked(const DeintOptionSet &set) -> void;
     auto setAudioDevice_locked(const QString &device) -> void;
