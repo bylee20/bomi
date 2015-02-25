@@ -304,12 +304,9 @@ auto PlayEngine::Data::onLoad() -> void
         } else
             mpv.setAsync("stream-open-filename", file.toMpv());
     } else if (file.data.startsWith("smb://"_a, QCI)) {
-//        file = QUrl(file).toString(QUrl::FullyEncoded);
         const auto &samba = local->d->samba;
         QUrl url(file);
-        if (url.userName().isEmpty())
-            url.setUserName(samba.username);
-        if (url.userName() == samba.username) {
+        if (!samba.username.isEmpty() && url.userName() == samba.username) {
             if (!samba.workgroup.isEmpty())
                 url.setUserName(samba.workgroup % ';'_q % samba.username);
             if (!samba.password.isEmpty())
