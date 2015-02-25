@@ -202,6 +202,10 @@ auto MainWindow::Data::initItems() -> void
     waiter.setSingleShot(true);
     connect(&waiter, &QTimer::timeout, p, [=] () { updateWaitingMessage(); });
 
+    singleClick.timer.setSingleShot(true);
+    connect(&singleClick.timer, &QTimer::timeout, p,
+            [=] () { if (singleClick.action) trigger(singleClick.action); });
+
     mouse = WindowObject::getMouse();
     connect(mouse, &MouseObject::hidingCursorBlockedChanged, p, [=] (bool b) {
         if (b) {
@@ -547,6 +551,30 @@ auto MainWindow::Data::applyPref() -> void
                                pref.preserve_fallback_folder());
     SubtitleParser::setMsPerCharactor(p.ms_per_char());
     cApp.setMprisActivated(p.use_mpris2());
+
+    MouseBehavior context = MouseBehavior::NoBehavior;
+    contextMenuModifier = KeyModifier::None;
+    const auto map = p.mouse_action_map();
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        for (auto iit = it->begin(); iit != it->end(); ++iit) {
+            if (iit.value() != "context-menu"_a)
+                continue;
+            context = it.key();
+            contextMenuModifier = iit.key();
+            break;
+        }
+        if (context != MouseBehavior::NoBehavior)
+            break;
+    }
+    if (context == MouseBehavior::NoBehavior) {
+        _Warn("No mouse behavior bound for context menu. Enforce right click.");
+        contextMenuButton = Qt::RightButton;
+    } else {
+        int button = _EnumData(context);
+        if (button < 0)
+            button = Qt::NoButton;
+        contextMenuButton = static_cast<Qt::MouseButton>(button);
+    }
 
     menu.retranslate();
     menu.setShortcutMap(p.shortcut_map());

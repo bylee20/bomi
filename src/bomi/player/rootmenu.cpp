@@ -633,6 +633,7 @@ RootMenu::RootMenu()
         d->action(u"about"_q, QT_TR_NOOP("About bomi"))->setMenuRole(QAction::AboutRole);
     });
 
+    d->action(u"context-menu"_q, QT_TR_NOOP("Show Context Menu"));
     d->action(u"exit"_q, QT_TR_NOOP("Exit"))->setMenuRole(QAction::QuitRole);
 
     Q_ASSERT(d->parent == this);

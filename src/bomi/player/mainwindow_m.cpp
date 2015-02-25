@@ -768,6 +768,8 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &help = menu(u"help"_q);
     connect(help[u"about"_q], &QAction::triggered,
             p, [=] () { AboutDialog dlg(p); dlg.exec(); });
+    connect(menu[u"context-menu"_q], &QAction::triggered,
+            p, [=] () { contextMenu.exec(QCursor::pos()); });
     connect(menu[u"exit"_q], &QAction::triggered, p, &MainWindow::exit);
 
 #define PLUG_EC(mm, ec, EC, msg) \

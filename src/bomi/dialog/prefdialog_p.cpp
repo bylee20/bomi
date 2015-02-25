@@ -207,7 +207,7 @@ class MouseActionItem : public QTreeWidgetItem {
 public:
     MouseActionItem(MouseBehavior mb, const QVector<ActionInfo> *actions,
                     QTreeWidget *parent)
-        : QTreeWidgetItem(parent), m_actions(actions)
+        : QTreeWidgetItem(parent), m_actions(actions), m_mb(mb)
     {
         setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         setText(0, MouseBehaviorInfo::description(mb));
@@ -223,6 +223,7 @@ public:
             addChild(sub);
         }
     }
+    auto behavior() const -> MouseBehavior { return m_mb; }
     auto compare(const KeyModifierActionMap &map) const -> bool
     {
         for (int i = 0; i < mods.size(); ++i) {
@@ -259,6 +260,7 @@ public:
     }
 private:
     const QVector<ActionInfo> *m_actions = nullptr;
+    MouseBehavior m_mb;
 };
 
 PrefMouseActionTree::PrefMouseActionTree(QWidget *parent)
@@ -273,24 +275,40 @@ auto PrefMouseActionTree::setActionList(const QVector<ActionInfo> *acts) -> void
     setColumnCount(2);
     setHeaderLabels(QStringList() << tr("Behavior") << tr("Menu"));
     const auto all = MouseBehaviorInfo::items();
-    for (auto one : all)
-        addTopLevelItem(new MouseActionItem(one.value, acts, this));
+    for (auto one : all) {
+        if (one.value == MouseBehavior::NoBehavior)
+            continue;
+        const auto item = new MouseActionItem(one.value, acts, this);
+        switch (item->behavior()) {
+        case MouseBehavior::Extra1Click:
+            item->setText(1, qApp->translate("PrefDialog",
+                "Typically denoted as 'Back' button"));
+            break;
+        case MouseBehavior::Extra2Click:
+            item->setText(1, qApp->translate("PrefDialog",
+                "Typically denoted as 'Forward' button"));
+            break;
+        case MouseBehavior::LeftClick:
+            item->setText(1, qApp->translate("PrefDialog",
+                "Triggered with delay of %1sec to be distingushed from double click")
+                .arg(qApp->doubleClickInterval()*1e-3, 0, 'g', 3));
+            break;
+        default:
+            break;
+        }
+    }
     setItemDelegate(new MouseActionDelegate(acts, this));
     expandAll();
     resizeColumnToContents(0);
-    auto setExp = [this] (MouseBehavior mb, const QString &exp)
-        { topLevelItem((int)mb)->setText(1, exp); };
-    setExp(MouseBehavior::Extra1Click,
-           qApp->translate("PrefDialog", "Typically denoted as 'Back' button"));
-    setExp(MouseBehavior::Extra2Click,
-           qApp->translate("PrefDialog", "Typically denoted as 'Forward' button"));
+    resizeColumnToContents(1);
 }
 
 auto PrefMouseActionTree::compare(const QVariant &var) const -> bool
 {
     const auto map = var.value<MouseActionMap>();
     for (int i = 0; i < topLevelItemCount(); ++i) {
-        if (!static_cast<MouseActionItem*>(topLevelItem(i))->compare(map[(MouseBehavior)i]))
+        const auto item = static_cast<MouseActionItem*>(topLevelItem(i));
+        if (!item->compare(map[item->behavior()]))
             return false;
     }
     return true;
@@ -298,15 +316,19 @@ auto PrefMouseActionTree::compare(const QVariant &var) const -> bool
 
 auto PrefMouseActionTree::set(const MouseActionMap &map) -> void
 {
-    for (int i = 0; i < topLevelItemCount(); ++i)
-        static_cast<MouseActionItem*>(topLevelItem(i))->set(map[(MouseBehavior)i]);
+    for (int i = 0; i < topLevelItemCount(); ++i) {
+        const auto item = static_cast<MouseActionItem*>(topLevelItem(i));
+        item->set(map[item->behavior()]);
+    }
 }
 
 auto PrefMouseActionTree::get() const -> MouseActionMap
 {
     MouseActionMap map;
-    for (int i = 0; i < topLevelItemCount(); ++i)
-        map[(MouseBehavior)i] = static_cast<MouseActionItem*>(topLevelItem(i))->get();
+    for (int i = 0; i < topLevelItemCount(); ++i) {
+        const auto item = static_cast<MouseActionItem*>(topLevelItem(i));
+        map[item->behavior()] = item->get();
+    }
     return map;
 }
 

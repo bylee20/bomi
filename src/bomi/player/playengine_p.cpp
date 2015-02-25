@@ -2,6 +2,19 @@
 #include <QQmlEngine>
 #include <QTextCodec>
 
+void *discnav_ctx = nullptr;
+
+extern "C" {
+
+auto discnav_set_mouse_in_button(void *ctx, int in) -> void
+{
+    thread_local bool prev = false;
+    if (_Change(prev, !!in))
+        _PostEvent(static_cast<PlayEngine*>(ctx), DiscNavMouseInButton, prev);
+}
+
+}
+
 template<class T>
 SIA findEnum(const QString &mpv) -> T
 {
@@ -599,7 +612,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
     if (mpv.process(event))
         return;
     switch ((int)event->type()) {
-     case StateChange:
+    case StateChange:
         updateState(_GetData<PlayEngine::State>(event));
         break;
     case WaitingChange: {
@@ -667,6 +680,8 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         emit p->endSyncMrlState();
         history->update(&params, true);
         break;
+    } case DiscNavMouseInButton: {
+        mouseInButton = _GetData<bool>(event);
     } default:
         break;
     }

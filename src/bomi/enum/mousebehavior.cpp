@@ -1,8 +1,11 @@
 #include "mousebehavior.hpp"
 
-const std::array<MouseBehaviorInfo::Item, 13> MouseBehaviorInfo::info{{
-    {MouseBehavior::DoubleClick, u"DoubleClick"_q, u""_q, -1},
+const std::array<MouseBehaviorInfo::Item, 16> MouseBehaviorInfo::info{{
+    {MouseBehavior::NoBehavior, u"NoBehavior"_q, u""_q, Qt::NoButton},
+    {MouseBehavior::LeftClick, u"LeftClick"_q, u""_q, Qt::LeftButton},
+    {MouseBehavior::RightClick, u"RightClick"_q, u""_q, Qt::RightButton},
     {MouseBehavior::MiddleClick, u"MiddleClick"_q, u""_q, Qt::MiddleButton},
+    {MouseBehavior::DoubleClick, u"DoubleClick"_q, u""_q, -1},
     {MouseBehavior::ScrollUp, u"ScrollUp"_q, u""_q, -2},
     {MouseBehavior::ScrollDown, u"ScrollDown"_q, u""_q, -3},
     {MouseBehavior::Extra1Click, u"Extra1Click"_q, u""_q, Qt::ExtraButton1},

@@ -161,6 +161,10 @@ void mp_nav_destroy(struct MPContext *mpctx)
     update_state(mpctx);
 }
 
+extern void *discnav_ctx;
+
+void discnav_set_mouse_in_button(void *ctx, int in);
+
 void mp_nav_user_input(struct MPContext *mpctx, char *command)
 {
     struct mp_nav_state *nav = mpctx->nav_state;
@@ -182,6 +186,7 @@ void mp_nav_user_input(struct MPContext *mpctx, char *command)
         inp.u.mouse_pos.x = x;
         inp.u.mouse_pos.y = y;
         run_stream_control(mpctx, STREAM_CTRL_NAV_CMD, &inp);
+        discnav_set_mouse_in_button(discnav_ctx, inp.mouse_in_button);
     } else {
         struct mp_nav_cmd inp = {MP_NAV_CMD_MENU};
         inp.u.menu.action = command;

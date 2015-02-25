@@ -33,7 +33,7 @@ DECLARE_LOG_CONTEXT(Engine)
 enum EventType {
     UserType = QEvent::User, StateChange, WaitingChange,
     PreparePlayback,EndPlayback, StartPlayback, NotifySeek,
-    SyncMrlState,
+    SyncMrlState, DiscNavMouseInButton,
     EventTypeMax
 };
 
@@ -98,7 +98,7 @@ struct PlayEngine::Data {
 
     bool hasImage = false, seekable = false, hasVideo = false;
     bool pauseAfterSkip = false, resume = false, hwdec = false;
-    bool quit = false, preciseSeeking = false;
+    bool quit = false, preciseSeeking = false, mouseInButton = false;
 
     QByteArray hwcdc;
 
@@ -117,7 +117,6 @@ struct PlayEngine::Data {
         strs[StreamSubtitle] = { "sid", SubtitleExt };
         return strs;
     }();
-
 
     struct {
         quint64 drawn = 0, dropped = 0, delayed = 0;

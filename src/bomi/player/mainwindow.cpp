@@ -200,14 +200,17 @@ auto MainWindow::onMouseMoveEvent(QMouseEvent *event) -> void
     if (full)
         resetMoving();
     else if (d->moving)
-            move(d->winStartPos + (gpos - d->mouseStartPos));
+        move(d->winStartPos + (gpos - d->mouseStartPos));
     d->readyToHideCursor();
     d->e.sendMouseMove(event->pos());
+    if (d->pressedButton == Qt::LeftButton)
+        d->pressedButton = Qt::NoButton;
 }
 
 auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
 {
     QWidget::mouseDoubleClickEvent(event);
+    d->singleClick.unset();
     if (event->buttons() & Qt::LeftButton) {
         const auto act = d->menu.action(d->actionId(MsBh::DoubleClick, event));
         if (!act)
@@ -224,24 +227,40 @@ auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
 auto MainWindow::onMouseReleaseEvent(QMouseEvent *event) -> void
 {
     QWidget::mouseReleaseEvent(event);
-    const auto rect = geometry();
-    if (d->pressedButton == event->button()
-            && rect.contains(event->localPos().toPoint() + rect.topLeft())) {
-        const auto mb = MouseBehaviorInfo::fromData(d->pressedButton);
-        if (mb != MsBh::DoubleClick)
-            d->trigger(d->menu.action(d->actionId(mb, event)));
-    }
+    const auto singleClickAction = d->singleClick.action;
+    const auto pressed = d->pressedButton;
+    d->singleClick.unset();
     d->pressedButton = Qt::NoButton;
+    if (pressed != event->button())
+        return;
+    if (pressed == Qt::LeftButton && d->e.isMouseInButton())
+        return;
+    const auto rect = geometry();
+    if (!rect.contains(event->localPos().toPoint() + rect.topLeft()))
+        return;
+    const auto mb = MouseBehaviorInfo::fromData(pressed);
+    if (mb == MsBh::NoBehavior)
+        return;
+    if (pressed == Qt::LeftButton) {
+        if (singleClickAction) {
+            d->singleClick.action = singleClickAction;
+            d->singleClick.timer.start(qApp->doubleClickInterval() + 10);
+        }
+    } else
+        d->trigger(d->menu.action(d->actionId(mb, event)));
 }
 
 auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
 {
     QWidget::mousePressEvent(event);
+    d->singleClick.unset();
     d->pressedButton = Qt::NoButton;
-    bool showContextMenu = false;
     switch (event->button()) {
     case Qt::LeftButton:
-        if (isFullScreen())
+        d->e.sendMouseClick(event->pos());
+        if (!d->e.isMouseInButton())
+            d->pressedButton = Qt::LeftButton;
+        if (isFullScreen() || event->modifiers())
             break;
         d->moving = true;
         d->mouseStartPos = event->globalPos();
@@ -252,19 +271,23 @@ auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
     case Qt::ExtraButton4:    case Qt::ExtraButton5:
     case Qt::ExtraButton6:    case Qt::ExtraButton7:
     case Qt::ExtraButton8:    case Qt::ExtraButton9:
-        d->pressedButton = event->button();
-        break;
     case Qt::RightButton:
-        showContextMenu = true;
+        d->pressedButton = event->button();
         break;
     default:
         break;
     }
-    if (showContextMenu)
-        d->contextMenu.exec(QCursor::pos());
-    else
-        d->contextMenu.hide();
-    d->e.sendMouseClick(event->pos());
+
+    d->contextMenu.hide();
+    // context menu should be displayed as soon as pressed
+    if (d->pressedButton == d->contextMenuButton
+            && d->contextMenuModifier == event->modifiers()) {
+        d->contextMenu.exec(event->globalPos());
+        d->pressedButton = Qt::NoButton;
+    }
+
+    if (d->pressedButton == Qt::LeftButton)
+        d->singleClick.action = d->menu.action(d->actionId(MsBh::LeftClick, event));
 }
 
 auto MainWindow::onWheelEvent(QWheelEvent *ev) -> void

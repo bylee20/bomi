@@ -101,6 +101,10 @@ auto Pref::load() -> void
                 map.import(it.key(), *it);
             m_shortcut_map = map;
         }
+
+        if (!m_mouse_action_map.contains(MouseBehavior::RightClick))
+            m_mouse_action_map[MouseBehavior::RightClick]
+                = defaultMouseActionMap()[MouseBehavior::RightClick];
     }
     m_app_unique = cApp.isUnique();
     m_app_locale = cApp.locale();
@@ -166,6 +170,9 @@ auto Pref::defaultMouseActionMap() -> MouseActionMap
 {
     MouseActionMap map;
     map[MouseBehavior::DoubleClick][KeyModifier::None] = u"window/full"_q;
+    auto &right = map[MouseBehavior::RightClick];
+    for (auto item : KeyModifierInfo::items())
+        right[item.value] = u"context-menu"_q;
     map[MouseBehavior::MiddleClick][KeyModifier::None] = u"play/pause"_q;
     map[MouseBehavior::ScrollUp][KeyModifier::None] = u"audio/volume/increase"_q;
     map[MouseBehavior::ScrollUp][KeyModifier::Ctrl] = u"audio/amp/increase"_q;

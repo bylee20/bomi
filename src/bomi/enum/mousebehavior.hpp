@@ -5,19 +5,22 @@
 #define MOUSEBEHAVIOR_IS_FLAG 0
 
 enum class MouseBehavior : int {
-    DoubleClick = (int)0,
-    MiddleClick = (int)1,
-    ScrollUp = (int)2,
-    ScrollDown = (int)3,
-    Extra1Click = (int)4,
-    Extra2Click = (int)5,
-    Extra3Click = (int)6,
-    Extra4Click = (int)7,
-    Extra5Click = (int)8,
-    Extra6Click = (int)9,
-    Extra7Click = (int)10,
-    Extra8Click = (int)11,
-    Extra9Click = (int)12
+    NoBehavior = (int)0,
+    LeftClick = (int)1,
+    RightClick = (int)2,
+    MiddleClick = (int)3,
+    DoubleClick = (int)4,
+    ScrollUp = (int)5,
+    ScrollDown = (int)6,
+    Extra1Click = (int)7,
+    Extra2Click = (int)8,
+    Extra3Click = (int)9,
+    Extra4Click = (int)10,
+    Extra5Click = (int)11,
+    Extra6Click = (int)12,
+    Extra7Click = (int)13,
+    Extra8Click = (int)14,
+    Extra9Click = (int)15
 };
 
 Q_DECLARE_METATYPE(MouseBehavior)
@@ -51,15 +54,15 @@ class EnumInfo<MouseBehavior> {
     typedef MouseBehavior Enum;
 public:
     typedef MouseBehavior type;
-    using Data =  QVariant;
+    using Data =  int;
     struct Item {
         Enum value;
         QString name, key;
-        QVariant data;
+        int data;
     };
-    using ItemList = std::array<Item, 13>;
+    using ItemList = std::array<Item, 16>;
     static constexpr auto size() -> int
-    { return 13; }
+    { return 16; }
     static constexpr auto typeName() -> const char*
     { return "MouseBehavior"; }
     static constexpr auto typeKey() -> const char*
@@ -72,15 +75,18 @@ public:
     { auto i = item(e); return i ? i->name : QString(); }
     static auto key(Enum e) -> QString
     { auto i = item(e); return i ? i->key : QString(); }
-    static auto data(Enum e) -> QVariant
-    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto data(Enum e) -> int
+    { auto i = item(e); return i ? i->data : int(); }
     static auto description(int e) -> QString
     { return description((Enum)e); }
     static auto description(Enum e) -> QString
     {
         switch (e) {
-        case Enum::DoubleClick: return qApp->translate("EnumInfo", "Double click");
+        case Enum::NoBehavior: return qApp->translate("EnumInfo", "");
+        case Enum::LeftClick: return qApp->translate("EnumInfo", "Left button");
+        case Enum::RightClick: return qApp->translate("EnumInfo", "Right button");
         case Enum::MiddleClick: return qApp->translate("EnumInfo", "Middle button");
+        case Enum::DoubleClick: return qApp->translate("EnumInfo", "Double click");
         case Enum::ScrollUp: return qApp->translate("EnumInfo", "Scroll up");
         case Enum::ScrollDown: return qApp->translate("EnumInfo", "Scroll down");
         case Enum::Extra1Click: return qApp->translate("EnumInfo", "Extra button 1");
@@ -121,7 +127,7 @@ public:
         val = it->value;
         return true;
     }
-    static auto fromData(const QVariant &data,
+    static auto fromData(const int &data,
                          Enum def = default_()) -> Enum
     {
         auto it = std::find_if(info.cbegin(), info.cend(),
@@ -130,7 +136,7 @@ public:
         return it != info.cend() ? it->value : def;
     }
     static constexpr auto default_() -> Enum
-    { return MouseBehavior::DoubleClick; }
+    { return MouseBehavior::NoBehavior; }
 private:
     static const ItemList info;
 };

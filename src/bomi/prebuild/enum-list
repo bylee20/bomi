@@ -237,9 +237,12 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Current
 -Ask
 
-+MouseBehavior
--DoubleClick[-Double click-][:-1:]
++MouseBehavior[:int:]
+-NoBehavior[--][:Qt::NoButton:]
+-LeftClick[-Left button-][:Qt::LeftButton:]
+-RightClick[-Right button-][:Qt::RightButton:]
 -MiddleClick[-Middle button-][:Qt::MiddleButton:]
+-DoubleClick[-Double click-][:-1:]
 -ScrollUp[-Scroll up-][:-2:]
 -ScrollDown[-Scroll down-][:-3:]
 -Extra1Click[-Extra button 1-][:Qt::ExtraButton1:]

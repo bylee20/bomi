@@ -211,6 +211,7 @@ public:
     auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
+    auto isMouseInButton() const -> bool;
     auto subtitle() const -> SubtitleObject*;
     auto setSubtitleDelay(int ms) -> void;
     auto setNextMrl(const Mrl &Mrl) -> void;
