@@ -5,6 +5,7 @@ class SmbAuth {
 public:
     enum Error {
         NoError,
+        Unsupported,
         InvalidUrl,
         OutOfMemory,
         NoSmbConf,

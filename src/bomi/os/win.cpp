@@ -191,12 +191,10 @@ auto refreshRate() -> qreal
 Dxva2Info::Dxva2Info()
     : HwAcc(Dxva2Copy)
 {
-    setSupportedCodecs(QList<CodecId>() << CodecId::Mpeg2 << CodecId::H264
-                       << CodecId::Vc1 << CodecId::Wmv3);
-    setSupportedDeints(QList<DeintMethod>() << DeintMethod::Bob
-                       << DeintMethod::LinearBob << DeintMethod::CubicBob
-                       << DeintMethod::LinearBlend << DeintMethod::Yadif
-                       << DeintMethod::Median);
+    setSupportedCodecs({ CodecId::Mpeg2, CodecId::H264,
+                         CodecId::Vc1, CodecId::Wmv3 });
+    setSupportedDeints({ DeintMethod::Bob, DeintMethod::LinearBob,
+                         DeintMethod::CubicBob, DeintMethod::Yadif });
 }
 
 auto getHwAcc() -> HwAcc*

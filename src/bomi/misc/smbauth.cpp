@@ -1,6 +1,9 @@
 #include "smbauth.hpp"
 #include "dialog/bbox.hpp"
+#include "configure.hpp"
+#if HAVE_SAMBA
 #include <libsmbclient.h>
+#endif
 #include <errno.h>
 
 SIA smb_auth_fn(const char */*server*/, const char */*share*/,
@@ -32,6 +35,7 @@ auto SmbAuth::translate(const QUrl &input) -> QUrl
 
 auto SmbAuth::process(const QUrl &url) -> Error
 {
+#if HAVE_SAMBA
     const int err = smbc_init(smb_auth_fn, 1);
     if (err < 0)
         return m_lastError = [&] () {
@@ -59,6 +63,9 @@ auto SmbAuth::process(const QUrl &url) -> Error
 
     smbc_close(fd);
     return m_lastError = NoError;
+#else
+    return m_lastError = Unsupported;
+#endif
 }
 
 auto SmbAuth::getNewAuthInfo() -> bool
