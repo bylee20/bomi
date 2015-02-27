@@ -128,8 +128,8 @@ public:
     auto addSubtitleFiles(const QStringList &files, const EncodingInfo &enc) -> void;
     auto clearSubtitleFiles() -> void;
     auto captionBeginTime() -> int;
+    auto captionBeginTime(int direction) -> int;
     auto captionEndTime() -> int;
-    auto seekCaption(int direction) -> void;
     auto subtitleImage(const QRect &rect, QRectF *subRect = nullptr) const -> QImage;
 
     auto setSubtitleTrackSelected(int id, bool s) -> void;

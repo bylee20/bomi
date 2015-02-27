@@ -277,7 +277,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(play[u"disc-menu"_q], &QAction::triggered,
             p, [=] () { e.seekEdition(PlayEngine::DVDMenu); });
     connect(seek.g(u"subtitle"_q), &ActionGroup::triggered,
-            p, [this] (QAction *a) { e.seekCaption(a->data().toInt()); });
+            p, [this] (QAction *a) { e.seek(e.captionBeginTime(a->data().toInt())); });
 
     auto seekChapter = [this] (int offset) {
         if (!e.chapters().isEmpty()) {
@@ -596,7 +596,14 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_ENUM_CHILD(sub, sub_display, setSubtitleDisplay);
     PLUG_ENUM(sub(u"align"_q), sub_alignment, setSubtitleAlignment);
     PLUG_STEP(sub(u"position"_q).g(), sub_position, setSubtitlePosition);
-    PLUG_STEP(sub(u"sync"_q).g(), sub_sync, setSubtitleDelay);
+    PLUG_STEP(sub(u"sync"_q).g(u"step"_q), sub_sync, setSubtitleDelay);
+
+
+    connect(sub(u"sync"_q).g(u"bring"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
+        const int time = e.captionBeginTime(a->data().toInt());
+        if (time >= 0)
+            e.setSubtitleDelay(e.time() - time);
+    });
     PLUG_STEP(sub(u"scale"_q).g(), sub_scale, setSubtitleScale);
 
     Menu &tool = menu(u"tool"_q);

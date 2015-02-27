@@ -565,7 +565,12 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Subtitle Sync"));
+        d->menu(u"sync"_q, QT_TR_NOOP("Subtitle Sync"), [&] () {
+            d->stepReset(u"step"_q);
+            d->separator();
+            d->actionToGroup(u"prev"_q, QT_TR_NOOP("Bring Previous Subtitle"), false, u"bring"_q)->setData(-1);
+            d->actionToGroup(u"next"_q, QT_TR_NOOP("Bring Next Subtitle"), false, u"bring"_q)->setData(1);
+        });
     });
 
     d->menu(u"tool"_q, QT_TR_NOOP("Tools"), [=] () {

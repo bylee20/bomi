@@ -411,7 +411,7 @@ auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
 
 auto PlayEngine::seek(int pos) -> void
 {
-    if (!d->hasImage)
+    if (pos >= 0 && !d->hasImage)
         d->mpv.tell("seek", (double)pos/1000.0, 2);
     d->vp->stopSkipping();
 }
@@ -1094,17 +1094,13 @@ auto PlayEngine::captionEndTime() -> int
     return d->sr->finish(d->time);
 }
 
-auto PlayEngine::seekCaption(int direction) -> void
+auto PlayEngine::captionBeginTime(int direction) -> int
 {
-    int time = -1;
     if (direction < 0)
-        time = d->sr->previous();
-    else if (direction > 0)
-        time = d->sr->next();
-    else
-        time = d->sr->current();
-    if (time > 0)
-        seek(time);
+        return d->sr->previous();
+    if (direction > 0)
+        return d->sr->next();
+    return d->sr->current();
 }
 
 auto PlayEngine::subtitleImage(const QRect &rect, QRectF *subRect) const -> QImage

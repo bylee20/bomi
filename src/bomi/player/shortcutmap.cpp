@@ -142,6 +142,8 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"subtitle/sync/increase"_q] << Qt::Key_D;
        map[u"subtitle/sync/reset"_q] << Qt::Key_Q;
        map[u"subtitle/sync/decrease"_q] << Qt::Key_A;
+       map[u"subtitle/sync/prev"_q] << SHIFT + Key_Left;
+       map[u"subtitle/sync/next"_q] << SHIFT + Key_Right;
 
        map[u"video/snapshot/quick"_q] << Qt::CTRL + Qt::Key_S;
        map[u"video/snapshot/tool"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_S;

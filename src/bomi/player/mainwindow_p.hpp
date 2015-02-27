@@ -200,6 +200,16 @@ struct MainWindow::Data {
     auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
                    void(PlayEngine::*set)(int,bool), const char *msg,
                    const QString &gkey = QString(), QAction *sep = nullptr) -> void;
+
+    template<class T, class F>
+    auto stepMessage(QString(MrlState::*desc)()  const, void(MrlState::*sig)(T), F func) -> void
+        { connect(e.params(), sig, p, [=] (T val) { showMessage((e.params()->*desc)(), func(val)); }); }
+
+    template<class T>
+    auto stepMessage(QString(MrlState::*desc)()  const, void(MrlState::*sig)(T), StepValue Steps::*step) -> void
+        { stepMessage(desc, sig, [=] (T val) { return (pref.steps().*step).text(val); }); }
+#define STEP_MESSAGE(p, s) stepMessage(&MrlState::desc_##p, &MrlState::p##_changed, &Steps::s)
+
     static auto triggerNextAction(const QList<QAction*> &actions) -> void;
 };
 
