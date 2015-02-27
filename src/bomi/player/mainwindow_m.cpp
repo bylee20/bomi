@@ -30,42 +30,33 @@ auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUn
 }
 
 template<class T, class S>
-auto MainWindow::Data::push(const T &to, T(MrlState::*get)() const,
-          void(PlayEngine::*set)(S)) -> QUndoCommand*
+auto MainWindow::Data::push(const T &to, const T &old, void(PlayEngine::*set)(S)) -> QUndoCommand*
 {
-    const auto old = (e.params()->*get)();
     if (to == old)
         return nullptr;
     return push(to, old, [=] (const T &s) { (e.*set)(s); });
 }
 
-template<class T, class S, class ToString>
-auto MainWindow::Data::push(const T &to, const char *p, T(MrlState::*get)() const,
-          void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*
+template<class T, class S>
+auto MainWindow::Data::push(const T &to, T(MrlState::*get)() const, void(PlayEngine::*set)(S)) -> QUndoCommand*
 {
-    const auto old = (e.params()->*get)();
-    showProperty(p, ts(to));
-    if (to == old)
-        return nullptr;
-    return push(to, old, [=] (const T &s) { (e.*set)(s); showProperty(p, ts(s)); });
+    return push(to, (e.params()->*get)(), set);
 }
 
-auto MainWindow::Data::plugFlag(QAction *action, const char *property,
-                                bool(MrlState::*get)() const, void(MrlState::*sig)(bool),
+auto MainWindow::Data::plugFlag(QAction *action, bool(MrlState::*get)() const,
+                                void(MrlState::*sig)(bool),
+                                QString(MrlState::*desc)() const,
                                 void(PlayEngine::*set)(bool)) -> void
 {
     connect(e.params(), sig, action, &QAction::setChecked);
-    connect(action, &QAction::triggered, &e, [=] (bool on)
-        { push(on, property, get, set, toMessage); });
+    connect(action, &QAction::triggered, &e, [=] (bool on) { push(on, get, set); });
+    propertyMessage(desc, sig);
 }
 
-template<class T, class S>
-auto MainWindow::Data::plugStep(ActionGroup *g, const char *prop,
-                                T(MrlState::*get)() const,
-                                void(PlayEngine::*set)(S)) -> void
+template<class T>
+auto MainWindow::Data::plugStep(ActionGroup *g, PLUG_MEMFUNC(T)) -> void
 {
     auto &step = static_cast<StepAction*>(g->find(ChangeValue::Increase))->value();
-    static_assert(tmp::is_same<T, tmp::remove_const_t<S>>(), "!!!");
     connect(g, &ActionGroup::triggered, p, [=, &step] (QAction *a) {
         auto action = qobject_cast<StepAction*>(a);
         Q_ASSERT(action);
@@ -74,8 +65,9 @@ auto MainWindow::Data::plugStep(ActionGroup *g, const char *prop,
             value = (e.default_()->*get)();
         else
             value = step.changed((e.params()->*get)(), action->enum_());
-        push(value, prop, get, set, [=, &step] (auto) { return step.text((e.params()->*get)()); });
+        push(value, get, set);
     });
+    propertyMessage(desc, sig, [=, &step] (T val) { return step.text(val); });
 }
 
 template<class T>
@@ -96,22 +88,19 @@ auto MainWindow::Data::plugAppEnumChild(Menu &parent, const char *prop,
             });
     });
     if (auto cycle = m->action(u"cycle"_q))
-        connect(cycle, &QAction::triggered,
-                p, [=] () { triggerNextAction(g->actions()); });
+        plugCycle(cycle, g);
 }
 
 template<class T>
-auto MainWindow::Data::plugEnum(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
-                                void(MrlState::*sig)(T), void(PlayEngine::*set)(T), QAction *cycle) -> void
+auto MainWindow::Data::plugEnum(ActionGroup *g, PLUG_MEMFUNC(T), QAction *cycle) -> void
 {
     connect(e.params(), sig, g, &ActionGroup::setChecked<T>);
-    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-        push(a->data().template value<T>(), prop, get, set,
-             [=] (T t) { return EnumInfo<T>::description(t); });
-    });
+    connect(g, &ActionGroup::triggered, p,
+            [=] (QAction *a) { push(a->data().template value<T>(), get, set); });
     if (cycle)
         connect(cycle, &QAction::triggered, p,
                 [=] () { triggerNextAction(g->actions()); });
+    propertyMessage(desc, sig, [=] (T val) { return EnumInfo<T>::description(val); });
 }
 
 auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
@@ -135,7 +124,8 @@ auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
 }
 
 auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
-                                 void(PlayEngine::*set)(int,bool), const char *msg,
+                                 QString(MrlState::*desc)() const,
+                                 void(PlayEngine::*set)(int,bool),
                                  const QString &gkey, QAction *sep) -> void
 {
     auto *m = &parent(u"track"_q);
@@ -157,10 +147,11 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
         const auto checked = a->isChecked();
         const auto text = a->text();
         (e.*set)(a->data().toInt(), checked);
-        if (checked)
-            showMessage(tr(msg), text);
+        showMessage((e.params()->*desc)(), a->text());
     });
 }
+#define PLUG_TRACK(m, p, s, ...) plugTrack(m, &MrlState::p##_changed, \
+    &MrlState::desc_##p, &PlayEngine::s, ##__VA_ARGS__)
 
 auto MainWindow::Data::plugMenu() -> void
 {
@@ -294,30 +285,24 @@ auto MainWindow::Data::plugMenu() -> void
     connect(play[u"state"_q], &QAction::triggered, p, [=] () {
         const auto fmt = u"%1/%2 (%3%), %4x"_q;
         showMessage(fmt.arg(_MSecToString(e.time()), _MSecToString(e.end()),
-                            QString::number(e.rate() * 100, 'f', 1),
-                            QString::number(e.speed())));
+                            _N(e.rate() * 100, 1), _N(e.speed(), 2)));
     });
 
     Menu &video = menu(u"video"_q);
 
-    auto &aspect = video(u"aspect"_q);
-    g = aspect.g(u"preset"_q);
-    connect(e.params(), &MrlState::video_aspect_ratio_changed, p, [=] (double v) {
-        auto checked = g->setChecked(v);
-        const auto name = e.params()->desc_video_aspect_ratio();
-        if (checked)
-            showMessage(name, checked->text());
-        else {
-            const auto size = e.videoSizeHint();
-            showMessage(name, u"%3:1 (%1x%2)"_q.arg(size.width()).arg(size.height()).arg(v, 0, 'g', 6));
-        }
-    });
-    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-        push(a->data().toDouble(), e.params()->video_aspect_ratio(),
-             [=] (double v) { e.setVideoAspectRatio(v); });
-    });
-    connect(aspect[u"cycle"_q], &QAction::triggered, p, [=] () { triggerNextAction(g->actions()); });
-    g = aspect.g(u"adjust"_q);
+    auto ratio = &video(u"aspect"_q);
+    g = ratio->g(u"preset"_q);
+#define PLUG_RATIO(prop, s) {\
+    PROP_NOTIFY(prop, [=] (double v) { \
+        if (auto checked = g->setChecked(v)) return checked->text(); \
+        const auto size = e.videoSizeHint(); \
+        return u"%3:1 (%1x%2)"_q.arg(size.width()).arg(size.height()).arg(v, 0, 'g', 6); }); \
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) \
+        {  push(a->data().toDouble(), e.params()->prop(), [=] (double v) { e.s(v); }); }); \
+    plugCycle(*ratio, g); }
+
+    PLUG_RATIO(video_aspect_ratio, setVideoAspectRatio);
+    g = ratio->g(u"adjust"_q);
     connect(g, &ActionGroup::triggered, p, [=] (QAction *a)
     {
         const auto r = e.videoOutputAspectRatio();
@@ -327,13 +312,9 @@ auto MainWindow::Data::plugMenu() -> void
              [=] (double v) { e.setVideoAspectRatio(v); });
     });
 
-    auto &crop = video(u"crop"_q);
-    g = crop.g();
-    connect(crop[u"cycle"_q], &QAction::triggered, p, [=] () { triggerNextAction(g->actions()); });
-    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-        push(_EnumData(a->data().value<VideoRatio>()), e.params()->video_aspect_ratio(),
-             [=] (double v) { e.setVideoAspectRatio(v); });
-    });
+    ratio = &video(u"crop"_q);
+    g = ratio->g();
+    PLUG_RATIO(video_crop_ratio, setVideoCropRatio);
 
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
@@ -419,25 +400,17 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_ENUM(video(u"align"_q), video_horizontal_alignment, setVideoHorizontalAlignment);
 
     auto &move = video(u"move"_q);
-    connect(move[u"reset"_q], &QAction::triggered, p, [=] () {
-        push(QPointF(), &MrlState::video_offset, &PlayEngine::setVideoOffset);
-    });
-    connect(move.g(u"horizontal"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
-        const auto action = static_cast<StepAction*>(a);
-        QPointF offset = e.params()->video_offset();
-        offset.rx() = action->value().changed(offset.x(), action->enum_());
-        push(offset, &MrlState::video_offset, &PlayEngine::setVideoOffset);
-    });
-    connect(move.g(u"vertical"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
-        const auto action = static_cast<StepAction*>(a);
-        QPointF offset = e.params()->video_offset();
-        offset.ry() = action->value().changed(offset.y(), action->enum_());
-        push(offset, &MrlState::video_offset, &PlayEngine::setVideoOffset);
-    });
-    connect(e.params(), &MrlState::video_offset_changed, p, [=] (const QPointF &offset) {
+    connect(move[u"reset"_q], &QAction::triggered, p, [=] ()
+        { push(QPointF(), &MrlState::video_offset, &PlayEngine::setVideoOffset); });
+#define PLUG_XY(grp, coord) connect(move.g(grp), &ActionGroup::triggered, p, [=] (QAction *a) { \
+        const auto action = static_cast<StepAction*>(a); \
+        QPointF offset = e.params()->video_offset(); \
+        offset.r##coord() = action->value().changed(offset.coord(), action->enum_()); \
+        push(offset, &MrlState::video_offset, &PlayEngine::setVideoOffset); })
+    PLUG_XY(u"horizontal"_q, x); PLUG_XY(u"vertical"_q, y);
+    PROP_NOTIFY(video_offset, [=] (const QPointF &offset) {
         const auto &step = pref.steps().video_offset_pct;
-        showMessage(e.params()->desc_video_offset(),
-                    u"x: %1, y: %2"_q.arg(step.text(offset.x()), step.text(offset.y())));
+        return u"x: %1, y: %2"_q.arg(step.text(offset.x()), step.text(offset.y()));
     });
 
     PLUG_STEP(video(u"zoom"_q).g(), video_zoom, setVideoZoom);
@@ -484,19 +457,20 @@ auto MainWindow::Data::plugMenu() -> void
             if (act->isChecked())
                 effects |= act->data().value<VideoEffect>();
         }
-        push(effects, "video_effects", &MrlState::video_effects,
-             &PlayEngine::setVideoEffects, _EnumFlagsDescription<VideoEffect>);
+        push(effects, &MrlState::video_effects, &PlayEngine::setVideoEffects);
     });
-    connect(e.params(), &MrlState::video_effects_changed, &e,
-            [=] (VideoEffects effects) {
+    PROP_NOTIFY(video_effects, [=] (VideoEffects e) {
         for (auto a : menu(u"video"_q)(u"filter"_q).actions())
-            a->setChecked(a->data().value<VideoEffect>() & effects);
+            a->setChecked(a->data().value<VideoEffect>() & e);
+        return e.description();
     });
+
     auto &vcolor = video(u"color"_q);
     connect(vcolor[u"editor"_q], &QAction::triggered, p, [=] () {
         if (!color) {
             color = new VideoColorDialog(p);
-            connect(color, &VideoColorDialog::colorChanged, &e, &PlayEngine::setVideoEqualizer);
+            connect(color, &VideoColorDialog::colorChanged,
+                    &e, &PlayEngine::setVideoEqualizer);
         }
         color->setColor(e.params()->video_color());
         color->show();
@@ -510,14 +484,11 @@ auto MainWindow::Data::plugMenu() -> void
             push(color, &MrlState::video_color, &PlayEngine::setVideoEqualizer);
         });
     });
-    connect(vcolor[u"reset"_q], &QAction::triggered, p, [this] () {
-        push(VideoColor(), &MrlState::video_color, &PlayEngine::setVideoEqualizer);
-    });
-    connect(e.params(), &MrlState::video_color_changed, p,
-            [=] (auto eq) { this->showMessage(e.params()->desc_video_color(), eq.description()); });
+    connect(vcolor[u"reset"_q], &QAction::triggered, p, [=] ()
+        { push(VideoColor(), &MrlState::video_color, &PlayEngine::setVideoEqualizer); });
+    PROP_NOTIFY(video_color, [=] (auto eq) { return eq.description(); });
 
-    plugTrack(video, &MrlState::video_tracks_changed,
-              &PlayEngine::setVideoTrackSelected, QT_TR_NOOP("Selected Video Track"));
+    PLUG_TRACK(video, video_tracks, setVideoTrackSelected);
 
     Menu &audio = menu(u"audio"_q);
 
@@ -539,10 +510,8 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);
 
     auto &atrack = audio(u"track"_q);
-    plugTrack(audio, &MrlState::audio_tracks_changed,
-              &PlayEngine::setAudioTrackSelected, QT_TR_NOOP("Selected Audio Track"));
-    connect(atrack[u"cycle"_q], &QAction::triggered, p, [=] ()
-        { triggerNextAction(menu(u"audio"_q)(u"track"_q).g()->actions()); });
+    PLUG_TRACK(audio, audio_tracks, setAudioTrackSelected);
+    plugCycle(atrack);
     connect(atrack[u"open"_q], &QAction::triggered, p, [this] () {
         const auto files = _GetOpenFiles(p, tr("Open Audio File"), AudioExt);
         if (!files.isEmpty()) e.addAudioFiles(files);
@@ -554,22 +523,17 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &sub = menu(u"subtitle"_q);
     auto &strack = sub(u"track"_q);
     auto ssep = strack.addSeparator();
-    plugTrack(sub, &MrlState::sub_tracks_changed, &PlayEngine::setSubtitleTrackSelected,
-              QT_TR_NOOP("Selected Subtitle Track"), "exclusive"_a);
-    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed, &PlayEngine::setSubtitleInclusiveTrackSelected,
-              QT_TR_NOOP("Selected Subtitle Track"), "inclusive"_a, ssep);
+    PLUG_TRACK(sub, sub_tracks, setSubtitleTrackSelected, "exclusive"_a);
+    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed, &MrlState::desc_sub_tracks,
+              &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
     connect(sub(u"track"_q)[u"cycle"_q], &QAction::triggered, p, [=] () {
         auto &m = menu(u"subtitle"_q)(u"track"_q);
         auto actions = m.g(u"exclusive"_q)->actions();
         actions += m.g(u"inclusive"_q)->actions();
         triggerNextAction(actions);
     });
-    connect(strack[u"all"_q], &QAction::triggered, p, [=, &strack] () {
-        e.setSubtitleInclusiveTrackSelected(-1, true);
-        const auto size = e.params()->sub_tracks_inclusive().size();
-        const auto text = tr("%1 Subtitle(s)").arg(size);
-        showMessage(tr("Select All Subtitles"), text);
-    });
+    connect(strack[u"all"_q], &QAction::triggered, p,
+            [=] () { e.setSubtitleInclusiveTrackSelected(-1, true); });
     PLUG_FLAG(strack[u"hide"_q], sub_hidden, setSubtitleHidden);
     connect(strack[u"open"_q], &QAction::triggered, p, [this] () {
         QString dir;
@@ -598,11 +562,10 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_STEP(sub(u"position"_q).g(), sub_position, setSubtitlePosition);
     PLUG_STEP(sub(u"sync"_q).g(u"step"_q), sub_sync, setSubtitleDelay);
 
-
     connect(sub(u"sync"_q).g(u"bring"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
         const int time = e.captionBeginTime(a->data().toInt());
         if (time >= 0)
-            e.setSubtitleDelay(e.time() - time);
+            push(e.time() - time, e.params()->sub_sync(), &PlayEngine::setSubtitleDelay);
     });
     PLUG_STEP(sub(u"scale"_q).g(), sub_scale, setSubtitleScale);
 
@@ -620,8 +583,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(pl[u"save"_q], &QAction::triggered, p, [this] () {
         const auto &list = playlist.list();
         if (!list.isEmpty()) {
-            auto file = _GetSaveFile(p, tr("Save File"),
-                                         QString(), PlaylistExt);
+            auto file = _GetSaveFile(p, tr("Save File"), u""_q, PlaylistExt);
             if (!file.isEmpty())
                 list.save(file);
         }

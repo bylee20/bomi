@@ -100,7 +100,7 @@ private:
     P_(bool, video_hq_downscaling, false, QT_TR_NOOP("Video High Quality Downscaling"), 0)
     P_(bool, video_motion_interpolation, false, QT_TR_NOOP("Video Motion Interpolation"), 0)
     P_(VideoEffects, video_effects, 0, QT_TR_NOOP("Video Effects"), 0)
-    P_(StreamList, video_tracks, {StreamVideo}, "", 0)
+    P_(StreamList, video_tracks, {StreamVideo}, QT_TR_NOOP("Video Track"), 0)
 
     PB(double, audio_volume, 1.0, 0.0, 1.0, QT_TR_NOOP("Audio Volume"), 0)
     PB(double, audio_amplifier, 1.0, 0.0, 10.0, QT_TR_NOOP("Audio Amp"), 0)

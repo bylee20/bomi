@@ -159,56 +159,58 @@ struct MainWindow::Data {
     template<class T, class Func>
     auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*;
     template<class T, class S>
-    auto push(const T &to, T(MrlState::*get)() const,
-              void(PlayEngine::*set)(S)) -> QUndoCommand*;
-    template<class T, class S, class ToString>
-    auto push(const T &to, const char *p, T(MrlState::*get)() const,
-              void(PlayEngine::*set)(S), ToString ts) -> QUndoCommand*;
+    auto push(const T &to, const T &old, void(PlayEngine::*set)(S)) -> QUndoCommand*;
+    template<class T, class S>
+    auto push(const T &to, T(MrlState::*get)() const, void(PlayEngine::*set)(S)) -> QUndoCommand*;
     auto showTimeLine() -> void;
     auto showMessageBox(const QVariant &msg) -> void;
     auto showOSD(const QVariant &msg) -> void;
-    template<class T>
-    auto showProperty(const char *p, T(MrlState::*get)() const) -> void
-        { showProperty(p, (e.params()->*get)()); }
-    template<class T>
-    auto showProperty(const char *p, const T &val) -> void
-        { showMessage(e.params()->description(p), val); }
 
-    auto plugFlag(QAction *action, const char *property,
-                  bool(MrlState::*get)() const, void(MrlState::*sig)(bool),
-                  void(PlayEngine::*set)(bool)) -> void;
-#define PLUG_FLAG(a, p, s) plugFlag(a, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
-    template<class T, class S>
-    auto plugStep(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
-                  void(PlayEngine::*set)(S)) -> void;
-#define PLUG_STEP(m, p, s) plugStep(m, #p, &MrlState::p, &PlayEngine::s)
+#define PLUG_MEMFUNC(T) T(MrlState::*get)() const, void(MrlState::*sig)(T), \
+        QString(MrlState::*desc)() const, void(PlayEngine::*set)(T)
+#define PLUG_HELPER(p, s) &MrlState::p, &MrlState::p##_changed, &MrlState::desc_##p, &PlayEngine::s
+    auto plugFlag(QAction *action, PLUG_MEMFUNC(bool)) -> void;
+#define PLUG_FLAG(a, p, s) plugFlag(a, PLUG_HELPER(p, s))
     template<class T>
-    auto plugEnum(ActionGroup *g, const char *prop, T(MrlState::*get)() const,
-                  void(MrlState::*sig)(T), void(PlayEngine::*set)(T), QAction *cycle) -> void;
+    auto plugStep(ActionGroup *g, PLUG_MEMFUNC(T)) -> void;
+#define PLUG_STEP(m, p, s) plugStep(m, PLUG_HELPER(p, s))
     template<class T>
-    auto plugEnum(Menu &m, const char *property, T(MrlState::*get)() const,
-                  void(MrlState::*sig)(T), void(PlayEngine::*set)(T)) -> void
-    { plugEnum<T>(m.g(_L(EnumInfo<T>::typeKey())), property, get, sig, set, m.action(u"cycle"_q)); }
-#define PLUG_ENUM(m, p, s) plugEnum(m, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
+    auto plugEnum(ActionGroup *g, PLUG_MEMFUNC(T), QAction *cycle) -> void;
     template<class T>
-    auto plugEnumChild(Menu &parent, const char *property, T(MrlState::*get)() const,
-                       void(MrlState::*sig)(T), void(PlayEngine::*set)(T)) -> void
-    { plugEnum<T>(parent(_L(EnumInfo<T>::typeKey())), property, get, sig, set); }
-#define PLUG_ENUM_CHILD(pm, p, s) plugEnumChild(pm, #p, &MrlState::p, &MrlState::p##_changed, &PlayEngine::s)
+    auto plugEnum(Menu &m, PLUG_MEMFUNC(T)) -> void
+    { plugEnum<T>(m.g(_L(EnumInfo<T>::typeKey())), get, sig, desc, set, m.action(u"cycle"_q)); }
+#define PLUG_ENUM(m, p, s) plugEnum(m, PLUG_HELPER(p, s))
+    template<class T>
+    auto plugEnumChild(Menu &parent, PLUG_MEMFUNC(T)) -> void
+    { plugEnum<T>(parent(_L(EnumInfo<T>::typeKey())), get, sig, desc, set); }
+#define PLUG_ENUM_CHILD(pm, p, s) plugEnumChild(pm, PLUG_HELPER(p, s))
     template<class T>
     auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void;
     auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
-                   void(PlayEngine::*set)(int,bool), const char *msg,
+                   QString(MrlState::*desc)() const, void(PlayEngine::*set)(int,bool),
                    const QString &gkey = QString(), QAction *sep = nullptr) -> void;
 
+    auto plugCycle(Menu &parent, const QString &g = QString()) -> void
+    { plugCycle(parent, parent.g(g)); }
+    auto plugCycle(Menu &parent, ActionGroup *g) -> void
+    { plugCycle(parent[u"cycle"_q], g); }
+    auto plugCycle(QAction *cycle, ActionGroup *g) -> void
+    { if (cycle) connect(cycle, &QAction::triggered, [=] () { triggerNextAction(g->actions()); }); }
+
     template<class T, class F>
-    auto stepMessage(QString(MrlState::*desc)()  const, void(MrlState::*sig)(T), F func) -> void
+    auto propertyMessage(QString(MrlState::*desc)() const,
+                         void(MrlState::*sig)(T), F func) -> void
         { connect(e.params(), sig, p, [=] (T val) { showMessage((e.params()->*desc)(), func(val)); }); }
 
     template<class T>
-    auto stepMessage(QString(MrlState::*desc)()  const, void(MrlState::*sig)(T), StepValue Steps::*step) -> void
-        { stepMessage(desc, sig, [=] (T val) { return (pref.steps().*step).text(val); }); }
-#define STEP_MESSAGE(p, s) stepMessage(&MrlState::desc_##p, &MrlState::p##_changed, &Steps::s)
+    auto propertyMessage(QString(MrlState::*desc)() const, void(MrlState::*sig)(T)) -> void
+        { connect(e.params(), sig, p, [=] (T val) { showMessage((e.params()->*desc)(), val); }); }
+#define PROP_NOTIFY(p, ...) propertyMessage(&MrlState::desc_##p, &MrlState::p##_changed, ##__VA_ARGS__)
+
+    template<class T>
+    auto propertyMessage(QString(MrlState::*desc)() const, void(MrlState::*sig)(T), StepValue Steps::*step) -> void
+        { propertyMessage(desc, sig, [=] (T val) { return (pref.steps().*step).text(val); }); }
+#define STEP_MESSAGE(p, s) propertyMessage(&MrlState::desc_##p, &MrlState::p##_changed, &Steps::s)
 
     static auto triggerNextAction(const QList<QAction*> &actions) -> void;
 };
