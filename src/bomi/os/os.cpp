@@ -153,6 +153,28 @@ auto WindowAdapter::setFullScreen(bool fs) -> void
         m_widget->setWindowState(states);
 }
 
+auto WindowAdapter::startMoveByDrag(const QPointF &m) -> void
+{
+    m_started = true;
+    m_mouseStartPos = m.toPoint();
+    m_winStartPos = m_widget->pos();
+}
+
+auto WindowAdapter::moveByDrag(const QPointF &m) -> void
+{
+    if (m_started) {
+        m_widget->move(m_winStartPos + (m.toPoint() - m_mouseStartPos));
+        setMovingByDrag(true);
+    }
+}
+
+auto WindowAdapter::endMoveByDrag() -> void
+{
+    setMovingByDrag(false);
+    m_started = false;
+    m_mouseStartPos = m_winStartPos = QPoint();
+}
+
 auto WindowAdapter::isFrameless() const -> bool
 {
     return m_widget->windowFlags() & Qt::FramelessWindowHint;

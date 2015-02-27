@@ -26,12 +26,20 @@ namespace OS {
 
 auto createAdapter(QWidget *w) -> WindowAdapter*;
 
+struct X11;
+
 class X11WindowAdapter : public WindowAdapter {
 public:
-    X11WindowAdapter(QWidget* w): WindowAdapter(w) { }
+    X11WindowAdapter(QWidget* w);
     auto setFullScreen(bool fs) -> void final;
     auto isAlwaysOnTop() const -> bool final;
     auto setAlwaysOnTop(bool onTop) -> void final;
+    auto startMoveByDrag(const QPointF &m) -> void final;
+    auto moveByDrag(const QPointF &m) -> void final;
+    auto endMoveByDrag() -> void final;
+private:
+    auto stopDrag() -> void;
+    QTimer m_timer;
 };
 
 class HwAccX11 : public HwAcc {

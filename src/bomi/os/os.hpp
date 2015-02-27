@@ -35,12 +35,23 @@ public:
     virtual auto setFrameless(bool frameless) -> void;
     virtual auto isAlwaysOnTop() const -> bool = 0;
     virtual auto setAlwaysOnTop(bool onTop) -> void = 0;
+    virtual auto startMoveByDrag(const QPointF &m) -> void;
+    virtual auto moveByDrag(const QPointF &m) -> void;
+    virtual auto endMoveByDrag() -> void;
+    auto isMovingByDrag() const -> bool { return m_moving; }
+    auto isMoveByDragStarted() const -> bool { return m_started; }
+    auto posForMovingByDrag() const -> QPoint { return m_winStartPos; }
+    auto mousePosForMovingByDrag() const -> QPoint { return m_mouseStartPos; }
     auto winId() const -> WId { return m_widget->winId(); }
     auto widget() const -> QWidget* { return m_widget; }
 protected:
     WindowAdapter(QWidget *parent);
+    auto setMovingByDrag(bool moving) { m_moving = moving; }
 private:
     QWidget *m_widget = nullptr;
+
+    bool m_started = false, m_moving = false;
+    QPoint m_winStartPos, m_mouseStartPos;
 };
 
 auto adapter(QWidget *w) -> WindowAdapter*;

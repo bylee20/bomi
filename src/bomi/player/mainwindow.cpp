@@ -184,10 +184,7 @@ auto MainWindow::isFullScreen() const -> bool
 
 auto MainWindow::resetMoving() -> void
 {
-    if (d->moving) {
-        d->moving = false;
-        d->winStartPos = d->mouseStartPos = QPoint();
-    }
+    d->adapter->endMoveByDrag();
 }
 
 using MsBh = MouseBehavior;
@@ -200,8 +197,8 @@ auto MainWindow::onMouseMoveEvent(QMouseEvent *event) -> void
     const auto gpos = event->globalPos();
     if (full)
         resetMoving();
-    else if (d->moving)
-        move(d->winStartPos + (gpos - d->mouseStartPos));
+    else if (d->adapter->isMoveByDragStarted())
+        d->adapter->moveByDrag(gpos);
     d->readyToHideCursor();
     d->e.sendMouseMove(event->pos());
     if (d->pressedButton == Qt::LeftButton)
@@ -263,9 +260,7 @@ auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
             d->pressedButton = Qt::LeftButton;
         if (isFullScreen() || event->modifiers())
             break;
-        d->moving = true;
-        d->mouseStartPos = event->globalPos();
-        d->winStartPos = pos();
+        d->adapter->startMoveByDrag(event->globalPos());
         break;
     case Qt::MiddleButton:    case Qt::ExtraButton1:
     case Qt::ExtraButton2:    case Qt::ExtraButton3:
