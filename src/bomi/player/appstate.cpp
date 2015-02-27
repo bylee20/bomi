@@ -23,6 +23,7 @@ static const auto jio = JIO(
     JE(history_visible),
     JE(playinfo_visible),
     JE(win_stays_on_top),
+    JE(win_frameless),
     JE(ask_system_tray),
     JE(dvd_device),
     JE(bluray_device),

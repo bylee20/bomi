@@ -143,6 +143,7 @@ auto MainWindow::play() -> void
 
 auto MainWindow::togglePlayPause() -> void
 {
+    d->pausedByHiding = false;
     if (d->stateChanging)
         return;
     if (d->e.mrl().isImage())

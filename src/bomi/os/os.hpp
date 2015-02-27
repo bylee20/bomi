@@ -31,6 +31,8 @@ class WindowAdapter : public QObject {
 public:
     virtual auto isFullScreen() const -> bool;
     virtual auto setFullScreen(bool fs) -> void;
+    virtual auto isFrameless() const -> bool;
+    virtual auto setFrameless(bool frameless) -> void;
     virtual auto isAlwaysOnTop() const -> bool = 0;
     virtual auto setAlwaysOnTop(bool onTop) -> void = 0;
     auto winId() const -> WId { return m_widget->winId(); }

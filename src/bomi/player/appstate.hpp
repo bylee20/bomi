@@ -25,6 +25,7 @@ public:
     bool playinfo_visible = false;
     // window state
     StaysOnTop win_stays_on_top = StaysOnTop::Playing;
+    bool win_frameless = false;
 
     // misc
     bool ask_system_tray = true;

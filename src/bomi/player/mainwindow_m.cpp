@@ -199,8 +199,7 @@ auto MainWindow::Data::plugMenu() -> void
             &recent, &RecentInfo::clear);
 
     Menu &play = menu(u"play"_q);
-    connect(play[u"stop"_q], &QAction::triggered,
-            p, [this] () {e.stop();});
+    connect(play[u"stop"_q], &QAction::triggered, &e, &PlayEngine::stop);
     PLUG_STEP(play(u"speed"_q).g(), play_speed, setSpeed);
 
     connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
@@ -728,6 +727,8 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &win = menu(u"window"_q);
     plugAppEnumChild(win, "win_stays_on_top", &AppState::winStaysOnTopChanged);
     connect(&as, &AppState::winStaysOnTopChanged, p, [=] () { updateStaysOnTop(); });
+    connect(win[u"frameless"_q], &QAction::triggered, p,
+            [=] (bool on) { adapter->setFrameless(on); as.win_frameless = on; });
     connect(win.g(u"size"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
     connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);

@@ -36,6 +36,8 @@ auto MainWindow::Data::restoreState() -> void
     pl[u"shuffle"_q]->setChecked(as.playlist_shuffled);
     pl[u"repeat"_q]->setChecked(as.playlist_repeat);
     tool[u"auto-exit"_q]->setChecked(as.auto_exit);
+    if (as.win_frameless)
+        menu(u"window"_q)[u"frameless"_q]->trigger();
     emit as.winStaysOnTopChanged(as.win_stays_on_top);
 
     as.state.set_video_tracks(StreamList(StreamVideo));
@@ -145,6 +147,8 @@ auto MainWindow::Data::plugEngine() -> void
             waiter.stop();
             showMessageBox(tr("Error!\nCannot open the media."));
         }
+        if (state != PlayEngine::Paused)
+            pausedByHiding = false;
         const auto playing = e.isPlaying();
         const auto running = e.isRunning();
         menu(u"play"_q)[u"pause"_q]->setText(playing ? tr("Pause") : tr("Play"));
@@ -782,7 +786,7 @@ auto MainWindow::Data::updateTitle() -> void
 auto MainWindow::Data::doVisibleAction(bool visible) -> void
 {
     if (visible) {
-        if (pausedByHiding && e.isPaused()) {
+        if (pausedByHiding) {
             e.unpause();
             pausedByHiding = false;
         }

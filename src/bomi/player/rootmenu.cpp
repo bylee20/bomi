@@ -617,6 +617,7 @@ RootMenu::RootMenu()
 
     d->menu(u"window"_q, QT_TR_NOOP("Window"), [=] () {
         d->enumMenuCheckable<StaysOnTop>(true);
+        d->action(u"frameless"_q, QT_TR_NOOP("Remove Frame"), true);
 
         d->separator();
 
