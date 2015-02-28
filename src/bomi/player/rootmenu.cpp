@@ -291,30 +291,30 @@ RootMenu::RootMenu()
     d->infos[menuAction()] = { };
 
     d->menu(u"open"_q, QT_TR_NOOP("Open"), [=] () {
-        d->action(u"file"_q, QT_TR_NOOP("Open File"));
-        d->action(u"folder"_q, QT_TR_NOOP("Open Folder"));
-        d->action(u"url"_q, QT_TR_NOOP("Load URL"));
-        d->action(u"dvd"_q, QT_TR_NOOP("Open DVD"));
-        d->action(u"bluray"_q, QT_TR_NOOP("Open Blu-ray"));
+        d->action(u"file"_q, QT_TR_NOOP("File"));
+        d->action(u"folder"_q, QT_TR_NOOP("Folder"));
+        d->action(u"url"_q, QT_TR_NOOP("URL"));
+        d->action(u"dvd"_q, QT_TR_NOOP("DVD"));
+        d->action(u"bluray"_q, QT_TR_NOOP("Blu-ray"));
 
         d->separator();
 
-        d->menu(u"recent"_q, QT_TR_NOOP("Recently Opened"), [=] () {
+        d->menu(u"recent"_q, QT_TR_NOOP("Recent"), [=] () {
             d->separator();
             d->action(u"clear"_q, QT_TR_NOOP("Clear"));
         });
     });
 
     d->menu(u"play"_q, QT_TR_NOOP("Play"), [=] () {
-        d->action(u"pause"_q, QT_TR_NOOP("Play"));
+        d->action(u"pause"_q, QT_TR_NOOP("Start"));
         d->action(u"stop"_q, QT_TR_NOOP("Stop"));
         d->separator();
-        d->action(u"prev"_q, QT_TR_NOOP("Play Previous"));
-        d->action(u"next"_q, QT_TR_NOOP("Play Next"));
+        d->action(u"prev"_q, QT_TR_NOOP("Previous"));
+        d->action(u"next"_q, QT_TR_NOOP("Next"));
 
         d->separator();
 
-        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Playback Speed"));
+        d->menuStepReset(u"speed"_q, QT_TR_NOOP("Speed"));
 
         d->menu(u"repeat"_q, QT_TR_NOOP("A-B Repeat"), [=] () {
             d->actionToGroup(u"range"_q, QT_TR_NOOP("Set Range to Current Time"))->setData(int('r'));
@@ -326,7 +326,7 @@ RootMenu::RootMenu()
 
         d->action(u"disc-menu"_q, QT_TR_NOOP("Disc Menu"));
         d->menu(u"seek"_q, QT_TR_NOOP("Seek"), [=] () {
-            d->action(u"begin"_q, QT_TR_NOOP("To the Beginning"));
+            d->action(u"begin"_q, QT_TR_NOOP("Beginning"));
 
             d->separator();
 
@@ -344,17 +344,17 @@ RootMenu::RootMenu()
 
             d->separator();
 
-            d->actionToGroup(u"prev-subtitle"_q, QT_TR_NOOP("To Previous Subtitle"), false, u"subtitle"_q)->setData(-1);
-            d->actionToGroup(u"current-subtitle"_q, QT_TR_NOOP("To Beginning of Current Subtitle"), false, u"subtitle"_q)->setData(0);
-            d->actionToGroup(u"next-subtitle"_q, QT_TR_NOOP("To Next Subtitle"), false, u"subtitle"_q)->setData(1);
+            d->actionToGroup(u"prev-subtitle"_q, QT_TR_NOOP("Previous Subtitle"), false, u"subtitle"_q)->setData(-1);
+            d->actionToGroup(u"current-subtitle"_q, QT_TR_NOOP("Current Subtitle"), false, u"subtitle"_q)->setData(0);
+            d->actionToGroup(u"next-subtitle"_q, QT_TR_NOOP("Next Subtitle"), false, u"subtitle"_q)->setData(1);
         });
         d->menu(u"title"_q, QT_TR_NOOP("Title/Edition"), [=] () {
             d->group()->setExclusive(true);
         })->setEnabled(false);
         d->menu(u"chapter"_q, QT_TR_NOOP("Chapter"), [=] () {
             d->group()->setExclusive(true);
-            d->action(u"prev"_q, QT_TR_NOOP("Previous Chapter"));
-            d->action(u"next"_q, QT_TR_NOOP("Next Chapter"));
+            d->action(u"prev"_q, QT_TR_NOOP("Previous"));
+            d->action(u"next"_q, QT_TR_NOOP("Next"));
             d->separator();
         })->setEnabled(false);
 
@@ -364,7 +364,7 @@ RootMenu::RootMenu()
     });
 
     d->menu(u"video"_q, QT_TR_NOOP("Video"), [=] () {
-        d->menu(u"track"_q, QT_TR_NOOP("Video Track"), [=] () { })->setEnabled(false);
+        d->menu(u"track"_q, QT_TR_NOOP("Track"), [=] () { })->setEnabled(false);
 
         d->separator();
 
@@ -429,11 +429,11 @@ RootMenu::RootMenu()
             d->enumActionsCheckable<Interpolator>(true);
         });
         d->menu(u"hq-scaling"_q, QT_TR_NOOP("High Quality Scaling"), [=] () {
-            d->action(u"up"_q, QT_TR_NOOP("High Quality Upscaling"), true);
-            d->action(u"down"_q, QT_TR_NOOP("High Quality Downscaling"), true);
+            d->action(u"up"_q, QT_TR_NOOP("Upscaling"), true);
+            d->action(u"down"_q, QT_TR_NOOP("Downscaling"), true);
         });
 
-        d->action(u"motion"_q, QT_TR_NOOP("Motion Interpolation"), true);
+        d->action(u"motion"_q, QT_TR_NOOP("Motion Smoothing"), true);
 
         d->separator();
 
@@ -470,7 +470,7 @@ RootMenu::RootMenu()
     });
 
     d->menu(u"audio"_q, QT_TR_NOOP("Audio"), [=] () {
-        d->menu(u"track"_q, QT_TR_NOOP("Audio Track"), [=] () {
+        d->menu(u"track"_q, QT_TR_NOOP("Track"), [=] () {
             d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
                     QT_TR_NOOP("Open Audio Track File"));
             d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
@@ -485,7 +485,7 @@ RootMenu::RootMenu()
                     QT_TR_NOOP("Select Next Audio Track"));
             d->separator();
         })->setEnabled(false);
-        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Audio Sync"));
+        d->menuStepReset(u"sync"_q, QT_TR_NOOP("Sync"));
 
         d->separator();
 
@@ -500,20 +500,18 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->action(u"normalizer"_q, QT_TR_NOOP("Volume Normalizer"), true);
+        d->action(u"normalizer"_q, QT_TR_NOOP("Normalizer"), true);
         d->action(u"tempo-scaler"_q, QT_TR_NOOP("Tempo Scaler"), true);
     });
 
 
     d->menu(u"subtitle"_q, QT_TR_NOOP("Subtitle"), [=] () {
-        d->menu(u"track"_q, QT_TR_NOOP("Subtitle Track"), [=] () {
+        d->menu(u"track"_q, QT_TR_NOOP("Track"), [=] () {
             d->group(u"exclusive"_q)->setExclusive(false);
             d->group(u"inclusive"_q)->setExclusive(false);
 
-            d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
-                    QT_TR_NOOP("Open Subtitle File"));
-            d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
-                    QT_TR_NOOP("Auto-load Subtitle File"));
+            d->action(u"open"_q, QT_TR_NOOP("Open File"));
+            d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File"));
             d->menu(u"reload"_q, QT_TR_NOOP("Reload File"), [=] () {
                 d->actionToGroup(u"current"_q, QT_TR_NOOP("Current Encoding"))->setData(-1);
                 d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(0);
@@ -539,17 +537,13 @@ RootMenu::RootMenu()
                     })->setTitle(title);
                 }
             });
-            d->desc(d->action(u"clear"_q, QT_TR_NOOP("Clear File")),
-                    QT_TR_NOOP("Clear Subtitle File"));
+            d->action(u"clear"_q, QT_TR_NOOP("Clear File"));
 
             d->separator();
 
-            d->desc(d->action(u"cycle"_q, QT_TR_NOOP("Select Next")),
-                    QT_TR_NOOP("Select Next Subtitle"));
-            d->desc(d->action(u"all"_q, QT_TR_NOOP("Select All")),
-                    QT_TR_NOOP("Select All Subtitles"));
-            d->desc(d->action(u"hide"_q, QT_TR_NOOP("Hide"), true),
-                    QT_TR_NOOP("Hide Subtitles"));
+            d->action(u"cycle"_q, QT_TR_NOOP("Select Next"));
+            d->action(u"all"_q, QT_TR_NOOP("Select All"));
+            d->action(u"hide"_q, QT_TR_NOOP("Hide"), true);
 
             d->separator();
         })->setEnabled(false);
@@ -558,18 +552,18 @@ RootMenu::RootMenu()
 
         d->action(u"override"_q, QT_TR_NOOP("Override ASS Style"), true);
         d->enumMenuCheckable<SubtitleDisplay>(true);
-        d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Subtitle Alignment"),
+        d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Alignment"),
                              {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
-        d->menuStepReset(u"position"_q, QT_TR_NOOP("Subtitle Position"));
-        d->menuStepReset(u"scale"_q, QT_TR_NOOP("Subtitle Scale"));
+        d->menuStepReset(u"position"_q, QT_TR_NOOP("Position"));
+        d->menuStepReset(u"scale"_q, QT_TR_NOOP("Scale"));
 
         d->separator();
 
-        d->menu(u"sync"_q, QT_TR_NOOP("Subtitle Sync"), [&] () {
+        d->menu(u"sync"_q, QT_TR_NOOP("Sync"), [&] () {
             d->stepReset(u"step"_q);
             d->separator();
-            d->actionToGroup(u"prev"_q, QT_TR_NOOP("Bring Previous Subtitle"), false, u"bring"_q)->setData(-1);
-            d->actionToGroup(u"next"_q, QT_TR_NOOP("Bring Next Subtitle"), false, u"bring"_q)->setData(1);
+            d->actionToGroup(u"prev"_q, QT_TR_NOOP("Bring Previous Lines"), false, u"bring"_q)->setData(-1);
+            d->actionToGroup(u"next"_q, QT_TR_NOOP("Bring Next Lines"), false, u"bring"_q)->setData(1);
         });
     });
 
@@ -702,22 +696,24 @@ auto RootMenu::description(const QString &longId) const -> QString
     auto action = this->action(longId);
     if (!action)
         return QString();
+
     auto it = d->infos.find(action);
     if (it == d->infos.end())
         return QString();
     if (it->desc)
         return tr(it->desc);
+    QString desc = action->text();
+    Menu *menu = nullptr;
     if (action->menu())
-        return tr("%1 Menu").arg(action->menu()->title());
-    if (qobject_cast<BaseEnumAction*>(action)) {
-        const auto idx = longId.lastIndexOf('/'_q);
-        if (idx != -1) {
-            auto menuAction = this->action(longId.left(idx));
-            if (menuAction && menuAction->menu())
-                return menuAction->menu()->title() % ": "_a % action->text();
-        }
+        menu = qobject_cast<Menu*>(action->menu()->parent());
+    else
+        menu = qobject_cast<Menu*>(action->parent());
+    while (menu && menu != this) {
+        desc = menu->title() % '>'_q % desc;
+        menu = qobject_cast<Menu*>(menu->parent());
+        Q_ASSERT(menu);
     }
-    return action->text();
+    return desc;
 }
 
 auto RootMenu::action(const QString &longId) const -> QAction*
