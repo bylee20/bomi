@@ -13,6 +13,7 @@
 #include <QFileOpenEvent>
 #include <QJsonDocument>
 #include <QCommandLineParser>
+#include <QFontDatabase>
 
 #ifdef Q_OS_LINUX
 #include "player/mpris.hpp"
@@ -64,6 +65,8 @@ struct App::Data {
     QCommandLineParser cmdParser, msgParser;
     QMap<LineCmd, QCommandLineOption> options;
     LocalConnection connection = {u"net.xylosper.bomi"_q, nullptr};
+    QFont fixedFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+
     auto open(const Mrl &mrl) -> void
     {
         if (!main || !main->isSceneGraphInitialized())
@@ -203,6 +206,8 @@ App::App(int &argc, char **argv)
     d->storage.add("style-name", &d->styleName);
     d->storage.add("unique", &d->unique);
     d->storage.add("open-folders", open_folders, set_open_folders);
+    d->storage.add("font");
+    d->storage.add("fixedFont");
     d->storage.restore();
 
     setLocale(d->locale);
@@ -245,7 +250,6 @@ App::App(int &argc, char **argv)
 
 App::~App() {
     setMprisActivated(false);
-    d->storage.save();
     delete d->main;
     delete d->mb;
     delete d;
@@ -384,10 +388,8 @@ auto App::sendMessage(MessageType type, const QJsonValue &json, int timeout) -> 
 
 auto App::setLocale(const Locale &locale) -> void
 {
-    if (translator_load(locale)) {
+    if (translator_load(locale))
         d->locale = locale;
-        d->storage.save();
-    }
 }
 
 auto App::locale() const -> Locale
@@ -413,13 +415,11 @@ auto App::setStyleName(const QString &name) -> void
         return;
     setStyle(QStyleFactory::create(name));
     d->styleName = style()->objectName();
-    d->storage.save();
 }
 
 auto App::setUnique(bool unique) -> void
 {
-    if (_Change(d->unique, unique))
-        d->storage.save();
+    d->unique = unique;
 }
 
 auto App::styleName() const -> QString
@@ -439,6 +439,15 @@ auto App::logOption() const -> LogOption
 
 auto App::setLogOption(const LogOption &option) -> void
 {
-    if (_Change(d->logOption, option))
-        d->storage.save();
+    d->logOption = option;
+}
+
+auto App::setFixedFont(const QFont &font) -> void
+{
+    d->fixedFont = font;
+}
+
+auto App::fixedFont() const -> QFont
+{
+    return d->fixedFont;
 }

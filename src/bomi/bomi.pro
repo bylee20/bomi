@@ -274,7 +274,8 @@ HEADERS += \
     player/main.hpp \
     misc/stepinfo.hpp \
     player/mrlstate_old.hpp \
-    misc/smbauth.hpp
+    misc/smbauth.hpp \
+    widget/fontcombobox.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -471,7 +472,8 @@ SOURCES += \
     quick/algorithmobject.cpp \
     misc/stepinfo.cpp \
     player/mrlstate_old.cpp \
-    misc/smbauth.cpp
+    misc/smbauth.cpp \
+    widget/fontcombobox.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

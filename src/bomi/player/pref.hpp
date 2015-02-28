@@ -150,6 +150,8 @@ private:
     P1(Locale, app_locale, {}, "locale");
     P1(QString, app_style, {}, "value");
     P0(LogOption, app_log_option, LogOption::default_())
+    P1(QFont, app_font, {}, "currentFont")
+    P1(QFont, app_fixed_font, {}, "currentFont")
 
 //    static auto preset(KeyMapPreset id) -> Shortcuts;
 public:

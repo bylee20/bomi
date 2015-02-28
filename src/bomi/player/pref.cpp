@@ -4,6 +4,7 @@
 #include "misc/jsonstorage.hpp"
 #include "pref_helper.hpp"
 #include "configure.hpp"
+#include <QFontDatabase>
 
 DECLARE_LOG_CONTEXT(Pref)
 
@@ -12,6 +13,8 @@ static bool init = false;
 Pref::Pref()
 {
     m_app_style = cApp.defaultStyleName();
+    m_app_font = QFontDatabase::systemFont(QFontDatabase::GeneralFont);
+    m_app_fixed_font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
 }
 
 auto Pref::initialize() -> void
@@ -52,6 +55,9 @@ auto Pref::save() const -> void
     cApp.setLocale(m_app_locale);
     cApp.setStyleName(m_app_style);
     cApp.setLogOption(m_app_log_option);
+    cApp.setFont(m_app_font);
+    cApp.setFixedFont(m_app_fixed_font);
+    cApp.save();
 }
 
 auto Pref::load() -> void
@@ -110,6 +116,8 @@ auto Pref::load() -> void
     m_app_locale = cApp.locale();
     m_app_style = cApp.styleName().toLower();
     m_app_log_option = cApp.logOption();
+    m_app_font = cApp.font();
+    m_app_fixed_font = cApp.fixedFont();
 }
 
 #undef PREF_GROUP

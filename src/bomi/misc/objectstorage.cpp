@@ -119,6 +119,11 @@ auto ObjectStorage::save() -> void
         close();
 }
 
+auto ObjectStorage::add(const char *property) -> void
+{
+    d->properties.push_back(property);
+}
+
 auto ObjectStorage::restore() -> void
 {
     if (!d->object)

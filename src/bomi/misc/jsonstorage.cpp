@@ -135,6 +135,7 @@ static const QHash<int, JVConvert> convs = [] () {
     INSERT(QSizeF);
     INSERT(QColor);
     INSERT(QStringList);
+    INSERT(QFont);
 
     INSERT(VideoColor);
     INSERT(OpenMediaInfo);

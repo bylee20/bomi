@@ -316,7 +316,6 @@ auto MainWindow::resizeEvent(QResizeEvent *event) -> void
         d->container->setGeometry(QRect(QPoint(0, 0), frameSize()));
     else
         d->container->setGeometry(QRect(QPoint(0, 0), size()));
-//    d->as.updateWindowGeometry(this);
 }
 
 auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void

@@ -112,8 +112,8 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Miscellaneous"), d->ui.misc, u":/img/applications-education-miscellaneous-32.png"_q);
 
     addCategory(tr("Appearance"));
+    addPage(tr("Style"), d->ui.skin, u":/img/preferences-desktop-theme-32.png"_q);
     addPage(tr("OSD"), d->ui.osd, u":/img/view-multiple-objects.png"_q);
-    addPage(tr("Skin & Style"), d->ui.skin_style, u":/img/preferences-desktop-theme-32.png"_q);
 
     addCategory(tr("Video"));
     addPage(tr("Hardware acceleration"), d->ui.video_hwacc, u":/img/apps-hardware-icon.png"_q);
@@ -133,6 +133,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Mouse actions"), d->ui.ui_mouse, u":/img/input-mouse-32.png"_q);
     addPage(tr("Control step"), d->ui.ui_step, u":/img/run-build-32.png"_q);
 
+    d->ui.app_fixed_font->setFixedFont(true);
     d->ui.enable_hwaccel->setEnabled(OS::hwAcc()->isAvailable());
 
     connect(d->ui.quick_snapshot_folder_browse, &QPushButton::clicked,

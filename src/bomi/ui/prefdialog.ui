@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>21</number>
+        <number>17</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2021,8 +2021,8 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="skin_style">
-        <layout class="QVBoxLayout" name="verticalLayout_40">
+       <widget class="QWidget" name="skin">
+        <layout class="QVBoxLayout" name="verticalLayout_23">
          <item>
           <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
@@ -2047,20 +2047,63 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="groupBox_11">
+           <property name="title">
+            <string>Font</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>General</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="FontComboBox" name="app_font">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>Fixed-width</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="FontComboBox" name="app_fixed_font">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="QGroupBox" name="groupBox_22">
            <property name="title">
             <string>Background Image</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_30">
-            <item>
-             <widget class="QRadioButton" name="show_logo">
-              <property name="text">
-               <string>Show default bo&amp;mi logo</string>
-              </property>
-             </widget>
-            </item>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_18">
+              <item>
+               <widget class="QRadioButton" name="show_logo">
+                <property name="text">
+                 <string>Show default bo&amp;mi logo</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QRadioButton" name="fill_bg_color">
                 <property name="text">
@@ -2540,6 +2583,11 @@ You don't need to specify to this if geust is allowed.</string>
    <class>PrefStepTreeWidget</class>
    <extends>QTreeWidget</extends>
    <header>dialog/prefdialog_p.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>FontComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widget/fontcombobox.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

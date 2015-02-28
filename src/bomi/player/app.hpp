@@ -7,6 +7,8 @@ class Locale;                           struct LogOption;
 
 class App : public QApplication {
     Q_OBJECT
+    Q_PROPERTY(QFont font READ font WRITE setFont)
+    Q_PROPERTY(QFont fixedFont READ fixedFont WRITE setFixedFont)
 public:
     enum MessageType {
         CommandLine = 1
@@ -35,6 +37,8 @@ public:
     auto sendMessage(MessageType type, const QJsonValue &t, int timeout = 5000) -> bool;
     auto save() const -> void;
     auto load() -> void;
+    auto setFixedFont(const QFont &font) -> void;
+    auto fixedFont() const -> QFont;
     static constexpr auto version() -> const char* { return "0.9.2"; }
     static constexpr auto name() -> const char* { return "bomi"; }
     static auto displayName() -> QString { return tr("bomi"); }
