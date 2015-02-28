@@ -99,10 +99,13 @@ PlayEngine::PlayEngine()
         auto act = Unavailable;
         if (d->vp->isInputInterlaced())
             act = d->vp->isOutputInterlaced() ? Deactivated : Activated;
-        d->info.video.setDeinterlacer(act);
+        d->info.video.deint()->setState(act);
     };
     connect(d->vp, &VideoProcessor::inputInterlacedChanged, this, checkDeint);
     connect(d->vp, &VideoProcessor::outputInterlacedChanged, this, checkDeint);
+    connect(d->vp, &VideoProcessor::deintMethodChanged, this,
+            [=] (auto m) { d->info.video.deint()->setDriver(_EnumName(m)); });
+
     connect(d->vp, &VideoProcessor::skippingChanged, this, [=] (bool skipping) {
         if (skipping) {
             d->pauseAfterSkip = isPaused();

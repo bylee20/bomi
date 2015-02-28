@@ -46,7 +46,7 @@ auto registerType() -> void
     qmlRegisterType<VideoObject>();
     qmlRegisterType<AvTrackObject>();
     qmlRegisterType<VideoFormatObject>();
-    qmlRegisterType<VideoHwAccObject>();
+    qmlRegisterType<VideoToolObject>();
     qmlRegisterType<AudioFormatObject>();
     qmlRegisterType<AudioObject>();
     qmlRegisterType<CodecObject>();
