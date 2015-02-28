@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>17</number>
+        <number>20</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2295,12 +2295,12 @@ Regular expression is supported.</string>
            </property>
            <column>
             <property name="text">
-             <string/>
+             <string>Action</string>
             </property>
            </column>
            <column>
             <property name="text">
-             <string/>
+             <string>Step</string>
             </property>
            </column>
           </widget>

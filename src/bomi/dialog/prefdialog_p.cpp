@@ -450,7 +450,6 @@ PrefStepTreeWidget::PrefStepTreeWidget(QWidget *p)
 {
     clear();
     setColumnCount(2);
-    setHeaderLabels({tr("Item"), tr("Step")});
 
     Steps steps;
 

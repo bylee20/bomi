@@ -42,8 +42,8 @@ Item {
             readonly property real usage: Alg.trunc(App.cpu.usage, 1)
             readonly property real avg: usage/App.cpu.cores
             readonly property string name: qsTr("CPU Usage")
-            readonly property string sub: qsTr("avg. per-core")
-            content: formatBracket(name, usage.toFixed(1) + "%", sub + ": " + avg.toFixed(1) + '%')
+            readonly property string suffix: qsTr("core")
+            content: formatBracket(name, usage.toFixed(1) + "%", avg.toFixed(1) + '%/' + suffix)
         }
         PlayInfoText {
             readonly property real usage: Alg.trunc(App.memory.usage, 1)
