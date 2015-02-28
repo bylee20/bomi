@@ -1,5 +1,6 @@
 #include "videocolordialog.hpp"
 #include "video/videocolor.hpp"
+#include "dialog/bbox.hpp"
 #include <QToolButton>
 
 struct Line {
@@ -54,6 +55,16 @@ VideoColorDialog::VideoColorDialog(QWidget *parent)
         connect(button, &QPushButton::clicked, this,
                 [=] () { d->lines[type].spin->setValue(0); });
     });
+
+    auto bbox = new BBox;
+    connect(bbox->addButton(BBox::Reset), &QPushButton::clicked,
+            this, [=] () { setColor(VideoColor()); });
+    const auto close = bbox->addButton(BBox::Close);
+    connect(close, &QPushButton::clicked, this, &QDialog::reject);
+    close->setAutoDefault(true);
+    close->setDefault(true);
+    grid->addWidget(bbox, 7 + 1, 0, 1, -1);
+
     setLayout(grid);
     setMinimumWidth(400);
     adjustSize();
