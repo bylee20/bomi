@@ -638,8 +638,11 @@ static int decode(struct dec_video *vd, struct demux_packet *packet,
     assert(mpi->planes[0] || mpi->planes[3]);
     mp_image_set_params(mpi, &params);
 
-    if (ctx->hwdec && ctx->hwdec->process_image)
-        mpi = ctx->hwdec->process_image(ctx, mpi);
+    if (ctx->hwdec) {
+        if (ctx->hwdec->process_image)
+            mpi = ctx->hwdec->process_image(ctx, mpi);
+        mpi->hwdec_type = ctx->hwdec->type;
+    }
 
     *out_image = mp_img_swap_to_native(mpi);
     return 1;

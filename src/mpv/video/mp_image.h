@@ -109,6 +109,7 @@ typedef struct mp_image {
         int64_t next_vsync;
         int64_t prev_vsync;
     } frame_timing;
+    int hwdec_type;
     
     /* memory management */
     struct m_refcount *refcount;

@@ -81,7 +81,8 @@ struct VideoProcessor::Data {
     MotionInterpolator interpolator;
     MotionIntrplOption intrplOption;
     mp_image_params params;
-    bool deint = false, hwacc = false, inter_i = false, inter_o = false, interpolate = false;
+    int hwdecType = -10;
+    bool deint = false, inter_i = false, inter_o = false, interpolate = false;
     HwDecTool *hwdec = nullptr;
     mp_image_pool *pool = nullptr;
 
@@ -100,7 +101,7 @@ struct VideoProcessor::Data {
     {
         DeintOption opt;
         if (deint)
-            opt = hwacc ? deint_hwdec : deint_swdec;
+            opt = hwdecType > 0 ? deint_hwdec : deint_swdec;
         deinterlacer.setOption(opt);
         reset();
         emit p->deintMethodChanged(opt.method);
@@ -203,10 +204,9 @@ auto VideoProcessor::reconfig(mp_image_params *in, mp_image_params *out) -> int
 {
     d->params = *in;
     *out = *in;
-    if (_Change(d->hwacc, !!IMGFMT_IS_HWACCEL(in->imgfmt)))
-        d->updateDeint();
     d->interpolator.setTargetFps(d->intrplOption.fps());
     d->reset();
+    d->hwdecType = -10;
     return 0;
 }
 
@@ -284,6 +284,24 @@ static auto luminance(const mp_image *mpi) -> double
     }
 }
 
+auto VideoProcessor::hwdec() const -> QString
+{
+    switch (d->hwdecType) {
+    case HWDEC_VAAPI:
+        return u"vaapi"_q;
+    case HWDEC_VAAPI_COPY:
+        return u"vaapi-copy"_q;
+    case HWDEC_VDA:
+        return u"vda"_q;
+    case HWDEC_VDPAU:
+        return u"vdpau"_q;
+    case HWDEC_DXVA2_COPY:
+        return u"dxva2-copy"_q;
+    default:
+        return QString();
+    }
+}
+
 auto VideoProcessor::filterIn(mp_image *_mpi) -> int
 {
     if (!_mpi) { // propagate eof
@@ -291,6 +309,11 @@ auto VideoProcessor::filterIn(mp_image *_mpi) -> int
         d->deinterlacer.push(MpImage());
         d->interpolator.push(MpImage());
         return 0;
+    }
+
+    if (_Change(d->hwdecType, _mpi->hwdec_type)) {
+        d->updateDeint();
+        emit hwdecChanged(hwdec());
     }
 
     MpImage mpi = MpImage::wrap(_mpi);

@@ -100,7 +100,7 @@ struct PlayEngine::Data {
     bool pauseAfterSkip = false, resume = false, hwdec = false;
     bool quit = false, preciseSeeking = false, mouseInButton = false;
 
-    QByteArray hwcdc;
+    QList<CodecId> hwCodecs;
 
     struct { int size = 0, used = 0; } cache;
 

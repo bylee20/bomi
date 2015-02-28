@@ -18,8 +18,10 @@ public:
     auto skipToNextBlackFrame() -> void;
     auto stopSkipping() -> void;
     auto isSkipping() const -> bool;
+    auto hwdec() const -> QString;
     auto setMotionIntrplOption(const MotionIntrplOption &option) -> void;
 signals:
+    void hwdecChanged(const QString &api);
     void inputInterlacedChanged();
     void outputInterlacedChanged();
     void deintMethodChanged(DeintMethod method);

@@ -120,6 +120,27 @@ PlayEngine::PlayEngine()
     connect(d->vp, &VideoProcessor::seekRequested, this, &PlayEngine::seek);
     connect(d->vp, &VideoProcessor::fpsManimulated, &d->info.video,
             &VideoObject::setFpsManimulation, Qt::QueuedConnection);
+    connect(d->vp, &VideoProcessor::hwdecChanged, this, [=] (const QString &api)
+    {
+        auto &video = d->info.video;
+        auto hwState = [&] () {
+            if (!d->hwdec) {
+                Q_ASSERT(api.isEmpty());
+                return Deactivated;
+            }
+            if (!api.isEmpty()) {
+                Q_ASSERT(api == OS::hwAcc()->name());
+                return Activated;
+            }
+            const auto codec = CodecIdInfo::fromData(video.codec()->type());
+            if (OS::hwAcc()->supports(codec) && !d->hwCodecs.contains(codec))
+                return Deactivated;
+            return Unavailable;
+        };
+        auto hwacc = video.hwacc();
+        hwacc->setState(hwState());
+        hwacc->setDriver(api);
+    }, Qt::QueuedConnection);
 
     connect(d->ac, &AudioController::inputFormatChanged, this,
             [=] () { d->info.audio.filter()->setFormat(d->ac->inputFormat()); });
@@ -492,12 +513,14 @@ auto PlayEngine::setSmbAuth_locked(const SmbAuth &smb) -> void
 
 auto PlayEngine::setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void
 {
-    d->hwcdc.clear();
-    for (auto c : codecs)
-        d->hwcdc += _EnumData(c).toLatin1() + ',';
-    d->hwcdc.chop(1);
     d->hwdec = use;
-    d->mpv.setAsync("options/hwdec-codecs", use ? d->hwcdc : ""_b);
+    d->hwCodecs = codecs;
+
+    QByteArray hwcdc;
+    for (auto c : codecs)
+        hwcdc += _EnumData(c).toLatin1() + ',';
+    hwcdc.chop(1);
+    d->mpv.setAsync("options/hwdec-codecs", use ? hwcdc : ""_b);
 }
 
 auto PlayEngine::avSync() const -> int
