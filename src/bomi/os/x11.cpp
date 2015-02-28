@@ -336,7 +336,8 @@ auto X11WindowAdapter::stopDrag() -> void
                         XCB_WINDOW_NONE, d->root, 0, 0, 0);
     xcb_flush(d->connection);
 
-    QCursor::setPos(pos + QPoint(20, 20));
+    QCursor::setPos(pos + QPoint(10, 0));
+    QCursor::setPos(pos - QPoint(10, 0));
     QCursor::setPos(pos);
 }
 
