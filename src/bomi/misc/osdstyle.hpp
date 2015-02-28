@@ -3,7 +3,7 @@
 
 struct OsdStyle {
     struct Font {
-        Font() { qfont.setPixelSize(height()); }
+        Font();
         auto family() const -> QString { return qfont.family(); }
         auto bold() const -> bool { return qfont.bold(); }
         auto italic() const -> bool { return qfont.italic(); }

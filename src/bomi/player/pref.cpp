@@ -162,13 +162,7 @@ auto Pref::defaultOsdTheme() -> OsdTheme
 {
     OsdTheme theme;
     auto &style = theme.style;
-    style.font.setUnderline(false);
-    style.font.setStrikeOut(false);
-    style.font.setItalic(false);
-    style.font.setBold(false);
-    style.font.setFamily(qApp->font().family());
     style.font.size = 0.03;
-//    theme.style = TextThemeStyle::Outline;
     style.font.color = Qt::white;
     style.outline.color = Qt::black;
     return theme;

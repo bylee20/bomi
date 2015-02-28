@@ -205,7 +205,7 @@ auto FontComboBox::setFixedFont(bool fixed) -> void
 auto FontComboBox::setCurrentFont(const QFont &font) -> void
 {
     for (int i = 0; i < d->model->size(); ++i) {
-        if (d->model->at(i).font == font) {
+        if (d->model->at(i).font.family() == font.family()) {
             setCurrentIndex(i);
             break;
         }

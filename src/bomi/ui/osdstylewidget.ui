@@ -39,11 +39,7 @@
       <item row="0" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QFontComboBox" name="font_family">
-          <property name="editable">
-           <bool>false</bool>
-          </property>
-         </widget>
+         <widget class="FontComboBox" name="font_family"/>
         </item>
         <item>
          <widget class="QLabel" name="label_21">
@@ -618,6 +614,11 @@
    <extends>QWidget</extends>
    <header>widget/colorselectwidget.hpp</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FontComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widget/fontcombobox.hpp</header>
   </customwidget>
   <customwidget>
    <class>FontOptionWidget</class>

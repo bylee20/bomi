@@ -1,5 +1,6 @@
 #include "osdstyle.hpp"
 #include "json.hpp"
+#include <QFontDatabase>
 
 #define JSON_CLASS OsdStyle::Font
 static const auto fontIO = JIO(JE(color), JE(size), JE(qfont));
@@ -37,6 +38,12 @@ static const auto jio = JIO(
 );
 
 JSON_DECLARE_FROM_TO_FUNCTIONS
+
+OsdStyle::Font::Font()
+{
+    qfont = QFontDatabase::systemFont(QFontDatabase::GeneralFont);
+    qfont.setPixelSize(height());
+}
 
 /******************************************************************************/
 
@@ -83,7 +90,7 @@ OsdStyleWidget::~OsdStyleWidget()
 
 auto OsdStyleWidget::setValue(const OsdStyle &v) -> void
 {
-    d->ui.font_family->setCurrentFont(v.font.family());
+    d->ui.font_family->setCurrentFont(v.font.qfont);
     d->ui.font_option->set(v.font.qfont);
     d->ui.font_color->setColor(v.font.color);
     d->ui.outline->setChecked(v.outline.enabled);
