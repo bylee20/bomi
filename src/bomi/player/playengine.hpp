@@ -57,7 +57,7 @@ class PlayEngine : public QObject {
 
     Q_PROPERTY(qreal zoom READ videoZoom NOTIFY zoomChanged)
     Q_PROPERTY(qreal volume READ volume WRITE setAudioVolume NOTIFY volumeChanged)
-    Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
+    Q_PROPERTY(bool muted READ isMuted WRITE setAudioMuted NOTIFY mutedChanged)
 
     Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
     Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)

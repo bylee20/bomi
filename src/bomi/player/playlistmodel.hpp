@@ -12,6 +12,7 @@ class PlaylistModel : public SimpleListModel<Mrl, Playlist> {
     Q_PROPERTY(int count READ rows NOTIFY countChanged)
     Q_PROPERTY(int length READ rows NOTIFY countChanged)
     Q_PROPERTY(int currentNumber READ currentNumber NOTIFY loadedChanged)
+    Q_PROPERTY(int currentIndex READ loaded NOTIFY loadedChanged)
     Q_PROPERTY(QChar fillChar READ fillChar WRITE setFillChar)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
     Q_PROPERTY(int selected READ selected WRITE select NOTIFY selectedChanged)
