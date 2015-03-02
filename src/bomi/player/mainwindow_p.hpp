@@ -25,6 +25,8 @@
 #include "os/os.hpp"
 #include "misc/smbauth.hpp"
 #include "misc/dataevent.hpp"
+#include "json/jrserver.hpp"
+#include "player/jrplayer.hpp"
 #include <QUndoCommand>
 #include <QMimeData>
 #include <QQmlProperty>
@@ -110,6 +112,8 @@ struct MainWindow::Data {
     IntrplDialog *intrpl = nullptr, *chroma = nullptr;
 
     OS::WindowAdapter *adapter = nullptr;
+    JrServer *jrServer = nullptr;
+    JrPlayer jrPlayer;
 
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
         { return pref.mouse_action_map()[mb][event->modifiers()]; }

@@ -17,6 +17,7 @@ public:
     auto action(const QString &longId) const -> QAction*;
     auto action(const QKeySequence &shortcut) const -> QAction*
         { return m_keymap.value(shortcut); }
+    auto argument(QAction *action) const -> QString;
     auto setShortcutMap(const ShortcutMap &map) -> void;
     static auto instance() -> RootMenu& {return *obj;}
     static auto execute(const QString &longId,

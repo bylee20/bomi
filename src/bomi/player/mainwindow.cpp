@@ -46,6 +46,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow() {
     cApp.setMprisActivated(false);
+    if (d->jrServer)
+        d->jrServer->setInterface(nullptr);
+    delete d->jrServer;
     d->view->clear();
     exit();
     _Delete(d->view);

@@ -1,4 +1,6 @@
 #include "main.hpp"
+#include "json/jrserver.hpp"
+#include "player/jrplayer.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
 
@@ -31,6 +33,7 @@ int main(int argc, char **argv) {
     mw->show();
     app.setMainWindow(mw);
     _Debug("Start main event loop.");
+
     auto ret = app.exec();
     _Debug("Exit...");
     return ret;

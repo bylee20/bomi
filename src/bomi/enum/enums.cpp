@@ -29,6 +29,8 @@
 #include "mousebehavior.hpp"
 #include "logoutput.hpp"
 #include "codecid.hpp"
+#include "jrconnection.hpp"
+#include "jrprotocol.hpp"
 auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
 {
     EnumNameVariantConverter conv;
@@ -122,13 +124,19 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<CodecId>()) {
         conv.variantToName = _EnumVariantToEnumName<CodecId>;
         conv.nameToVariant = _EnumNameToEnumVariant<CodecId>;
+    } else    if (metaType == qMetaTypeId<JrConnection>()) {
+        conv.variantToName = _EnumVariantToEnumName<JrConnection>;
+        conv.nameToVariant = _EnumNameToEnumVariant<JrConnection>;
+    } else    if (metaType == qMetaTypeId<JrProtocol>()) {
+        conv.variantToName = _EnumVariantToEnumName<JrProtocol>;
+        conv.nameToVariant = _EnumNameToEnumVariant<JrProtocol>;
     } else
         return EnumNameVariantConverter();
     return conv;
 }
-auto _EnumMetaTypeIds() -> const std::array<int, 30>&
+auto _EnumMetaTypeIds() -> const std::array<int, 32>&
 {
-    static const std::array<int, 30> ids = {
+    static const std::array<int, 32> ids = {
         qMetaTypeId<TextThemeStyle>(),
         qMetaTypeId<SpeakerId>(),
         qMetaTypeId<ChannelLayout>(),
@@ -158,7 +166,9 @@ auto _EnumMetaTypeIds() -> const std::array<int, 30>&
         qMetaTypeId<QuickSnapshotSave>(),
         qMetaTypeId<MouseBehavior>(),
         qMetaTypeId<LogOutput>(),
-        qMetaTypeId<CodecId>()
+        qMetaTypeId<CodecId>(),
+        qMetaTypeId<JrConnection>(),
+        qMetaTypeId<JrProtocol>()
     };
     return ids;
 }

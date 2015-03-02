@@ -487,35 +487,35 @@ auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
         for (int i=0; i<files.size(); ++i)
             list.push_back(dir.absoluteFilePath(files[i]));
     } else {
-      const auto files = dir.entryInfoList(filter, QDir::Files, QDir::Name);
-      const auto fileName = file.fileName();
-      bool prefix = false, suffix = false;
-      auto it = files.cbegin();
-      for(; it != files.cend(); ++it) {
-          static QRegEx rxs(uR"((\D*)\d+(.*))"_q);
-          const auto ms = rxs.match(fileName);
-          if (!ms.hasMatch())
-              continue;
-          static QRegEx rxt(uR"((\D*)\d+(.*))"_q);
-          const auto mt = rxt.match(it->fileName());
-          if (!mt.hasMatch())
-              continue;
-          if (!prefix && !suffix) {
-              if (ms.capturedRef(1) == mt.capturedRef(1))
-                  prefix = true;
-              else if (ms.capturedRef(2) == mt.capturedRef(2))
-                  suffix = true;
-              else
-                  continue;
-          } else if (prefix) {
-              if (ms.capturedRef(1) != mt.capturedRef(1))
-                  continue;
-          } else if (suffix) {
-              if (ms.capturedRef(2) != mt.capturedRef(2))
-                  continue;
-          }
-          list.append(it->absoluteFilePath());
-      }
+        const auto files = dir.entryInfoList(filter, QDir::Files, QDir::Name);
+        const auto fileName = file.fileName();
+        bool prefix = false, suffix = false;
+        auto it = files.cbegin();
+        for(; it != files.cend(); ++it) {
+            static QRegEx rxs(uR"((\D*)\d+(.*))"_q);
+            const auto ms = rxs.match(fileName);
+            if (!ms.hasMatch())
+                continue;
+            static QRegEx rxt(uR"((\D*)\d+(.*))"_q);
+            const auto mt = rxt.match(it->fileName());
+            if (!mt.hasMatch())
+                continue;
+            if (!prefix && !suffix) {
+                if (ms.capturedRef(1) == mt.capturedRef(1))
+                    prefix = true;
+                else if (ms.capturedRef(2) == mt.capturedRef(2))
+                    suffix = true;
+                else
+                    continue;
+            } else if (prefix) {
+                if (ms.capturedRef(1) != mt.capturedRef(1))
+                    continue;
+            } else if (suffix) {
+                if (ms.capturedRef(2) != mt.capturedRef(2))
+                    continue;
+            }
+            list.append(it->absoluteFilePath());
+        }
     }
 
     if (list.size()) {
@@ -555,6 +555,17 @@ auto MainWindow::Data::applyPref() -> void
                                pref.preserve_fallback_folder());
     SubtitleParser::setMsPerCharactor(p.ms_per_char());
     cApp.setMprisActivated(p.use_mpris2());
+
+    if (p.jr_use()) {
+        _Renew(jrServer, p.jr_connection(), p.jr_protocol());
+        jrServer->setInterface(&jrPlayer);
+        connect(jrServer, &JrServer::error, this->p, [=] () {
+            MBox::error(this->p, tr("JSON-RPC Server Error"),
+                        jrServer->errorString(), {BBox::Ok});
+        });
+        jrServer->listen(p.jr_address(), p.jr_port());
+    } else
+        _Delete(jrServer);
 
     MouseBehavior context = MouseBehavior::NoBehavior;
     contextMenuModifier = KeyModifier::None;

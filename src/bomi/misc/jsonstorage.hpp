@@ -32,5 +32,6 @@ auto _JsonToQVariant(const QJsonValue &json, int metaType) -> QVariant;
 auto _JsonToQVariant(const QJsonValue &json, int metaType, const QVariant &def) -> QVariant;
 
 auto _JsonType(int metaType) -> QJsonValue::Type;
+auto _QVariantFromType(int metaType) -> QVariant;
 
 #endif // JSONSTORAGE_HPP

@@ -10,6 +10,8 @@
 #include "enum/textthemestyle.hpp"
 #include "enum/channellayout.hpp"
 #include "enum/verticalalignment.hpp"
+#include "enum/jrconnection.hpp"
+#include "enum/jrprotocol.hpp"
 
 template<class Enum>
 class EnumComboBox : public DataComboBox {
@@ -55,5 +57,7 @@ using InterpolatorComboBox = EnumComboBox<Interpolator>;
 using TextThemeStyleComboBox = EnumComboBox<TextThemeStyle>;
 using ChannelComboBox = EnumComboBox<ChannelLayout>;
 using VerticalAlignmentComboBox = EnumComboBox<VerticalAlignment>;
+using JrConnectionComboBox = EnumComboBox<JrConnection>;
+using JrProtocolComboBox = EnumComboBox<JrProtocol>;
 
 #endif // ENUMCOMBOBOX_HPP
