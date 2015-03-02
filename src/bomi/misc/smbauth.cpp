@@ -85,6 +85,8 @@ auto SmbAuth::errorString(Error error) -> QString
     switch (error) {
     case NoError:
         return u"No error"_q;
+    case Unsupported:
+        return u"smb:// is not supported"_q;
     case InvalidUrl:
         return u"Invalid URL"_q;
     case OutOfMemory:
