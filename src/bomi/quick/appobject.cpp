@@ -268,46 +268,7 @@ static auto dumpProperty(const QMetaProperty &p, QByteArray &indent) -> void
         }
         return;
     }
-//    indent += "    ";
     dumpObject(p.name(), mo, indent);
-//    indent.chop(4);
-}
-
-static auto printObject(const QMetaProperty &p, QByteArray &indent) -> void
-{
-    const auto mo = QMetaType::metaObjectForType(p.userType());
-    Q_ASSERT(mo);
-    auto parent = mo;
-    while (parent) {
-        if (parent->className() == "QQuickItem"_b)
-            return;
-        parent = parent->superClass();
-    }
-    qd() << indent << propertyInfo(p);
-    indent += "    ";
-    QRegEx rxQmlList(uR"(QQmlListProperty<(.+)>)"_q);
-    for (int i = 1; i < mo->propertyCount(); ++i) {
-        const auto p = mo->property(i);
-        if (QMetaType::metaObjectForType(p.userType())) {
-            printObject(p, indent);
-            continue;
-        }
-//        Q_ASSERT(p.isReadable());
-//        auto m = rxQmlList.match(QString::fromLatin1(p.typeName()));
-//        qd() << indent <<  propertyInfo(p);
-//        if (m.hasMatch()) {
-//            auto item = QMetaType::metaObjectForType(QMetaType::type(m.capturedRef(1).toLatin1() + '*'));
-//            indent += "    ";
-//            printObject(false, "item", item, indent);
-//            indent.chop(4);
-//        }
-    }
-    for (int i = 0; i < mo->methodCount(); ++i) {
-        const auto m = mo->method(i);
-        if (m.methodType() == QMetaMethod::Method)
-            qd() << indent << methodInfo(m);
-    }
-    indent.chop(4);
 }
 
 auto AppObject::dumpInfo() -> void
