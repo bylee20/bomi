@@ -58,7 +58,12 @@ struct JrTcp : public QTcpServer, public JrTransport {
                 [=] () { removeClient(s); s->deleteLater(); });
     }
     auto listen(const QString &address, int port) -> bool final
-        { return QTcpServer::listen(QHostAddress(address), port); }
+    {
+        if (!address.compare("localhost"_a, Qt::CaseInsensitive))
+            return QTcpServer::listen(QHostAddress::LocalHost, port);
+        else
+            return QTcpServer::listen(QHostAddress(address), port);
+    }
     auto serverName() const -> QString final
         { return serverAddress().toString() % ':'_q % _N(serverPort()); }
 };
