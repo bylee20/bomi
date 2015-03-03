@@ -140,7 +140,6 @@ public:
     auto lock() -> void;
     auto setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void;
     auto setSubtitleStyle_locked(const OsdStyle &style) -> void;
-    auto setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void;
     auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;
     auto setCache_locked(const CacheInfo &info) -> void;
     auto setSmbAuth_locked(const SmbAuth &smb) -> void;
@@ -178,7 +177,7 @@ public:
     auto setSubtitleHidden(bool hidden) -> void;
     auto autoloadSubtitleFiles() -> void;
     auto autoloadAudioFiles() -> void;
-    auto reloadSubtitleFiles(const EncodingInfo &enc, double acc = -1) -> void;
+    auto reloadSubtitleFiles(const EncodingInfo &enc, bool detect) -> void;
     auto reloadAudioFiles() -> void;
     auto setSubtitleStyleOverriden(bool override) -> void;
     auto setSubtitleScale(double by) -> void;
@@ -267,10 +266,8 @@ signals:
     void duration_sChanged();
     void begin_sChanged();
     void end_sChanged();
-
     void beginSyncMrlState();
     void endSyncMrlState();
-    void seeked(int time);
     void sought();
     void started(Mrl mrl);
     void finished(Mrl mrl, bool eof);
@@ -303,7 +300,6 @@ signals:
     void runningChanged();
     void deintOptionsChanged();
     void cacheSizeChanged();
-    void messageRequested(const QString &message);
     void snapshotTaken();
     void subtitleSelectionChanged();
 private:

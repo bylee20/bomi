@@ -5,17 +5,14 @@
 #include "enum/autoselectmode.hpp"
 #include "video/deintoption.hpp"
 #include "video/interpolatorparams.hpp"
-#include "misc/charsetdetector.hpp"
 #include "misc/smbauth.hpp"
 
 struct MrlState::Data {
     CacheInfo cache;
     SmbAuth smb;
-    double autodetect = -1;
     bool autoselect = false, disc = false;
     AutoselectMode autoselectMode = AutoselectMode::Matched;
     QString autoselectExt;
-    EncodingInfo subtitleEncoding;
     DeintOptionSet deint;
     QString audioDevice = _L("auto");
     IntrplParamSetMap intrpl, chroma;

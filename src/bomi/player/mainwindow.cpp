@@ -64,6 +64,8 @@ auto MainWindow::postInitialize() -> void
     d->applyPref();
     cApp.runCommands();
     d->noMessage = false;
+
+    AppObject::dumpInfo();
 }
 
 auto MainWindow::setupSkinPlayer() -> void

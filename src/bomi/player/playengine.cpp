@@ -352,7 +352,7 @@ auto PlayEngine::autoloadAudioFiles() -> void
     setAudioFiles(d->autoloadFiles(StreamAudio).names);
 }
 
-auto PlayEngine::reloadSubtitleFiles(const EncodingInfo &enc, double acc) -> void
+auto PlayEngine::reloadSubtitleFiles(const EncodingInfo &enc, bool detect) -> void
 {
     d->mutex.lock();
     auto old1 = d->params.sub_tracks();
@@ -361,9 +361,9 @@ auto PlayEngine::reloadSubtitleFiles(const EncodingInfo &enc, double acc) -> voi
     clearSubtitleFiles();
     for (auto &track : old1) {
         if (track.isExternal())
-            d->sub_add(track.file(), d->detect(track, enc, acc), track.isSelected());
+            d->sub_add(track.file(), d->encoding(track, enc, detect), track.isSelected());
     }
-    d->setInclusiveSubtitles(d->restoreInclusiveSubtitles(old2, enc, acc));
+    d->setInclusiveSubtitles(d->restoreInclusiveSubtitles(old2, enc, detect));
 }
 
 auto PlayEngine::reloadAudioFiles() -> void
@@ -1083,12 +1083,6 @@ auto PlayEngine::clearAudioFiles() -> void
 auto PlayEngine::params() const -> const MrlState*
 {
     return &d->params;
-}
-
-auto PlayEngine::setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void
-{
-    d->params.d->subtitleEncoding = enc;
-    d->params.d->autodetect = accuracy;
 }
 
 auto PlayEngine::setAutoselectMode_locked(bool enable, AutoselectMode mode,

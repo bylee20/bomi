@@ -47,6 +47,7 @@ public:
     Q_INVOKABLE bool isLoaded(int row) const {return loaded() == row;}
 
     auto open(const Mrl &mrl, const EncodingInfo &enc) -> void;
+    auto open(const QString &mrl) -> void;
     auto setLoaded(const Mrl &mrl) -> void;
     auto setFillChar(QChar c) -> void;
     auto setVisible(bool visible) -> void;

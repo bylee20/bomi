@@ -517,7 +517,7 @@ RootMenu::RootMenu()
                 d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(0);
                 d->separator();
                 auto g = d->group();
-                for (auto &c : EncodingInfo::categorized()) {
+                for (auto &c : EncodingInfo::grouped()) {
                     if (c.isEmpty())
                         continue;
                     const auto &e = c.front();

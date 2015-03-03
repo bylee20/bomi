@@ -1,6 +1,7 @@
 #include "encodinginfo.hpp"
 #include <QTextCodec>
 #include "misc/log.hpp"
+#include "misc/charsetdetector.hpp"
 
 auto operator << (QDataStream &out, const EncodingInfo &e) -> QDataStream&
 {
@@ -32,6 +33,60 @@ EncodingInfo::EncodingInfo(int mib, const QString &name,
 EncodingInfo::~EncodingInfo()
 {
 
+}
+
+auto EncodingInfo::detect(Category c, const QByteArray &data) -> EncodingInfo
+{
+    return detect(c, default_(c), data);
+}
+
+auto EncodingInfo::detect(Category c, const QString &fileName, int length) -> EncodingInfo
+{
+    return detect(c, default_(c), fileName, length);
+}
+
+auto EncodingInfo::detect(Category c, const EncodingInfo &fb, const QByteArray &data) -> EncodingInfo
+{
+    const auto conf = _confidence(c);
+    if (conf < 0 && fb.isValid())
+        return fb;
+    const auto ret = CharsetDetector::detect(data, conf);
+    return (!fb.isValid() || ret.isValid()) ? ret : fb;
+}
+
+auto EncodingInfo::detect(Category c, const EncodingInfo &fb, const QString &fileName, int length) -> EncodingInfo
+{
+    const auto conf = _confidence(c);
+    if (conf < 0 && fb.isValid())
+        return fb;
+    const auto ret = CharsetDetector::detect(fileName, conf, length);
+    return (!fb.isValid() || ret.isValid()) ? ret : fb;
+}
+
+auto EncodingInfo::_confidence(Category c) -> double&
+{
+    static QVector<double> confs;
+    if (confs.empty()) {
+        confs.resize(CategoryMax);
+        confs.fill(-1);
+    }
+    return confs[c];
+}
+
+auto EncodingInfo::setDefault(Category c, const EncodingInfo &def, double autodetect) -> void
+{
+    _default(c) = def;
+    _confidence(c) = autodetect;
+}
+
+auto EncodingInfo::_default(Category c) -> EncodingInfo&
+{
+    static QVector<EncodingInfo> defs;
+    if (defs.empty()) {
+        defs.resize(CategoryMax);
+        defs.fill(utf8());
+    }
+    return defs[c];
 }
 
 auto EncodingInfo::fromMib(int mib) -> EncodingInfo
@@ -176,7 +231,7 @@ auto EncodingInfo::description() const -> QString
    return m_group % " ("_a % m_subgroup % "): "_a % m_name;
 }
 
-auto EncodingInfo::categorized() -> QVector<QVector<EncodingInfo>>
+auto EncodingInfo::grouped() -> QVector<QVector<EncodingInfo>>
 {
     QVector<QVector<EncodingInfo>> list;
     QString group, subgroup;

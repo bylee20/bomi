@@ -164,6 +164,11 @@ auto PlaylistModel::setDownloader(Downloader *downloader) -> void
     });
 }
 
+auto PlaylistModel::open(const QString &mrl) -> void
+{
+
+}
+
 auto PlaylistModel::open(const Mrl &mrl, const EncodingInfo &enc) -> void
 {
     if (mrl.isLocalFile()) {

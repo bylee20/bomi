@@ -544,6 +544,8 @@ auto MainWindow::Data::applyPref() -> void
     pref.save();
     const Pref &p = pref;
 
+    EncodingInfo::setDefault(EncodingInfo::Subtitle, p.sub_enc(), p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1);
+
     youtube.setUserAgent(p.yt_user_agent());
     youtube.setProgram(p.yt_program());
     yle.setProgram(p.yle_program());
@@ -653,7 +655,6 @@ auto MainWindow::Data::applyPref() -> void
         });
         return smb;
     };
-    const auto chardet = p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1;
 
     e.lock();
     e.setResume_locked(p.remember_stopped());
@@ -674,7 +675,6 @@ auto MainWindow::Data::applyPref() -> void
 
     e.setSubtitleStyle_locked(p.sub_style());
     e.setAutoselectMode_locked(p.sub_enable_autoselect(), p.sub_autoselect(), p.sub_ext());
-    e.setSubtitleEncoding_locked(p.sub_enc(), chardet);
     e.unlock();
     e.reload();
 }

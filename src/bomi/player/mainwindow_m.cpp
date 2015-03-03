@@ -545,13 +545,9 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(strack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadSubtitleFiles);
     connect(strack(u"reload"_q).g(), &ActionGroup::triggered, p, [=] (QAction *a) {
-        auto mib = a->data().toInt();
-        if (mib > 0)
-            e.reloadSubtitleFiles(EncodingInfo::fromMib(mib), -1);
-        else {
-            double acc = mib < 0 ? -1 : 0.001;
-            e.reloadSubtitleFiles(EncodingInfo(), acc);
-        }
+        const auto mib = a->data().toInt();
+        // mib > 0: force, == 0: auto, < 0: current
+        e.reloadSubtitleFiles(EncodingInfo::fromMib(mib), mib == 0);
     });
     connect(strack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearSubtitleFiles);
 
