@@ -2,7 +2,9 @@
 #include "formatobject.hpp"
 #include "tmp/algorithm.hpp"
 #include "windowobject.hpp"
+#include "player/mrl.hpp"
 #include "player/rootmenu.hpp"
+#include "player/mainwindow.hpp"
 #include "os/os.hpp"
 #include <QQmlEngine>
 
@@ -67,6 +69,12 @@ auto AppObject::setWindow(MainWindow *window) -> void
     static WindowObject o;
     o.set(window);
     s.window = &o;
+    s.mw = window;
+}
+
+auto AppObject::open(const QString &location) -> void
+{
+    s.mw->openFromFileManager(Mrl(location));
 }
 
 auto AppObject::description(const QString &actionId) const -> QString
@@ -146,4 +154,67 @@ auto AppObject::delete_(QObject *o) -> void
 {
     QQmlEngine::setObjectOwnership(o, QQmlEngine::CppOwnership);
     delete o;
+}
+
+auto methodInfo(const QMetaMethod &m) -> QByteArray
+{
+    QByteArray info;
+    info += m.name();
+    info += '(';
+    const auto names = m.parameterNames();
+    const auto types = m.parameterTypes();
+    for (int i = 0; i < m.parameterCount(); ++i) {
+        if (i)
+            info += ", ";
+        info += types[i];
+        info += ' ';
+        info += names[i];
+    }
+    info += ") -> ";
+    info += QMetaType::typeName(m.returnType());
+    return info;
+}
+
+static auto printObject(bool writable, const char *name, const QMetaObject *mo, QByteArray &indent) -> void
+{
+    auto parent = mo;
+    while (parent) {
+        if (parent->className() == "QQuickItem"_b)
+            return;
+        parent = parent->superClass();
+    }
+
+#define qd() qDebug().noquote().nospace()
+    qd() << indent << "[" << (writable ? "W" : "R") << "] " << name << ": " << QString::fromLatin1(mo->className()).remove("Object"_a);
+    indent += "    ";
+    QRegEx rxQmlList(uR"(QQmlListProperty<(.+)>)"_q);
+    for (int i = 1; i < mo->propertyCount(); ++i) {
+        const auto p = mo->property(i);
+        if (auto child = QMetaType::metaObjectForType(p.userType())) {
+            printObject(p.isWritable(), p.name(), child, indent);
+            continue;
+        }
+        Q_ASSERT(p.isReadable());
+        qd() << indent <<  "[" << (p.isWritable() ? "W" : "R") << "] " << p.name() << ": " << p.typeName();
+        auto m = rxQmlList.match(QString::fromLatin1(p.typeName()));
+        if (m.hasMatch()) {
+            auto item = QMetaType::metaObjectForType(QMetaType::type(m.capturedRef(1).toLatin1() + '*'));
+            indent += "    ";
+            printObject(false, "item", item, indent);
+            indent.chop(4);
+        }
+    }
+    for (int i = 0; i < mo->methodCount(); ++i) {
+        const auto m = mo->method(i);
+        if (mo->indexOfSignal(m.methodSignature()) < 0
+                && mo->indexOfSlot(m.methodSignature()) < 0)
+            qd() << indent << methodInfo(m);
+    }
+    indent.chop(4);
+}
+
+auto AppObject::dumpInfo() -> void
+{
+    QByteArray indent;
+    printObject(false, "App", &AppObject::staticMetaObject, indent);
 }

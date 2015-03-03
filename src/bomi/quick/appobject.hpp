@@ -79,6 +79,7 @@ public:
     Q_INVOKABLE double textWidth(const QString &text, int size, const QString &family) const;
     Q_INVOKABLE bool execute(const QString &id) const;
     Q_INVOKABLE QObject *action(const QString &id) const;
+    Q_INVOKABLE void open(const QString &location);
     Q_INVOKABLE void delete_(QObject *o);
 
     static auto setTheme(ThemeObject *theme) -> void { s.theme = theme; }
@@ -91,6 +92,8 @@ public:
     static auto setQmlEngine(QQmlEngine *engine) -> void { s.qml = engine; }
     static auto qmlEngine() -> QQmlEngine* { return s.qml; }
     static auto itemToAccept(Event event, const QPointF &scenePos = QPointF()) -> QQuickItem*;
+
+    static auto dumpInfo() -> void;
 private:
     struct StaticData {
         PlayEngine *engine = nullptr;
@@ -103,6 +106,7 @@ private:
         QHash<QQuickItem*, Events> itemsToAccept;
         QLinkedList<QQuickItem*> orderToAccept;
         QQmlEngine *qml = nullptr;
+        MainWindow *mw = nullptr;
     };
     static StaticData s;
     mutable MemoryObject m_memory;

@@ -63,6 +63,10 @@ char *gets(char *str);
 #include <QtDBus>
 #endif
 
+#ifndef Q_MOC_RUN
+#define PUBLIC_API
+#endif
+
 #include "global.hpp"
 
 #endif
