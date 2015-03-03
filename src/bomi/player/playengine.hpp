@@ -39,6 +39,8 @@ class PlayEngine : public QObject {
     Q_ENUMS(ActivationState)
     Q_ENUMS(Waiting)
 
+    Q_CLASSINFO("QmlType", "Engine")
+
     Q_PROPERTY(MediaObject *media READ media CONSTANT FINAL)
     Q_PROPERTY(AudioObject *audio READ audio CONSTANT FINAL)
     Q_PROPERTY(VideoObject *video READ video CONSTANT FINAL)

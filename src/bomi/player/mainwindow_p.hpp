@@ -67,7 +67,7 @@ struct MainWindow::Data {
     MainQuickView *view = nullptr;
     QWidget *container = nullptr;
     QQuickItem *player = nullptr;
-    RootMenu menu;
+    RootMenu &menu = RootMenu::instance();
     RecentInfo recent;
     AppState as;
     PlayEngine e;

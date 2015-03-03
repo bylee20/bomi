@@ -6,6 +6,8 @@
 #include "misc/json.hpp"
 #include "misc/locale.hpp"
 #include "misc/objectstorage.hpp"
+#include "quick/appobject.hpp"
+#include "rootmenu.hpp"
 #include "os/os.hpp"
 #include <clocale>
 #include <QStyleFactory>
@@ -36,7 +38,8 @@ auto root_menu_execute(const QString &longId, const QString &argument) -> bool;
 auto translator_load(const Locale &locale) -> bool;
 
 enum class LineCmd {
-    Wake, Open, Action, LogLevel, OpenGLDebug, Debug
+    Wake, Open, Action, LogLevel, OpenGLDebug, Debug,
+    DumpApiTree, DumpActionList
 };
 
 struct App::Data {
@@ -120,6 +123,10 @@ struct App::Data {
             lvStdOut = qMax(lvStdOut, Log::Debug);
             gldebug = true;
         }
+        if (!main && isSet(LineCmd::DumpApiTree))
+            AppObject::dumpInfo();
+        if (!main && isSet(LineCmd::DumpActionList))
+            RootMenu::dumpInfo();
         return lvStdOut;
     }
     auto getCommandParser(QCommandLineParser *parser) const
@@ -194,6 +201,10 @@ App::App(int &argc, char **argv)
                  tr("Turn on OpenGL debug logger."));
     d->addOption(LineCmd::Debug, u"debug"_q,
                  tr("Turn on options for debugging."));
+    d->addOption(LineCmd::DumpApiTree, u"dump-api-tree"_q,
+                 tr("Dump API structure tree to stdout."));
+    d->addOption(LineCmd::DumpActionList, u"dump-action-list"_q,
+                 tr("Dump executable action list."));
     d->getCommandParser(&d->cmdParser)->process(arguments());
     d->getCommandParser(&d->msgParser);
     auto lvStdOut = d->execute(&d->cmdParser);

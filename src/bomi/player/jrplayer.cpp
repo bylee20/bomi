@@ -88,7 +88,8 @@ auto JrPlayer::request(const JrRequest &request) -> JrResponse
     int pos = 0;
     const auto jrMethod = request.method();
     const auto jrParams = request.params();
-
+    if (jrMethod.startsWith("App."_a))
+        pos = 4;
     auto error = [&] (JrError e) { return _JrErrorResponse(request.id(), e); };
     while (pos < jrMethod.size()) {
         const int next = jrMethod.indexOf('.'_q, pos);

@@ -26,8 +26,6 @@ auto root_menu_execute(const QString &longId, const QString &argument) -> bool
     return RootMenu::execute(longId, argument);
 }
 
-RootMenu *RootMenu::obj = nullptr;
-
 using GetText = std::function<QString(void)>;
 using Translate = std::function<void(void)>;
 
@@ -272,9 +270,6 @@ RootMenu::RootMenu()
     : Menu(u"menu"_q, 0), d(new Data) {
 
     Q_UNUSED(QT_TR_NOOP("Toggle")); // dummy to tranlsate
-
-    Q_ASSERT(obj == nullptr);
-    obj = this;
 
 #define ALIAS(from, to) {d->alias[u"" #from ""_q] = u"" #to ""_q;}
     ALIAS(audio/channel/next, audio/channel/cycle);
@@ -642,8 +637,10 @@ RootMenu::RootMenu()
 RootMenu::~RootMenu()
 {
     delete d;
-    obj = nullptr;
 }
+
+auto RootMenu::instance() -> RootMenu&
+{ static RootMenu self; return self; }
 
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
 {
@@ -719,4 +716,26 @@ auto RootMenu::description(const QString &longId) const -> QString
 auto RootMenu::action(const QString &longId) const -> QAction*
 {
     return d->find(longId).action;
+}
+
+struct DumpInfo {
+    QString id, desc;
+    auto operator < (const DumpInfo &rhs) const -> bool { return id < rhs.id; }
+};
+
+auto RootMenu::dumpInfo() -> void
+{
+    auto &menu = instance();
+    menu.retranslate();
+    auto d = menu.d;
+    int width = 0;
+    for (auto it = d->actions.begin(); it != d->actions.end(); ++it)
+        width = std::max(width, it.key().size());
+    QByteArray fill;
+    for (auto it = d->actions.begin(); it != d->actions.end(); ++it) {
+        const auto id = it.key();
+        fill.resize(width - id.size());
+        fill.fill(' ');
+        qDebug().noquote().nospace() << id << fill << " (" << menu.description(it.key()) << ')';
+    }
 }
