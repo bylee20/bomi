@@ -58,6 +58,7 @@ class MrlState : public QObject {
 private: \
     type m_##name = def; \
     Q_PROPERTY(type name READ name WRITE set_##name NOTIFY name ## _changed REVISION rev) \
+    Q_CLASSINFO(#name, desc) \
 public: \
     Q_SIGNAL void name ## _changed(type); \
     Q_INVOKABLE QString desc_ ## name() const { return tr(desc); } \
@@ -125,8 +126,8 @@ public:
     static const int Version = 4;
     MrlState();
     ~MrlState();
-    struct PropertyInfo { QMetaProperty property; QString description; };
-    auto description(const char *property) const -> QString;
+    struct PropertyInfo { QString property; QString description; };
+    static auto description(const char *property) -> QString;
     auto notifySignal(const char *property) const -> QMetaMethod;
     auto metaProperty(const char *property) const -> QMetaProperty;
     auto tracks(StreamType type) const -> const StreamList& { return *m_tracks[type].tracks; }

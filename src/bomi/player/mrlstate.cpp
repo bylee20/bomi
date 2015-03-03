@@ -85,19 +85,15 @@ auto MrlState::copyFrom(const MrlState *state) -> void
     *d = *state->d;
 }
 
-auto MrlState::description(const char *property) const -> QString
+auto MrlState::description(const char *property) -> QString
 {
-    QByteArray name = "desc_";
-    name += property;
-    name += "()";
-    auto mo = metaObject();
-    const int idx = mo->indexOfMethod(name.constData());
-    if (idx < 0)
-        return QString();
-    QString ret;
-    auto ok = mo->method(idx).invoke(const_cast<MrlState*>(this),
-                                     Q_RETURN_ARG(QString, ret));
-    return ok ? ret : QString();
+    auto mo = &staticMetaObject;
+    for (int i = 0; i < mo->classInfoCount(); ++i) {
+        const auto info = mo->classInfo(i);
+        if (!qstrcmp(info.name(), property))
+            return tr(info.value());
+    }
+    return QString();
 }
 
 auto MrlState::notifySignal(const char *property) const -> QMetaMethod
@@ -137,14 +133,13 @@ auto MrlState::defaultProperties() -> QStringList
 
 auto MrlState::restorableProperties() -> QVector<PropertyInfo>
 {
-    MrlState s;
-    auto mo = s.metaObject();
+    auto mo = &staticMetaObject;
     QVector<PropertyInfo> properties;
     properties.reserve(mo->propertyCount());
     PropertyInfo info;
-    for (int i =  1; i < mo->propertyCount(); ++i) {
-        info.property = mo->property(i);
-        info.description = s.description(info.property.name());
+    for (int i = 1; i < mo->propertyCount(); ++i) {
+        info.property = _L(mo->property(i).name());
+        info.description = description(mo->property(i).name());
         if (!info.description.isEmpty())
             properties.push_back(info);
     }
