@@ -16,8 +16,8 @@ public:
          std::initializer_list<Button> &&buttons = {},
          Button def = BBox::NoButton);
     ~MBox() { delete m_mbox; }
-    auto addButton(const QString &text, Role role) -> void;
-    auto addButton(Button button) -> void;
+    auto addButton(const QString &text, Role role) -> QPushButton*;
+    auto addButton(Button button) -> QPushButton*;
     auto addButtons(std::initializer_list<Button> &&buttons) -> void;
     auto exec() -> int { return m_mbox->exec(); }
     auto mbox() const -> QMessageBox* { return m_mbox; }
@@ -51,13 +51,15 @@ private:
     BBox::Layout m_layout;
 };
 
-inline auto MBox::addButton(const QString &text, Role role) -> void
-{ m_mbox->addButton(text, (QMessageBox::ButtonRole)role); }
+inline auto MBox::addButton(const QString &text, Role role) -> QPushButton*
+{ return m_mbox->addButton(text, (QMessageBox::ButtonRole)role); }
 
-inline auto MBox::addButton(Button button) -> void
+inline auto MBox::addButton(Button button) -> QPushButton*
 {
     const auto b = static_cast<QMessageBox::StandardButton>(button);
-    m_mbox->addButton(b)->setText(BBox::buttonText(button, m_layout));
+    const auto ret = m_mbox->addButton(b);
+    ret->setText(BBox::buttonText(button, m_layout));
+    return ret;
 }
 
 inline auto MBox::checkBox() const -> QCheckBox*

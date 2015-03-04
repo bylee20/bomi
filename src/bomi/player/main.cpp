@@ -1,10 +1,11 @@
 #include "main.hpp"
+#include "dialog/mbox.hpp"
 #include "json/jrserver.hpp"
 #include "player/jrplayer.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
 
-namespace OGL { auto check() -> void; }
+namespace OGL { auto check() -> QString; }
 
 int main(int argc, char **argv) {
 #ifdef Q_OS_LINUX
@@ -27,7 +28,19 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    OGL::check();
+    const auto error = OGL::check();
+    if (!error.isEmpty()) {
+        MBox mbox(nullptr, MBox::Icon::Critical,
+                  qApp->translate("OpenGL", "OpenGL Error"),
+                  qApp->translate("OpenGL", "Error: %1\n\n"
+                                            "Failed to check OpenGL support.\n"
+                                            "It may help to update driver of "
+                                            "graphics card.").arg(error));
+        auto button = mbox.addButton(MBox::Button::Close);
+        QObject::connect(button, &QPushButton::clicked, qApp, &QApplication::quit);
+        mbox.mbox()->show();
+        return app.exec();
+    }
     MainWindow *mw = new MainWindow;
     _Debug("Show MainWindow.");
     mw->show();
