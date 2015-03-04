@@ -31,7 +31,6 @@ signals:
 private:
     static auto open(vf_instance *vf) -> int;
     static auto queryFormat(vf_instance *vf, uint fmt) -> int;
-    auto open() -> int;
     auto uninit() -> void;
     auto reconfig(mp_image_params *in, mp_image_params *out) -> int;
     auto control(int request, void *data) -> int;
