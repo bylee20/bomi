@@ -116,6 +116,7 @@ struct scaler {
 struct fbosurface {
     struct fbotex fbotex;
     int64_t pts;
+    bool valid;
 };
 
 #define FBOSURFACES_MAX 2
@@ -169,7 +170,6 @@ struct gl_video {
 
     struct fbotex indirect_fbo;         // RGB target
     struct fbotex scale_sep_fbo;        // first pass when doing 2 pass scaling
-    struct fbotex inter_fbo;            // interpolation target
     struct fbosurface surfaces[FBOSURFACES_MAX];
     size_t surface_idx;
 
@@ -398,9 +398,9 @@ const struct m_sub_options gl_video_conf = {
                    ({"auto",   MP_CHROMA_AUTO},
                     {"center", MP_CHROMA_CENTER},
                     {"left",   MP_CHROMA_LEFT})),
-        OPT_CHOICE("alpha", alpha_mode, M_OPT_OPTIONAL_PARAM,
+        OPT_CHOICE("alpha", alpha_mode, 0,
                    ({"no", 0},
-                    {"yes", 1}, {"", 1},
+                    {"yes", 1},
                     {"blend", 2})),
         OPT_FLAG("rectangle-textures", use_rectangle, 0),
         OPT_COLOR("background", background, 0),
@@ -468,9 +468,9 @@ void gl_video_set_debug(struct gl_video *p, bool enable)
 }
 
 // Draw a textured quad.
-// x0, y0, x1, y1 = destination coordinates of the quad
-// tx0, ty0, tx1, ty1 = source texture coordinates (usually in pixels)
-// texture_w, texture_h = size of the texture, or an inverse factor
+// x0, y0, x1, y1 = destination coordinates of the quad in pixels
+// tx0, ty0, tx1, ty1 = source texture coordinates in pixels
+// tex_w, tex_h = size of the texture in pixels
 // flags = bits 0-1: rotate, bits 2: flip vertically
 static void draw_quad(struct gl_video *p,
                       float x0, float y0, float x1, float y1,
@@ -867,9 +867,9 @@ static void shader_setup_scaler(char **shader, struct scaler *scaler, int pass)
                 // The direction/pass assignment is rather arbitrary, but fixed in
                 // other parts of the code (like FBO setup).
                 const char *direction = pass == 0 ? "0, 1" : "1, 0";
-                // SAMPLE_CONVOLUTION_SEP_N(NAME, DIR, N, LUT, WEIGHTS_FUNC)
-                APPENDF(shader, "SAMPLE_CONVOLUTION_SEP_N(%s, vec2(%s), %d, %s, %s)\n",
-                        name, direction, size, lut_tex, lut_fn);
+                // SAMPLE_CONVOLUTION_SEP_N(NAME, DIR, N, LUT, WEIGHTS_FUNC, ANTIRING)
+                APPENDF(shader, "SAMPLE_CONVOLUTION_SEP_N(%s, vec2(%s), %d, %s, %s, %f)\n",
+                        name, direction, size, lut_tex, lut_fn, scaler->antiring);
             } else {
                 // SAMPLE_CONVOLUTION_N(NAME, N, LUT, WEIGHTS_FUNC)
                 APPENDF(shader, "SAMPLE_CONVOLUTION_N(%s, %d, %s, %s)\n",
@@ -938,28 +938,13 @@ static void compile_shaders(struct gl_video *p)
     bool use_input_gamma = p->input_gamma != 1.0;
     bool use_conv_gamma = p->conv_gamma != 1.0;
     bool use_const_luma = p->image_params.colorspace == MP_CSP_BT_2020_C;
-
-    enum mp_csp_trc gamma_fun = MP_CSP_TRC_NONE;
+    enum mp_csp_trc gamma_fun = p->image_params.gamma;
 
     // If either color correction option (3dlut or srgb) is enabled, or if
     // sigmoidal upscaling is requested, or if the source is linear XYZ, we
     // always scale in linear light
     bool use_linear_light = p->opts.linear_scaling || p->opts.sigmoid_upscaling
                             || use_cms || is_xyz;
-
-    if (use_linear_light) {
-        // We use the color level range to distinguish between PC
-        // content like images, which are most likely sRGB, and TV content
-        // like movies, which are most likely BT.1886. XYZ input is always
-        // treated as linear.
-        if (is_xyz) {
-            gamma_fun = MP_CSP_TRC_LINEAR;
-        } else if (p->image_params.colorlevels == MP_CSP_LEVELS_PC) {
-            gamma_fun = MP_CSP_TRC_SRGB;
-        } else {
-            gamma_fun = MP_CSP_TRC_BT_1886;
-        }
-    }
 
     // The inverse of the above transformation is normally handled by
     // the CMS cases, but if CMS is disabled we need to go back manually
@@ -1050,9 +1035,9 @@ static void compile_shaders(struct gl_video *p)
     shader_def_opt(&header_conv, "USE_CONV_GAMMA", use_conv_gamma);
     shader_def_opt(&header_conv, "USE_CONST_LUMA", use_const_luma);
     shader_def_opt(&header_conv, "USE_LINEAR_LIGHT_BT1886",
-                   gamma_fun == MP_CSP_TRC_BT_1886);
+                   use_linear_light && gamma_fun == MP_CSP_TRC_BT_1886);
     shader_def_opt(&header_conv, "USE_LINEAR_LIGHT_SRGB",
-                   gamma_fun == MP_CSP_TRC_SRGB);
+                   use_linear_light && gamma_fun == MP_CSP_TRC_SRGB);
     shader_def_opt(&header_conv, "USE_SIGMOID", use_sigmoid);
     if (p->opts.alpha_mode > 0 && p->has_alpha && p->plane_count > 3)
         shader_def(&header_conv, "USE_ALPHA_PLANE", "3");
@@ -1078,16 +1063,16 @@ static void compile_shaders(struct gl_video *p)
         header_sep = talloc_strdup(tmp, "");
         shader_def_opt(&header_sep, "FIXED_SCALE", true);
         shader_setup_scaler(&header_sep, &p->scalers[0], 0);
-        shader_setup_scaler(&header_final, &p->scalers[0], 1);
+        shader_setup_scaler(&header_inter, &p->scalers[0], 1);
     } else {
-        shader_setup_scaler(&header_final, &p->scalers[0], -1);
+        shader_setup_scaler(&header_inter, &p->scalers[0], -1);
     }
 
     bool use_interpolation = p->opts.smoothmotion;
 
     if (use_interpolation) {
         shader_def_opt(&header_inter, "FIXED_SCALE", true);
-        shader_def_opt(&header_inter, "USE_LINEAR_INTERPOLATION", 1);
+        shader_def_opt(&header_final, "USE_LINEAR_INTERPOLATION", 1);
     }
 
     // The indirect pass is used to preprocess the image before scaling.
@@ -1095,8 +1080,7 @@ static void compile_shaders(struct gl_video *p)
 
     // Don't sample from input video textures before converting the input to
     // its proper gamma.
-    if (use_input_gamma || use_conv_gamma || use_linear_light ||
-        use_const_luma || use_interpolation)
+    if (use_input_gamma || use_conv_gamma || use_linear_light || use_const_luma)
         use_indirect = true;
 
     // Trivial scalers are implemented directly and efficiently by the GPU.
@@ -1132,7 +1116,7 @@ static void compile_shaders(struct gl_video *p)
     } else if (header_sep) {
         header_sep = t_concat(tmp, header_sep, header_conv);
     } else {
-        header_final = t_concat(tmp, header_final, header_conv);
+        header_inter = t_concat(tmp, header_inter, header_conv);
     }
 
     if (header_sep) {
@@ -1145,6 +1129,8 @@ static void compile_shaders(struct gl_video *p)
         header_inter = t_concat(tmp, header, header_inter);
         p->inter_program =
             create_program(p, "inter", header_inter, vertex_shader, s_video, v);
+    } else {
+        header_final = t_concat(tmp, header_final, header_inter);
     }
 
     header_final = t_concat(tmp, header, header_final);
@@ -1436,18 +1422,6 @@ static void reinit_rendering(struct gl_video *p)
                     p->opts.fbo_format);
     }
 
-    if (p->inter_program) {
-        fbotex_init(&p->inter_fbo, gl, p->log, w, h, p->gl_target, filter,
-                    p->opts.fbo_format);
-    }
-
-    if (p->inter_program) {
-        for (int i = 0; i < FBOSURFACES_MAX; i++) {
-            fbotex_init(&p->surfaces[i].fbotex, gl, p->log, w, h, p->gl_target,
-                        filter, p->opts.fbo_format);
-        }
-    }
-
     recreate_osd(p);
 
     p->need_reinit_rendering = false;
@@ -1470,10 +1444,11 @@ static void uninit_rendering(struct gl_video *p)
     p->dither_texture = 0;
 
     fbotex_uninit(&p->indirect_fbo);
-    fbotex_uninit(&p->inter_fbo);
 
-    for (int i = 0; i < FBOSURFACES_MAX; i++)
+    for (int i = 0; i < FBOSURFACES_MAX; i++) {
         fbotex_uninit(&p->surfaces[i].fbotex);
+        p->surfaces[i].valid = false;
+    }
 
     fbotex_uninit(&p->scale_sep_fbo);
 }
@@ -1750,25 +1725,78 @@ static size_t fbosurface_next(struct gl_video *p)
     return (p->surface_idx + 1) % FBOSURFACES_MAX;
 }
 
-static void gl_video_interpolate_frame(struct gl_video *p,
+// Handle all of the frame passes upto and including upscaling, assuming
+// upscaling is not part of the final pass
+static void gl_video_upscale_frame(struct gl_video *p, struct pass *chain, struct fbotex *inter_fbo)
+{
+    // Order of processing: [indirect -> [scale_sep ->]] inter
+    handle_pass(p, chain, &p->indirect_fbo, p->indirect_program);
+
+    // compensated for optional rotation
+    struct mp_rect src_rect_rot = p->src_rect;
+    if ((p->image_params.rotate % 180) == 90) {
+        MPSWAP(int, src_rect_rot.x0, src_rect_rot.y0);
+        MPSWAP(int, src_rect_rot.x1, src_rect_rot.y1);
+    }
+
+    // Clip to visible height so that separate scaling scales the visible part
+    // only (and the target FBO texture can have a bounded size).
+    // Don't clamp width; too hard to get correct final scaling on l/r borders.
+    chain->f.vp_y = src_rect_rot.y0;
+    chain->f.vp_h = src_rect_rot.y1 - src_rect_rot.y0;
+
+    handle_pass(p, chain, &p->scale_sep_fbo, p->scale_sep_program);
+
+    // For Y direction, use the whole source viewport; it has been fit to the
+    // correct origin/height before.
+    // For X direction, assume the texture wasn't scaled yet, so we can
+    // select the correct portion, which will be scaled to screen.
+    chain->f.vp_x = src_rect_rot.x0;
+    chain->f.vp_w = src_rect_rot.x1 - src_rect_rot.x0;
+
+    if (inter_fbo)
+        handle_pass(p, chain, inter_fbo, p->inter_program);
+}
+
+static double gl_video_interpolate_frame(struct gl_video *p,
                                        struct pass *chain,
                                        struct frame_timing *t)
 {
     GL *gl = p->gl;
     double inter_coeff = 0.0;
     int64_t prev_pts = p->surfaces[fbosurface_next(p)].pts;
-    int64_t vsync_interval = t->next_vsync - t->prev_vsync;
 
-    if (prev_pts < t->pts) {
-        MP_STATS(p, "new-pts");
-        p->surfaces[p->surface_idx].pts = t->pts;
-        p->surface_idx = fbosurface_next(p);
+    // Make sure all surfaces are actually valid, and redraw them manually
+    // if this is not the case
+    for (int i = 0; i < FBOSURFACES_MAX; i++) {
+        if (!p->surfaces[i].valid) {
+            struct pass frame = { .f = chain->f };
+            gl_video_upscale_frame(p, &frame, &p->surfaces[i].fbotex);
+            p->surfaces[i].valid = true;
+        }
     }
 
-    // fbosurface 0 is already bound from the caller
+    if (t && prev_pts < t->pts) {
+        gl_video_upscale_frame(p, chain, &p->surfaces[p->surface_idx].fbotex);
+        p->surfaces[p->surface_idx].valid = true;
+        p->surfaces[p->surface_idx].pts = t->pts;
+        p->surface_idx = fbosurface_next(p);
+    } else {
+        // re-use the previously rendered surface as source
+        chain->f = p->surfaces[fbosurface_next(p)].fbotex;
+    }
+
+    // fbosurface 0 is bound by handle_pass
     gl->ActiveTexture(GL_TEXTURE0 + 1);
     gl->BindTexture(p->gl_target, p->surfaces[p->surface_idx].fbotex.texture);
     gl->ActiveTexture(GL_TEXTURE0);
+
+    if (!t) {
+        p->is_interpolated = false;
+        return 0.0;
+    }
+
+    int64_t vsync_interval = t->next_vsync - t->prev_vsync;
 
     if (t->pts > t->next_vsync && t->pts < t->next_vsync + vsync_interval) {
         // current frame overlaps PTS boundary, blend
@@ -1794,10 +1822,7 @@ static void gl_video_interpolate_frame(struct gl_video *p,
     }
 
     p->is_interpolated = inter_coeff > 0.0;
-    gl->UseProgram(p->inter_program);
-    GLint loc = gl->GetUniformLocation(p->inter_program, "inter_coeff");
-    gl->Uniform1f(loc, inter_coeff);
-    handle_pass(p, chain, &p->inter_fbo, p->inter_program);
+    return inter_coeff;
 }
 
 // (fbo==0 makes BindFramebuffer select the screen backbuffer)
@@ -1805,13 +1830,6 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
 {
     GL *gl = p->gl;
     struct video_image *vimg = &p->image;
-
-    // compensated for optional rotation
-    struct mp_rect src_rect_rot = p->src_rect;
-    if ((p->image_params.rotate % 180) == 90) {
-        MPSWAP(int, src_rect_rot.x0, src_rect_rot.y0);
-        MPSWAP(int, src_rect_rot.x1, src_rect_rot.y1);
-    }
 
     p->is_interpolated = false;
 
@@ -1833,9 +1851,6 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
         goto draw_osd;
     }
 
-    // Order of processing:
-    //  [indirect -> [interpolate -> [scale_sep ->]]] final
-
     GLuint imgtex[4] = {0};
     set_image_textures(p, vimg, imgtex);
 
@@ -1849,26 +1864,12 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
         },
     };
 
-    int64_t prev_pts = p->surfaces[fbosurface_next(p)].pts;
-    struct fbotex *indirect_target;
-    if (p->inter_program && t && prev_pts < t->pts) {
-        indirect_target = &p->surfaces[p->surface_idx].fbotex;
+    double inter_coeff = 0.0;
+    if (p->opts.smoothmotion && t) {
+        inter_coeff = gl_video_interpolate_frame(p, &chain, t);
     } else {
-        indirect_target = &p->indirect_fbo;
+        gl_video_upscale_frame(p, &chain, NULL);
     }
-
-    handle_pass(p, &chain, indirect_target, p->indirect_program);
-
-    if (t && p->inter_program)
-        gl_video_interpolate_frame(p, &chain, t);
-
-    // Clip to visible height so that separate scaling scales the visible part
-    // only (and the target FBO texture can have a bounded size).
-    // Don't clamp width; too hard to get correct final scaling on l/r borders.
-    chain.f.vp_y = src_rect_rot.y0;
-    chain.f.vp_h = src_rect_rot.y1 - src_rect_rot.y0;
-
-    handle_pass(p, &chain, &p->scale_sep_fbo, p->scale_sep_program);
 
     struct fbotex screen = {
         .vp_x = p->vp_x,
@@ -1878,18 +1879,14 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
         .fbo = fbo,
     };
 
-    // For Y direction, use the whole source viewport; it has been fit to the
-    // correct origin/height before.
-    // For X direction, assume the texture wasn't scaled yet, so we can
-    // select the correct portion, which will be scaled to screen.
-    chain.f.vp_x = src_rect_rot.x0;
-    chain.f.vp_w = src_rect_rot.x1 - src_rect_rot.x0;
-
     chain.use_dst = true;
     chain.dst = p->dst_rect;
     chain.flags = (p->image_params.rotate % 90 ? 0 : p->image_params.rotate / 90)
                 | (vimg->image_flipped ? 4 : 0);
 
+    gl->UseProgram(p->final_program);
+    GLint loc = gl->GetUniformLocation(p->final_program, "inter_coeff");
+    gl->Uniform1f(loc, inter_coeff);
     handle_pass(p, &chain, &screen, p->final_program);
 
     gl->UseProgram(0);
@@ -1908,21 +1905,38 @@ draw_osd:
 
 static void update_window_sized_objects(struct gl_video *p)
 {
+    int w = p->dst_rect.x1 - p->dst_rect.x0;
+    int h = p->dst_rect.y1 - p->dst_rect.y0;
+    if ((p->image_params.rotate % 180) == 90)
+        MPSWAP(int, w, h);
+
+    // Round up to an arbitrary alignment to make window resizing or
+    // panscan controls smoother (less texture reallocations).
+    int width  = FFALIGN(w, 256);
+    int height = FFALIGN(h, 256);
+
     if (p->scale_sep_program) {
-        int w = p->dst_rect.x1 - p->dst_rect.x0;
-        int h = p->dst_rect.y1 - p->dst_rect.y0;
-        if ((p->image_params.rotate % 180) == 90)
-            MPSWAP(int, w, h);
         if (h > p->scale_sep_fbo.tex_h) {
             fbotex_uninit(&p->scale_sep_fbo);
-            // Round up to an arbitrary alignment to make window resizing or
-            // panscan controls smoother (less texture reallocations).
-            int height = FFALIGN(h, 256);
             fbotex_init(&p->scale_sep_fbo, p->gl, p->log, p->image_w, height,
                         p->gl_target, GL_NEAREST, p->opts.fbo_format);
         }
         p->scale_sep_fbo.vp_w = p->image_w;
         p->scale_sep_fbo.vp_h = h;
+    }
+
+    if (p->opts.smoothmotion) {
+        for (int i = 0; i < FBOSURFACES_MAX; i++) {
+            struct fbotex *fbo = &p->surfaces[i].fbotex;
+            if (w > fbo->tex_w || h > fbo->tex_h) {
+                fbotex_uninit(fbo);
+                fbotex_init(fbo, p->gl, p->log, width, height,
+                            p->gl_target, GL_NEAREST, p->opts.fbo_format);
+            }
+            fbo->vp_w = w;
+            fbo->vp_h = h;
+            p->surfaces[i].valid = false;
+        }
     }
 }
 
@@ -2066,20 +2080,26 @@ void gl_video_upload_image(struct gl_video *p, struct mp_image *mpi)
         gl->BindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
-static bool test_fbo(struct gl_video *p, GLenum format)
+static bool test_fbo(struct gl_video *p, bool *success)
 {
+    if (!*success)
+        return false;
+
     GL *gl = p->gl;
-    bool success = false;
+    *success = false;
+    MP_VERBOSE(p, "Testing user-set FBO format (0x%x)\n",
+                   (unsigned)p->opts.fbo_format);
     struct fbotex fbo = {0};
-    if (fbotex_init(&fbo, p->gl, p->log, 16, 16, p->gl_target, GL_LINEAR, format))
+    if (fbotex_init(&fbo, p->gl, p->log, 16, 16, p->gl_target, GL_LINEAR,
+                    p->opts.fbo_format))
     {
         gl->BindFramebuffer(GL_FRAMEBUFFER, fbo.fbo);
         gl->BindFramebuffer(GL_FRAMEBUFFER, 0);
-        success = true;
+        *success = true;
     }
     fbotex_uninit(&fbo);
     glCheckError(gl, p->log, "FBO test");
-    return success;
+    return *success;
 }
 
 // Disable features that are not supported with the current OpenGL version.
@@ -2096,33 +2116,25 @@ static void check_gl_features(struct gl_video *p)
     char *disabled[10];
     int n_disabled = 0;
 
-    if (have_fbo) {
-        MP_VERBOSE(p, "Testing user-set FBO format (0x%x)\n",
-                   (unsigned)p->opts.fbo_format);
-        have_fbo = test_fbo(p, p->opts.fbo_format);
-    }
-
     // Normally, we want to disable them by default if FBOs are unavailable,
     // because they will be slow (not critically slow, but still slower).
     // Without FP textures, we must always disable them.
     // I don't know if luminance alpha float textures exist, so disregard them.
-    if (!have_float_tex || !have_arrays || !have_fbo || !have_1d_tex) {
-        for (int n = 0; n < 2; n++) {
-            const struct filter_kernel *kernel = mp_find_filter_kernel(p->opts.scalers[n]);
-            if (kernel) {
-                char *reason = "";
-                if (!have_fbo)
-                    reason = "scaler (FBO)";
-                if (!have_float_tex)
-                    reason = "scaler (float tex.)";
-                if (!have_arrays)
-                    reason = "scaler (no GLSL support)";
-                if (!have_1d_tex && kernel->polar)
-                    reason = "scaler (1D tex.)";
-                if (*reason) {
-                    p->opts.scalers[n] = "bilinear";
-                    disabled[n_disabled++] = reason;
-                }
+    for (int n = 0; n < 2; n++) {
+        const struct filter_kernel *kernel = mp_find_filter_kernel(p->opts.scalers[n]);
+        if (kernel) {
+            char *reason = NULL;
+            if (!test_fbo(p, &have_fbo))
+                reason = "scaler (FBO)";
+            if (!have_float_tex)
+                reason = "scaler (float tex.)";
+            if (!have_arrays)
+                reason = "scaler (no GLSL support)";
+            if (!have_1d_tex && kernel->polar)
+                reason = "scaler (1D tex.)";
+            if (reason) {
+                p->opts.scalers[n] = "bilinear";
+                disabled[n_disabled++] = reason;
             }
         }
     }
@@ -2147,10 +2159,14 @@ static void check_gl_features(struct gl_video *p)
         p->opts.srgb = false;
         disabled[n_disabled++] = "sRGB output (GLSL version)";
     }
-    if (!have_fbo && use_cms) {
+    if (use_cms && !test_fbo(p, &have_fbo)) {
         p->opts.srgb = false;
         p->use_lut_3d = false;
         disabled[n_disabled++] = "color management (FBO)";
+    }
+    if (p->opts.smoothmotion && !test_fbo(p, &have_fbo)) {
+        p->opts.smoothmotion = false;
+        disabled[n_disabled++] = "smoothmotion (FBO)";
     }
     // because of bt709_expand()
     if (!have_mix && p->use_lut_3d) {
@@ -2208,6 +2224,7 @@ static int init_gl(struct gl_video *p)
             MP_VERBOSE(p, "16 bit texture depth: %d.\n", (int)param);
             p->texture_16bit_depth = param;
         }
+        gl->DeleteTextures(1, &tex);
     }
 
     debug_check_gl(p, "after init_gl");
