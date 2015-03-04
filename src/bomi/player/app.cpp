@@ -204,7 +204,7 @@ App::App(int &argc, char **argv)
     d->addOption(LineCmd::DumpApiTree, u"dump-api-tree"_q,
                  tr("Dump API structure tree to stdout."));
     d->addOption(LineCmd::DumpActionList, u"dump-action-list"_q,
-                 tr("Dump executable action list."));
+                 tr("Dump executable action list to stdout."));
     d->getCommandParser(&d->cmdParser)->process(arguments());
     d->getCommandParser(&d->msgParser);
     auto lvStdOut = d->execute(&d->cmdParser);

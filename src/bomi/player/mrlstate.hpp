@@ -99,7 +99,7 @@ private:
     P_(ColorSpace, video_space, ColorSpace::Auto, QT_TR_NOOP("Video Color Space"), 0)
     P_(bool, video_hq_upscaling, false, QT_TR_NOOP("Video High Quality Upscaling"), 0)
     P_(bool, video_hq_downscaling, false, QT_TR_NOOP("Video High Quality Downscaling"), 0)
-    P_(bool, video_motion_interpolation, false, QT_TR_NOOP("Video Motion Interpolation"), 0)
+    P_(bool, video_motion_interpolation, false, QT_TR_NOOP("Video Motion Smoothing"), 0)
     P_(VideoEffects, video_effects, 0, QT_TR_NOOP("Video Effects"), 0)
     P_(StreamList, video_tracks, {StreamVideo}, QT_TR_NOOP("Video Track"), 0)
 

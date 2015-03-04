@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>14</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1612,7 +1612,7 @@
          <item>
           <widget class="MotionIntrplOptionWidget" name="motion_interpolation">
            <property name="title">
-            <string>Motion Interpolation</string>
+            <string>Motion Smoothing</string>
            </property>
           </widget>
          </item>
