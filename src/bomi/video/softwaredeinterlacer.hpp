@@ -7,7 +7,7 @@ struct DeintOption;                     class MpImage;
 
 class SoftwareDeinterlacer : public VideoFilter {
 public:
-    enum Type {Graph, Bob, Mark, Pass};
+    enum Type {Pass, Graph, Bob, Mark};
     SoftwareDeinterlacer();
     ~SoftwareDeinterlacer();
     SoftwareDeinterlacer(const SoftwareDeinterlacer &other) = delete;

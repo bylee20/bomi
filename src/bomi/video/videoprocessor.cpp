@@ -83,6 +83,7 @@ struct VideoProcessor::Data {
     mp_image_params params;
     int hwdecType = -10;
     bool deint = false, inter_i = false, inter_o = false, interpolate = false;
+    bool hwacc = false;
     HwDecTool *hwdec = nullptr;
     mp_image_pool *pool = nullptr;
 
@@ -102,6 +103,7 @@ struct VideoProcessor::Data {
         DeintOption opt;
         if (deint)
             opt = hwdecType > 0 ? deint_hwdec : deint_swdec;
+        opt.processor = hwacc ? Processor::GPU : Processor::CPU;
         deinterlacer.setOption(opt);
         reset();
         emit p->deintMethodChanged(opt.method);
@@ -284,10 +286,12 @@ auto VideoProcessor::filterIn(mp_image *_mpi) -> int
         return 0;
     }
 
-    if (_Change(d->hwdecType, _mpi->hwdec_type)) {
+    const bool hwacc = _Change(d->hwacc, !!IMGFMT_IS_HWACCEL(_mpi->imgfmt));
+    const bool hwtype = _Change(d->hwdecType, _mpi->hwdec_type);
+    if (hwacc || hwtype)
         d->updateDeint();
+    if (hwtype)
         emit hwdecChanged(hwdec());
-    }
 
     MpImage mpi = MpImage::wrap(_mpi);
     Q_ASSERT(mpi->frame_timing.next_vsync == 0);
