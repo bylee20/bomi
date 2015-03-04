@@ -83,7 +83,6 @@ JrPlayer::~JrPlayer()
 auto JrPlayer::request(const JrRequest &request) -> JrResponse
 {
     Q_ASSERT(request.isValid());
-    auto mo = d->app.metaObject();
     QObject *object = &d->app;
     int pos = 0;
     const auto jrMethod = request.method();
@@ -95,18 +94,37 @@ auto JrPlayer::request(const JrRequest &request) -> JrResponse
         const int next = jrMethod.indexOf('.'_q, pos);
         if (next > pos) {
             const auto name = jrMethod.midRef(pos, next - pos).toUtf8();
-            const auto idx = mo->indexOfProperty(name);
-            if (idx < 0 || !(object = mo->property(idx).read(object).value<QObject*>()))
-                break;
             pos = next + 1;
-            mo = object->metaObject();
-            continue;
+            const int left = name.indexOf('[');
+            if (left > 0) {
+                QQmlListReference list(object, name.left(left));
+                const int right = name.indexOf(']', left);
+                if (!list.isValid() || right < 0)
+                    break;
+                bool ok = false;
+                const int idx = name.mid(left + 1, right - (left + 1)).toInt(&ok);
+                const auto obj = list.at(idx);
+                if (!ok || !obj)
+                    break;
+                object = obj;
+                continue;
+            }
+            const auto p = object->property(name);
+            if (auto obj = p.value<QObject*>()) {
+                object = obj;
+                continue;
+            }
+            QQmlListReference list(object, name);
+            if (!list.isValid() || jrMethod.midRef(pos) != "length"_a)
+                break;
+            return { request, list.count() };
         }
         const auto name = jrMethod.midRef(pos).toUtf8();
         pos = jrMethod.size();
         if (name.isEmpty())
             break;
 
+        const auto mo = object->metaObject();
         const int idx = mo->indexOfProperty(name);
         if (idx >= 0) {
             const auto p = mo->property(idx);
