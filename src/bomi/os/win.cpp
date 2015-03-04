@@ -9,8 +9,31 @@
 #include <psapi.h>
 #include <QWindow>
 #include <QSettings>
+#include <QFontDatabase>
 
 namespace OS {
+
+auto defaultFixedFont() -> QFont
+{
+    auto font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    switch (QLocale(QLocale::system().name()).script()) {
+    case QLocale::KoreanScript:
+        font.setFamily(u"GulimChe"_q);
+        break;
+    case QLocale::JapaneseScript:
+        font.setFamily(u"MS Gothic"_q);
+        break;
+    case QLocale::SimplifiedChineseScript:
+        font.setFamily(u"NSimSun"_q);
+        break;
+    case QLocale::TraditionalChineseScript:
+        font.setFamily(u"Ming Light"_q);
+        break;
+    default:
+        break;
+    }
+    return font;
+}
 
 static const auto REGISTRY_DESKTOP_PATH = u"HKEY_CURRENT_USER\\Control Panel\\Desktop"_q;
 static const auto REGISTRY_SCREENSAVER_KEY = u"SCRNSAVE.EXE"_q;

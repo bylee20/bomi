@@ -23,6 +23,9 @@ auto systemTime()  -> quint64; // us
 auto totalMemory() -> double;
 auto usingMemory() -> double;
 
+auto defaultFont() -> QFont;
+auto defaultFixedFont() -> QFont;
+
 auto opticalDrives() -> QStringList;
 auto refreshRate() -> qreal;
 

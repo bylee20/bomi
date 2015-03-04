@@ -1,8 +1,21 @@
 #include "os/os.hpp"
 #include "enum/codecid.hpp"
 #include "enum/deintmethod.hpp"
+#include <QFontDatabase>
 
 namespace OS {
+
+auto defaultFont() -> QFont
+{
+    return QFontDatabase::systemFont(QFontDatabase::GeneralFont);
+}
+
+#ifndef Q_OS_WIN
+auto defaultFixedFont() -> QFont
+{
+    return QFontDatabase::systemFont(QFontDatabase::FixedFont);
+}
+#endif
 
 auto getHwAcc() -> HwAcc*;
 

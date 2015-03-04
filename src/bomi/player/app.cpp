@@ -68,7 +68,7 @@ struct App::Data {
     QCommandLineParser cmdParser, msgParser;
     QMap<LineCmd, QCommandLineOption> options;
     LocalConnection connection = {u"net.xylosper.bomi"_q, nullptr};
-    QFont fixedFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QFont fixedFont = OS::defaultFixedFont();
 
     auto open(const Mrl &mrl) -> void
     {
