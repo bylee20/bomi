@@ -265,6 +265,7 @@ App::~App() {
     delete d->mb;
     delete d;
     OS::finalize();
+    RootMenu::finalize();
 }
 
 auto App::save() const -> void

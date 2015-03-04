@@ -18,6 +18,7 @@ public:
     auto argument(QAction *action) const -> QString;
     auto setShortcutMap(const ShortcutMap &map) -> void;
     static auto instance() -> RootMenu&;
+    static auto finalize() -> void;
     static auto execute(const QString &longId,
                         const QString &argument = QString()) -> bool;
     static auto dumpInfo() -> void;

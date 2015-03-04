@@ -639,8 +639,19 @@ RootMenu::~RootMenu()
     delete d;
 }
 
+static RootMenu *obj = nullptr;
+
 auto RootMenu::instance() -> RootMenu&
-{ static RootMenu self; return self; }
+{
+    if (!obj)
+        obj = new RootMenu;
+    return*obj;
+}
+
+auto RootMenu::finalize() -> void
+{
+    _Delete(obj);
+}
 
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
 {
