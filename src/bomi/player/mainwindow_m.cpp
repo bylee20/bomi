@@ -123,7 +123,8 @@ auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
         actions[i]->trigger();
 }
 
-auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
+auto MainWindow::Data::plugTrack(Menu &parent, StreamList(MrlState::*get)() const,
+                                 void(MrlState::*sig)(StreamList),
                                  QString(MrlState::*desc)() const,
                                  void(PlayEngine::*set)(int,bool),
                                  const QString &gkey, QAction *sep) -> void
@@ -147,11 +148,14 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
         const auto checked = a->isChecked();
         const auto text = a->text();
         (e.*set)(a->data().toInt(), checked);
-        showMessage((e.params()->*desc)(), a->text());
+        if (auto track = (e.params()->*get)().selection())
+            showMessage((e.params()->*desc)(), track->name());
+        else
+            showMessage((e.params()->*desc)(), false);
     });
 }
-#define PLUG_TRACK(m, p, s, ...) plugTrack(m, &MrlState::p##_changed, \
-    &MrlState::desc_##p, &PlayEngine::s, ##__VA_ARGS__)
+#define PLUG_TRACK(m, p, s, ...) plugTrack(m, &MrlState::p, \
+    &MrlState::p##_changed, &MrlState::desc_##p, &PlayEngine::s, ##__VA_ARGS__)
 
 auto MainWindow::Data::plugMenu() -> void
 {
@@ -523,7 +527,8 @@ auto MainWindow::Data::plugMenu() -> void
     auto &strack = sub(u"track"_q);
     auto ssep = strack.addSeparator();
     PLUG_TRACK(sub, sub_tracks, setSubtitleTrackSelected, "exclusive"_a);
-    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed, &MrlState::desc_sub_tracks,
+    plugTrack(sub, &MrlState::sub_tracks_inclusive,
+              &MrlState::sub_tracks_inclusive_changed, &MrlState::desc_sub_tracks,
               &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
     connect(sub(u"track"_q)[u"cycle"_q], &QAction::triggered, p, [=] () {
         auto &m = menu(u"subtitle"_q)(u"track"_q);

@@ -190,7 +190,7 @@ struct MainWindow::Data {
 #define PLUG_ENUM_CHILD(pm, p, s) plugEnumChild(pm, PLUG_HELPER(p, s))
     template<class T>
     auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void;
-    auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
+    auto plugTrack(Menu &parent, StreamList(MrlState::*get)() const, void(MrlState::*sig)(StreamList),
                    QString(MrlState::*desc)() const, void(PlayEngine::*set)(int,bool),
                    const QString &gkey = QString(), QAction *sep = nullptr) -> void;
 

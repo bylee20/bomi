@@ -330,7 +330,7 @@ auto PlayEngine::setSubtitleTrackSelected(int id, bool s) -> void
     if (s)
         d->mpv.setAsync("sid", id);
     else if (d->params.sub_tracks().selectionId() == id)
-        d->mpv.setAsync("sid", -1);
+        d->mpv.setAsync("sid", "no"_b);
 }
 
 auto PlayEngine::autoloadSubtitleFiles() -> void

@@ -29,7 +29,8 @@ MrlState::~MrlState()
 auto MrlState::select(StreamType type, int id) -> void
 {
     bool locked = m_mutex && m_mutex->tryLock();
-    if (m_tracks[type].tracks->select(id))
+    auto tracks = m_tracks[type].tracks;
+    if ((id < 0 && tracks->deselect(-1)) || (id >= 0 && tracks->select(id)))
         emit (this->*m_tracks[type].signal)(*m_tracks[type].tracks);
     if (locked)
         m_mutex->unlock();

@@ -442,7 +442,14 @@ auto PlayEngine::Data::observe() -> void
     });
 
     for (auto type : streamTypes)
-        mpv.observe(streams[type].pid, [=] (int id) { params.select(type, id); });
+        mpv.observe(streams[type].pid, [=] (QVariant &&var) {
+            if (var.type() == QVariant::Int)
+                params.select(type, var.toInt());
+            else if (var.toString() == "no"_a)
+                params.select(type, -1);
+            else
+                _Error("'%%' is not a valid id for stream id.", var.toString());
+        });
     mpv.observe("metadata", [=] () {
         const auto list = mpv.get<QVariant>("metadata").toList();
         MetaData metaData;

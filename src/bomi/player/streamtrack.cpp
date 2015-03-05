@@ -174,6 +174,16 @@ auto StreamList::fileIds() const -> QList<int>
 }
 auto StreamList::deselect(int id) -> bool
 {
+    if (id < 0) {
+        bool ret = false;
+        for (auto &track : m_tracks) {
+            if (track.isSelected()) {
+                ret = true;
+                track.m_selected = false;
+            }
+        }
+        return ret;
+    }
     auto t = track(id);
     if (!t || !t->isSelected())
         return false;
@@ -197,7 +207,7 @@ auto StreamList::select(int id) -> bool
 
 auto StreamList::selection() const -> const StreamTrack*
 {
-    for (int i =  m_tracks.size() - 1; i >= m_tracks.size(); --i) {
+    for (int i =  m_tracks.size() - 1; i >= 0; --i) {
         if (m_tracks[i].isSelected())
             return &m_tracks[i];
     }
