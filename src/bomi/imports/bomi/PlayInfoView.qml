@@ -124,12 +124,13 @@ Item {
                 readonly property string name: qsTr("Subtitle Track")
                 function format(name, track) {
                     if (name.length <= 0) return ""
-                    return qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5")
+                    return qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5, Encoding=%6")
                         .arg(name)
                         .arg(Format.integerNA(track.number))
                         .arg(Format.textNA(track.codec))
                         .arg(Format.textNA(track.title))
                         .arg(Format.textNA(track.language))
+                        .arg(Format.textNA(track.encoding))
                 }
                 content: format(name, track)
             }

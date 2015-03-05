@@ -35,6 +35,7 @@ auto AvTrackObject::fromTrack(int n, const StreamTrack &track) -> AvTrackObject*
     info->m_title = track.title();
     info->m_lang = track.language();
     info->m_selected = track.isSelected();
+    info->m_enc = track.encoding().name();
     return info;
 }
 

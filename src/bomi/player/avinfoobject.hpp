@@ -62,6 +62,7 @@ class AvTrackObject : public QObject {
     Q_PROPERTY(bool valid READ isValid CONSTANT FINAL)
     Q_PROPERTY(bool selected READ isSelected CONSTANT FINAL)
     Q_PROPERTY(QString codec READ codec CONSTANT FINAL)
+    Q_PROPERTY(QString encoding READ encoding CONSTANT FINAL)
 public:
     AvTrackObject() = default;
     auto id() const -> int {return m_id;}
@@ -71,9 +72,10 @@ public:
     auto isValid() const -> bool { return m_id > 0; }
     auto codec() const -> QString { return m_codec; }
     auto isSelected() const -> bool { return m_selected; }
+    auto encoding() const -> QString { return m_enc; }
     static auto fromTrack(int n, const StreamTrack &track) -> AvTrackObject*;
 private:
-    int m_id = -1, m_number = -1; QString m_title, m_lang, m_codec;
+    int m_id = -1, m_number = -1; QString m_title, m_lang, m_codec, m_enc;
     bool m_selected = false;
 };
 
