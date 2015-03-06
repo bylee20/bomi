@@ -28,10 +28,15 @@ auto CharsetDetector::isDetected() const -> bool
 
 auto CharsetDetector::encoding() const -> QString
 {
+
     if (d->detected) {
         const QString enc(_L(d->obj->encoding));
-        if (enc.compare("EUC-KR"_a, Qt::CaseInsensitive) == 0)
-            return u"CP949"_q;
+        auto same = [&] (const QLatin1String &e) -> bool
+            { return !enc.compare(e, Qt::CaseInsensitive); };
+#define FB(from, to) { if (same(from ""_a)) return u"" to ""_q; }
+        FB("euc-kr", "cp949");
+        FB("iso-8859-2", "cp1250");
+#undef FB
         return enc;
     }
     return QString();
@@ -67,5 +72,8 @@ auto CharsetDetector::detect(const QString &fileName, double confidence, int siz
         return EncodingInfo();
     }
     _Info("Trying encoding autodetection: %%", fileName);
+    size = -1;
+    if (size < 0)
+        size = file.size();
     return detect(file.read(size), confidence);
 }
