@@ -50,7 +50,7 @@ Steps::Steps() {
     STEP(zoom_pct, 0.1, 99.999, 0.1, 3, "%", false, 1e-2);
     STEP(video_offset_pct, 0.1, 99.999, 0.1, 3, "%", true, 1e-2);
 
-    STEP(volume_pct, 1, 99, 1, 0, "%", false, 1e-2);
+    STEP(volume_pct, 2, 99, 1, 0, "%", false, 1e-2);
     STEP(amp_pct, 10, 99, 1, 0, "%", false, 1e-2);
     TIME(audio_sync_sec, 0.2, 0.1);
 
