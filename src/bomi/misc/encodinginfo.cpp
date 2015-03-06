@@ -200,7 +200,7 @@ auto EncodingInfo::all() -> const QVector<EncodingInfo>&
         { 18,   u"EUC-JP"_q,          u"Japanese"_q },
         { 39,   u"ISO-2022-JP"_q,     u"Japanese"_q },
         { 17,   u"SHIFT-JIS"_q,       u"Japanese"_q },
-        { 36,   u"CP949"_q,           u"Korean"_q },
+        { 36,   u"Windows-949"_q,           u"Korean"_q },
         { 37,   u"ISO-2022-KR"_q,     u"Korean"_q },
         { 2048, u"CP860"_q,           u"Portuguese"_q },
         { 2016, u"CP838"_q,           u"Thai"_q },

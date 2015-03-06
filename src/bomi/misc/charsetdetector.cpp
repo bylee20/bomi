@@ -34,8 +34,8 @@ auto CharsetDetector::encoding() const -> QString
         auto same = [&] (const QLatin1String &e) -> bool
             { return !enc.compare(e, Qt::CaseInsensitive); };
 #define FB(from, to) { if (same(from ""_a)) return u"" to ""_q; }
-        FB("euc-kr", "cp949");
-        FB("iso-8859-2", "cp1250");
+        FB("euc-kr", "windows-949");
+        FB("iso-8859-2", "windows-1250");
 #undef FB
         return enc;
     }
