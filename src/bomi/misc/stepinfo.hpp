@@ -31,7 +31,8 @@ private:
     const StepInfo *m_info;
 };
 
-struct Steps {
+class Steps {
+public:
     Steps();
     auto operator == (const Steps &rhs) const -> bool;
     auto operator != (const Steps &rhs) const -> bool

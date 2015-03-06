@@ -2,8 +2,6 @@
 #include "mpimage.hpp"
 #include "misc/log.hpp"
 
-DECLARE_LOG_CONTEXT(Video)
-
 struct MotionInterpolator::Data {
     MotionInterpolator *p = nullptr;
     std::deque<MpImage> queue;

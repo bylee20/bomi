@@ -14,7 +14,7 @@ LIBS += -L$${LIB_DIR} -lbz2 -lz
 include(configure.pro)
 !isEmpty(BOMI_RELEASE) {
     CONFIG += release
-	macx:CONFIG += app_bundle
+    macx:CONFIG += app_bundle
 } else:CONFIG -= release
 
 QMAKE_CXXFLAGS_CXX11 = -std=c++1y

@@ -747,6 +747,7 @@ auto RootMenu::dumpInfo() -> void
         const auto id = it.key();
         fill.resize(width - id.size());
         fill.fill(' ');
-        qDebug().noquote().nospace() << id << fill << " (" << menu.description(it.key()) << ')';
+        qDebug().nospace() << id.toLatin1().constData() << fill.constData()
+                           << " (" << menu.description(it.key()).toLatin1().constData() << ')';
     }
 }

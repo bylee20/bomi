@@ -12,7 +12,8 @@ DECLARE_LOG_CONTEXT(JSON-RPC)
 
 using ServerError = QAbstractSocket::SocketError;
 
-struct JrTransport {
+class JrTransport {
+public:
     JrTransport(JrServer *server): m_server(server) { }
     virtual ~JrTransport() { }
     auto addClient(QIODevice *device, const QString &peer) -> bool

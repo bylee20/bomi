@@ -26,7 +26,7 @@ class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
 class QOpenGLContext;                   class EncodingInfo;
-class SubComp;                          struct SmbAuth;
+class SubComp;                          class SmbAuth;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
 

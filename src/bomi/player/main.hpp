@@ -82,7 +82,6 @@ auto registerType() -> void
     qRegisterMetaType<ShortcutMap>();
     qRegisterMetaType<OsdStyle>();
     qRegisterMetaType<OS::HwAcc::Api>();
-    qRegisterMetaType<QMap<QString, QString>>();
     qRegisterMetaType<IntrplParamSetMap>("IntrplParamSetMap");
 
     qRegisterMetaTypeStreamOperators<Mrl>();

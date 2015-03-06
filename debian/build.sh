@@ -50,9 +50,11 @@ echo "3.0 (native)" > source/format
 
 trusty_bdeps=ffmpeg-bomi
 trusty_deps=libqt5qml-quickcontrols
+trusty_opts="--cc=g++-4.9"
 
 utopic_bdeps=ffmpeg-bomi
 utopic_deps=qml-module-qtquick-controls
+utopic_opts=
 
 bdeps=
 for one in $(eval echo \$"$distro"_bdeps); do
@@ -62,8 +64,10 @@ deps=
 for one in $(eval echo \$"$distro"_deps); do
     deps="$deps, $one"
 done
+opts=$(eval echo \$"$distro"_opts)
 
 sed -i "s/@bdeps@/$bdeps/g" control
 sed -i "s/@deps@/$deps/g" control
+sed -i "s/@opts@/$opts/g" rules
 
 debuild -S -sa

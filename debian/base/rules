@@ -19,7 +19,7 @@ build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	./configure --prefix=/usr --cc=clang \
+	./configure --prefix=/usr @opts@ \
 		--actiondir=/usr/share/kde4/apps/solid/actions
 	make
 

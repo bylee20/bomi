@@ -3,7 +3,7 @@
 SED=sed
 
 #special case for build in ubuntu using bomi ppa
-PKG_CONFIG_PATH=/opt/ffmpeg-bomi/lib/pkgconfig:${PKG_CONFIG_PATH}
+PKG_CONFIG_PATH=/opt/ffmpeg-bomi/lib/pkgconfig:/opt/libass-bomi/lib/pkgconfig:${PKG_CONFIG_PATH}
 
 export PKG_CONFIG_PATH="`pwd`/build/lib/pkgconfig:$PKG_CONFIG_PATH"
 
@@ -124,6 +124,7 @@ f_pkg=4
 parallel=$njobs
 release=
 cc=gcc
+cxx=g++
 qmake=autodetect
 lrelease=autodetect
 macdeployqt=
@@ -193,8 +194,10 @@ setup_build() {
     printf "checking for cc ... "
     if check_cc __clang__; then
         mk=linux-clang
+        cxx=$(echo $cc | sed 's/clang/clang++/g')
     elif check_cc __GNUC__; then
         mk=linux-g++
+        cxx=$(echo $cc | sed 's/gcc/g++/g')
     else
         echo "no"
         echo "'$cc' is not supported."
@@ -506,7 +509,10 @@ parse_file() {
 
 rootdir=`pwd`
 
-parse_file "src/bomi/configure.pro" config libs cflags rootdir
+cc=$(which $cc)
+cxx=$(which $cxx)
+
+parse_file "src/bomi/configure.pro" cc cxx config libs cflags rootdir
 if [ "$os" = "win" ]; then
 	sed -i 's#'"$(pwd)"'#../..#g' "src/bomi/configure.pro"
 fi

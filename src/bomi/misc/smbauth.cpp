@@ -64,6 +64,7 @@ auto SmbAuth::process(const QUrl &url) -> Error
     smbc_close(fd);
     return m_lastError = NoError;
 #else
+    Q_UNUSED(url);
     return m_lastError = Unsupported;
 #endif
 }

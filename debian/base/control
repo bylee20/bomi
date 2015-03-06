@@ -3,7 +3,7 @@ Section: graphics
 Priority: optional
 Maintainer: Byoung-young Lee (xylosper) <darklin20@gmail.com>
 Standards-Version: 3.9.5
-Build-Depends: clang (>= 3.3), debhelper (>= 7), pkg-config
+Build-Depends: g++ (>= 4.9), debhelper (>= 7), pkg-config
  , qt5-qmake, qttools5-dev-tools, qtbase5-dev (>= 5.2.0), qtdeclarative5-dev
  , libqt5x11extras5-dev, python, libicu-dev, libbluray-dev
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
@@ -12,7 +12,7 @@ Build-Depends: clang (>= 3.3), debhelper (>= 7), pkg-config
  , libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
  , libpulse-dev, libxcb-icccm4-dev, libgnutls-dev, libsmbclient-dev
  , libxcb-util0-dev, libxcb-randr0-dev, libxcb-screensaver0-dev
- , qt5-default@bdeps@
+ , libxcb-xtest0-dev, libsmbclient-dev, qt5-default@bdeps@
 
 Package: bomi
 Architecture: any

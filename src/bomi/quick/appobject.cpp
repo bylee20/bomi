@@ -187,7 +187,7 @@ auto methodInfo(const QMetaMethod &m) -> QByteArray
     return info;
 }
 
-#define qd() (qDebug().noquote().nospace() << indent)
+#define qd() (qDebug().nospace() << indent)
 
 static auto filterTypeName(const char *name) -> QByteArray
 {
@@ -245,7 +245,7 @@ static auto dumpObject(const char *name, const QMetaObject *mo, QByteArray &inde
         qd() << "methods:";
         std::sort(methods.begin(), methods.end());
         for (auto &m : methods)
-            qd() << methodInfo(m);
+            qd() << methodInfo(m).constData();
         indent.chop(4);
     }
 }
@@ -256,7 +256,7 @@ static auto dumpProperty(const QMetaProperty &p, QByteArray &indent) -> void
 
     const auto mo = QMetaType::metaObjectForType(p.userType());
     if (!mo) {
-        qd() << propertyInfo(p);
+        qd() << propertyInfo(p).constData();
         QRegEx rxQmlList(uR"(QQmlListProperty<(.+)>)"_q);
         auto m = rxQmlList.match(QString::fromLatin1(p.typeName()));
         if (m.hasMatch()) {
