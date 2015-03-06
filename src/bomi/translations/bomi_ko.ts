@@ -1433,14 +1433,14 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="162"/>
-        <location filename="../player/mainwindow_m.cpp" line="574"/>
-        <location filename="../player/mainwindow_m.cpp" line="588"/>
+        <location filename="../player/mainwindow_m.cpp" line="166"/>
+        <location filename="../player/mainwindow_m.cpp" line="579"/>
+        <location filename="../player/mainwindow_m.cpp" line="593"/>
         <source>Open File</source>
         <translation>파일 열기</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="543"/>
+        <location filename="../player/mainwindow_m.cpp" line="548"/>
         <source>Open Subtitle</source>
         <translation>자막 열기</translation>
     </message>
@@ -1453,13 +1453,13 @@ This requires much more CPU or GPU usage.</source>
         <translation type="vanished">%1개 자막</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="716"/>
+        <location filename="../player/mainwindow_m.cpp" line="721"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>자동 시스템 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="381"/>
-        <location filename="../player/mainwindow_m.cpp" line="581"/>
+        <location filename="../player/mainwindow_m.cpp" line="385"/>
+        <location filename="../player/mainwindow_m.cpp" line="586"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
@@ -1491,38 +1491,38 @@ Please wait for a while.</source>
         <translation>스킨 불러오기 에러</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="257"/>
+        <location filename="../player/mainwindow_m.cpp" line="261"/>
         <source>Seeking</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="700"/>
+        <location filename="../player/mainwindow_m.cpp" line="705"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>재생목록을 마치면 보미를 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="701"/>
+        <location filename="../player/mainwindow_m.cpp" line="706"/>
         <source>Auto-exit is canceled.</source>
         <translation>자동 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="707"/>
+        <location filename="../player/mainwindow_m.cpp" line="712"/>
         <source>Auto-shutdown</source>
         <translation>자동 시스템 종료</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="708"/>
         <location filename="../player/mainwindow_m.cpp" line="713"/>
+        <location filename="../player/mainwindow_m.cpp" line="718"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>재생목록을 마치면 시스템이 종료됩니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="762"/>
+        <location filename="../player/mainwindow_m.cpp" line="767"/>
         <source>Current Chapter</source>
         <translation>현재 챕터</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="221"/>
+        <location filename="../player/mainwindow_m.cpp" line="225"/>
         <source>Set A to %1</source>
         <translation>시작 %1</translation>
     </message>
@@ -1534,37 +1534,37 @@ Cannot open the media.</source>
 미디어를 열 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="189"/>
+        <location filename="../player/mainwindow_m.cpp" line="193"/>
         <source>Select DVD device</source>
         <translation>DVD 장치 선택</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="193"/>
+        <location filename="../player/mainwindow_m.cpp" line="197"/>
         <source>Select Blu-ray device</source>
         <translation>블루레이 장치 선택</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="226"/>
+        <location filename="../player/mainwindow_m.cpp" line="230"/>
         <source>Range is too short!</source>
         <translation>구간이 너무 짧습니다!</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="229"/>
+        <location filename="../player/mainwindow_m.cpp" line="233"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation>마지막 %1. 반복 시작!</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="243"/>
+        <location filename="../player/mainwindow_m.cpp" line="247"/>
         <source>Quit repeating</source>
         <translation>반복 마침</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="439"/>
+        <location filename="../player/mainwindow_m.cpp" line="443"/>
         <source>Advanced Interpolator Settings</source>
         <translation>고급 보간법 설정</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="442"/>
+        <location filename="../player/mainwindow_m.cpp" line="446"/>
         <source>Advanced Chroma Upscaler Settings</source>
         <translation>고급 크로마 업스케일러 설정</translation>
     </message>
@@ -1585,7 +1585,7 @@ Cannot open the media.</source>
         <translation type="vanished">선택된 오디오 트랙</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="515"/>
+        <location filename="../player/mainwindow_m.cpp" line="519"/>
         <source>Open Audio File</source>
         <translation>오디오 파일 열기</translation>
     </message>
@@ -1594,42 +1594,42 @@ Cannot open the media.</source>
         <translation type="vanished">선택된 자막 트랙</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="761"/>
+        <location filename="../player/mainwindow_m.cpp" line="766"/>
         <source>Current Title/Edition</source>
         <translation>현재 타이틀/에디션</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="237"/>
+        <location filename="../player/mainwindow_m.cpp" line="241"/>
         <source>Repeat current subtitle</source>
         <translation>현재 자막 반복</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="265"/>
+        <location filename="../player/mainwindow_m.cpp" line="269"/>
         <source>Seek to Next Black Frame</source>
         <translation>검은 프레임 탐색</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="389"/>
+        <location filename="../player/mainwindow_m.cpp" line="393"/>
         <source>Snapshot saved</source>
         <translation>스냅샷 저장</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="391"/>
+        <location filename="../player/mainwindow_m.cpp" line="395"/>
         <source>Failed to save a snapshot</source>
         <translation>스냅샷 저장 실패</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="625"/>
+        <location filename="../player/mainwindow_m.cpp" line="630"/>
         <source>Shuffle Playlist</source>
         <translation>재생 목록 섞기</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="636"/>
+        <location filename="../player/mainwindow_m.cpp" line="641"/>
         <source>Repeat Playlist</source>
         <translation>재생 목록 반복</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="688"/>
+        <location filename="../player/mainwindow_m.cpp" line="693"/>
         <source>Downloaded</source>
         <translation>다운로드</translation>
     </message>
@@ -1649,7 +1649,7 @@ Cannot open the media.</source>
         <translation>환경 설정에서 동작방식을 변경할 수 있습니다. 보미를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="209"/>
+        <location filename="../player/mainwindow_m.cpp" line="213"/>
         <source>A-B Repeat</source>
         <translation>A-B 구간 반복</translation>
     </message>
@@ -2081,6 +2081,51 @@ Cannot open the media.</source>
     </message>
 </context>
 <context>
+    <name>OpenGL</name>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="41"/>
+        <source>Cannot create OpenGL context!</source>
+        <translation>OpenGL 컨텍스트를 만들 수 없습니다!</translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="46"/>
+        <source>Cannot make OpenGL context current!</source>
+        <translation>OpenGL 컨텍스트를 활성화할 수 없습니다!</translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="57"/>
+        <source>OpenGL version is too low. bomi requires OpenGL 2.1 or higher.</source>
+        <translation>OpenGL 버전이 너무 낮습니다. 보미는 OpenGL 2.1이상을 필요로 합니다.</translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="88"/>
+        <source>FBO is not available. FBO support is essential.</source>
+        <translation>FBO를 사용할 수 없습니다. FBO 지원은 필수입니다.</translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="103"/>
+        <source>No available FBO texture format.
+One of GL_BGRA8 and GL_BGRA16 must be supported at least.</source>
+        <translation>사용할 수 있는 FBO 텍스쳐 형식이 없습니다. 적어도 GL_BGRA8와 GL_BGRA16 중 하나를 지원해야합니다.</translation>
+    </message>
+    <message>
+        <location filename="../player/main.cpp" line="34"/>
+        <source>OpenGL Error</source>
+        <translation>OpenGL 오류</translation>
+    </message>
+    <message>
+        <location filename="../player/main.cpp" line="35"/>
+        <source>Error: %1
+
+Failed to check OpenGL support.
+It may help to update driver of graphics card.</source>
+        <translation>오류: %1
+
+OpenGL 지원을 확인하는데 실패하였습니다.
+그래픽 카드 드라이버를 업데이트해보세요.</translation>
+    </message>
+</context>
+<context>
     <name>OpenMediaBehaviorGroupBox</name>
     <message>
         <location filename="../widget/openmediabehaviorgroupbox.cpp" line="13"/>
@@ -2261,12 +2306,12 @@ Cannot open the media.</source>
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../player/playengine_p.cpp" line="556"/>
+        <location filename="../player/playengine_p.cpp" line="563"/>
         <source>Title %1</source>
         <translation>타이틀 %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="556"/>
+        <location filename="../player/playengine_p.cpp" line="563"/>
         <source>Edition %1</source>
         <translation>에디션 %1</translation>
     </message>
@@ -2488,8 +2533,12 @@ Cannot open the media.</source>
     </message>
     <message>
         <location filename="../imports/bomi/PlayInfoView.qml" line="127"/>
+        <source>%1 #%2: Codec=%3, Title=%4, Language=%5, Encoding=%6</source>
+        <translation>%1 #%2: 코덱=%3, 제목=%4, 언어=%5, 인코딩=%6</translation>
+    </message>
+    <message>
         <source>%1 #%2: Codec=%3, Title=%4, Language=%5</source>
-        <translation>%1 #%2: 코덱=%3, 제목=%4, 언어=%5</translation>
+        <translation type="vanished">%1 #%2: 코덱=%3, 제목=%4, 언어=%5</translation>
     </message>
     <message>
         <source>Output  </source>
@@ -4826,7 +4875,7 @@ h:m:s
         <location filename="../player/translator.cpp" line="120"/>
         <source>UTF-8</source>
         <comment>Specify most popular encoding here in target localization.</comment>
-        <translation>CP949</translation>
+        <translation>Windows-949</translation>
     </message>
 </context>
 <context>

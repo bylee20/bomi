@@ -1434,19 +1434,19 @@ Esta opción necesita mucho más uso de CPU o GPU.</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="162"/>
-        <location filename="../player/mainwindow_m.cpp" line="574"/>
-        <location filename="../player/mainwindow_m.cpp" line="588"/>
+        <location filename="../player/mainwindow_m.cpp" line="166"/>
+        <location filename="../player/mainwindow_m.cpp" line="579"/>
+        <location filename="../player/mainwindow_m.cpp" line="593"/>
         <source>Open File</source>
         <translation>Abrir archivo</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="543"/>
+        <location filename="../player/mainwindow_m.cpp" line="548"/>
         <source>Open Subtitle</source>
         <translation>Abrir Subtítulo</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="257"/>
+        <location filename="../player/mainwindow_m.cpp" line="261"/>
         <source>Seeking</source>
         <translation>Desplazando</translation>
     </message>
@@ -1466,7 +1466,7 @@ No se puede abrir el medio.</translation>
         <translation type="vanished">%1 Subtítulo(s)</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="716"/>
+        <location filename="../player/mainwindow_m.cpp" line="721"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>El apagado automático está cancelado.</translation>
     </message>
@@ -1498,43 +1498,43 @@ Por favor, espere un momento.</translation>
         <translation>Error cargando la apariencia</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="189"/>
+        <location filename="../player/mainwindow_m.cpp" line="193"/>
         <source>Select DVD device</source>
         <translation>Seleccionar unidad DVD</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="193"/>
+        <location filename="../player/mainwindow_m.cpp" line="197"/>
         <source>Select Blu-ray device</source>
         <translation>Seleccionar unidad Blu-ray</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="265"/>
+        <location filename="../player/mainwindow_m.cpp" line="269"/>
         <source>Seek to Next Black Frame</source>
         <translation>Desplazar al siguiente frame negro</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="389"/>
+        <location filename="../player/mainwindow_m.cpp" line="393"/>
         <source>Snapshot saved</source>
         <translation>Captura guardada</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="391"/>
+        <location filename="../player/mainwindow_m.cpp" line="395"/>
         <source>Failed to save a snapshot</source>
         <translation>Fallo al guardar captura</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="381"/>
-        <location filename="../player/mainwindow_m.cpp" line="581"/>
+        <location filename="../player/mainwindow_m.cpp" line="385"/>
+        <location filename="../player/mainwindow_m.cpp" line="586"/>
         <source>Save File</source>
         <translation>Guardar archivo</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="439"/>
+        <location filename="../player/mainwindow_m.cpp" line="443"/>
         <source>Advanced Interpolator Settings</source>
         <translation>Configuración avanzada del Interpolador</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="442"/>
+        <location filename="../player/mainwindow_m.cpp" line="446"/>
         <source>Advanced Chroma Upscaler Settings</source>
         <translation>Configuración avanzada del Chroma Upscaler</translation>
     </message>
@@ -1555,7 +1555,7 @@ Por favor, espere un momento.</translation>
         <translation type="vanished">Pista de audio seleccionado</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="515"/>
+        <location filename="../player/mainwindow_m.cpp" line="519"/>
         <source>Open Audio File</source>
         <translation>Abrir archivo de audio</translation>
     </message>
@@ -1564,43 +1564,43 @@ Por favor, espere un momento.</translation>
         <translation type="vanished">Pista de subtítulos seleccionado</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="625"/>
+        <location filename="../player/mainwindow_m.cpp" line="630"/>
         <source>Shuffle Playlist</source>
         <translation>Lista de reproducción aleatoria</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="636"/>
+        <location filename="../player/mainwindow_m.cpp" line="641"/>
         <source>Repeat Playlist</source>
         <translation>Repetir lista de reproducción</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="688"/>
+        <location filename="../player/mainwindow_m.cpp" line="693"/>
         <source>Downloaded</source>
         <translation>Descargado</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="700"/>
+        <location filename="../player/mainwindow_m.cpp" line="705"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>Salir de bomi cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="701"/>
+        <location filename="../player/mainwindow_m.cpp" line="706"/>
         <source>Auto-exit is canceled.</source>
         <translation>La salida automática está cancelada.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="707"/>
+        <location filename="../player/mainwindow_m.cpp" line="712"/>
         <source>Auto-shutdown</source>
         <translation>Apagar automáticamente</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="708"/>
         <location filename="../player/mainwindow_m.cpp" line="713"/>
+        <location filename="../player/mainwindow_m.cpp" line="718"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>El equipo se apagará cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="761"/>
+        <location filename="../player/mainwindow_m.cpp" line="766"/>
         <source>Current Title/Edition</source>
         <translation>Título/Edición actual</translation>
     </message>
@@ -1620,37 +1620,37 @@ Por favor, espere un momento.</translation>
         <translation>Puedes cambiar este comportamiento en las preferencias. Si deseas salir de bomi, por favor usa el menú &apos;Salir&apos;.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="762"/>
+        <location filename="../player/mainwindow_m.cpp" line="767"/>
         <source>Current Chapter</source>
         <translation>Capítulo actual</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="221"/>
+        <location filename="../player/mainwindow_m.cpp" line="225"/>
         <source>Set A to %1</source>
         <translation>Seleccionar A desde %1</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="226"/>
+        <location filename="../player/mainwindow_m.cpp" line="230"/>
         <source>Range is too short!</source>
         <translation>¡El rango es muy corto!</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="229"/>
+        <location filename="../player/mainwindow_m.cpp" line="233"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation>Seleccionar B hasta %1. ¡Inicia para repetir!</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="243"/>
+        <location filename="../player/mainwindow_m.cpp" line="247"/>
         <source>Quit repeating</source>
         <translation>Salir del bucle</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="237"/>
+        <location filename="../player/mainwindow_m.cpp" line="241"/>
         <source>Repeat current subtitle</source>
         <translation>Repetir subtítulo actual</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="209"/>
+        <location filename="../player/mainwindow_m.cpp" line="213"/>
         <source>A-B Repeat</source>
         <translation>Repetir A-B</translation>
     </message>
@@ -2062,6 +2062,48 @@ Por favor, espere un momento.</translation>
     </message>
 </context>
 <context>
+    <name>OpenGL</name>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="41"/>
+        <source>Cannot create OpenGL context!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="46"/>
+        <source>Cannot make OpenGL context current!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="57"/>
+        <source>OpenGL version is too low. bomi requires OpenGL 2.1 or higher.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="88"/>
+        <source>FBO is not available. FBO support is essential.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="103"/>
+        <source>No available FBO texture format.
+One of GL_BGRA8 and GL_BGRA16 must be supported at least.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/main.cpp" line="34"/>
+        <source>OpenGL Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/main.cpp" line="35"/>
+        <source>Error: %1
+
+Failed to check OpenGL support.
+It may help to update driver of graphics card.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>OpenMediaBehaviorGroupBox</name>
     <message>
         <location filename="../widget/openmediabehaviorgroupbox.cpp" line="13"/>
@@ -2242,12 +2284,12 @@ Por favor, espere un momento.</translation>
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../player/playengine_p.cpp" line="556"/>
+        <location filename="../player/playengine_p.cpp" line="563"/>
         <source>Edition %1</source>
         <translation>Edición %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="556"/>
+        <location filename="../player/playengine_p.cpp" line="563"/>
         <source>Title %1</source>
         <translation>Título %1</translation>
     </message>
@@ -2468,8 +2510,12 @@ Por favor, espere un momento.</translation>
     </message>
     <message>
         <location filename="../imports/bomi/PlayInfoView.qml" line="127"/>
+        <source>%1 #%2: Codec=%3, Title=%4, Language=%5, Encoding=%6</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 #%2: Codec=%3, Title=%4, Language=%5</source>
-        <translation type="unfinished">%1 #%2: Codec=%3, Título=%4, Idioma=%5</translation>
+        <translation type="obsolete">%1 #%2: Codec=%3, Título=%4, Idioma=%5</translation>
     </message>
     <message>
         <source>Normalizer: %1[%2%]</source>

@@ -1417,19 +1417,19 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="162"/>
-        <location filename="../player/mainwindow_m.cpp" line="574"/>
-        <location filename="../player/mainwindow_m.cpp" line="588"/>
+        <location filename="../player/mainwindow_m.cpp" line="166"/>
+        <location filename="../player/mainwindow_m.cpp" line="579"/>
+        <location filename="../player/mainwindow_m.cpp" line="593"/>
         <source>Open File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="543"/>
+        <location filename="../player/mainwindow_m.cpp" line="548"/>
         <source>Open Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="257"/>
+        <location filename="../player/mainwindow_m.cpp" line="261"/>
         <source>Seeking</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1440,7 +1440,7 @@ Cannot open the media.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="716"/>
+        <location filename="../player/mainwindow_m.cpp" line="721"/>
         <source>Auto-shutdown is canceled.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1471,89 +1471,89 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="189"/>
+        <location filename="../player/mainwindow_m.cpp" line="193"/>
         <source>Select DVD device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="193"/>
+        <location filename="../player/mainwindow_m.cpp" line="197"/>
         <source>Select Blu-ray device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="265"/>
+        <location filename="../player/mainwindow_m.cpp" line="269"/>
         <source>Seek to Next Black Frame</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="389"/>
+        <location filename="../player/mainwindow_m.cpp" line="393"/>
         <source>Snapshot saved</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="391"/>
+        <location filename="../player/mainwindow_m.cpp" line="395"/>
         <source>Failed to save a snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="381"/>
-        <location filename="../player/mainwindow_m.cpp" line="581"/>
+        <location filename="../player/mainwindow_m.cpp" line="385"/>
+        <location filename="../player/mainwindow_m.cpp" line="586"/>
         <source>Save File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="439"/>
+        <location filename="../player/mainwindow_m.cpp" line="443"/>
         <source>Advanced Interpolator Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="442"/>
+        <location filename="../player/mainwindow_m.cpp" line="446"/>
         <source>Advanced Chroma Upscaler Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="515"/>
+        <location filename="../player/mainwindow_m.cpp" line="519"/>
         <source>Open Audio File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="625"/>
+        <location filename="../player/mainwindow_m.cpp" line="630"/>
         <source>Shuffle Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="636"/>
+        <location filename="../player/mainwindow_m.cpp" line="641"/>
         <source>Repeat Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="688"/>
+        <location filename="../player/mainwindow_m.cpp" line="693"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="700"/>
+        <location filename="../player/mainwindow_m.cpp" line="705"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="701"/>
+        <location filename="../player/mainwindow_m.cpp" line="706"/>
         <source>Auto-exit is canceled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="707"/>
+        <location filename="../player/mainwindow_m.cpp" line="712"/>
         <source>Auto-shutdown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="708"/>
         <location filename="../player/mainwindow_m.cpp" line="713"/>
+        <location filename="../player/mainwindow_m.cpp" line="718"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="761"/>
+        <location filename="../player/mainwindow_m.cpp" line="766"/>
         <source>Current Title/Edition</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1568,37 +1568,37 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="762"/>
+        <location filename="../player/mainwindow_m.cpp" line="767"/>
         <source>Current Chapter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="221"/>
+        <location filename="../player/mainwindow_m.cpp" line="225"/>
         <source>Set A to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="226"/>
+        <location filename="../player/mainwindow_m.cpp" line="230"/>
         <source>Range is too short!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="229"/>
+        <location filename="../player/mainwindow_m.cpp" line="233"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="243"/>
+        <location filename="../player/mainwindow_m.cpp" line="247"/>
         <source>Quit repeating</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="237"/>
+        <location filename="../player/mainwindow_m.cpp" line="241"/>
         <source>Repeat current subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="209"/>
+        <location filename="../player/mainwindow_m.cpp" line="213"/>
         <source>A-B Repeat</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1900,6 +1900,48 @@ Please wait for a while.</source>
     </message>
 </context>
 <context>
+    <name>OpenGL</name>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="41"/>
+        <source>Cannot create OpenGL context!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="46"/>
+        <source>Cannot make OpenGL context current!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="57"/>
+        <source>OpenGL version is too low. bomi requires OpenGL 2.1 or higher.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="88"/>
+        <source>FBO is not available. FBO support is essential.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../opengl/openglmisc.cpp" line="103"/>
+        <source>No available FBO texture format.
+One of GL_BGRA8 and GL_BGRA16 must be supported at least.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/main.cpp" line="34"/>
+        <source>OpenGL Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/main.cpp" line="35"/>
+        <source>Error: %1
+
+Failed to check OpenGL support.
+It may help to update driver of graphics card.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>OpenMediaBehaviorGroupBox</name>
     <message>
         <location filename="../widget/openmediabehaviorgroupbox.cpp" line="13"/>
@@ -2080,12 +2122,12 @@ Please wait for a while.</source>
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../player/playengine_p.cpp" line="556"/>
+        <location filename="../player/playengine_p.cpp" line="563"/>
         <source>Title %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="556"/>
+        <location filename="../player/playengine_p.cpp" line="563"/>
         <source>Edition %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2243,7 +2285,7 @@ Please wait for a while.</source>
     </message>
     <message>
         <location filename="../imports/bomi/PlayInfoView.qml" line="127"/>
-        <source>%1 #%2: Codec=%3, Title=%4, Language=%5</source>
+        <source>%1 #%2: Codec=%3, Title=%4, Language=%5, Encoding=%6</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
