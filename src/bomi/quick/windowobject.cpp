@@ -1,5 +1,6 @@
 #include "windowobject.hpp"
 #include "player/mainwindow.hpp"
+#include "os/os.hpp"
 #include <QQuickWindow>
 #include <QToolTip>
 
@@ -52,4 +53,9 @@ auto WindowObject::getMouse() -> MouseObject*
 {
     static MouseObject mouse;
     return &mouse;
+}
+
+auto WindowObject::fullScreenMargin() const -> int
+{
+    return m->adapter()->fullScreenMargin();
 }

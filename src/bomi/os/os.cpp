@@ -150,6 +150,16 @@ WindowAdapter::WindowAdapter(QWidget *parent)
     m_widget = parent;
 }
 
+auto WindowAdapter::updateFrameMargins() -> void
+{
+    const auto in = m_widget->geometry();
+    const auto out = m_widget->frameGeometry();
+    m_frameMargins.setLeft(in.left() - out.left());
+    m_frameMargins.setTop(in.top() - out.top());
+    m_frameMargins.setRight(out.right() - in.right());
+    m_frameMargins.setBottom(out.bottom() - in.bottom());
+}
+
 auto WindowAdapter::isFullScreen() const -> bool
 {
     return m_widget->isFullScreen();
@@ -195,7 +205,7 @@ auto WindowAdapter::isFrameless() const -> bool
 
 auto WindowAdapter::setFrameless(bool frameless) -> void
 {
-    if (isFrameless() == frameless)
+    if (WindowAdapter::isFrameless() == frameless)
         return;
     auto flags = m_widget->windowFlags();
     if (frameless)

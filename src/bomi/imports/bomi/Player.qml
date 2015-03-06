@@ -89,13 +89,16 @@ Item {
         }
     }
 
+    readonly property int __margin: B.App.window.fullscreen
+                                    ? B.App.window.fullScreenMargin : 0
+
     function updateScreenSize() {
         if (!screen)
             return
-        screen.width = width * engine.zoom
-        screen.height = height * engine.zoom
-        screen.x = (width - screen.width) * 0.5
-        screen.y = (height - screen.height) * 0.5
+        screen.width = width * engine.zoom - 2 * __margin;
+        screen.height = height * engine.zoom - 2 * __margin;
+        screen.x = (width - screen.width) * 0.5 + __margin;
+        screen.y = (height - screen.height) * 0.5 + __margin
     }
 
     Connections { target: engine; onZoomChanged: updateScreenSize() }

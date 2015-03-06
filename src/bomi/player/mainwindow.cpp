@@ -58,12 +58,20 @@ MainWindow::~MainWindow() {
 
 auto MainWindow::postInitialize() -> void
 {
+    d->adapter->updateFrameMargins();;
+    if (d->as.win_frameless)
+        d->menu(u"window"_q)[u"frameless"_q]->trigger();
     d->as.restoreWindowGeometry(this);
     OS::setImeEnabled(windowHandle(), false);
     OS::setImeEnabled(d->view, false);
     d->applyPref();
     cApp.runCommands();
     d->noMessage = false;
+}
+
+auto MainWindow::adapter() const -> OS::WindowAdapter*
+{
+    return d->adapter;
 }
 
 auto MainWindow::setupSkinPlayer() -> void
@@ -315,10 +323,13 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 {
     QWidget::resizeEvent(event);
-    if (d->adapter->isFullScreen())
-        d->container->setGeometry(QRect(QPoint(0, 0), frameSize()));
-    else
-        d->container->setGeometry(QRect(QPoint(0, 0), size()));
+    QSize size = frameSize();
+    if (d->adapter->isFrameVisible()) {
+        const auto m = d->adapter->frameMargins();
+        size.rwidth() -= m.left() + m.right();
+        size.rheight() -= m.top() + m.bottom();
+    }
+    d->container->resize(size);
 }
 
 auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void

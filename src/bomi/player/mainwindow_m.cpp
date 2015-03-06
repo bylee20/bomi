@@ -728,8 +728,8 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &win = menu(u"window"_q);
     plugAppEnumChild(win, "win_stays_on_top", &AppState::winStaysOnTopChanged);
     connect(&as, &AppState::winStaysOnTopChanged, p, [=] () { updateStaysOnTop(); });
-    connect(win[u"frameless"_q], &QAction::triggered, p,
-            [=] (bool on) { adapter->setFrameless(on); as.win_frameless = on; });
+    connect(win[u"frameless"_q], &QAction::triggered, p, [=] (bool on)
+        { adapter->setFrameless(on); as.win_frameless = on; });
     connect(win.g(u"size"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
     connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);

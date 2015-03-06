@@ -3,6 +3,7 @@
 
 class Mrl;                              class PlaylistModel;
 class PlayEngine;                       class QQuickItem;
+namespace OS { class WindowAdapter; }
 
 class MainWindow : public QWidget {
     Q_OBJECT
@@ -21,6 +22,7 @@ public:
     auto isSceneGraphInitialized() const -> bool;
     auto resetMoving() -> void;
     auto screen() const -> QScreen*;
+    auto adapter() const -> OS::WindowAdapter*;
 signals:
     void cursorChanged(const QCursor &cursor);
     void fullscreenChanged(bool fs);

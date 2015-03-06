@@ -50,17 +50,6 @@ struct Win : public QObject {
     }
 
     bool originalScreensaver = false;
-
-    struct Window {
-        bool onTop = false;
-        bool fullScreen = false;
-        QRect prevGeometry;
-        DWORD prevStyle = 0;
-        auto layer() const -> HWND
-        { return onTop ? HWND_TOPMOST : HWND_NOTOPMOST; }
-    };
-
-    QHash<QWidget*, Window> windows;
     QHash<QWindow*, HIMC> imes;
     HANDLE shutdownToken = nullptr;
     HANDLE proc = nullptr;
@@ -84,42 +73,64 @@ auto setImeEnabled(QWindow *w, bool enabled) -> void
         ime = ImmAssociateContext((HWND)w->winId(), nullptr);
 }
 
+auto WinWindowAdapter::setFrameless(bool frameless) -> void
+{
+    if (_Change(m_frameless, frameless) && !m_fs) {
+        const auto g = widget()->geometry();
+        updateFrame();
+        widget()->resize(g.width() + 1, g.height());
+        widget()->resize(g.width(), g.height());
+    }
+}
+
+auto WinWindowAdapter::updateFrame() -> void
+{
+    WindowAdapter::setFrameless(!isFrameVisible());
+}
+
+SIA setLayer(HWND hwnd, HWND layer) -> void
+{
+    SetWindowPos(hwnd, layer, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+}
+
 auto WinWindowAdapter::setAlwaysOnTop(bool onTop) -> void
 {
     m_onTop = onTop;
-    SetWindowPos((HWND)winId(), layer(), 0, 0, 0, 0,
-                 SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
-}
-
-auto WinWindowAdapter::isFullScreen() const -> bool
-{
-    return m_fs;
-}
-
-auto WinWindowAdapter::isAlwaysOnTop() const -> bool
-{
-    return m_onTop;
+    setLayer((HWND)winId(), layer());
 }
 
 auto WinWindowAdapter::setFullScreen(bool fs) -> void
 {
     if (!_Change(m_fs, fs))
         return;
+    const auto w = widget();
     auto g = m_prevGeometry;
     auto style = m_prevStyle;
     auto layer = this->layer();
     const auto hwnd = (HWND)winId();
     if (fs) {
-        m_prevGeometry = widget()->frameGeometry();
+        m_prevGeometry = w->frameGeometry();
         m_prevStyle = GetWindowLong(hwnd, GWL_STYLE);
-        g = qApp->desktop()->screenGeometry(widget());
+        g = qApp->desktop()->screenGeometry(w);
         g.adjust(-1, -1, 1, 1);
         style = m_prevStyle & ~(WS_DLGFRAME | WS_THICKFRAME);
+        style |= WS_BORDER;
         layer = HWND_NOTOPMOST;
     }
-    SetWindowLong(hwnd, GWL_STYLE, style);
-    SetWindowPos(hwnd, layer, g.x(), g.y(), g.width(), g.height(),
-                 SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+    updateFrame();
+    setLayer(hwnd, layer);
+    if (m_fs) {
+        w->setGeometry(g);
+        w->setMask(QRect(1, 1, g.width() - 2, g.height() - 2));
+    } else {
+        if (m_frameless)
+            w->setGeometry(g);
+        else {
+            w->move(g.topLeft());
+            w->resize(g.size());
+        }
+        w->clearMask();
+    }
 }
 
 auto createAdapter(QWidget *w) -> WindowAdapter*
