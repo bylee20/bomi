@@ -132,6 +132,8 @@ Item {
                         .arg(Format.textNA(track.language))
                         .arg(Format.textNA(track.encoding))
                 }
+                width: wrapper.width
+                textStyle.wrapMode: Text.Wrap
                 content: format(name, track)
             }
         }

@@ -11,6 +11,7 @@ QtObject {
     property int verticalAlignment: Text.AlignTop
     property int horizontalAlignment: Text.AlignLeft
     property bool monospace: false
+    property int wrapMode: Text.NoWrap
     property QtObject copy: null
     onMonospaceChanged: {
         font.family = monospace ? B.App.theme.monospace
