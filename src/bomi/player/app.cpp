@@ -34,7 +34,6 @@ auto _SetWindowTitle(QWidget *w, const QString &title) -> void
 { cApp.setWindowTitle(w, title); }
 }
 
-auto root_menu_execute(const QString &longId, const QString &argument) -> bool;
 auto translator_load(const Locale &locale) -> bool;
 
 enum class LineCmd {
@@ -117,7 +116,7 @@ struct App::Data {
                 open(mrl);
             const auto args = values(LineCmd::Action);
             if (!args.isEmpty())
-                root_menu_execute(args[0], args.value(1));
+                RootMenu::instance().execute(args[0]);
         }
         if (isSet(LineCmd::Debug)) {
             lvStdOut = qMax(lvStdOut, Log::Debug);

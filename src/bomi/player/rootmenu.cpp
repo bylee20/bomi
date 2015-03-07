@@ -21,11 +21,6 @@
 
 DECLARE_LOG_CONTEXT(Menu)
 
-auto root_menu_execute(const QString &longId, const QString &argument) -> bool
-{
-    return RootMenu::execute(longId, argument);
-}
-
 using GetText = std::function<QString(void)>;
 using Translate = std::function<void(void)>;
 
@@ -35,16 +30,14 @@ struct MenuActionInfo
     Translate trans; const char *desc = nullptr;
 };
 
-struct ArgAction { QString argument; QAction *action = nullptr; };
-
 struct RootMenu::Data {
     Menu *parent = nullptr;
     QHash<QAction*, MenuActionInfo> infos;
     MenuActionInfo *info = nullptr;
     QMap<QString, QString> alias;
-    QMap<QString, ArgAction> actions;
+    QMap<QString, QAction*> actions;
 
-    auto find(const QString &longId) const -> ArgAction
+    auto find(const QString &longId) const -> QAction*
     {
         auto it = actions.find(longId);
         if (it == actions.end()) {
@@ -52,7 +45,7 @@ struct RootMenu::Data {
             if (ait != alias.end())
                 it = actions.find(*ait);
         }
-        return it != actions.end() ? *it : ArgAction();
+        return it != actions.end() ? *it : nullptr;
     }
 
     auto toGetText(const char *trans) const -> GetText
@@ -72,7 +65,7 @@ struct RootMenu::Data {
         const auto &prefix = parent->menuAction()->objectName();
         const QString id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
         action->setObjectName(id);
-        actions[id].action = action;
+        actions[id] = action;
         this->info = &info;
         return &info;
     }
@@ -653,20 +646,16 @@ auto RootMenu::finalize() -> void
     _Delete(obj);
 }
 
-auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
+auto RootMenu::execute(const QString &id) -> bool
 {
-    ArgAction aa = RootMenu::instance().d->find(longId);
-    if (aa.action) {
-        if (aa.action->menu())
-            aa.action->menu()->exec(QCursor::pos());
-        else {
-            aa.argument = argument;
-            aa.action->trigger();
-            aa.argument.clear();
-        }
+    if (auto action = RootMenu::instance().d->find(id)) {
+        if (action->menu())
+            action->menu()->exec(QCursor::pos());
+        else
+            action->trigger();
         return true;
     } else {
-        _Warn("Cannot execute '%%'", longId);
+        _Warn("Cannot execute '%%'", id);
         return false;
     }
 }
@@ -676,10 +665,11 @@ auto RootMenu::setShortcutMap(const ShortcutMap &map) -> void
     m_keymap.clear();
     for (auto it = d->actions.cbegin(); it != d->actions.cend(); ++it) {
         const auto &keys = map.keys(it.key());
-        it->action->setShortcuts(keys);
+        const auto action = *it;
+        action->setShortcuts(keys);
         for (auto &key : keys) {
             if (!key.isEmpty())
-                m_keymap[key] = it->action;
+                m_keymap[key] = action;
         }
     }
 #ifdef Q_OS_MAC
@@ -724,9 +714,9 @@ auto RootMenu::description(const QString &longId) const -> QString
     return desc;
 }
 
-auto RootMenu::action(const QString &longId) const -> QAction*
+auto RootMenu::action(const QString &id) const -> QAction*
 {
-    return d->find(longId).action;
+    return d->find(id);
 }
 
 struct DumpInfo {
