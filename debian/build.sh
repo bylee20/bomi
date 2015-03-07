@@ -58,7 +58,7 @@ utopic_bdeps=", ffmpeg-bomi, g++ (>= 4.9)"
 utopic_deps=", qml-module-qtquick2, qml-module-qtquick-controls, qml-module-qtquick-layouts"
 utopic_opts=
 
-vivid_bdeps=", g++ (>= 4.9)"
+vivid_bdeps=", g++ (>= 4.9), libsystemd-dev"
 vivid_bdeps="$vivid_bdeps, libavformat-ffmpeg-dev (>= 2.4), libavutil-ffmpeg-dev (>= 2.4), libavcodec-ffmpeg-dev (>= 2.4)"
 vivid_bdeps="$vivid_bdeps, libswresample-ffmpeg-dev (>= 2.4), libswscale-ffmpeg-dev (>= 2.4), libavfilter-ffmpeg-dev (>= 2.4)"
 vivid_deps=", qml-module-qtquick2, qml-module-qtquick-controls, qml-module-qtquick-layouts"
