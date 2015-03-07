@@ -115,6 +115,7 @@ struct MainWindow::Data {
     JrServer *jrServer = nullptr;
     JrPlayer jrPlayer;
 
+    auto resizeContainer() -> void;
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
         { return pref.mouse_action_map()[mb][event->modifiers()]; }
     auto setOpen(const Mrl &mrl) -> void

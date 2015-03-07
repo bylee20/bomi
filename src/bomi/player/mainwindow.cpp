@@ -58,10 +58,11 @@ MainWindow::~MainWindow() {
 
 auto MainWindow::postInitialize() -> void
 {
-    d->adapter->updateFrameMargins();;
+    d->adapter->updateFrameMargins();
     if (d->as.win_frameless)
         d->menu(u"window"_q)[u"frameless"_q]->trigger();
     d->as.restoreWindowGeometry(this);
+    d->resizeContainer();
     OS::setImeEnabled(windowHandle(), false);
     OS::setImeEnabled(d->view, false);
     d->applyPref();
@@ -323,13 +324,7 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 {
     QWidget::resizeEvent(event);
-    QSize size = frameSize();
-    if (d->adapter->isFrameVisible()) {
-        const auto m = d->adapter->frameMargins();
-        size.rwidth() -= m.left() + m.right();
-        size.rheight() -= m.top() + m.bottom();
-    }
-    d->container->resize(size);
+    d->resizeContainer();
 }
 
 auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void
