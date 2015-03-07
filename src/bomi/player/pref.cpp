@@ -13,8 +13,8 @@ static bool init = false;
 Pref::Pref()
 {
     m_app_style = cApp.defaultStyleName();
-    m_app_font = QFontDatabase::systemFont(QFontDatabase::GeneralFont);
-    m_app_fixed_font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    m_app_font = OS::defaultFont();
+    m_app_fixed_font = OS::defaultFixedFont();
 }
 
 auto Pref::initialize() -> void

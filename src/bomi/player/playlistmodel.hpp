@@ -12,6 +12,7 @@ class PlaylistModel : public SimpleListModel<Mrl, Playlist> {
     Q_PROPERTY(int count READ rows NOTIFY countChanged)
     Q_PROPERTY(int length READ rows NOTIFY countChanged)
     Q_PROPERTY(int currentNumber READ currentNumber NOTIFY loadedChanged)
+    Q_PROPERTY(int currentIndex READ loaded NOTIFY loadedChanged)
     Q_PROPERTY(QChar fillChar READ fillChar WRITE setFillChar)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
     Q_PROPERTY(int selected READ selected WRITE select NOTIFY selectedChanged)
@@ -46,14 +47,17 @@ public:
     Q_INVOKABLE bool isLoaded(int row) const {return loaded() == row;}
 
     auto open(const Mrl &mrl, const EncodingInfo &enc) -> void;
+    Q_INVOKABLE void open(const QString &mrl);
+    Q_INVOKABLE void open(const QString &mrl, const QString &enc);
+    Q_INVOKABLE void add(const QString &mrl);
     auto setLoaded(const Mrl &mrl) -> void;
     auto setFillChar(QChar c) -> void;
     auto setVisible(bool visible) -> void;
     auto toggle() -> void { setVisible(!isVisible()); }
     auto setDownloader(Downloader *downloader) -> void;
-    auto clear() -> void { setList(Playlist()); }
-    auto playNext() -> void {play(next());}
-    auto playPrevious() -> void {play(previous());}
+    Q_INVOKABLE void clear() { setList(Playlist()); }
+    Q_INVOKABLE void playNext() { play(next()); }
+    Q_INVOKABLE void playPrevious() { play(previous()); }
     auto select(int row) -> void;
     auto setShuffled(bool shuffled) -> void;
     auto setRepeat(bool repeat) -> void;

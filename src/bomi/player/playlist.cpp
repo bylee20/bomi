@@ -40,7 +40,7 @@ auto Playlist::save(const QString &filePath, Type type) const -> bool
     if (type == Unknown)
         type = guessType(file.fileName());
     QTextStream out(&file);
-    out.setCodec("UTF-8");
+    out.setCodec(EncodingInfo::utf8().codec());
     switch (type) {
     case PLS:
         return savePLS(out);
@@ -58,7 +58,7 @@ auto Playlist::load(QTextStream &in, const EncodingInfo &_enc,
     clear();
     EncodingInfo enc = _enc;
     if (type == M3U8)
-        enc = EncodingInfo::fromName(u"UTF-8"_q);
+        enc = EncodingInfo::utf8();
     if (enc.isValid())
         in.setCodec(enc.codec());
     switch (type) {

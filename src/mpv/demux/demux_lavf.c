@@ -32,12 +32,8 @@
 #include <libavutil/avutil.h>
 #include <libavutil/avstring.h>
 #include <libavutil/mathematics.h>
-#if HAVE_AVCODEC_REPLAYGAIN_SIDE_DATA
-# include <libavutil/replaygain.h>
-#endif
-#if HAVE_AV_DISPLAYMATRIX
-# include <libavutil/display.h>
-#endif
+#include <libavutil/replaygain.h>
+#include <libavutil/display.h>
 #include <libavutil/opt.h>
 
 #include "options/options.h"
@@ -108,6 +104,7 @@ struct format_hack {
     bool no_stream : 1;         // do not wrap struct stream as AVIOContext
     bool use_stream_ids : 1;    // export the native stream IDs
     bool fully_read : 1;        // set demuxer.fully_read flag
+    bool image_format : 1;      // expected to contain exactly 1 frame
     // Do not confuse player's position estimation (position is into external
     // segment, with e.g. HLS, player knows about the playlist main file only).
     bool clear_filepos : 1;
@@ -115,6 +112,7 @@ struct format_hack {
 
 #define BLACKLIST(fmt) {fmt, .ignore = true}
 #define TEXTSUB(fmt) {fmt, .fully_read = true}
+#define IMAGEFMT(fmt) {fmt, .image_format = true}
 
 static const struct format_hack format_hacks[] = {
     // for webradios
@@ -139,12 +137,10 @@ static const struct format_hack format_hacks[] = {
     // Let's open files with extremely generic extensions (.bin) with a
     // demuxer that doesn't have a probe function! NO.
     BLACKLIST("bin"),
-    // Image demuxers, disabled in favor of demux_mf (for now):
-    BLACKLIST("image"),
-    BLACKLIST("image2pipe"),
-    BLACKLIST("bmp_pipe"), BLACKLIST("dpx_pipe"), BLACKLIST("exr_pipe"),
-    BLACKLIST("j2k_pipe"), BLACKLIST("png_pipe"), BLACKLIST("tiff_pipe"),
-    BLACKLIST("jpeg_pipe"),
+    // Useless, does not work with custom streams.
+    BLACKLIST("image2"),
+    // Image demuxers ("<name>_pipe" is detected explicitly)
+    IMAGEFMT("image2pipe"),
     {0}
 };
 
@@ -384,6 +380,11 @@ static int lavf_check_file(demuxer_t *demuxer, enum demux_check check)
         return -1;
     }
 
+    if (bstr_endswith0(bstr0(priv->avif->name), "_pipe")) {
+        MP_VERBOSE(demuxer, "Assuming this is an image format.\n");
+        priv->format_hack.image_format = true;
+    }
+
     demuxer->filetype = priv->avif->name;
 
     return 0;
@@ -422,7 +423,6 @@ static void select_tracks(struct demuxer *demuxer, int start)
 
 static void export_replaygain(demuxer_t *demuxer, sh_audio_t *sh, AVStream *st)
 {
-#if HAVE_AVCODEC_REPLAYGAIN_SIDE_DATA
     for (int i = 0; i < st->nb_side_data; i++) {
         AVReplayGain *av_rgain;
         struct replaygain_data *rgain;
@@ -448,7 +448,6 @@ static void export_replaygain(demuxer_t *demuxer, sh_audio_t *sh, AVStream *st)
 
         sh->replaygain_data = rgain;
     }
-#endif
 }
 
 // Return a dictionary entry as (decimal) integer.
@@ -526,6 +525,8 @@ static void handle_stream(demuxer_t *demuxer, int i)
                               av_q2d(st->codec->time_base) *
                               st->codec->ticks_per_frame);
         sh_video->fps = fps;
+        if (priv->format_hack.image_format)
+            sh_video->fps = demuxer->opts->mf_fps;
         if (st->sample_aspect_ratio.num)
             sh_video->aspect = codec->width  * st->sample_aspect_ratio.num
                     / (float)(codec->height * st->sample_aspect_ratio.den);
@@ -537,15 +538,9 @@ static void handle_stream(demuxer_t *demuxer, int i)
         if (sh_video->bitrate == 0)
             sh_video->bitrate = avfc->bit_rate;
 
-#if HAVE_AV_DISPLAYMATRIX
         uint8_t *sd = av_stream_get_side_data(st, AV_PKT_DATA_DISPLAYMATRIX, NULL);
         if (sd)
             sh_video->rotate = -av_display_rotation_get((uint32_t *)sd);
-#else
-        int rot = dict_get_decimal(st->metadata, "rotate", -1);
-        if (rot >= 0)
-            sh_video->rotate = rot;
-#endif
         sh_video->rotate = ((sh_video->rotate % 360) + 360) % 360;
 
         // This also applies to vfw-muxed mkv, but we can't detect these easily.
@@ -565,8 +560,6 @@ static void handle_stream(demuxer_t *demuxer, int i)
             memcpy(sh_sub->extradata, codec->extradata, codec->extradata_size);
             sh_sub->extradata_len = codec->extradata_size;
         }
-        sh_sub->w = codec->width;
-        sh_sub->h = codec->height;
 
         if (matches_avinputformat_name(priv, "microdvd")) {
             AVRational r;
@@ -641,7 +634,6 @@ static void add_new_streams(demuxer_t *demuxer)
 
 static void update_metadata(demuxer_t *demuxer, AVPacket *pkt)
 {
-#if HAVE_AVFORMAT_METADATA_UPDATE_FLAG
     lavf_priv_t *priv = demuxer->priv;
     if (priv->avfc->event_flags & AVFMT_EVENT_FLAG_METADATA_UPDATED) {
         mp_tags_copy_from_av_dictionary(demuxer->metadata, priv->avfc->metadata);
@@ -658,24 +650,6 @@ static void update_metadata(demuxer_t *demuxer, AVPacket *pkt)
             }
         }
     }
-#elif HAVE_AVCODEC_METADATA_UPDATE_SIDE_DATA
-    lavf_priv_t *priv = demuxer->priv;
-    int md_size;
-    const uint8_t *md;
-    if (!pkt)
-        return;
-    md = av_packet_get_side_data(pkt, AV_PKT_DATA_METADATA_UPDATE, &md_size);
-    if (md && priv->merge_track_metadata) {
-        AVDictionary *dict = NULL;
-        av_packet_unpack_dictionary(md, md_size, &dict);
-        if (dict) {
-            mp_tags_clear(demuxer->metadata);
-            mp_tags_copy_from_av_dictionary(demuxer->metadata, dict);
-            av_dict_free(&dict);
-            demux_changed(demuxer, DEMUX_EVENT_METADATA);
-        }
-    }
-#endif
 }
 
 static int interrupt_cb(void *ctx)
@@ -944,31 +918,12 @@ static void demux_seek_lavf(demuxer_t *demuxer, double rel_seek_secs, int flags)
         // API by default, because there are some major issues.
         // Set max_ts==ts, so that demuxing starts from an earlier position in
         // the worst case.
-        // To make this horrible situation even worse, some lavf demuxers have
-        // broken timebase handling (everything that uses
-        // ff_subtitles_queue_seek()), and always uses the stream timebase. So
-        // we use the timebase and stream index of the first enabled stream
-        // (i.e. a stream which can participate in seeking).
-        int stream_index = -1;
-        AVRational time_base = {1, AV_TIME_BASE};
-        for (int n = 0; n < priv->num_streams; n++) {
-            struct sh_stream *stream = priv->streams[n];
-            AVStream *st = priv->avfc->streams[n];
-            if (stream && st->discard != AVDISCARD_ALL) {
-                stream_index = n;
-                time_base = st->time_base;
-                break;
-            }
-        }
-        int64_t pts = priv->last_pts;
-        if (pts != AV_NOPTS_VALUE)
-            pts = pts / (double)AV_TIME_BASE * av_q2d(av_inv_q(time_base));
-        int r = avformat_seek_file(priv->avfc, stream_index, INT64_MIN,
-                                   pts, pts, avsflags);
+        int r = avformat_seek_file(priv->avfc, -1, INT64_MIN,
+                                   priv->last_pts, priv->last_pts, avsflags);
         // Similar issue as in the normal seeking codepath.
         if (r < 0) {
-            avformat_seek_file(priv->avfc, stream_index, INT64_MIN,
-                               pts, INT64_MAX, avsflags);
+            avformat_seek_file(priv->avfc, -1, INT64_MIN,
+                               priv->last_pts, INT64_MAX, avsflags);
         }
     }
 }

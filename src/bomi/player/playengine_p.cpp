@@ -442,7 +442,17 @@ auto PlayEngine::Data::observe() -> void
     });
 
     for (auto type : streamTypes)
-        mpv.observe(streams[type].pid, [=] (int id) { params.select(type, id); });
+        mpv.observe(streams[type].pid, [=] (QVariant &&var) {
+            if (var.type() == QVariant::Int)
+                params.select(type, var.toInt());
+            else if (var.type() == QVariant::String) {
+                const auto id = var.toString();
+                if (id == "no"_a)
+                    params.select(type, -1);
+                else if (id != "auto"_a)
+                    _Error("'%%' is not a valid id for stream id.", var.toString());
+            }
+        });
     mpv.observe("metadata", [=] () {
         const auto list = mpv.get<QVariant>("metadata").toList();
         MetaData metaData;
@@ -743,7 +753,7 @@ auto PlayEngine::Data::toTracks(const QVariant &var) -> QVector<StreamList>
     return streams;
 }
 
-auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks, const EncodingInfo &enc, double acc) -> QVector<SubComp>
+auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks, const EncodingInfo &enc, bool detect) -> QVector<SubComp>
 {
     Q_ASSERT(tracks.type() == StreamInclusiveSubtitle);
     QVector<SubComp> ret;
@@ -753,7 +763,7 @@ auto PlayEngine::Data::restoreInclusiveSubtitles(const StreamList &tracks, const
         if (it == subMap.end()) {
             it = subMap.insert(track.file(), QMap<QString, SubComp>());
             Subtitle sub;
-            if (!sub.load(track.file(), detect(track, enc, acc)))
+            if (!sub.load(track.file(), encoding(track, enc, detect)))
                 continue;
             for (int i = 0; i < sub.size(); ++i)
                 it->insert(sub[i].language(), sub[i]);
@@ -828,7 +838,7 @@ auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<MpvFileList, QVe
     QVector<SubComp> loads;
     for (auto &file : subs.names) {
         Subtitle sub;
-        const auto enc = detect(file, s);
+        const auto enc = EncodingInfo::detect(EncodingInfo::Subtitle, file);
         if (sub.load(file, enc)) {
             for (int i = 0; i < sub.size(); ++i)
                 loads.push_back(sub[i]);
@@ -916,7 +926,7 @@ auto PlayEngine::Data::addSubtitleFiles(const QVector<SubtitleWithEncoding> &sub
         return;
     QVector<SubComp> loaded;
     for (auto &s : subs) {
-        const auto enc = detect(s.file, s.encoding, params.d->autodetect);
+        const auto enc = EncodingInfo::detect(EncodingInfo::Subtitle, s.encoding, s.file);
         Subtitle sub;
         if (sub.load(s.file, enc)) {
             for (int i = 0; i < sub.size(); ++i) {

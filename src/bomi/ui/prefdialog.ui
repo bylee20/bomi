@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>20</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1612,7 +1612,7 @@
          <item>
           <widget class="MotionIntrplOptionWidget" name="motion_interpolation">
            <property name="title">
-            <string>Motion Interpolation</string>
+            <string>Motion Smoothing</string>
            </property>
           </widget>
          </item>
@@ -1916,7 +1916,7 @@
         </layout>
        </widget>
        <widget class="QWidget" name="gen_behaviours">
-        <layout class="QVBoxLayout" name="verticalLayout_33">
+        <layout class="QVBoxLayout" name="verticalLayout_28">
          <item>
           <widget class="QGroupBox" name="system_tray_group">
            <property name="title">
@@ -1948,6 +1948,87 @@
            <property name="title">
             <string>Logging (Restart required)</string>
            </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="jr_use">
+           <property name="title">
+            <string>Use &amp;JSON-RPC interface</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_4">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>Connection</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_9">
+              <item>
+               <widget class="JrConnectionComboBox" name="jr_connection">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_11">
+                <property name="text">
+                 <string>Protocol</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="JrProtocolComboBox" name="jr_protocol">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_13">
+              <property name="text">
+               <string>Address</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <item>
+               <widget class="QLineEdit" name="jr_address"/>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_12">
+                <property name="text">
+                 <string>Port</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="jr_port">
+                <property name="maximum">
+                 <number>9999</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
           </widget>
          </item>
          <item>
@@ -2588,6 +2669,16 @@ You don't need to specify to this if geust is allowed.</string>
    <class>FontComboBox</class>
    <extends>QComboBox</extends>
    <header>widget/fontcombobox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>JrConnectionComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widget/enumcombobox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>JrProtocolComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widget/enumcombobox.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

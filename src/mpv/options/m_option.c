@@ -74,9 +74,15 @@ char *m_option_strerror(int code)
 
 int m_option_required_params(const m_option_t *opt)
 {
-    if (((opt->flags & M_OPT_OPTIONAL_PARAM) ||
-            (opt->type->flags & M_OPT_TYPE_OPTIONAL_PARAM)))
+    if (opt->type->flags & M_OPT_TYPE_OPTIONAL_PARAM)
         return 0;
+    if (opt->type == &m_option_type_choice) {
+        struct m_opt_choice_alternatives *alt;
+        for (alt = opt->priv; alt->name; alt++) {
+            if (strcmp(alt->name, "yes") == 0)
+                return 0;
+        }
+    }
     return 1;
 }
 
@@ -124,29 +130,23 @@ static int clamp_flag(const m_option_t *opt, void *val)
 static int parse_flag(struct mp_log *log, const m_option_t *opt,
                       struct bstr name, struct bstr param, void *dst)
 {
-    if (param.len) {
-        if (!bstrcmp0(param, "yes")) {
-            if (dst)
-                VAL(dst) = 1;
-            return 1;
-        }
-        if (!bstrcmp0(param, "no")) {
-            if (dst)
-                VAL(dst) = 0;
-            return 1;
-        }
-        mp_fatal(log, "Invalid parameter for %.*s flag: %.*s\n",
-                 BSTR_P(name), BSTR_P(param));
-        mp_info(log, "Valid values are:\n");
-        mp_info(log, "    yes\n");
-        mp_info(log, "    no\n");
-        mp_info(log, "    (passing nothing)\n");
-        return M_OPT_INVALID;
-    } else {
+    if (bstr_equals0(param, "yes") || !param.len) {
         if (dst)
             VAL(dst) = 1;
-        return 0;
+        return 1;
     }
+    if (bstr_equals0(param, "no")) {
+        if (dst)
+            VAL(dst) = 0;
+        return 1;
+    }
+    mp_fatal(log, "Invalid parameter for %.*s flag: %.*s\n",
+                BSTR_P(name), BSTR_P(param));
+    mp_info(log, "Valid values are:\n");
+    mp_info(log, "    yes\n");
+    mp_info(log, "    no\n");
+    mp_info(log, "    (passing nothing)\n");
+    return M_OPT_INVALID;
 }
 
 static char *print_flag(const m_option_t *opt, const void *val)
@@ -541,9 +541,17 @@ static int parse_choice(struct mp_log *log, const struct m_option *opt,
                         struct bstr name, struct bstr param, void *dst)
 {
     struct m_opt_choice_alternatives *alt = opt->priv;
-    for ( ; alt->name; alt++)
+    for ( ; alt->name; alt++) {
         if (!bstrcmp0(param, alt->name))
             break;
+    }
+    if (!alt->name && param.len == 0) {
+        // allow flag-style options, e.g. "--mute" implies "--mute=yes"
+        for (alt = opt->priv; alt->name; alt++) {
+            if (!strcmp("yes", alt->name))
+                break;
+        }
+    }
     if (!alt->name) {
         if (param.len == 0)
             return M_OPT_MISSING_PARAM;

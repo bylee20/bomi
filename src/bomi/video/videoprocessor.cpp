@@ -83,6 +83,7 @@ struct VideoProcessor::Data {
     mp_image_params params;
     int hwdecType = -10;
     bool deint = false, inter_i = false, inter_o = false, interpolate = false;
+    bool hwacc = false;
     HwDecTool *hwdec = nullptr;
     mp_image_pool *pool = nullptr;
 
@@ -102,6 +103,7 @@ struct VideoProcessor::Data {
         DeintOption opt;
         if (deint)
             opt = hwdecType > 0 ? deint_hwdec : deint_swdec;
+        opt.processor = hwacc ? Processor::GPU : Processor::CPU;
         deinterlacer.setOption(opt);
         reset();
         emit p->deintMethodChanged(opt.method);
@@ -160,33 +162,6 @@ auto VideoProcessor::open(vf_instance *vf) -> int
         d->hwdec = new HwDecTool(vf->hwdec->hwctx);
     mp_image_pool_clear(d->pool);
     p->vp->stopSkipping();
-    return true;
-}
-
-auto VideoProcessor::open() -> int
-{
-    d->updateDeint();
-    memset(&d->params, 0, sizeof(d->params));
-    d->vf->reconfig = [] (vf_instance *vf, mp_image_params *in,
-                          mp_image_params *out) -> int
-        { return priv(vf)->reconfig(in, out); };
-    d->vf->filter_ext = [] (vf_instance *vf, mp_image *in) -> int
-        { return priv(vf)->filterIn(in); };
-    d->vf->filter_out = [] (vf_instance *vf) -> int
-        { return priv(vf)->filterOut(); };
-    d->vf->needs_input = [] (vf_instance *vf) -> bool
-        { return priv(vf)->needsInput(); };
-    d->vf->query_format = queryFormat;
-    d->vf->uninit = [] (vf_instance *vf) -> void { return priv(vf)->uninit(); };
-    d->vf->control = [] (vf_instance *vf, int request, void *data) -> int
-        { return priv(vf)->control(request, data); };
-
-    _Delete(d->hwdec);
-    hwdec_request_api(d->vf->hwdec, OS::hwAcc()->name().toLatin1());
-    if (d->vf->hwdec && d->vf->hwdec->hwctx)
-        d->hwdec = new HwDecTool(d->vf->hwdec->hwctx);
-    mp_image_pool_clear(d->pool);
-    stopSkipping();
     return true;
 }
 
@@ -311,10 +286,12 @@ auto VideoProcessor::filterIn(mp_image *_mpi) -> int
         return 0;
     }
 
-    if (_Change(d->hwdecType, _mpi->hwdec_type)) {
+    const bool hwacc = _Change(d->hwacc, !!IMGFMT_IS_HWACCEL(_mpi->imgfmt));
+    const bool hwtype = _Change(d->hwdecType, _mpi->hwdec_type);
+    if (hwacc || hwtype)
         d->updateDeint();
+    if (hwtype)
         emit hwdecChanged(hwdec());
-    }
 
     MpImage mpi = MpImage::wrap(_mpi);
     Q_ASSERT(mpi->frame_timing.next_vsync == 0);

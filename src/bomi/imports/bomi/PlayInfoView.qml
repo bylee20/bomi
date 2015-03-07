@@ -82,15 +82,21 @@ Item {
             content: formatBracket(name, video.delayedFrames, video.delayedTime.toFixed(3) + "ms")
         }
 
-        PlayInfoText {
-            readonly property string name: qsTr("Hardware Acceleration")
-            readonly property var hw: video.hwacc
-            content: formatBracket(name, activationText(hw.state), Format.textNA(hw.driver))
+        Component {
+            id: toolText
+            PlayInfoText {
+                content: formatBracket(name, activationText(tool.state), Format.textNA(tool.driver))
+            }
         }
-
-        PlayInfoText {
+        Loader {
+            readonly property string name: qsTr("Hardware Acceleration")
+            readonly property QtObject tool: video.hardwareAcceleration
+            sourceComponent: toolText
+        }
+        Loader {
             readonly property string name: qsTr("Deinterlacer")
-            content: name + ": " + activationText(video.deinterlacer)
+            readonly property QtObject tool: video.deinterlacer
+            sourceComponent: toolText
         }
 
         PlayInfoText { }
@@ -118,13 +124,16 @@ Item {
                 readonly property string name: qsTr("Subtitle Track")
                 function format(name, track) {
                     if (name.length <= 0) return ""
-                    return qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5")
+                    return qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5, Encoding=%6")
                         .arg(name)
                         .arg(Format.integerNA(track.number))
                         .arg(Format.textNA(track.codec))
                         .arg(Format.textNA(track.title))
                         .arg(Format.textNA(track.language))
+                        .arg(Format.textNA(track.encoding))
                 }
+                width: wrapper.width
+                textStyle.wrapMode: Text.Wrap
                 content: format(name, track)
             }
         }

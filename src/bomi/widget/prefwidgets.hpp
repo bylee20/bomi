@@ -60,7 +60,7 @@ public:
         QStringList list;
         for (int i=0; i<restores.size(); ++i) {
             if (restores[i])
-                list.append(_L(at(i).property.name()));
+                list.append(at(i).property);
         }
         return list;
     }
@@ -68,7 +68,7 @@ public:
     {
         QVector<bool> restores(size(), false);
         for (int i=0; i<size(); ++i)
-            restores[i] = list.contains(_L(at(i).property.name()));
+            restores[i] = list.contains(at(i).property);
         setChecked(0, restores);
     }
     auto compare(const QVariant &var) const -> bool
@@ -76,7 +76,7 @@ public:
         auto list = var.toStringList();
         auto restores = checkedList(0);
         for (int i = 0; i < restores.size(); ++i) {
-            if (list.contains(_L(at(i).property.name())) != restores[i])
+            if (list.contains(at(i).property) != restores[i])
                 return false;
         }
         return true;

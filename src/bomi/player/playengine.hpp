@@ -26,7 +26,7 @@ class StreamTrack;                      class SubtitleObject;
 class OpenGLFramebufferObject;          class SubtitleRenderer;
 class SubCompModel;                     class MrlState;
 class QOpenGLContext;                   class EncodingInfo;
-class SubComp;                          struct SmbAuth;
+class SubComp;                          class SmbAuth;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
 
@@ -38,6 +38,8 @@ class PlayEngine : public QObject {
     Q_ENUMS(State)
     Q_ENUMS(ActivationState)
     Q_ENUMS(Waiting)
+
+    Q_CLASSINFO("QmlType", "Engine")
 
     Q_PROPERTY(MediaObject *media READ media CONSTANT FINAL)
     Q_PROPERTY(AudioObject *audio READ audio CONSTANT FINAL)
@@ -57,7 +59,7 @@ class PlayEngine : public QObject {
 
     Q_PROPERTY(qreal zoom READ videoZoom NOTIFY zoomChanged)
     Q_PROPERTY(qreal volume READ volume WRITE setAudioVolume NOTIFY volumeChanged)
-    Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
+    Q_PROPERTY(bool muted READ isMuted WRITE setAudioMuted NOTIFY mutedChanged)
 
     Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
     Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)
@@ -140,7 +142,6 @@ public:
     auto lock() -> void;
     auto setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void;
     auto setSubtitleStyle_locked(const OsdStyle &style) -> void;
-    auto setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void;
     auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;
     auto setCache_locked(const CacheInfo &info) -> void;
     auto setSmbAuth_locked(const SmbAuth &smb) -> void;
@@ -178,7 +179,7 @@ public:
     auto setSubtitleHidden(bool hidden) -> void;
     auto autoloadSubtitleFiles() -> void;
     auto autoloadAudioFiles() -> void;
-    auto reloadSubtitleFiles(const EncodingInfo &enc, double acc = -1) -> void;
+    auto reloadSubtitleFiles(const EncodingInfo &enc, bool detect) -> void;
     auto reloadAudioFiles() -> void;
     auto setSubtitleStyleOverriden(bool override) -> void;
     auto setSubtitleScale(double by) -> void;
@@ -267,10 +268,8 @@ signals:
     void duration_sChanged();
     void begin_sChanged();
     void end_sChanged();
-
     void beginSyncMrlState();
     void endSyncMrlState();
-    void seeked(int time);
     void sought();
     void started(Mrl mrl);
     void finished(Mrl mrl, bool eof);
@@ -303,7 +302,6 @@ signals:
     void runningChanged();
     void deintOptionsChanged();
     void cacheSizeChanged();
-    void messageRequested(const QString &message);
     void snapshotTaken();
     void subtitleSelectionChanged();
 private:

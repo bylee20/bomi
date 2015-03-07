@@ -27,6 +27,8 @@
 #include "os/os.hpp"
 #include "pref_helper.hpp"
 #include "player/shortcutmap.hpp"
+#include "enum/jrconnection.hpp"
+#include "enum/jrprotocol.hpp"
 
 using Shortcuts = QMap<QString, QList<QKeySequence>>; // keep for backward compat
 
@@ -57,6 +59,12 @@ private:
     P0(QString, quick_snapshot_folder, _WritablePath(Location::Pictures))
     P0(int, quick_snapshot_quality, -1)
     P0(QuickSnapshotSave, quick_snapshot_save, QuickSnapshotSave::Fixed)
+
+    P0(bool, jr_use, false)
+    P0(JrConnection, jr_connection, JrConnection::Tcp)
+    P0(JrProtocol, jr_protocol, JrProtocol::Raw)
+    P0(QString, jr_address, u"localhost"_q)
+    P0(int, jr_port, 2020)
 
     P0(bool, fit_to_video, false)
     P0(bool, use_mpris2, true)

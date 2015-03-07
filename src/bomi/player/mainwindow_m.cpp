@@ -123,7 +123,8 @@ auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
         actions[i]->trigger();
 }
 
-auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
+auto MainWindow::Data::plugTrack(Menu &parent, StreamList(MrlState::*get)() const,
+                                 void(MrlState::*sig)(StreamList),
                                  QString(MrlState::*desc)() const,
                                  void(PlayEngine::*set)(int,bool),
                                  const QString &gkey, QAction *sep) -> void
@@ -147,11 +148,14 @@ auto MainWindow::Data::plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
         const auto checked = a->isChecked();
         const auto text = a->text();
         (e.*set)(a->data().toInt(), checked);
-        showMessage((e.params()->*desc)(), a->text());
+        if (auto track = (e.params()->*get)().selection())
+            showMessage((e.params()->*desc)(), track->name());
+        else
+            showMessage((e.params()->*desc)(), false);
     });
 }
-#define PLUG_TRACK(m, p, s, ...) plugTrack(m, &MrlState::p##_changed, \
-    &MrlState::desc_##p, &PlayEngine::s, ##__VA_ARGS__)
+#define PLUG_TRACK(m, p, s, ...) plugTrack(m, &MrlState::p, \
+    &MrlState::p##_changed, &MrlState::desc_##p, &PlayEngine::s, ##__VA_ARGS__)
 
 auto MainWindow::Data::plugMenu() -> void
 {
@@ -523,7 +527,8 @@ auto MainWindow::Data::plugMenu() -> void
     auto &strack = sub(u"track"_q);
     auto ssep = strack.addSeparator();
     PLUG_TRACK(sub, sub_tracks, setSubtitleTrackSelected, "exclusive"_a);
-    plugTrack(sub, &MrlState::sub_tracks_inclusive_changed, &MrlState::desc_sub_tracks,
+    plugTrack(sub, &MrlState::sub_tracks_inclusive,
+              &MrlState::sub_tracks_inclusive_changed, &MrlState::desc_sub_tracks,
               &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
     connect(sub(u"track"_q)[u"cycle"_q], &QAction::triggered, p, [=] () {
         auto &m = menu(u"subtitle"_q)(u"track"_q);
@@ -545,13 +550,9 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(strack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadSubtitleFiles);
     connect(strack(u"reload"_q).g(), &ActionGroup::triggered, p, [=] (QAction *a) {
-        auto mib = a->data().toInt();
-        if (mib > 0)
-            e.reloadSubtitleFiles(EncodingInfo::fromMib(mib), -1);
-        else {
-            double acc = mib < 0 ? -1 : 0.001;
-            e.reloadSubtitleFiles(EncodingInfo(), acc);
-        }
+        const auto mib = a->data().toInt();
+        // mib > 0: force, == 0: auto, < 0: current
+        e.reloadSubtitleFiles(EncodingInfo::fromMib(mib), mib == 0);
     });
     connect(strack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearSubtitleFiles);
 
@@ -727,8 +728,8 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &win = menu(u"window"_q);
     plugAppEnumChild(win, "win_stays_on_top", &AppState::winStaysOnTopChanged);
     connect(&as, &AppState::winStaysOnTopChanged, p, [=] () { updateStaysOnTop(); });
-    connect(win[u"frameless"_q], &QAction::triggered, p,
-            [=] (bool on) { adapter->setFrameless(on); as.win_frameless = on; });
+    connect(win[u"frameless"_q], &QAction::triggered, p, [=] (bool on)
+        { adapter->setFrameless(on); as.win_frameless = on; });
     connect(win.g(u"size"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
     connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);

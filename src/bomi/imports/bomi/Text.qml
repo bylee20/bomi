@@ -22,5 +22,6 @@ Item {
         color: textStyle.color
         textFormat: textStyle.format
         elide: textStyle.elide
+        wrapMode: textStyle.wrapMode
     }
 }

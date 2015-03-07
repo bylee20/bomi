@@ -52,6 +52,6 @@ struct EnumNameVariantConverter
 
 auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter;
 
-auto _EnumMetaTypeIds() -> const std::array<int, 30>&;
+auto _EnumMetaTypeIds() -> const std::array<int, 32>&;
 
 #endif

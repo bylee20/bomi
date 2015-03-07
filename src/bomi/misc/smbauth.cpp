@@ -64,6 +64,7 @@ auto SmbAuth::process(const QUrl &url) -> Error
     smbc_close(fd);
     return m_lastError = NoError;
 #else
+    Q_UNUSED(url);
     return m_lastError = Unsupported;
 #endif
 }
@@ -85,6 +86,8 @@ auto SmbAuth::errorString(Error error) -> QString
     switch (error) {
     case NoError:
         return u"No error"_q;
+    case Unsupported:
+        return u"smb:// is not supported"_q;
     case InvalidUrl:
         return u"Invalid URL"_q;
     case OutOfMemory:

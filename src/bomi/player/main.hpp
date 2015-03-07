@@ -46,7 +46,7 @@ auto registerType() -> void
     qmlRegisterType<VideoObject>();
     qmlRegisterType<AvTrackObject>();
     qmlRegisterType<VideoFormatObject>();
-    qmlRegisterType<VideoHwAccObject>();
+    qmlRegisterType<VideoToolObject>();
     qmlRegisterType<AudioFormatObject>();
     qmlRegisterType<AudioObject>();
     qmlRegisterType<CodecObject>();
@@ -82,7 +82,6 @@ auto registerType() -> void
     qRegisterMetaType<ShortcutMap>();
     qRegisterMetaType<OsdStyle>();
     qRegisterMetaType<OS::HwAcc::Api>();
-    qRegisterMetaType<QMap<QString, QString>>();
     qRegisterMetaType<IntrplParamSetMap>("IntrplParamSetMap");
 
     qRegisterMetaTypeStreamOperators<Mrl>();

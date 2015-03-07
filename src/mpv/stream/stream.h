@@ -54,7 +54,6 @@ enum streamtype {
 #define STREAM_WRITE 1
 
 // flags for stream_open_ext (this includes STREAM_READ and STREAM_WRITE)
-#define STREAM_NO_FILTERS 2
 #define STREAM_SAFE_ONLY 4
 #define STREAM_NETWORK_ONLY 8
 
@@ -157,7 +156,6 @@ typedef struct stream_info_st {
     void *(*get_defaults)(struct stream *st);
     const struct m_option *options;
     const char *const *url_options;
-    bool stream_filter;
     bool can_write;     // correctly checks for READ/WRITE modes
     bool is_safe;       // opening is no security issue, even with remote provided URLs
     bool is_network;    // used to restrict remote playlist entries to remote URLs
@@ -196,7 +194,6 @@ typedef struct stream {
     bool streaming : 1; // known to be a network stream if true
     bool seekable : 1; // presence of general byte seeking support
     bool fast_skip : 1; // consider stream fast enough to fw-seek by skipping
-    bool safe_origin : 1; // used for playlists that can be opened safely
     bool is_network : 1; // original stream_info_t.is_network flag
     bool allow_caching : 1; // stream cache makes sense
     struct mp_log *log;
@@ -209,7 +206,6 @@ typedef struct stream {
     char *capture_filename;
 
     struct stream *uncached_stream; // underlying stream for cache wrapper
-    struct stream *source;
 
     // Includes additional padding in case sizes get rounded up by sector size.
     unsigned char buffer[];

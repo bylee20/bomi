@@ -14,7 +14,7 @@ LIBS += -L$${LIB_DIR} -lbz2 -lz
 include(configure.pro)
 !isEmpty(BOMI_RELEASE) {
     CONFIG += release
-	macx:CONFIG += app_bundle
+    macx:CONFIG += app_bundle
 } else:CONFIG -= release
 
 QMAKE_CXXFLAGS_CXX11 = -std=c++1y
@@ -47,7 +47,7 @@ macx {
 } else:unix {
     QT += dbus x11extras
 	TARGET = bomi
-	LIBS += -ldl -lxcb-randr -lxcb-screensaver -lxcb-xtest
+	LIBS += -ldl
 	HEADERS += player/mpris.hpp
 	SOURCES += player/mpris.cpp
 } else:win32 {
@@ -275,7 +275,15 @@ HEADERS += \
     misc/stepinfo.hpp \
     player/mrlstate_old.hpp \
     misc/smbauth.hpp \
-    widget/fontcombobox.hpp
+    widget/fontcombobox.hpp \
+    json/jrserver.hpp \
+    json/jrclient.hpp \
+    json/jrcommon.hpp \
+	json/jriface.hpp \
+    player/jrplayer.hpp \
+    enum/jrprotocol.hpp \
+    enum/jrconnection.hpp \
+    http-parser/http_parser.h
 
 SOURCES += \
 	stdafx.cpp \
@@ -473,7 +481,15 @@ SOURCES += \
     misc/stepinfo.cpp \
     player/mrlstate_old.cpp \
     misc/smbauth.cpp \
-    widget/fontcombobox.cpp
+    widget/fontcombobox.cpp \
+    json/jrserver.cpp \
+    json/jrclient.cpp \
+    json/jrcommon.cpp \
+	json/jriface.cpp \
+    player/jrplayer.cpp \
+    enum/jrprotocol.cpp \
+    enum/jrconnection.cpp \
+    http-parser/http_parser.c
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

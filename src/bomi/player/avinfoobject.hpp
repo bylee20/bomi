@@ -15,7 +15,7 @@ class CodecObject : public QObject {
     Q_PROPERTY(QString description READ description NOTIFY descriptionChanged)
 public:
     auto parse(const QString &info) -> void;
-    auto family() const -> QString { return m_family.toUpper(); }
+    auto family() const -> QString { return m_family; }
     auto type() const -> QString { return m_type; }
     auto description() const -> QString { return m_desc; }
     auto setFamily(const QString &family) -> void
@@ -39,7 +39,7 @@ public:
     auto type() const -> QString { return m_type; }
     auto bitrate() const -> int { return m_bitrate; }
     auto setType(const QString &type) -> void
-        { if (_Change(m_type, type.toUpper())) emit typeChanged(); }
+        { if (_Change(m_type, type)) emit typeChanged(); }
     auto setBitrate(int bps) -> void
         { if (_Change(m_bitrate, bps)) emit bitrateChanged(); }
     auto depth() const -> int { return m_depth; }
@@ -62,6 +62,7 @@ class AvTrackObject : public QObject {
     Q_PROPERTY(bool valid READ isValid CONSTANT FINAL)
     Q_PROPERTY(bool selected READ isSelected CONSTANT FINAL)
     Q_PROPERTY(QString codec READ codec CONSTANT FINAL)
+    Q_PROPERTY(QString encoding READ encoding CONSTANT FINAL)
 public:
     AvTrackObject() = default;
     auto id() const -> int {return m_id;}
@@ -71,9 +72,10 @@ public:
     auto isValid() const -> bool { return m_id > 0; }
     auto codec() const -> QString { return m_codec; }
     auto isSelected() const -> bool { return m_selected; }
+    auto encoding() const -> QString { return m_enc; }
     static auto fromTrack(int n, const StreamTrack &track) -> AvTrackObject*;
 private:
-    int m_id = -1, m_number = -1; QString m_title, m_lang, m_codec;
+    int m_id = -1, m_number = -1; QString m_title, m_lang, m_codec, m_enc;
     bool m_selected = false;
 };
 
@@ -151,7 +153,7 @@ public:
     auto setNormalizer(double gain) -> void
         { if (_Change(m_gain, gain)) emit normalizerChanged(); }
     auto device() const -> QString;
-    auto driver() const -> QString { return m_driver.toUpper(); }
+    auto driver() const -> QString { return m_driver; }
 public slots:
     void setDriver(const QString &driver);
     void setDevice(const QString &device);
@@ -167,15 +169,16 @@ private:
 
 /******************************************************************************/
 
-class VideoHwAccObject : public QObject {
+class VideoToolObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(int state READ state NOTIFY stateChanged)
     Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
+    Q_PROPERTY(QString method READ driver NOTIFY driverChanged)
 public:
     auto state() const -> int { return m_state; }
     auto driver() const -> QString { return m_driver; }
     auto setDriver(const QString &driver) -> void
-    { if (_Change(m_driver, driver.toUpper())) emit driverChanged(); }
+    { if (_Change(m_driver, driver)) emit driverChanged(); }
     auto setState(int state) -> void
     { if (_Change(m_state, state)) emit stateChanged(); }
 signals:
@@ -244,8 +247,8 @@ class VideoObject : public AvCommonObject {
     Q_PROPERTY(VideoFormatObject *decoder READ decoder CONSTANT FINAL)
     Q_PROPERTY(VideoFormatObject *filter READ filter CONSTANT FINAL)
     Q_PROPERTY(VideoFormatObject *output READ output CONSTANT FINAL)
-    Q_PROPERTY(VideoHwAccObject *hwacc READ hwacc CONSTANT FINAL)
-    Q_PROPERTY(int deinterlacer READ deinterlacer NOTIFY deinterlacerChanged)
+    Q_PROPERTY(VideoToolObject *hardwareAcceleration READ hwacc CONSTANT FINAL)
+    Q_PROPERTY(VideoToolObject *deinterlacer READ deint CONSTANT FINAL)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(int delayedFrames READ delayedFrames NOTIFY delayedFramesChanged)
     Q_PROPERTY(qreal delayedTime READ delayedTime NOTIFY delayedTimeChanged)
@@ -260,11 +263,10 @@ public:
     auto decoder() -> VideoFormatObject* { return &m_decoder; }
     auto output() -> VideoFormatObject* { return &m_output; }
     auto filter() -> VideoFormatObject* { return &m_filter; }
-    auto hwacc() -> VideoHwAccObject* { return &m_hwacc; }
-    auto hwacc() const -> const VideoHwAccObject* { return &m_hwacc; }
-    auto deinterlacer() const -> int { return m_deint; }
-    auto setDeinterlacer(int deint) -> void
-        { if (_Change(m_deint, deint)) emit deinterlacerChanged(); }
+    auto hwacc() -> VideoToolObject* { return &m_hwacc; }
+    auto hwacc() const -> const VideoToolObject* { return &m_hwacc; }
+    auto deint() -> VideoToolObject* { return &m_deint; }
+    auto deint() const -> const VideoToolObject* { return &m_deint; }
     auto droppedFrames() const -> int { return m_dropped; }
     auto droppedFps() const -> qreal { return m_droppedFps; }
     auto delayedFrames() const -> int { return m_delayed; }
@@ -283,15 +285,14 @@ public:
 signals:
     void frameCountChanged();
     void frameNumberChanged();
-    void deinterlacerChanged();
     void droppedFramesChanged();
     void droppedFpsChanged();
     void delayedFramesChanged();
     void delayedTimeChanged();
 private:
     VideoFormatObject m_decoder, m_filter, m_output;
-    VideoHwAccObject m_hwacc;
-    int m_deint = 0, m_dropped = 0, m_delayed = 0;
+    VideoToolObject m_hwacc, m_deint;
+    int m_dropped = 0, m_delayed = 0;
     qreal m_droppedFps = 0.0, m_fpsMp = 1;
     qint64 m_frameCount = 0, m_frameNumber = 0;
     QTime m_time;

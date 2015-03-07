@@ -25,6 +25,8 @@
 #include "os/os.hpp"
 #include "misc/smbauth.hpp"
 #include "misc/dataevent.hpp"
+#include "json/jrserver.hpp"
+#include "player/jrplayer.hpp"
 #include <QUndoCommand>
 #include <QMimeData>
 #include <QQmlProperty>
@@ -65,7 +67,7 @@ struct MainWindow::Data {
     MainQuickView *view = nullptr;
     QWidget *container = nullptr;
     QQuickItem *player = nullptr;
-    RootMenu menu;
+    RootMenu &menu = RootMenu::instance();
     RecentInfo recent;
     AppState as;
     PlayEngine e;
@@ -110,6 +112,8 @@ struct MainWindow::Data {
     IntrplDialog *intrpl = nullptr, *chroma = nullptr;
 
     OS::WindowAdapter *adapter = nullptr;
+    JrServer *jrServer = nullptr;
+    JrPlayer jrPlayer;
 
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
         { return pref.mouse_action_map()[mb][event->modifiers()]; }
@@ -186,7 +190,7 @@ struct MainWindow::Data {
 #define PLUG_ENUM_CHILD(pm, p, s) plugEnumChild(pm, PLUG_HELPER(p, s))
     template<class T>
     auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void;
-    auto plugTrack(Menu &parent, void(MrlState::*sig)(StreamList),
+    auto plugTrack(Menu &parent, StreamList(MrlState::*get)() const, void(MrlState::*sig)(StreamList),
                    QString(MrlState::*desc)() const, void(PlayEngine::*set)(int,bool),
                    const QString &gkey = QString(), QAction *sep = nullptr) -> void;
 

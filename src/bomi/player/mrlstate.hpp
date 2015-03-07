@@ -58,6 +58,7 @@ class MrlState : public QObject {
 private: \
     type m_##name = def; \
     Q_PROPERTY(type name READ name WRITE set_##name NOTIFY name ## _changed REVISION rev) \
+    Q_CLASSINFO(#name, desc) \
 public: \
     Q_SIGNAL void name ## _changed(type); \
     Q_INVOKABLE QString desc_ ## name() const { return tr(desc); } \
@@ -98,7 +99,7 @@ private:
     P_(ColorSpace, video_space, ColorSpace::Auto, QT_TR_NOOP("Video Color Space"), 0)
     P_(bool, video_hq_upscaling, false, QT_TR_NOOP("Video High Quality Upscaling"), 0)
     P_(bool, video_hq_downscaling, false, QT_TR_NOOP("Video High Quality Downscaling"), 0)
-    P_(bool, video_motion_interpolation, false, QT_TR_NOOP("Video Motion Interpolation"), 0)
+    P_(bool, video_motion_interpolation, false, QT_TR_NOOP("Video Motion Smoothing"), 0)
     P_(VideoEffects, video_effects, 0, QT_TR_NOOP("Video Effects"), 0)
     P_(StreamList, video_tracks, {StreamVideo}, QT_TR_NOOP("Video Track"), 0)
 
@@ -125,8 +126,8 @@ public:
     static const int Version = 4;
     MrlState();
     ~MrlState();
-    struct PropertyInfo { QMetaProperty property; QString description; };
-    auto description(const char *property) const -> QString;
+    struct PropertyInfo { QString property; QString description; };
+    static auto description(const char *property) -> QString;
     auto notifySignal(const char *property) const -> QMetaMethod;
     auto metaProperty(const char *property) const -> QMetaProperty;
     auto tracks(StreamType type) const -> const StreamList& { return *m_tracks[type].tracks; }

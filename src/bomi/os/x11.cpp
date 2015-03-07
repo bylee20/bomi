@@ -330,15 +330,18 @@ auto X11WindowAdapter::stopDrag() -> void
     // hack to get back focus
     auto pos = QCursor::pos();
     d->send(widget(), _NET_WM_MOVERESIZE, pos.x(), pos.y(), 11, 1, 0);
+    auto reset = [&] () {
+        QCursor::setPos(pos + QPoint(10, 0));
+        QCursor::setPos(pos - QPoint(10, 0));
+        QCursor::setPos(pos);
+    };
     xcb_test_fake_input(d->connection, XCB_BUTTON_PRESS, XCB_BUTTON_INDEX_1,
                         XCB_WINDOW_NONE, d->root, 0, 0, 0);
+    reset();
     xcb_test_fake_input(d->connection, XCB_BUTTON_RELEASE, XCB_BUTTON_INDEX_1,
                         XCB_WINDOW_NONE, d->root, 0, 0, 0);
     xcb_flush(d->connection);
-
-    QCursor::setPos(pos + QPoint(10, 0));
-    QCursor::setPos(pos - QPoint(10, 0));
-    QCursor::setPos(pos);
+    reset();
 }
 
 auto X11WindowAdapter::startMoveByDrag(const QPointF &m) -> void

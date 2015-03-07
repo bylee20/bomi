@@ -1,3 +1,70 @@
+  * New: display used encoding for subtitle file track in playinfo
+  * New: '--dump-api-tree' and '--dump-action-list' command line options
+  * New: JSON-RPC interface (#247)
+  * New: current deinterlacing method in playinfo
+  * New: options to set general font and fixed-width font
+  * New: 'Window > Remove Frame' for frameless(borderless) window
+  * New: 'Subtitle > Subtitle Sync > Bring Previous/Next Subtitle' menu (#245)
+  * New: allow to map actions for left/right button click
+  * New: ask username and password on permission denied for smb://
+  * New: 'Subtitle > Subtitle Scale' menu to adjust font scale during playback (#240)
+  * New: 'Subtitle > Override ASS Style' menu (#240)
+  * New: options to specify authentication info for samba
+  * New: configurable step for 'move screen position'
+  * New: 'Video > Zoom' menu
+  * New: color adjustment for RGB channel
+  * New: video color editor dialog
+  * New: new skin 'air'
+  * New: 'Est. Frame Number' item in playback information
+  * New: aspect ratio is adjustable now
+  * New: enable smbclient support(smb:// protocol)
+  * New: caption filter in subtitle viewer
+  * New: checkbox to display time in milliseconds
+  * New: language filter list for subtitle find dialog (#236)
+  * New: reconstruct encoding list
+  * New: reload file with specific encoding
+  * New: seek by double clicking caption in subtitle viewer (#231)
+  * New: accept non-media type URL by drag-and-drop (#225)
+  * Mod: don't capitalize items in playinfo
+  * Mod: drop LinearBlend and Median deinterlacer
+  * Mod: drop libpostproc dependency
+  * Mod: drop external command support to disable screensaver
+  * Fix: prefer cp1250 to iso-8859-2 for autodetection
+  * Fix: deselecting internal subtitle didn't work (#248)
+  * Fix: wrong H/W Acc. state in playinfo
+  * Fix: request _NET_WM_MOVERESIZE to window manager for move-by-drag
+  * Fix: unset pressed button on button released
+  * Fix: display all selected subtitles in playinfo
+  * Fix: Bob/LinearBob/CubicBob supports all pixel format now
+  * Fix: top and button pixels was blinking with Bob/LinearBob/CubicBob
+  * Fix: subtitle position menu worked in opposite way
+  * Fix: subtitle alignment wasn't kept after position changed
+  * Fix: rename Input/Output/Renderer -> Decoder/Filter/Output
+  * Fix: display package-bitrate for decoder input in playinfo
+  * Fix: synchronize display order of menu in preference with context menu
+  * Fix: don't display logo during changing current media
+  * Fix: don't display property OSD on intialization of new playback
+  * Fix: potential crash on changing subtitles
+  * Fix: potential crash when parsing SAMI subtitles
+  * Fix: crash on exiting while dialogs are open
+  * Fix: subtitle viewer didn't work if it was open before start playback
+  * Fix: crash on reloading subtitle during subtitle viewer is open
+  * Fix: don't draw subtitles in snapshot when hidden
+  * Fix: popup an error message for error on loading skin
+  * Fix: disable IME on main window
+  * Fix: pixel format mismatch which causes crash or deinterlacing disabled
+  * Fix: disc title wasn't restored
+  * Fix: prevent interference from other applications using PulseAudio (#230)
+  * Fix: keep horizontal scroll bar position on auto scroll in subtitle viewer
+  * Fix: currupted font for current caption in subtitle viewer
+  * Fix: prevent bad interfere from MPRIS and QML TimeSlider
+  * Fix: save and restore states of subtitle find dialog and subtitle viewer
+  * Fix: show history/playlist after 200ms timeout when mouse hovers on edge
+  * Fix: keep 'default' shortcuts for unchanged shortcuts of actions
+  * Fix: display full URL for non-media type URL
+  * Fix: display media name provided by youtube-dl (#226)
+  * Fix: Ok/Apply wasn't activated for hwacc codec change
+
 0.9.2
 
   * New: new skin 'native' which supports native look & feel

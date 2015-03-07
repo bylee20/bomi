@@ -34,16 +34,16 @@ auto hasExtension(Extension ext) -> bool
     return d.extensions & ext;
 }
 
-auto check() -> void
+auto check() -> QString
 {
     QOpenGLContext gl;
     if (!gl.create())
-        _Fatal("Cannot create OpenGL context!");
+        return qApp->translate("OpenGL", "Cannot create OpenGL context!");
     QOffscreenSurface off;
     off.setFormat(gl.format());
     off.create();
     if (!gl.makeCurrent(&off))
-        _Fatal("Cannot make OpenGL context current!");
+        return qApp->translate("OpenGL", "Cannot make OpenGL context current!");
 
     _Info("Check OpenGL stuffs.");
     const auto version = QOpenGLVersionProfile(gl.format()).version();
@@ -54,7 +54,7 @@ auto check() -> void
         { return major*100 + minor; };
     const int current = versionNumber(version.first, version.second);
     if (current < versionNumber(2, 1))
-        _Fatal("OpenGL version is too low. "
+        return qApp->translate("OpenGL", "OpenGL version is too low. "
                "bomi requires OpenGL 2.1 or higher.");
 
     auto exts = gl.extensions();
@@ -85,7 +85,7 @@ auto check() -> void
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &d.maxTexSize);
 
     if (!hasExtension(FramebufferObject))
-        _Fatal("FBO is not available. FBO support is essential.");
+        return qApp->translate("OpenGL", "FBO is not available. FBO support is essential.");
     auto testFbo = [] (OGL::TextureFormat format) {
         auto fbo = new QOpenGLFramebufferObject(
             {16, 16}, QOpenGLFramebufferObject::NoAttachment,
@@ -100,9 +100,10 @@ auto check() -> void
     testFbo(OGL::RGBA16_UNorm);
     testFbo(OGL::RGBA8_UNorm);
     if (d.fboFormats.isEmpty())
-        _Fatal("No available FBO texture format.\n"
+        return qApp->translate("OpenGL", "No available FBO texture format.\n"
                "One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
     _Info("Available extensions: %%", extensions.join(u", "_q));
+    return QString();
 }
 
 auto errorString(GLenum error) -> const char*

@@ -99,10 +99,13 @@ PlayEngine::PlayEngine()
         auto act = Unavailable;
         if (d->vp->isInputInterlaced())
             act = d->vp->isOutputInterlaced() ? Deactivated : Activated;
-        d->info.video.setDeinterlacer(act);
+        d->info.video.deint()->setState(act);
     };
     connect(d->vp, &VideoProcessor::inputInterlacedChanged, this, checkDeint);
     connect(d->vp, &VideoProcessor::outputInterlacedChanged, this, checkDeint);
+    connect(d->vp, &VideoProcessor::deintMethodChanged, this,
+            [=] (auto m) { d->info.video.deint()->setDriver(_EnumName(m)); });
+
     connect(d->vp, &VideoProcessor::skippingChanged, this, [=] (bool skipping) {
         if (skipping) {
             d->pauseAfterSkip = isPaused();
@@ -327,7 +330,7 @@ auto PlayEngine::setSubtitleTrackSelected(int id, bool s) -> void
     if (s)
         d->mpv.setAsync("sid", id);
     else if (d->params.sub_tracks().selectionId() == id)
-        d->mpv.setAsync("sid", -1);
+        d->mpv.setAsync("sid", "no"_b);
 }
 
 auto PlayEngine::autoloadSubtitleFiles() -> void
@@ -349,7 +352,7 @@ auto PlayEngine::autoloadAudioFiles() -> void
     setAudioFiles(d->autoloadFiles(StreamAudio).names);
 }
 
-auto PlayEngine::reloadSubtitleFiles(const EncodingInfo &enc, double acc) -> void
+auto PlayEngine::reloadSubtitleFiles(const EncodingInfo &enc, bool detect) -> void
 {
     d->mutex.lock();
     auto old1 = d->params.sub_tracks();
@@ -358,9 +361,9 @@ auto PlayEngine::reloadSubtitleFiles(const EncodingInfo &enc, double acc) -> voi
     clearSubtitleFiles();
     for (auto &track : old1) {
         if (track.isExternal())
-            d->sub_add(track.file(), d->detect(track, enc, acc), track.isSelected());
+            d->sub_add(track.file(), d->encoding(track, enc, detect), track.isSelected());
     }
-    d->setInclusiveSubtitles(d->restoreInclusiveSubtitles(old2, enc, acc));
+    d->setInclusiveSubtitles(d->restoreInclusiveSubtitles(old2, enc, detect));
 }
 
 auto PlayEngine::reloadAudioFiles() -> void
@@ -1080,12 +1083,6 @@ auto PlayEngine::clearAudioFiles() -> void
 auto PlayEngine::params() const -> const MrlState*
 {
     return &d->params;
-}
-
-auto PlayEngine::setSubtitleEncoding_locked(const EncodingInfo &enc, double accuracy) -> void
-{
-    d->params.d->subtitleEncoding = enc;
-    d->params.d->autodetect = accuracy;
 }
 
 auto PlayEngine::setAutoselectMode_locked(bool enable, AutoselectMode mode,

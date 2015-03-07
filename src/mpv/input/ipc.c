@@ -482,13 +482,19 @@ static char *text_execute_command(struct client_arg *arg, void *tmp, char *src)
     return NULL;
 }
 
-static int ipc_write(int fd, const char *buf, size_t count)
+static int ipc_write_str(struct client_arg *client, const char *buf)
 {
+    size_t count = strlen(buf);
     while (count > 0) {
-        ssize_t rc = write(fd, buf, count);
+        ssize_t rc = write(client->client_fd, buf, count);
         if (rc <= 0) {
             if (rc == 0)
                 return -1;
+
+            if (errno == EBADF) {
+                client->writable = false;
+                return 0;
+            }
 
             if (errno == EINTR)
                 continue;
@@ -567,16 +573,16 @@ static void *client_thread(void *p)
                     goto done;
                 }
 
-                rc = ipc_write(arg->client_fd, event_msg, strlen(event_msg));
+                rc = ipc_write_str(arg, event_msg);
                 talloc_free(event_msg);
                 if (rc < 0) {
-                    MP_ERR(arg, "Write error\n");
+                    MP_ERR(arg, "Write error (%s)\n", mp_strerror(errno));
                     goto done;
                 }
             }
         }
 
-        if (fds[1].revents & POLLIN) {
+        if (fds[1].revents & (POLLIN | POLLHUP)) {
             while (1) {
                 char buf[128];
                 bstr append = { buf, 0 };
@@ -619,8 +625,7 @@ static void *client_thread(void *p)
                     }
 
                     if (reply_msg && arg->writable) {
-                        rc = ipc_write(arg->client_fd, reply_msg,
-                                       strlen(reply_msg));
+                        rc = ipc_write_str(arg, reply_msg);
                         if (rc < 0) {
                             MP_ERR(arg, "Write error (%s)\n", mp_strerror(errno));
                             talloc_free(tmp);
@@ -678,10 +683,20 @@ static void ipc_start_client_text(struct mp_ipc_ctx *ctx, const char *path)
     int mode = O_RDONLY;
     int client_fd = -1;
     bool close_client_fd = true;
+    bool writable = false;
 
     if (strcmp(path, "/dev/stdin") == 0) { // for symmetry with Linux
         client_fd = STDIN_FILENO;
         close_client_fd = false;
+    } else if (strncmp(path, "fd://", 5) == 0) {
+        char *end = NULL;
+        client_fd = strtol(path + 5, &end, 0);
+        if (!end || end == path + 5 || end[0]) {
+            MP_ERR(ctx, "Invalid FD: %s\n", path);
+            return;
+        }
+        close_client_fd = false;
+        writable = true; // maybe
     } else {
         // Use RDWR for FIFOs to ensure they stay open over multiple accesses.
         struct stat st;
@@ -690,7 +705,7 @@ static void ipc_start_client_text(struct mp_ipc_ctx *ctx, const char *path)
         client_fd = open(path, mode);
     }
     if (client_fd < 0) {
-        MP_ERR(ctx, "Could not open pipe at '%s'\n", path);
+        MP_ERR(ctx, "Could not open '%s'\n", path);
         return;
     }
 
@@ -699,8 +714,7 @@ static void ipc_start_client_text(struct mp_ipc_ctx *ctx, const char *path)
         .client_name = "input-file",
         .client_fd   = client_fd,
         .close_client_fd = close_client_fd,
-
-        .writable = false,
+        .writable = writable,
     };
 
     ipc_start_client(ctx, client);
@@ -724,6 +738,10 @@ static void *ipc_thread(void *p)
         MP_ERR(arg, "Could not create IPC socket\n");
         goto done;
     }
+
+#if HAVE_FCHMOD
+    fchmod(ipc_fd, 0600);
+#endif
 
     size_t path_len = strlen(arg->path);
     if (path_len >= sizeof(ipc_un.sun_path) - 1) {

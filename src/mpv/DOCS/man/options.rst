@@ -104,8 +104,9 @@ Playback Control
 ``--speed=<0.01-100>``
     Slow down or speed up playback by the factor given as parameter.
 
-    If ``--audio-pitch-correction`` is used, playing with a speed higher than
-    normal automatically inserts the ``scaletempo`` audio filter.
+    If ``--audio-pitch-correction`` (on by default) is used, playing with a
+    speed higher than normal automatically inserts the ``scaletempo`` audio
+    filter.
 
 ``--loop=<N|inf|force|no>``
     Loops playback ``N`` times. A value of ``1`` plays it one time (default),
@@ -453,6 +454,18 @@ Program Behavior
     available aliases. To use experimental DASH support for youtube, use
     ``bestvideo+bestaudio``.
     (Default: ``best``)
+
+``--ytdl-raw-options=<key>=<value>[,<key>=<value>[,...]]``
+    Pass arbitraty options to youtube-dl. Parameter and argument should be
+    passed as a key-value pair. Options without argument must include ``=``.
+    
+    There is no sanity checking so it's possible to break things (i.e.
+    passing invalid parameters to youtube-dl).
+
+    .. admonition:: Example
+ 
+        ``--ytdl-raw-options=username=user,password=pass``
+        ``--ytdl-raw-options=force-ipv6=``
 
 Video
 -----
@@ -1253,8 +1266,7 @@ Subtitles
     :signfs: like ``yes``, but apply ``--sub-scale`` only to signs
     :no:    Render subtitles as forced by subtitle scripts.
     :force: Try to force the font style as defined by the ``--sub-text-*``
-            options. Requires a modified libass, can break rendering easily.
-            Probably more reliable than ``force``.
+            options. Can break rendering easily.
 
 ``--ass-force-margins``
     Enables placing toptitles and subtitles in black borders when they are
@@ -1932,6 +1944,10 @@ Disc Devices
 ``--cdda-skip=<yes|no>``
     (Never) accept imperfect data reconstruction.
 
+``--cdda-cdtext=<yes|no>``
+    Print CD text. This is disabled by default, because it ruins perfomance
+    with CD-ROM drives for unknown reasons.
+
 ``--dvd-speed=<speed>``
     Try to limit DVD speed (default: 0, no change). DVD base speed is 1385
     kB/s, so an 8x drive can read at speeds up to 11080 kB/s. Slower speeds
@@ -2229,7 +2245,7 @@ Demuxer
 
 ``--demuxer-readahead-secs=<seconds>``
     If ``--demuxer-thread`` is enabled, this controls how much the demuxer
-    should buffer ahead in seconds (default: 0.2). As long as no packet has
+    should buffer ahead in seconds (default: 1). As long as no packet has
     a timestamp difference higher than the readahead amount relative to the
     last packet returned to the decoder, the demuxer keeps reading.
 
@@ -2306,6 +2322,9 @@ Input
     mpv 0.7.0 also understands JSON commands (see `JSON IPC`_), but you can't
     get replies or events. Use ``--input-unix-socket`` for something
     bi-directional. On MS Windows, JSON commands are not available.
+
+    This can also specify a direct file descriptor with ``fd://N`` (UNIX only).
+    In this case, JSON replies will be written if the FD is writable.
 
     See also ``--slave-broken``.
 
@@ -2534,7 +2553,8 @@ OSD
         - ``--osd-color='#C0808080'`` set OSD to 50% gray with 75% alpha
 
 ``--osd-fractions``
-    Show OSD times with fractions of seconds.
+    Show OSD times with fractions of seconds (in millisecond precision). Useful
+    to see the exact timestamp of a video frame.
 
 ``--osd-level=<0-3>``
     Specifies which mode the OSD should start in.
@@ -2625,6 +2645,13 @@ Screenshot
     :tga:       TARGA
     :jpg:       JPEG (default)
     :jpeg:      JPEG (same as jpg, but with .jpeg file ending)
+
+``--screenshot-tag-colorspace=<yes|no>``
+    Tag screenshots with the appropriate colorspace.
+
+    Note that not all formats are supported.
+
+    Default: ``yes``.
 
 ``--screenshot-template=<template>``
     Specify the filename template used to save screenshots. The template
@@ -3123,7 +3150,7 @@ Cache
 ``--cache-secs=<seconds>``
     How many seconds of audio/video to prefetch if the cache is active. This
     overrides the ``--demuxer-readahead-secs`` option if and only if the cache
-    is enabled and the value is larger. (Default: 2.)
+    is enabled and the value is larger. (Default: 10.)
 
 ``--cache-pause``, ``--no-cache-pause``
     Whether the player should automatically pause when the cache runs low,

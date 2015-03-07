@@ -269,18 +269,26 @@ float[6] weights6(sampler2D lookup, float f) {
     }
 
 // The DIR parameter is (0, 1) or (1, 0), and we expect the shader compiler to
-// remove all the redundant multiplications and additions.
-#define SAMPLE_CONVOLUTION_SEP_N(NAME, DIR, N, LUT, WEIGHTS_FUNC)           \
+// remove all the redundant multiplications and additions, and also to unroll
+// the loop and remove the conditional completely
+#define SAMPLE_CONVOLUTION_SEP_N(NAME, DIR, N, LUT, WEIGHTS_FUNC, ANTIRING) \
     vec4 NAME(VIDEO_SAMPLER tex, vec2 texsize, vec2 texcoord) {             \
         vec2 pt = (vec2(1.0) / texsize) * DIR;                              \
         float fcoord = dot(fract(texcoord * texsize - vec2(0.5)), DIR);     \
         vec2 base = texcoord - fcoord * pt - pt * vec2(N / 2 - 1);          \
         float weights[N] = WEIGHTS_FUNC(LUT, fcoord);                       \
         vec4 res = vec4(0);                                                 \
+        vec4 hi  = vec4(0);                                                 \
+        vec4 lo  = vec4(1);                                                 \
         for (int n = 0; n < N; n++) {                                       \
-            res += vec4(weights[n]) * texture(tex, base + pt * vec2(n));    \
+            vec4 c = texture(tex, base + pt * vec2(n));                     \
+            res += vec4(weights[n]) * c;                                    \
+            if (n == N/2-1 || n == N/2) {                                   \
+                lo = min(lo, c);                                            \
+                hi = max(hi, c);                                            \
+            }                                                               \
         }                                                                   \
-        return res;                                                         \
+        return mix(res, clamp(res, lo, hi), ANTIRING);                      \
     }
 
 #define SAMPLE_CONVOLUTION_N(NAME, N, LUT, WEIGHTS_FUNC)                    \
@@ -393,9 +401,6 @@ void main() {
         texture(texture0, texcoord),
         texture(texture1, texcoord),
         inter_coeff);
-    // debug code to visually check the interpolation amount
-    // vec4 acolor = texture(texture0, texcoord) -
-    //               inter_coeff * texture(texture1, texcoord);
 #elif USE_CONV == CONV_PLANAR
     vec4 acolor = vec4(SAMPLE(texture0, textures_size[0], texcoord).r,
                        SAMPLE_C(texture1, textures_size[1], chr_texcoord).r,

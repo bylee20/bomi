@@ -26,8 +26,6 @@ auto root_menu_execute(const QString &longId, const QString &argument) -> bool
     return RootMenu::execute(longId, argument);
 }
 
-RootMenu *RootMenu::obj = nullptr;
-
 using GetText = std::function<QString(void)>;
 using Translate = std::function<void(void)>;
 
@@ -273,9 +271,6 @@ RootMenu::RootMenu()
 
     Q_UNUSED(QT_TR_NOOP("Toggle")); // dummy to tranlsate
 
-    Q_ASSERT(obj == nullptr);
-    obj = this;
-
 #define ALIAS(from, to) {d->alias[u"" #from ""_q] = u"" #to ""_q;}
     ALIAS(audio/channel/next, audio/channel/cycle);
     ALIAS(audio/track/next, audio/track/cycle);
@@ -517,7 +512,7 @@ RootMenu::RootMenu()
                 d->actionToGroup(u"auto"_q, QT_TR_NOOP("Autodetect Encoding"))->setData(0);
                 d->separator();
                 auto g = d->group();
-                for (auto &c : EncodingInfo::categorized()) {
+                for (auto &c : EncodingInfo::grouped()) {
                     if (c.isEmpty())
                         continue;
                     const auto &e = c.front();
@@ -642,7 +637,20 @@ RootMenu::RootMenu()
 RootMenu::~RootMenu()
 {
     delete d;
-    obj = nullptr;
+}
+
+static RootMenu *obj = nullptr;
+
+auto RootMenu::instance() -> RootMenu&
+{
+    if (!obj)
+        obj = new RootMenu;
+    return*obj;
+}
+
+auto RootMenu::finalize() -> void
+{
+    _Delete(obj);
 }
 
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
@@ -719,4 +727,27 @@ auto RootMenu::description(const QString &longId) const -> QString
 auto RootMenu::action(const QString &longId) const -> QAction*
 {
     return d->find(longId).action;
+}
+
+struct DumpInfo {
+    QString id, desc;
+    auto operator < (const DumpInfo &rhs) const -> bool { return id < rhs.id; }
+};
+
+auto RootMenu::dumpInfo() -> void
+{
+    auto &menu = instance();
+    menu.retranslate();
+    auto d = menu.d;
+    int width = 0;
+    for (auto it = d->actions.begin(); it != d->actions.end(); ++it)
+        width = std::max(width, it.key().size());
+    QByteArray fill;
+    for (auto it = d->actions.begin(); it != d->actions.end(); ++it) {
+        const auto id = it.key();
+        fill.resize(width - id.size());
+        fill.fill(' ');
+        qDebug().nospace() << id.toLatin1().constData() << fill.constData()
+                           << " (" << menu.description(it.key()).toLatin1().constData() << ')';
+    }
 }

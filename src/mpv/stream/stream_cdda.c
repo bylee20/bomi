@@ -64,6 +64,7 @@ typedef struct cdda_params {
     int skip;
     char *device;
     int span[2];
+    int cdtext;
 } cdda_priv;
 
 #define OPT_BASE_STRUCT struct cdda_params
@@ -86,6 +87,7 @@ const struct m_sub_options stream_cdda_conf = {
         OPT_FLAG("skip", skip, 0),
         OPT_STRING("device", device, 0),
         OPT_INTPAIR("span", span, 0),
+        OPT_FLAG("cdtext", cdtext, 0),
         {0}
     },
     .size = sizeof(struct cdda_params),
@@ -117,9 +119,11 @@ static const char *const cdtext_name[] = {
 #endif
 };
 
-static bool print_cdtext(stream_t *s, int track)
+static void print_cdtext(stream_t *s, int track)
 {
     cdda_priv* p = (cdda_priv*)s->priv;
+    if (!p->cdtext)
+        return;
 #ifdef OLD_API
     cdtext_t *text = cdio_get_cdtext(p->cd->p_cdio, track);
 #else
@@ -141,9 +145,7 @@ static bool print_cdtext(stream_t *s, int track)
                 MP_INFO(s, "  %s: '%s'\n", name, value);
             }
         }
-        return true;
     }
-    return false;
 }
 
 static void print_track_info(stream_t *s, int track)
@@ -227,7 +229,6 @@ static void close_cdda(stream_t *s)
     cdda_priv *p = (cdda_priv *)s->priv;
     paranoia_free(p->cdp);
     cdda_close(p->cd);
-    free(p);
 }
 
 static int get_track_by_sector(cdda_priv *p, unsigned int sector)
@@ -313,7 +314,6 @@ static int open_cdda(stream_t *st)
         return STREAM_ERROR;
     }
 
-    priv = calloc(1,sizeof(cdda_priv));
     priv->cd = cdd;
 
     if (p->toc_bias)

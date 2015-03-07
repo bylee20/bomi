@@ -219,6 +219,10 @@ iconv support use --disable-iconv.",
         'deps_any': [ 'os-win32', 'os-cygwin' ],
         'func': check_true
     }, {
+        'name': 'fchmod',
+        'desc': 'fchmod()',
+        'func': check_statement('sys/stat.h', 'fchmod(0, 0)'),
+    }, {
         'name': 'glibc-thread-name',
         'desc': 'GLIBC API for setting thread name',
         'func': check_statement('pthread.h',
@@ -366,11 +370,12 @@ iconv support use --disable-iconv.",
 ]
 
 libav_pkg_config_checks = [
-    'libavutil',   '>= 52.48.101',
-    'libavcodec',  '>= 55.34.1',
-    'libavformat', '>= 55.12.0',
-    'libswscale',  '>= 2.1.2'
+    'libavutil',   '>= 54.02.0',
+    'libavcodec',  '>= 56.1.0',
+    'libavformat', '>= 56.01.0',
+    'libswscale',  '>= 2.1.3'
 ]
+libav_versions_string = "FFmpeg 2.4 or Libav 11"
 
 libav_dependencies = [
     {
@@ -379,15 +384,15 @@ libav_dependencies = [
         'func': check_pkg_config(*libav_pkg_config_checks),
         'req': True,
         'fmsg': "Unable to find development files for some of the required \
-Libav libraries ({0}). Aborting.".format(" ".join(libav_pkg_config_checks))
+FFmpeg/Libav libraries. You need at least {0}. Aborting.".format(libav_versions_string)
     }, {
         'name': '--libswresample',
         'desc': 'libswresample',
-        'func': check_pkg_config('libswresample', '>= 0.17.104'),
+        'func': check_pkg_config('libswresample', '>= 1.1.100'),
     }, {
         'name': '--libavresample',
         'desc': 'libavresample',
-        'func': check_pkg_config('libavresample',  '>= 1.1.0'),
+        'func': check_pkg_config('libavresample',  '>= 2.1.0'),
         'deps_neg': ['libswresample'],
     }, {
         'name': 'resampler',
@@ -399,11 +404,11 @@ Libav libraries ({0}). Aborting.".format(" ".join(libav_pkg_config_checks))
     }, {
         'name': '--libavfilter',
         'desc': 'libavfilter',
-        'func': check_pkg_config('libavfilter', '>= 3.90.100'),
+        'func': check_pkg_config('libavfilter', '>= 5.0.0'),
     }, {
         'name': '--libavdevice',
         'desc': 'libavdevice',
-        'func': check_pkg_config('libavdevice', '>= 54.0.0'),
+        'func': check_pkg_config('libavdevice', '>= 55.0.0'),
     }, {
         'name': 'avcodec-chroma-pos-api',
         'desc': 'libavcodec avcodec_enum_to_chroma_pos API',
@@ -411,42 +416,6 @@ Libav libraries ({0}). Aborting.".format(" ".join(libav_pkg_config_checks))
             avcodec_enum_to_chroma_pos(&x, &y, AVCHROMA_LOC_UNSPECIFIED)""",
             use='libav')
     }, {
-        'name': 'avcol-spc-bt2020',
-        'desc': 'libavcodec avcol_spc_bt2020 available',
-        'func': check_statement('libavcodec/avcodec.h',
-                                'int x = AVCOL_SPC_BT2020_NCL',
-                                use='libav')
-    }, {
-        'name': 'avcodec-vdpau-alloc-context',
-        'desc': 'libavcodec vdpau non-sense',
-        'func': check_statement('libavcodec/vdpau.h',
-                                'AVVDPAUContext *x = av_vdpau_alloc_context()',
-                                use='libav')
-    }, {
-        'name': 'avcodec-metadata-update-side-data',
-        'desc': 'libavcodec AV_PKT_DATA_METADATA_UPDATE side data type',
-        'func': check_statement('libavcodec/avcodec.h',
-                                'enum AVPacketSideDataType type = AV_PKT_DATA_METADATA_UPDATE',
-                                use='libav')
-    }, {
-        'name': 'avformat-metadata-update-flag',
-        'desc': "libavformat metadata update flags",
-        'func': check_statement('libavformat/avformat.h',
-                                'int x = AVFMT_EVENT_FLAG_METADATA_UPDATED',
-                                use='libav')
-    }, {
-        'name': 'avcodec-replaygain-side-data',
-        'desc': 'libavcodec AV_PKT_DATA_REPLAYGAIN side data type',
-        'func': check_statement('libavcodec/avcodec.h',
-                                'enum AVPacketSideDataType type = AV_PKT_DATA_REPLAYGAIN',
-                                use='libav')
-    }, {
-        'name': 'av-displaymatrix',
-        'desc': 'libavutil/libavcodec display matrix side data',
-        'func': check_statement('libavutil/frame.h',
-                                'enum AVFrameSideDataType type = AV_FRAME_DATA_DISPLAYMATRIX',
-                                use='libav')
-    },{
         'name': 'avframe-metadata',
         'desc': 'libavutil AVFrame metadata',
         'func': check_statement('libavutil/frame.h',
@@ -710,9 +679,7 @@ hwaccel_features = [
         'name': '--vda-gl',
         'desc': 'VDA with OpenGL',
         'deps': [ 'gl-cocoa', 'vda-hwaccel' ],
-        # apparently a bug in waf causes msg= to be needed when passing only
-        # framework= (it probably fails to infer it)
-        'func': check_cc(msg='QuartzCore', framework='QuartzCore')
+        'func': check_true
     }, {
         'name': '--vdpau-hwaccel',
         'desc': 'libavcodec VDPAU hwaccel',
