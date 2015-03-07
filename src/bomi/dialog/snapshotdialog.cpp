@@ -2,6 +2,18 @@
 #include "ui_snapshotdialog.h"
 #include <QClipboard>
 #include <QScrollBar>
+#include "misc/log.hpp"
+
+DECLARE_LOG_CONTEXT(Snapshot)
+
+auto SnapshotSaver::run() -> void
+{
+    if (!m_image.save(m_fileName, nullptr, m_quality))
+        _Error("Failed to save '%%'.", m_fileName);
+    else
+        _Info("'%%' saved.", m_fileName);
+
+}
 
 struct SnapshotDialog::Data {
     SnapshotDialog *p = nullptr;

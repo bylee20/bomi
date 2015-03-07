@@ -3,6 +3,17 @@
 
 class VideoRenderer;        class SubtitleRenderer;
 
+class SnapshotSaver : public QRunnable {
+public:
+    SnapshotSaver(const QImage &image, const QString &fileName, int quality)
+        : m_image(image), m_fileName(fileName), m_quality(quality) { }
+private:
+    QImage m_image;
+    QString m_fileName;
+    int m_quality;
+    auto run() -> void final;
+};
+
 class SnapshotDialog : public QDialog {
     Q_OBJECT
 public:

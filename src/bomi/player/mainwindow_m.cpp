@@ -388,11 +388,12 @@ auto MainWindow::Data::plugMenu() -> void
                 file = pref.quick_snapshot_folder() % '/'_q % fileName;
                 break;
             }
-            if (!file.isEmpty() && image.save(file, nullptr,
-                                              pref.quick_snapshot_quality()))
-                showMessage(tr("Snapshot saved"), fileName);
-            else
-                showMessage(tr("Failed to save a snapshot"));
+            if (!file.isEmpty()) {
+                const int quality = pref.quick_snapshot_quality();
+                const auto saver = new SnapshotSaver(image, file, quality);
+                QThreadPool::globalInstance()->start(saver);
+                showMessage(u"Save Snapshot"_q, file);
+            }
             break;
         } default:
             break;
