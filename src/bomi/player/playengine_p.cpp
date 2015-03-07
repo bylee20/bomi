@@ -693,26 +693,18 @@ auto PlayEngine::Data::takeSnapshot() -> void
         return;
     }
     OpenGLFramebufferObject fbo(size);
-    auto take = [&](bool withOsd) -> QImage {
-        QImage image;
-        if (withOsd && !params.sub_tracks().isEmpty()) {
-            const auto was = mpv.get<bool>("sub-visibility");
-            if (was != withOsd)
-                mpv.set("sub-visibility", withOsd);
-            mpv.render(fbo.id(), fbo.size());
-            if (was != withOsd)
-                mpv.set("sub-visibility", was);
-            return fbo.texture().toImage();
-        }
-        if (!ss.video.isNull())
-            return ss.video;
-        mpv.render(fbo.id(), fbo.size());
-        return fbo.texture().toImage();
-    };
-    if (snapshot & VideoOnly)
-        ss.video = take(false);
+    auto take = [&]() -> QImage
+        { mpv.render(fbo.id(), fbo.size()); return fbo.texture().toImage(); };
+    const auto sub = !params.sub_hidden() && !params.sub_tracks().isEmpty();
+    if (snapshot & VideoOnly) {
+        if (sub)
+            mpv.set("sub-visibility", false);
+        ss.video = take();
+        if (sub)
+            mpv.set("sub-visibility", true);
+    }
     if (snapshot & VideoWidthOsd)
-        ss.screen = take(true);
+        ss.screen = !sub && !ss.video.isNull() ? ss.video : take();
     emit p->snapshotTaken();
 }
 
