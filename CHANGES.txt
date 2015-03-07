@@ -1,3 +1,5 @@
+0.9.3
+
   * New: display used encoding for subtitle file track in playinfo
   * New: '--dump-api-tree' and '--dump-action-list' command line options
   * New: JSON-RPC interface (#247)

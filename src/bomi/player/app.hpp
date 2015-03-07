@@ -39,7 +39,7 @@ public:
     auto load() -> void;
     auto setFixedFont(const QFont &font) -> void;
     auto fixedFont() const -> QFont;
-    static constexpr auto version() -> const char* { return "0.9.2"; }
+    static constexpr auto version() -> const char* { return "0.9.3"; }
     static constexpr auto name() -> const char* { return "bomi"; }
     static auto displayName() -> QString { return tr("bomi"); }
     static auto defaultIcon() -> QIcon;
