@@ -51,12 +51,18 @@ mkdir source
 echo "3.0 (native)" > source/format
 
 trusty_bdeps=", ffmpeg-bomi, g++-4.9"
-trusty_deps=", libqt5qml-quickcontrols"
+trusty_deps=", qtdeclarative5-qtquick2-plugin, libqt5qml-quickcontrols, qtdeclarative5-quicklayouts-plugin"
 trusty_opts="--cc=gcc-4.9"
 
 utopic_bdeps=", ffmpeg-bomi, g++ (>= 4.9)"
-utopic_deps=", qml-module-qtquick-controls"
+utopic_deps=", qml-module-qtquick2, qml-module-qtquick-controls, qml-module-qtquick-layouts"
 utopic_opts=
+
+vivid_bdeps=", g++ (>= 4.9)"
+vivid_bdeps="$vivid_bdeps, libavformat-ffmpeg-dev (>= 2.4), libavutil-ffmpeg-dev (>= 2.4), libavcodec-ffmpeg-dev (>= 2.4)"
+vivid_bdeps="$vivid_bdeps, libswresample-ffmpeg-dev (>= 2.4), libswscale-ffmpeg-dev (>= 2.4), libavfilter-ffmpeg-dev (>= 2.4)"
+vivid_deps=", qml-module-qtquick2, qml-module-qtquick-controls, qml-module-qtquick-layouts"
+vivid_opts=
 
 bdeps="$(eval echo \$"$distro"_bdeps)"
 deps="$(eval echo \$"$distro"_deps)"
