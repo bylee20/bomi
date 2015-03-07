@@ -9,7 +9,7 @@ Build-Depends: g++ (>= 4.9), debhelper (>= 7), pkg-config
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
  , libasound2-dev, libva-dev, libvdpau-dev, libchardet
- , libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
+ , libmpg123-dev, libbz2-dev, libass-bomi, libjack-dev
  , libpulse-dev, libxcb-icccm4-dev, libgnutls-dev, libsmbclient-dev
  , libxcb-util0-dev, libxcb-randr0-dev, libxcb-screensaver0-dev
  , libxcb-xtest0-dev, libsmbclient-dev, qt5-default@bdeps@

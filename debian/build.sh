@@ -38,11 +38,13 @@ cd debian
 printf "bomi ("$ver"ppa"$rel"~"$distro"1) $distro; urgency=low\n\n" >> changelog
 printf "  * upstream release\n\n" >> changelog
 printf " -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  $(LANG=C date -R)\n" >> changelog
- 
-cp $orig/base/compat .
-cp $orig/base/menu .
-cp $orig/base/rules .
-cp $orig/base/control .
+
+base=ubuntu
+
+cp $orig/$base/compat .
+cp $orig/$base/menu .
+cp $orig/$base/rules .
+cp $orig/$base/control .
 cp ../COPYING.txt copyright
 
 mkdir source
