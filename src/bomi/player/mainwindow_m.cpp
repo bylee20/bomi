@@ -103,7 +103,7 @@ auto MainWindow::Data::plugEnum(ActionGroup *g, PLUG_MEMFUNC(T), QAction *cycle)
     propertyMessage(desc, sig, [=] (T val) { return EnumInfo<T>::description(val); });
 }
 
-auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
+auto getNextAction(const QList<QAction*> &actions) -> QAction*
 {
     int i = 0;
     for (; i<actions.size(); ++i)
@@ -120,7 +120,15 @@ auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
         ++i;
     }
     if (i != prev)
-        actions[i]->trigger();
+        return actions[i];
+    return nullptr;
+}
+
+
+auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
+{
+    if (auto action = getNextAction(actions))
+        action->trigger();
 }
 
 auto MainWindow::Data::plugTrack(Menu &parent, StreamList(MrlState::*get)() const,
@@ -530,7 +538,14 @@ auto MainWindow::Data::plugMenu() -> void
         auto &m = menu(u"subtitle"_q)(u"track"_q);
         auto actions = m.g(u"exclusive"_q)->actions();
         actions += m.g(u"inclusive"_q)->actions();
-        triggerNextAction(actions);
+        if (auto next = getNextAction(actions)) {
+            const int id = next->data().toInt();
+            e.clearAllSubtitleSelection();
+            if (e.params()->sub_tracks().contains(id))
+                e.setSubtitleTrackSelected(id, true);
+            else
+                e.setSubtitleInclusiveTrackSelected(id, true);
+        }
     });
     connect(strack[u"all"_q], &QAction::triggered, p,
             [=] () { e.setSubtitleInclusiveTrackSelected(-1, true); });

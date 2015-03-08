@@ -329,6 +329,15 @@ auto PlayEngine::setAutoloader_locked(const Autoloader &audio, const Autoloader 
     d->streams[StreamSubtitle].autoloader = sub;
 }
 
+auto PlayEngine::clearAllSubtitleSelection() -> void
+{
+    const int id = d->params.sub_tracks().selectionId();
+    if (id >= 0)
+        setSubtitleTrackSelected(id, false);
+    d->sr->deselect(-1);
+    d->syncInclusiveSubtitles();
+}
+
 auto PlayEngine::setSubtitleInclusiveTrackSelected(int id, bool s) -> void
 {
     if (s)

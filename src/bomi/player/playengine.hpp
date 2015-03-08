@@ -134,6 +134,7 @@ public:
     auto setVideoTrackSelected(int id, bool s) -> void;
     auto setAudioTrackSelected(int id, bool s) -> void;
     auto setSubtitleInclusiveTrackSelected(int id, bool s) -> void;
+    auto clearAllSubtitleSelection() -> void;
 
     auto lock() -> void;
     auto setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void;
