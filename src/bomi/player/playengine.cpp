@@ -15,8 +15,8 @@ PlayEngine::PlayEngine()
     d->sr = new SubtitleRenderer;
     d->vr = new VideoRenderer;
     d->vr->setOverlay(d->sr);
-    d->vr->setRenderFrameFunction([this] (OpenGLFramebufferObject *fbo)
-        { d->renderVideoFrame(fbo); });
+    d->vr->setRenderFrameFunction([this] (Fbo *frame, Fbo* osd, const QMargins &m)
+        { d->renderVideoFrame(frame, osd, m); });
 
     d->params.m_mutex = &d->mutex;
 
@@ -950,20 +950,21 @@ auto PlayEngine::setVideoEffects(VideoEffects e) -> void
         d->updateVideoSubOptions();
 }
 
-auto PlayEngine::takeSnapshot(Snapshot mode) -> void
+auto PlayEngine::takeSnapshot() -> void
 {
-    d->snapshot = mode;
+    d->ss.take = true;
     d->vr->updateForNewFrame(d->displaySize());
 }
 
-auto PlayEngine::snapshot(bool withOsd) -> QImage
+auto PlayEngine::snapshot(QImage *frame, QImage *osd) -> void
 {
-    return withOsd ? d->ss.screen : d->ss.video;
+    *frame = d->ss.frame;
+    *osd = d->ss.osd;
 }
 
 auto PlayEngine::clearSnapshots() -> void
 {
-    d->ss.screen = d->ss.video = QImage();
+    d->ss.frame = d->ss.osd = QImage();
 }
 
 auto PlayEngine::setVideoHighQualityDownscaling(bool on) -> void

@@ -10,6 +10,7 @@
 #include <functional>
 
 class QOpenGLContext;
+class OpenGLFramebufferObject;
 
 SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
 
@@ -88,7 +89,8 @@ public:
         { request(id, [=] (mpv_event*) -> void { proc(); }); }
     auto setUpdateCallback(std::function<void(void)> &&cb) -> void;
     auto update() -> void;
-    auto render(quint32 fbo, const QSize &size) -> int;
+    auto render(OpenGLFramebufferObject *frame, OpenGLFramebufferObject *osd,
+                const QMargins &m) -> int;
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL() -> void;
 private:

@@ -1,5 +1,6 @@
 #include "videorenderer.hpp"
 #include "letterboxitem.hpp"
+#include "mpvosdrenderer.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "opengl/openglframebufferobject.hpp"
 #include "opengl/opengltexturebinder.hpp"
@@ -14,7 +15,8 @@ enum EventType {NewFrame = QEvent::User + 1 };
 
 
 struct VideoRenderer::VideoShaderData : public VideoRenderer::ShaderData {
-    const OpenGLTexture2D *texture = nullptr;
+    const OpenGLTexture2D *frame = nullptr;
+    const OpenGLTexture2D *osd = nullptr;
 };
 
 struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
@@ -22,38 +24,69 @@ struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
         vertexShader = R"(
             uniform mat4 qt_Matrix;
             attribute vec4 aPosition;
-            attribute vec2 aTexCoord;
-            varying vec2 texCoord;
+            attribute vec2 aFrameTexCoord;
+            attribute vec2 aOsdTexCoord;
+            varying vec2 frameTexCoord;
+            varying vec2 osdTexCoord;
             void main() {
-                texCoord = aTexCoord;
+                frameTexCoord = aFrameTexCoord;
+                osdTexCoord = aOsdTexCoord;
                 gl_Position = qt_Matrix * aPosition;
             }
         )";
         fragmentShader = R"(
-            varying vec2 texCoord;
+            varying vec2 frameTexCoord;
+            varying vec2 osdTexCoord;
             uniform float qt_Opacity;
-            uniform sampler2D tex;
+            uniform sampler2D frameTex;
+            uniform sampler2D osdTex;
             void main() {
-                gl_FragColor = texture2D(tex, texCoord) * qt_Opacity;
+                vec4 frame = texture2D(frameTex, frameTexCoord);
+                vec4 osd = texture2D(osdTex, osdTexCoord);
+                gl_FragColor = (frame * (1.0 - osd.a) + osd) * qt_Opacity;
             }
         )";
-        attributes << "aPosition" << "aTexCoord";
+        attributes << "aPosition" << "aFrameTexCoord" << "aOsdTexCoord";
     }
     void resolve(QOpenGLShaderProgram *prog) override {
         Q_ASSERT(prog->isLinked());
-        loc_tex = prog->uniformLocation("tex");
+        loc_frameTex = prog->uniformLocation("frameTex");
+        loc_osdTex = prog->uniformLocation("osdTex");
     }
     void update(QOpenGLShaderProgram *prog,
                 const VideoRenderer::ShaderData *data) override {
         auto d = static_cast<const VideoShaderData*>(data);
-        if (d->texture->id() != GL_NONE && !d->texture->isEmpty()) {
-            prog->setUniformValue(loc_tex, 0);
+        if (d->frame->id() != GL_NONE && !d->frame->isEmpty()) {
+            prog->setUniformValue(loc_frameTex, 0);
+            prog->setUniformValue(loc_osdTex, 1);
             func()->glActiveTexture(GL_TEXTURE0);
-            d->texture->bind();
+            d->frame->bind();
+            func()->glActiveTexture(GL_TEXTURE1);
+            d->osd->bind();
+            func()->glActiveTexture(GL_TEXTURE0);
         }
     }
 private:
-    int loc_tex = -1;
+    int loc_frameTex = -1, loc_osdTex = -1;
+};
+
+struct FboSet {
+    OpenGLFramebufferObject *fbo = nullptr;
+    QSize size;
+    OpenGLTexture2D fallback;
+    QMargins margins;
+    QRectF rect;
+    auto texture() const -> const OpenGLTexture2D*
+    {
+        if (fbo && !fbo->size().isEmpty())
+            return &fbo->texture();
+        return &fallback;
+    }
+    auto renew() -> void
+    {
+        if (!fbo || fbo->size() != size)
+            _Renew(fbo, size);
+    }
 };
 
 struct VideoRenderer::Data {
@@ -65,9 +98,10 @@ struct VideoRenderer::Data {
     QRectF vtx; QPointF offset = {0, 0};
     LetterboxItem *letterbox = nullptr;
     GeometryItem *overlay = nullptr;
-    OpenGLTexture2D black;
-    OpenGLFramebufferObject *fbo = nullptr;
-    QSize displaySize{0, 1}, fboSize, prevSize;
+
+    FboSet frame, osd;
+
+    QSize displaySize{0, 1};
     QTimer sizeChecker;
     RenderFrameFunc render = nullptr;
 
@@ -130,23 +164,22 @@ struct VideoRenderer::Data {
             *letterbox = {xy, letter};
         return rect;
     }
+    auto osdSizeHint() const -> QSize
+    {
+        if (onLetterbox)
+            return p->size().toSize();
+        return fboSizeHint();
+    }
     auto fboSizeHint() const -> QSize
     {
         auto size = displaySize;
-        size.scale(vtx.width() + 0.5, vtx.height() + 0.5, Qt::KeepAspectRatio);
+        size.scale(qCeil(vtx.width()), qCeil(vtx.height()), Qt::KeepAspectRatio);
         return size;
-    }
-    auto updateFboSize(const QSize &size) -> void
-    {
-        if (_Change(fboSize, size)) {
-            redraw = true;
-            p->reserve(UpdateAll);
-        }
     }
 };
 
 VideoRenderer::VideoRenderer(QQuickItem *parent)
-    : ShaderRenderItem<OGL::TextureVertex>(parent), d(new Data)
+    : Super(parent), d(new Data)
 {
     d->p = this;
     d->letterbox = new LetterboxItem(this);
@@ -157,9 +190,10 @@ VideoRenderer::VideoRenderer(QQuickItem *parent)
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsDrops, true);
     connect(&d->sizeChecker, &QTimer::timeout, [this] () {
-        if (_Change(d->prevSize, d->fboSizeHint())) {
-            d->sizeChecker.stop();
-            d->updateFboSize(d->prevSize);
+        if (_Change(d->frame.size, d->fboSizeHint()) |
+                _Change(d->osd.size, d->osdSizeHint())) {
+            d->redraw = true;
+            reserve(UpdateAll);
         }
     });
     d->sizeChecker.setInterval(300);
@@ -183,6 +217,8 @@ auto VideoRenderer::updateForNewFrame(const QSize &displaySize) -> void
 auto VideoRenderer::setOverlayOnLetterbox(bool letterbox) -> void
 {
     if (_Change(d->onLetterbox, letterbox)) {
+        if (_Change(d->osd.size, d->osdSizeHint()))
+            reserve(UpdateAll);
         polish();
         emit overlayOnLetterboxChanged(d->onLetterbox);
     }
@@ -195,18 +231,19 @@ auto VideoRenderer::overlayOnLetterbox() const -> bool
 
 auto VideoRenderer::initializeGL() -> void
 {
-    ShaderRenderItem<OGL::TextureVertex>::initializeGL();
-    d->black.create(OGL::Repeat);
-    OpenGLTextureBinder<OGL::Target2D> binder(&d->black);
+    Super::initializeGL();
+    d->frame.fallback.create(OGL::Repeat);
+    OpenGLTextureBinder<OGL::Target2D> binder(&d->frame.fallback);
     const quint32 p = 0x0;
-    d->black.initialize(1, 1, OGL::BGRA, &p);
+    d->frame.fallback.initialize(1, 1, OGL::BGRA, &p);
+    d->osd.fallback = d->frame.fallback;
 }
 
 auto VideoRenderer::finalizeGL() -> void
 {
-    ShaderRenderItem<OGL::TextureVertex>::finalizeGL();
-    d->black.destroy();
-    _Delete(d->fbo);
+    Super::finalizeGL();
+    d->frame.fallback.destroy();
+    _Delete(d->frame.fbo);
 }
 
 auto VideoRenderer::customEvent(QEvent *event) -> void
@@ -216,7 +253,8 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
         auto ds = _GetData<QSize>(event);
         if (_Change(d->displaySize, ds)) {
             reserve(UpdateGeometry, false);
-            d->fboSize = d->fboSizeHint();
+            d->frame.size = d->fboSizeHint();
+            d->osd.size = d->osdSizeHint();
             polish();
         }
         d->redraw = true;
@@ -330,11 +368,29 @@ auto VideoRenderer::sizeHint() const -> QSize
 
 auto VideoRenderer::updatePolish() -> void
 {
-    ShaderRenderItem<OGL::TextureVertex>::updatePolish();
+    Super::updatePolish();
+    d->sizeChecker.stop();
     QRectF letter;
     if (_Change(d->vtx, d->frameRect({0, 0, width(), height()}, d->offset, &letter))) {
-        d->sizeChecker.start();
         reserve(UpdateGeometry, false);
+        const auto p0 = d->vtx.topLeft();
+        const auto p1 = d->vtx.bottomRight() + QPoint(1, 1);
+#define NORM(v, vv) (vv - p0.v()) / double(p1.v() - p0.v())
+        d->frame.rect.setTop(NORM(y, 0));
+        d->frame.rect.setBottom(NORM(y, height()));
+        d->frame.rect.setLeft(NORM(x, 0));
+        d->frame.rect.setRight(NORM(x, width()));
+#undef NORM
+    }
+    if (d->onLetterbox) {
+        d->osd.rect = QRectF(0, 0, 1, 1);
+        d->osd.margins.setTop(d->vtx.top());
+        d->osd.margins.setLeft(d->vtx.left());
+        d->osd.margins.setRight(width() - d->vtx.right() + 0.5);
+        d->osd.margins.setBottom(height() - d->vtx.bottom() + 0.5);
+    } else {
+        d->osd.rect = d->frame.rect;
+        d->osd.margins = QMargins();
     }
     if (d->letterbox->set(rect(), letter))
         emit screenRectChanged(d->letterbox->screen());
@@ -342,12 +398,8 @@ auto VideoRenderer::updatePolish() -> void
         const auto g = d->onLetterbox ? rect() : d->letterbox->screen();
         d->overlay->setGeometry(g);
     }
+    d->sizeChecker.start();
 }
-
-//auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
-//{
-
-//}
 
 auto VideoRenderer::setFlipped(bool horizontal, bool vertical) -> void
 {
@@ -362,7 +414,7 @@ auto VideoRenderer::mapToVideo(const QPointF &pos) -> QPointF
 
 auto VideoRenderer::geometryChanged(const QRectF &new_, const QRectF& old) -> void
 {
-    ShaderRenderItem<OGL::TextureVertex>::geometryChanged(new_, old);
+    Super::geometryChanged(new_, old);
     if (new_.size().toSize() != old.size().toSize())
         polish();
 }
@@ -376,7 +428,8 @@ auto VideoRenderer::createShader() const -> ShaderIface*
 auto VideoRenderer::createData() const -> ShaderData*
 {
     auto data = new VideoShaderData;
-    data->texture = &d->black;
+    data->frame = d->frame.texture();
+    data->osd = d->osd.texture();
     return data;
 }
 
@@ -385,34 +438,42 @@ auto VideoRenderer::updateData(ShaderData *_data) -> void
     auto data = static_cast<VideoShaderData*>(_data);
     if (!d->redraw) {
         _Trace("VideoRendererItem::updateTexture(): no queued frame");
-    } else if (!d->fboSize.isEmpty()) {
+    } else if (!d->frame.size.isEmpty()) {
         d->redraw = false;
-        if (!d->fbo || d->fbo->size() != d->fboSize)
-            _Renew(d->fbo, d->fboSize);
+        d->frame.renew();
+        d->osd.renew();
         auto w = window();
         if (w && d->render) {
             w->resetOpenGLState();
-            d->render(d->fbo);
+            d->render(d->frame.fbo, d->osd.fbo, d->osd.margins);
             w->resetOpenGLState();
         }
     }
-    data->texture = !d->fboSize.isEmpty() && d->fbo ? &d->fbo->texture() : &d->black;
+    data->frame = d->frame.texture();
+    data->osd = d->osd.texture();
 }
+
+#define FILL_TS(...) OGL::CoordAttr::fillTriangleStrip(vertex, &Vertex:: __VA_ARGS__)
 
 auto VideoRenderer::updateVertex(Vertex *vertex) -> void
 {
-    double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
+    auto tl = d->frame.rect.topLeft();
+    auto br = d->frame.rect.bottomRight();
     if (d->flip_v)
-        std::swap(top, bottom);
+        std::swap(tl.ry(), br.ry());
     if (d->flip_h)
-        std::swap(left, right);
-    Vertex::fillAsTriangleStrip(vertex, d->vtx.topLeft(), d->vtx.bottomRight(),
-                                {left, top}, {right, bottom});
+        std::swap(tl.rx(), br.rx());
+    FILL_TS(position, {0, 0}, {width(), height()});
+    FILL_TS(frameTexCoord, tl, br);
+    FILL_TS(osdTexCoord, d->osd.rect.topLeft(), d->osd.rect.bottomRight());
+
 }
 
 auto VideoRenderer::initializeVertex(Vertex *vertex) const -> void
 {
-    Vertex::fillAsTriangleStrip(vertex, {0, 0}, {0, 0}, {0, 0}, {1, 1});
+    FILL_TS(position, {0, 0}, {1, 1});
+    FILL_TS(frameTexCoord, {0, 0}, {1, 1});
+    FILL_TS(osdTexCoord, {0, 0}, {0, 0});
 }
 
-
+#undef FILL_TS

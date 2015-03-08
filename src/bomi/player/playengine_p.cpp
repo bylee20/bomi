@@ -692,34 +692,25 @@ auto PlayEngine::Data::takeSnapshot() -> void
         emit p->snapshotTaken();
         return;
     }
-    OpenGLFramebufferObject fbo(size);
-    auto take = [&]() -> QImage
-        { mpv.render(fbo.id(), fbo.size()); return fbo.texture().toImage(); };
-    const auto sub = !params.sub_hidden() && !params.sub_tracks().isEmpty();
-    if (snapshot & VideoOnly) {
-        if (sub)
-            mpv.set("sub-visibility", false);
-        ss.video = take();
-        if (sub)
-            mpv.set("sub-visibility", true);
-    }
-    if (snapshot & VideoWidthOsd)
-        ss.screen = !sub && !ss.video.isNull() ? ss.video : take();
+    Fbo frame(size), osd(size);
+    mpv.render(&frame, &osd, QMargins());
+    ss.frame = frame.texture().toImage(QImage::Format_ARGB32);
+    ss.osd = osd.texture().toImage(QImage::Format_ARGB32_Premultiplied);
     emit p->snapshotTaken();
 }
 
-auto PlayEngine::Data::renderVideoFrame(OpenGLFramebufferObject *fbo) -> void
+auto PlayEngine::Data::renderVideoFrame(Fbo *frame, Fbo *osd, const QMargins &m) -> void
 {
-    info.delayed = mpv.render(fbo->id(), fbo->size());
+    info.delayed = mpv.render(frame, osd, m);
     frames.measure.push(++frames.drawn);
 
     _Trace("PlayEngine::Data::renderVideoFrame(): "
            "render queued frame(%%), avgfps: %%",
-           fbo->size(), info.video.output()->fps());
+           frame->size(), info.video.output()->fps());
 
-    if (snapshot) {
-        this->takeSnapshot();
-        snapshot = NoSnapshot;
+    if (ss.take) {
+        takeSnapshot();
+        ss.take = false;
     }
 }
 

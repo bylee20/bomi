@@ -18,6 +18,7 @@ include(configure.pro)
 } else:CONFIG -= release
 
 QMAKE_CXXFLAGS_CXX11 = -std=c++1y
+QMAKE_CXXFLAGS -= -O2
 
 contains(QMAKE_CXX, clang++) {
 QMAKE_CXXFLAGS += -Wno-missing-braces
@@ -283,7 +284,8 @@ HEADERS += \
     player/jrplayer.hpp \
     enum/jrprotocol.hpp \
     enum/jrconnection.hpp \
-    http-parser/http_parser.h
+    http-parser/http_parser.h \
+    video/mpvosdrenderer.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -489,7 +491,8 @@ SOURCES += \
     player/jrplayer.cpp \
     enum/jrprotocol.cpp \
     enum/jrconnection.cpp \
-    http-parser/http_parser.c
+    http-parser/http_parser.c \
+    video/mpvosdrenderer.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

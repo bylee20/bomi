@@ -69,7 +69,6 @@ struct PlayEngine::Data {
     PlayEngine::Waitings waitings = PlayEngine::NoWaiting;
     PlayEngine::State state = PlayEngine::Stopped;
     PlayEngine::ActivationState hwacc = PlayEngine::Unavailable;
-    PlayEngine::Snapshot snapshot = PlayEngine::NoSnapshot;
 
     Mrl mrl;
     MrlState params, default_;
@@ -123,7 +122,7 @@ struct PlayEngine::Data {
         SpeedMeasure<quint64> measure{5, 20};
     } frames;
 
-    struct { QImage screen, video; } ss;
+    struct { QImage osd, frame; bool take = false; } ss;
     QPoint mouse;
 
     auto updateSubtitleStyle() -> void;
@@ -150,7 +149,7 @@ struct PlayEngine::Data {
     auto vo(const MrlState *s) const -> QByteArray;
     auto videoSubOptions(const MrlState *s) const -> QByteArray;
     auto updateVideoSubOptions() -> void;
-    auto renderVideoFrame(OpenGLFramebufferObject *fbo) -> void;
+    auto renderVideoFrame(Fbo *frame, Fbo *osd, const QMargins &m) -> void;
     auto displaySize() const { return info.video.output()->size(); }
     auto post(State state) -> void { _PostEvent(p, StateChange, state); }
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }

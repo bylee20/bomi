@@ -85,10 +85,6 @@ public:
     enum Waiting { NoWaiting = 0, Searching = 1, Loading = 2, Buffering = 4, Seeking = 8 };
     Q_DECLARE_FLAGS(Waitings, Waiting)
     enum ActivationState { Unavailable, Deactivated, Activated };
-    enum Snapshot {
-        NoSnapshot = 0, VideoOnly = 1, VideoWidthOsd = 2,
-        VideoAndOsd = VideoOnly | VideoWidthOsd
-    };
     enum DVDCmd { DVDMenu = -1 };
     PlayEngine();
     ~PlayEngine();
@@ -249,8 +245,8 @@ public:
     auto chromaUpscalerMap() const -> IntrplParamSetMap;
     auto setVideoDithering(Dithering dithering) -> void;
     auto setVideoEffects(VideoEffects effects) -> void;
-    auto takeSnapshot(Snapshot mode) -> void;
-    auto snapshot(bool withOsd = true) -> QImage;
+    auto takeSnapshot() -> void;
+    auto snapshot(QImage *frame, QImage *osd) -> void;
     auto clearSnapshots() -> void;
     auto setHighQualityScaling(bool up, bool down) -> void;
     auto waitingText() const -> QString;

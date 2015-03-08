@@ -1,4 +1,5 @@
 #include "mpv.hpp"
+#include "video/mpvosdrenderer.hpp"
 #include <QOpenGLContext>
 #include <QLibrary>
 
@@ -29,6 +30,7 @@ auto Mpv::e2l(int error) -> Log::Level
 struct Mpv::Data {
     Mpv *p = nullptr;
     mpv_opengl_cb_context *gl = nullptr;
+    MpvOsdRenderer osd;
     bool quit = false;
     QVector<PropertyObservation> observations;
     QVector<std::function<void(mpv_event*)>> events;
@@ -105,10 +107,19 @@ auto Mpv::setUpdateCallback(std::function<void ()> &&cb) -> void
     mpv_opengl_cb_set_update_callback(d->gl, update, d);
 }
 
-auto Mpv::render(GLuint fbo, const QSize &size) -> int
+auto Mpv::render(OpenGLFramebufferObject *frame, OpenGLFramebufferObject *osd, const QMargins &m) -> int
 {
-    d->viewport[2] = size.width(); d->viewport[3] = size.height();
-    return mpv_opengl_cb_render(d->gl, fbo, d->viewport);
+    int ret = 0;
+    if (frame) {
+        d->viewport[2] = frame->width(); d->viewport[3] = frame->height();
+        ret = mpv_opengl_cb_render(d->gl, frame->id(), d->viewport);
+    }
+    if (osd) {
+        d->osd.prepare(osd);
+        mpv_opengl_cb_render_osd(d->gl, osd->width(), osd->height(), m.left(), m.top(), m.right(), m.bottom(), 1.0, MpvOsdRenderer::callback, &d->osd);
+        d->osd.end();
+    }
+    return ret;
 }
 
 auto Mpv::initializeGL(QOpenGLContext *ctx) -> void
@@ -126,10 +137,12 @@ auto Mpv::initializeGL(QOpenGLContext *ctx) -> void
     };
     auto err = mpv_opengl_cb_init_gl(d->gl, nullptr, getProcAddr, ctx);
     Q_ASSERT(err >= 0);
+    d->osd.initialize();
 }
 
 auto Mpv::finalizeGL() -> void
 {
+    d->osd.finalize();
     mpv_opengl_cb_uninit_gl(d->gl);
 }
 

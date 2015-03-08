@@ -1825,6 +1825,11 @@ static double gl_video_interpolate_frame(struct gl_video *p,
     return inter_coeff;
 }
 
+void gl_video_render_osd(struct gl_video *p, const struct mp_osd_res *res, void(*cb)(void*,struct sub_bitmaps*), void *ctx)
+{
+    osd_draw(p->osd->osd, *res, p->osd_pts, 0, p->osd->formats, cb, ctx);
+}
+
 // (fbo==0 makes BindFramebuffer select the screen backbuffer)
 void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
 {
@@ -1898,7 +1903,7 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
     debug_check_gl(p, "after video rendering");
 
 draw_osd:
-    mpgl_osd_draw(p->osd, p->osd_rect, p->osd_pts, p->image_params.stereo_out);
+//     mpgl_osd_draw(p->osd, p->osd_rect, p->osd_pts, p->image_params.stereo_out);
 
     gl->BindFramebuffer(GL_FRAMEBUFFER, 0);
 }

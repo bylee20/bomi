@@ -2,10 +2,21 @@
 #include "dialog/mbox.hpp"
 #include "json/jrserver.hpp"
 #include "player/jrplayer.hpp"
+#include <QCryptographicHash>
 
 DECLARE_LOG_CONTEXT(Main)
 
 namespace OGL { auto check() -> QString; }
+
+template<class F>
+SIA measure(F func, int loop = 100000) -> quint64
+{
+    QElapsedTimer timer;
+    timer.start();
+    for (int i = 0; i < loop; ++i)
+        func();
+    return timer.nsecsElapsed() / loop;
+}
 
 int main(int argc, char **argv) {
 #ifdef Q_OS_LINUX

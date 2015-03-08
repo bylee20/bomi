@@ -272,6 +272,17 @@ int mpv_opengl_cb_uninit_gl(struct mpv_opengl_cb_context *ctx)
     return 0;
 }
 
+int mpv_opengl_cb_render_osd(struct mpv_opengl_cb_context *ctx, 
+                             int w, int h, int ml, int mt, int mr, int mb, double dpar,
+                             void(*cb)(void*,struct sub_bitmaps*), void *octx)
+{
+    struct mp_osd_res res = { .w = w, .h = h, .ml = ml, .mt = mt, .mr = mr, .mb = mb, .display_par = dpar };
+    pthread_mutex_lock(&ctx->lock);
+    gl_video_render_osd(ctx->renderer, &res, cb, octx);
+    pthread_mutex_unlock(&ctx->lock);
+    return 0;
+}
+
 int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
 {
     assert(ctx->renderer);

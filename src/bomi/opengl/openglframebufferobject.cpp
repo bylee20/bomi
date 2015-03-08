@@ -12,7 +12,7 @@ auto makeTexture(const QSize &size, OGL::TextureFormat internal) -> OpenGLTextur
     info.transfer.type = OGL::UInt8;
 
     OpenGLTexture2D texture;
-    texture.create();
+    texture.create(OGL::Linear, OGL::ClampToBorder);
     OpenGLTextureBinder<OGL::Target2D> binder(&texture);
     texture.initialize(size, info);
     return texture;

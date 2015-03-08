@@ -6,10 +6,25 @@
 #include <functional>
 
 class OpenGLFramebufferObject;
-using RenderFrameFunc = std::function<void(OpenGLFramebufferObject*)>;
+using Fbo = OpenGLFramebufferObject;
+using RenderFrameFunc = std::function<void(Fbo*,Fbo*,const QMargins&)>;
 
-class VideoRenderer : public ShaderRenderItem<OGL::TextureVertex> {
+struct VideoFrameOsdVertex {
+    OGL::CoordAttr position, frameTexCoord, osdTexCoord;
+    static const OGL::AttrInfo &info() {
+        static const OGL::AttrData data[] = {
+            OGL::CoordAttr::data(0, true),
+            OGL::CoordAttr::data(1, false),
+            OGL::CoordAttr::data(2, false)
+        };
+        static const OGL::AttrInfo info = { 3, sizeof(VideoFrameOsdVertex), data };
+        return info;
+    }
+};
+
+class VideoRenderer : public ShaderRenderItem<VideoFrameOsdVertex> {
     Q_OBJECT
+    using Super = ShaderRenderItem<VideoFrameOsdVertex>;
 public:
     VideoRenderer(QQuickItem *parent = 0);
     ~VideoRenderer();

@@ -321,32 +321,27 @@ auto MainWindow::Data::plugMenu() -> void
 
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
-        connect(snap[actionName], &QAction::triggered, p, [this, mode] () {
-            snapshotMode = mode;
-            if (snapshotMode == NoSnapshot)
-                return;
-            PlayEngine::Snapshot snapshot = PlayEngine::VideoOnly;
-            if (snapshotMode == QuickSnapshot || snapshotMode == SnapshotTool)
-                snapshot = PlayEngine::VideoAndOsd;
-            e.takeSnapshot(snapshot);
-        });
+        connect(snap[actionName], &QAction::triggered, p, [this, mode] ()
+            { if ((snapshotMode = mode) != NoSnapshot) e.takeSnapshot(); });
     };
     connectSnapshot(u"quick"_q, QuickSnapshot);
     connectSnapshot(u"quick-nosub"_q, QuickSnapshotNoSub);
     connectSnapshot(u"tool"_q, SnapshotTool);
     connect(&e, &PlayEngine::snapshotTaken, p, [this] () {
-        auto video = e.snapshot(false);
-        auto osd = e.snapshot(true);
+        QImage frameOnly, withOsd;
+        e.snapshot(&frameOnly, &withOsd);
         e.clearSnapshots();
-        if (video.isNull() && osd.isNull())
+        if (frameOnly.isNull())
             return;
         if (snapshotMode == QuickSnapshot || snapshotMode == SnapshotTool) {
             QRectF subRect;
-            auto sub = e.subtitleImage(osd.rect(), &subRect);
-            if (!sub.isNull()) {
-                QPainter painter(&osd);
+            QImage osd; osd.swap(withOsd);
+            withOsd = frameOnly;
+            QPainter painter(&withOsd);
+            painter.drawImage(osd.rect(), osd);
+            auto sub = e.subtitleImage(withOsd.rect(), &subRect);
+            if (!sub.isNull())
                 painter.drawImage(subRect, sub);
-            }
         }
         switch (snapshotMode) {
         case SnapshotTool: {
@@ -355,20 +350,20 @@ auto MainWindow::Data::plugMenu() -> void
                 connect(snapshot, &SnapshotDialog::request, p, [=] () {
                     if (e.hasVideoFrame()) {
                         snapshotMode = SnapshotTool;
-                        e.takeSnapshot(PlayEngine::VideoAndOsd);
+                        e.takeSnapshot();
                     } else
                         snapshot->clear();
                 });
             }
-            if (!video.isNull())
-                snapshot->setImage(video, osd);
+            if (!frameOnly.isNull())
+                snapshot->setImage(frameOnly, withOsd);
             else
                 snapshot->clear();
             break;
         } case QuickSnapshot: case QuickSnapshotNoSub: {
-            auto image = video;
+            auto image = frameOnly;
             if (snapshotMode == QuickSnapshot)
-                image = osd;
+                image = withOsd;
             const auto time = QDateTime::currentDateTime();
             const QString fileName = "bomi-snapshot-"_a
                     % time.toString(u"yyyy-MM-dd-hh-mm-ss-zzz"_q)
