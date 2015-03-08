@@ -20,11 +20,21 @@ PlayEngine::PlayEngine()
 
     d->params.m_mutex = &d->mutex;
 
+    auto isAss = [=] () {
+        auto track = d->params.sub_tracks().selection();
+        return track && track->codec().toLower() == "ass"_a;
+    };
+
     connect(&d->params, &MrlState::video_offset_changed, d->vr, &VideoRenderer::setOffset);
     connect(&d->params, &MrlState::video_aspect_ratio_changed, d->vr, &VideoRenderer::setAspectRatio);
     connect(&d->params, &MrlState::video_crop_ratio_changed, d->vr, &VideoRenderer::setCropRatio);
-    connect(&d->params, &MrlState::sub_display_changed, d->vr,
-            [=] (auto sd) { d->vr->setOverlayOnLetterbox(sd == SubtitleDisplay::OnLetterbox); });
+    auto updateLetterBox = [=] (bool override)
+        { d->mpv.setAsync("ass-force-margins", d->vr->overlayOnLetterbox() && override); };
+    connect(&d->params, &MrlState::sub_display_changed, d->vr, [=] (auto sd) {
+        d->vr->setOverlayOnLetterbox(sd == SubtitleDisplay::OnLetterbox);
+        updateLetterBox(d->params.sub_override_ass_position());
+        d->mpv.update();
+    });
     connect(&d->params, &MrlState::video_zoom_changed, this, &PlayEngine::zoomChanged);
     auto setAlignment = [=] () {
         const auto v = _EnumData(d->params.video_vertical_alignment());
@@ -53,41 +63,43 @@ PlayEngine::PlayEngine()
 
     connect(&d->params, &MrlState::sub_sync_changed, d->sr, &SubtitleRenderer::setDelay);
     connect(&d->params, &MrlState::sub_hidden_changed, d->sr, &SubtitleRenderer::setHidden);
-    connect(&d->params, &MrlState::sub_position_changed, d->sr, [=] (double pos) {
-        d->sr->setPos(pos);
-        if (d->params.sub_style_overriden()) {
-            d->mpv.setAsync("options/sub-pos", qRound(pos * 100));
-        } else {
-            auto track = d->params.sub_tracks().selection();
-            if (track && track->codec().toLower() != "ass"_a)
-                d->mpv.setAsync("options/sub-pos", qRound(pos * 100));
-            else
-                d->mpv.setAsync("options/sub-pos", 100);
-        }
+
+    auto updatePos = [=] (double p, bool o) {
+        d->mpv.setAsync("sub-pos", o || !isAss() ? qRound(p * 100) : 100);
+        updateLetterBox(o);
+        d->mpv.update();
+    };
+    auto updateScale = [=] (double s, bool o) {
+        d->mpv.setAsync("sub-scale", o || !isAss() ? qMax(0., 1. + s) : 1.);
+        d->mpv.update();
+    };
+
+    connect(&d->params, &MrlState::sub_override_ass_position_changed, this,
+            [=] (bool override) { updatePos(d->params.sub_position(), override); });
+    connect(&d->params, &MrlState::sub_position_changed, d->sr, [=] (double pos)
+        { d->sr->setPos(pos); updatePos(pos,d->params.sub_override_ass_position()); });
+    connect(&d->params, &MrlState::sub_alignment_changed, d->sr, [=] (auto a) {
+        const auto top = a == VerticalAlignment::Top;
+        d->sr->setTopAligned(top);
+    });
+    connect(&d->params, &MrlState::sub_style_overriden_changed, this, [=] (bool o) {
+        d->mpv.setAsync("ass-style-override", o ? "force"_b : "yes"_b);
         d->mpv.update();
     });
-    connect(&d->params, &MrlState::sub_alignment_changed, d->sr, [=] (auto a)
-        { d->sr->setTopAligned(a == VerticalAlignment::Top); });
-    connect(&d->params, &MrlState::sub_style_overriden_changed, this, [=] (bool override) {
-        const int pos = qRound(d->params.sub_position() * 100);
-        if (override) {
-            d->mpv.setAsync("options/sub-pos", pos);
-            d->mpv.setAsync("options/ass-style-override", "force"_b);
-        } else {
-            auto track = d->params.sub_tracks().selection();
-            if (track && track->codec().toLower() != "ass"_a)
-                d->mpv.setAsync("options/sub-pos", pos);
-            else
-                d->mpv.setAsync("options/sub-pos", 100);
-            d->mpv.setAsync("options/ass-style-override", "no"_b);
-        }
-        d->mpv.update();
+    connect(&d->params, &MrlState::sub_scale_changed, this, [=] (double s) {
+        auto style = d->subStyle;
+        style.font.size = qBound(0.0, style.font.size * (1.0 + s), 1.0);
+        d->sr->setStyle(style);
+        updateScale(s, d->params.sub_override_ass_scale());
     });
-    connect(&d->params, &MrlState::sub_scale_changed, this, [=] () { d->updateSubtitleStyle(); });
 
     auto set_subs = [=] ()
         { d->info.subtitle.setTracks(d->params.sub_tracks(), d->params.sub_tracks_inclusive()); };
-    connect(&d->params, &MrlState::sub_tracks_changed, this, set_subs);
+    connect(&d->params, &MrlState::sub_tracks_changed, this, [=] () {
+        set_subs();
+        updatePos(d->params.sub_position(), d->params.sub_override_ass_position());
+        updateScale(d->params.sub_scale(), d->params.sub_override_ass_scale());
+    });
     connect(&d->params, &MrlState::sub_tracks_inclusive_changed, this, set_subs);
 
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
@@ -195,7 +207,7 @@ PlayEngine::PlayEngine()
     d->mpv.setOption("hr-seek", d->preciseSeeking ? "yes" : "absolute");
     d->mpv.setOption("audio-file-auto", "no");
     d->mpv.setOption("sub-auto", "no");
-    d->mpv.setOption("sub-text-margin-y", "0");
+//    d->mpv.setOption("sub-text-margin-y", "0");
     d->mpv.setOption("audio-client-name", cApp.name());
 
     auto overrides = qgetenv("BOMI_MPV_OPTIONS").trimmed();
@@ -1135,9 +1147,19 @@ auto PlayEngine::setSubtitleDisplay(SubtitleDisplay sd) -> void
     d->params.set_sub_display(sd);
 }
 
-auto PlayEngine::setSubtitleStyleOverriden(bool overriden) -> void
+auto PlayEngine::setOverrideAssTextStyle(bool overriden) -> void
 {
     d->params.set_sub_style_overriden(overriden);
+}
+
+auto PlayEngine::setOverrideAssPosition(bool override) -> void
+{
+    d->params.set_sub_override_ass_position(override);
+}
+
+auto PlayEngine::setOverrideAssScale(bool override) -> void
+{
+    d->params.set_sub_override_ass_scale(override);
 }
 
 auto PlayEngine::setSubtitleFiles(const QStringList &files,

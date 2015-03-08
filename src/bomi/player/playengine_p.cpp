@@ -931,11 +931,10 @@ auto PlayEngine::Data::addSubtitleFiles(const QVector<SubtitleWithEncoding> &sub
 auto PlayEngine::Data::updateSubtitleStyle() -> void
 {
     auto style = subStyle;
-    style.font.size = qBound(0.0, style.font.size + params.sub_scale(), 1.0);
-
+    style.font.size = qBound(0.0, style.font.size * (1.0 + params.sub_scale()), 1.0);
     sr->setStyle(style);
 
-    const auto font = style.font;
+    const auto font = subStyle.font;
     mpv.setAsync("options/sub-text-color", font.color.name(QColor::HexArgb).toLatin1());
     QStringList fontStyles;
     if (font.bold())

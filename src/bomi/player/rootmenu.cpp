@@ -538,11 +538,18 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->action(u"override"_q, QT_TR_NOOP("Override ASS Style"), true);
-        d->enumMenuCheckable<SubtitleDisplay>(true);
+        d->menu(u"override-ass"_q, QT_TR_NOOP("Override ASS"), [=] () {
+            d->action(u"position"_q, QT_TR_NOOP("Position"), true);
+            d->action(u"scale"_q, QT_TR_NOOP("Scale"), true);
+            d->action(u"text"_q, QT_TR_NOOP("Text Style"), true);
+        });
         d->enumMenuCheckable<VerticalAlignment>(u"align"_q, QT_TR_NOOP("Alignment"),
                              {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
-        d->menuStepReset(u"position"_q, QT_TR_NOOP("Position"));
+        d->menu(u"position"_q, QT_TR_NOOP("Position"), [=] () {
+            d->stepReset(u"adjust"_q);
+            d->separator();
+            d->enumActions<SubtitleDisplay>(true);
+        });
         d->menuStepReset(u"scale"_q, QT_TR_NOOP("Scale"));
 
         d->separator();

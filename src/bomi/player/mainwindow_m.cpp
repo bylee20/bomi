@@ -552,16 +552,17 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(strack[u"clear"_q], &QAction::triggered, &e, &PlayEngine::clearSubtitleFiles);
 
-    PLUG_FLAG(sub[u"override"_q], sub_style_overriden, setSubtitleStyleOverriden);
-    PLUG_ENUM_CHILD(sub, sub_display, setSubtitleDisplay);
+    auto &ass = sub(u"override-ass"_q);
+    PLUG_FLAG(ass[u"text"_q], sub_style_overriden, setOverrideAssTextStyle);
+    PLUG_FLAG(ass[u"position"_q], sub_override_ass_position, setOverrideAssPosition);
+    PLUG_FLAG(ass[u"scale"_q], sub_override_ass_scale, setOverrideAssScale);
     PLUG_ENUM(sub(u"align"_q), sub_alignment, setSubtitleAlignment);
-    PLUG_STEP(sub(u"position"_q).g(), sub_position, setSubtitlePosition);
+    PLUG_STEP(sub(u"position"_q).g(u"adjust"_q), sub_position, setSubtitlePosition);
+    PLUG_ENUM(sub(u"position"_q), sub_display, setSubtitleDisplay);
     PLUG_STEP(sub(u"sync"_q).g(u"step"_q), sub_sync, setSubtitleDelay);
-
     connect(sub(u"sync"_q).g(u"bring"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
         const int time = e.captionBeginTime(a->data().toInt());
-        if (time >= 0)
-            push(e.time() - time, e.params()->sub_sync(), &PlayEngine::setSubtitleDelay);
+        if (time >= 0) push(e.time() - time, e.params()->sub_sync(), &PlayEngine::setSubtitleDelay);
     });
     PLUG_STEP(sub(u"scale"_q).g(), sub_scale, setSubtitleScale);
 
