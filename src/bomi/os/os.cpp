@@ -165,6 +165,12 @@ auto WindowAdapter::isFullScreen() const -> bool
     return m_widget->isFullScreen();
 }
 
+auto WindowAdapter::containerSize() const -> QSize
+{
+//    return isFrameVisible() ? m_widget->size() : m_widget->frameSize();
+    return m_widget->size();
+}
+
 auto WindowAdapter::setFullScreen(bool fs) -> void
 {
     auto states = m_widget->windowState();

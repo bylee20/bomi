@@ -815,11 +815,12 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
 
 auto MainWindow::Data::resizeContainer() -> void
 {
-    QSize size = p->frameSize();
-    if (adapter->isFrameVisible()) {
-        const auto m = adapter->frameMargins();
-        size.rwidth() -= m.left() + m.right();
-        size.rheight() -= m.top() + m.bottom();
-    }
-    container->resize(size);
+    container->resize(adapter->containerSize());
+//    QSize size = p->frameSize();
+//    if (adapter->isFrameVisible()) {
+//        const auto m = adapter->frameMargins();
+//        size.rwidth() -= m.left() + m.right();
+//        size.rheight() -= m.top() + m.bottom();
+//    }
+//    container->resize(size);
 }

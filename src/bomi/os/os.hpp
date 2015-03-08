@@ -42,6 +42,7 @@ public:
     virtual auto moveByDrag(const QPointF &m) -> void;
     virtual auto endMoveByDrag() -> void;
     virtual auto fullScreenMargin() const -> int { return 0; }
+    virtual auto containerSize() const -> QSize;
     auto frameMargins() const -> QMargins { return m_frameMargins; }
     auto isFrameVisible() const -> bool { return !isFullScreen() && !isFrameless(); }
     auto geometry() const -> QRect { return isFrameVisible() ? m_widget->geometry()
