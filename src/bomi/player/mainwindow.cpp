@@ -178,14 +178,18 @@ auto MainWindow::isSceneGraphInitialized() const -> bool
     return d->sgInit;
 }
 
-auto MainWindow::setFullScreen(bool full) -> void
+auto MainWindow::setFullScreen(bool full, bool updateLastGeometry) -> void
 {
     if (d->adapter->isFullScreen() == full)
         return;
+    if (updateLastGeometry && !d->adapter->isFullScreen())
+        d->as.updateLastWindowGeometry(this);
     d->adapter->setFullScreen(full);
 #ifdef Q_OS_WIN // This should be checked in WindowStatesChange event for others
     emit fullscreenChanged(full);
     d->updateStaysOnTop();
+    if (!full)
+        d->as.restoreLastWindowGeometry(this);
 #endif
 }
 
@@ -360,11 +364,16 @@ auto MainWindow::changeEvent(QEvent *ev) -> void
             { return !((event->oldState() & windowState()) & state); };
         if (!d->stateChanging && changed(Qt::WindowMinimized))
             d->doVisibleAction(!isMinimized());
-#ifndef Q_OS_WIN // this doesn't work for windows because of fake fullscreen
-        if (changed(Qt::WindowFullScreen))
-            emit fullscreenChanged(isFullScreen());
-#endif
+#ifdef Q_OS_WIN
         d->updateStaysOnTop();
+#else // this doesn't work for windows because of fake fullscreen
+        const bool fsChanged = changed(Qt::WindowFullScreen);
+        if (fsChanged)
+            emit fullscreenChanged(isFullScreen());
+        d->updateStaysOnTop();
+        if (fsChanged && !isFullScreen())
+            d->as.restoreLastWindowGeometry(this);
+#endif
     }
 }
 

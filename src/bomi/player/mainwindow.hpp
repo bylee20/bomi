@@ -12,7 +12,7 @@ public:
     ~MainWindow();
     auto openFromFileManager(const Mrl &mrl) -> void;
     auto isFullScreen() const -> bool;
-    auto setFullScreen(bool full) -> void;
+    auto setFullScreen(bool full, bool updateLastGeometry = true) -> void;
     auto wake() -> void;
     auto togglePlayPause() -> void;
     auto play() -> void;

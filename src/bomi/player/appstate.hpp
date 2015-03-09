@@ -16,6 +16,10 @@ public:
 
     QPointF win_pos;
     QSize win_size;
+
+    QPointF last_win_pos;
+    QSize last_win_size;
+
     // tool state
     bool auto_exit = false;
     bool playlist_visible = false;
@@ -34,6 +38,9 @@ public:
 
     auto updateWindowGeometry(const MainWindow *w) -> void;
     auto restoreWindowGeometry(MainWindow *w) -> void;
+
+    auto updateLastWindowGeometry(const MainWindow *w) -> void;
+    auto restoreLastWindowGeometry(MainWindow *w) -> void;
 
     auto load() -> void;
     auto save() const -> void;

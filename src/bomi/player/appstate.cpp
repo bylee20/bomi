@@ -16,6 +16,8 @@ DECLARE_LOG_CONTEXT(App)
 static const auto jio = JIO(
     JE(win_pos),
     JE(win_size),
+    JE(last_win_pos),
+    JE(last_win_size),
     JE(auto_exit),
     JE(playlist_visible),
     JE(playlist_shuffled),
@@ -56,6 +58,36 @@ auto AppState::save() const -> void
 static const QSize s_maximized{-759, -526};
 static const QSize s_fullScreen{-333, -333};
 
+static auto saveWindowGeometry(const MainWindow *w, QPointF *p, QSize *s) -> void
+{
+    *s = w->size();
+    auto screen = w->screen()->availableVirtualSize();
+    p->rx() = qBound(0.0, w->x()/(double)screen.width(), 1.0);
+    p->ry() = qBound(0.0, w->y()/(double)screen.height(), 1.0);
+}
+
+static auto loadWindowGeometry(MainWindow *w, const QPointF &p, const QSize &s) -> void
+{
+    if (s.isValid()) {
+        auto screen = w->screen()->availableVirtualSize();
+        const int x = screen.width() * p.x();
+        const int y = screen.height() * p.y();
+        w->setGeometry(QRect({x, y}, s));
+    } else
+        w->resize(400, 300);
+}
+
+
+auto AppState::updateLastWindowGeometry(const MainWindow *w) -> void
+{
+    saveWindowGeometry(w, &last_win_pos, &last_win_size);
+}
+
+auto AppState::restoreLastWindowGeometry(MainWindow *w) -> void
+{
+    loadWindowGeometry(w, last_win_pos, last_win_size);
+}
+
 auto AppState::updateWindowGeometry(const MainWindow *w) -> void
 {
     if (w->isMinimized() || !w->isVisible())
@@ -64,12 +96,8 @@ auto AppState::updateWindowGeometry(const MainWindow *w) -> void
         win_size = s_fullScreen;
     else if (w->isMaximized())
         win_size = s_maximized;
-    else {
-        win_size = w->size();
-        auto screen = w->screen()->availableVirtualSize();
-        win_pos.rx() = qBound(0.0, w->x()/(double)screen.width(), 1.0);
-        win_pos.ry() = qBound(0.0, w->y()/(double)screen.height(), 1.0);
-    }
+    else
+        saveWindowGeometry(w, &win_pos, &win_size);
 }
 
 auto AppState::restoreWindowGeometry(MainWindow *w) -> void
@@ -77,13 +105,7 @@ auto AppState::restoreWindowGeometry(MainWindow *w) -> void
     if (win_size == s_maximized)
         w->showMaximized();
     else if (win_size == s_fullScreen)
-        w->setFullScreen(true);
-    else if (win_size.isValid()) {
-        auto screen = w->screen()->availableVirtualSize();
-        const int x = screen.width() * win_pos.x();
-        const int y = screen.height() * win_pos.y();
-        w->setGeometry(QRect({x, y}, win_size));
-    } else
-        w->resize(400, 300);
-    w->setMinimumSize(QSize(400, 300));
+        w->setFullScreen(true, false);
+    else
+        loadWindowGeometry(w, win_pos, win_size);
 }
