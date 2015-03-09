@@ -15,10 +15,11 @@ include(configure.pro)
 !isEmpty(BOMI_RELEASE) {
     CONFIG += release
     macx:CONFIG += app_bundle
-} else:CONFIG -= release
+} else {
+	CONFIG -= release
+}
 
 QMAKE_CXXFLAGS_CXX11 = -std=c++1y
-QMAKE_CXXFLAGS -= -O2
 
 contains(QMAKE_CXX, clang++) {
 QMAKE_CXXFLAGS += -Wno-missing-braces
