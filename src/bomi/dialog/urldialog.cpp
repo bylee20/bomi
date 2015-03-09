@@ -81,8 +81,7 @@ auto UrlDialog::url() const -> QUrl
 
 auto UrlDialog::isPlaylist() const -> bool
 {
-    return d->playlist->isChecked()
-           && _IsSuffixOf(PlaylistExt, QFileInfo(url().path()).suffix());
+    return d->playlist->isChecked();
 }
 
 auto UrlDialog::encoding() const -> EncodingInfo

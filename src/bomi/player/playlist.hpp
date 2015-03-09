@@ -23,6 +23,7 @@ public:
     bool load(const Mrl &url, const EncodingInfo &enc = EncodingInfo(), Type type = Unknown);
     auto load(const QUrl &url, QByteArray *data, const EncodingInfo &enc, Type type) -> bool;
     static auto guessType(const QString &fileName) -> Type;
+    static auto typeForSuffix(const QString &suffix) -> Type;
 private:
     static auto resolve(const QString &location, const QUrl &url) -> QString;
     auto savePLS(QTextStream &out) const -> bool;

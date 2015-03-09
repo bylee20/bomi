@@ -97,9 +97,9 @@ auto Playlist::load(const Mrl &mrl, const EncodingInfo &enc, Type type) -> bool
     return false;
 }
 
-auto Playlist::guessType(const QString &fileName) -> Playlist::Type
+auto Playlist::typeForSuffix(const QString &str) -> Type
 {
-    const auto suffix = QFileInfo(fileName).suffix().toLower();
+    const auto suffix = str.toLower();
     if (suffix == "pls"_a)
         return PLS;
     else if (suffix == "m3u"_a)
@@ -108,6 +108,11 @@ auto Playlist::guessType(const QString &fileName) -> Playlist::Type
         return M3U8;
     else
         return Unknown;
+}
+
+auto Playlist::guessType(const QString &fileName) -> Playlist::Type
+{
+    return typeForSuffix(QFileInfo(fileName).suffix());
 }
 
 auto Playlist::savePLS(QTextStream &out) const -> bool

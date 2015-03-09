@@ -12,7 +12,9 @@ class Downloader: public QObject {
 public:
     Downloader(QObject *parent = nullptr);
     ~Downloader();
-    auto start(const QUrl &url) -> bool;
+    auto type(const QUrl &url, int timeout = 30000) -> QString;
+    auto start(const QUrl &url, const QStringList &extFilter = QStringList()) -> bool;
+    auto suffixes() const -> QStringList;
     auto isRunning() const -> bool;
     auto data() const -> QByteArray;
     auto takeData() -> QByteArray;

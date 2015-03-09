@@ -155,7 +155,8 @@ auto PlaylistModel::setDownloader(Downloader *downloader) -> void
         if (m_downloader->isCanceled())
             return;
         auto data = m_downloader->takeData();
-        const auto type = Playlist::guessType(m_downloader->url().path());
+        const auto suffix = m_downloader->suffixes().value(0);
+        const auto type = Playlist::typeForSuffix(suffix);
         Playlist list;
         if (list.load(m_downloader->url(), &data, m_enc, type)) {
             setList(list);
@@ -188,7 +189,7 @@ auto PlaylistModel::open(const Mrl &mrl, const EncodingInfo &enc) -> void
         if (m_downloader->isRunning())
             m_downloader->cancel();
         m_enc = enc;
-        m_downloader->start(mrl.toString());
+        m_downloader->start(mrl.toString(), _ExtList(PlaylistExt));
     }
 }
 

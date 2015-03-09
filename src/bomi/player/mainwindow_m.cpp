@@ -179,6 +179,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(open[u"url"_q], &QAction::triggered, p, [this] () {
         UrlDialog dlg(p);
         if (dlg.exec()) {
+            downloader.cancel();
             if (dlg.isPlaylist())
                 playlist.open(dlg.url(), dlg.encoding());
             else
