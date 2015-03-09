@@ -27,15 +27,17 @@ using Translate = std::function<void(void)>;
 struct MenuActionInfo
 {
     MenuActionInfo() = default;
-    Translate trans; const char *desc = nullptr;
+    QAction *action = nullptr;
+    Translate trans;
+    const char *desc = nullptr;
 };
 
 struct RootMenu::Data {
     Menu *parent = nullptr;
-    QHash<QAction*, MenuActionInfo> infos;
     MenuActionInfo *info = nullptr;
     QMap<QString, QString> alias;
-    QMap<QString, QAction*> actions;
+    QMap<QString, MenuActionInfo> actions;
+    QMap<QKeySequence, QAction*> keymap;
 
     auto find(const QString &longId) const -> QAction*
     {
@@ -45,29 +47,21 @@ struct RootMenu::Data {
             if (ait != alias.end())
                 it = actions.find(*ait);
         }
-        return it != actions.end() ? *it : nullptr;
+        return it != actions.end() ? it->action : nullptr;
     }
 
     auto toGetText(const char *trans) const -> GetText
         { return [=] () { return tr(trans); }; }
 
-    auto desc(QAction *act, const char *description) -> void
-    {
-        Q_ASSERT(act && infos.contains(act));
-        infos[act].desc = description;
-    }
-    auto desc(Menu *m, const char *description) -> void
-        { desc(m->menuAction(), description); }
-
     auto newInfo(QAction *action, const QString &key) -> MenuActionInfo*
     {
-        auto &info = infos[action];
         const auto &prefix = parent->menuAction()->objectName();
         const QString id = prefix.isEmpty() ? key : (prefix % '/'_q % key);
         action->setObjectName(id);
-        actions[id] = action;
-        this->info = &info;
-        return &info;
+        auto &i = actions[id];
+        Q_ASSERT(!i.action);
+        i.action = action;
+        return info = &i;
     }
     auto newInfo(QMenu *menu, const QString &key) -> MenuActionInfo*
         { return newInfo(menu->menuAction(), key); }
@@ -273,10 +267,7 @@ RootMenu::RootMenu()
     ALIAS(video/deinterlacing/toggle, video/deinterlacing/cycle);
 #undef ALIAS
 
-//    setTitle(u"Root Menu"_q);
-
     d->parent = this;
-    d->infos[menuAction()] = { };
 
     d->menu(u"open"_q, QT_TR_NOOP("Open"), [=] () {
         d->action(u"file"_q, QT_TR_NOOP("File"));
@@ -459,18 +450,13 @@ RootMenu::RootMenu()
 
     d->menu(u"audio"_q, QT_TR_NOOP("Audio"), [=] () {
         d->menu(u"track"_q, QT_TR_NOOP("Track"), [=] () {
-            d->desc(d->action(u"open"_q, QT_TR_NOOP("Open File")),
-                    QT_TR_NOOP("Open Audio Track File"));
-            d->desc(d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File")),
-                    QT_TR_NOOP("Auto-load Audio Track File"));
-            d->desc(d->action(u"reload"_q, QT_TR_NOOP("Reload File")),
-                    QT_TR_NOOP("Reload Audio Track File"));
-            d->desc(d->action(u"clear"_q, QT_TR_NOOP("Clear File")),
-                    QT_TR_NOOP("Clear Audio Track File"));
+            d->action(u"open"_q, QT_TR_NOOP("Open File"));
+            d->action(u"auto-load"_q, QT_TR_NOOP("Auto-load File"));
+            d->action(u"reload"_q, QT_TR_NOOP("Reload File"));
+            d->action(u"clear"_q, QT_TR_NOOP("Clear File"));
             d->group()->setExclusive(true);
             d->separator();
-            d->desc(d->action(u"cycle"_q, QT_TR_NOOP("Select Next")),
-                    QT_TR_NOOP("Select Next Audio Track"));
+            d->action(u"cycle"_q, QT_TR_NOOP("Select Next"));
             d->separator();
         })->setEnabled(false);
         d->menuStepReset(u"sync"_q, QT_TR_NOOP("Sync"));
@@ -669,14 +655,14 @@ auto RootMenu::execute(const QString &id) -> bool
 
 auto RootMenu::setShortcutMap(const ShortcutMap &map) -> void
 {
-    m_keymap.clear();
+    d->keymap.clear();
     for (auto it = d->actions.cbegin(); it != d->actions.cend(); ++it) {
         const auto &keys = map.keys(it.key());
-        const auto action = *it;
+        const auto action = it->action;
         action->setShortcuts(keys);
         for (auto &key : keys) {
             if (!key.isEmpty())
-                m_keymap[key] = action;
+                d->keymap[key] = action;
         }
     }
 #ifdef Q_OS_MAC
@@ -686,13 +672,14 @@ auto RootMenu::setShortcutMap(const ShortcutMap &map) -> void
 
 auto RootMenu::retranslate() -> void
 {
-    for (auto it = d->infos.begin(); it != d->infos.end(); ++it) {
-        if (it.key()->objectName().isEmpty())
+    for (const auto &info : d->actions) {
+        Q_ASSERT(info.action);
+        if (info.action->objectName().isEmpty())
             continue;
-        if (!it->trans)
-            _Error("'%%' is not tranlsatable.", it.key()->objectName());
+        if (!info.trans)
+            _Error("'%%' is not tranlsatable.", info.action->objectName());
         else
-            it->trans();
+            info.trans();
     }
 }
 
@@ -701,12 +688,6 @@ auto RootMenu::description(const QString &longId) const -> QString
     auto action = this->action(longId);
     if (!action)
         return QString();
-
-    auto it = d->infos.find(action);
-    if (it == d->infos.end())
-        return QString();
-    if (it->desc)
-        return tr(it->desc);
     QString desc = action->text();
     Menu *menu = nullptr;
     if (action->menu())
@@ -724,6 +705,11 @@ auto RootMenu::description(const QString &longId) const -> QString
 auto RootMenu::action(const QString &id) const -> QAction*
 {
     return d->find(id);
+}
+
+auto RootMenu::action(const QKeySequence &shortcut) const -> QAction*
+{
+    return d->keymap.value(shortcut);
 }
 
 struct DumpInfo {
