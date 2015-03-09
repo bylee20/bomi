@@ -140,6 +140,7 @@ config_opts="""
 --win=ARCH|32 for 32bit or 64 for 64bit(only Windows)|$win
 --qtsdk=QTSDK|directory for Qt SDK|
 --qmake=QMAKE|qmake executable|$qmake
+--lrelease=LRELEASE|lrelease executable|$lrelease
 --mkspec=MKSPEC|make spec for qmake|$mkspec
 --macdeployqt=MACDEPLOYQT|macdeployqt executable|QTSDK/bin/macdeployqt
 --parallel=JOBS|count of parallel jobs|autodetect:$njobs
