@@ -118,17 +118,17 @@ struct SubtitleFindDialog::Data {
         ui.language->setEnabled(ok);
         ui.get->setEnabled(ok);
         ui.view->setEnabled(ok);
+        ui.prog->setValue(0);
         if (ok) {
-            ui.prog->setMaximum(1);
-            ui.prog->setValue(0);
+            ui.prog->setRange(0, 1);
             if (!pending.isEmpty()) {
                 auto mrl = pending;
                 pending = Mrl();
                 p->find(mrl);
             }
-        } else {
-            ui.prog->setMaximum(0);
-        }
+        } else
+            ui.prog->setRange(0, 0);
+
         switch (finder->state()) {
         case OpenSubtitlesFinder::Connecting:
             ui.state->setText(tr("Connecting..."));
@@ -224,7 +224,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     d->finder = new OpenSubtitlesFinder;
     connect(&d->downloader, &Downloader::started, [this] () { d->updateState(); });
     connect(&d->downloader, &Downloader::progressed, [this] (qint64 written, qint64 total) {
-        d->ui.prog->setMaximum(total);
+        d->ui.prog->setRange(0, total);
         d->ui.prog->setValue(written);
     });
     connect(&d->downloader, &Downloader::finished, [this] () {
