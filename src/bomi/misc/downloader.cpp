@@ -2,6 +2,7 @@
 #include "misc/log.hpp"
 #include <QQuickItem>
 #include <QNetworkReply>
+#include <QMimeDatabase>
 
 DECLARE_LOG_CONTEXT(Downloader)
 

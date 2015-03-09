@@ -15,6 +15,7 @@
 #include "dialog/subtitlefinddialog.hpp"
 #include "dialog/encodingfiledialog.hpp"
 #include "video/interpolatorparams.hpp"
+#include <QThreadPool>
 
 template<class T, class Func>
 auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUndoCommand*

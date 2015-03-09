@@ -59,8 +59,16 @@ MainWindow::~MainWindow() {
 auto MainWindow::postInitialize() -> void
 {
     d->adapter->updateFrameMargins();
+#ifdef Q_OS_WIN
+    d->adapter->setFrameless(true);
+    if (d->as.win_frameless)
+        d->menu(u"window"_q)[u"frameless"_q]->setChecked(true);
+    else
+        d->adapter->setFrameless(false);
+#else
     if (d->as.win_frameless)
         d->menu(u"window"_q)[u"frameless"_q]->trigger();
+#endif
     d->as.restoreWindowGeometry(this);
     d->resizeContainer();
     OS::setImeEnabled(windowHandle(), false);

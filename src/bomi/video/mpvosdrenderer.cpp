@@ -46,7 +46,7 @@ struct MpvOsdRenderer::Data {
     QMatrix4x4 vMatrix;
     QOpenGLBuffer vbo{QOpenGLBuffer::VertexBuffer};
     int prevVboSize = 0;
-
+    QOpenGLFunctions *func = nullptr;
     QVector<PartInfo> parts;
 
     auto build(int inFormat) -> void
@@ -160,6 +160,7 @@ auto MpvOsdRenderer::initialize() -> void
     d->atlas.create(OGL::Linear, OGL::ClampToEdge);
     d->vbo.create();
     d->vbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    d->func = OGL::func();
 }
 auto MpvOsdRenderer::finalize() -> void
 {
@@ -199,7 +200,7 @@ auto MpvOsdRenderer::draw(const sub_bitmaps *imgs) -> void
 
     d->vbo.bind();
 
-    glActiveTexture(GL_TEXTURE0);
+    d->func->glActiveTexture(GL_TEXTURE0);
     OpenGLTextureBinder<OGL::Target2D> binder(&d->atlas);
 
     if (_Change(d->last.id, id)) {

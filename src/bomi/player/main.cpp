@@ -3,6 +3,7 @@
 #include "json/jrserver.hpp"
 #include "player/jrplayer.hpp"
 #include <QCryptographicHash>
+#include <QElapsedTimer>
 
 DECLARE_LOG_CONTEXT(Main)
 

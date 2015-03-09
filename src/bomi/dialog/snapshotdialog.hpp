@@ -1,6 +1,8 @@
 #ifndef SNAPSHOTDIALOG_H
 #define SNAPSHOTDIALOG_H
 
+#include <QRunnable>
+
 class VideoRenderer;        class SubtitleRenderer;
 
 class SnapshotSaver : public QRunnable {

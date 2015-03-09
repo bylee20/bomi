@@ -73,6 +73,20 @@ auto setImeEnabled(QWindow *w, bool enabled) -> void
         ime = ImmAssociateContext((HWND)w->winId(), nullptr);
 }
 
+auto WinWindowAdapter::containerSize() const -> QSize
+{
+    auto w = widget();
+    if (!m_removeFrameSize)
+        return w->size();
+    if (!isFrameVisible())
+        return w->size();
+    QSize size = w->frameSize();
+    const auto m = frameMargins();
+    size.rwidth() -= m.left() + m.right();
+    size.rheight() -= m.top() + m.bottom();
+    return size;
+}
+
 auto WinWindowAdapter::setFrameless(bool frameless) -> void
 {
     if (_Change(m_frameless, frameless) && !m_fs) {
@@ -85,6 +99,8 @@ auto WinWindowAdapter::setFrameless(bool frameless) -> void
 
 auto WinWindowAdapter::updateFrame() -> void
 {
+    if (!isFrameVisible())
+        m_removeFrameSize = true;
     WindowAdapter::setFrameless(!isFrameVisible());
 }
 

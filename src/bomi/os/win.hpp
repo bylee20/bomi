@@ -23,10 +23,12 @@ public:
     auto setFrameless(bool frameless) -> void final;
     auto isFrameless() const -> bool final { return m_frameless; }
     auto fullScreenMargin() const -> int final { return 1; }
+    auto containerSize() const -> QSize final;
 private:
     auto updateFrame() -> void;
     auto layer() const -> HWND
         { return m_onTop ? HWND_TOPMOST : HWND_NOTOPMOST; }
+    bool m_removeFrameSize = false;
     bool m_onTop = false, m_fs = false, m_frameless = false;
     QRect m_prevGeometry;
     DWORD m_prevStyle = 0;
