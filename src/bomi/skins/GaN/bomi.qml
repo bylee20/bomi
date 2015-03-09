@@ -106,7 +106,7 @@ B.AppWithFloating {
                                 groove: Image {
                                     width: volume.width; height: volume.height; source: "volume-unfill.png"
                                     Item {
-                                        clip: true; width: parent.width*engine.volume*1e-2; height: parent.height
+                                        clip: true; width: parent.width*engine.volume; height: parent.height
                                         Image { width: volume.width; height: volume.height ;source: "volume-fill.png" }
                                     }
                                 }
