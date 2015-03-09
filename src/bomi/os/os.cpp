@@ -17,6 +17,11 @@ auto defaultFixedFont() -> QFont
 }
 #endif
 
+#ifndef Q_OS_LINUX
+auto screensaverMethods() -> QStringList { return { u"auto"_q }; }
+auto setScreensaverMethod(const QString &) -> void { }
+#endif
+
 auto getHwAcc() -> HwAcc*;
 
 auto hwAcc() -> HwAcc*

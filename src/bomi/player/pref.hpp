@@ -79,6 +79,7 @@ private:
     P0(GeneratePlaylist, generate_playlist, GeneratePlaylist::Folder)
     P0(bool, hide_cursor, true)
     P0(bool, disable_screensaver, true)
+    P1(QString, screensaver_method, u"auto"_q, "currentText")
     P0(bool, lion_style_fullscreen, false)
     P0(bool, hide_cursor_fs_only, false)
     P0(int, hide_cursor_delay_sec, 3)

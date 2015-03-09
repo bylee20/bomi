@@ -135,6 +135,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->ui.app_fixed_font->setFixedFont(true);
     d->ui.enable_hwaccel->setEnabled(OS::hwAcc()->isAvailable());
+    d->ui.screensaver_method->addItems(OS::screensaverMethods());
+    d->ui.screensaver_method->setVisible(d->ui.screensaver_method->count() > 1);
 
     connect(d->ui.quick_snapshot_folder_browse, &QPushButton::clicked,
             this, [this] () {

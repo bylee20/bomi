@@ -12,6 +12,8 @@ namespace OS {
 auto initialize() -> void;
 auto finalize() -> void;
 
+auto screensaverMethods() -> QStringList;
+auto setScreensaverMethod(const QString &method) -> void;
 auto setScreensaverEnabled(bool enabled) -> void;
 auto setImeEnabled(QWindow *w, bool enabled) -> void;
 

@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>9</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2032,11 +2032,35 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="disable_screensaver">
-           <property name="text">
-            <string>Disable screensaver while playing</string>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_10">
+           <item>
+            <widget class="QCheckBox" name="disable_screensaver">
+             <property name="text">
+              <string>Disable screensaver while playing</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="screensaver_method">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
          </item>
          <item>
           <widget class="QCheckBox" name="app_unique">
@@ -2692,12 +2716,12 @@ You don't need to specify to this if geust is allowed.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>515</x>
-     <y>98</y>
+     <x>318</x>
+     <y>74</y>
     </hint>
     <hint type="destinationlabel">
-     <x>684</x>
-     <y>130</y>
+     <x>318</x>
+     <y>74</y>
     </hint>
    </hints>
   </connection>
@@ -2708,12 +2732,12 @@ You don't need to specify to this if geust is allowed.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>521</x>
-     <y>527</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>590</x>
-     <y>528</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -2724,12 +2748,12 @@ You don't need to specify to this if geust is allowed.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>539</x>
-     <y>98</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>539</x>
-     <y>125</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -2740,12 +2764,12 @@ You don't need to specify to this if geust is allowed.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>539</x>
-     <y>193</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>539</x>
-     <y>220</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -2756,12 +2780,12 @@ You don't need to specify to this if geust is allowed.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>684</x>
-     <y>394</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>539</x>
-     <y>425</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -2772,12 +2796,12 @@ You don't need to specify to this if geust is allowed.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>684</x>
-     <y>394</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>683</x>
-     <y>425</y>
+     <x>312</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -2788,12 +2812,12 @@ You don't need to specify to this if geust is allowed.</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>313</x>
-     <y>68</y>
+     <x>534</x>
+     <y>98</y>
     </hint>
     <hint type="destinationlabel">
-     <x>298</x>
-     <y>68</y>
+     <x>519</x>
+     <y>125</y>
     </hint>
    </hints>
   </connection>
@@ -2808,8 +2832,24 @@ You don't need to specify to this if geust is allowed.</string>
      <y>61</y>
     </hint>
     <hint type="destinationlabel">
-     <x>287</x>
-     <y>106</y>
+     <x>312</x>
+     <y>68</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>disable_screensaver</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>screensaver_method</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>436</x>
+     <y>309</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>301</y>
     </hint>
    </hints>
   </connection>

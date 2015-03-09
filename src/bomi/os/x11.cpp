@@ -68,6 +68,10 @@ static auto getAtom(xcb_connection_t *conn, const char *name) -> xcb_atom_t
     return ret;
 }
 
+enum class ScreensaverMethod {
+    Auto, Gnome, Freedesktop, Xss
+};
+
 struct X11 : public QObject {
     X11();
     ~X11();
@@ -76,7 +80,8 @@ struct X11 : public QObject {
         QTimer reset;
         QDBusInterface *iface = nullptr;
         QDBusReply<uint> reply;
-        bool inhibit = false, xss = false, gnome = false;
+        bool inhibit = false;
+        ScreensaverMethod method = ScreensaverMethod::Auto;
     } ss;
 
     xcb_connection_t *connection = nullptr;
@@ -135,7 +140,6 @@ static X11 *d = nullptr;
 auto initialize() -> void { _Renew(d); }
 auto finalize() -> void { _Delete(d); }
 
-
 X11::X11()
 {
     connection = QX11Info::connection();
@@ -164,7 +168,7 @@ X11::X11()
 
     ss.reset.setInterval(20000);
     connect(&ss.reset, &QTimer::timeout, this, [=] () {
-        Q_ASSERT(ss.xss);
+        Q_ASSERT(ss.method == ScreensaverMethod::Xss);
         _Debug("Force XCB_SCREEN_SAVER_RESET.");
         xcb_force_screen_saver(connection, XCB_SCREEN_SAVER_RESET);
         xcb_flush(connection);
@@ -238,34 +242,102 @@ auto refreshRate() -> qreal
     return -1;
 }
 
+static auto methodName(ScreensaverMethod method) -> QString
+{
+    switch (method) {
+    case ScreensaverMethod::Gnome:
+        return u"org.gnome.SessionManager.Inhibit"_q;
+    case ScreensaverMethod::Freedesktop:
+        return u"org.freedesktop.ScreenSaver.Inhibit"_q;
+    case ScreensaverMethod::Xss:
+        return u"XScreenSaver"_q;
+    default:
+        return u"auto"_q;
+    }
+}
+
+static auto methodFromName(const QString &name) -> ScreensaverMethod
+{
+    if (name == "org.gnome.SessionManager.Inhibit"_a)
+        return ScreensaverMethod::Gnome;
+    else if (name == "org.freedesktop.ScreenSaver.Inhibit"_a)
+        return ScreensaverMethod::Freedesktop;
+    else if (name == "XScreenSaver"_a)
+        return ScreensaverMethod::Xss;
+    return ScreensaverMethod::Auto;
+}
+
+auto setScreensaverMethod(const QString &name) -> void
+{
+    bool was = d->ss.inhibit;
+    if (was)
+        setScreensaverEnabled(true);
+    if (_Change(d->ss.method, methodFromName(name))) {
+        _Delete(d->ss.iface);
+        d->ss.reset.stop();
+    }
+    if (was)
+        setScreensaverEnabled(false);
+}
+
+auto screensaverMethods() -> QStringList
+{
+    return {
+        u"auto"_q,
+        u"org.gnome.SessionManager.Inhibit"_q,
+        u"org.freedesktop.ScreenSaver.Inhibit"_q,
+        u"XScreenSaver"_q
+    };
+}
+
 auto setScreensaverEnabled(bool enabled) -> void
 {
     const auto disabled = !enabled;
     auto &s = d->ss;
     if (s.inhibit == disabled)
         return;
-    if (!s.iface && !s.xss) {
-        _Debug("Initialize screensaver functions.");
-        _Debug("Trying to connect 'org.gnome.SessionManager'.");
-        _New(s.iface, u"org.gnome.SessionManager"_q,
-             u"/org/gnome/SessionManager"_q, u"org.gnome.SessionManager"_q);
-        if (!(s.gnome = s.iface->isValid())) {
-            _Debug("Failed to connect 'org.gnome.SessionManager'. "
-                   "Fallback to 'org.freedesktop.ScreenSaver'.");
+
+    s.reset.stop();
+
+    if (!s.iface && s.method != ScreensaverMethod::Xss) {
+        auto getGnome = [&] () {
+            _Renew(s.iface, u"org.gnome.SessionManager"_q,
+                 u"/org/gnome/SessionManager"_q, u"org.gnome.SessionManager"_q);
+            return s.iface;
+        };
+        auto getFreedesktop = [&] () {
             _Renew(s.iface, u"org.freedesktop.ScreenSaver"_q,
                    u"/ScreenSaver"_q, u"org.freedesktop.ScreenSaver"_q);
-            if (!s.iface->isValid()) {
-                _Debug("Failed to connect 'org.freedesktop.ScreenSaver'. "
-                       "Fallback to XCB_SCREEN_SAVER_RESET.");
-                _Delete(s.iface);
-                s.xss = true;
+            return s.iface;
+        };
+        const auto dbus = [&] () {
+            if (s.method == ScreensaverMethod::Gnome)
+                return getGnome()->isValid();
+            if (s.method == ScreensaverMethod::Freedesktop)
+                return getFreedesktop()->isValid();
+            if (s.method == ScreensaverMethod::Xss)
+                return false;
+            if (getGnome()->isValid()) {
+                s.method = ScreensaverMethod::Gnome;
+                return true;
             }
+            if (getFreedesktop()->isValid()) {
+                s.method = ScreensaverMethod::Freedesktop;
+                return true;
+            }
+            return false;
+        }();
+        if (!dbus) {
+            _Delete(s.iface);
+            s.method = ScreensaverMethod::Xss;
         }
+        _Info("Selected screensaver method: %%", methodName(s.method));
     }
-    s.reset.stop();
+    Q_ASSERT(s.method != ScreensaverMethod::Auto);
+
     if (disabled) {
         if (s.iface) {
-            if (s.gnome)
+            if (s.method == ScreensaverMethod::Gnome)
                 s.reply = s.iface->call(u"Inhibit"_q, u"bomi"_q, 0u,
                                         u"Running player"_q, 4u | 8u);
             else
@@ -276,27 +348,29 @@ auto setScreensaverEnabled(bool enabled) -> void
                        s.reply.error().message());
                 _Error("Fallback to XCB_SCREEN_SAVER_RESET.");
                 _Delete(s.iface);
-                s.xss = true;
+                s.method = ScreensaverMethod::Xss;
             } else
                 _Debug("Disable screensaver with '%%'.", s.iface->interface());
         }
-        if (s.xss) {
+        if (s.method == ScreensaverMethod::Xss) {
             xcb_screensaver_suspend(d->connection, 1);
-            _Debug("Disable screensaver with XCB_SCREEN_SAVER_RESET.");
+            _Debug("Disable screensaver with XScreenSaver.");
             s.reset.start();
         }
     } else {
         if (s.iface) {
-            auto res = s.iface->call(s.gnome ? u"Uninhibit"_q : u"UnInhibit"_q,
-                                     s.reply.value());
+            const auto func = s.method == ScreensaverMethod::Gnome ? u"Uninhibit"_q : u"UnInhibit"_q;
+            auto res = s.iface->call(func, s.reply.value());
             if (res.type() == QDBusMessage::ErrorMessage)
                 _Error("DBus '%%' error: [%%] %%", s.iface->interface(),
                        res.errorName(), res.errorMessage());
             else
                 _Debug("Enable screensaver with '%%'.", s.iface->interface());
         }
-        if (s.xss)
+        if (s.method == ScreensaverMethod::Xss) {
             xcb_screensaver_suspend(d->connection, 0);
+            _Debug("Enable screensaver with XScreenSaver.");
+        }
     }
     s.inhibit = disabled;
 }
