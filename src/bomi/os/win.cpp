@@ -35,20 +35,9 @@ auto defaultFixedFont() -> QFont
     return font;
 }
 
-static const auto REGISTRY_DESKTOP_PATH = u"HKEY_CURRENT_USER\\Control Panel\\Desktop"_q;
-static const auto REGISTRY_SCREENSAVER_KEY = u"SCRNSAVE.EXE"_q;
-
 struct Win : public QObject {
-    Win() {
-        originalScreensaver = isScreensaverEnabled();
-        proc = GetCurrentProcess();
-    }
-    auto isScreensaverEnabled() -> bool
-    {
-        QSettings s(REGISTRY_DESKTOP_PATH, QSettings::NativeFormat);
-        return !s.value(REGISTRY_SCREENSAVER_KEY).isNull();
-    }
-
+    Win() { proc = GetCurrentProcess(); }
+    EXECUTION_STATE executionState = 0;
     bool originalScreensaver = false;
     QHash<QWindow*, HIMC> imes;
     HANDLE shutdownToken = nullptr;
@@ -156,8 +145,13 @@ auto createAdapter(QWidget *w) -> WindowAdapter*
 
 auto setScreensaverEnabled(bool enabled) -> void
 {
-    const auto active = enabled ? d->originalScreensaver : false;
-    SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, active, 0, SPIF_SENDWININICHANGE);
+    const bool disabled = d->executionState & ES_DISPLAY_REQUIRED;
+    if (disabled == !enabled)
+        return;
+    d->executionState = ES_CONTINUOUS;
+    if (!enabled)
+        d->executionState |= ES_DISPLAY_REQUIRED;
+    SetThreadExecutionState(d->executionState);
 }
 
 auto processTime() -> quint64
