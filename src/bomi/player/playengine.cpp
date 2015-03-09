@@ -207,7 +207,7 @@ PlayEngine::PlayEngine()
     d->mpv.setOption("hr-seek", d->preciseSeeking ? "yes" : "absolute");
     d->mpv.setOption("audio-file-auto", "no");
     d->mpv.setOption("sub-auto", "no");
-//    d->mpv.setOption("sub-text-margin-y", "0");
+    d->mpv.setOption("sub-text-margin-y", "0");
     d->mpv.setOption("audio-client-name", cApp.name());
 
     auto overrides = qgetenv("BOMI_MPV_OPTIONS").trimmed();
