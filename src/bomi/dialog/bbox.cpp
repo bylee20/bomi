@@ -32,6 +32,12 @@ auto BBox::buttonLayout(QWidget *w) -> Layout {
     return static_cast<Layout>(layout);
 }
 
+auto BBox::buttonText(Button button) -> QString
+{
+    const auto layout = qApp->style()->styleHint(QStyle::SH_DialogButtonLayout);
+    return buttonText(button, static_cast<Layout>(layout));
+}
+
 auto BBox::buttonText(Button button, Layout layout) -> QString
 {
     const auto gnome = (layout == GnomeLayout);

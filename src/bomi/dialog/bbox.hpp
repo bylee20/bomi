@@ -25,6 +25,7 @@ public:
     auto addButton(QAbstractButton *button, Role role) -> void
         { QDialogButtonBox::addButton(button, role); }
     static auto buttonText(Button button, Layout layout) -> QString;
+    static auto buttonText(Button button) -> QString;
     static auto buttonLayout(QWidget *w) -> Layout;
     static auto make(QDialog *dlg) -> BBox*;
 private:
