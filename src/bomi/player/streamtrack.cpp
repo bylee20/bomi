@@ -2,6 +2,17 @@
 #include "subtitle/subtitle.hpp"
 #include "misc/locale.hpp"
 
+SIA typeDesc(StreamType type) -> QString
+{
+    switch (type) {
+    case StreamVideo:             return qApp->translate("StreamType", "Video Track %1");
+    case StreamAudio:             return qApp->translate("StreamType", "Audio Track %1");
+    case StreamSubtitle:
+    case StreamInclusiveSubtitle: return qApp->translate("StreamType", "Subtitle Track %1");
+    default:                      return QString();
+    }
+}
+
 SIA type2str(StreamType type) -> QString
 {
     switch (type) {
@@ -60,6 +71,8 @@ auto StreamTrack::name() const -> QString
     if (!lang.isEmpty())
         name += name.isEmpty() ? lang : " ("_a % lang % ")"_a;
     name = name.trimmed();
+    if (name.isEmpty())
+        name = typeDesc(m_type).arg(m_id);
     return name;
 }
 
