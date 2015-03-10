@@ -15,10 +15,12 @@ DECLARE_LOG_CONTEXT(History)
 MrlState::MrlState()
     : d(new Data) {
     m_tracks.resize(StreamUnknown);
-    m_tracks[StreamVideo] = { &m_video_tracks, &MrlState::video_tracks_changed };
-    m_tracks[StreamAudio] = { &m_audio_tracks, &MrlState::audio_tracks_changed };
-    m_tracks[StreamSubtitle] = { &m_sub_tracks, &MrlState::sub_tracks_changed };
-    m_tracks[StreamInclusiveSubtitle] = { &m_sub_tracks_inclusive, &MrlState::sub_tracks_inclusive_changed };
+    m_tracks[StreamVideo] = { &m_video_tracks, &MrlState::video_tracks_changed, &MrlState::desc_video_tracks };
+    m_tracks[StreamAudio] = { &m_audio_tracks, &MrlState::audio_tracks_changed, &MrlState::desc_audio_tracks };
+    m_tracks[StreamSubtitle] = { &m_sub_tracks, &MrlState::sub_tracks_changed, &MrlState::desc_sub_tracks };
+    m_tracks[StreamInclusiveSubtitle] = { &m_sub_tracks_inclusive, &MrlState::sub_tracks_inclusive_changed, &MrlState::desc_sub_tracks };
+    for (int i = 0; i < m_tracks.size(); ++i)
+        connect(this, m_tracks[i].signal, this, [=] () { emit tracksChanged((StreamType)i); });
 }
 
 MrlState::~MrlState()
@@ -30,8 +32,10 @@ auto MrlState::select(StreamType type, int id) -> void
 {
     bool locked = m_mutex && m_mutex->tryLock();
     auto tracks = m_tracks[type].tracks;
-    if ((id < 0 && tracks->deselect(-1)) || (id >= 0 && tracks->select(id)))
+    if ((id < 0 && tracks->deselect(-1)) || (id >= 0 && tracks->select(id))) {
         emit (this->*m_tracks[type].signal)(*m_tracks[type].tracks);
+        emit currentTrackChanged(type);
+    }
     if (locked)
         m_mutex->unlock();
 }

@@ -3,6 +3,7 @@
 
 #include "mrl.hpp"
 #include "mediamisc.hpp"
+#include "streamtrack.hpp"
 #include "enum/videoeffect.hpp"
 #include <QQmlListProperty>
 
@@ -130,11 +131,8 @@ public:
     auto captionEndTime() -> int;
     auto subtitleImage(const QRect &rect, QRectF *subRect = nullptr) const -> QImage;
 
-    auto setSubtitleTrackSelected(int id, bool s) -> void;
-    auto setVideoTrackSelected(int id, bool s) -> void;
-    auto setAudioTrackSelected(int id, bool s) -> void;
-    auto setSubtitleInclusiveTrackSelected(int id, bool s) -> void;
     auto clearAllSubtitleSelection() -> void;
+    auto setTrackSelected(StreamType type, int id, bool s) -> void;
 
     auto lock() -> void;
     auto setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void;
@@ -263,6 +261,7 @@ public:
 public slots:
     void seek(int pos);
 signals:
+    void currentTrackChanged(StreamType type);
     void time_sChanged();
     void duration_sChanged();
     void begin_sChanged();
@@ -304,6 +303,10 @@ signals:
     void snapshotTaken();
     void subtitleSelectionChanged();
 private:
+    auto setVideoTrackSelected(int id, bool s) -> void;
+    auto setAudioTrackSelected(int id, bool s) -> void;
+    auto setSubtitleTrackSelected(int id, bool s) -> void;
+    auto setSubtitleInclusiveTrackSelected(int id, bool s) -> void;
     auto customEvent(QEvent *event) -> void;
     struct Data; Data *d;
 };

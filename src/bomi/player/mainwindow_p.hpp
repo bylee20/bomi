@@ -191,9 +191,7 @@ struct MainWindow::Data {
 #define PLUG_ENUM_CHILD(pm, p, s) plugEnumChild(pm, PLUG_HELPER(p, s))
     template<class T>
     auto plugAppEnumChild(Menu &parent, const char *prop, void(AppState::*sig)(T)) -> void;
-    auto plugTrack(Menu &parent, StreamList(MrlState::*get)() const, void(MrlState::*sig)(StreamList),
-                   QString(MrlState::*desc)() const, void(PlayEngine::*set)(int,bool),
-                   const QString &gkey = QString(), QAction *sep = nullptr) -> void;
+    auto plugTrack(Menu &parent, StreamType type, const QString &gkey = QString(), QAction *sep = nullptr) -> void;
 
     auto plugCycle(Menu &parent, const QString &g = QString()) -> void
     { plugCycle(parent, parent.g(g)); }

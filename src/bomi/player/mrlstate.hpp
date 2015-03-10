@@ -130,6 +130,8 @@ public:
     ~MrlState();
     struct PropertyInfo { QString property; QString description; };
     static auto description(const char *property) -> QString;
+    auto description(StreamType type) const -> QString { return (this->*(m_tracks[type].desc))(); }
+    auto signal(StreamType type) const -> void(MrlState::*)(StreamList) { return m_tracks[type].signal; }
     auto notifySignal(const char *property) const -> QMetaMethod;
     auto metaProperty(const char *property) const -> QMetaProperty;
     auto tracks(StreamType type) const -> const StreamList& { return *m_tracks[type].tracks; }
@@ -141,6 +143,9 @@ public:
     static auto restorableProperties() -> QVector<PropertyInfo>;
     static auto table() -> QString { return "state"_a % _N(Version); }
     auto import(const MrlStateV3 *v3) -> void;
+signals:
+    void tracksChanged(StreamType type);
+    void currentTrackChanged(StreamType type);
 private:
     auto notifyAll() const -> void;
     template<class T>
@@ -151,6 +156,7 @@ private:
     struct TrackInfo {
         StreamList *tracks;
         void(MrlState::*signal)(StreamList);
+        QString(MrlState::*desc)() const;
     };
 
     struct Data;

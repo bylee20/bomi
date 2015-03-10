@@ -345,6 +345,7 @@ auto PlayEngine::setSubtitleInclusiveTrackSelected(int id, bool s) -> void
     else
         d->sr->deselect(id);
     d->syncInclusiveSubtitles();
+    emit d->params.currentTrackChanged(StreamInclusiveSubtitle);
 }
 
 auto PlayEngine::setSubtitleTrackSelected(int id, bool s) -> void
@@ -353,6 +354,27 @@ auto PlayEngine::setSubtitleTrackSelected(int id, bool s) -> void
         d->mpv.setAsync("sid", id);
     else if (d->params.sub_tracks().selectionId() == id)
         d->mpv.setAsync("sid", "no"_b);
+}
+
+auto PlayEngine::setTrackSelected(StreamType type, int id, bool s) -> void
+{
+    switch (type) {
+    case StreamVideo:
+        setVideoTrackSelected(id, s);
+        break;
+    case StreamAudio:
+        setAudioTrackSelected(id, s);
+        break;
+    case StreamSubtitle:
+        setSubtitleTrackSelected(id, s);
+        break;
+    case StreamInclusiveSubtitle:
+        setSubtitleInclusiveTrackSelected(id, s);
+        break;
+    default:
+        return;
+    }
+//    emit currentTrackChanged(type, id);
 }
 
 auto PlayEngine::autoloadSubtitleFiles() -> void

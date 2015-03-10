@@ -132,39 +132,25 @@ auto MainWindow::Data::triggerNextAction(const QList<QAction*> &actions) -> void
         action->trigger();
 }
 
-auto MainWindow::Data::plugTrack(Menu &parent, StreamList(MrlState::*get)() const,
-                                 void(MrlState::*sig)(StreamList),
-                                 QString(MrlState::*desc)() const,
-                                 void(PlayEngine::*set)(int,bool),
+auto MainWindow::Data::plugTrack(Menu &parent, StreamType type,
                                  const QString &gkey, QAction *sep) -> void
 {
     auto *m = &parent(u"track"_q);
     const auto g = m->g(gkey);
-    connect(e.params(), sig, p, [=] (StreamList list) {
-        g->clear();
-        if (!list.isEmpty()) {
-            for (auto it = list.begin(); it != list.end(); ++it) {
-                auto act = new QAction(it->name(), m);
-                m->insertAction(sep, act);
-                g->addAction(act);
-                act->setCheckable(true);
-                act->setData(it->id());
-                act->setChecked(it->isSelected());
-            }
+    connect(e.params(), e.params()->signal(type), p, [=] (StreamList list) {
+        g->clear(); if (list.isEmpty()) return;
+        for (auto it = list.begin(); it != list.end(); ++it) {
+            auto act = new QAction(it->name(), m);
+            m->insertAction(sep, act);
+            g->addAction(act);
+            act->setCheckable(true);
+            act->setData(it->id());
+            act->setChecked(it->isSelected());
         }
     });
-    connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
-        const auto checked = a->isChecked();
-        const auto text = a->text();
-        (e.*set)(a->data().toInt(), checked);
-        if (auto track = (e.params()->*get)().selection())
-            showMessage((e.params()->*desc)(), track->name());
-        else
-            showMessage((e.params()->*desc)(), false);
-    });
+    connect(g, &ActionGroup::triggered, p, [=] (QAction *a)
+        { e.setTrackSelected(type, a->data().toInt(), a->isChecked()); });
 }
-#define PLUG_TRACK(m, p, s, ...) plugTrack(m, &MrlState::p, \
-    &MrlState::p##_changed, &MrlState::desc_##p, &PlayEngine::s, ##__VA_ARGS__)
 
 auto MainWindow::Data::plugMenu() -> void
 {
@@ -497,7 +483,14 @@ auto MainWindow::Data::plugMenu() -> void
         { push(VideoColor(), &MrlState::video_color, &PlayEngine::setVideoEqualizer); });
     PROP_NOTIFY(video_color, [=] (auto eq) { return eq.description(); });
 
-    PLUG_TRACK(video, video_tracks, setVideoTrackSelected);
+    connect(e.params(), &MrlState::currentTrackChanged, p, [=] (StreamType type) {
+//        qDebug() << "notified" << e.params()->tracks(type).selectionId();
+        if (auto track = e.params()->tracks(type).selection())
+            showMessage(e.params()->description(type), track->name());
+        else
+            showMessage(e.params()->description(type), false);
+    });
+    plugTrack(video, StreamVideo);
 
     Menu &audio = menu(u"audio"_q);
 
@@ -519,8 +512,7 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);
 
     auto &atrack = audio(u"track"_q);
-    PLUG_TRACK(audio, audio_tracks, setAudioTrackSelected);
-    plugCycle(atrack);
+    plugTrack(audio, StreamAudio); plugCycle(atrack);
     connect(atrack[u"open"_q], &QAction::triggered, p, [this] () {
         const auto files = _GetOpenFiles(p, tr("Open Audio File"), AudioExt);
         if (!files.isEmpty()) e.addAudioFiles(files);
@@ -532,10 +524,8 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &sub = menu(u"subtitle"_q);
     auto &strack = sub(u"track"_q);
     auto ssep = strack.addSeparator();
-    PLUG_TRACK(sub, sub_tracks, setSubtitleTrackSelected, "exclusive"_a);
-    plugTrack(sub, &MrlState::sub_tracks_inclusive,
-              &MrlState::sub_tracks_inclusive_changed, &MrlState::desc_sub_tracks,
-              &PlayEngine::setSubtitleInclusiveTrackSelected, "inclusive"_a, ssep);
+    plugTrack(sub, StreamSubtitle, "exclusive"_a);
+    plugTrack(sub, StreamInclusiveSubtitle, "inclusive"_a, ssep);
     connect(sub(u"track"_q)[u"cycle"_q], &QAction::triggered, p, [=] () {
         auto &m = menu(u"subtitle"_q)(u"track"_q);
         auto actions = m.g(u"exclusive"_q)->actions();
@@ -544,13 +534,13 @@ auto MainWindow::Data::plugMenu() -> void
             const int id = next->data().toInt();
             e.clearAllSubtitleSelection();
             if (e.params()->sub_tracks().contains(id))
-                e.setSubtitleTrackSelected(id, true);
+                e.setTrackSelected(StreamSubtitle, id, true);
             else
-                e.setSubtitleInclusiveTrackSelected(id, true);
+                e.setTrackSelected(StreamInclusiveSubtitle, id, true);
         }
     });
     connect(strack[u"all"_q], &QAction::triggered, p,
-            [=] () { e.setSubtitleInclusiveTrackSelected(-1, true); });
+            [=] () { e.setTrackSelected(StreamInclusiveSubtitle, -1, true); });
     PLUG_FLAG(strack[u"hide"_q], sub_hidden, setSubtitleHidden);
     connect(strack[u"open"_q], &QAction::triggered, p, [this] () {
         QString dir;
