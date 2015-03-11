@@ -46,6 +46,8 @@ auto Mrl::suffix() const -> QString
 
 auto Mrl::displayName() const -> QString
 {
+    if (!m_name.isEmpty())
+        return m_name;
     if (isLocalFile())
         return fileName();
     QString disc;

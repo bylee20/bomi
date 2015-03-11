@@ -168,7 +168,7 @@ auto Playlist::loadM3U(QTextStream &in, const QUrl &url) -> bool
         return QString();
     };
 
-    QRegEx rxExtInf(uR"(#EXTINF\s*:\s*(?<num>(-|)\d+)\s*\,\s*(?<name>.*)\s*$)"_q);
+    QRegEx rxExtInf(uR"(#EXTINF\s*:\s*(?<num>(-|)\d+)[^,]*,\s*(?<name>.*)\s*$)"_q);
     while (!in.atEnd()) {
         const QString line = in.readLine().trimmed();
         if (line.isEmpty())
