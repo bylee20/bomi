@@ -27,6 +27,26 @@ struct GenericEq {
 };
 }
 
+SIA operator << (QIODevice &dev, const QByteArray &data) -> QIODevice&
+    { dev.write(data, data.size()); return dev; }
+
+template<int N>
+SIA operator << (QIODevice &dev, const char (&str)[N]) -> QIODevice&
+    { static_assert(N > 0, "!!!"); dev.write(str, N - 1); return dev; }
+
+SIA operator << (QIODevice &dev, char ch) -> QIODevice&
+    { dev.write(&ch, 1); return dev; }
+
+#define DECL_WRITE_NUMBER(T) \
+SIA operator << (QIODevice &dev, T n) -> QIODevice& { dev.write(QByteArray::number(n)); return dev; }
+DECL_WRITE_NUMBER(int)
+DECL_WRITE_NUMBER(qint64)
+DECL_WRITE_NUMBER(uint)
+DECL_WRITE_NUMBER(quint64)
+DECL_WRITE_NUMBER(float)
+DECL_WRITE_NUMBER(double)
+#undef DECL_WRITE_NUMBER
+
 SIA operator "" _q(const char16_t *str, size_t len) -> QString
 { return QString::fromRawData(reinterpret_cast<const QChar*>(str), len); }
 

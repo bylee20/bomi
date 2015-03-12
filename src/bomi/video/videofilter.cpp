@@ -1,4 +1,5 @@
 #include "videofilter.hpp"
+#include "tmp/algorithm.hpp"
 
 auto VideoFilter::needsMore() const -> bool
 {
@@ -14,9 +15,5 @@ auto PassthroughVideoFilter::push(MpImage &&mpi) -> void
 
 auto PassthroughVideoFilter::pop() -> MpImage
 {
-    if (m_queue.empty())
-        return MpImage();
-    auto mpi = std::move(m_queue.front());
-    m_queue.pop_front();
-    return mpi;
+    return tmp::take_front(m_queue);
 }

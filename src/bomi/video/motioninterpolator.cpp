@@ -1,6 +1,7 @@
 #include "motioninterpolator.hpp"
 #include "mpimage.hpp"
 #include "misc/log.hpp"
+#include "tmp/algorithm.hpp"
 
 struct MotionInterpolator::Data {
     MotionInterpolator *p = nullptr;
@@ -69,9 +70,7 @@ auto MotionInterpolator::pop() -> MpImage
 {
     if (d->queue.empty() || (!d->eof && d->queue.size() < 2))
         return MpImage();
-    auto ret = std::move(d->queue.front());
-    d->queue.pop_front();
-    return std::move(ret);
+    return tmp::take_front(d->queue);
 }
 
 auto MotionInterpolator::clear() -> void

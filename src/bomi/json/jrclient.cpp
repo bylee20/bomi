@@ -6,19 +6,6 @@
 
 DECLARE_LOG_CONTEXT(JSON-RPC)
 
-SIA operator << (QIODevice &dev, const QByteArray &data) -> QIODevice&
-    { dev.write(data, data.size()); return dev; }
-
-template<int N>
-SIA operator << (QIODevice &dev, const char (&str)[N]) -> QIODevice&
-    { static_assert(N > 0, "!!!"); dev.write(str, N - 1); return dev; }
-
-SIA operator << (QIODevice &dev, char ch) -> QIODevice&
-    { dev.write(&ch, 1); return dev; }
-
-SIA operator << (QIODevice &dev, int n) -> QIODevice&
-    { dev.write(QByteArray::number(n)); return dev; }
-
 struct JrClient::Data {
     QIODevice *device;
     JrServer *server;

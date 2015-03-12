@@ -79,6 +79,22 @@ template<class T, class... Args>
 SIA min(const T &t1, const T &t2, const Args&... args) -> T
     { return min(min(t1, t2), args...); }
 
+template<class Container, class T = typename Container::value_type>
+SIA min(const Container &c) -> T
+    { if (c.empty()) return T(); return *std::min_element(c.begin(), c.end()); }
+
+template<class Container, class T = typename Container::value_type>
+SIA max(const Container &c) -> T
+    { if (c.empty()) return T(); return *std::max_element(c.begin(), c.end()); }
+
+template<class Container, class T = typename Container::value_type>
+SIA take_front(Container &c) -> T
+    { if (c.empty()) return T(); T t = std::move(c.front()); c.pop_front(); return t; }
+
+template<class Container, class T = typename Container::value_type>
+SIA take_back(Container &c) -> T
+    { if (c.empty()) return T(); T t = std::move(c.back()); c.pop_back(); return t; }
+
 }
 
 #endif // ALGORITHM_HPP
