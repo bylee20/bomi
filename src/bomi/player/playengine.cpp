@@ -56,8 +56,8 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::play_speed_changed, this, &PlayEngine::speedChanged);
     connect(&d->params, &MrlState::audio_tracks_changed, this,
             [=] (StreamList list) { d->info.audio.setTracks(list); });
-    connect(&d->params, &MrlState::audio_volume_normalizer_changed,
-            d->ac, &AudioController::setNormalizerActivated);
+//    connect(&d->params, &MrlState::audio_volume_normalizer_changed,
+//            d->ac, &AudioController::setNormalizerActivated);
     connect(&d->params, &MrlState::audio_equalizer_changed,
             d->ac, &AudioController::setEqualizer);
 
@@ -462,8 +462,11 @@ auto PlayEngine::speed() const -> double
 
 auto PlayEngine::setSpeed(double s) -> void
 {
-    if (d->params.set_play_speed(s))
+    if (d->params.set_play_speed(s)) {
         d->mpv.setAsync("speed", speed());
+        if (isRunning() && d->params.audio_volume_normalizer())
+            d->mpv.tellAsync("seek", 0.0, "relative"_b);
+    }
 }
 
 auto PlayEngine::setSubtitleScale(double by) -> void
@@ -764,13 +767,20 @@ auto PlayEngine::setAudioSync(int sync) -> void
 
 auto PlayEngine::setAudioVolumeNormalizer(bool on) -> void
 {
-    d->params.set_audio_volume_normalizer(on);
+    if (d->params.set_audio_volume_normalizer(on)) {
+        d->mpv.tellAsync("af", "set"_b, d->af(&d->params));
+        if (isRunning())
+            d->mpv.tellAsync("seek", 0.0, "relative"_b);
+    }
 }
 
 auto PlayEngine::setAudioTempoScaler(bool on) -> void
 {
-    if (d->params.set_audio_tempo_scaler(on))
+    if (d->params.set_audio_tempo_scaler(on)) {
         d->mpv.tellAsync("af", "set"_b, d->af(&d->params));
+        if (isRunning() && d->params.audio_volume_normalizer())
+            d->mpv.tellAsync("seek", 0.0, "relative"_b);
+    }
 }
 
 auto PlayEngine::stop() -> void

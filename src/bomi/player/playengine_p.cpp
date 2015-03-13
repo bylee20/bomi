@@ -66,6 +66,7 @@ auto PlayEngine::Data::af(const MrlState *s) const -> QByteArray
     OptionList af(':');
     af.add("dummy:address"_b, ac);
     af.add("use_scaler"_b, (int)s->audio_tempo_scaler());
+    af.add("use_normalizer"_b, (int)s->audio_volume_normalizer());
     af.add("layout"_b, (int)s->audio_channel_layout());
     return af.get();
 }

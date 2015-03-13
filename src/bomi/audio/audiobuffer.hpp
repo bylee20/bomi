@@ -32,6 +32,8 @@ public:
     auto type() const -> af_format { return (af_format)m_audio.format; }
     auto planes() const -> int { return m_audio.num_planes; }
     auto mpAudio() const -> const mp_audio& { return m_audio; }
+    auto toSeconds(int frames) const -> double { return double(frames) / fps(); }
+    auto secToFrames(double s) const -> int { return fps() * s; }
 private:
     mp_audio m_audio;
 };
@@ -56,7 +58,7 @@ public:
     auto samples() const -> int { return frames() * channels(); }
     auto frames() const -> int { return m_audio->samples; }
     auto channels() const -> int { return m_audio->channels.num; }
-    auto isEmpty() const -> bool { return frames() <= 0; }
+    auto isEmpty() const -> bool { return !m_audio || frames() <= 0; }
     auto planes() const -> int { return m_audio->num_planes; }
     auto bps() const -> int { return m_audio->bps; }
     auto fstride() const -> int { return m_audio->sstride; }
@@ -104,6 +106,9 @@ public:
     auto plane(int n = 0) -> T* { return (T*)this->m_buffer->m_audio->planes[n]; }
     auto begin(int n = 0) -> T* { return plane(n); }
     auto end(int n = 0) -> T* { return (T*)this->m_buffer->m_ends[n]; }
+    auto plane(int n = 0) const -> const T* { return (const T*)this->m_buffer->m_audio->planes[n]; }
+    auto begin(int n = 0) const -> const T* { return plane(n); }
+    auto end(int n = 0) const -> const T* { return (const T*)this->m_buffer->m_ends[n]; }
 private:
     AudioBufferView(AudioBuffer *buffer): AudioBufferConstView<T>(buffer) { }
     friend class AudioBuffer;

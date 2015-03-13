@@ -22,7 +22,7 @@ af_info af_info_dummy = create_info();
 struct bomi_af_priv {
     AudioController *ac;
     char *address;
-    int use_scaler, layout;
+    int use_scaler, layout, use_normalizer;
 };
 
 static auto priv(af_instance *af) -> AudioController*
@@ -59,7 +59,7 @@ struct AudioController::Data {
     SpeedMeasure<quint64> measure{10, 30};
     int srate = 0;
     quint64 samples = 0;
-    bool normalizerActivated = false, tempoScalerActivated = false;
+    bool normalizerActivated = false, tempoScalerActivated = false, eof = false;
     double scale = 1.0, amp = 1.0, gain = 1.0;
     mp_chmap chmap;
     af_instance *af = nullptr;
@@ -74,11 +74,12 @@ struct AudioController::Data {
     af_format fmt_to = AF_FORMAT_UNKNOWN;
 
     AudioResampler resampler;
-    AudioScaler scaler;
     AudioAnalyzer analyzer;
+    AudioScaler scaler;
     AudioMixer mixer;
     AudioConverter converter;
-
+    AudioBufferPtr input;
+    QVector<AudioFilter*> filters;
     QVector<AudioFilter*> chain;
 
     QMutex mutex;
@@ -95,12 +96,8 @@ AudioController::AudioController(QObject *parent)
             emit gainChanged(d->gain);
     }, 100000);
 
-    d->chain << &d->resampler << &d->analyzer
-             << &d->scaler    << &d->mixer << &d->converter;
-
-    connect(&d->analyzer, &AudioAnalyzer::gainCalculated, this,
-            [=] (double gain) { d->mixer.setAmplifier(d->amp * gain); },
-            Qt::DirectConnection);
+    d->chain << &d->scaler << &d->mixer << &d->converter;
+    d->filters << &d->resampler << &d->analyzer << d->chain;
 }
 
 AudioController::~AudioController()
@@ -121,27 +118,30 @@ auto AudioController::test(int fmt_in, int fmt_out) -> bool
 
 auto AudioController::open(af_instance *af) -> int
 {
-    auto priv = static_cast<bomi_af_priv*>(af->priv);
-    priv->ac = address_cast<AudioController*>(priv->address);
-    auto d = priv->ac->d;
+    auto p = static_cast<bomi_af_priv*>(af->priv);
+    p->ac = address_cast<AudioController*>(p->address);
+    auto d = p->ac->d;
     d->af = af;
-    d->tempoScalerActivated = priv->use_scaler;
+    d->tempoScalerActivated = p->use_scaler;
+    d->normalizerActivated = p->use_normalizer;
 //    d->layout = ChannelLayoutInfo::from(priv->layout);
 
-    af->control = AudioController::control;
-    af->uninit = AudioController::uninit;
-    af->filter_frame = AudioController::filter;
+    af->control = [] (af_instance *af, int cmd, void *arg) -> int
+        { return priv(af)->control(cmd, arg); };
+    af->uninit = [] (af_instance *af) -> void { priv(af)->uninit(); };
+    af->filter_frame = [] (af_instance *af, mp_audio *data) -> int
+        { return priv(af)->filter(data); };
+    af->filter_out = [] (af_instance *af) -> int { return priv(af)->output(); };
     af->delay = 0.0;
 
     return AF_OK;
 }
 
-auto AudioController::uninit(af_instance *af) -> void
+auto AudioController::uninit() -> void
 {
-    auto ac = priv(af); auto d = ac->d;
-    Q_ASSERT(ac != nullptr);
     d->af = nullptr;
     d->layout = ChannelLayoutInfo::default_();
+    d->input = AudioBufferPtr();
 }
 
 auto AudioController::reinitialize(mp_audio *from) -> int
@@ -206,19 +206,20 @@ auto AudioController::reinitialize(mp_audio *from) -> int
 
     d->fmt_to = (af_format)to->format;
     d->dirty = 0xffffffff;
+    d->eof = false;
 
-    for (auto filter : d->chain)
+    for (auto filter : d->filters) {
         filter->setPool(d->af->out_pool);
+        filter->reset();
+    }
     return true;
 }
 
-auto AudioController::control(af_instance *af, int cmd, void *arg) -> int
+auto AudioController::control(int cmd, void *arg) -> int
 {
-    auto ac = priv(af);
-    auto d = ac->d;
     switch(cmd){
     case AF_CONTROL_REINIT:
-        return ac->reinitialize(static_cast<mp_audio*>(arg));
+        return reinitialize(static_cast<mp_audio*>(arg));
     case AF_CONTROL_SET_VOLUME:
         d->amp = *((float*)arg);
         return AF_OK;
@@ -242,7 +243,7 @@ auto AudioController::control(af_instance *af, int cmd, void *arg) -> int
         d->layout = ChannelLayoutMap::toLayout(*(mp_chmap*)arg);
         return AF_OK;
     case AF_CONTROL_RESET:
-        for (auto filter : d->chain)
+        for (auto filter : d->filters)
             filter->reset();
         return AF_OK;
     default:
@@ -250,14 +251,8 @@ auto AudioController::control(af_instance *af, int cmd, void *arg) -> int
     }
 }
 
-auto AudioController::filter(af_instance *af, mp_audio *data) -> int
+auto AudioController::filter(mp_audio *data) -> int
 {
-    auto ac = priv(af); AudioController::Data *d = ac->d;
-    if (!data)
-        return 0;
-
-    d->af->delay = 0.0;
-
     if (d->dirty) {
         d->mutex.lock();
         if (d->dirty & Normalizer) {
@@ -276,19 +271,39 @@ auto AudioController::filter(af_instance *af, mp_audio *data) -> int
         d->mutex.unlock();
     }
 
-    d->mixer.setAmplifier(d->amp);
-    auto buffer = AudioBuffer::fromMpAudio(data);
+    d->eof = !data;
+    if (d->eof)
+        return 0;
+    d->input = AudioBuffer::fromMpAudio(data);
+    return 0;
+}
 
-    for (auto filter : d->chain) {
-        if (filter->passthrough(buffer))
-            continue;
-        buffer = filter->run(buffer);
-        d->af->delay += filter->delay();
+auto AudioController::output() -> int
+{
+    if (d->input) {
+        auto buffer = d->resampler.run(d->input);
+        d->input = AudioBufferPtr();
+        d->analyzer.push(buffer);
     }
-    auto audio = buffer->take();
-    Q_ASSERT(mp_audio_config_equals(&af->fmt_out, audio));
-    af_add_output_frame(d->af, audio);
-    d->measure.push(d->samples += data->samples);
+    for (;;) {
+        auto buffer = d->analyzer.pull(d->eof);
+        if (!buffer || buffer->isEmpty())
+            break;
+
+        d->mixer.setAmplifier(d->amp * d->analyzer.gain());
+        for (auto filter : d->chain) {
+            if (!filter->passthrough(buffer))
+                buffer = filter->run(buffer);
+        }
+        auto audio = buffer->take();
+        Q_ASSERT(mp_audio_config_equals(&d->af->fmt_out, audio));
+        af_add_output_frame(d->af, audio);
+        d->measure.push(d->samples += audio->samples);
+    }
+
+    d->af->delay = 0;
+    for (auto filter : d->filters)
+        d->af->delay += filter->delay();
     return 0;
 }
 
@@ -305,12 +320,6 @@ auto AudioController::inputFormat() const -> AudioFormat
 auto AudioController::outputFormat() const -> AudioFormat
 {
     return d->to;
-}
-
-auto AudioController::setNormalizerActivated(bool on) -> void
-{
-    if (_Change(d->normalizerActivated, on))
-        d->dirty |= Normalizer;
 }
 
 auto AudioController::gain() const -> double
@@ -352,6 +361,7 @@ af_info create_info() {
     static m_option options[] = {
         MPV_OPTION(address),
         MPV_OPTION(use_scaler),
+        MPV_OPTION(use_normalizer),
         MPV_OPTION(layout),
         mpv::null_option
     };

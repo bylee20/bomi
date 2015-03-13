@@ -8,7 +8,7 @@ public:
     AudioFilter() { }
     virtual ~AudioFilter() { }
     auto setPool(mp_audio_pool *pool) -> void { m_pool = pool; }
-    auto newBuffer(const AudioBufferFormat &format, int frames) -> AudioBufferPtr
+    auto newBuffer(const AudioBufferFormat &format, int frames) const -> AudioBufferPtr
     { return AudioBuffer::fromMpAudio(mp_audio_pool_get(m_pool, &format.mpAudio(), frames)); }
     virtual auto reset() -> void;
     virtual auto delay() const -> double;

@@ -13,7 +13,6 @@ class AudioController : public QObject {
 public:
     AudioController(QObject *parent = nullptr);
     ~AudioController();
-    auto setNormalizerActivated(bool on) -> void;
     auto gain() const -> double;
     auto isTempoScalerActivated() const -> bool;
     auto isNormalizerActivated() const -> bool;
@@ -32,12 +31,13 @@ signals:
     void samplerateChanged(int sr);
     void gainChanged(double gain);
 private:
-    auto reinitialize(mp_audio *data) -> int;
     static auto open(af_instance *af) -> int;
     static auto test(int fmt_in, int fmt_out) -> bool;
-    static auto filter(af_instance *af, mp_audio *data) -> int;
-    static auto uninit(af_instance *af) -> void;
-    static auto control(af_instance *af, int cmd, void *arg) -> int;
+    auto reinitialize(mp_audio *data) -> int;
+    auto filter(mp_audio *data) -> int;
+    auto output() -> int;
+    auto uninit() -> void;
+    auto control(int cmd, void *arg) -> int;
     struct Data;
     Data *d;
     friend auto create_info() -> af_info;
