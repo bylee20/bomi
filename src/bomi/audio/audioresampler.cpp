@@ -30,21 +30,25 @@ auto AudioResampler::setFormat(const AudioBufferFormat &in, const AudioBufferFor
     d->delay = 0.0;
     if (!(_Change(d->in, in) | _Change(d->out, out)))
         return;
+    Q_ASSERT(d->in.channels().num == d->out.channels().num);
     d->resample = d->in != d->out;
-    if (!d->resample)
-        return;
+
     if (d->swr)
         swr_free(&d->swr);
+
+    if (!d->resample)
+        return;
+
     d->swr = swr_alloc();
-    Q_ASSERT(in.channels().num == out.channels().num);
-    const auto nch = in.channels().num;
+    const auto nch = d->in.channels().num;
     av_opt_set_int(d->swr,  "in_channel_count", nch, 0);
     av_opt_set_int(d->swr, "out_channel_count", nch, 0);
     av_opt_set_int(d->swr,  "in_sample_rate", d->in.fps(), 0);
     av_opt_set_int(d->swr, "out_sample_rate", d->out.fps(), 0);
     av_opt_set_sample_fmt(d->swr,  "in_sample_fmt", af_to_avformat(d->in.type()), 0);
     av_opt_set_sample_fmt(d->swr, "out_sample_fmt", af_to_avformat(d->out.type()), 0);
-    swr_init(d->swr);
+
+    reset();
 }
 
 auto AudioResampler::delay() const -> double
@@ -77,6 +81,8 @@ auto AudioResampler::run(AudioBufferPtr &in) -> AudioBufferPtr
 
 auto AudioResampler::reset() -> void
 {
-    if (d->swr)
-        while (swr_drop_output(d->swr, 1000) > 0) ;
+    if (!d->swr)
+        return;
+    swr_close(d->swr);
+    swr_init(d->swr);
 }
