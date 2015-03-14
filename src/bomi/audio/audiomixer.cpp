@@ -69,7 +69,6 @@ struct AudioMixer::Data {
     ClippingMethod clip = ClippingMethod::Auto;
     ClippingMethod realClip = ClippingMethod::Hard;
     bool mix = true;
-    bool updateChmap = false, updateFormat = false;
     std::array<int, MP_SPEAKER_ID_COUNT> ch_index_src, ch_index_dst;
     ChannelManipulation ch_man;
     ChannelLayoutMap map;
@@ -107,7 +106,7 @@ auto AudioMixer::setChannelLayoutMap(const ChannelLayoutMap &map) -> void
 {
     d->map = map;
     d->ch_man = map(d->in.channels(), d->out.channels());
-    d->mix = !d->map.isIdentity(d->in.channels(), d->out.channels());
+    d->mix = d->in != d->out || !d->map.isIdentity(d->in.channels(), d->out.channels());
 }
 
 auto AudioMixer::setEqualizer(const AudioEqualizer &eq) -> void
@@ -134,8 +133,6 @@ auto AudioMixer::setFormat(const AudioBufferFormat &in, const AudioBufferFormat 
         d->ch_index_dst[out.channels().speaker[i]] = i;
     for (int i=0; i<in.channels().num; ++i)
         d->ch_index_src[in.channels().speaker[i]] = i;
-    d->updateChmap = !mp_chmap_equals(&in.channels(), &out.channels());
-    d->updateFormat = in.type() != out.type();
     setClippingMethod(d->clip);
     setChannelLayoutMap(d->map);
 
