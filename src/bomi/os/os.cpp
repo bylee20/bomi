@@ -149,16 +149,17 @@ auto setImeEnabled(QWindow *w, bool enabled) -> void
 }
 #endif
 
-WindowAdapter::WindowAdapter(QWidget *parent)
+WindowAdapter::WindowAdapter(QWindow *parent)
     : QObject(parent)
 {
-    m_widget = parent;
+    m_window = parent;
+    connect(m_window, &QWindow::windowStateChanged, this, &WindowAdapter::setState);
 }
 
 auto WindowAdapter::updateFrameMargins() -> void
 {
-    const auto in = m_widget->geometry();
-    const auto out = m_widget->frameGeometry();
+    const auto in = m_window->geometry();
+    const auto out = m_window->frameGeometry();
     m_frameMargins.setLeft(in.left() - out.left());
     m_frameMargins.setTop(in.top() - out.top());
     m_frameMargins.setRight(out.right() - in.right());
@@ -167,37 +168,43 @@ auto WindowAdapter::updateFrameMargins() -> void
 
 auto WindowAdapter::isFullScreen() const -> bool
 {
-    return m_widget->isFullScreen();
+    return m_window->windowState() & Qt::WindowFullScreen;
 }
 
 auto WindowAdapter::containerSize() const -> QSize
 {
 //    return isFrameVisible() ? m_widget->size() : m_widget->frameSize();
-    return m_widget->size();
+    return m_window->size();
 }
 
 auto WindowAdapter::setFullScreen(bool fs) -> void
 {
-    auto states = m_widget->windowState();
-    if (fs)
-        states |= Qt::WindowFullScreen;
-    else
-        states &= ~Qt::WindowFullScreen;
-    if (states != m_widget->windowState())
-        m_widget->setWindowState(states);
+    auto visible = m_window->isVisible();
+    m_window->setWindowState(fs ? Qt::WindowFullScreen : m_oldState);
+    if (visible)
+        m_window->setVisible(true);
+}
+
+auto WindowAdapter::setState(Qt::WindowState ws) -> void
+{
+    if (m_state != ws) {
+        m_oldState = m_state;
+        m_state = ws;
+        emit stateChanged(m_state, m_oldState);
+    }
 }
 
 auto WindowAdapter::startMoveByDrag(const QPointF &m) -> void
 {
     m_started = true;
     m_mouseStartPos = m.toPoint();
-    m_winStartPos = m_widget->pos();
+    m_winStartPos = m_window->position();
 }
 
 auto WindowAdapter::moveByDrag(const QPointF &m) -> void
 {
     if (m_started) {
-        m_widget->move(m_winStartPos + (m.toPoint() - m_mouseStartPos));
+        m_window->setPosition(m_winStartPos + (m.toPoint() - m_mouseStartPos));
         setMovingByDrag(true);
     }
 }
@@ -211,27 +218,27 @@ auto WindowAdapter::endMoveByDrag() -> void
 
 auto WindowAdapter::isFrameless() const -> bool
 {
-    return m_widget->windowFlags() & Qt::FramelessWindowHint;
+    return m_window->flags() & Qt::FramelessWindowHint;
 }
 
 auto WindowAdapter::setFrameless(bool frameless) -> void
 {
     if (WindowAdapter::isFrameless() == frameless)
         return;
-    auto flags = m_widget->windowFlags();
+    auto flags = m_window->flags();
     if (frameless)
         flags |= Qt::FramelessWindowHint;
     else
         flags &= ~Qt::FramelessWindowHint;
-    const bool visible = m_widget->isVisible();
-    m_widget->setWindowFlags(flags);
+    const bool visible = m_window->isVisible();
+    m_window->setFlags(flags);
     if (visible)
-        m_widget->show();
+        m_window->show();
 }
 
-auto createAdapter(QWidget *w) -> WindowAdapter*;
+auto createAdapter(QWindow *w) -> WindowAdapter*;
 
-auto adapter(QWidget *w) -> WindowAdapter*
+auto adapter(QWindow *w) -> WindowAdapter*
 {
     static const constexpr char *property = "_b_window_adpater";
     auto a = static_cast<WindowAdapter*>(w->property(property).value<WindowAdapter*>());

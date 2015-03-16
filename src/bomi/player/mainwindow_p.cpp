@@ -1,4 +1,5 @@
 #include "mainwindow_p.hpp"
+#include "skin.hpp"
 #include "app.hpp"
 #include "misc/trayicon.hpp"
 #include "misc/stepactionpair.hpp"
@@ -93,47 +94,6 @@ auto MainWindow::Data::initTray() -> void
         else if (reason == TrayIcon::Quit)
             p->exit();
     });
-}
-
-auto MainWindow::Data::initWindow() -> void
-{
-    auto format = view->requestedFormat();
-    if (OpenGLLogger::isAvailable())
-        format.setOption(QSurfaceFormat::DebugContext);
-    view->setFormat(format);
-    view->setPersistentOpenGLContext(true);
-    view->setPersistentSceneGraph(true);
-
-    container = createWindowContainer(view, p);
-    container->setGeometry(0, 0, p->width(), p->height());
-    p->setFocusProxy(container);
-    p->setFocus();
-    p->setAcceptDrops(true);
-    _SetWindowTitle(p, QString());
-
-    container->installEventFilter(view);
-
-    connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
-        auto context = view->openglContext();
-        if (cApp.isOpenGLDebugLoggerRequested())
-            glLogger.initialize(context);
-        sgInit = true;
-        e.initializeGL(context);
-        emit p->sceneGraphInitialized();
-    }, Qt::DirectConnection);
-    connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
-        sgInit = false;
-        auto context = QOpenGLContext::currentContext();
-        glLogger.finalize(context);
-        e.finalizeGL(context);
-    }, Qt::DirectConnection);
-
-    connect(p, &MainWindow::fullscreenChanged, p,
-            [=] (bool fs) { setCursorVisible(!fs); });
-
-    connect(&cApp, &App::commitDataRequest, p, [=] () { commitData(); });
-    connect(&cApp, &App::saveStateRequest, p, [=] (QSessionManager &session)
-        { session.setRestartHint(QSessionManager::RestartIfRunning); });
 }
 
 auto MainWindow::Data::plugEngine() -> void
@@ -275,7 +235,7 @@ auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
 
 auto MainWindow::Data::setVideoSize(const QSize &video) -> void
 {
-    if (p->isFullScreen() || p->isMaximized())
+    if (p->isFullScreen() || p->windowState() == Qt::WindowMaximized)
         return;
     // patched by Handrake
     const QSizeF screen = screenSize();
@@ -295,7 +255,7 @@ auto MainWindow::Data::setVideoSize(const QSize &video) -> void
             int x = p->x() + dx;
             if (x < 0)
                 x = 0;
-            p->move(x, p->y());
+            p->setPosition(x, p->y());
         }
     }
 }
@@ -304,7 +264,7 @@ auto MainWindow::Data::trigger(QAction *action) -> void
 {
     if (!action)
         return;
-    if (view->topLevelItem()->isVisible()) {
+    if (top->isVisible()) {
         if (unblockedActions.isEmpty()) {
             // allow only next actions when top level item shown
             unblockedActions += menu(u"window"_q).actions();
@@ -318,9 +278,12 @@ auto MainWindow::Data::trigger(QAction *action) -> void
 
 auto MainWindow::Data::setCursorVisible(bool visible) -> void
 {
-    view->setCursorVisible(visible);
-    mouse->updateCursor(view->cursor().shape());
-    emit p->cursorChanged(view->cursor());
+    if (visible && p->cursor().shape() == Qt::BlankCursor)
+        p->unsetCursor();
+    else if (!visible && p->cursor().shape() != Qt::BlankCursor)
+        p->setCursor(Qt::BlankCursor);
+    mouse->updateCursor(p->cursor().shape());
+    emit p->cursorChanged(p->cursor());
 }
 
 auto MainWindow::Data::readyToHideCursor() -> void
@@ -387,10 +350,10 @@ auto MainWindow::Data::screenSize() const -> QSize
 
 auto MainWindow::Data::openDir(const QString &dir) -> void
 {
-    OpenMediaFolderDialog dlg(p);
-    dlg.setFolder(dir);
-    if (dlg.exec()) {
-        const auto list = dlg.playlist();
+    auto dlg = dialog<OpenMediaFolderDialog>();
+    dlg->setFolder(dir);
+    if (dlg->exec()) {
+        const auto list = dlg->playlist();
         if (!list.isEmpty()) {
             playlist.setList(list);
             load(list.first());
@@ -533,7 +496,7 @@ auto MainWindow::Data::showMessage(const QString &msg, const bool *force) -> voi
             return;
     } else if (!pref.osd_theme().message.show_on_action)
         return;
-    if (sgInit)
+    if (p->m_sgInit)
         showOSD(msg);
 }
 
@@ -562,7 +525,7 @@ auto MainWindow::Data::applyPref() -> void
         _Renew(jrServer, p.jr_connection(), p.jr_protocol());
         jrServer->setInterface(&jrPlayer);
         connect(jrServer, &JrServer::error, this->p, [=] () {
-            MBox::error(this->p, tr("JSON-RPC Server Error"),
+            MBox::error(nullptr, tr("JSON-RPC Server Error"),
                         jrServer->errorString(), {BBox::Ok});
         });
         jrServer->listen(p.jr_address(), p.jr_port());
@@ -697,7 +660,7 @@ auto MainWindow::Data::setVideoSize(double rate) -> void
     } else {
         if (p->isFullScreen())
             p->setFullScreen(false);
-        if (p->isMaximized())
+        if (p->windowState() == Qt::WindowMaximized)
             p->showNormal();
         const QSizeF video = e.videoSizeHint();
         auto area = [] (const QSizeF &s) { return s.width()*s.height(); };
@@ -718,14 +681,16 @@ auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void
 auto MainWindow::Data::reloadSkin() -> void
 {
     this->player = nullptr;
-    if (!view->setSkin(pref.skin_name())) {
+    clear();
+    Skin::apply(p, pref.skin_name());
+    if (p->status() == QQuickView::Error) {
         QString msg;
-        for (auto &error : view->errors())
+        for (auto &error : p->errors())
             msg += error.toString() % '\n'_q;
-        MBox::error(p, tr("Error on loading skin"), msg, {BBox::Ok});
+        MBox::error(nullptr, tr("Error on loading skin"), msg, {BBox::Ok});
         return;
     }
-    auto app = view->rootObject();
+    auto app = p->rootObject();
     if (!app)
         return;
     auto min = app->property("minimumSize").toSize();
@@ -784,14 +749,14 @@ auto MainWindow::Data::updateMrl(const Mrl &mrl) -> void
         const QFileInfo file(mrl.toLocalFile());
         filePath = file.absoluteFilePath();
         if (p->isVisible())
-            p->setWindowFilePath(filePath);
+            p->setFilePath(filePath);
     } else
-        p->setWindowFilePath(QString());
+        p->setFilePath(QString());
 }
 
 auto MainWindow::Data::updateTitle() -> void
 {
-    _SetWindowTitle(p, e.media()->name());
+    cApp.setWindowTitle(p, e.media()->name());
 }
 
 auto MainWindow::Data::doVisibleAction(bool visible) -> void
@@ -801,9 +766,9 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
             e.unpause();
             pausedByHiding = false;
         }
-        p->setWindowFilePath(filePath);
+        p->setFilePath(filePath);
 #ifndef Q_OS_MAC
-        p->setWindowIcon(cApp.defaultIcon());
+        p->setIcon(cApp.defaultIcon());
 #endif
     } else {
         if (!pref.pause_minimized())
@@ -815,7 +780,24 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
     }
 }
 
-auto MainWindow::Data::resizeContainer() -> void
+auto MainWindow::Data::updateWindowState(Qt::WindowState ws) -> void
 {
-    container->resize(adapter->containerSize());
+    p->setFilePath(filePath);
+    adapter->endMoveByDrag();
+    readyToHideCursor();
+    auto changed = [&] (Qt::WindowState state) -> bool
+    { return !((prevWindowState & ws) & state); };
+    if (!stateChanging && changed(Qt::WindowMinimized))
+        doVisibleAction(ws != Qt::WindowMinimized);
+#ifdef Q_OS_WIN
+    updateStaysOnTop();
+#else // this doesn't work for windows because of fake fullscreen
+    const bool fsChanged = changed(Qt::WindowFullScreen);
+    if (fsChanged)
+        emit p->fullscreenChanged(p->isFullScreen());
+    updateStaysOnTop();
+    if (fsChanged && !p->isFullScreen())
+        as.restoreLastWindowGeometry(p);
+#endif
+    prevWindowState = ws;
 }

@@ -93,17 +93,14 @@ struct X11 : public QObject {
     int statm = 0;
 
     template<class... Args>
-    auto send(QWidget *widget, XcbAtom type, Args... args) -> void
+    auto send(WId wid, XcbAtom type, Args... args) -> void
     {
-        if (!widget)
-            return;
         uint32_t data32[5] = { static_cast<uint32_t>(args)... };
-        const auto window = widget->winId();
         xcb_client_message_event_t event;
         memset(&event, 0, sizeof(event));
         event.response_type = XCB_CLIENT_MESSAGE;
         event.format = 32;
-        event.window = window;
+        event.window = wid;
         event.type = atoms[type];
         memcpy(event.data.data32, data32, sizeof(data32));
         const auto mask = XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY
@@ -112,17 +109,13 @@ struct X11 : public QObject {
         xcb_flush(connection);
     }
 
-    auto sendState(QWidget *widget, bool on,
-                   XcbAtom a1, XcbAtom a2 = XcbAtomEnd) -> void
+    auto sendState(WId wid, bool on, XcbAtom a1, XcbAtom a2 = XcbAtomEnd) -> void
     {
-        if (!widget)
-            return;
-        const auto window = widget->winId();
         xcb_client_message_event_t event;
         memset(&event, 0, sizeof(event));
         event.response_type = XCB_CLIENT_MESSAGE;
         event.format = 32;
-        event.window = window;
+        event.window = wid;
         event.type = atoms[_NET_WM_STATE];
         event.data.data32[0] = on ? 1 : 0;
         event.data.data32[1] = atoms[a1];
@@ -375,7 +368,7 @@ auto setScreensaverEnabled(bool enabled) -> void
     s.inhibit = disabled;
 }
 
-X11WindowAdapter::X11WindowAdapter(QWidget* w)
+X11WindowAdapter::X11WindowAdapter(QWindow* w)
     : WindowAdapter(w)
 {
     connect(&m_timer, &QTimer::timeout, this, [=] () {
@@ -392,7 +385,7 @@ X11WindowAdapter::X11WindowAdapter(QWidget* w)
 auto X11WindowAdapter::setFullScreen(bool fs) -> void
 {
     if (isFullScreen() != fs)
-        d->sendState(widget(), fs, _NET_WM_STATE_FULLSCREEN);
+        d->sendState(winId(), fs, _NET_WM_STATE_FULLSCREEN);
 }
 
 auto X11WindowAdapter::stopDrag() -> void
@@ -403,7 +396,7 @@ auto X11WindowAdapter::stopDrag() -> void
 
     // hack to get back focus
     auto pos = QCursor::pos();
-    d->send(widget(), _NET_WM_MOVERESIZE, pos.x(), pos.y(), 11, 1, 0);
+    d->send(winId(), _NET_WM_MOVERESIZE, pos.x(), pos.y(), 11, 1, 0);
     auto reset = [&] () {
         QCursor::setPos(pos + QPoint(10, 0));
         QCursor::setPos(pos - QPoint(10, 0));
@@ -429,7 +422,7 @@ auto X11WindowAdapter::moveByDrag(const QPointF &m) -> void
     if (isMovingByDrag())
         return;
     xcb_ungrab_pointer(d->connection, XCB_TIME_CURRENT_TIME);
-    d->send(widget(), _NET_WM_MOVERESIZE,
+    d->send(winId(), _NET_WM_MOVERESIZE,
             m.x(), m.y(),
             8, // _NET_WM_MOVERESIZE_MOVE
             1, // button 1
@@ -446,9 +439,8 @@ auto X11WindowAdapter::endMoveByDrag() -> void
 
 auto X11WindowAdapter::isAlwaysOnTop() const -> bool
 {
-    const auto wid = widget()->winId();
     const auto cookie = xcb_get_property_unchecked
-        (d->connection, 0, wid, d->atoms[_NET_WM_STATE], XCB_ATOM_ATOM, 0, 1024);
+        (d->connection, 0, winId(), d->atoms[_NET_WM_STATE], XCB_ATOM_ATOM, 0, 1024);
     auto reply = _Reply(xcb_get_property_reply(d->connection, cookie, nullptr));
     if (!reply || reply->format != 32 || reply->type != XCB_ATOM_ATOM)
         return false;
@@ -463,10 +455,10 @@ auto X11WindowAdapter::isAlwaysOnTop() const -> bool
 
 auto X11WindowAdapter::setAlwaysOnTop(bool on) -> void
 {
-    d->sendState(widget(), on, _NET_WM_STATE_ABOVE, _NET_WM_STATE_STAYS_ON_TOP);
+    d->sendState(winId(), on, _NET_WM_STATE_ABOVE, _NET_WM_STATE_STAYS_ON_TOP);
 }
 
-auto createAdapter(QWidget *w) -> WindowAdapter*
+auto createAdapter(QWindow *w) -> WindowAdapter*
 {
     return new X11WindowAdapter(w);
 }

@@ -190,7 +190,6 @@ HEADERS += \
 	player/playengine_p.hpp \
 	player/historymodel.hpp \
 	player/playlistmodel.hpp \
-	player/mainquickview.hpp \
     audio/channellayoutmap.hpp \
     player/openmediainfo.hpp \
     enum/openmediabehavior.hpp \
@@ -408,7 +407,6 @@ SOURCES += \
 	player/mrlstate.cpp \
 	player/historymodel.cpp \
 	player/mpv_helper.cpp \
-	player/mainquickview.cpp \
     audio/channellayoutmap.cpp \
     player/openmediainfo.cpp \
     enum/openmediabehavior.cpp \

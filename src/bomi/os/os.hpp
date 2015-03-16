@@ -15,7 +15,6 @@ auto finalize() -> void;
 auto screensaverMethods() -> QStringList;
 auto setScreensaverMethod(const QString &method) -> void;
 auto setScreensaverEnabled(bool enabled) -> void;
-auto setImeEnabled(QWindow *w, bool enabled) -> void;
 
 auto shutdown() -> bool;
 auto canShutdown() -> bool;
@@ -45,28 +44,36 @@ public:
     virtual auto endMoveByDrag() -> void;
     virtual auto fullScreenMargin() const -> int { return 0; }
     virtual auto containerSize() const -> QSize;
+    virtual auto setImeEnabled(bool enabled) -> void = 0;
+    virtual auto isImeEnabled() const -> bool = 0;
+    auto state() const -> Qt::WindowState { return m_state; }
+    auto oldState() const -> Qt::WindowState { return m_oldState; }
     auto frameMargins() const -> QMargins { return m_frameMargins; }
     auto isFrameVisible() const -> bool { return !isFullScreen() && !isFrameless(); }
-    auto geometry() const -> QRect { return isFrameVisible() ? m_widget->geometry()
-                                                             : m_widget->frameGeometry(); }
+    auto geometry() const -> QRect { return isFrameVisible() ? m_window->geometry()
+                                                             : m_window->frameGeometry(); }
     auto isMovingByDrag() const -> bool { return m_moving; }
     auto isMoveByDragStarted() const -> bool { return m_started; }
     auto posForMovingByDrag() const -> QPoint { return m_winStartPos; }
     auto mousePosForMovingByDrag() const -> QPoint { return m_mouseStartPos; }
-    auto winId() const -> WId { return m_widget->winId(); }
-    auto widget() const -> QWidget* { return m_widget; }
+    auto winId() const -> WId { return m_window->winId(); }
+    auto window() const -> QWindow* { return m_window; }
     auto updateFrameMargins() -> void;
+signals:
+    void stateChanged(Qt::WindowState state, Qt::WindowState old);
 protected:
-    WindowAdapter(QWidget *parent);
+    WindowAdapter(QWindow *parent);
     auto setMovingByDrag(bool moving) { m_moving = moving; }
+    auto setState(Qt::WindowState ws) -> void;
 private:
-    QWidget *m_widget = nullptr;
+    QWindow *m_window = nullptr;
     QMargins m_frameMargins;
     bool m_started = false, m_moving = false;
     QPoint m_winStartPos, m_mouseStartPos;
+    Qt::WindowState m_state = Qt::WindowNoState, m_oldState = Qt::WindowNoState;
 };
 
-auto adapter(QWidget *w) -> WindowAdapter*;
+auto adapter(QWindow *w) -> WindowAdapter*;
 
 class HwAcc {
 public:

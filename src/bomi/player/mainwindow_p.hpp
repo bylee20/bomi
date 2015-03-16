@@ -19,6 +19,7 @@
 #include "subtitle/subtitlerenderer.hpp"
 #include "opengl/opengllogger.hpp"
 #include "quick/themeobject.hpp"
+#include "quick/toplevelitem.hpp"
 #include "quick/windowobject.hpp"
 #include "misc/stepaction.hpp"
 #include "misc/logviewer.hpp"
@@ -30,6 +31,7 @@
 #include <QUndoCommand>
 #include <QMimeData>
 #include <QQmlProperty>
+#include <QQmlEngine>
 
 DECLARE_LOG_CONTEXT(Main)
 
@@ -60,17 +62,17 @@ class TrayIcon;                         class AudioEqualizerDialog;
 class IntrplDialog;                     class VideoColorDialog;
 
 struct MainWindow::Data {
+    Data(MainWindow *p): p(p) { }
+
     template<class T>
     SIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
 
     MainWindow *p = nullptr;
-    MainQuickView *view = nullptr;
-    QWidget *container = nullptr;
     QQuickItem *player = nullptr;
     RootMenu &menu = RootMenu::instance();
     RecentInfo recent;
     AppState as;
-    PlayEngine e;
+    PlayEngine &e = *p->m_engine;
     QPoint mouseStartPos, winStartPos;
     YouTubeDL youtube;
     YleDL yle;
@@ -84,19 +86,21 @@ struct MainWindow::Data {
     } singleClick;
     bool moving = false;
     bool pausedByHiding = false;
-    bool stateChanging = false, sgInit = false;
+    bool stateChanging = false;
     bool hidingCursorPended = true, noMessage = true;
     MouseObject *mouse = nullptr;
 
     QTimer waiter, hider;
     ABRepeatChecker ab;
     QMenu contextMenu;
-    PrefDialog *prefDlg = nullptr;
-    SubtitleFindDialog *subFindDlg = nullptr;
-    LogViewer *logViewer = nullptr;
-    SnapshotDialog *snapshot = nullptr;
-    OpenGLLogger glLogger{"SG"};
-    SubtitleViewer *sview = nullptr;
+    QSharedPointer<PrefDialog> prefDlg;
+    QSharedPointer<SubtitleFindDialog> subFindDlg;
+    QSharedPointer<LogViewer> logViewer;
+    QSharedPointer<SnapshotDialog> snapshot;
+    QSharedPointer<SubtitleViewer> sview;
+    QSharedPointer<AudioEqualizerDialog> eq;
+    QSharedPointer<VideoColorDialog> color;
+    QSharedPointer<IntrplDialog> intrpl, chroma;
     PlaylistModel playlist;
     QUndoStack undo;
     Downloader downloader;
@@ -107,14 +111,27 @@ struct MainWindow::Data {
     QList<QAction*> unblockedActions;
     HistoryModel history;
     SnapshotMode snapshotMode = NoSnapshot;
-    AudioEqualizerDialog *eq = nullptr;
-    VideoColorDialog *color = nullptr;
-    IntrplDialog *intrpl = nullptr, *chroma = nullptr;
 
+    TopLevelItem *top = nullptr;
     OS::WindowAdapter *adapter = nullptr;
     JrServer *jrServer = nullptr;
     JrPlayer jrPlayer;
+    Qt::WindowState prevWindowState = Qt::WindowNoState;
 
+    template<class T, class... Args>
+    auto dialog(const Args&... args) -> QSharedPointer<T>
+    {
+        auto dlg = new T(args...);
+        dlg->winId();
+        Q_ASSERT(p && dlg->windowHandle());
+        dlg->windowHandle()->setTransientParent(p);
+        return QSharedPointer<T>(dlg);
+    }
+
+    template <class T = QObject>
+    auto findItem(const QString &name = QString()) -> T*
+        { return p->rootObject()->findChild<T*>(name); }
+    auto clear() -> void { p->QQuickView::engine()->clearComponentCache(); }
     auto resizeContainer() -> void;
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
         { return pref.mouse_action_map()[mb][event->modifiers()]; }
@@ -160,6 +177,7 @@ struct MainWindow::Data {
     auto openDir(const QString &dir = QString()) -> void;
     auto screenSize() const -> QSize;
     auto updateWaitingMessage() -> void;
+    auto updateWindowState(Qt::WindowState ws) -> void;
 
     template<class T, class Func>
     auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*;

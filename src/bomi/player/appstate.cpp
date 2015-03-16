@@ -90,11 +90,11 @@ auto AppState::restoreLastWindowGeometry(MainWindow *w) -> void
 
 auto AppState::updateWindowGeometry(const MainWindow *w) -> void
 {
-    if (w->isMinimized() || !w->isVisible())
+    if (w->windowState() == Qt::WindowMinimized || !w->isVisible())
         return;
     if (w->isFullScreen())
         win_size = s_fullScreen;
-    else if (w->isMaximized())
+    else if (w->windowState() == Qt::WindowMaximized)
         win_size = s_maximized;
     else
         saveWindowGeometry(w, &win_pos, &win_size);

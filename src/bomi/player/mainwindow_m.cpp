@@ -158,31 +158,31 @@ auto MainWindow::Data::plugMenu() -> void
 
     Menu &open = menu(u"open"_q);
     connect(open[u"file"_q], &QAction::triggered, p, [this] () {
-        const auto file = _GetOpenFile(p, tr("Open File"), MediaExt);
+        const auto file = _GetOpenFile(nullptr, tr("Open File"), MediaExt);
         if (!file.isEmpty())
             openMrl(Mrl(file));
     });
     connect(open[u"folder"_q], &QAction::triggered, p, [this] () { openDir(); });
     connect(open[u"url"_q], &QAction::triggered, p, [this] () {
-        UrlDialog dlg(p);
-        if (dlg.exec()) {
+        auto dlg = dialog<UrlDialog>();
+        if (dlg->exec()) {
             downloader.cancel();
-            if (dlg.isPlaylist())
-                playlist.open(dlg.url(), dlg.encoding());
+            if (dlg->isPlaylist())
+                playlist.open(dlg->url(), dlg->encoding());
             else
-                openMrl(dlg.url().toString());
+                openMrl(dlg->url().toString());
         }
     });
     auto openDisc = [this] (const QString &title, QString &device, bool dvd) {
-        OpenDiscDialog dlg(p);
-        dlg.setIsoEnabled(dvd);
-        _SetWindowTitle(&dlg, title);
-        dlg.setDeviceList(OS::opticalDrives());
+        auto dlg = dialog<OpenDiscDialog>();
+        dlg->setIsoEnabled(dvd);
+        _SetWindowTitle(dlg.data(), title);
+        dlg->setDeviceList(OS::opticalDrives());
         if (!device.isEmpty())
-            dlg.setDevice(device);
-        if (dlg.exec())
-            device = dlg.device();
-        return dlg.result() && !device.isEmpty();
+            dlg->setDevice(device);
+        if (dlg->exec())
+            device = dlg->device();
+        return dlg->result() && !device.isEmpty();
     };
 
     connect(open[u"dvd"_q], &QAction::triggered, p, [openDisc, this] () {
@@ -342,8 +342,8 @@ auto MainWindow::Data::plugMenu() -> void
         switch (snapshotMode) {
         case SnapshotTool: {
             if (!snapshot) {
-                snapshot = new SnapshotDialog(p);
-                connect(snapshot, &SnapshotDialog::request, p, [=] () {
+                snapshot = dialog<SnapshotDialog>();
+                connect(snapshot.data(), &SnapshotDialog::request, p, [=] () {
                     if (e.hasVideoFrame()) {
                         snapshotMode = SnapshotTool;
                         e.takeSnapshot();
@@ -373,7 +373,7 @@ auto MainWindow::Data::plugMenu() -> void
                     break;
                 }
             case QuickSnapshotSave::Ask:
-                file = _GetSaveFile(p, tr("Save File"), fileName, WritableImageExt);
+                file = _GetSaveFile(nullptr, tr("Save File"), fileName, WritableImageExt);
                 break;
             case QuickSnapshotSave::Fixed:
                 file = pref.quick_snapshot_folder() % '/'_q % fileName;
@@ -417,16 +417,16 @@ auto MainWindow::Data::plugMenu() -> void
 #define PLUG_INTRPL(m, name, dlg, title, setParams, getParams, getMap) \
         connect(m[u"advanced"_q], &QAction::triggered, p, [=] () { \
             if (!dlg) { \
-                dlg = new IntrplDialog(p); \
-                connect(dlg, &IntrplDialog::paramsChanged, &e, \
+                dlg = dialog<IntrplDialog>(); \
+                connect(dlg.data(), &IntrplDialog::paramsChanged, &e, \
                     static_cast<Signal<PlayEngine, const IntrplParamSet&>>(&PlayEngine::setParams)); \
-                connect(e.params(), &MrlState::video_##name##_changed, dlg, [=] () { \
+                connect(e.params(), &MrlState::video_##name##_changed, dlg.data(), [=] () { \
                     if (dlg->isVisible()) \
                         dlg->set(e.getParams().type, e.getMap()); \
                 }); \
             } \
             if (!dlg->isVisible()) { \
-                _SetWindowTitle(dlg, title); \
+                _SetWindowTitle(dlg.data(), title); \
                 dlg->set(e.getParams().type, e.getMap()); \
                 dlg->show(); \
             } \
@@ -463,8 +463,8 @@ auto MainWindow::Data::plugMenu() -> void
     auto &vcolor = video(u"color"_q);
     connect(vcolor[u"editor"_q], &QAction::triggered, p, [=] () {
         if (!color) {
-            color = new VideoColorDialog(p);
-            connect(color, &VideoColorDialog::colorChanged,
+            color = dialog<VideoColorDialog>();
+            connect(color.data(), &VideoColorDialog::colorChanged,
                     &e, &PlayEngine::setVideoEqualizer);
         }
         color->setColor(e.params()->video_color());
@@ -498,8 +498,8 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_FLAG(audio(u"volume"_q)[u"mute"_q], audio_muted, setAudioMuted);
     connect(audio[u"equalizer"_q], &QAction::triggered, p, [=] () {
         if (!eq) {
-            eq = new AudioEqualizerDialog(p);
-            connect(eq, &AudioEqualizerDialog::equalizerChanged, p,
+            eq = dialog<AudioEqualizerDialog>();
+            connect(eq.data(), &AudioEqualizerDialog::equalizerChanged, p,
                     [=] (const AudioEqualizer &eq) { e.setAudioEqualizer(eq); });
         }
         eq->setEqualizer(e.params()->audio_equalizer());
@@ -514,7 +514,7 @@ auto MainWindow::Data::plugMenu() -> void
     auto &atrack = audio(u"track"_q);
     plugTrack(audio, StreamAudio); plugCycle(atrack);
     connect(atrack[u"open"_q], &QAction::triggered, p, [this] () {
-        const auto files = _GetOpenFiles(p, tr("Open Audio File"), AudioExt);
+        const auto files = _GetOpenFiles(nullptr, tr("Open Audio File"), AudioExt);
         if (!files.isEmpty()) e.addAudioFiles(files);
     });
     connect(atrack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadAudioFiles);
@@ -548,7 +548,7 @@ auto MainWindow::Data::plugMenu() -> void
             dir = _ToAbsPath(e.mrl().toLocalFile());
         auto enc = pref.sub_enc();
         const auto files = EncodingFileDialog::getOpenFileNames(
-            p, tr("Open Subtitle"), dir, _ToFilter(SubtitleExt), &enc);
+            nullptr, tr("Open Subtitle"), dir, _ToFilter(SubtitleExt), &enc);
         e.addSubtitleFiles(files, enc);
     });
     connect(strack[u"auto-load"_q], &QAction::triggered, &e, &PlayEngine::autoloadSubtitleFiles);
@@ -580,33 +580,33 @@ auto MainWindow::Data::plugMenu() -> void
         EncodingInfo enc;
         const auto filter = _ToFilter(PlaylistExt);
         const auto file = EncodingFileDialog::getOpenFileName
-                (p, tr("Open File"), QString(), filter, &enc);
+                (nullptr, tr("Open File"), QString(), filter, &enc);
         if (!file.isEmpty())
             playlist.open(file, enc);
     });
     connect(pl[u"save"_q], &QAction::triggered, p, [this] () {
         const auto &list = playlist.list();
         if (!list.isEmpty()) {
-            auto file = _GetSaveFile(p, tr("Save File"), u""_q, PlaylistExt);
+            auto file = _GetSaveFile(nullptr, tr("Save File"), u""_q, PlaylistExt);
             if (!file.isEmpty())
                 list.save(file);
         }
     });
     connect(pl[u"clear"_q], &QAction::triggered, p, [=] () { playlist.clear(); });
     connect(pl[u"append-file"_q], &QAction::triggered, p, [this] () {
-        const auto files = _GetOpenFiles(p, tr("Open File"), MediaExt);
+        const auto files = _GetOpenFiles(nullptr, tr("Open File"), MediaExt);
         Playlist list;
         for (int i=0; i<files.size(); ++i)
             list.push_back(Mrl(files[i]));
         playlist.append(list);
     });
     connect(pl[u"append-url"_q], &QAction::triggered, p, [this] () {
-        UrlDialog dlg(p);
-        if (dlg.exec()) {
-            const Mrl mrl = dlg.url().toString();
-            if (dlg.isPlaylist()) {
+        auto dlg = dialog<UrlDialog>();
+        if (dlg->exec()) {
+            const Mrl mrl = dlg->url().toString();
+            if (dlg->isPlaylist()) {
                 Playlist list;
-                list.load(mrl, dlg.encoding());
+                list.load(mrl, dlg->encoding());
                 playlist.append(list);
             } else
                 playlist.append(mrl);
@@ -654,17 +654,17 @@ auto MainWindow::Data::plugMenu() -> void
     connect(tool[u"playinfo"_q], &QAction::triggered, p, [=] () {
         auto toggleTool = [this] (const char *name, bool &visible) {
             visible = !visible;
-            if (auto item = view->findItem<QObject>(_L(name)))
+            if (auto item = findItem<QObject>(_L(name)))
                 item->setProperty("show", visible);
         };
         toggleTool("playinfo", as.playinfo_visible);
     });
-    connect(tool[u"log"_q], &QAction::triggered, logViewer, &LogViewer::show);
+    connect(tool[u"log"_q], &QAction::triggered, logViewer.data(), &LogViewer::show);
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         if (!sview) {
-            sview = new SubtitleViewer(p);
-            connect(sview, &SubtitleViewer::seekRequested, &e, &PlayEngine::seek);
-            connect(&e, &PlayEngine::subtitleSelectionChanged, sview, [=] () {
+            sview = dialog<SubtitleViewer>();
+            connect(sview.data(), &SubtitleViewer::seekRequested, &e, &PlayEngine::seek);
+            connect(&e, &PlayEngine::subtitleSelectionChanged, sview.data(), [=] () {
                 if (sview->isVisible())
                     sview->setComponents(e.subtitleSelection());
             });
@@ -675,9 +675,9 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
         if (!prefDlg) {
-            prefDlg = new PrefDialog(p);
+            prefDlg = dialog<PrefDialog>();
             prefDlg->setAudioDeviceList(e.audioDeviceList());
-            connect(prefDlg, &PrefDialog::applyRequested, p,
+            connect(prefDlg.data(), &PrefDialog::applyRequested, p,
                     [this] { prefDlg->get(&pref); applyPref(); });
         }
         if (!prefDlg->isVisible()) {
@@ -687,11 +687,11 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(tool[u"find-subtitle"_q], &QAction::triggered, p, [this] () {
         if (!subFindDlg) {
-            subFindDlg = new SubtitleFindDialog(p);
+            subFindDlg = dialog<SubtitleFindDialog>();
             subFindDlg->setOptions(pref.preserve_downloaded_subtitles(),
                                    pref.preserve_file_name_format(),
                                    pref.preserve_fallback_folder());
-            connect(subFindDlg, &SubtitleFindDialog::loadRequested,
+            connect(subFindDlg.data(), &SubtitleFindDialog::loadRequested,
                     p, [this] (const QString &fileName) {
                 e.addSubtitleFiles(QStringList(fileName), pref.sub_enc());
                 showMessage(tr("Downloaded"), QFileInfo(fileName).fileName());
@@ -713,7 +713,7 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(tool[u"auto-shutdown"_q], &QAction::toggled, p, [this] (bool on) {
         if (on) {
-            if (MBox::warn(p, tr("Auto-shutdown"),
+            if (MBox::warn(nullptr, tr("Auto-shutdown"),
                            tr("The system will shut down "
                               "when the play list has finished."),
                            {BBox::Ok, BBox::Cancel}) == BBox::Cancel) {
@@ -742,7 +742,7 @@ auto MainWindow::Data::plugMenu() -> void
 
     Menu &help = menu(u"help"_q);
     connect(help[u"about"_q], &QAction::triggered,
-            p, [=] () { AboutDialog dlg(p); dlg.exec(); });
+            p, [=] () { auto dlg = dialog<AboutDialog>(); dlg->exec(); });
     connect(menu[u"context-menu"_q], &QAction::triggered,
             p, [=] () { contextMenu.exec(QCursor::pos()); });
     connect(menu[u"exit"_q], &QAction::triggered, p, &MainWindow::exit);
@@ -780,12 +780,12 @@ auto MainWindow::Data::plugMenu() -> void
 
 auto MainWindow::Data::deleteDialogs() -> void
 {
-    _Delete(sview);
-    _Delete(prefDlg);
-    _Delete(subFindDlg);
-    _Delete(snapshot);
-    _Delete(logViewer);
-    _Delete(eq);
-    _Delete(color);
+    sview.clear();
+    prefDlg.clear();
+    subFindDlg.clear();
+    snapshot.clear();
+    logViewer.clear();
+    eq.clear();
+    color.clear();
 }
 

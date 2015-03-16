@@ -3,20 +3,36 @@
 #include "misc/trayicon.hpp"
 #include "dialog/mbox.hpp"
 #include "quick/appobject.hpp"
+#include <QSessionManager>
 
 //DECLARE_LOG_CONTEXT(Main)
 
-MainWindow::MainWindow(QWidget *parent)
-    : QWidget(parent, Qt::Window), d(new Data)
+MainWindow::MainWindow()
+    : QQuickView(), m_glLogger(new OpenGLLogger("SG"))
+    , m_engine(new PlayEngine), d(new Data(this))
 {
     d->p = this;
-    d->view = new MainQuickView(this);
+
+    cApp.setWindowTitle(this, QString());
+    setColor(Qt::black);
+    setResizeMode(QQuickView::SizeRootObjectToView);
+    auto format = requestedFormat();
+    if (OpenGLLogger::isAvailable())
+        format.setOption(QSurfaceFormat::DebugContext);
+    setFormat(format);
+    setPersistentOpenGLContext(true);
+    setPersistentSceneGraph(true);
+
+    d->top = new TopLevelItem;
+
     d->pref.initialize();
     d->pref.load();
     d->undo.setActive(false);
-    d->logViewer = new LogViewer(this);
+    d->logViewer = d->dialog<LogViewer>();
     d->adapter = OS::adapter(this);
 
+    AppObject::setTopLevelItem(d->top);
+    AppObject::setQmlEngine(QQuickView::engine());
     AppObject::setEngine(&d->e);
     AppObject::setHistory(&d->history);
     AppObject::setPlaylist(&d->playlist);
@@ -30,16 +46,39 @@ MainWindow::MainWindow(QWidget *parent)
     d->e.setYle(&d->yle);
     d->e.run();
 
-    d->initWindow();
     d->initContextMenu();
     d->initItems();
     d->initTray();
-
     d->plugEngine();
     d->plugMenu();
 
-    d->restoreState();
+    connect(this, &QQuickView::statusChanged, this, [=] (Status status)
+        { if (status == Ready) d->top->setParentItem(contentItem()); });
+    connect(this, &MainWindow::windowStateChanged, this,
+            [=] (Qt::WindowState ws) { d->updateWindowState(ws); });
+    connect(this, &QQuickView::sceneGraphInitialized, this, [this] () {
+        auto context = openglContext();
+        if (cApp.isOpenGLDebugLoggerRequested())
+            m_glLogger->initialize(context);
+        m_sgInit = true;
+        m_engine->initializeGL(context);
+        emit sceneGraphInitialized();
+    }, Qt::DirectConnection);
+    connect(this, &QQuickView::sceneGraphInvalidated, this, [this] () {
+        auto context = QOpenGLContext::currentContext();
+        m_sgInit = false;
+        m_glLogger->finalize(context);
+        m_glLogger->deleteLater();
+        m_engine->finalizeGL(context);
+        m_engine->deleteLater();
+    }, Qt::DirectConnection);
+    connect(this, &MainWindow::fullscreenChanged, this,
+            [=] (bool fs) { d->setCursorVisible(!fs); });
+    connect(&cApp, &App::commitDataRequest, this, [=] () { d->commitData(); });
+    connect(&cApp, &App::saveStateRequest, this, [=] (QSessionManager &session)
+        { session.setRestartHint(QSessionManager::RestartIfRunning); });
 
+    d->restoreState();
     d->undo.setActive(true);
     QTimer::singleShot(1, this, SLOT(postInitialize()));
 }
@@ -49,9 +88,8 @@ MainWindow::~MainWindow() {
     if (d->jrServer)
         d->jrServer->setInterface(nullptr);
     delete d->jrServer;
-    d->view->clear();
+    d->clear();
     exit();
-    _Delete(d->view);
     d->deleteDialogs();
     delete d;
 }
@@ -70,9 +108,7 @@ auto MainWindow::postInitialize() -> void
         d->menu(u"window"_q)[u"frameless"_q]->trigger();
 #endif
     d->as.restoreWindowGeometry(this);
-    d->resizeContainer();
-    OS::setImeEnabled(windowHandle(), false);
-    OS::setImeEnabled(d->view, false);
+    d->adapter->setImeEnabled(false);
     d->applyPref();
     cApp.runCommands();
     d->noMessage = false;
@@ -85,16 +121,16 @@ auto MainWindow::adapter() const -> OS::WindowAdapter*
 
 auto MainWindow::setupSkinPlayer() -> void
 {
-    d->player = d->view->rootObject()->property("player").value<QQuickItem*>();
+    d->player = rootObject()->property("player").value<QQuickItem*>();
     if (!d->player)
         return;
     d->e.screen()->setParentItem(d->player);
     d->e.screen()->setWidth(d->player->width());
     d->e.screen()->setHeight(d->player->height());
     d->player->setProperty("screen", QVariant::fromValue(d->e.screen()));
-    if (auto item = d->view->findItem(u"playinfo"_q))
+    if (auto item = d->findItem(u"playinfo"_q))
         item->setProperty("show", d->as.playinfo_visible);
-    if (auto item = d->view->findItem(u"logo"_q)) {
+    if (auto item = d->findItem(u"logo"_q)) {
         item->setProperty("show", d->pref.show_logo());
         item->setProperty("color", d->pref.bg_color());
     }
@@ -112,11 +148,6 @@ auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
             d->openWith(mode, QList<Mrl>() << mrl);
         }
     }
-}
-
-auto MainWindow::screen() const -> QScreen*
-{
-    return d->view->screen();
 }
 
 auto MainWindow::engine() const -> PlayEngine*
@@ -183,7 +214,7 @@ auto MainWindow::togglePlayPause() -> void
 
 auto MainWindow::isSceneGraphInitialized() const -> bool
 {
-    return d->sgInit;
+    return m_sgInit;
 }
 
 auto MainWindow::setFullScreen(bool full, bool updateLastGeometry) -> void
@@ -206,21 +237,17 @@ auto MainWindow::isFullScreen() const -> bool
     return d->adapter->isFullScreen();
 }
 
-auto MainWindow::resetMoving() -> void
-{
-    d->adapter->endMoveByDrag();
-}
-
 using MsBh = MouseBehavior;
 
-auto MainWindow::onMouseMoveEvent(QMouseEvent *event) -> void
+auto MainWindow::mouseMoveEvent(QMouseEvent *event) -> void
 {
-    QWidget::mouseMoveEvent(event);
+    event->setAccepted(false);
+    QQuickView::mouseMoveEvent(event);
     d->cancelToHideCursor();
     const bool full = isFullScreen();
     const auto gpos = event->globalPos();
     if (full)
-        resetMoving();
+        d->adapter->endMoveByDrag();
     else if (d->adapter->isMoveByDragStarted())
         d->adapter->moveByDrag(gpos);
     d->readyToHideCursor();
@@ -229,9 +256,15 @@ auto MainWindow::onMouseMoveEvent(QMouseEvent *event) -> void
         d->pressedButton = Qt::NoButton;
 }
 
-auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
+
+auto MainWindow::mouseDoubleClickEvent(QMouseEvent *event) -> void
 {
-    QWidget::mouseDoubleClickEvent(event);
+    d->adapter->endMoveByDrag();
+    event->setAccepted(false);
+    if (AppObject::itemToAccept(AppObject::DoubleClickEvent, event->localPos()))
+        QQuickView::mouseDoubleClickEvent(event);
+    if (event->isAccepted())
+        return;
     d->singleClick.unset();
     if (event->buttons() & Qt::LeftButton) {
         const auto act = d->menu.action(d->actionId(MsBh::DoubleClick, event));
@@ -246,9 +279,13 @@ auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
     }
 }
 
-auto MainWindow::onMouseReleaseEvent(QMouseEvent *event) -> void
+auto MainWindow::mouseReleaseEvent(QMouseEvent *event) -> void
 {
-    QWidget::mouseReleaseEvent(event);
+    d->adapter->endMoveByDrag();
+    event->setAccepted(false);
+    QQuickView::mouseReleaseEvent(event);
+    if (event->isAccepted())
+        return;
     const auto singleClickAction = d->singleClick.action;
     const auto pressed = d->pressedButton;
     d->singleClick.unset();
@@ -272,9 +309,14 @@ auto MainWindow::onMouseReleaseEvent(QMouseEvent *event) -> void
         d->trigger(d->menu.action(d->actionId(mb, event)));
 }
 
-auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
+auto MainWindow::mousePressEvent(QMouseEvent *event) -> void
 {
-    QWidget::mousePressEvent(event);
+    d->adapter->endMoveByDrag();
+    d->top->resetMousePressEventFilterState();
+    event->setAccepted(false);
+    QQuickView::mousePressEvent(event);
+    if (event->isAccepted() && !d->top->filteredMousePressEvent())
+        return;
     d->singleClick.unset();
     d->pressedButton = Qt::NoButton;
     switch (event->button()) {
@@ -310,38 +352,39 @@ auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
         d->singleClick.action = d->menu.action(d->actionId(MsBh::LeftClick, event));
 }
 
-auto MainWindow::onWheelEvent(QWheelEvent *ev) -> void
+auto MainWindow::wheelEvent(QWheelEvent *event) -> void
 {
-    QWidget::wheelEvent(ev);
-    const auto delta = ev->delta();
+    event->setAccepted(false);
+    QQuickView::wheelEvent(event);
+    if (event->isAccepted())
+        return;
+    const auto delta = event->delta();
     if (delta) {
         const bool up = d->pref.invert_wheel() ? delta < 0 : delta > 0;
-        const auto id = d->actionId(up ? MsBh::ScrollUp : MsBh::ScrollDown, ev);
+        const auto id = d->actionId(up ? MsBh::ScrollUp : MsBh::ScrollDown, event);
         d->trigger(d->menu.action(id));
-        ev->accept();
+        event->accept();
     }
-}
-
-auto MainWindow::dragEnterEvent(QDragEnterEvent *event) -> void
-{
-    if (event->mimeData()->hasUrls())
-        event->acceptProposedAction();
-}
-
-auto MainWindow::dropEvent(QDropEvent *event) -> void
-{
-    d->openMimeData(event->mimeData());
 }
 
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 {
-    QWidget::resizeEvent(event);
-    d->resizeContainer();
+    QQuickView::resizeEvent(event);
+    auto content = contentItem();
+    auto root = rootObject();
+    if (content && root && content == root->parentItem()) {
+        root->setSize({content->width(), content->height()});
+        root->setPosition({0, 0});
+    }
 }
 
-auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void
+auto MainWindow::keyPressEvent(QKeyEvent *event) -> void
 {
-    QWidget::keyPressEvent(event);
+    event->setAccepted(false);
+    if (auto item = AppObject::itemToAccept(AppObject::KeyEvent))
+        sendEvent(item, event);
+    if (event->isAccepted())
+        return;
     constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
     const QKeySequence shortcut(event->key() + (event->modifiers() & modMask));
     d->trigger(RootMenu::instance().action(shortcut));
@@ -350,76 +393,67 @@ auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void
 
 auto MainWindow::showEvent(QShowEvent *event) -> void
 {
-    QWidget::showEvent(event);
+    QQuickView::showEvent(event);
     d->doVisibleAction(true);
 }
 
 auto MainWindow::hideEvent(QHideEvent *event) -> void
 {
-    QWidget::hideEvent(event);
+    QQuickView::hideEvent(event);
     d->doVisibleAction(false);
 }
 
-auto MainWindow::changeEvent(QEvent *ev) -> void
+auto MainWindow::event(QEvent *event) -> bool
 {
-    QWidget::changeEvent(ev);
-    if (ev->type() == QEvent::WindowStateChange) {
-        auto event = static_cast<QWindowStateChangeEvent*>(ev);
-        setWindowFilePath(d->filePath);
-        resetMoving();
-        d->readyToHideCursor();
-        auto changed = [&] (Qt::WindowState state) -> bool
-            { return !((event->oldState() & windowState()) & state); };
-        if (!d->stateChanging && changed(Qt::WindowMinimized))
-            d->doVisibleAction(!isMinimized());
-#ifdef Q_OS_WIN
-        d->updateStaysOnTop();
-#else // this doesn't work for windows because of fake fullscreen
-        const bool fsChanged = changed(Qt::WindowFullScreen);
-        if (fsChanged)
-            emit fullscreenChanged(isFullScreen());
-        d->updateStaysOnTop();
-        if (fsChanged && !isFullScreen())
-            d->as.restoreLastWindowGeometry(this);
-#endif
-    }
-}
-
-auto MainWindow::closeEvent(QCloseEvent *event) -> void
-{
-    setFullScreen(false);
-    QWidget::closeEvent(event);
-#ifndef Q_OS_MAC
-    if (d->tray && d->pref.enable_system_tray()
-            && d->pref.hide_rather_close()) {
-        hide();
-        if (d->as.ask_system_tray) {
-            MBox mbox(this);
-            mbox.setIcon(MBox::Icon::Information);
-            mbox.setTitle(tr("System Tray Icon"));
-            mbox.setText(tr("bomi will be running in "
-                "the system tray when the window closed."));
-            mbox.setInformativeText(
-                tr("You can change this behavior in the preferences. "
-                    "If you want to exit bomi, please use 'Exit' menu."));
-            mbox.addButton(BBox::Ok);
-            mbox.checkBox()->setText(tr("Do not display this message again"));
-            mbox.exec();
-            d->as.ask_system_tray = !mbox.checkBox()->isChecked();
+    return QQuickView::event(event);
+    switch (event->type()) {
+    case QEvent::InputMethodQuery: {
+        auto e = static_cast<QInputMethodQueryEvent*>(event);
+        e->setValue(Qt::ImEnabled, false);
+        e->accept();
+        return true;
+    } case QEvent::DragEnter:
+    case QEvent::DragMove: {
+        auto e = static_cast<QDragEnterEvent*>(event);
+        if (e->mimeData()->hasUrls())
+            e->acceptProposedAction();
+        return true;
+    } case QEvent::Drop: {
+        auto e = static_cast<QDropEvent*>(event);
+        d->openMimeData(e->mimeData());
+        return true;
+    } case QEvent::Close: {
+        setFullScreen(false);
+    #ifndef Q_OS_MAC
+        if (d->tray && d->pref.enable_system_tray()
+                && d->pref.hide_rather_close()) {
+            hide();
+            if (d->as.ask_system_tray) {
+                MBox mbox(nullptr);
+                mbox.setIcon(MBox::Icon::Information);
+                mbox.setTitle(tr("System Tray Icon"));
+                mbox.setText(tr("bomi will be running in "
+                    "the system tray when the window closed."));
+                mbox.setInformativeText(
+                    tr("You can change this behavior in the preferences. "
+                        "If you want to exit bomi, please use 'Exit' menu."));
+                mbox.addButton(BBox::Ok);
+                mbox.checkBox()->setText(tr("Do not display this message again"));
+                mbox.exec();
+                d->as.ask_system_tray = !mbox.checkBox()->isChecked();
+            }
+            event->ignore();
+        } else {
+            event->accept();
+            exit();
         }
-        event->ignore();
-    } else {
+    #else
         event->accept();
-        exit();
+    #endif
+        return true;
+    } default:
+        return QQuickView::event(event);
     }
-#else
-    event->accept();
-#endif
-}
-
-auto MainWindow::moveEvent(QMoveEvent *event) -> void
-{
-    QWidget::moveEvent(event);
 }
 
 auto MainWindow::customEvent(QEvent *event) -> void
@@ -430,11 +464,11 @@ auto MainWindow::customEvent(QEvent *event) -> void
         QWaitCondition *cond = nullptr;
         _TakeData(event, smb, res, cond);
         Q_ASSERT(smb && res && cond);
-        SmbAuthDialog dlg(this);
-        dlg.setAuthInfo(*smb);
-        if (dlg.exec()) {
+        auto dlg = d->dialog<SmbAuthDialog>();
+        dlg->setAuthInfo(*smb);
+        if (dlg->exec()) {
             *res = true;
-            *smb = dlg.authInfo();
+            *smb = dlg->authInfo();
         }
         cond->wakeAll();
     }

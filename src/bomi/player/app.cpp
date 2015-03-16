@@ -305,7 +305,7 @@ auto App::setMainWindow(MainWindow *mw) -> void
 {
     d->main = mw;
 #ifndef Q_OS_MAC
-    d->main->setWindowIcon(defaultIcon());
+    d->main->setIcon(defaultIcon());
 #endif
     connect(d->main, &MainWindow::sceneGraphInitialized, this, [this] () {
         if (!d->pended.isEmpty()) {
@@ -315,13 +315,22 @@ auto App::setMainWindow(MainWindow *mw) -> void
     }, Qt::QueuedConnection);
 }
 
-auto App::setWindowTitle(QWidget *widget, const QString &title) -> void
+auto App::setWindowTitle(QWidget *w, const QString &title) -> void
 {
     _Trace("Set window title of %% to '%%'.",
-           widget->metaObject()->className(), title);
+           w->metaObject()->className(), title);
     const QString text = title % (title.isEmpty() ? u""_q : u" - "_q)
                          % displayName();
-    widget->setWindowTitle(text);
+    w->setWindowTitle(text);
+}
+
+auto App::setWindowTitle(QWindow *w, const QString &title) -> void
+{
+    _Trace("Set window title of %% to '%%'.",
+           w->metaObject()->className(), title);
+    const QString text = title % (title.isEmpty() ? u""_q : u" - "_q)
+                         % displayName();
+    w->setTitle(text);
 }
 
 auto App::setMprisActivated(bool activated) -> void

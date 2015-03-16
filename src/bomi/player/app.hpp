@@ -16,6 +16,7 @@ public:
     App(int &argc, char **argv);
     ~App();
     auto setWindowTitle(QWidget *w, const QString &title) -> void;
+    auto setWindowTitle(QWindow *w, const QString &title) -> void;
     auto setMainWindow(MainWindow *mw) -> void;
     auto mainWindow() const -> MainWindow*;
     auto styleName() const -> QString;
