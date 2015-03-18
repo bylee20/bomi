@@ -201,6 +201,7 @@ PlayEngine::PlayEngine()
     d->mpv.setOption("input-terminal", "no");
     d->mpv.setOption("ad-lavc-downmix", "no");
     d->mpv.setOption("title", "\"\"");
+    d->mpv.setOption("audio-pitch-correction", "no");
     d->mpv.setOption("vo", d->vo(&d->params));
     d->mpv.setOption("af", d->af(&d->params));
     d->mpv.setOption("vf", d->vf(&d->params));
