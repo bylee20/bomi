@@ -7,7 +7,6 @@
 #include "recentinfo.hpp"
 #include "abrepeatchecker.hpp"
 #include "playengine.hpp"
-#include "mainquickview.hpp"
 #include "playlistmodel.hpp"
 #include "historymodel.hpp"
 #include "pref.hpp"
