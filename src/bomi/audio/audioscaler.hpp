@@ -5,13 +5,14 @@
 
 class AudioScaler : public AudioFilter {
 public:
-    auto delay() const -> double override { return m_delay; }
-    auto setScale(bool on, double scale) -> void;
+    auto setActive(bool active) -> void;
+    auto isActive() const -> bool { return m_enabled && m_scale != 1.0; }
     auto setFormat(const AudioBufferFormat &format) -> void;
+    auto delay() const -> double override { return m_delay; }
+    auto setScale(double scale) -> void final;
     auto run(AudioBufferPtr &in) -> AudioBufferPtr override;
-    auto passthrough(const AudioBufferPtr &in) const -> bool override;
-    auto isActive() const -> bool { return m_enabled; }
     auto reset() -> void override;
+    auto passthrough(const AudioBufferPtr &in) const -> bool override;
 private:
     struct Vector {
         auto data() -> float* { return buffer.data(); }

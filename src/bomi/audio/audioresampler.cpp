@@ -8,8 +8,10 @@ extern "C" {
 struct AudioResampler::Data {
     SwrContext *swr = nullptr;
     AudioBufferFormat in, out;
+    int fps = 1;
     bool resample = false;
-    double delay = 0.0;
+    double delay = 0.0, scale = 1.0;
+    auto updateFps() -> void { fps = lrint(in.fps() * scale); }
 };
 
 AudioResampler::AudioResampler()
@@ -25,20 +27,13 @@ AudioResampler::~AudioResampler()
     delete d;
 }
 
-auto AudioResampler::setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void
+auto AudioResampler::reconfigure() -> void
 {
-    d->delay = 0.0;
-    if (!(_Change(d->in, in) | _Change(d->out, out)))
-        return;
-    Q_ASSERT(d->in.channels().num == d->out.channels().num);
-    d->resample = d->in != d->out;
-
+    d->updateFps();
     if (d->swr)
         swr_free(&d->swr);
-
     if (!d->resample)
         return;
-
     d->swr = swr_alloc();
     const auto nch = d->in.channels().num;
     av_opt_set_int(d->swr,  "in_channel_count", nch, 0);
@@ -47,8 +42,18 @@ auto AudioResampler::setFormat(const AudioBufferFormat &in, const AudioBufferFor
     av_opt_set_int(d->swr, "out_sample_rate", d->out.fps(), 0);
     av_opt_set_sample_fmt(d->swr,  "in_sample_fmt", af_to_avformat(d->in.type()), 0);
     av_opt_set_sample_fmt(d->swr, "out_sample_fmt", af_to_avformat(d->out.type()), 0);
-
     reset();
+}
+
+auto AudioResampler::setFormat(const AudioBufferFormat &in, const AudioBufferFormat &out) -> void
+{
+    d->delay = 0.0;
+    if (!(_Change(d->in, in) | _Change(d->out, out)))
+        return;
+    Q_ASSERT(d->in.channels().num == d->out.channels().num);
+    d->resample = d->in != d->out;
+
+    reconfigure();
 }
 
 auto AudioResampler::delay() const -> double
@@ -77,6 +82,11 @@ auto AudioResampler::run(AudioBufferPtr &in) -> AudioBufferPtr
         dst->expand(frames);
     }
     return dst;
+}
+
+auto AudioResampler::setScale(double scale) -> void
+{
+    d->scale = scale;
 }
 
 auto AudioResampler::reset() -> void

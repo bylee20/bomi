@@ -259,8 +259,11 @@ auto AudioController::filter(mp_audio *data) -> int
             d->analyzer.setNormalizerActive(d->normalizerActivated);
             d->analyzer.setNormalizerOption(d->normalizerOption);
         }
-        if (d->dirty & Scale)
-            d->scaler.setScale(d->tempoScalerActivated, d->scale);
+        if (d->dirty & Scale) {
+            d->scaler.setActive(d->tempoScalerActivated);
+            for (auto filter : d->filters)
+                filter->setScale(d->scale);
+        }
         if (d->dirty & ChMap)
             d->mixer.setChannelLayoutMap(d->map);
         if (d->dirty & Clip)

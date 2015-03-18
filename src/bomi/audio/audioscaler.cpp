@@ -59,14 +59,14 @@ auto AudioScaler::setFormat(const AudioBufferFormat &format) -> void
 
 auto AudioScaler::passthrough(const AudioBufferPtr &in) const -> bool
 {
-    return !m_enabled || in->isEmpty();
+    return !isActive() || in->isEmpty();
 }
 
 auto AudioScaler::run(AudioBufferPtr &in) -> AudioBufferPtr
 {
     m_delay = 0;
     const int frames_in = in->frames();
-    if (!m_enabled || frames_in <= 0)
+    if (!isActive() || frames_in <= 0)
         return in;
 
     auto fill_queue = [&in, this](int frames_offset) -> int
@@ -146,12 +146,17 @@ auto AudioScaler::run(AudioBufferPtr &in) -> AudioBufferPtr
     return dest;
 }
 
-auto AudioScaler::setScale(bool on, double scale) -> void
+auto AudioScaler::setActive(bool active) -> void
+{
+    if (_Change(m_enabled, active))
+        reset();
+}
+
+auto AudioScaler::setScale(double scale) -> void
 {
     m_scale = scale;
     m_frames_stride_scaled = m_scale * m_frames_stride;
     reset();
-    m_enabled = on && scale != 1.0;
 }
 
 auto AudioScaler::best_overlap_frames_offset() -> int
