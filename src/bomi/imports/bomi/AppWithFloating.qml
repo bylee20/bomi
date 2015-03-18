@@ -27,6 +27,11 @@ BaseApp {
             onReleased: mouse.accepted = false
             onEntered: floating.hidden = false
             onExited: floating.hidden = true
+            onPositionChanged: {
+                var m = App.window.mouse
+                m.hidingCursorBlocked = m.isIn(floating)
+            }
+
             MouseArea {
                 id: floating
                 function clamp(min, v, max) { return Math.max(Math.min(max, v), min); }
