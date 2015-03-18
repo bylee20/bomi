@@ -98,6 +98,7 @@ struct PlayEngine::Data {
     bool hasImage = false, seekable = false, hasVideo = false;
     bool pauseAfterSkip = false, resume = false, hwdec = false;
     bool quit = false, preciseSeeking = false, mouseInButton = false;
+    bool filterResync = false;
 
     QList<CodecId> hwCodecs;
 
@@ -125,6 +126,7 @@ struct PlayEngine::Data {
     struct { QImage osd, frame; bool take = false; } ss;
     QPoint mouse;
 
+    auto resync(bool force = false) -> void;
     auto updateSubtitleStyle() -> void;
     auto updateState(State s) -> void;
     auto setWaitings(Waitings w, bool set) -> void;

@@ -128,6 +128,7 @@ private:
     P0(QList<CodecId>, hwaccel_codecs, OS::hwAcc()->fullCodecList())
     P0(DeintOptionSet, deinterlacing, {})
 
+    P0(bool, audio_filter_resync, true)
     P0(AudioNormalizerOption, audio_normalizer, AudioNormalizerOption::default_())
 
     P1(QString, skin_name, defaultSkinName(), "currentText")

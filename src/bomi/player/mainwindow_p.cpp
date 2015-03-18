@@ -635,6 +635,7 @@ auto MainWindow::Data::applyPref() -> void
     e.setVolumeNormalizerOption_locked(p.audio_normalizer());
     e.setChannelLayoutMap_locked(p.channel_manipulation());
     e.setClippingMethod_locked(p.clipping_method());
+    e.setResyncAvWhenFilterToggled_locked(p.audio_filter_resync());
 
     e.setSubtitleStyle_locked(p.sub_style());
     e.setAutoselectMode_locked(p.sub_enable_autoselect(), p.sub_autoselect(), p.sub_ext());

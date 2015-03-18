@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>14</number>
+        <number>10</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1643,6 +1643,13 @@
              <widget class="AudioNormalizerOptionWidget" name="audio_normalizer" native="true"/>
             </item>
            </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="audio_filter_resync">
+           <property name="text">
+            <string>Resynchronize audio/video whenever filter toggled</string>
+           </property>
           </widget>
          </item>
          <item>

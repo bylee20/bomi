@@ -973,3 +973,12 @@ auto PlayEngine::Data::updateSubtitleStyle() -> void
         mpv.setAsync("options/sub-text-shadow-offset", 0.0);
     }
 }
+
+auto PlayEngine::Data::resync(bool force) -> void
+{
+    if (!p->isRunning() || !filterResync)
+        return;
+    if (!force && !params.audio_volume_normalizer())
+        return;
+    mpv.tellAsync("seek", 0.0, "relative"_b);
+}

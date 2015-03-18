@@ -149,6 +149,7 @@ public:
     auto setAutoloader_locked(const Autoloader &audio, const Autoloader &sub) -> void;
     auto setResume_locked(bool resume) -> void;
     auto setPreciseSeeking_locked(bool on) -> void;
+    auto setResyncAvWhenFilterToggled_locked(bool on) -> void;
     auto setMotionIntrplOption_locked(const MotionIntrplOption &option) -> void;
     auto unlock() -> void;
 

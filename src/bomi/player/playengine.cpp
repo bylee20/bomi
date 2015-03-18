@@ -465,8 +465,7 @@ auto PlayEngine::setSpeed(double s) -> void
 {
     if (d->params.set_play_speed(s)) {
         d->mpv.setAsync("speed", speed());
-        if (isRunning() && d->params.audio_volume_normalizer())
-            d->mpv.tellAsync("seek", 0.0, "relative"_b);
+        d->resync();
     }
 }
 
@@ -766,12 +765,16 @@ auto PlayEngine::setAudioSync(int sync) -> void
         d->mpv.setAsync("audio-delay", sync * 1e-3);
 }
 
+auto PlayEngine::setResyncAvWhenFilterToggled_locked(bool on) -> void
+{
+    d->filterResync = on;
+}
+
 auto PlayEngine::setAudioVolumeNormalizer(bool on) -> void
 {
     if (d->params.set_audio_volume_normalizer(on)) {
         d->mpv.tellAsync("af", "set"_b, d->af(&d->params));
-        if (isRunning())
-            d->mpv.tellAsync("seek", 0.0, "relative"_b);
+        d->resync(true);
     }
 }
 
@@ -779,8 +782,7 @@ auto PlayEngine::setAudioTempoScaler(bool on) -> void
 {
     if (d->params.set_audio_tempo_scaler(on)) {
         d->mpv.tellAsync("af", "set"_b, d->af(&d->params));
-        if (isRunning() && d->params.audio_volume_normalizer())
-            d->mpv.tellAsync("seek", 0.0, "relative"_b);
+        d->resync();
     }
 }
 
