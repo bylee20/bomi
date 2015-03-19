@@ -405,7 +405,6 @@ auto MainWindow::hideEvent(QHideEvent *event) -> void
 
 auto MainWindow::event(QEvent *event) -> bool
 {
-    return QQuickView::event(event);
     switch (event->type()) {
     case QEvent::InputMethodQuery: {
         auto e = static_cast<QInputMethodQueryEvent*>(event);
