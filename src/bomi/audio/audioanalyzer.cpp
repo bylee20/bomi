@@ -78,7 +78,7 @@ struct AudioAnalyzer::Data {
     AudioBufferFormat format;
     AudioNormalizerOption option;
     int frames = 0, gaussian_r = 0;
-    double prevGain = 1.0, currentGain = 1.0;
+    double prevGain = 1.0, currentGain = 1.0, scale = 1.0;
     bool normalizer = false;
     struct {
         std::deque<double> orig, min, smooth;
@@ -159,6 +159,11 @@ auto AudioAnalyzer::gain() const -> float
     return d->currentGain;
 }
 
+auto AudioAnalyzer::setScale(double scale) -> void
+{
+    d->scale = scale;
+}
+
 auto AudioAnalyzer::delay() const -> double
 {
     int frames = d->filling.filled();
@@ -166,7 +171,7 @@ auto AudioAnalyzer::delay() const -> double
         frames += chunk.filled();
     for (const auto &chunk : d->outputs)
         frames += chunk.filled();
-    return d->format.toSeconds(frames);
+    return d->format.toSeconds(frames) / d->scale;
 }
 
 auto AudioAnalyzer::setNormalizerOption(const AudioNormalizerOption &opt) -> void

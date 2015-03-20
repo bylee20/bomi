@@ -9,6 +9,7 @@ public:
     AudioAnalyzer();
     ~AudioAnalyzer();
     auto reset() -> void;
+    auto setScale(double scale) -> void final;
     auto isNormalizerActive() const -> bool;
     auto setNormalizerActive(bool on) -> void;
     auto setNormalizerOption(const AudioNormalizerOption &opt) -> void;
