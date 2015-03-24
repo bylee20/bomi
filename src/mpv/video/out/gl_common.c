@@ -470,7 +470,7 @@ void mpgl_load_functions2(GL *gl, void *(*get_fn)(void *ctx, const char *n),
             for (int i = 0; fnlist && fnlist[i].funcnames[0]; i++) {
                 const struct gl_function *fn = &fnlist[i];
                 void **funcptr = (void**)(((char*)gl) + fn->offset);
-                if (loaded[i])
+                if (loaded[i] && !*funcptr)
                     *funcptr = loaded[i];
             }
         }
