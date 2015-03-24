@@ -790,15 +790,11 @@ auto MainWindow::Data::updateWindowState(Qt::WindowState ws) -> void
     { return !((prevWindowState & ws) & state); };
     if (!stateChanging && changed(Qt::WindowMinimized))
         doVisibleAction(ws != Qt::WindowMinimized);
-#ifdef Q_OS_WIN
-    updateStaysOnTop();
-#else // this doesn't work for windows because of fake fullscreen
     const bool fsChanged = changed(Qt::WindowFullScreen);
     if (fsChanged)
         emit p->fullscreenChanged(p->isFullScreen());
     updateStaysOnTop();
     if (fsChanged && !p->isFullScreen())
         as.restoreLastWindowGeometry(p);
-#endif
     prevWindowState = ws;
 }

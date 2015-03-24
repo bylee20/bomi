@@ -5,6 +5,8 @@
 #include "enum/deintmethod.hpp"
 #include "enum/codecid.hpp"
 #include <QScreen>
+#include <QQuickWindow>
+#include <QQuickItem>
 #include <QDesktopWidget>
 #include <psapi.h>
 #include <QWindow>
@@ -50,47 +52,38 @@ static Win *d = nullptr;
 auto initialize() -> void { _Renew(d); }
 auto finalize() -> void { _Delete(d); }
 
-auto setImeEnabled(QWindow *w, bool enabled) -> void
+WinWindowAdapter::WinWindowAdapter(QWindow* w)
+    : WindowAdapter(w)
 {
-    auto &ime = d->imes[w];
+    qApp->installNativeEventFilter(this);
+}
+
+auto WinWindowAdapter::isImeEnabled() const -> bool
+{
+    return !m_ime;
+}
+
+auto WinWindowAdapter::setImeEnabled(bool enabled) -> void
+{
+    if (enabled == isImeEnabled())
+        return;
     if (enabled) {
-        if (ime) {
-            ImmAssociateContext((HWND)w->winId(), ime);
-            ime = nullptr;
-        }
+        ImmAssociateContext((HWND)winId(), m_ime);
+        m_ime = nullptr;
     } else
-        ime = ImmAssociateContext((HWND)w->winId(), nullptr);
+        m_ime = ImmAssociateContext((HWND)winId(), nullptr);
 }
 
-auto WinWindowAdapter::containerSize() const -> QSize
+auto WinWindowAdapter::setFrameless(bool /*frameless*/) -> void
 {
-    auto w = widget();
-    if (!m_removeFrameSize)
-        return w->size();
-    if (!isFrameVisible())
-        return w->size();
-    QSize size = w->frameSize();
-    const auto m = frameMargins();
-    size.rwidth() -= m.left() + m.right();
-    size.rheight() -= m.top() + m.bottom();
-    return size;
-}
-
-auto WinWindowAdapter::setFrameless(bool frameless) -> void
-{
-    if (_Change(m_frameless, frameless) && !m_fs) {
-        const auto g = widget()->geometry();
-        updateFrame();
-        widget()->resize(g.width() + 1, g.height());
-        widget()->resize(g.width(), g.height());
-    }
-}
-
-auto WinWindowAdapter::updateFrame() -> void
-{
-    if (!isFrameVisible())
-        m_removeFrameSize = true;
-    WindowAdapter::setFrameless(!isFrameVisible());
+    return;
+//    if (_Change(m_frameless, frameless) && !m_fs) {
+//        auto w = window();
+//        const auto g = w->geometry();
+//        updateFrame();
+//        w->resize(g.width() + 1, g.height());
+//        w->resize(g.width(), g.height());
+//    }
 }
 
 SIA setLayer(HWND hwnd, HWND layer) -> void
@@ -108,37 +101,41 @@ auto WinWindowAdapter::setFullScreen(bool fs) -> void
 {
     if (!_Change(m_fs, fs))
         return;
-    const auto w = widget();
-    auto g = m_prevGeometry;
-    auto style = m_prevStyle;
-    auto layer = this->layer();
-    const auto hwnd = (HWND)winId();
+    WindowAdapter::setFullScreen(fs);
     if (fs) {
-        m_prevGeometry = w->frameGeometry();
-        m_prevStyle = GetWindowLong(hwnd, GWL_STYLE);
-        g = qApp->desktop()->screenGeometry(w);
-        g.adjust(-1, -1, 1, 1);
-        style = m_prevStyle & ~(WS_DLGFRAME | WS_THICKFRAME);
+        const auto hwnd = (HWND)winId();
+        auto style = GetWindowLong(hwnd, GWL_STYLE);
         style |= WS_BORDER;
-        layer = HWND_NOTOPMOST;
-    }
-    updateFrame();
-    setLayer(hwnd, layer);
-    if (m_fs) {
-        w->setGeometry(g);
-        w->setMask(QRect(1, 1, g.width() - 2, g.height() - 2));
-    } else {
-        if (m_frameless)
-            w->setGeometry(g);
-        else {
-            w->move(g.topLeft());
-            w->resize(g.size());
-        }
-        w->clearMask();
+        SetWindowLong(hwnd, GWL_STYLE, style);
     }
 }
 
-auto createAdapter(QWidget *w) -> WindowAdapter*
+auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long *) -> bool
+{
+    if (!m_fs)
+        return false;
+    auto msg = static_cast<MSG*>(message);
+    if (msg->message != WM_NCPAINT)
+        return false;
+    if (msg->hwnd != (HWND)winId())
+        return false;
+    auto dc = GetWindowDC(msg->hwnd);
+    if (!dc)
+        return false;
+    auto pen = CreatePen(PS_INSIDEFRAME, GetSystemMetrics(SM_CXFRAME), RGB(0, 0, 0));
+    if (pen) {
+        RECT rect;
+        GetWindowRect(msg->hwnd, &rect);
+        auto old = SelectObject(dc, pen);
+        SelectObject(dc, GetStockObject(NULL_BRUSH));
+        Rectangle(dc, 0, 0, rect.right - rect.left, rect.bottom - rect.top);
+        DeleteObject(SelectObject(dc, old));
+    }
+    ReleaseDC(msg->hwnd, dc);
+    return true;
+}
+
+auto createAdapter(QWindow *w) -> WindowAdapter*
 {
     return new WinWindowAdapter(w);
 }

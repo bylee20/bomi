@@ -156,25 +156,9 @@ WindowAdapter::WindowAdapter(QWindow *parent)
     connect(m_window, &QWindow::windowStateChanged, this, &WindowAdapter::setState);
 }
 
-auto WindowAdapter::updateFrameMargins() -> void
-{
-    const auto in = m_window->geometry();
-    const auto out = m_window->frameGeometry();
-    m_frameMargins.setLeft(in.left() - out.left());
-    m_frameMargins.setTop(in.top() - out.top());
-    m_frameMargins.setRight(out.right() - in.right());
-    m_frameMargins.setBottom(out.bottom() - in.bottom());
-}
-
 auto WindowAdapter::isFullScreen() const -> bool
 {
     return m_window->windowState() & Qt::WindowFullScreen;
-}
-
-auto WindowAdapter::containerSize() const -> QSize
-{
-//    return isFrameVisible() ? m_widget->size() : m_widget->frameSize();
-    return m_window->size();
 }
 
 auto WindowAdapter::setFullScreen(bool fs) -> void

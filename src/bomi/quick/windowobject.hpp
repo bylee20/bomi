@@ -34,12 +34,10 @@ class WindowObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged)
     Q_PROPERTY(MouseObject *mouse READ mouse CONSTANT FINAL)
-    Q_PROPERTY(int fullScreenMargin READ fullScreenMargin CONSTANT FINAL)
 public:
     auto set(MainWindow *mw) -> void;
     auto fullscreen() const -> bool;
     auto mouse() const -> MouseObject* { return getMouse(); }
-    auto fullScreenMargin() const -> int;
     static auto getMouse() -> MouseObject*;
     Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos,
                                  const QString &text);

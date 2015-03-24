@@ -96,17 +96,8 @@ MainWindow::~MainWindow() {
 
 auto MainWindow::postInitialize() -> void
 {
-    d->adapter->updateFrameMargins();
-#ifdef Q_OS_WIN
-    d->adapter->setFrameless(true);
-    if (d->as.win_frameless)
-        d->menu(u"window"_q)[u"frameless"_q]->setChecked(true);
-    else
-        d->adapter->setFrameless(false);
-#else
     if (d->as.win_frameless)
         d->menu(u"window"_q)[u"frameless"_q]->trigger();
-#endif
     d->as.restoreWindowGeometry(this);
     d->adapter->setImeEnabled(false);
     d->applyPref();
@@ -224,12 +215,6 @@ auto MainWindow::setFullScreen(bool full, bool updateLastGeometry) -> void
     if (updateLastGeometry && !d->adapter->isFullScreen())
         d->as.updateLastWindowGeometry(this);
     d->adapter->setFullScreen(full);
-#ifdef Q_OS_WIN // This should be checked in WindowStatesChange event for others
-    emit fullscreenChanged(full);
-    d->updateStaysOnTop();
-    if (!full)
-        d->as.restoreLastWindowGeometry(this);
-#endif
 }
 
 auto MainWindow::isFullScreen() const -> bool
@@ -471,4 +456,10 @@ auto MainWindow::customEvent(QEvent *event) -> void
         }
         cond->wakeAll();
     }
+}
+
+auto MainWindow::wake() -> void {
+    setVisible(true);
+    raise();
+    requestActivate();
 }

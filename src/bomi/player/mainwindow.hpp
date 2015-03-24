@@ -48,14 +48,6 @@ private:
     OpenGLLogger *m_glLogger;
     PlayEngine *m_engine;
     Data *d;
-
-
 };
-
-inline auto MainWindow::wake() -> void {
-    setVisible(true);
-    raise();
-    requestActivate();
-}
 
 #endif // MAINWINDOW_HPP

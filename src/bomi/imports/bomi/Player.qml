@@ -89,8 +89,7 @@ Item {
         }
     }
 
-    readonly property int __margin: B.App.window.fullscreen
-                                    ? B.App.window.fullScreenMargin : 0
+    readonly property int __margin: 0
 
     function updateScreenSize() {
         if (!screen)

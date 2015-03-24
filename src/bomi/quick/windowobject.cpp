@@ -54,8 +54,3 @@ auto WindowObject::getMouse() -> MouseObject*
     static MouseObject mouse;
     return &mouse;
 }
-
-auto WindowObject::fullScreenMargin() const -> int
-{
-    return m->adapter()->fullScreenMargin();
-}
