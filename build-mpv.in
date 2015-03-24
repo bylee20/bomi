@@ -27,7 +27,7 @@ fi
 
 orig="$(pwd)"
 
-cd src/mpv && $py ./bootstrap.py && $py ./waf clean; $py ./waf distclean; $py ./waf configure $args
+cd src/mpv && $py ./waf clean; $py ./waf distclean; $py ./waf configure $args && \
 $py ./waf build -j $njobs && $py ./waf install
 
 cd "$orig"
