@@ -27,15 +27,14 @@ if [ "$kern" = "Darwin" ]; then
     mkspec=macx-clang
 elif [ "$kern" = "Linux" ]; then
     os="linux"
-    mpv_args="$mpv_args --enable-alsa --enable-oss-audio" # --enable-vaapi-hwaccel  --enable-vdpau-hwaccel
-	mpv_args="$mpv_args --enable-gl-x11 --enable-x11 "
-	mpv_args="$mpv_args --enable-vdpau --enable-vdpau-gl-x11 --enable-vaapi --enable-vaapi-glx"
+    mpv_args="$mpv_args --enable-alsa --enable-oss-audio"
+    mpv_args="$mpv_args --enable-gl-x11 --enable-x11 "
     njobs=$(nproc)
 elif [ $(echo "$kern" | cut -d "-" -sf1) = "MSYS_NT" ]; then
-	os="win"
-	mpv_args="$mpv_args --enable-gl-win32 --enable-dsound --enable-wasapi --enable-dxva2-hwaccel"
-	njobs=$(nproc)
-	mkspec=win32-g++
+    os="win"
+    mpv_args="$mpv_args --enable-gl-win32 --enable-dsound --enable-wasapi --enable-dxva2-hwaccel"
+    njobs=$(nproc)
+    mkspec=win32-g++
 else
     echo "Not supported!"
     exit
@@ -258,6 +257,8 @@ pulseaudio=autodetect
 cdda=autodetect
 systemd=autodetect
 samba=autodetect
+vdpau=autodetect
+vaapi=autodetect
 
 mf() { # make_feature
     local value=$(eval echo \$$1)
@@ -275,8 +276,9 @@ $(mf pulseaudio "enable PulseAudio support" "libpulse")
 $(mf cdda "enable CDDA support" "libcdio_paranoia libcdio libcdio_cdda")
 $(mf samba "enable playing through samba" "smbclient")
 $(mf systemd "enable systemd integration" "libsystemd")
+$(mf vdpau "enable VDPAU support for harware acceleration" "vdpau")
+$(mf vaapi "enable VA-API support for harware acceleration" "libva libva-glx libva-x11")
 """
-
 
 add_mpv() {
     mpv_args="$mpv_args --$1-$2"
@@ -286,6 +288,10 @@ setup_features() {
     add_mpv $pulseaudio pulse
     add_mpv $cdda cdda
     add_mpv $samba libsmbclient
+    add_mpv $vdpau vdpau
+    add_mpv $vdpau vdpau-gl-x11
+    add_mpv $vaapi vaapi
+    add_mpv $vaapi vaapi-glx
 }
 
 options="""
@@ -410,11 +416,11 @@ check_pkg_or_exit() {
     fi
     true
 }
-	
+    
 if [ "$os" = "win" ]; then
-	export PKG_CONFIG_PATH="/mingw$win/lib/pkgconfig:${PKG_CONFIG_PATH}"
-	export PATH="/mingw$win/bin:${PATH}"
-	qtsdk="/mingw$win"
+    export PKG_CONFIG_PATH="/mingw$win/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    export PATH="/mingw$win/bin:${PATH}"
+    qtsdk="/mingw$win"
 fi
 
 if has_arg "developer"; then
@@ -422,6 +428,8 @@ if has_arg "developer"; then
         jack=enable
         pulseaudio=enable
         cdda=enable
+        vdpau=enable
+        vaapi=enable
     elif [ "$os" = "osx" ]; then
         qtsdk=/usr/local/opt/qt5
         macdeployqt=macdeployqt
@@ -443,8 +451,6 @@ check_pkg_or_exit "icu-uc"
 check_pkg_or_exit "chardet"
 if [ $os = "linux" ]; then
     check_pkg_or_exit glib "glib-2.0" "gobject-2.0"
-    check_pkg_or_exit "vaapi" "libva" "libva-glx" "libva-x11"
-    check_pkg_or_exit "vdpau"
     check_pkg_or_exit xcb "xcb" "xcb-icccm" "xcb-screensaver" "xcb-randr" "xcb-xtest" "x11"
     check_pkg_or_exit "alsa"
 fi
@@ -515,7 +521,7 @@ cxx=$(which $cxx)
 
 parse_file "src/bomi/configure.pro" cc cxx config libs cflags rootdir
 if [ "$os" = "win" ]; then
-	sed -i 's#'"$(pwd)"'#../..#g' "src/bomi/configure.pro"
+    sed -i 's#'"$(pwd)"'#../..#g' "src/bomi/configure.pro"
 fi
 
 parse_file "Makefile" os qmake lrelease PATH PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \

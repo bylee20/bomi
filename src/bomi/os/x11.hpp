@@ -5,9 +5,15 @@
 
 #ifdef Q_OS_LINUX
 
+#include "configure.hpp"
 #include "misc/log.hpp"
 #include "enum/deintmethod.hpp"
 #include <functional>
+
+#if HAVE_VAAPI
+
+#define VA_NOOP(...) __VA_ARGS__
+
 #include <va/va.h>
 #if VA_CHECK_VERSION(0, 34, 0)
 #include <va/va_compat.h>
@@ -15,12 +21,26 @@
 static constexpr VAProfile VAProfileNone = (VAProfile)-1;
 #endif
 #include <va/va_glx.h>
+
+#else
+#define VA_NOOP(...)
+#endif
+
+#if HAVE_VDPAU
+
+#define VDP_NOOP(...) __VA_ARGS__
+
 #include <vdpau/vdpau.h>
 #include <vdpau/vdpau_x11.h>
+
+#else
+#define VDP_NOOP(...)
+#endif
 
 #ifdef None
 #undef None
 #endif
+
 
 namespace OS {
 
@@ -78,11 +98,17 @@ private:
     bool m_native = false;
 };
 
+#if HAVE_VAAPI
+
 struct VaApiInfo : public HwAccX11 {
     VaApiInfo();
     auto download(mp_hwdec_ctx *ctx, const mp_image *mpi,
                   mp_image_pool *pool) -> mp_image* final;
 };
+
+#endif
+
+#if HAVE_VDPAU
 
 struct VdpauInfo : public HwAccX11 {
     VdpauInfo();
@@ -99,6 +125,8 @@ private:
         return static_cast<VdpStatus>(status());
     }
 };
+
+#endif
 
 }
 

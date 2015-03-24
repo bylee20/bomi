@@ -24,8 +24,14 @@
 #include <xcb/xtest.h>
 
 extern "C" {
+#if HAVE_VAAPI
 #include <video/vaapi.h>
+#endif
+#if HAVE_VDPAU
 #include <video/vdpau.h>
+#endif
+#include <video/img_format.h>
+#include <video/mp_image.h>
 #include <video/mp_image_pool.h>
 }
 
@@ -167,6 +173,7 @@ X11::X11()
         xcb_flush(connection);
     });
 
+#if HAVE_VAAPI && HAVE_VDPAU
     api = new VaApiInfo;
     if (!api->isNative()) {
         delete api;
@@ -174,6 +181,11 @@ X11::X11()
         if (!api->isNative())
             _Delete(api);
     }
+#elif HAVE_VAAPI
+    api = new VaApiInfo;
+#elif HAVE_VDPAU
+    api = new VdpauInfo;
+#endif
     if (api && !api->isOk()) {
         _Info("Failed to initalize hardware acceration API.");
         _Delete(api);
@@ -565,28 +577,39 @@ auto usingMemory() -> double
 
 /******************************************************************************/
 
+#if HAVE_VAAPI && HAVE_VDPAU
+#define HA_CODEC(id, va, vdp) { CodecId::id, va, vdp }
+#elif HAVE_VAAPI
+#define HA_CODEC(id, va, vdp) { CodecId::id, va }
+#elif HAVE_VDPAU
+#define HA_CODEC(id, va, vdp) { CodecId::id, vdp }
+#endif
 
 struct HwAccCodec {
     CodecId id;
-    QVector<VAProfile> vaapiProfiles;
-    QVector<VdpDecoderProfile> vdpauProfiles;
+    VA_NOOP(QVector<VAProfile> vaapiProfiles);
+    VDP_NOOP(QVector<VdpDecoderProfile> vdpauProfiles);
 };
 
+#if HAVE_VAAPI || HAVE_VDPAU
+
 static const HwAccCodec s_codecs[] = {
-    { CodecId::Mpeg1, {}, {VDP_DECODER_PROFILE_MPEG1}},
-    { CodecId::Mpeg2, {VAProfileMPEG2Simple, VAProfileMPEG2Main},
-      {VDP_DECODER_PROFILE_MPEG2_SIMPLE, VDP_DECODER_PROFILE_MPEG2_MAIN} },
-    { CodecId::Mpeg4,
-      {VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Main, VAProfileMPEG4Simple},
-      {VDP_DECODER_PROFILE_MPEG4_PART2_ASP, VDP_DECODER_PROFILE_MPEG4_PART2_SP} },
-    { CodecId::H264,
-      {VAProfileH264Baseline, VAProfileH264ConstrainedBaseline, VAProfileH264High, VAProfileH264Main},
-      {VDP_DECODER_PROFILE_H264_BASELINE, VDP_DECODER_PROFILE_H264_MAIN, VDP_DECODER_PROFILE_H264_HIGH} },
-    { CodecId::Vc1, {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple}, // same as wmv3
-      {VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE} },
-    { CodecId::Wmv3, {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple},
-      {VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE} }
+    HA_CODEC(Mpeg1, VA_NOOP({}), VDP_NOOP({VDP_DECODER_PROFILE_MPEG1})),
+    HA_CODEC(Mpeg2, VA_NOOP({VAProfileMPEG2Simple, VAProfileMPEG2Main}),
+                    VDP_NOOP({VDP_DECODER_PROFILE_MPEG2_SIMPLE, VDP_DECODER_PROFILE_MPEG2_MAIN}) ),
+    HA_CODEC(Mpeg4, VA_NOOP({VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Main, VAProfileMPEG4Simple}),
+                    VDP_NOOP({VDP_DECODER_PROFILE_MPEG4_PART2_ASP, VDP_DECODER_PROFILE_MPEG4_PART2_SP}) ),
+    HA_CODEC(H264,  VA_NOOP({VAProfileH264Baseline, VAProfileH264ConstrainedBaseline, VAProfileH264High, VAProfileH264Main}),
+                    VDP_NOOP({VDP_DECODER_PROFILE_H264_BASELINE, VDP_DECODER_PROFILE_H264_MAIN, VDP_DECODER_PROFILE_H264_HIGH}) ),
+    HA_CODEC(Vc1,   VA_NOOP({VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple}), // same as wmv3
+                    VDP_NOOP({VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE}) ),
+    HA_CODEC(Wmv3,  VA_NOOP({VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple}),
+                    VDP_NOOP({VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE}) )
 };
+
+#endif
+
+#if HAVE_VAAPI
 
 VaApiInfo::VaApiInfo(): HwAccX11(VaApiGLX)
 {
@@ -604,9 +627,12 @@ VaApiInfo::VaApiInfo(): HwAccX11(VaApiGLX)
         return;
     do {
         const auto vendor = QString::fromLatin1(vaQueryVendorString(display));
-        if (vendor.contains("VDPAU"_a))
+        if (!vendor.contains("VDPAU"_a))
+            setNative(true);
+#if HAVE_VDPAU
+        if (!isNative())
             break;
-        setNative(true);
+#endif
         auto size = vaMaxNumProfiles(display);
         QVector<VAProfile> profiles(size);
         if (!check(vaQueryConfigProfiles(display, profiles.data(), &size),
@@ -651,8 +677,11 @@ auto VaApiInfo::download(mp_hwdec_ctx *ctx, const mp_image *mpi,
     return img;
 }
 
+#endif
 
 /******************************************************************************/
+
+#if HAVE_VDPAU
 
 VdpauInfo::VdpauInfo()
     : HwAccX11(VdpauX11)
@@ -688,9 +717,12 @@ VdpauInfo::VdpauInfo()
         char const *info = nullptr;
         if (!check(getInformationString(&info), "Cannot get VDPAU information."))
             break;
-        if (QString::fromLatin1(info).contains("VAAPI"_a))
+        if (!QString::fromLatin1(info).contains("VAAPI"_a))
+            setNative(true);
+#if HAVE_VAAPI
+        if (!isNative())
             break;
-        setNative(true);
+#endif
         auto supports = [=] (VdpDecoderProfile id) -> bool
         {
             VdpBool supported = VDP_FALSE;
@@ -730,6 +762,8 @@ auto VdpauInfo::download(mp_hwdec_ctx *ctx, const mp_image *mpi,
     talloc_free(img);
     return nullptr;
 }
+
+#endif
 
 } // namespace OS
 
