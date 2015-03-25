@@ -586,6 +586,10 @@ auto MainWindow::Data::applyPref() -> void
     sub(u"sync"_q).s()->setValue(p.steps().sub_sync_sec);
     sub(u"scale"_q).s()->setValue(p.steps().sub_scale_pct);
 
+    auto &win = menu(u"window"_q);
+    for (int i = 0; i < p.window_sizes().size(); ++i)
+        p.window_sizes()[i].fillAction(win["size"_a % _N(i)]);
+
     theme.set(p.osd_theme());
     theme.set(p.playlist_theme());
     theme.set(p.history_theme());
@@ -654,21 +658,14 @@ auto MainWindow::Data::updateStaysOnTop() -> void
     adapter->setAlwaysOnTop(onTop);
 }
 
-auto MainWindow::Data::setVideoSize(double rate) -> void
+auto MainWindow::Data::videoSize(const WindowSize &hint) -> QSize
 {
-    if (rate < 0) {
-        p->setFullScreen(!p->isFullScreen());
-    } else {
-        if (p->isFullScreen())
-            p->setFullScreen(false);
-        if (p->windowState() == Qt::WindowMaximized)
-            p->showNormal();
-        const QSizeF video = e.videoSizeHint();
-        auto area = [] (const QSizeF &s) { return s.width()*s.height(); };
-        if (rate == 0.0)
-            rate = area(screenSize())*0.15/area(video);
-        setVideoSize((video*qSqrt(rate)).toSize());
-    }
+    auto area = [] (const QSizeF &s) { return s.width()*s.height(); };
+    double r = hint.rate;
+    const QSizeF video = e.videoSizeHint();
+    if (hint.display_based)
+        r = area(screenSize()) * hint.rate / area(video);
+    return (video * qSqrt(r)).toSize();
 }
 
 auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void

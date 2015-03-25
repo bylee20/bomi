@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>10</number>
+        <number>20</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2417,6 +2417,13 @@ Regular expression is supported.</string>
            </column>
           </widget>
          </item>
+         <item>
+          <widget class="WindowSizeWidget" name="window_sizes">
+           <property name="title">
+            <string>Adjust Window Size</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
        <widget class="QWidget" name="network">
@@ -2710,6 +2717,12 @@ You don't need to specify to this if geust is allowed.</string>
    <class>JrProtocolComboBox</class>
    <extends>QComboBox</extends>
    <header>widget/enumcombobox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>WindowSizeWidget</class>
+   <extends>QGroupBox</extends>
+   <header>misc/windowsize.hpp</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

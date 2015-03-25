@@ -144,7 +144,8 @@ struct MainWindow::Data {
     auto restoreState() -> void;
     auto applyPref() -> void;
     auto updateStaysOnTop() -> void;
-    auto setVideoSize(double rate) -> void;
+    auto videoSize(const WindowSize &hint) -> QSize;
+    auto setVideoSize(const QSize &video) -> void;
     auto updateRecentActions(const QList<Mrl> &list) -> void;
     auto updateMrl(const Mrl &mrl) -> void;
     auto updateTitle() -> void;
@@ -164,7 +165,6 @@ struct MainWindow::Data {
     auto plugEngine() -> void;
     auto initItems() -> void;
     auto plugMenu() -> void;
-    auto setVideoSize(const QSize &video) -> void;
     auto load(const Mrl &mrl, bool play = true, bool tryResume = true) -> void;
     auto reloadSkin() -> void;
     auto trigger(QAction *action) -> void;

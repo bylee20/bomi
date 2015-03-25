@@ -171,6 +171,8 @@ static auto convs() -> const QHash<int, JVConvert>&
         INSERT(EncodingInfo);
         INSERT(Steps);
         INSERT(IntrplParamSetMap);
+        INSERT(WindowSize);
+        INSERT(QList<WindowSize>);
 
         for (auto type : _EnumMetaTypeIds()) {
             auto &ec = c[type];

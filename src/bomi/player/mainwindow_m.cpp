@@ -734,8 +734,15 @@ auto MainWindow::Data::plugMenu() -> void
     connect(&as, &AppState::winStaysOnTopChanged, p, [=] () { updateStaysOnTop(); });
     connect(win[u"frameless"_q], &QAction::triggered, p, [=] (bool on)
         { adapter->setFrameless(on); as.win_frameless = on; });
-    connect(win.g(u"size"_q), &ActionGroup::triggered,
-            p, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
+    connect(win.g(u"size"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
+        if (p->isFullScreen())
+            p->setFullScreen(false);
+        if (p->windowState() == Qt::WindowMaximized)
+            p->showNormal();
+        setVideoSize(videoSize(a->data().value<WindowSize>()));
+    });
+    connect(win[u"full"_q], &QAction::triggered, p,
+            [=] () { p->setFullScreen(!p->isFullScreen()); });
     connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);
     connect(win[u"maximize"_q], &QAction::triggered, p, &MainWindow::showMaximized);
     connect(win[u"close"_q], &QAction::triggered, p, [=] () { menu.hide(); p->close(); });

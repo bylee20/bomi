@@ -73,8 +73,7 @@ auto ShortcutMap::preset(Preset p) -> ShortcutMap
         keys[u"play/repeat/faster"_q] << Qt::SHIFT + Qt::CTRL + Qt::Key_Right;
         keys[u"play/speed/slower"_q] << Qt::SHIFT + Qt::CTRL + Qt::Key_Left;
         keys[u"window/full"_q] << Qt::META + Qt::CTRL + Qt::Key_F;
-        keys[u"window/100%"_q] << Qt::CTRL + Qt::Key_1;
-        keys[u"window/200%"_q] << Qt::CTRL + Qt::Key_2;
+        keys[u"window/size4"_q] << Qt::CTRL + Qt::Key_0;
         keys[u"audio/track/next"_q] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_S;
         keys[u"audio/sync-reset"_q] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Backslash;
         keys[u"audio/sync-add"_q] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Right;
@@ -192,11 +191,11 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"tool/playinfo"_q] << Qt::Key_Tab;
        map[u"tool/log"_q] << Qt::ALT + Qt::Key_L;
 
-       map[u"window/proper"_q] << Qt::Key_QuoteLeft;
-       map[u"window/100%"_q] << Qt::Key_1;
-       map[u"window/200%"_q] << Qt::Key_2;
-       map[u"window/300%"_q] << Qt::Key_3;
-       map[u"window/400%"_q] << Qt::Key_4;
+       map[u"window/size0"_q] << Qt::Key_QuoteLeft;
+       map[u"window/size1"_q] << Qt::Key_1;
+       map[u"window/size2"_q] << Qt::Key_2;
+       map[u"window/size3"_q] << Qt::Key_3;
+       map[u"window/size4"_q] << Qt::Key_0;
        map[u"window/full"_q] << Qt::Key_Enter << Qt::Key_Return << Qt::Key_F;
        map[u"window/close"_q] << Qt::CTRL + Qt::Key_W;
 

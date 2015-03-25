@@ -1,6 +1,7 @@
 #include "rootmenu.hpp"
 #include "shortcutmap.hpp"
 #include "video/videocolor.hpp"
+#include "misc/windowsize.hpp"
 #include "misc/log.hpp"
 #include "misc/stepactionpair.hpp"
 #include "misc/encodinginfo.hpp"
@@ -602,12 +603,10 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->actionToGroup(u"proper"_q, QT_TR_NOOP("Proper Size"), false, u"size"_q)->setData(0.0);
-        d->actionToGroup(u"100%"_q, "100%", false, u"size"_q)->setData(1.0);
-        d->actionToGroup(u"200%"_q, "200%", false, u"size"_q)->setData(2.0);
-        d->actionToGroup(u"300%"_q, "300%", false, u"size"_q)->setData(3.0);
-        d->actionToGroup(u"400%"_q, "400%", false, u"size"_q)->setData(4.0);
-        d->actionToGroup(u"full"_q, QT_TR_NOOP("Fullscreen"), false, u"size"_q)->setData(-1.0);
+        const auto sizes = WindowSize::defaults();
+        for (int i = 0; i < sizes.size(); ++i)
+            sizes[i].fillAction(d->actionToGroup("size"_a % _N(i), "", false, u"size"_q));
+        d->action(u"full"_q, QT_TR_NOOP("Fullscreen"));
 
         d->separator();
 

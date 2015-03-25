@@ -29,6 +29,7 @@
 #include "player/shortcutmap.hpp"
 #include "enum/jrconnection.hpp"
 #include "enum/jrprotocol.hpp"
+#include "misc/windowsize.hpp"
 
 using Shortcuts = QMap<QString, QList<QKeySequence>>; // keep for backward compat
 
@@ -123,6 +124,7 @@ private:
     P0(bool, invert_wheel, false)
 
     P0(Steps, steps, {})
+    P0(QList<WindowSize>, window_sizes, WindowSize::defaults())
 
     P0(bool, enable_hwaccel, false)
     P0(QList<CodecId>, hwaccel_codecs, OS::hwAcc()->fullCodecList())
