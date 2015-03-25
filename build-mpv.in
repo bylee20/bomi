@@ -4,7 +4,7 @@ args="--prefix=../../build --disable-manpage-build --enable-libmpv-static --disa
   --disable-vf-dlopen-filters --disable-test --disable-cplayer --disable-rubberband \
   --enable-iconv --disable-termios --disable-shm --disable-libguess \
   --disable-encoding --disable-joystick --disable-lirc --enable-libbluray --enable-dvdread --enable-dvdnav \
-  --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
+  --disable-enca --disable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-libavdevice --disable-libavresample --disable-vapoursynth --disable-vapoursynth-lazy \
   --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal \
   --disable-cocoa --disable-wayland --disable-xss --disable-xext --disable-xv --disable-xinerama --disable-xrandr \
