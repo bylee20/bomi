@@ -13,7 +13,7 @@ public:
     AudioFrameChunk() { }
     AudioFrameChunk(const AudioBufferFormat &format, const AudioFilter *filter, int frames)
         : m_format(format), m_filter(filter), m_frames(frames) { }
-    auto push(AudioBufferPtr &buffer) -> AudioBufferPtr
+    auto push(AudioBufferPtr buffer) -> AudioBufferPtr
     {
         Q_ASSERT(m_filter);
         if (isFull() || buffer->isEmpty())
@@ -211,14 +211,12 @@ auto AudioAnalyzer::push(AudioBufferPtr &src) -> void
 {
     Q_ASSERT(!d->filling.isFull());
     AudioBufferPtr left = std::move(src);
-    for (;;) {
+    while (left && !left->isEmpty()) {
         left = d->filling.push(left);
         if (d->filling.isFull()) {
             d->inputs.push_back(std::move(d->filling));
             d->filling = d->chunk();
         }
-        if (!left)
-            break;
     }
 }
 
