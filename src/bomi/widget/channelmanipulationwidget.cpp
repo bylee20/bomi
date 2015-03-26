@@ -163,8 +163,11 @@ auto ChannelManipulationWidget::setCurrentLayouts(ChannelLayout src,
 
 auto ChannelManipulationWidget::setMap(const ChannelLayoutMap &map) -> void
 {
-    d->map = map;
-    d->makeTable();
+    d->fillMap();
+    if (_Change(d->map, map)) {
+        d->makeTable();
+        emit mapChanged();
+    }
 }
 
 auto ChannelManipulationWidget::map() const -> ChannelLayoutMap

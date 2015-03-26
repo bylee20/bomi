@@ -27,6 +27,8 @@ public:
 private:
     auto get(ChannelLayout src, ChannelLayout dest) -> ChannelManipulation&
         { return m_map[src][dest]; }
+    auto get(ChannelLayout src, ChannelLayout dest) const -> ChannelManipulation
+        { return m_map[src][dest]; }
     QMap<ChannelLayout, QMap<ChannelLayout, ChannelManipulation>> m_map;
     friend class ChannelManipulationWidget;
 };
