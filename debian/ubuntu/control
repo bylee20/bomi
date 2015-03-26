@@ -5,7 +5,7 @@ Maintainer: Byoung-young Lee (xylosper) <darklin20@gmail.com>
 Standards-Version: 3.9.5
 Build-Depends: debhelper (>= 7), pkg-config
  , qt5-qmake, qttools5-dev-tools, qtbase5-dev (>= 5.2.0), qtdeclarative5-dev
- , libqt5x11extras5-dev, python, libicu-dev, libbluray-dev
+ , libqt5x11extras5-dev, libqt5svg5-dev, python, libbluray-dev
  , libass-bomi, libenca-dev, libfontconfig1-dev, libfreetype6-dev, libfribidi-dev, libharfbuzz-dev
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
@@ -18,7 +18,7 @@ Build-Depends: debhelper (>= 7), pkg-config
 Package: bomi
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
- , libqt5sql5-sqlite@deps@
+ , libqt5svg5, libqt5sql5-sqlite@deps@
 Recommends: youtube-dl
 Conflicts: cmplayer
 Description: bomi - a multimedia player

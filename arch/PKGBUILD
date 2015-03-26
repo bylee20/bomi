@@ -2,7 +2,7 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=bomi
-pkgver=0.9.3
+pkgver=0.9.4
 pkgrel=1
 pkgdesc="Powerful and easy-to-use GUI multimedia player based on mpv"
 arch=('i686' 'x86_64')
@@ -10,7 +10,7 @@ url="http://$pkgname-player.github.io"
 license=('GPL')
 provides=('cmplayer')
 install=$pkgname.install
-depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
+depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'qt5-svg'
          'libdvdread' 'libdvdnav' 'libcdio-paranoia' 'libcdio' 'smbclient'
          'alsa-lib' 'libpulse' 'jack' 'libchardet' 'libbluray'
          'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
@@ -24,8 +24,7 @@ md5sums=('30828a5f3726a59ee240f0fe88846879')
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
-  ./configure --prefix=/usr --enable-jack --enable-cdda --enable-pulseaudio
-  sed -i 's/--disable-cplayer/--disable-cplayer --disable-rubberband/g' build-mpv
+  ./configure --prefix=/usr
   make
 }
 

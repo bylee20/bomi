@@ -1,3 +1,37 @@
+0.9.4
+
+  * New: support millisecond precision for timeout to hide cursor (#275)
+  * New: make windows size menus configurable
+  * New: configure options --disable-vaapi, --disable-vdpau (#273)
+  * New: improve audio volume normalizer
+  * New: support some non-standard m3u playlist
+  * New: restore previous window size for initial fullscreen state (#261)
+  * New: selections for methods to disable screensaver
+  * New: split overriding choices for ASS style into text style/position/scale (#256)
+  * Mod: drop mpg123 decoder
+  * Mod: drop ICU dependency
+  * Fix: Ok/Apply button wasn't enabled when channel manipulation changed into default
+  * Fix: some controls in 'Mouse cursor' group was always disabled (#275)
+  * Fix: reduce file size of pref.json (#275)
+  * Fix: no video with intel GPU on windows (#266)
+  * Fix: don't hide floating controls while mouse hovering
+  * Fix: tempo scaler was always turned on (#269)
+  * Fix: media name in extended m3u wasn't displayed
+  * Fix: wrong track name display in on-screen message (#263)
+  * Fix: display track number when track title and language are unavailable
+  * Fix: subtitle downloader always indicated 50% after downloading is done (#262)
+  * Fix: remove duplicated encodings
+  * Fix: use SetThreadExecutionState() to disable screensaver on windows (#253)
+  * Fix: determine playlist from URL by mime type (#258)
+  * Fix: volume slider of GaN skin didn't show the volume level (#260)
+  * Fix: 'Select Next' for sub track didn't work properly (#254)
+  * Fix: wrong video coordinate on toggling 'Window > Remove Frame'
+  * Fix: remove margin around internal subtitle
+  * Fix: ensure internal widget fit to window on initialization
+  * Fix: save snapshot in separated thread to prevent interface frozen
+  * Fix: snapshot without subtitle didn't work (#251)
+  * Fix: set LC_MESSAGES=C instead of LANG to test qmake/lrelease version
+
 0.9.3
 
   * New: display used encoding for subtitle file track in playinfo
