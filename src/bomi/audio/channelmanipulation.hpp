@@ -24,8 +24,10 @@ public:
         { return !m_mix[dest].isEmpty(); }
     auto toString() const -> QString;
     static auto fromString(const QString &text) -> ChannelManipulation;
-    auto toJson() const -> QJsonArray;
-    auto setFromJson(const QJsonArray &json) -> bool;
+    auto toJsonObject() const -> QJsonObject;
+    auto toJsonArray() const -> QJsonArray;
+    auto setFromJsonObject(const QJsonObject &json) -> bool;
+    auto setFromJsonArray(const QJsonArray &json) -> bool;
 private:
     auto set(mp_speaker_id dest, const SourceArray &src) -> void
         { m_mix[dest] = src; }

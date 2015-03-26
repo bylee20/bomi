@@ -2,7 +2,8 @@
 #include "channellayoutmap.hpp"
 #include "misc/json.hpp"
 
-static auto nameToId(const QString &name) -> mp_speaker_id {
+static auto nameToId(const QString &name) -> mp_speaker_id
+{
     const int size = ChannelLayoutMap::channelNames().size();
     for (int i=0; i<size; ++i) {
         if (name == _L(ChannelLayoutMap::channelNames()[i].abbr))
@@ -11,11 +12,17 @@ static auto nameToId(const QString &name) -> mp_speaker_id {
     return MP_SPEAKER_ID_COUNT;
 }
 
+static auto idToName(int id) -> QString
+{
+    if (_InRange<int>(MP_SPEAKER_ID_FL, id, MP_SPEAKER_ID_SR))
+        return _L(ChannelLayoutMap::channelNames()[id].abbr);
+    return QString();
+}
+
 template<>
 struct JsonIO<mp_speaker_id> {
     SCA qt_type = QJsonValue::String;
-    auto toJson(mp_speaker_id id) const noexcept -> QJsonValue
-    { return _L(ChannelLayoutMap::channelNames()[id].abbr); }
+    auto toJson(mp_speaker_id id) const -> QJsonValue { return idToName(id); }
     auto fromJson(mp_speaker_id &id, const QJsonValue &json) const -> bool
     {
         const auto speaker = nameToId(json.toString());
@@ -26,18 +33,49 @@ struct JsonIO<mp_speaker_id> {
     }
 };
 
-auto ChannelManipulation::toJson() const -> QJsonArray
+auto ChannelManipulation::toJsonArray() const -> QJsonArray
 {
     auto obj = json_io(&m_mix)->toJson(m_mix);
     return obj;
 }
 
-auto ChannelManipulation::setFromJson(const QJsonArray &json) -> bool
+auto ChannelManipulation::toJsonObject() const -> QJsonObject
 {
+    QJsonObject json;
+    auto jio = json_io<SourceArray>();
+    for (int i = 0; i < m_mix.size(); ++i) {
+        const auto key = idToName(i);
+        if (!key.isEmpty())
+            json.insert(idToName(i), jio->toJson(m_mix[i]));
+    }
+    return json;
+}
+
+auto ChannelManipulation::setFromJsonArray(const QJsonArray &json) -> bool
+{
+    if (json.size() != m_mix.size())
+        return false;
     ChannelManipulation man;
     if (!json_io(&m_mix)->fromJson(man.m_mix, json))
         return false;
     m_mix = man.m_mix;
+    return true;
+}
+
+auto ChannelManipulation::setFromJsonObject(const QJsonObject &json) -> bool
+{
+    if (json.size() != m_mix.size())
+        return false;
+    ChannelManipulation man; auto &mix = man.m_mix;
+    auto jio = json_io<SourceArray>();
+    for (int i = 0; i < mix.size(); ++i) {
+        auto it = json.find(idToName(i));
+        if (it == json.end())
+            return false;
+        if (!jio->fromJson(mix[i], it.value()))
+            return false;
+    }
+    m_mix= mix;
     return true;
 }
 

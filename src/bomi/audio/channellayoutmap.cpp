@@ -46,6 +46,101 @@ static auto speakersInLayout(ChannelLayout layout) -> QVector<SpeakerId>
     return list;
 }
 
+ChannelLayoutMap::ChannelLayoutMap()
+{
+    static const auto map = [] () {
+        QMap<ChannelLayout, QMap<ChannelLayout, ChannelManipulation>> map;
+        auto &items = ChannelLayoutInfo::items();
+        auto _mp = [] (SpeakerId speaker) { return to_mp_speaker_id(speaker); };
+
+        for (auto &srcItem : items) {
+            const auto srcLayout = srcItem.value;
+            const auto srcSpeakers = speakersInLayout(srcLayout);
+            for (auto &dstItem : items) {
+                const auto dstLayout = dstItem.value;
+                auto &mix = map[srcLayout][dstLayout].m_mix;
+                for (auto srcSpeaker : srcSpeakers) {
+                    const auto mps = to_mp_speaker_id(srcSpeaker);
+                    if (srcSpeaker & dstLayout) {
+                        mix[mps].push_back(mps);
+                        continue;
+                    }
+                    if (dstLayout == ChannelLayout::Mono) {
+                        mix[MP_SPEAKER_ID_FC] << mps;
+                        continue;
+                    }
+
+                    auto testAndSet = [&] (SpeakerId id) {
+                        if (dstLayout & id) {
+                            mix[_mp(id)].push_back(mps);
+                            return true;
+                        } else
+                            return false;
+                    };
+                    auto testAndSet2 = [&] (SpeakerId left, SpeakerId right) {
+                        if (dstLayout & (left | right)) {
+                            mix[_mp(left)].push_back(mps);
+                            mix[_mp(right)].push_back(mps);
+                            return true;
+                        } else
+                            return false;
+                    };
+                    auto setLeft = [&] () { mix[MP_SPEAKER_ID_FL].push_back(mps); };
+                    auto setRight = [&] () { mix[MP_SPEAKER_ID_FR].append(mps); };
+                    auto setBoth = [&] { setLeft(); setRight(); };
+                    switch (srcSpeaker) {
+                    case SpeakerId::FrontLeft:
+                    case SpeakerId::FrontRight:
+                        Q_ASSERT(false);
+                        break;
+                    case SpeakerId::LowFrequency:
+                        if (!testAndSet(SpeakerId::FrontCenter)
+                                || !testAndSet(SpeakerId::FrontLeftCenter))
+                            setLeft();
+                        break;
+                    case SpeakerId::FrontCenter:
+                        if (!testAndSet2(SpeakerId::FrontLeftCenter,
+                                         SpeakerId::FrontRightCenter))
+                            setBoth();
+                        break;
+                    case SpeakerId::BackLeft:
+                        if (testAndSet(SpeakerId::BackCenter)
+                                || testAndSet(SpeakerId::SideLeft))
+                            break;
+                    case SpeakerId::FrontLeftCenter:
+                        setLeft();
+                        break;
+                    case SpeakerId::BackRight:
+                        if (testAndSet(SpeakerId::BackCenter)
+                                || testAndSet(SpeakerId::SideRight))
+                            break;
+                    case SpeakerId::FrontRightCenter:
+                        setRight();
+                        break;
+                    case SpeakerId::SideRight:
+                        if (!testAndSet(SpeakerId::BackRight))
+                            setRight();
+                        break;
+                    case SpeakerId::SideLeft:
+                        if (!testAndSet(SpeakerId::BackLeft))
+                            setLeft();
+                        break;
+                    case SpeakerId::BackCenter:
+                        if (!testAndSet2(SpeakerId::BackLeft,
+                                         SpeakerId::BackRight)
+                                && !testAndSet2(SpeakerId::SideLeft,
+                                                SpeakerId::SideRight))
+                            setBoth();
+                        break;
+                    }
+                }
+            }
+        }
+        return map;
+    }();
+    m_map = map;
+}
+
 auto ChannelLayoutMap::isIdentity(const mp_chmap &src, const mp_chmap &dest) const -> bool
 {
     const auto ls = toLayout(src);
@@ -68,94 +163,7 @@ auto ChannelLayoutMap::isIdentity(const mp_chmap &src, const mp_chmap &dest) con
 
 auto ChannelLayoutMap::default_() -> ChannelLayoutMap
 {
-    ChannelLayoutMap map;
-    auto &items = ChannelLayoutInfo::items();
-    auto _mp = [] (SpeakerId speaker) { return to_mp_speaker_id(speaker); };
-
-    for (auto &srcItem : items) {
-        const auto srcLayout = srcItem.value;
-        const auto srcSpeakers = speakersInLayout(srcLayout);
-        for (auto &dstItem : items) {
-            const auto dstLayout = dstItem.value;
-            auto &mix = map.get(srcLayout, dstLayout).m_mix;
-            for (auto srcSpeaker : srcSpeakers) {
-                const auto mps = to_mp_speaker_id(srcSpeaker);
-                if (srcSpeaker & dstLayout) {
-                    mix[mps].push_back(mps);
-                    continue;
-                }
-                if (dstLayout == ChannelLayout::Mono) {
-                    mix[MP_SPEAKER_ID_FC] << mps;
-                    continue;
-                }
-
-                auto testAndSet = [&] (SpeakerId id) {
-                    if (dstLayout & id) {
-                        mix[_mp(id)].push_back(mps);
-                        return true;
-                    } else
-                        return false;
-                };
-                auto testAndSet2 = [&] (SpeakerId left, SpeakerId right) {
-                    if (dstLayout & (left | right)) {
-                        mix[_mp(left)].push_back(mps);
-                        mix[_mp(right)].push_back(mps);
-                        return true;
-                    } else
-                        return false;
-                };
-                auto setLeft = [&] () { mix[MP_SPEAKER_ID_FL].push_back(mps); };
-                auto setRight = [&] () { mix[MP_SPEAKER_ID_FR].append(mps); };
-                auto setBoth = [&] { setLeft(); setRight(); };
-                switch (srcSpeaker) {
-                case SpeakerId::FrontLeft:
-                case SpeakerId::FrontRight:
-                    Q_ASSERT(false);
-                    break;
-                case SpeakerId::LowFrequency:
-                    if (!testAndSet(SpeakerId::FrontCenter)
-                            || !testAndSet(SpeakerId::FrontLeftCenter))
-                        setLeft();
-                    break;
-                case SpeakerId::FrontCenter:
-                    if (!testAndSet2(SpeakerId::FrontLeftCenter,
-                                     SpeakerId::FrontRightCenter))
-                        setBoth();
-                    break;
-                case SpeakerId::BackLeft:
-                    if (testAndSet(SpeakerId::BackCenter)
-                            || testAndSet(SpeakerId::SideLeft))
-                        break;
-                case SpeakerId::FrontLeftCenter:
-                    setLeft();
-                    break;
-                case SpeakerId::BackRight:
-                    if (testAndSet(SpeakerId::BackCenter)
-                            || testAndSet(SpeakerId::SideRight))
-                        break;
-                case SpeakerId::FrontRightCenter:
-                    setRight();
-                    break;
-                case SpeakerId::SideRight:
-                    if (!testAndSet(SpeakerId::BackRight))
-                        setRight();
-                    break;
-                case SpeakerId::SideLeft:
-                    if (!testAndSet(SpeakerId::BackLeft))
-                        setLeft();
-                    break;
-                case SpeakerId::BackCenter:
-                    if (!testAndSet2(SpeakerId::BackLeft,
-                                     SpeakerId::BackRight)
-                            && !testAndSet2(SpeakerId::SideLeft,
-                                            SpeakerId::SideRight))
-                        setBoth();
-                    break;
-                }
-            }
-        }
-    }
-    return map;
+    return ChannelLayoutMap();
 }
 
 auto ChannelLayoutMap::toLayout(const mp_chmap &chmap) -> ChannelLayout
@@ -220,10 +228,34 @@ auto ChannelLayoutMap::channelNames() -> const QVector<ChannelName>&
 
 auto ChannelLayoutMap::toJson() const -> QJsonObject
 {
-    return json_io(&m_map)->toJson(m_map);
+    QJsonObject json;
+    for (auto it = m_map.begin(); it != m_map.end(); ++it) {
+        QJsonObject obj;
+        for (auto iit = it->begin(); iit != it->end(); ++iit)
+            obj.insert(_EnumName(iit.key()), _JsonToString(iit->toJsonObject()));
+        json.insert(_EnumName(it.key()), obj);
+    }
+    return json;
 }
 
 auto ChannelLayoutMap::setFromJson(const QJsonObject &json) -> bool
 {
-    return json_io(&m_map)->fromJson(m_map, json);
+    ChannelLayoutMap other; auto &map = other.m_map;
+    bool ret = true;
+    for (auto it = map.begin(); it != map.end(); ++it) {
+        auto obj = json.value(_EnumName(it.key())).toObject();
+        if (obj.isEmpty())
+            continue;
+        for (auto iit = it->begin(); iit != it->end(); ++iit) {
+            auto value = obj.value(_EnumName(iit.key()));
+            if (value.isArray())
+                ret &= iit->setFromJsonArray(value.toArray());
+            else if (value.isString())
+                ret &= iit->setFromJsonObject(_JsonFromString(value.toString()));
+            else
+                ret = false;
+        }
+    }
+    m_map = other.m_map;
+    return ret;
 }
