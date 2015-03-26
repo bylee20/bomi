@@ -1833,12 +1833,12 @@ Cannot open the media.</source>
     <message>
         <location filename="../player/mrlstate.hpp" line="124"/>
         <source>Override ASS Position</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS 위치 덮어쓰기</translation>
     </message>
     <message>
         <location filename="../player/mrlstate.hpp" line="125"/>
         <source>Override ASS Scale</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS 스케일 덮어쓰기</translation>
     </message>
     <message>
         <source>Video Motion Interpolation</source>
@@ -2949,7 +2949,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
     <message>
         <location filename="../ui/prefdialog.ui" line="1654"/>
         <source>Resynchronize audio/video whenever filter toggled</source>
-        <translation type="unfinished"></translation>
+        <translation>필터를 전환할 때마다 오디오/비디오 재동기화하기</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1966"/>
@@ -3004,7 +3004,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
     <message>
         <location filename="../ui/prefdialog.ui" line="2426"/>
         <source>Adjust Window Size</source>
-        <translation type="unfinished"></translation>
+        <translation>윈도우 크기 조절</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2482"/>
@@ -4378,7 +4378,7 @@ Regular expression is supported.</source>
     <message>
         <location filename="../player/rootmenu.cpp" line="528"/>
         <source>Override ASS</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS 덮어쓰기</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="530"/>
@@ -4389,7 +4389,7 @@ Regular expression is supported.</source>
     <message>
         <location filename="../player/rootmenu.cpp" line="531"/>
         <source>Text Style</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 스타일</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="547"/>
@@ -4712,17 +4712,17 @@ Please confirm authentication informations and try again.</source>
     <message>
         <location filename="../player/streamtrack.cpp" line="8"/>
         <source>Video Track %1</source>
-        <translation type="unfinished"></translation>
+        <translation>비디오 트랙: %1</translation>
     </message>
     <message>
         <location filename="../player/streamtrack.cpp" line="9"/>
         <source>Audio Track %1</source>
-        <translation type="unfinished"></translation>
+        <translation>오디오 트랙: %1</translation>
     </message>
     <message>
         <location filename="../player/streamtrack.cpp" line="11"/>
         <source>Subtitle Track %1</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 트랙: %1</translation>
     </message>
 </context>
 <context>
@@ -5094,12 +5094,12 @@ h:m:s
     <message>
         <location filename="../misc/windowsize.cpp" line="30"/>
         <source>Display Size</source>
-        <translation type="unfinished"></translation>
+        <translation>디스플레이 크기</translation>
     </message>
     <message>
         <location filename="../misc/windowsize.cpp" line="31"/>
         <source>Video Size</source>
-        <translation type="unfinished"></translation>
+        <translation>비디오 크기</translation>
     </message>
 </context>
 <context>
@@ -5107,7 +5107,7 @@ h:m:s
     <message>
         <location filename="../misc/windowsize.cpp" line="75"/>
         <source>Action %1</source>
-        <translation type="unfinished"></translation>
+        <translation>동작 %1</translation>
     </message>
 </context>
 <context>
