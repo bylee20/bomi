@@ -83,7 +83,7 @@ private:
     P1(QString, screensaver_method, u"auto"_q, "currentText")
     P0(bool, lion_style_fullscreen, false)
     P0(bool, hide_cursor_fs_only, false)
-    P0(int, hide_cursor_delay_sec, 3)
+    P0(double, hide_cursor_delay_sec, 3)
     P0(bool, preserve_downloaded_subtitles, true)
     P0(QString, preserve_file_name_format, defaultFileNameFormat())
     P0(QString, preserve_fallback_folder, defaultFallbackFolder())
