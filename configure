@@ -162,7 +162,7 @@ config_opts="""
 config=
 
 detect_qt5() {
-    test -n "$(LANG=en_US.UTF-8 "$1" -version 2> /dev/null | grep "version 5.")"
+    test -n "$(LC_MESSAGES=C "$1" -version 2> /dev/null | grep "version 5.")"
 }
 
 check_qt5_or_exit() {
