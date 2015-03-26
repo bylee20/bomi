@@ -784,7 +784,7 @@ auto MainWindow::Data::updateWindowState(Qt::WindowState ws) -> void
     adapter->endMoveByDrag();
     readyToHideCursor();
     auto changed = [&] (Qt::WindowState state) -> bool
-    { return !((prevWindowState & ws) & state); };
+        { return !(prevWindowState & state) != !(ws & state); };
     if (!stateChanging && changed(Qt::WindowMinimized))
         doVisibleAction(ws != Qt::WindowMinimized);
     const bool fsChanged = changed(Qt::WindowFullScreen);
