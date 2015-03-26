@@ -23,6 +23,7 @@ export CC="@cc@"
 py=
 if [ "$os" = "win" ]; then
 	py=/usr/bin/python
+	args="$args --enable-win32-internal-pthreads"
 fi
 
 orig="$(pwd)"

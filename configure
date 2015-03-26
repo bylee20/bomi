@@ -18,23 +18,34 @@ kern=`uname -s`
 njobs=
 mpv_args=
 os=
-win=64
+win=
 mkspec=
 if [ "$kern" = "Darwin" ]; then
     os="osx"
     mpv_args="$mpv_args --enable-coreaudio --enable-vda-hwaccel" #
     njobs=`sysctl hw.ncpu | awk '{print $2}'`
     mkspec=macx-clang
+    echo "configure for OS X..."
 elif [ "$kern" = "Linux" ]; then
     os="linux"
     mpv_args="$mpv_args --enable-alsa --enable-oss-audio"
     mpv_args="$mpv_args --enable-gl-x11 --enable-x11 "
     njobs=$(nproc)
-elif [ $(echo "$kern" | cut -d "-" -sf1) = "MSYS_NT" ]; then
+    echo "configure for Linux..."
+elif [[ "$kern" = MINGW* ]]; then
     os="win"
     mpv_args="$mpv_args --enable-gl-win32 --enable-dsound --enable-wasapi --enable-dxva2-hwaccel"
     njobs=$(nproc)
     mkspec=win32-g++
+	if [[ "$kern" = MINGW64* ]]; then
+        win=64
+	elif [[ "$kern" = MINGW32* ]]; then
+        win=32
+	else
+        echo "Not supported!"
+        exit
+	fi
+    echo "configure for Windows ${win}bit..."
 else
     echo "Not supported!"
     exit
@@ -446,7 +457,7 @@ check_pkg_or_exit "libass"
 check_pkg_or_exit "dvdread"
 check_pkg_or_exit "dvdnav"
 check_pkg_or_exit "libbluray"
-check_pkg_or_exit "icu-uc"
+#check_pkg_or_exit "icu-uc"
 check_pkg_or_exit "chardet"
 if [ $os = "linux" ]; then
     check_pkg_or_exit glib "glib-2.0" "gobject-2.0"

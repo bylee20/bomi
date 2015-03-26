@@ -3,7 +3,7 @@ CONFIG += link_pkgconfig debug_and_release precompile_header \
 	c++11 object_parallel_to_source
 macx:CONFIG -= app_bundle
 
-QT = core gui network quick widgets sql xml
+QT = core gui network quick widgets sql xml svg
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
@@ -54,11 +54,16 @@ macx {
 	SOURCES += player/mpris.cpp
 } else:win32 {
     RC_ICONS = ../../icons/bomi.ico
-    LIBS += -lopengl32 -lgdi32 -limm32 -lwinmm -lole32
+    LIBS += -lopengl32 -lgdi32 -limm32 -lwinmm -lole32 -ldvdcss
     HEADERS += os/win.hpp
     SOURCES += os/win.cpp
     CONFIG -= debug
     CONFIG += release
+    CONFIG += static
+    contains(CONFIG, static) {
+        LIBS += -lfontconfig -lfreetype -lfribidi -lxml2 -lz \
+            -lnettle -lhogweed -lgmp -ltasn1 -lintl -liconv -lexpat -lharfbuzz
+    }
 }
 
 QML_IMPORT_PATH += imports
