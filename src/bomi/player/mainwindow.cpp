@@ -356,11 +356,14 @@ auto MainWindow::resizeEvent(QResizeEvent *event) -> void
 {
     QQuickView::resizeEvent(event);
     auto content = contentItem();
+    if (!content)
+        return;
+    const auto s = event->size();
+    content->setSize(s);
     auto root = rootObject();
-    if (content && root && content == root->parentItem()) {
-        root->setSize({content->width(), content->height()});
-        root->setPosition({0, 0});
-    }
+    if (!root || content != root->parentItem())
+        return;
+    root->setSize(s);
 }
 
 auto MainWindow::keyPressEvent(QKeyEvent *event) -> void
