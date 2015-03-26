@@ -36,6 +36,8 @@ public:
     static auto native() -> Locale;
     static auto setNative(const Locale &l) -> void;
     static auto isoToNativeName(const QString &iso) -> QString;
+
+    static auto importIcu() -> void;
 private:
     Locale(const QLocale &l): m_locale(new QLocale(l)) { }
     QLocale *m_locale = nullptr;
