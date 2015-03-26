@@ -1,3 +1,8 @@
+0.9.5
+
+  * Fix: restoring window size didn't work (#276)
+  * Fix: potential infinite loop for empty input data of audio (#277)
+
 0.9.4
 
   * New: support millisecond precision for timeout to hide cursor (#275)
