@@ -74,7 +74,7 @@
      <item>
       <widget class="QLabel" name="label_42">
        <property name="text">
-        <string>Chunk length</string>
+        <string>Buffer block</string>
        </property>
       </widget>
      </item>

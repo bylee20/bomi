@@ -121,7 +121,7 @@ private:
     P_(StreamList, sub_tracks_inclusive, {StreamInclusiveSubtitle}, "", 1)
     P_(bool, sub_hidden, false, QT_TR_NOOP("Subtitle Hiding"), 0)
     P_(bool, sub_style_overriden, false, QT_TR_NOOP("Override ASS Text Style"), 0)
-    P_(bool, sub_override_ass_position, false, QT_TR_NOOP("Override ASS Ppsition"), 0);
+    P_(bool, sub_override_ass_position, false, QT_TR_NOOP("Override ASS Position"), 0);
     P_(bool, sub_override_ass_scale, false, QT_TR_NOOP("Override ASS Scale"), 0);
     PB(double, sub_scale, 0.0, -1.0, 1.0, QT_TR_NOOP("Subtitle Scale"), 0)
 public:
