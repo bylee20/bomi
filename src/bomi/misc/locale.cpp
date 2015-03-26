@@ -1,20 +1,19 @@
 #include "locale.hpp"
-#include <unicode/locid.h>
 #include "misc/log.hpp"
 #include "configure.hpp"
 
 static constexpr int s_maxLang = 315;
 
-auto operator << (QDataStream &out, const ::Locale &l) -> QDataStream&
+auto operator << (QDataStream &out, const Locale &l) -> QDataStream&
 {
     out << l.toVariant(); return out;
 }
 
-auto operator >> (QDataStream &in, ::Locale &l) -> QDataStream&
+auto operator >> (QDataStream &in, Locale &l) -> QDataStream&
 {
     QVariant var;
     in >> var;
-    l = ::Locale::fromVariant(var);
+    l = Locale::fromVariant(var);
     return in;
 }
 
@@ -240,7 +239,7 @@ struct Data {
         aliases[u"za"_q] = u"zha"_q;
         aliases[u"zu"_q] = u"zul"_q;
     }
-    ::Locale native = ::Locale::system();
+    Locale native = Locale::system();
     QHash<QString, QString> aliases;
     QMap<QString, QString> isoName;
     auto iso(QLocale::Language lang) const -> QJsonObject
@@ -308,7 +307,7 @@ struct IcuData {
 };
 #endif
 
-auto ::Locale::importIcu() -> void
+auto Locale::importIcu() -> void
 {
 #if !BOMI_RELEASE
     const QString folder = QDir::homePath() % "/icu/source/data/lang/"_a;
@@ -704,18 +703,18 @@ auto ::Locale::importIcu() -> void
 #endif
 }
 
-::Locale::Locale(const Locale &rhs)
+Locale::Locale(const Locale &rhs)
 {
     if (rhs.m_locale)
         m_locale = new QLocale(*rhs.m_locale);
 }
 
-::Locale::Locale(Locale &&rhs)
+Locale::Locale(Locale &&rhs)
 {
     std::swap(m_locale, rhs.m_locale);
 }
 
-auto ::Locale::operator = (const Locale &rhs) -> Locale&
+auto Locale::operator = (const Locale &rhs) -> Locale&
 {
     if (this != &rhs) {
         _Delete(m_locale);
@@ -725,24 +724,24 @@ auto ::Locale::operator = (const Locale &rhs) -> Locale&
     return *this;
 }
 
-auto ::Locale::operator = (Locale &&rhs) -> Locale&
+auto Locale::operator = (Locale &&rhs) -> Locale&
 {
     if (this != &rhs)
         std::swap(m_locale, rhs.m_locale);
     return *this;
 }
 
-auto ::Locale::native() -> Locale
+auto Locale::native() -> Locale
 {
     return data().native;
 }
 
-auto ::Locale::setNative(const Locale &l) -> void
+auto Locale::setNative(const Locale &l) -> void
 {
     data().native = l;
 }
 
-auto ::Locale::isoToNativeName(const QString &_iso) -> QString
+auto Locale::isoToNativeName(const QString &_iso) -> QString
 {
     if (_iso.size() > 3)
         return QString();
@@ -763,7 +762,7 @@ auto ::Locale::isoToNativeName(const QString &_iso) -> QString
     return name;
 }
 
-auto ::Locale::nativeName() const -> QString
+auto Locale::nativeName() const -> QString
 {
     if (!m_locale)
         return QString();
@@ -773,12 +772,12 @@ auto ::Locale::nativeName() const -> QString
 }
 
 // dummy for pref
-auto ::Locale::toJson() const -> QJsonObject
+auto Locale::toJson() const -> QJsonObject
 {
     return QJsonObject();
 }
 
-auto ::Locale::setFromJson(const QJsonObject &json) -> bool
+auto Locale::setFromJson(const QJsonObject &json) -> bool
 {
     Q_UNUSED(json);
     return true;
