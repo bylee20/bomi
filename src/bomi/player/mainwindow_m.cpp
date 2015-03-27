@@ -326,7 +326,7 @@ auto MainWindow::Data::plugMenu() -> void
     connectSnapshot(u"tool"_q, SnapshotTool);
     connect(&e, &PlayEngine::snapshotTaken, p, [this] () {
         QImage frameOnly, withOsd;
-        e.snapshot(&frameOnly, &withOsd);
+        ph.position = _MSecToTime(e.snapshot(&frameOnly, &withOsd));
         e.clearSnapshots();
         if (frameOnly.isNull())
             return;
@@ -361,25 +361,7 @@ auto MainWindow::Data::plugMenu() -> void
             auto image = frameOnly;
             if (snapshotMode == QuickSnapshot)
                 image = withOsd;
-            const auto time = QDateTime::currentDateTime();
-            const QString fileName = "bomi-snapshot-"_a
-                    % time.toString(u"yyyy-MM-dd-hh-mm-ss-zzz"_q)
-                    % '.'_q % pref.quick_snapshot_format();
-            QString file;
-            switch (pref.quick_snapshot_save()) {
-            case QuickSnapshotSave::Current:
-                if (e.mrl().isLocalFile()) {
-                    file = _ToAbsPath(e.mrl().toLocalFile())
-                           % '/'_q % fileName;
-                    break;
-                }
-            case QuickSnapshotSave::Ask:
-                file = _GetSaveFile(nullptr, tr("Save File"), fileName, WritableImageExt);
-                break;
-            case QuickSnapshotSave::Fixed:
-                file = pref.quick_snapshot_folder() % '/'_q % fileName;
-                break;
-            }
+            const auto file = snapshotPath();
             if (!file.isEmpty()) {
                 const int quality = pref.quick_snapshot_quality();
                 const auto saver = new SnapshotSaver(image, file, quality);

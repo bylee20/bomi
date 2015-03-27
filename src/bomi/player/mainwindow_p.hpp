@@ -89,6 +89,11 @@ struct MainWindow::Data {
     bool hidingCursorPended = true, noMessage = true;
     MouseObject *mouse = nullptr;
 
+    struct {
+        QDate date; QTime time, position;
+        quint64 unix = 0;
+        QMap<QString, std::function<QString(void)>> get;
+    } ph;
     QTimer waiter, hider;
     ABRepeatChecker ab;
     QMenu contextMenu;
@@ -140,6 +145,7 @@ struct MainWindow::Data {
             _SetLastOpenPath(mrl.toLocalFile());
         playlist.setLoaded(mrl);
     }
+    auto snapshotPath() -> QString;
     auto deleteDialogs() -> void;
     auto restoreState() -> void;
     auto applyPref() -> void;

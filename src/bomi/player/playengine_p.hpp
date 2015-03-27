@@ -123,7 +123,7 @@ struct PlayEngine::Data {
         SpeedMeasure<quint64> measure{5, 20};
     } frames;
 
-    struct { QImage osd, frame; bool take = false; } ss;
+    struct { QImage osd, frame; bool take = false; int time = 0; } ss;
     QPoint mouse;
 
     auto resync(bool force = false) -> void;

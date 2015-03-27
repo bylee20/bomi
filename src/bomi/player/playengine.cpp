@@ -1012,10 +1012,11 @@ auto PlayEngine::takeSnapshot() -> void
     d->vr->updateForNewFrame(d->displaySize());
 }
 
-auto PlayEngine::snapshot(QImage *frame, QImage *osd) -> void
+auto PlayEngine::snapshot(QImage *frame, QImage *osd) -> int
 {
     *frame = d->ss.frame;
     *osd = d->ss.osd;
+    return d->ss.time;
 }
 
 auto PlayEngine::clearSnapshots() -> void

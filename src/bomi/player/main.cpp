@@ -55,6 +55,8 @@ int main(int argc, char **argv) {
         mbox.mbox()->show();
         return app.exec();
     }
+    qsrand(QDateTime::currentMSecsSinceEpoch());
+
     MainWindow *mw = new MainWindow;
     _Debug("Show MainWindow.");
     mw->show();

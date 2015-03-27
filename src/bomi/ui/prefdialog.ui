@@ -230,6 +230,9 @@
                </widget>
               </item>
               <item>
+               <widget class="QLineEdit" name="quick_snapshot_template"/>
+              </item>
+              <item>
                <widget class="QComboBox" name="quick_snapshot_format"/>
               </item>
               <item>
@@ -254,19 +257,6 @@
                  <number>-1</number>
                 </property>
                </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_15">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </item>

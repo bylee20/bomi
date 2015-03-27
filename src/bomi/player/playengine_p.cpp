@@ -697,6 +697,7 @@ auto PlayEngine::Data::takeSnapshot() -> void
     mpv.render(&frame, &osd, QMargins());
     ss.frame = frame.texture().toImage(QImage::Format_ARGB32);
     ss.osd = osd.texture().toImage(QImage::Format_ARGB32_Premultiplied);
+    ss.time = mpv.get<double>("time-pos") * 1e3;
     emit p->snapshotTaken();
 }
 

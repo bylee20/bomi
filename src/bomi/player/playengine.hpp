@@ -248,7 +248,7 @@ public:
     auto setVideoDithering(Dithering dithering) -> void;
     auto setVideoEffects(VideoEffects effects) -> void;
     auto takeSnapshot() -> void;
-    auto snapshot(QImage *frame, QImage *osd) -> void;
+    auto snapshot(QImage *frame, QImage *osd) -> int;
     auto clearSnapshots() -> void;
     auto setHighQualityScaling(bool up, bool down) -> void;
     auto waitingText() const -> QString;
