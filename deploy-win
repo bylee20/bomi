@@ -15,9 +15,12 @@ cp -r ../imports .
 cp -r ../translations .
 
 install -d QtQuick
-cp -r /mingw64/qt5-static/share/qt5/qml/QtQuick/{Controls,Layouts,Window.2} QtQuick/
-cp -r /mingw64/qt5-static/share/qt5/qml/QtQuick.2 .
-cp /mingw64/qt5-static/share/qt5/translations/qt_{ar,ca,cs,da,de,es,fa,fi,fr,gl,he}.qm translations/
+
+base=/$(echo $MSYSTEM | tr '[:upper:]' '[:lower:]')/qt5-static/share/qt5
+
+cp -r $base/qml/QtQuick/{Controls,Layouts,Window.2} QtQuick/
+cp -r $base/qml/QtQuick.2 .
+cp $base/translations/qt_{ar,ca,cs,da,de,es,fa,fi,fr,gl,he}.qm translations/
 
 find QtQuick{,.2} -name 'lib*.a' | xargs rm
 
