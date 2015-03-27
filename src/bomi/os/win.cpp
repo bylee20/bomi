@@ -12,6 +12,7 @@
 #include <QWindow>
 #include <QSettings>
 #include <QFontDatabase>
+#include <windowsx.h>
 
 namespace OS {
 
@@ -112,27 +113,36 @@ auto WinWindowAdapter::setFullScreen(bool fs) -> void
 
 auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long *) -> bool
 {
-    if (!m_fs)
-        return false;
     auto msg = static_cast<MSG*>(message);
-    if (msg->message != WM_NCPAINT)
+    switch (msg->message) {
+    case WM_NCPAINT: {
+        if (!m_fs || msg->hwnd != (HWND)winId())
+            return false;
+        auto dc = GetWindowDC(msg->hwnd);
+        if (!dc)
+            return false;
+        auto pen = CreatePen(PS_INSIDEFRAME, GetSystemMetrics(SM_CXFRAME), RGB(0, 0, 0));
+        if (pen) {
+            RECT rect;
+            GetWindowRect(msg->hwnd, &rect);
+            auto old = SelectObject(dc, pen);
+            SelectObject(dc, GetStockObject(NULL_BRUSH));
+            Rectangle(dc, 0, 0, rect.right - rect.left, rect.bottom - rect.top);
+            DeleteObject(SelectObject(dc, old));
+        }
+        ReleaseDC(msg->hwnd, dc);
+        return true;
+    } case WM_NCMOUSEMOVE: {
+        if (!m_fs || msg->hwnd != (HWND)winId())
+            return false;
+        QPoint gpos(GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam));
+        QPoint pos = window()->mapFromGlobal(gpos);
+        QMouseEvent me(QEvent::MouseMove, pos, gpos, Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+        qApp->sendEvent(window(), &me);
         return false;
-    if (msg->hwnd != (HWND)winId())
+    } default:
         return false;
-    auto dc = GetWindowDC(msg->hwnd);
-    if (!dc)
-        return false;
-    auto pen = CreatePen(PS_INSIDEFRAME, GetSystemMetrics(SM_CXFRAME), RGB(0, 0, 0));
-    if (pen) {
-        RECT rect;
-        GetWindowRect(msg->hwnd, &rect);
-        auto old = SelectObject(dc, pen);
-        SelectObject(dc, GetStockObject(NULL_BRUSH));
-        Rectangle(dc, 0, 0, rect.right - rect.left, rect.bottom - rect.top);
-        DeleteObject(SelectObject(dc, old));
     }
-    ReleaseDC(msg->hwnd, dc);
-    return true;
 }
 
 auto createAdapter(QWindow *w) -> WindowAdapter*
