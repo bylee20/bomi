@@ -230,7 +230,32 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="quick_snapshot_template"/>
+               <widget class="QLineEdit" name="quick_snapshot_template">
+                <property name="toolTip">
+                 <string>Placeholders
+
+Ones with _0 suffix correspons to with-leading-zero version.
+Small n in suffix represents a positive integer.
+
+Current date/time
+%YEAR%, %YEAR_2%(2 digits),
+%MONTH%, %MONTH_0%, %MONTH_S%(short name), %MONTH_L%(long name),
+%DAY%, %DAY_0%,
+%HOUR%, %MIN%, %SEC%, %MSEC%,
+%HOUR_0%, %MIN_0%, %SEC_0%, %MSEC_0%
+
+Playback information
+%T_HOUR%, %T_MIN%, %T_SEC%, %T_MSEC%,
+%T_HOUR_0%, %T_MIN_0%, %T_SEC_0%, %T_MSEC_0%,
+%MEDIA_NAME%(file name or remote location),
+%MEDIA_DISPLAY_NAME%(display name in player),
+%COUNTER_n%(incremental counter with n digits),
+
+%UNIX%(UNIX timestamp in seconds)
+%UNIX_MS%(UNIX timestamp in milliseconds)
+%RAND_n%(random number with n digits)</string>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QComboBox" name="quick_snapshot_format"/>
