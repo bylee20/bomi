@@ -427,11 +427,11 @@ check_pkg_or_exit() {
     fi
     true
 }
-    
+
 if [ "$os" = "win" ]; then
     export PKG_CONFIG_PATH="/mingw$win/lib/pkgconfig:${PKG_CONFIG_PATH}"
     export PATH="/mingw$win/bin:${PATH}"
-    qtsdk="/mingw$win"
+    qtsdk="/mingw$win/qt5-static"
 fi
 
 if has_arg "developer"; then
@@ -529,14 +529,20 @@ rootdir=`pwd`
 cc=$(which $cc)
 cxx=$(which $cxx)
 
+parse_file "Makefile" os qmake lrelease PATH PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
+    transdir skindir importdir parallel qtsdk macdeployqt
+parse_file "build-mpv" cc mpv_args parallel os njobs PKG_CONFIG_PATH PATH
+
+if [ "$os" = "win" ]; then
+    cc=$(echo $cc | sed 's#/mingw#C:/msys64/mingw#g')
+    cxx=$(echo $cxx | sed 's#/mingw#C:/msys64/mingw#g')
+fi
+
 parse_file "src/bomi/configure.pro" cc cxx config libs cflags rootdir
 if [ "$os" = "win" ]; then
     sed -i 's#'"$(pwd)"'#../..#g' "src/bomi/configure.pro"
 fi
 
-parse_file "Makefile" os qmake lrelease PATH PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
-    transdir skindir importdir parallel qtsdk macdeployqt
-parse_file "build-mpv" cc mpv_args parallel os njobs PKG_CONFIG_PATH PATH
 chmod +x build-mpv
 
 printf "\nbomi has been configured successfully!\n\n"
