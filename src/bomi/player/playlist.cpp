@@ -29,7 +29,7 @@ auto Playlist::sort() -> void
     c.setNumericMode(true);
 
     tmp::sort(*this, [&](Mrl a, Mrl b) -> bool
-        { return c.compare(a.fileName(), b.fileName()) < 0; });
+        { return c.compare(a.toString(), b.toString()) < 0; });
 }
 
 auto Playlist::save(const QString &filePath, Type type) const -> bool
