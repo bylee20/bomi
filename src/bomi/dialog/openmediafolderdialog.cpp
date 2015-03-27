@@ -3,6 +3,7 @@
 #include "player/playlist.hpp"
 #include "misc/objectstorage.hpp"
 #include <QFileIconProvider>
+#include "tmp/algorithm.hpp"
 
 enum ListRole {
     Type = Qt::UserRole + 1, Path
@@ -37,33 +38,56 @@ struct OpenMediaFolderDialog::Data {
         }
     }
 
+
+    static auto sort(QFileInfoList &list) -> QFileInfoList&
+    {
+        QCollator c;
+        c.setNumericMode(true);
+        tmp::sort(list, [&](auto &lhs, auto &rhs)
+            { return c.compare(lhs.fileName(), rhs.fileName()) < 0; });
+        return list;
+    }
+
+    auto open(const QDir &dir, const QString &root, bool recursive) -> void
+    {
+        static const auto filters = _ToNameFilter(MediaExt);
+        auto files = dir.entryInfoList(filters, QDir::Files);
+        sort(files);
+        for (int i=0; i<files.size(); ++i) {
+            const auto path = files[i].absoluteFilePath();
+            auto item = new QListWidgetItem(path.mid(root.size() + 1), ui.list);
+            QCheckBox *box = nullptr;
+            item->setCheckState(Qt::Unchecked);
+            const QString suffix = files[i].suffix();
+            if (_IsSuffixOf(VideoExt, suffix))
+                box = ui.videos;
+            else if (_IsSuffixOf(AudioExt, suffix))
+                box = ui.audios;
+            else if (_IsSuffixOf(ImageExt, suffix))
+                box = ui.images;
+            Q_ASSERT(box);
+            item->setIcon(icons.icon(files[i]));
+            item->setData(Type, QVariant::fromValue(box));
+            item->setData(Path, path);
+            item->setCheckState(box->isChecked() ? Qt::Checked : Qt::Unchecked);
+        }
+        if (recursive) {
+            auto subs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+            sort(subs);
+            for (auto &sub : subs)
+                open(QDir(sub.absoluteFilePath()), root, recursive);
+        }
+    }
+
     auto updateList() -> void
     {
+        ui.list->clear();
         const auto folder = ui.folder->text();
         if (!folder.isEmpty()) {
-            ui.list->clear();
-            QDir dir(folder);
-            static const auto filters = _ToNameFilter(MediaExt);
-            const auto files = dir.entryInfoList(filters, QDir::Files, QDir::Name);
-            for (int i=0; i<files.size(); ++i) {
-                auto item = new QListWidgetItem(files[i].fileName(), ui.list);
-                QCheckBox *box = nullptr;
-                item->setCheckState(Qt::Unchecked);
-                const QString suffix = files[i].suffix();
-                if (_IsSuffixOf(VideoExt, suffix))
-                    box = ui.videos;
-                else if (_IsSuffixOf(AudioExt, suffix))
-                    box = ui.audios;
-                else if (_IsSuffixOf(ImageExt, suffix))
-                    box = ui.images;
-                Q_ASSERT(box);
-                item->setIcon(icons.icon(files[i]));
-                item->setData(Type, QVariant::fromValue(box));
-                item->setData(Path, files[i].absoluteFilePath());
-                item->setCheckState(box->isChecked() ? Qt::Checked : Qt::Unchecked);
-            }
-            updateOpenButton();
+            const QDir dir(folder);
+            open(dir, dir.absolutePath(), ui.recursive->isChecked());
         }
+        updateOpenButton();
     }
     auto getFolder() -> void
     {
@@ -89,6 +113,8 @@ OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key
             this, [=] (bool checked) { d->checkList(d->ui.images, checked); });
     connect(d->ui.list, &QListWidget::itemChanged,
             this, [=] () { d->updateOpenButton(); });
+    connect(d->ui.recursive, &QCheckBox::toggled, this, [=] () { d->updateList(); });
+
     d->ui.dbb->button(QDialogButtonBox::Open)->setEnabled(false);
     adjustSize();
 

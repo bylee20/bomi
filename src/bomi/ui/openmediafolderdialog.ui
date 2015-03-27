@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>394</width>
     <height>203</height>
    </rect>
   </property>
@@ -62,14 +62,25 @@
     <widget class="QListWidget" name="list"/>
    </item>
    <item>
-    <widget class="BBox" name="dbb">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Open</set>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QCheckBox" name="recursive">
+       <property name="text">
+        <string>Open subfolders recursively</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="BBox" name="dbb">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Open</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
