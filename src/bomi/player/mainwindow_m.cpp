@@ -8,6 +8,7 @@
 #include "dialog/audioequalizerdialog.hpp"
 #include "dialog/videocolordialog.hpp"
 #include "dialog/urldialog.hpp"
+#include "dialog/openmediafolderdialog.hpp"
 #include "pref/prefdialog.hpp"
 #include "dialog/aboutdialog.hpp"
 #include "dialog/opendiscdialog.hpp"
@@ -599,6 +600,12 @@ auto MainWindow::Data::plugMenu() -> void
         for (int i=0; i<files.size(); ++i)
             list.push_back(Mrl(files[i]));
         playlist.append(list);
+    });
+    connect(pl[u"append-folder"_q], &QAction::triggered, p, [this] () {
+        auto dlg = dialog<OpenMediaFolderDialog>();
+//        dlg->setFolder(dir);
+        if (dlg->exec())
+            playlist.append(dlg->playlist());
     });
     connect(pl[u"append-url"_q], &QAction::triggered, p, [this] () {
         auto dlg = dialog<UrlDialog>();

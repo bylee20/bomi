@@ -563,6 +563,7 @@ RootMenu::RootMenu()
             d->action(u"clear"_q, QT_TR_NOOP("Clear"));
             d->separator();
             d->action(u"append-file"_q, QT_TR_NOOP("Append File"));
+            d->action(u"append-folder"_q, QT_TR_NOOP("Append Folder"));
             d->action(u"append-url"_q, QT_TR_NOOP("Append URL"));
             d->action(u"remove"_q, QT_TR_NOOP("Remove"));
             d->separator();
