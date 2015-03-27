@@ -120,7 +120,7 @@ HEADERS += \
 	opengl/opengloffscreencontext.hpp \
 	dialog/snapshotdialog.hpp \
 	dialog/openmediafolderdialog.hpp \
-	dialog/prefdialog.hpp \
+	pref/prefdialog.hpp \
 	dialog/subtitlefinddialog.hpp \
 	dialog/bbox.hpp \
 	dialog/mbox.hpp \
@@ -180,7 +180,7 @@ HEADERS += \
 	misc/trayicon.hpp \
 	player/app.hpp \
 	player/mrl.hpp \
-	player/pref.hpp \
+	pref/pref.hpp \
 	player/skin.hpp \
 	player/appstate.hpp \
 	player/playlist.hpp \
@@ -212,7 +212,7 @@ HEADERS += \
     player/abrepeatchecker.hpp \
     widget/openmediabehaviorgroupbox.hpp \
     tmp/static_op.hpp \
-    dialog/prefdialog_p.hpp \
+	pref/prefdialog_p.hpp \
     opengl/openglbenchmarker.hpp \
     enum/colorspace.hpp \
     player/mainwindow_p.hpp \
@@ -226,8 +226,8 @@ HEADERS += \
     misc/locale.hpp \
     misc/matchstring.hpp \
     misc/simplelistdelegate.hpp \
-    player/pref_helper.hpp \
-    widget/prefwidgets.hpp \
+	pref/pref_helper.hpp \
+	pref/prefwidgets.hpp \
     enum/colorenumdata.hpp \
     video/videorenderer.hpp \
     misc/youtubedl.hpp \
@@ -339,7 +339,7 @@ SOURCES += \
 	opengl/opengltexturebinder.cpp \
 	opengl/opengloffscreencontext.cpp \
 	dialog/snapshotdialog.cpp \
-	dialog/prefdialog.cpp \
+	pref/prefdialog.cpp \
 	dialog/bbox.cpp \
 	dialog/mbox.cpp \
 	dialog/shortcutdialog.cpp \
@@ -400,7 +400,7 @@ SOURCES += \
 	player/mainwindow.cpp \
 	player/mrl.cpp \
 	player/translator.cpp \
-	player/pref.cpp \
+	pref/pref.cpp \
 	player/playlist.cpp \
 	player/playlistmodel.cpp \
 	player/recentinfo.cpp \
@@ -425,7 +425,7 @@ SOURCES += \
     misc/localconnection.cpp \
     player/abrepeatchecker.cpp \
     widget/openmediabehaviorgroupbox.cpp \
-    dialog/prefdialog_p.cpp \
+	pref/prefdialog_p.cpp \
     opengl/openglbenchmarker.cpp \
     enum/colorspace.cpp \
     player/mainwindow_p.cpp \
@@ -441,8 +441,8 @@ SOURCES += \
     misc/locale.cpp \
     misc/matchstring.cpp \
     misc/simplelistdelegate.cpp \
-	player/pref_helper.cpp \
-    widget/prefwidgets.cpp \
+	pref/pref_helper.cpp \
+	pref/prefwidgets.cpp \
     video/videorenderer.cpp \
     misc/youtubedl.cpp \
     quick/playlistthemeobject.cpp \

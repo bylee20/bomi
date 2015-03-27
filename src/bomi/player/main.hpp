@@ -8,7 +8,7 @@
 #include "player/historymodel.hpp"
 #include "player/avinfoobject.hpp"
 #include "player/playengine.hpp"
-#include "player/pref.hpp"
+#include "pref/pref.hpp"
 #include "audio/audioformat.hpp"
 #include "video/interpolatorparams.hpp"
 #include "misc/downloader.hpp"

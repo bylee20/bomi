@@ -9,7 +9,7 @@
 #include "playengine.hpp"
 #include "playlistmodel.hpp"
 #include "historymodel.hpp"
-#include "pref.hpp"
+#include "pref/pref.hpp"
 #include "streamtrack.hpp"
 #include "misc/downloader.hpp"
 #include "misc/youtubedl.hpp"

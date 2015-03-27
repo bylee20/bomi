@@ -1,7 +1,7 @@
 #include "jsonstorage.hpp"
 #include "json.hpp"
 #include "misc/log.hpp"
-#include "player/pref.hpp"
+#include "pref/pref.hpp"
 #include "player/mrlstate.hpp"
 #include "video/interpolatorparams.hpp"
 

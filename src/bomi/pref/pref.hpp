@@ -1,7 +1,7 @@
 #ifndef PREF_HPP
 #define PREF_HPP
 
-#include "openmediainfo.hpp"
+#include "player/openmediainfo.hpp"
 #include "player/mrlstate.hpp"
 #include "audio/channellayoutmap.hpp"
 #include "audio/audionormalizeroption.hpp"

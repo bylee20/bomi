@@ -8,7 +8,7 @@
 #include "dialog/audioequalizerdialog.hpp"
 #include "dialog/videocolordialog.hpp"
 #include "dialog/urldialog.hpp"
-#include "dialog/prefdialog.hpp"
+#include "pref/prefdialog.hpp"
 #include "dialog/aboutdialog.hpp"
 #include "dialog/opendiscdialog.hpp"
 #include "dialog/snapshotdialog.hpp"

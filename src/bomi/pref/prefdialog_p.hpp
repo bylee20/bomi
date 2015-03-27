@@ -1,12 +1,12 @@
 #ifndef PREFDIALOG_P_HPP
 #define PREFDIALOG_P_HPP
 
+#include "pref.hpp"
 #include "player/shortcutmap.hpp"
 #include "enum/mousebehavior.hpp"
 #include "misc/keymodifieractionmap.hpp"
 #include "misc/simplelistmodel.hpp"
 #include "misc/matchstring.hpp"
-#include "player/pref.hpp"
 #include <QAction>
 #include <QStyledItemDelegate>
 #include <QTreeWidgetItem>

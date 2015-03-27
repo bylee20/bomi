@@ -2635,12 +2635,12 @@ You don't need to specify to this if geust is allowed.</string>
   <customwidget>
    <class>PrefMouseActionTree</class>
    <extends>QTreeWidget</extends>
-   <header>dialog/prefdialog_p.hpp</header>
+   <header>pref/prefdialog_p.hpp</header>
   </customwidget>
   <customwidget>
    <class>HwAccCodecBox</class>
    <extends>QGroupBox</extends>
-   <header>widget/prefwidgets.hpp</header>
+   <header>pref/prefwidgets.hpp</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -2652,7 +2652,7 @@ You don't need to specify to this if geust is allowed.</string>
   <customwidget>
    <class>PrefMenuTreeWidget</class>
    <extends>QTreeWidget</extends>
-   <header>dialog/prefdialog_p.hpp</header>
+   <header>pref/prefdialog_p.hpp</header>
   </customwidget>
   <customwidget>
    <class>OsdThemeWidget</class>
@@ -2704,7 +2704,7 @@ You don't need to specify to this if geust is allowed.</string>
   <customwidget>
    <class>PrefStepTreeWidget</class>
    <extends>QTreeWidget</extends>
-   <header>dialog/prefdialog_p.hpp</header>
+   <header>pref/prefdialog_p.hpp</header>
   </customwidget>
   <customwidget>
    <class>FontComboBox</class>
