@@ -405,7 +405,11 @@ auto MainWindow::event(QEvent *event) -> bool
     #ifndef Q_OS_MAC
         if (d->tray && d->pref.enable_system_tray()
                 && d->pref.hide_rather_close()) {
+#ifdef Q_OS_WIN
+            setVisible(false);
+#else
             hide();
+#endif
             if (d->as.ask_system_tray) {
                 MBox mbox(nullptr);
                 mbox.setIcon(MBox::Icon::Information);
