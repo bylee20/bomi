@@ -140,12 +140,22 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     else
         opts.add("frame-queue-size", 3);
     opts.add("frame-drop-mode", "clear"_b);
+    const bool rgba16 = vr->framebufferObjectFormat() == OGL::RGBA16_UNorm;
     opts.add("fancy-downscaling", s->video_hq_downscaling());
-    opts.add("sigmoid-upscaling", s->video_hq_upscaling());
-    opts.add("custom-shader", customShader(c_matrix()));
+    opts.add("sigmoid-upscaling", s->video_hq_upscaling() && rgba16);
     opts.add("smoothmotion", s->video_motion_interpolation());
+    opts.add("fbo-format", rgba16 ? "rgba16"_b : "rgba"_b);
 
+    opts.add("custom-shader", customShader(c_matrix()));
     return opts.get();
+}
+
+auto PlayEngine::Data::updateVideoRendererFboFormat() -> void
+{
+    auto gl = _EnumData(fboFormat);
+    if (gl == OGL::NoTextureFormat)
+        gl = OGL::is16bitFramebufferFormatSupported() ? OGL::RGBA16_UNorm : OGL::RGBA8_UNorm;
+    vr->setFramebufferObjectFormat(gl);
 }
 
 auto PlayEngine::Data::updateVideoSubOptions() -> void

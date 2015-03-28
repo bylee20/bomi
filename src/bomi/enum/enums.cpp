@@ -31,6 +31,7 @@
 #include "codecid.hpp"
 #include "jrconnection.hpp"
 #include "jrprotocol.hpp"
+#include "framebufferobjectformat.hpp"
 auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
 {
     EnumNameVariantConverter conv;
@@ -130,13 +131,16 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<JrProtocol>()) {
         conv.variantToName = _EnumVariantToEnumName<JrProtocol>;
         conv.nameToVariant = _EnumNameToEnumVariant<JrProtocol>;
+    } else    if (metaType == qMetaTypeId<FramebufferObjectFormat>()) {
+        conv.variantToName = _EnumVariantToEnumName<FramebufferObjectFormat>;
+        conv.nameToVariant = _EnumNameToEnumVariant<FramebufferObjectFormat>;
     } else
         return EnumNameVariantConverter();
     return conv;
 }
-auto _EnumMetaTypeIds() -> const std::array<int, 32>&
+auto _EnumMetaTypeIds() -> const std::array<int, 33>&
 {
-    static const std::array<int, 32> ids = {
+    static const std::array<int, 33> ids = {
         qMetaTypeId<TextThemeStyle>(),
         qMetaTypeId<SpeakerId>(),
         qMetaTypeId<ChannelLayout>(),
@@ -168,7 +172,8 @@ auto _EnumMetaTypeIds() -> const std::array<int, 32>&
         qMetaTypeId<LogOutput>(),
         qMetaTypeId<CodecId>(),
         qMetaTypeId<JrConnection>(),
-        qMetaTypeId<JrProtocol>()
+        qMetaTypeId<JrProtocol>(),
+        qMetaTypeId<FramebufferObjectFormat>()
     };
     return ids;
 }

@@ -21,6 +21,7 @@
 #include "subtitle/subtitle.hpp"
 #include "subtitle/subtitlerenderer.hpp"
 #include "enum/codecid.hpp"
+#include "enum/framebufferobjectformat.hpp"
 #include "opengl/openglframebufferobject.hpp"
 #include "os/os.hpp"
 
@@ -65,6 +66,7 @@ struct PlayEngine::Data {
     AudioController *ac = nullptr;
     SubtitleRenderer *sr = nullptr;
     VideoProcessor *vp = nullptr;
+    FramebufferObjectFormat fboFormat = FramebufferObjectFormat::Auto;
 
     PlayEngine::Waitings waitings = PlayEngine::NoWaiting;
     PlayEngine::State state = PlayEngine::Stopped;
@@ -151,6 +153,7 @@ struct PlayEngine::Data {
     auto vo(const MrlState *s) const -> QByteArray;
     auto videoSubOptions(const MrlState *s) const -> QByteArray;
     auto updateVideoSubOptions() -> void;
+    auto updateVideoRendererFboFormat() -> void;
     auto renderVideoFrame(Fbo *frame, Fbo *osd, const QMargins &m) -> void;
     auto displaySize() const { return info.video.output()->size(); }
     auto post(State state) -> void { _PostEvent(p, StateChange, state); }

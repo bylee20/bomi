@@ -16,6 +16,7 @@ public:
             x1 = y1 = 0; x2 = m_texture.width(); y2 = m_texture.height();
         } else { x1 = y1 = 0; x2 = y2 = 1; }
     }
+    auto format() const { return m_texture.format(); }
     auto bind(GLenum target = GL_FRAMEBUFFER) const -> void;
     auto release() const -> void;
     auto size() const -> QSize { return m_size; }

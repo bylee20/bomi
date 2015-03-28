@@ -19,7 +19,7 @@ enum class ColorRange;                  enum class ColorSpace;
 enum class Dithering;                   enum class AutoselectMode;
 enum class VideoRatio;                  enum class SubtitleDisplay;
 enum class VerticalAlignment;           enum class HorizontalAlignment;
-enum class CodecId;
+enum class CodecId;                     enum class FramebufferObjectFormat;
 class AudioObject;                      class VideoObject;
 class YouTubeDL;                        struct AudioDevice;
 class YleDL;                            class AudioEqualizer;
@@ -231,6 +231,8 @@ public:
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL(QOpenGLContext *ctx) -> void;
 
+    auto framebufferObjectFormat() const -> FramebufferObjectFormat;
+    auto setFramebufferObjectFormat(FramebufferObjectFormat format) -> void;
     auto setColorRange(ColorRange range) -> void;
     auto setColorSpace(ColorSpace space) -> void;
     auto setVideoEqualizer(const VideoColor &eq) -> void;
@@ -250,7 +252,6 @@ public:
     auto takeSnapshot() -> void;
     auto snapshot(QImage *frame, QImage *osd) -> int;
     auto clearSnapshots() -> void;
-    auto setHighQualityScaling(bool up, bool down) -> void;
     auto waitingText() const -> QString;
     auto stateText() const -> QString;
 
@@ -303,6 +304,7 @@ signals:
     void cacheSizeChanged();
     void snapshotTaken();
     void subtitleSelectionChanged();
+    void framebufferObjectFormatChanged(FramebufferObjectFormat format);
 private:
     auto setVideoTrackSelected(int id, bool s) -> void;
     auto setAudioTrackSelected(int id, bool s) -> void;

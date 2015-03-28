@@ -188,6 +188,8 @@ SIA func() -> QOpenGLFunctions* {
 }
 
 auto availableFrambebufferFormats() -> QVector<TextureFormat>;
+auto isSupportedFrambufferFormat(TextureFormat format) -> bool;
+auto is16bitFramebufferFormatSupported() -> bool;
 
 }
 

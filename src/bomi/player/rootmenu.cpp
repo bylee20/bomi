@@ -5,6 +5,7 @@
 #include "misc/log.hpp"
 #include "misc/stepactionpair.hpp"
 #include "misc/encodinginfo.hpp"
+#include "opengl/openglmisc.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/dithering.hpp"
 #include "enum/movetoward.hpp"
@@ -409,7 +410,8 @@ RootMenu::RootMenu()
             d->enumActionsCheckable<Interpolator>(true);
         });
         d->menu(u"hq-scaling"_q, QT_TR_NOOP("High Quality Scaling"), [=] () {
-            d->action(u"up"_q, QT_TR_NOOP("Upscaling"), true);
+            auto up = d->action(u"up"_q, QT_TR_NOOP("Upscaling"), true);
+            up->setEnabled(OGL::is16bitFramebufferFormatSupported());
             d->action(u"down"_q, QT_TR_NOOP("Downscaling"), true);
         });
 

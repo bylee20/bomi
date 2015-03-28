@@ -17,6 +17,7 @@ PlayEngine::PlayEngine()
     d->vr->setOverlay(d->sr);
     d->vr->setRenderFrameFunction([this] (Fbo *frame, Fbo* osd, const QMargins &m)
         { d->renderVideoFrame(frame, osd, m); });
+    d->updateVideoRendererFboFormat();
 
     d->params.m_mutex = &d->mutex;
 
@@ -908,6 +909,23 @@ auto PlayEngine::setYouTube(YouTubeDL *yt) -> void
     d->youtube = yt;
 }
 
+auto PlayEngine::framebufferObjectFormat() const -> FramebufferObjectFormat
+{
+    return d->fboFormat;
+}
+
+auto PlayEngine::setFramebufferObjectFormat(FramebufferObjectFormat format) -> void
+{
+    d->mutex.lock();
+    const auto changed = _Change(d->fboFormat, format);
+    d->mutex.unlock();
+    if (changed) {
+        d->updateVideoRendererFboFormat();
+        d->updateVideoSubOptions();
+        emit framebufferObjectFormatChanged(format);
+    }
+}
+
 auto PlayEngine::setColorRange(ColorRange range) -> void
 {
     if (d->params.set_video_range(range))
@@ -1032,6 +1050,7 @@ auto PlayEngine::setVideoHighQualityDownscaling(bool on) -> void
 
 auto PlayEngine::setVideoHighQualityUpscaling(bool on) -> void
 {
+    on &= OGL::is16bitFramebufferFormatSupported();
     if (d->params.set_video_hq_upscaling(on))
         d->updateVideoSubOptions();
 }

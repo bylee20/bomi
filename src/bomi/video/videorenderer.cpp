@@ -76,6 +76,7 @@ struct FboSet {
     OpenGLTexture2D fallback;
     QMargins margins;
     QRectF rect;
+    OGL::TextureFormat format = OGL::RGBA8_UNorm;
     auto texture() const -> const OpenGLTexture2D*
     {
         if (fbo && !fbo->size().isEmpty())
@@ -84,8 +85,8 @@ struct FboSet {
     }
     auto renew() -> void
     {
-        if (!fbo || fbo->size() != size)
-            _Renew(fbo, size);
+        if (!fbo || fbo->size() != size || fbo->format() != format)
+            _Renew(fbo, size, format);
     }
 };
 
@@ -202,6 +203,19 @@ VideoRenderer::VideoRenderer(QQuickItem *parent)
 
 VideoRenderer::~VideoRenderer() {
     delete d;
+}
+
+auto VideoRenderer::setFramebufferObjectFormat(OGL::TextureFormat format) -> void
+{
+    if (_Change(d->frame.format, format)) {
+        d->redraw = true;
+        reserve(UpdateMaterial);
+    }
+}
+
+auto VideoRenderer::framebufferObjectFormat() const -> OGL::TextureFormat
+{
+    return d->frame.format;
 }
 
 auto VideoRenderer::setRenderFrameFunction(const RenderFrameFunc &func) -> void

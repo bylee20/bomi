@@ -291,7 +291,8 @@ HEADERS += \
     enum/jrconnection.hpp \
     http-parser/http_parser.h \
     video/mpvosdrenderer.hpp \
-    misc/windowsize.hpp
+    misc/windowsize.hpp \
+    enum/framebufferobjectformat.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -498,7 +499,8 @@ SOURCES += \
     enum/jrconnection.cpp \
     http-parser/http_parser.c \
     video/mpvosdrenderer.cpp \
-    misc/windowsize.cpp
+    misc/windowsize.cpp \
+    enum/framebufferobjectformat.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \

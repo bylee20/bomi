@@ -19,9 +19,19 @@ struct Data {
 
 static Data d;
 
+auto isSupportedFrambufferFormat(TextureFormat format) -> bool
+{
+    return d.fboFormats.contains(format);
+}
+
 auto availableFrambebufferFormats() -> QVector<TextureFormat>
 {
     return d.fboFormats;
+}
+
+auto is16bitFramebufferFormatSupported() -> bool
+{
+    return isSupportedFrambufferFormat(RGBA16_UNorm);
 }
 
 auto maximumTextureSize() -> int

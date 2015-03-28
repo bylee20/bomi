@@ -3,6 +3,7 @@
 
 #include "quick/opengldrawitem.hpp"
 #include "opengl/openglvertex.hpp"
+#include "opengl/openglmisc.hpp"
 #include <functional>
 
 class OpenGLFramebufferObject;
@@ -50,6 +51,8 @@ public:
     auto setCropRatio(double ratio) -> void;
     auto setRenderFrameFunction(const RenderFrameFunc &func) -> void;
     auto updateForNewFrame(const QSize &displaySize) -> void;
+    auto setFramebufferObjectFormat(OGL::TextureFormat format) -> void;
+    auto framebufferObjectFormat() const -> OGL::TextureFormat;
 signals:
     void offsetChanged(const QPointF &pos);
     void screenRectChanged(const QRectF &rect);
