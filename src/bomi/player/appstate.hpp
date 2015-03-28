@@ -3,12 +3,14 @@
 
 #include "mrlstate.hpp"
 #include "enum/staysontop.hpp"
+#include "enum/framebufferobjectformat.hpp"
 
 class MainWindow;
 
 class AppState : public QObject {
     Q_OBJECT
     Q_PROPERTY(StaysOnTop win_stays_on_top MEMBER win_stays_on_top NOTIFY winStaysOnTopChanged)
+    Q_PROPERTY(FramebufferObjectFormat fbo_format MEMBER fbo_format NOTIFY fboFormatChanged)
 public:
     AppState();
 
@@ -33,6 +35,7 @@ public:
 
     // misc
     bool ask_system_tray = true;
+    FramebufferObjectFormat fbo_format = FramebufferObjectFormat::Auto;
 
     QString dvd_device, bluray_device;
 
@@ -46,6 +49,7 @@ public:
     auto save() const -> void;
 signals:
     void winStaysOnTopChanged(StaysOnTop top);
+    void fboFormatChanged(FramebufferObjectFormat format);
 };
 
 #endif // APPSTATE_HPP

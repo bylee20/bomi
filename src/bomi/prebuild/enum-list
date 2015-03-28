@@ -301,8 +301,8 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Raw[-Raw JSON-RPC message-]
 -Http[-JSON-RPC over HTTP-]
 
-+FramebufferObjectFormat[:OGL::TextureFormat:]
++FramebufferObjectFormat[[texture]][-Texture Format-][:OGL::TextureFormat:]
 !#include "opengl/openglmisc.hpp"
--Auto[-Auto-][:OGL::NoTextureFormat:]
--Rgba8[-8-bit-][:OGL::RGBA8_UNorm:]
--Rgba16[-16-bit-][:OGL::RGBA16_UNorm:]
+-Auto[[auto]][-Auto-][:OGL::NoTextureFormat:]
+-Rgba8[[rgba8]][-8-bit-][:OGL::RGBA8_UNorm:]
+-Rgba16[[rgba16]][-16-bit-][:OGL::RGBA16_UNorm:]

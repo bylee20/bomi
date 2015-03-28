@@ -398,6 +398,9 @@ auto MainWindow::Data::plugMenu() -> void
 
     PLUG_STEP(video(u"zoom"_q).g(), video_zoom, setVideoZoom);
 
+    plugAppEnumChild(video, "fbo_format", &AppState::fboFormatChanged);
+    connect(&as, &AppState::fboFormatChanged, &e, &PlayEngine::setFramebufferObjectFormat);
+
     PLUG_ENUM_CHILD(video, video_deinterlacing, setDeintMode);
     PLUG_ENUM(video(u"interpolator"_q), video_interpolator, setInterpolator);
     PLUG_ENUM(video(u"chroma-upscaler"_q), video_chroma_upscaler, setChromaUpscaler);

@@ -54,9 +54,9 @@ public:
     static constexpr auto typeName() -> const char*
     { return "FramebufferObjectFormat"; }
     static constexpr auto typeKey() -> const char*
-    { return ""; }
+    { return "texture"; }
     static auto typeDescription() -> QString
-    { return qApp->translate("EnumInfo", ""); }
+    { return qApp->translate("EnumInfo", "Texture Format"); }
     static auto item(Enum e) -> const Item*
     { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
     static auto name(Enum e) -> QString

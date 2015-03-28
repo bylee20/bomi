@@ -19,6 +19,7 @@
 #include "enum/interpolator.hpp"
 #include "enum/verticalalignment.hpp"
 #include "enum/horizontalalignment.hpp"
+#include "enum/framebufferobjectformat.hpp"
 #include <functional>
 
 DECLARE_LOG_CONTEXT(Menu)
@@ -401,6 +402,7 @@ RootMenu::RootMenu()
 
         d->separator();
 
+        d->enumMenuCheckable<FramebufferObjectFormat>(true);
         d->menu(u"chroma-upscaler"_q, QT_TR_NOOP("Chroma Upscaler"), [=] () {
             d->action(u"advanced"_q, QT_TR_NOOP("Advanced..."));
             d->enumActionsCheckable<Interpolator>(true);

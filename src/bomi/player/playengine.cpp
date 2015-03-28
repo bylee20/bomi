@@ -1050,7 +1050,7 @@ auto PlayEngine::setVideoHighQualityDownscaling(bool on) -> void
 
 auto PlayEngine::setVideoHighQualityUpscaling(bool on) -> void
 {
-    on &= OGL::is16bitFramebufferFormatSupported();
+//    on &= OGL::is16bitFramebufferFormatSupported();
     if (d->params.set_video_hq_upscaling(on))
         d->updateVideoSubOptions();
 }

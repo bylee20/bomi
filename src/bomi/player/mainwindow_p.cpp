@@ -38,6 +38,7 @@ auto MainWindow::Data::restoreState() -> void
     pl[u"repeat"_q]->setChecked(as.playlist_repeat);
     tool[u"auto-exit"_q]->setChecked(as.auto_exit);
     emit as.winStaysOnTopChanged(as.win_stays_on_top);
+    emit as.fboFormatChanged(as.fbo_format);
 
     as.state.set_video_tracks(StreamList(StreamVideo));
     as.state.set_audio_tracks(StreamList(StreamAudio));
