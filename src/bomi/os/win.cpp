@@ -111,12 +111,23 @@ auto WinWindowAdapter::setFullScreen(bool fs) -> void
     }
 }
 
-auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long *) -> bool
+auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long *res) -> bool
 {
     auto msg = static_cast<MSG*>(message);
     switch (msg->message) {
-    case WM_NCPAINT: {
-        if (!m_fs || msg->hwnd != (HWND)winId())
+    case WM_NCACTIVATE: {
+        if (window()->windowState() != Qt::WindowMaximized || msg->hwnd != (HWND)winId())
+            return false;
+        *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+        return true;
+    } case WM_NCPAINT: {
+        if (!window()->isVisible() || msg->hwnd != (HWND)winId())
+            return false;
+        if (window()->windowState() == Qt::WindowMaximized) {
+            *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+            return true;
+        }
+        if (!m_fs)
             return false;
         auto dc = GetWindowDC(msg->hwnd);
         if (!dc)
@@ -131,6 +142,7 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
             DeleteObject(SelectObject(dc, old));
         }
         ReleaseDC(msg->hwnd, dc);
+        *res = 0;
         return true;
     } case WM_NCMOUSEMOVE: {
         if (!m_fs || msg->hwnd != (HWND)winId())
