@@ -113,7 +113,7 @@ auto AudioController::setClippingMethod(ClippingMethod method) -> void
 
 auto AudioController::test(int fmt_in, int fmt_out) -> bool
 {
-    return fmt_in && isSupported(fmt_out);
+    return AudioResampler::canAccept(fmt_in) && isSupported(fmt_out);
 }
 
 auto AudioController::open(af_instance *af) -> int
@@ -168,7 +168,7 @@ auto AudioController::reinitialize(mp_audio *from) -> int
     };
     auto to = d->af->data;
     to->rate = from->rate;
-    const auto supported = isSupported(from->format);
+    const auto supported = AudioResampler::canAccept(from->format);
     if (!supported)
         mp_audio_set_format(from, AF_FORMAT_FLOAT);
     int fmt_to = d->fmt_conv;

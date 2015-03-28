@@ -27,6 +27,11 @@ AudioResampler::~AudioResampler()
     delete d;
 }
 
+auto AudioResampler::canAccept(int format) -> bool
+{
+    return af_to_avformat(format) != AV_SAMPLE_FMT_NONE;
+}
+
 auto AudioResampler::reconfigure() -> void
 {
     d->updateFps();

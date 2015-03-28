@@ -13,6 +13,7 @@ public:
     auto delay() const -> double override;
     auto reset() -> void override;
     auto passthrough(const AudioBufferPtr &in) const -> bool override;
+    static auto canAccept(int format) -> bool;
 private:
     auto reconfigure() -> void;
     struct Data;
