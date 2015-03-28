@@ -3,6 +3,7 @@
 #include "player/playlist.hpp"
 #include "misc/objectstorage.hpp"
 #include <QFileIconProvider>
+#include <QCollator>
 #include "tmp/algorithm.hpp"
 
 enum ListRole {
