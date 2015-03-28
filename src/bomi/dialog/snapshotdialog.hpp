@@ -7,12 +7,13 @@ class VideoRenderer;        class SubtitleRenderer;
 
 class SnapshotSaver : public QRunnable {
 public:
-    SnapshotSaver(const QImage &image, const QString &fileName, int quality)
-        : m_image(image), m_fileName(fileName), m_quality(quality) { }
+    SnapshotSaver(const QImage &image, const QString &fileName, int quality);
+    auto isWritable() const -> bool { return m_writable; }
 private:
     const QImage m_image;
     const QString m_fileName;
     const int m_quality;
+    bool m_writable = false;
     auto run() -> void final;
 };
 

@@ -6,9 +6,18 @@
 
 DECLARE_LOG_CONTEXT(Snapshot)
 
+SnapshotSaver::SnapshotSaver(const QImage &image, const QString &fileName, int quality)
+    : m_image(image), m_fileName(fileName), m_quality(quality)
+{
+    QFile file(fileName);
+    m_writable = file.open(QFile::Truncate | QFile::WriteOnly) && file.isWritable();
+}
+
 auto SnapshotSaver::run() -> void
 {
-    if (!m_image.save(m_fileName, nullptr, m_quality))
+    if (!m_writable)
+        _Error("'%%' is not wriable.", m_fileName);
+    else if (!m_image.save(m_fileName, nullptr, m_quality))
         _Error("Failed to save '%%'.", m_fileName);
     else
         _Info("'%%' saved.", m_fileName);

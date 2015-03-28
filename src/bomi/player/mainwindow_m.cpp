@@ -362,11 +362,16 @@ auto MainWindow::Data::plugMenu() -> void
             if (snapshotMode == QuickSnapshot)
                 image = withOsd;
             const auto file = snapshotPath();
-            if (!file.isEmpty()) {
-                const int quality = pref.quick_snapshot_quality();
-                const auto saver = new SnapshotSaver(image, file, quality);
+            if (file.isEmpty())
+                break;
+            const int quality = pref.quick_snapshot_quality();
+            const auto saver = new SnapshotSaver(image, file, quality);
+            if (saver->isWritable()) {
                 QThreadPool::globalInstance()->start(saver);
                 showMessage(u"Save Snapshot"_q, file);
+            } else {
+                delete saver;
+                MBox::error(nullptr, tr("Error"), tr("Failed to create next file:\n%1").arg(file), {BBox::Ok});
             }
             break;
         } default:
