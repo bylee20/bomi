@@ -22,7 +22,9 @@ private:
     Q_PROPERTY(OsdThemeObject *osd READ __osd NOTIFY osdChanged)
     Q_PROPERTY(QString monospace READ monospace CONSTANT FINAL)
     Q_PROPERTY(QFont font READ font CONSTANT FINAL)
+    Q_PROPERTY(bool showControlsWhenMouseMoved READ showControlsWhenMouseMoved WRITE setShowControlsWhenMouseMoved NOTIFY showControlsWhenMouseMovedChanged)
     OsdThemeObject m_osd;
+    bool m_showControlsWhenMouseMoved = true;
 public:
     Q_SIGNAL void osdChanged();
     auto __osd() const -> OsdThemeObject* { return (OsdThemeObject*)&m_osd; }
@@ -34,6 +36,11 @@ public:
     }
     auto font() const -> QFont;
     auto monospace() const -> QString;
+    auto showControlsWhenMouseMoved() const -> bool { return m_showControlsWhenMouseMoved; }
+    auto setShowControlsWhenMouseMoved(bool on) -> void
+        { if (_Change(m_showControlsWhenMouseMoved, on)) emit showControlsWhenMouseMovedChanged(on); }
+signals:
+    void showControlsWhenMouseMovedChanged(bool showControlsWhenMouseMoved);
 };
 
 #endif // THEMEOBJECT_HPP

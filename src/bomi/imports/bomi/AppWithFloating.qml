@@ -18,18 +18,26 @@ BaseApp {
             onHeightChanged: updatePosY()
             Component.onCompleted: {
                 controls.parent = floating
-                floating.hidden = !containsMouse
+                floating.shown = isControlsVisible()
             }
             acceptedButtons: Qt.AllButtons
             anchors.fill: parent
             hoverEnabled: true;
             onPressed: mouse.accepted = false
             onReleased: mouse.accepted = false
-            onEntered: floating.hidden = false
-            onExited: floating.hidden = true
+            onEntered: floating.shown = isControlsVisible()
+            onExited: floating.shown = false
             onPositionChanged: {
                 var m = App.window.mouse
                 m.hidingCursorBlocked = m.isIn(floating)
+                floating.shown = isControlsVisible()
+            }
+
+            function isControlsVisible() {
+                var m = App.window.mouse
+                if (App.theme.showControlsWhenMouseMoved)
+                    return m.cursor && m.isIn(area)
+                return m.isIn(floating)
             }
 
             MouseArea {
@@ -40,13 +48,13 @@ BaseApp {
                 function getCx(bg) { return (x+width/2)/bg; }
                 function getCy(bg) { return (y+height/2)/bg; }
 
-                property bool hidden: false
+                property bool shown: true
                 width: controls.width; height: controls.height
                 drag.target: floating; drag.axis: Drag.XAndYAxis
                 drag.minimumX: 0; drag.maximumX: root.width-width
                 drag.minimumY: 0; drag.maximumY: root.height-height
                 states: State {
-                    name: "hidden"; when: floating.hidden
+                    name: "hidden"; when: !floating.shown
                     PropertyChanges { target: floating; opacity: 0.0 }
                     PropertyChanges { target: floating; visible: false }
                 }
@@ -63,7 +71,7 @@ BaseApp {
             }
             Connections {
                 target: App.window.mouse
-                onCursorChanged: floating.hidden = !target.cursor
+                onCursorChanged: floating.shown = area.isControlsVisible()
             }
         }
     }

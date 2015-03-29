@@ -509,6 +509,7 @@ auto MainWindow::Data::applyPref() -> void
     OS::setScreensaverMethod(p.screensaver_method());
     const auto acc = p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1;
     EncodingInfo::setDefault(EncodingInfo::Subtitle, p.sub_enc(), acc);
+    theme.setShowControlsWhenMouseMoved(p.show_controls_when_mouse_moved());
 
     youtube.setUserAgent(p.yt_user_agent());
     youtube.setProgram(p.yt_program());

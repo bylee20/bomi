@@ -89,6 +89,7 @@ private:
     P0(QString, preserve_file_name_format, defaultFileNameFormat())
     P0(QString, preserve_fallback_folder, defaultFallbackFolder())
     P0(bool, show_logo, true)
+    P0(bool, show_controls_when_mouse_moved, true)
     P0(QColor, bg_color, Qt::black)
     P0(bool, exclude_images, true)
     P0(QStringList, sub_priority, {})
