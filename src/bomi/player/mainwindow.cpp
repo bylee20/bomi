@@ -357,6 +357,11 @@ auto MainWindow::resizeEvent(QResizeEvent *event) -> void
     QQuickView::resizeEvent(event);
 }
 
+auto MainWindow::moveEvent(QMoveEvent *event) -> void
+{
+    QQuickView::moveEvent(event);
+}
+
 auto MainWindow::keyPressEvent(QKeyEvent *event) -> void
 {
     event->setAccepted(false);

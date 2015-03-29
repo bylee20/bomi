@@ -57,6 +57,8 @@ WinWindowAdapter::WinWindowAdapter(QWindow* w)
     : WindowAdapter(w)
 {
     qApp->installNativeEventFilter(this);
+    w->installEventFilter(this);
+    m_position = w->position();
 }
 
 auto WinWindowAdapter::isImeEnabled() const -> bool
@@ -111,19 +113,40 @@ auto WinWindowAdapter::setFullScreen(bool fs) -> void
     }
 }
 
+auto WinWindowAdapter::eventFilter(QObject *obj, QEvent *ev) -> bool
+{
+    auto w = window();
+    if (obj != w)
+        return false;
+    if (ev->type() != QEvent::Move)
+        return false;
+    m_position = static_cast<QMoveEvent*>(ev)->pos();
+    return false;
+}
+
 auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long *res) -> bool
 {
     auto msg = static_cast<MSG*>(message);
+    auto w = window();
     switch (msg->message) {
-    case WM_NCACTIVATE: {
-        if (window()->windowState() != Qt::WindowMaximized || msg->hwnd != (HWND)winId())
+    case WM_MOVE: {
+        if (!w->isVisible())
+            return false;
+        const auto x = GET_X_LPARAM(msg->lParam);
+        const auto y = GET_Y_LPARAM(msg->lParam);
+        QMoveEvent event({x, y}, m_position);
+        qApp->sendEvent(w, &event);
+        *res = 0;
+        return true;
+    } case WM_NCACTIVATE: {
+        if (w->windowState() != Qt::WindowMaximized || msg->hwnd != (HWND)winId())
             return false;
         *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
         return true;
     } case WM_NCPAINT: {
-        if (!window()->isVisible() || msg->hwnd != (HWND)winId())
+        if (!w->isVisible() || msg->hwnd != (HWND)winId())
             return false;
-        if (window()->windowState() == Qt::WindowMaximized) {
+        if (w->windowState() == Qt::WindowMaximized) {
             *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
             return true;
         }
@@ -148,9 +171,9 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         if (!m_fs || msg->hwnd != (HWND)winId())
             return false;
         QPoint gpos(GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam));
-        QPoint pos = window()->mapFromGlobal(gpos);
+        QPoint pos = w->mapFromGlobal(gpos);
         QMouseEvent me(QEvent::MouseMove, pos, gpos, Qt::NoButton, Qt::NoButton, Qt::NoModifier);
-        qApp->sendEvent(window(), &me);
+        qApp->sendEvent(w, &me);
         return false;
     } default:
         return false;

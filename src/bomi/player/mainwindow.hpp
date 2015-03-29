@@ -36,6 +36,7 @@ private:
     auto showEvent(QShowEvent *event) -> void final;
     auto hideEvent(QHideEvent *event) -> void final;
     auto resizeEvent(QResizeEvent *event) -> void final;
+    auto moveEvent(QMoveEvent *event) -> void final;
     auto customEvent(QEvent *event) -> void final;
     auto keyPressEvent(QKeyEvent *event) -> void final;
     auto mouseDoubleClickEvent(QMouseEvent *event) -> void final;
