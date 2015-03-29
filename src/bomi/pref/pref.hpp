@@ -152,6 +152,7 @@ private:
 
     P0(QString, yt_user_agent, u"Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0 (Chrome)"_q)
     P0(QString, yt_program, u"youtube-dl"_q)
+    P0(bool, yt_ask_video_quality, false)
     P0(QString, yle_program, u"yle-dl"_q)
     int yt_timeout = 60000;
 

@@ -513,6 +513,7 @@ auto MainWindow::Data::applyPref() -> void
 
     youtube.setUserAgent(p.yt_user_agent());
     youtube.setProgram(p.yt_program());
+    youtube.setAskVideoQuality(p.yt_ask_video_quality());
     yle.setProgram(p.yle_program());
     history.setRememberImage(p.remember_image());
     history.setPropertiesToRestore(p.restore_properties());

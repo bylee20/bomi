@@ -40,6 +40,15 @@ MainWindow::MainWindow()
     AppObject::setTheme(&d->theme);
     AppObject::setWindow(this);
 
+    d->youtube.setGetFormat([=] (QList<YouTubeFormat> *formats,
+                         const QString &def) -> void {
+        QMutex mutex; QWaitCondition cond;
+        mutex.lock();
+        _PostEvent(this, GetYouTubeFormat, formats, def, &cond);
+        cond.wait(&mutex);
+        mutex.unlock();
+    });
+
     d->playlist.setDownloader(&d->downloader);
     d->e.setHistory(&d->history);
     d->e.setYouTube(&d->youtube);
@@ -445,10 +454,11 @@ auto MainWindow::event(QEvent *event) -> bool
 
 auto MainWindow::customEvent(QEvent *event) -> void
 {
-    if ((int)event->type() == GetSmbAuth) {
+    QWaitCondition *cond = nullptr;
+    switch ((int)event->type()) {
+    case GetSmbAuth: {
         SmbAuth *smb = nullptr;
         bool *res = nullptr;
-        QWaitCondition *cond = nullptr;
         _TakeData(event, smb, res, cond);
         Q_ASSERT(smb && res && cond);
         auto dlg = d->dialog<SmbAuthDialog>();
@@ -458,6 +468,21 @@ auto MainWindow::customEvent(QEvent *event) -> void
             *smb = dlg->authInfo();
         }
         cond->wakeAll();
+        break;
+    } case GetYouTubeFormat: {
+        QList<YouTubeFormat> *formats;
+        QString defId;
+        _TakeData(event, formats, defId, cond);
+        auto dlg = d->dialog<YouTubeDialog>();
+        dlg->setFormats(*formats, defId);
+        if (dlg->exec())
+            *formats = dlg->formats();
+        else
+            formats->clear();
+        cond->wakeAll();
+        break;
+    } default:
+        break;
     }
 }
 

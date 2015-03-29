@@ -321,8 +321,13 @@ auto PlayEngine::Data::onLoad() -> void
             mpv.setAsync("file-local-options/cookies-file", MpvFile(youtube->cookies()).toMpv());
             mpv.setAsync("file-local-options/user-agent", youtube->userAgent().toUtf8());
             const auto r = youtube->result();
-            if (!r.url.isEmpty())
+            if (!r.url.isEmpty()) {
                 mpv.setAsync("stream-open-filename", MpvFile(r.url).toMpv());
+                if (!r.audio.isEmpty()) { // DASH
+                    mpv.setAsync("file-local-options/audio-file", MpvFile(r.audio).toMpv());
+                    mpv.setAsync("file-local-options/demuxer-lavf-o", "fflags=+ignidx"_b);
+                }
+            }
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
         } else
