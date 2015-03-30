@@ -3,7 +3,7 @@ import bomi 1.0 as B
 
 PlayInfoText {
     id: self
-    property string name
+    property string name: info.track.typeText
     property var info
     function format(name, info) {
         if (name.length <= 0) return ""

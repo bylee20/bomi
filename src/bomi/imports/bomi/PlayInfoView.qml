@@ -63,7 +63,7 @@ Item {
 
         PlayInfoText { }
 
-        PlayInfoTrack { id: ti; name: qsTr("Video Track"); info: video }
+        PlayInfoTrack { id: ti; info: video }
         PlayInfoVideoOutput { format: video.decoder; name: qsTr("Decoder") }
         PlayInfoVideoOutput { format: video.filter;  name: qsTr("Filter ") }
         PlayInfoVideoOutput { format: video.output;  name: qsTr("Output ") }
@@ -101,7 +101,7 @@ Item {
 
         PlayInfoText { }
 
-        PlayInfoTrack { name: qsTr("Audio Track"); info: audio }
+        PlayInfoTrack { info: audio }
         PlayInfoAudioOutput { format: audio.decoder; name: qsTr("Decoder") }
         PlayInfoAudioOutput { format: audio.filter;  name: qsTr("Filter ") }
         PlayInfoAudioOutput { format: audio.output;  name: qsTr("Output ") }
@@ -121,7 +121,7 @@ Item {
         Component {
             id: subtitleTrack
             PlayInfoText {
-                readonly property string name: qsTr("Subtitle Track")
+                readonly property string name: engine.subtitle.track.typeText
                 function format(name, track) {
                     if (name.length <= 0) return ""
                     return qsTr("%1 #%2: Codec=%3, Title=%4, Language=%5, Encoding=%6")

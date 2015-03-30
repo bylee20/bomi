@@ -8,6 +8,7 @@ enum StreamType { StreamAudio = 0, StreamVideo, StreamSubtitle, StreamInclusiveS
 class SubComp;
 
 class StreamTrack {
+    Q_DECLARE_TR_FUNCTIONS(StreamTrack)
 public:
     auto name() const -> QString;
     auto id() const -> int {return m_id;}
@@ -31,6 +32,7 @@ public:
     auto file() const -> QString { return m_file; }
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
+    static auto typeDescription(StreamType type, bool albumart = false) -> QString;
     static auto fromJson(const QJsonObject &json) -> StreamTrack;
     static auto fromMpvData(const QVariant &mpv) -> StreamTrack;
     static auto fromSubComp(const SubComp &comp) -> StreamTrack;

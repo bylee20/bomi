@@ -26,6 +26,11 @@ auto CodecObject::parse(const QString &info) -> void
     }
 }
 
+auto AvTrackObject::typeText() const -> QString
+{
+    return StreamTrack::typeDescription((StreamType)m_type, m_albumart);
+}
+
 auto AvTrackObject::fromTrack(int n, const StreamTrack &track) -> AvTrackObject*
 {
     AvTrackObject *info = new AvTrackObject;
@@ -36,7 +41,14 @@ auto AvTrackObject::fromTrack(int n, const StreamTrack &track) -> AvTrackObject*
     info->m_lang = track.language();
     info->m_selected = track.isSelected();
     info->m_enc = track.encoding().name();
+    info->m_albumart = track.isAlbumArt();
+    info->m_type = track.type();
     return info;
+}
+
+AvCommonObject::AvCommonObject(int type)
+{
+    m_dummy.m_type = type;
 }
 
 AvCommonObject::~AvCommonObject()
@@ -48,8 +60,7 @@ auto AvCommonObject::track() const -> AvTrackObject*
 {
     if (m_track)
         return m_track;
-    static AvTrackObject dummy;
-    return &dummy;
+    return &m_dummy;
 }
 
 auto AvCommonObject::update(const StreamList &tracks, bool clear) -> AvTrackObject*
@@ -84,6 +95,12 @@ auto AvCommonObject::setTracks(const StreamList &tracks) -> void
 }
 
 /******************************************************************************/
+
+AudioObject::AudioObject()
+    : AvCommonObject(StreamAudio)
+{
+
+}
 
 auto AudioFormatObject::setFormat(const AudioFormat &format) -> void
 {
@@ -156,6 +173,7 @@ auto VideoFormatObject::spaceText() const -> QString
 }
 
 VideoObject::VideoObject()
+    : AvCommonObject(StreamVideo)
 {
     connect(this, &VideoObject::delayedFramesChanged,
             this, &VideoObject::delayedTimeChanged);
@@ -189,6 +207,7 @@ auto VideoObject::delayedTime() const -> qreal
 /******************************************************************************/
 
 SubtitleObject::SubtitleObject()
+    : AvCommonObject(StreamSubtitle)
 {
 }
 

@@ -63,6 +63,8 @@ class AvTrackObject : public QObject {
     Q_PROPERTY(bool selected READ isSelected CONSTANT FINAL)
     Q_PROPERTY(QString codec READ codec CONSTANT FINAL)
     Q_PROPERTY(QString encoding READ encoding CONSTANT FINAL)
+    Q_PROPERTY(QString typeText READ typeText CONSTANT FINAL)
+    Q_PROPERTY(bool albumart READ isAlbumArt CONSTANT FINAL)
 public:
     AvTrackObject() = default;
     auto id() const -> int {return m_id;}
@@ -73,10 +75,14 @@ public:
     auto codec() const -> QString { return m_codec; }
     auto isSelected() const -> bool { return m_selected; }
     auto encoding() const -> QString { return m_enc; }
+    auto isAlbumArt() const -> bool { return m_albumart; }
+    auto typeText() const -> QString;
     static auto fromTrack(int n, const StreamTrack &track) -> AvTrackObject*;
 private:
-    int m_id = -1, m_number = -1; QString m_title, m_lang, m_codec, m_enc;
-    bool m_selected = false;
+    friend class AvCommonObject;
+    int m_id = -1, m_number = -1, m_type = 0;
+    QString m_title, m_lang, m_codec, m_enc, m_typeText;
+    bool m_selected = false, m_albumart = false;
 };
 
 class AvCommonObject : public QObject {
@@ -85,6 +91,7 @@ class AvCommonObject : public QObject {
     Q_PROPERTY(AvTrackObject *track READ track NOTIFY trackChanged)
     Q_PROPERTY(QQmlListProperty<AvTrackObject> tracks READ tracks NOTIFY tracksChanged)
 public:
+    AvCommonObject(int type);
     ~AvCommonObject();
     auto tracks() const -> QQmlListProperty<AvTrackObject>;
     auto trackObjects() const -> const QVector<AvTrackObject*>& { return m_tracks; }
@@ -104,6 +111,7 @@ private:
     CodecObject m_codec;
     QVector<AvTrackObject*> m_tracks;
     AvTrackObject *m_track = nullptr;
+    mutable AvTrackObject m_dummy;
 };
 
 /******************************************************************************/
@@ -143,6 +151,7 @@ class AudioObject : public AvCommonObject {
     Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
     Q_PROPERTY(QString device READ device NOTIFY deviceChanged)
 public:
+    AudioObject();
     auto decoder() const -> const AudioFormatObject* { return &m_decoder; }
     auto filter() const -> const AudioFormatObject* { return &m_filter; }
     auto output() const -> const AudioFormatObject* { return &m_output; }
