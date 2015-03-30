@@ -5,6 +5,17 @@ BaseApp {
     id: root
     player: playerItem
 
+    MouseArea {
+        id: area
+        anchors.fill: parent
+        hoverEnabled: true
+        onPressed: mouse.accepted = false
+        onReleased: mouse.accepted = false
+        onEntered: catcher.update();
+        onExited: catcher.update();
+        onPositionChanged: catcher.update();
+    }
+
     Player {
         id: playerItem
         width: parent.width
@@ -39,17 +50,6 @@ BaseApp {
     Connections {
         target: App.window.mouse
         onCursorChanged: catcher.update();
-    }
-
-    MouseArea {
-        id: area
-        anchors.fill: parent
-        hoverEnabled: true
-        onPressed: mouse.accepted = false
-        onReleased: mouse.accepted = false
-        onEntered: catcher.update();
-        onExited: catcher.update();
-        onPositionChanged: catcher.update();
     }
 
     MouseArea {
