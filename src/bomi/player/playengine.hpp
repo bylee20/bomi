@@ -114,7 +114,6 @@ public:
     auto chapters() const -> const QVector<ChapterObject*>&;
     auto seekEdition(int number, int from = 0) -> void;
     auto seekChapter(int number) -> void;
-    auto isAudioOnly() const -> bool;
 
     auto setAudioFiles(const QStringList &files) -> void;
     auto addAudioFiles(const QStringList &files) -> void;
@@ -293,7 +292,6 @@ signals:
     void hwaccChanged();
     void cacheUsedChanged();
     void hasVideoChanged();
-    void audioOnlyChanged();
     void chapterChanged();
     void subtitleTrackInfoChanged();
     void metaDataChanged();

@@ -475,7 +475,6 @@ auto MainWindow::Data::plugMenu() -> void
     PROP_NOTIFY(video_color, [=] (auto eq) { return eq.description(); });
 
     connect(e.params(), &MrlState::currentTrackChanged, p, [=] (StreamType type) {
-//        qDebug() << "notified" << e.params()->tracks(type).selectionId();
         if (auto track = e.params()->tracks(type).selection())
             showMessage(e.params()->description(type), track->name());
         else

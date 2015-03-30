@@ -772,9 +772,9 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
         p->setIcon(cApp.defaultIcon());
 #endif
     } else {
-        if (!pref.pause_minimized())
+        if (!pref.pause_minimized() || !e.isPlaying())
             return;
-        if (!e.isPlaying() || (pref.pause_video_only() && e.isAudioOnly()))
+        if (pref.pause_video_only() && e.video()->track()->isAlbumArt())
             return;
         pausedByHiding = true;
         e.pause();

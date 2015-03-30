@@ -47,17 +47,8 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::video_effects_changed, d->vr, [=] (auto e)
         { d->vr->setFlipped(e & VideoEffect::FlipH, e & VideoEffect::FlipV); });
     connect(&d->params, &MrlState::video_tracks_changed, this, [=] (StreamList list) {
-        bool audioOnly = true;
-        for (const auto &track : list) {
-            if (!track.isAlbumArt()) {
-                audioOnly = false;
-                break;
-            }
-        }
         if (_Change(d->hasVideo, !list.isEmpty()))
             emit hasVideoChanged();
-        if (_Change(d->audioOnly, audioOnly))
-            emit audioOnlyChanged();
         d->info.video.setTracks(list);
     });
 
@@ -654,11 +645,6 @@ auto PlayEngine::seekEdition(int number, int from) -> void
         d->mpv.setAsync(mrl.isDisc() ? "disc-title"_b : "edition"_b, number);
         seek(from);
     }
-}
-
-auto PlayEngine::isAudioOnly() const -> bool
-{
-    return d->audioOnly;
 }
 
 auto PlayEngine::setAudioVolume(double volume) -> void

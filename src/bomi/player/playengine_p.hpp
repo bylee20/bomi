@@ -97,7 +97,7 @@ struct PlayEngine::Data {
         QSharedPointer<MrlState> local;
     } t; // thread local
 
-    bool hasImage = false, seekable = false, hasVideo = false, audioOnly = false;
+    bool hasImage = false, seekable = false, hasVideo = false;
     bool pauseAfterSkip = false, resume = false, hwdec = false;
     bool quit = false, preciseSeeking = false, mouseInButton = false;
     bool filterResync = false;
