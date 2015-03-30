@@ -1515,12 +1515,12 @@ Nelze otevřít záznam.</translation>
         <translation>Automatické vypnutí je zrušeno.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="417"/>
+        <location filename="../player/mainwindow.cpp" line="431"/>
         <source>bomi will be running in the system tray when the window closed.</source>
         <translation>bomi poběží, když bude okno zavřeno, dále v oznamovací oblasti panelu.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="420"/>
+        <location filename="../player/mainwindow.cpp" line="434"/>
         <source>You can change this behavior in the preferences. If you want to exit bomi, please use &apos;Exit&apos; menu.</source>
         <translation>Toto chování můžete změnit v nastavení. Pokud chcete bomi ukončit, použijte, prosím, nabídku Ukončit.</translation>
     </message>
@@ -1542,12 +1542,12 @@ Please wait for a while.</source>
 Počkejte chvíli, prosím.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="529"/>
+        <location filename="../player/mainwindow_p.cpp" line="531"/>
         <source>JSON-RPC Server Error</source>
         <translation>Chyba serveru JSON-RPC</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="689"/>
+        <location filename="../player/mainwindow_p.cpp" line="691"/>
         <source>Error on loading skin</source>
         <translation>Chyba při nahrávání vzhledu</translation>
     </message>
@@ -1575,13 +1575,13 @@ Počkejte chvíli, prosím.</translation>
         <translation type="vanished">Nepodařilo se uložit snímek obrazovky</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="416"/>
+        <location filename="../player/mainwindow.cpp" line="430"/>
         <source>System Tray Icon</source>
         <translation>Ikona v oznamovací oblasti panelu</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="581"/>
-        <location filename="../player/mainwindow_p.cpp" line="944"/>
+        <location filename="../player/mainwindow_p.cpp" line="946"/>
         <source>Save File</source>
         <translation>Uložit soubor</translation>
     </message>
@@ -1681,17 +1681,17 @@ Počkejte chvíli, prosím.</translation>
         <translation>Opakování A-B</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="423"/>
+        <location filename="../player/mainwindow.cpp" line="437"/>
         <source>Do not display this message again</source>
         <translation>Tuto zprávu znovu nezobrazovat</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.hpp" line="161"/>
+        <location filename="../player/mainwindow_p.hpp" line="162"/>
         <source>On</source>
         <translation>Zapnuto</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.hpp" line="161"/>
+        <location filename="../player/mainwindow_p.hpp" line="162"/>
         <source>Off</source>
         <translation>Vypnuto</translation>
     </message>
@@ -2305,52 +2305,52 @@ Může pomoci aktualizovat ovladač grafické karty.</translation>
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../player/playengine_p.cpp" line="577"/>
+        <location filename="../player/playengine_p.cpp" line="582"/>
         <source>Edition %1</source>
         <translation>Díl %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="577"/>
+        <location filename="../player/playengine_p.cpp" line="582"/>
         <source>Title %1</source>
         <translation>Titul %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1086"/>
+        <location filename="../player/playengine.cpp" line="1100"/>
         <source>Playing</source>
         <translation>Přehrává se</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1084"/>
+        <location filename="../player/playengine.cpp" line="1098"/>
         <source>Stopped</source>
         <translation>Zastaveno</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1068"/>
+        <location filename="../player/playengine.cpp" line="1082"/>
         <source>Loading</source>
         <translation>Nahrává se</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1070"/>
+        <location filename="../player/playengine.cpp" line="1084"/>
         <source>Searching</source>
         <translation>Hledá se</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1072"/>
+        <location filename="../player/playengine.cpp" line="1086"/>
         <source>Buffering</source>
         <translation>Ukládá se do vyrovnávací paměti</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1074"/>
+        <location filename="../player/playengine.cpp" line="1088"/>
         <source>Seeking</source>
         <translation>Posouvá se</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1090"/>
+        <location filename="../player/playengine.cpp" line="1104"/>
         <source>Error</source>
         <translation>Chyba</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1088"/>
+        <location filename="../player/playengine.cpp" line="1102"/>
         <source>Paused</source>
         <translation>Pozastaveno</translation>
     </message>
@@ -2400,9 +2400,8 @@ Může pomoci aktualizovat ovladač grafické karty.</translation>
         <translation type="vanished">%1 KiB (%3% z %2 KiB)</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="66"/>
         <source>Video Track</source>
-        <translation>Obrazová stopa</translation>
+        <translation type="vanished">Obrazová stopa</translation>
     </message>
     <message>
         <source>Input   </source>
@@ -2510,9 +2509,8 @@ Může pomoci aktualizovat ovladač grafické karty.</translation>
         <translation>Odstranění prokládání</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="104"/>
         <source>Audio Track</source>
-        <translation>Zvuková stopa</translation>
+        <translation type="vanished">Zvuková stopa</translation>
     </message>
     <message>
         <location filename="../imports/bomi/PlayInfoView.qml" line="111"/>
@@ -2525,9 +2523,8 @@ Může pomoci aktualizovat ovladač grafické karty.</translation>
         <translation>Ovladač</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="124"/>
         <source>Subtitle Track</source>
-        <translation>Stopa titulků</translation>
+        <translation type="vanished">Stopa titulků</translation>
     </message>
     <message>
         <location filename="../imports/bomi/PlayInfoView.qml" line="127"/>
@@ -2705,18 +2702,18 @@ Může pomoci aktualizovat ovladač grafické karty.</translation>
         <translation>Jazyk</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2298"/>
-        <location filename="../ui/prefdialog.ui" line="2361"/>
+        <location filename="../ui/prefdialog.ui" line="2305"/>
+        <location filename="../ui/prefdialog.ui" line="2368"/>
         <source>You may need to restart bomi to apply the changes </source>
         <translation>Aby se změny projevily, bude zřejmě Bomi potřeba spustit znovu </translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2289"/>
+        <location filename="../ui/prefdialog.ui" line="2296"/>
         <source>Window style</source>
         <translation>Styl okna</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2225"/>
+        <location filename="../ui/prefdialog.ui" line="2232"/>
         <source>Background Image</source>
         <translation>Obrázek na pozadí</translation>
     </message>
@@ -2766,7 +2763,7 @@ Může pomoci aktualizovat ovladač grafické karty.</translation>
         <translation>Uložit a obnovit stav podle přehrávání média</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2345"/>
+        <location filename="../ui/prefdialog.ui" line="2352"/>
         <source>Locale</source>
         <translation>Jazyk</translation>
     </message>
@@ -2877,42 +2874,52 @@ Playback information
         <translation>Přípojka</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2182"/>
+        <location filename="../ui/prefdialog.ui" line="2179"/>
+        <source>Show hidden controls whenever mouse moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2189"/>
         <source>Font</source>
         <translation>Písmo</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2205"/>
+        <location filename="../ui/prefdialog.ui" line="2212"/>
         <source>Fixed-width</source>
         <translation>Pevná šířka</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2233"/>
+        <location filename="../ui/prefdialog.ui" line="2240"/>
         <source>Show default bo&amp;mi logo</source>
         <translation>Ukázat výchozí značku Bo&amp;mi</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2428"/>
+        <location filename="../ui/prefdialog.ui" line="2435"/>
         <source>Action</source>
         <translation>Činnost</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2433"/>
+        <location filename="../ui/prefdialog.ui" line="2440"/>
         <source>Step</source>
         <translation>Krok</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2441"/>
+        <location filename="../ui/prefdialog.ui" line="2448"/>
         <source>Adjust Window Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2497"/>
+        <location filename="../ui/prefdialog.ui" line="2495"/>
+        <source>Ask video quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2511"/>
         <source>Username</source>
         <translation>Uživatelské jméno</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2504"/>
+        <location filename="../ui/prefdialog.ui" line="2518"/>
         <source>Username for SMB/CIFS protocol.
 You don&apos;t need to specify to this if geust is allowed.
 You can specify workgroup in the form of &apos;workgroup;username&apos;.</source>
@@ -2921,29 +2928,29 @@ Nemusíte jej určovat, jestliže je host dovolen.
 Můžete stanovit pracovní skupinu ve tvaru &apos;pracovní skupina;uživatelské jméno&apos;.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2513"/>
+        <location filename="../ui/prefdialog.ui" line="2527"/>
         <source>Password</source>
         <translation>Heslo</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2520"/>
+        <location filename="../ui/prefdialog.ui" line="2534"/>
         <source>Password for given username.
 You don&apos;t need to specify to this if geust is allowed.</source>
         <translation>Heslo pro dané uživatelské jméno.
 Nemusíte je určovat, jestliže je host dovolen.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2531"/>
+        <location filename="../ui/prefdialog.ui" line="2545"/>
         <source>CAUTION: password will be stored in plain text!</source>
         <translation>POZOR: Heslo bude uloženo v prostém textu!</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2541"/>
+        <location filename="../ui/prefdialog.ui" line="2555"/>
         <source>Network folders</source>
         <translation>Síťové složky</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2547"/>
+        <location filename="../ui/prefdialog.ui" line="2561"/>
         <source>Folders of network drives or NFS</source>
         <translation>Složky síťových disků nebo NFS</translation>
     </message>
@@ -3126,7 +3133,7 @@ Nemusíte je určovat, jestliže je host dovolen.</translation>
         <translation>Toto je záložní složka pro ukládání stažených titulků, když není původní složka zapisovatelná.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2452"/>
+        <location filename="../ui/prefdialog.ui" line="2459"/>
         <source>Streaming</source>
         <translation>Přenos</translation>
     </message>
@@ -3201,37 +3208,37 @@ Nemusíte je určovat, jestliže je host dovolen.</translation>
         <translation>Zobrazení</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2240"/>
+        <location filename="../ui/prefdialog.ui" line="2247"/>
         <source>Fi&amp;ll color:</source>
         <translation>Barva &amp;výplně:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2275"/>
+        <location filename="../ui/prefdialog.ui" line="2282"/>
         <source>Playlist View</source>
         <translation>Pohled na seznam skladeb</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2282"/>
+        <location filename="../ui/prefdialog.ui" line="2289"/>
         <source>History View</source>
         <translation>Pohled na historii</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2334"/>
+        <location filename="../ui/prefdialog.ui" line="2341"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation>Obrátit směr posunování obrazu pomocí kolečka myši</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2371"/>
+        <location filename="../ui/prefdialog.ui" line="2378"/>
         <source>Audio Priority</source>
         <translation>Přednost zvuku</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2390"/>
+        <location filename="../ui/prefdialog.ui" line="2397"/>
         <source>Subtitle Priority</source>
         <translation>Přednost titulků</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2409"/>
+        <location filename="../ui/prefdialog.ui" line="2416"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
         <translation>Tyto volby se použijí na určení přednosti zvuku/titulků.
@@ -3311,7 +3318,7 @@ Je podporován regulární výraz.</translation>
         <translation type="vanished">Barevný odstín</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2188"/>
+        <location filename="../ui/prefdialog.ui" line="2195"/>
         <location filename="../pref/prefdialog.cpp" line="105"/>
         <source>General</source>
         <translation>Obecné</translation>
@@ -4657,20 +4664,25 @@ Potvrďte, prosím, údaje pro ověření pravosti a zkuste to znovu.</translati
     </message>
 </context>
 <context>
-    <name>StreamType</name>
+    <name>StreamTrack</name>
     <message>
-        <location filename="../player/streamtrack.cpp" line="8"/>
-        <source>Video Track %1</source>
+        <location filename="../player/streamtrack.cpp" line="61"/>
+        <source>Album Art</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/streamtrack.cpp" line="9"/>
-        <source>Audio Track %1</source>
-        <translation type="unfinished"></translation>
+        <location filename="../player/streamtrack.cpp" line="62"/>
+        <source>Video Track</source>
+        <translation type="unfinished">Obrazová stopa</translation>
     </message>
     <message>
-        <location filename="../player/streamtrack.cpp" line="11"/>
-        <source>Subtitle Track %1</source>
+        <location filename="../player/streamtrack.cpp" line="64"/>
+        <source>Audio Track</source>
+        <translation type="unfinished">Zvuková stopa</translation>
+    </message>
+    <message>
+        <location filename="../player/streamtrack.cpp" line="67"/>
+        <source>Subtitle Track</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5057,6 +5069,24 @@ h:m:s
     <message>
         <location filename="../misc/windowsize.cpp" line="75"/>
         <source>Action %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>YouTubeDialog</name>
+    <message>
+        <location filename="../misc/youtubedl.cpp" line="284"/>
+        <source>Video</source>
+        <translation type="unfinished">Obraz</translation>
+    </message>
+    <message>
+        <location filename="../misc/youtubedl.cpp" line="285"/>
+        <source>Audio</source>
+        <translation type="unfinished">Zvuk</translation>
+    </message>
+    <message>
+        <location filename="../misc/youtubedl.cpp" line="324"/>
+        <source>Video Only</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

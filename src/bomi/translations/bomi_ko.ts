@@ -1492,7 +1492,7 @@ This requires much more CPU or GPU usage.</source>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="581"/>
-        <location filename="../player/mainwindow_p.cpp" line="944"/>
+        <location filename="../player/mainwindow_p.cpp" line="946"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
@@ -1514,12 +1514,12 @@ Please wait for a while.</source>
 잠시만 기다려주세요.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="529"/>
+        <location filename="../player/mainwindow_p.cpp" line="531"/>
         <source>JSON-RPC Server Error</source>
         <translation>JSON-RPC 서버 오류</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="689"/>
+        <location filename="../player/mainwindow_p.cpp" line="691"/>
         <source>Error on loading skin</source>
         <translation>스킨 불러오기 에러</translation>
     </message>
@@ -1677,17 +1677,17 @@ Cannot open the media.</source>
         <translation>다운로드</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="416"/>
+        <location filename="../player/mainwindow.cpp" line="430"/>
         <source>System Tray Icon</source>
         <translation>시스템 트레이 아이콘</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="417"/>
+        <location filename="../player/mainwindow.cpp" line="431"/>
         <source>bomi will be running in the system tray when the window closed.</source>
         <translation>창이 닫혀도 보미는 종료되지 않고 시스템 트레이상에서 작동할 것입니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="420"/>
+        <location filename="../player/mainwindow.cpp" line="434"/>
         <source>You can change this behavior in the preferences. If you want to exit bomi, please use &apos;Exit&apos; menu.</source>
         <translation>환경 설정에서 동작방식을 변경할 수 있습니다. 보미를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
@@ -1697,17 +1697,17 @@ Cannot open the media.</source>
         <translation>A-B 구간 반복</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.hpp" line="161"/>
+        <location filename="../player/mainwindow_p.hpp" line="162"/>
         <source>On</source>
         <translation>켜기</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.hpp" line="161"/>
+        <location filename="../player/mainwindow_p.hpp" line="162"/>
         <source>Off</source>
         <translation>끄기</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow.cpp" line="423"/>
+        <location filename="../player/mainwindow.cpp" line="437"/>
         <source>Do not display this message again</source>
         <translation>이 메시지를 다시 표시하지 않기</translation>
     </message>
@@ -2368,52 +2368,52 @@ OpenGL 지원을 확인하는데 실패하였습니다.
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../player/playengine_p.cpp" line="577"/>
+        <location filename="../player/playengine_p.cpp" line="582"/>
         <source>Title %1</source>
         <translation>타이틀 %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="577"/>
+        <location filename="../player/playengine_p.cpp" line="582"/>
         <source>Edition %1</source>
         <translation>에디션 %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1086"/>
+        <location filename="../player/playengine.cpp" line="1100"/>
         <source>Playing</source>
         <translation>재생중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1084"/>
+        <location filename="../player/playengine.cpp" line="1098"/>
         <source>Stopped</source>
         <translation>정지</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1068"/>
+        <location filename="../player/playengine.cpp" line="1082"/>
         <source>Loading</source>
         <translation>로딩중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1070"/>
+        <location filename="../player/playengine.cpp" line="1084"/>
         <source>Searching</source>
         <translation>검색중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1072"/>
+        <location filename="../player/playengine.cpp" line="1086"/>
         <source>Buffering</source>
         <translation>버퍼링</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1074"/>
+        <location filename="../player/playengine.cpp" line="1088"/>
         <source>Seeking</source>
         <translation>탐색중</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1090"/>
+        <location filename="../player/playengine.cpp" line="1104"/>
         <source>Error</source>
         <translation>에러</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1088"/>
+        <location filename="../player/playengine.cpp" line="1102"/>
         <source>Paused</source>
         <translation>일시정지</translation>
     </message>
@@ -2476,9 +2476,8 @@ OpenGL 지원을 확인하는데 실패하였습니다.
         <translation type="vanished">%1KiB(%3%, 전체: %2KiB)</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="66"/>
         <source>Video Track</source>
-        <translation>비디오 트랙</translation>
+        <translation type="vanished">비디오 트랙</translation>
     </message>
     <message>
         <source>Input   </source>
@@ -2574,9 +2573,8 @@ OpenGL 지원을 확인하는데 실패하였습니다.
         <translation>디인터레이스</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="104"/>
         <source>Audio Track</source>
-        <translation>오디오 트랙</translation>
+        <translation type="vanished">오디오 트랙</translation>
     </message>
     <message>
         <location filename="../imports/bomi/PlayInfoView.qml" line="111"/>
@@ -2589,9 +2587,8 @@ OpenGL 지원을 확인하는데 실패하였습니다.
         <translation>드라이버</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/PlayInfoView.qml" line="124"/>
         <source>Subtitle Track</source>
-        <translation>자막 트랙</translation>
+        <translation type="vanished">자막 트랙</translation>
     </message>
     <message>
         <location filename="../imports/bomi/PlayInfoView.qml" line="127"/>
@@ -2665,7 +2662,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2188"/>
+        <location filename="../ui/prefdialog.ui" line="2195"/>
         <location filename="../pref/prefdialog.cpp" line="105"/>
         <source>General</source>
         <translation>일반</translation>
@@ -2764,13 +2761,13 @@ OpenGL 지원을 확인하는데 실패하였습니다.
         <translation>언어</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2298"/>
-        <location filename="../ui/prefdialog.ui" line="2361"/>
+        <location filename="../ui/prefdialog.ui" line="2305"/>
+        <location filename="../ui/prefdialog.ui" line="2368"/>
         <source>You may need to restart bomi to apply the changes </source>
         <translation>변경점을 모두 적용하기 위해서는 보미를 다시 시작해야 합니다</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2289"/>
+        <location filename="../ui/prefdialog.ui" line="2296"/>
         <source>Window style</source>
         <translation>창 스타일</translation>
     </message>
@@ -2816,7 +2813,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
         <translation>원래 폴더에 저장할 수 없을 때 대신 다운로드한 자막을 저장할 폴더입니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2452"/>
+        <location filename="../ui/prefdialog.ui" line="2459"/>
         <source>Streaming</source>
         <translation>스트리밍</translation>
     </message>
@@ -2845,7 +2842,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
         <translation>로그 (재시작 필요)</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2225"/>
+        <location filename="../ui/prefdialog.ui" line="2232"/>
         <source>Background Image</source>
         <translation>배경 그림</translation>
     </message>
@@ -2906,7 +2903,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
         <translation>다음 시간이 경과하면 마우스 커서 숨기기:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2345"/>
+        <location filename="../ui/prefdialog.ui" line="2352"/>
         <source>Locale</source>
         <translation>로캘</translation>
     </message>
@@ -3057,42 +3054,52 @@ Playback information
         <translation>포트</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2182"/>
+        <location filename="../ui/prefdialog.ui" line="2179"/>
+        <source>Show hidden controls whenever mouse moved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2189"/>
         <source>Font</source>
         <translation>글꼴</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2205"/>
+        <location filename="../ui/prefdialog.ui" line="2212"/>
         <source>Fixed-width</source>
         <translation>고정폭</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2233"/>
+        <location filename="../ui/prefdialog.ui" line="2240"/>
         <source>Show default bo&amp;mi logo</source>
         <translation>기본 보미 로고 표시(&amp;m)</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2428"/>
+        <location filename="../ui/prefdialog.ui" line="2435"/>
         <source>Action</source>
         <translation>동작</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2433"/>
+        <location filename="../ui/prefdialog.ui" line="2440"/>
         <source>Step</source>
         <translation>단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2441"/>
+        <location filename="../ui/prefdialog.ui" line="2448"/>
         <source>Adjust Window Size</source>
         <translation>윈도우 크기 조절</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2497"/>
+        <location filename="../ui/prefdialog.ui" line="2495"/>
+        <source>Ask video quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2511"/>
         <source>Username</source>
         <translation>사용자명</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2504"/>
+        <location filename="../ui/prefdialog.ui" line="2518"/>
         <source>Username for SMB/CIFS protocol.
 You don&apos;t need to specify to this if geust is allowed.
 You can specify workgroup in the form of &apos;workgroup;username&apos;.</source>
@@ -3101,29 +3108,29 @@ You can specify workgroup in the form of &apos;workgroup;username&apos;.</source
 &apos;작업그룹;사용자명&apos;의 형식으로 작업그룹을 명시할 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2513"/>
+        <location filename="../ui/prefdialog.ui" line="2527"/>
         <source>Password</source>
         <translation>비밀번호</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2520"/>
+        <location filename="../ui/prefdialog.ui" line="2534"/>
         <source>Password for given username.
 You don&apos;t need to specify to this if geust is allowed.</source>
         <translation>입력한 사용자명의 비밀번호입니다.
 게스트가 허용된 경우에는 입력하지 않아도 됩니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2531"/>
+        <location filename="../ui/prefdialog.ui" line="2545"/>
         <source>CAUTION: password will be stored in plain text!</source>
         <translation>주의: 비밀번호는 평문으로 저장됩니다!</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2541"/>
+        <location filename="../ui/prefdialog.ui" line="2555"/>
         <source>Network folders</source>
         <translation>네트워크 폴더</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2547"/>
+        <location filename="../ui/prefdialog.ui" line="2561"/>
         <source>Folders of network drives or NFS</source>
         <translation>네트워크 드라이브나 NFS용 폴더</translation>
     </message>
@@ -3178,17 +3185,17 @@ You don&apos;t need to specify to this if geust is allowed.</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2240"/>
+        <location filename="../ui/prefdialog.ui" line="2247"/>
         <source>Fi&amp;ll color:</source>
         <translation>색 채우기(&amp;L):</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2275"/>
+        <location filename="../ui/prefdialog.ui" line="2282"/>
         <source>Playlist View</source>
         <translation>재생 목록</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2282"/>
+        <location filename="../ui/prefdialog.ui" line="2289"/>
         <source>History View</source>
         <translation>재생 기록</translation>
     </message>
@@ -3325,22 +3332,22 @@ You don&apos;t need to specify to this if geust is allowed.</source>
         <translation>표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2334"/>
+        <location filename="../ui/prefdialog.ui" line="2341"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation>마우스 휠 스크롤 방향을 반대로</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2371"/>
+        <location filename="../ui/prefdialog.ui" line="2378"/>
         <source>Audio Priority</source>
         <translation>오디오 우선 순위</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2390"/>
+        <location filename="../ui/prefdialog.ui" line="2397"/>
         <source>Subtitle Priority</source>
         <translation>자막 우선 순위</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2409"/>
+        <location filename="../ui/prefdialog.ui" line="2416"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
         <translation>이 옵션은 오디오 및 자막 우선 순위를 결정하는데 사용됩니다.
@@ -4793,21 +4800,41 @@ Please confirm authentication informations and try again.</source>
     </message>
 </context>
 <context>
+    <name>StreamTrack</name>
+    <message>
+        <location filename="../player/streamtrack.cpp" line="61"/>
+        <source>Album Art</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/streamtrack.cpp" line="62"/>
+        <source>Video Track</source>
+        <translation type="unfinished">비디오 트랙</translation>
+    </message>
+    <message>
+        <location filename="../player/streamtrack.cpp" line="64"/>
+        <source>Audio Track</source>
+        <translation type="unfinished">오디오 트랙</translation>
+    </message>
+    <message>
+        <location filename="../player/streamtrack.cpp" line="67"/>
+        <source>Subtitle Track</source>
+        <translation type="unfinished">자막 트랙</translation>
+    </message>
+</context>
+<context>
     <name>StreamType</name>
     <message>
-        <location filename="../player/streamtrack.cpp" line="8"/>
         <source>Video Track %1</source>
-        <translation>비디오 트랙: %1</translation>
+        <translation type="vanished">비디오 트랙: %1</translation>
     </message>
     <message>
-        <location filename="../player/streamtrack.cpp" line="9"/>
         <source>Audio Track %1</source>
-        <translation>오디오 트랙: %1</translation>
+        <translation type="vanished">오디오 트랙: %1</translation>
     </message>
     <message>
-        <location filename="../player/streamtrack.cpp" line="11"/>
         <source>Subtitle Track %1</source>
-        <translation>자막 트랙: %1</translation>
+        <translation type="vanished">자막 트랙: %1</translation>
     </message>
 </context>
 <context>
@@ -5193,6 +5220,24 @@ h:m:s
         <location filename="../misc/windowsize.cpp" line="75"/>
         <source>Action %1</source>
         <translation>동작 %1</translation>
+    </message>
+</context>
+<context>
+    <name>YouTubeDialog</name>
+    <message>
+        <location filename="../misc/youtubedl.cpp" line="284"/>
+        <source>Video</source>
+        <translation type="unfinished">비디오</translation>
+    </message>
+    <message>
+        <location filename="../misc/youtubedl.cpp" line="285"/>
+        <source>Audio</source>
+        <translation type="unfinished">오디오</translation>
+    </message>
+    <message>
+        <location filename="../misc/youtubedl.cpp" line="324"/>
+        <source>Video Only</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
