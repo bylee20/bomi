@@ -774,7 +774,7 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
     } else {
         if (!pref.pause_minimized())
             return;
-        if (!e.isPlaying() || (pref.pause_video_only() && !e.hasVideo()))
+        if (!e.isPlaying() || (pref.pause_video_only() && e.isAudioOnly()))
             return;
         pausedByHiding = true;
         e.pause();
