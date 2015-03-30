@@ -407,9 +407,11 @@ static void flip_page(struct vo *vo)
             frame_queue_drop_all(p->ctx);
         else // FRAME_DROP_POP mode
             frame_queue_shrink(p->ctx, p->frame_queue_size - 1);
-    }
-    frame_queue_push(p->ctx, p->ctx->waiting_frame);
-    p->ctx->waiting_frame = NULL;
+	}
+	if (p->ctx->waiting_frame) {
+		frame_queue_push(p->ctx, p->ctx->waiting_frame);
+		p->ctx->waiting_frame = NULL;
+	}
     update(p);
     pthread_mutex_unlock(&p->ctx->lock);
 }
