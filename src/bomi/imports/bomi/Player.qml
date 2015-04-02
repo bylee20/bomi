@@ -181,7 +181,7 @@ Item {
         id: rightEdge
         y: right.y
         width: 15; height: right.height; anchors.right: parent.right
-        visible: B.App.theme.playlist.showOnMouseOverEdge
+        visible: B.App.theme.controls.showPlaylistOnMouseOverEdge
         target: B.App.playlist; box: right;
     }
 
@@ -189,7 +189,7 @@ Item {
         id: leftEdge
         y: left.y
         width: 15; height: left.height; anchors.left: parent.left
-        visible: B.App.theme.history.showOnMouseOverEdge
+        visible: B.App.theme.controls.showHistoryOnMouseOverEdge
         target: B.App.history; box: left;
     }
 

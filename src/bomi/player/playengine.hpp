@@ -11,6 +11,7 @@ class VideoRenderer;                    class HistoryModel;
 struct DeintOptionSet;                  class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct OsdStyle;
+class VideoPreview;
 struct AudioNormalizerOption;           class QQuickItem;
 enum class ClippingMethod;              enum class VideoEffect;
 enum class DeintMethod;                 enum class DeintMode;
@@ -45,6 +46,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(MediaObject *media READ media CONSTANT FINAL)
     Q_PROPERTY(AudioObject *audio READ audio CONSTANT FINAL)
     Q_PROPERTY(VideoObject *video READ video CONSTANT FINAL)
+    Q_PROPERTY(VideoPreview *preview READ preview CONSTANT FINAL)
     Q_PROPERTY(SubtitleObject* subtitle READ subtitle CONSTANT FINAL)
 
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
@@ -71,6 +73,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
     Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
     Q_PROPERTY(bool stopped READ isStopped NOTIFY stoppedChanged)
+    Q_PROPERTY(bool seekable READ isSeekable NOTIFY seekableChanged)
     Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
     Q_PROPERTY(Waiting waiting READ waiting NOTIFY waitingChanged)
     Q_PROPERTY(QString waitingText READ waitingText NOTIFY waitingChanged)
@@ -181,6 +184,7 @@ public:
     auto setOverrideAssPosition(bool override) -> void;
     auto setOverrideAssScale(bool override) -> void;
     auto setSubtitleScale(double by) -> void;
+    auto preview() const -> VideoPreview*;
 
     auto setSpeed(double speed) -> void;
     auto setAudioSync(int sync) -> void;
@@ -199,6 +203,7 @@ public:
     auto video() const -> VideoObject*;
     auto avSync() const -> int;
     auto rate(int time) const -> double { return (double)(time-begin())/duration(); }
+    Q_INVOKABLE double rate_ms(int ms) const { return rate(ms); }
     auto rate() const -> double { return rate(time()); }
     auto setRate(qreal r) -> void { seek(begin() + r * duration()); }
     auto cacheSize() const -> int;

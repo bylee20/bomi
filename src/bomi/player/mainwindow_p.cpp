@@ -7,6 +7,7 @@
 #include "video/kernel3x3.hpp"
 #include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
+#include "video/videopreview.hpp"
 #include "audio/audionormalizeroption.hpp"
 #include "subtitle/subtitleviewer.hpp"
 #include "subtitle/subtitlemodel.hpp"
@@ -509,7 +510,6 @@ auto MainWindow::Data::applyPref() -> void
     OS::setScreensaverMethod(p.screensaver_method());
     const auto acc = p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1;
     EncodingInfo::setDefault(EncodingInfo::Subtitle, p.sub_enc(), acc);
-    theme.setShowControlsWhenMouseMoved(p.show_controls_when_mouse_moved());
 
     youtube.setUserAgent(p.yt_user_agent());
     youtube.setProgram(p.yt_program());
@@ -594,8 +594,7 @@ auto MainWindow::Data::applyPref() -> void
         p.window_sizes()[i].fillAction(win["size"_a % _N(i)]);
 
     theme.set(p.osd_theme());
-    theme.set(p.playlist_theme());
-    theme.set(p.history_theme());
+    theme.set(p.controls_theme());
     reloadSkin();
     if (tray)
         tray->setVisible(p.enable_system_tray());
@@ -627,6 +626,8 @@ auto MainWindow::Data::applyPref() -> void
     };
 
     e.lock();
+    e.preview()->setActive(p.controls_theme().showPreviewOnMouseOverSeekBar);
+
     e.setResume_locked(p.remember_stopped());
     e.setPreciseSeeking_locked(p.precise_seeking());
     e.setCache_locked(cache());

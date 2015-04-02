@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>678</width>
-    <height>545</height>
+    <height>571</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>21</number>
+        <number>17</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1943,6 +1943,18 @@ Playback information
        <widget class="QWidget" name="gen_behaviours">
         <layout class="QVBoxLayout" name="verticalLayout_28">
          <item>
+          <widget class="QGroupBox" name="groupBox_16">
+           <property name="title">
+            <string>Window style (Restart required)</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_20">
+            <item>
+             <widget class="DataComboBox" name="app_style"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="QGroupBox" name="system_tray_group">
            <property name="title">
             <string>System tray</string>
@@ -2173,13 +2185,6 @@ Playback information
               </item>
              </layout>
             </item>
-            <item>
-             <widget class="QCheckBox" name="show_controls_when_mouse_moved">
-              <property name="text">
-               <string>Show hidden controls whenever mouse moved</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </widget>
          </item>
@@ -2277,36 +2282,10 @@ Playback information
           </widget>
          </item>
          <item>
-          <widget class="PlaylistThemeWidget" name="playlist_theme">
+          <widget class="ControlsThemeWidget" name="controls_theme">
            <property name="title">
-            <string>Playlist View</string>
+            <string>Controls</string>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="HistoryThemeWidget" name="history_theme">
-           <property name="title">
-            <string>History View</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_16">
-           <property name="title">
-            <string>Window style</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_20">
-            <item>
-             <widget class="DataComboBox" name="app_style"/>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_27">
-              <property name="text">
-               <string>You may need to restart bomi to apply the changes </string>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </widget>
          </item>
          <item>
@@ -2701,18 +2680,6 @@ You don't need to specify to this if geust is allowed.</string>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PlaylistThemeWidget</class>
-   <extends>QGroupBox</extends>
-   <header>quick/playlistthemeobject.hpp</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>HistoryThemeWidget</class>
-   <extends>QGroupBox</extends>
-   <header>quick/playlistthemeobject.hpp</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>DeintWidget</class>
    <extends>QGroupBox</extends>
    <header>widget/deintwidget.hpp</header>
@@ -2754,6 +2721,12 @@ You don't need to specify to this if geust is allowed.</string>
    <class>WindowSizeWidget</class>
    <extends>QGroupBox</extends>
    <header>misc/windowsize.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ControlsThemeWidget</class>
+   <extends>QGroupBox</extends>
+   <header>quick/playlistthemeobject.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

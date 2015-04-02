@@ -1,5 +1,65 @@
 #include "playlistthemeobject.hpp"
 #include "misc/json.hpp"
+#include "ui_controlsthemewidget.h"
+
+#define JSON_CLASS ControlsTheme
+
+static const auto jio = JIO(
+    JE(showOnMouseMoved),
+    JE(showLocationsInPlaylist),
+    JE(showPlaylistOnMouseOverEdge),
+    JE(showHistoryOnMouseOverEdge),
+    JE(showPreviewOnMouseOverSeekBar)
+);
+
+JSON_DECLARE_FROM_TO_FUNCTIONS
+
+#undef JSON_CLASS
+
+/******************************************************************************/
+
+struct ControlsThemeWidget::Data {
+    Ui::ControlsThemeWidget ui;
+};
+
+ControlsThemeWidget::ControlsThemeWidget(QWidget *parent)
+    : QGroupBox(parent), d(new Data)
+{
+    d->ui.setupUi(this);
+    auto signal = &ControlsThemeWidget::valueChanged;
+    PLUG_CHANGED(d->ui.show_hidden_on_moved);
+    PLUG_CHANGED(d->ui.show_locations);
+    PLUG_CHANGED(d->ui.show_playlist_on_hovered);
+    PLUG_CHANGED(d->ui.show_history_on_hovered);
+    PLUG_CHANGED(d->ui.show_preview);
+}
+
+ControlsThemeWidget::~ControlsThemeWidget()
+{
+    delete d;
+}
+
+auto ControlsThemeWidget::value() const -> ControlsTheme
+{
+    ControlsTheme theme;
+    theme.showOnMouseMoved = d->ui.show_hidden_on_moved->isChecked();
+    theme.showLocationsInPlaylist = d->ui.show_locations->isChecked();
+    theme.showPlaylistOnMouseOverEdge = d->ui.show_playlist_on_hovered->isChecked();
+    theme.showHistoryOnMouseOverEdge = d->ui.show_history_on_hovered->isChecked();
+    theme.showPreviewOnMouseOverSeekBar = d->ui.show_preview->isChecked();
+    return theme;
+}
+
+auto ControlsThemeWidget::setValue(const ControlsTheme &theme) -> void
+{
+    d->ui.show_hidden_on_moved->setChecked(theme.showOnMouseMoved);
+    d->ui.show_locations->setChecked(theme.showLocationsInPlaylist);
+    d->ui.show_playlist_on_hovered->setChecked(theme.showPlaylistOnMouseOverEdge);
+    d->ui.show_history_on_hovered->setChecked(theme.showHistoryOnMouseOverEdge);
+    d->ui.show_preview->setChecked(theme.showPreviewOnMouseOverSeekBar);
+}
+
+/******************************************************************************/
 
 #define JSON_CLASS PlaylistTheme
 static const auto jioPlaylist = JIO(
@@ -12,63 +72,8 @@ JSON_DECLARE_FROM_TO_FUNCTIONS_IO(jioPlaylist)
 #undef JSON_CLASS
 
 #define JSON_CLASS HistoryTheme
-static const auto jio = JIO(
+static const auto jioHistory = JIO(
     JE(showOnMouseOverEdge)
 );
 
-JSON_DECLARE_FROM_TO_FUNCTIONS
-
-/******************************************************************************/
-
-PlaylistThemeWidget::PlaylistThemeWidget(QWidget *parent)
-    : QGroupBox(parent)
-{
-    m_location = new QCheckBox(tr("Show location in playlist"));
-    m_edge = new QCheckBox(tr("Show playlist when mouse hovers on the right edge"));
-    auto vbox = new QVBoxLayout;
-    vbox->addWidget(m_location);
-    vbox->addWidget(m_edge);
-    setLayout(vbox);
-
-    auto signal = &PlaylistThemeWidget::valueChanged;
-    PLUG_CHANGED(m_location);
-    PLUG_CHANGED(m_edge);
-}
-auto PlaylistThemeWidget::value() const -> PlaylistTheme
-{
-    PlaylistTheme theme;
-    theme.showLocation = m_location->isChecked();
-    theme.showOnMouseOverEdge = m_edge->isChecked();
-    return theme;
-}
-auto PlaylistThemeWidget::setValue(const PlaylistTheme &theme) -> void
-{
-    m_location->setChecked(theme.showLocation);
-    m_edge->setChecked(theme.showOnMouseOverEdge);
-}
-
-/******************************************************************************/
-
-HistoryThemeWidget::HistoryThemeWidget(QWidget *parent)
-    : QGroupBox(parent)
-{
-    m_edge = new QCheckBox(tr("Show history when mouse hovers on the left edge"));
-    auto vbox = new QVBoxLayout;
-    vbox->addWidget(m_edge);
-    setLayout(vbox);
-
-    auto signal = &HistoryThemeWidget::valueChanged;
-    PLUG_CHANGED(m_edge);
-}
-
-auto HistoryThemeWidget::value() const -> HistoryTheme
-{
-    HistoryTheme theme;
-    theme.showOnMouseOverEdge = m_edge->isChecked();
-    return theme;
-}
-
-auto HistoryThemeWidget::setValue(const HistoryTheme &theme) -> void
-{
-    m_edge->setChecked(theme.showOnMouseOverEdge);
-}
+JSON_DECLARE_FROM_TO_FUNCTIONS_IO(jioHistory)

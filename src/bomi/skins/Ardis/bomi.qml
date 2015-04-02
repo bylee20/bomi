@@ -130,6 +130,7 @@ B.AppWithFloating {
                 B.TimeSlider {
                     id: seeker; bind: td
                     width: 300; height: 10; style: sliderstyle
+                    z: 1
                     anchors {
                         verticalCenter: speaker.verticalCenter
                         horizontalCenter: parent.horizontalCenter

@@ -21,7 +21,7 @@ B.ModelView {
     }
     Text {
         id: _location
-        readonly property bool show: B.App.theme.playlist.showLocation
+        readonly property bool show: B.App.theme.controls.showLocationsInPlaylist
         readonly property real h: contentHeight
         font { pixelSize: 10; family: B.App.theme.monospace }
         visible: false

@@ -216,7 +216,7 @@ auto Mpv::run() -> void
                 }
             };
             const auto lv = getLevel();
-            Log::print(lv, Log::parse(lv, "mpv/"_b + msg->prefix, msg->text));
+            Log::print(lv, Log::parse(lv, m_logContext + '/' + msg->prefix, msg->text));
             break;
         } case MPV_EVENT_CLIENT_MESSAGE: {
             auto message = static_cast<mpv_event_client_message*>(ev->data);

@@ -292,7 +292,8 @@ HEADERS += \
     http-parser/http_parser.h \
     video/mpvosdrenderer.hpp \
     misc/windowsize.hpp \
-    enum/framebufferobjectformat.hpp
+    enum/framebufferobjectformat.hpp \
+    video/videopreview.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -500,7 +501,8 @@ SOURCES += \
     http-parser/http_parser.c \
     video/mpvosdrenderer.cpp \
     misc/windowsize.cpp \
-    enum/framebufferobjectformat.cpp
+    enum/framebufferobjectformat.cpp \
+    video/videopreview.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -523,7 +525,8 @@ FORMS += \
     ui/osdthemewidget.ui \
     ui/autoloaderwidget.ui \
     ui/logviewer.ui \
-    ui/subtitleviewer.ui
+    ui/subtitleviewer.ui \
+    ui/controlsthemewidget.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \
@@ -590,4 +593,5 @@ DISTFILES += \
     skins/air/bomi.qml \
     skins/air/ImageButton.qml \
     skins/air/IconTextButton.qml \
-	imports/bomi/PlayInfoAvOutput.qml
+	imports/bomi/PlayInfoAvOutput.qml \
+    imports/bomi/VideoPreviewStyle.qml

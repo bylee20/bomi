@@ -12,6 +12,7 @@ PlayEngine::PlayEngine()
     d->vp = new VideoProcessor;
     d->sr = new SubtitleRenderer;
     d->vr = new VideoRenderer;
+    d->preview = new VideoPreview;
     d->vr->setOverlay(d->sr);
     d->vr->setRenderFrameFunction([this] (Fbo *frame, Fbo* osd, const QMargins &m)
         { d->renderVideoFrame(frame, osd, m); });
@@ -179,6 +180,8 @@ PlayEngine::PlayEngine()
         d->info.video.setDelayedFrames(d->info.delayed);
         d->info.video.setDroppedFrames(d->mpv.get<int64_t>("vo-drop-frame-count"));
     });
+    connect(d->info.video.output(), &VideoFormatObject::sizeChanged,
+            d->preview, &VideoPreview::setSizeHint);
     d->info.frameTimer.setInterval(100);
 
     _Debug("Make registrations and connections");
@@ -251,6 +254,7 @@ PlayEngine::~PlayEngine()
     delete d->sr;
     delete d->vr;
     delete d->vp;
+    delete d->preview;
     delete d;
     _Debug("Finalized");
 }
@@ -514,6 +518,11 @@ auto PlayEngine::reload() -> void
     load(d->mrl);
 }
 
+auto PlayEngine::preview() const -> VideoPreview*
+{
+    return d->preview;
+}
+
 auto PlayEngine::setHistory(HistoryModel *history) -> void
 {
     d->history = history;
@@ -674,6 +683,7 @@ auto PlayEngine::setAudioMuted(bool muted) -> void
 
 auto PlayEngine::shutdown() -> void
 {
+    d->preview->shutdown();
     d->mpv.tell("quit", 1);
 }
 

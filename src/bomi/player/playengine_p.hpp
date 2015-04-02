@@ -18,6 +18,7 @@
 #include "audio/audioformat.hpp"
 #include "video/videorenderer.hpp"
 #include "video/videoprocessor.hpp"
+#include "video/videopreview.hpp"
 #include "subtitle/subtitle.hpp"
 #include "subtitle/subtitlerenderer.hpp"
 #include "enum/codecid.hpp"
@@ -63,6 +64,7 @@ struct PlayEngine::Data {
 
     Mpv mpv;
     VideoRenderer *vr = nullptr;
+    VideoPreview *preview = nullptr;
     AudioController *ac = nullptr;
     SubtitleRenderer *sr = nullptr;
     VideoProcessor *vp = nullptr;

@@ -11,6 +11,7 @@
 #include "pref/pref.hpp"
 #include "audio/audioformat.hpp"
 #include "video/interpolatorparams.hpp"
+#include "video/videopreview.hpp"
 #include "misc/downloader.hpp"
 #include "quick/algorithmobject.hpp"
 #include "quick/circularimageitem.hpp"
@@ -57,11 +58,11 @@ auto registerType() -> void
     qmlRegisterType<CpuObject>();
     qmlRegisterType<MouseObject>();
     qmlRegisterType<ThemeObject>();
-    qmlRegisterType<PlaylistThemeObject>();
-    qmlRegisterType<HistoryThemeObject>();
+    qmlRegisterType<ControlsThemeObject>();
     qmlRegisterType<OsdThemeObject>();
     qmlRegisterType<MessageThemeObject>();
     qmlRegisterType<MouseEventObject>();
+    qmlRegisterType<VideoPreview>();
 
     qmlRegisterSingletonType<AppObject>("bomi", 1, 0, "App", _QmlSingleton<AppObject>);
     qmlRegisterSingletonType<FormatObject>("bomi", 1, 0, "Format", _QmlSingleton<FormatObject>);

@@ -111,6 +111,19 @@ auto Pref::load() -> void
         if (!m_mouse_action_map.contains(MouseBehavior::RightClick))
             m_mouse_action_map[MouseBehavior::RightClick]
                 = defaultMouseActionMap()[MouseBehavior::RightClick];
+
+        if (json.contains(u"playlist_theme"_q)) {
+            m_controls_theme.showOnMouseMoved = json[u"show_controls_when_mouse_moved"_q].toBool(true);
+
+            PlaylistTheme playlist;
+            playlist.setFromJson(json[u"playlist_theme"_q].toObject());
+            m_controls_theme.showLocationsInPlaylist = playlist.showLocation;
+            m_controls_theme.showPlaylistOnMouseOverEdge = playlist.showOnMouseOverEdge;
+
+            HistoryTheme history;
+            history.setFromJson(json[u"history_theme"_q].toObject());
+            m_controls_theme.showHistoryOnMouseOverEdge = history.showOnMouseOverEdge;
+        }
     }
     m_app_unique = cApp.isUnique();
     m_app_locale = cApp.locale();

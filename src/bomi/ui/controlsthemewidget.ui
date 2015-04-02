@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ControlsThemeWidget</class>
+ <widget class="QGroupBox" name="ControlsThemeWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>342</width>
+    <height>145</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>GroupBox</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QCheckBox" name="show_hidden_on_moved">
+     <property name="text">
+      <string>Show hidden controls whenever mouse moved</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="show_locations">
+     <property name="text">
+      <string>Show locations in playlist</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="show_playlist_on_hovered">
+     <property name="text">
+      <string>Show playlist when mouse hovers on the right edge</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="show_history_on_hovered">
+     <property name="text">
+      <string>Show history when mouse hovers on the left edge</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="show_preview">
+     <property name="text">
+      <string>Show preview when mouse hovers on seek bar</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

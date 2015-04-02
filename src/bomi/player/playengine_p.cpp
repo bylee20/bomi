@@ -302,14 +302,14 @@ auto PlayEngine::Data::onLoad() -> void
         file = QUrl(file).toString(QUrl::FullyEncoded);
         if (yle && yle->supports(file)) {
             if (yle->run(file))
-                mpv.setAsync("stream-open-filename", MpvFile(yle->url()));
+                file = yle->url();
         } else if (youtube && youtube->run(file)) {
             mpv.setAsync("file-local-options/cookies", true);
             mpv.setAsync("file-local-options/cookies-file", MpvFile(youtube->cookies()).toMpv());
             mpv.setAsync("file-local-options/user-agent", youtube->userAgent().toUtf8());
             const auto r = youtube->result();
             if (!r.url.isEmpty()) {
-                mpv.setAsync("stream-open-filename", MpvFile(r.url).toMpv());
+                file = r.url;
                 if (!r.audio.isEmpty()) { // DASH
                     mpv.setAsync("file-local-options/audio-file", MpvFile(r.audio).toMpv());
                     mpv.setAsync("file-local-options/demuxer-lavf-o", "fflags=+ignidx"_b);
@@ -317,8 +317,7 @@ auto PlayEngine::Data::onLoad() -> void
             }
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
-        } else
-            mpv.setAsync("stream-open-filename", file.toMpv());
+        }
     } else if (file.data.startsWith("smb://"_a, QCI)) {
         auto smb = local->d->smb;
         QUrl url = smb.translate(QUrl(file));
@@ -337,10 +336,9 @@ auto PlayEngine::Data::onLoad() -> void
             url.setUserName(smb.username());
             url.setPassword(smb.password());
         }
-        mpv.setAsync("stream-open-filename", file.toMpv());
-    } else if (local->d->disc)
-        mpv.setAsync("stream-open-filename", file.toMpv());
+    }
 
+    mpv.setAsync("stream-open-filename", file.toMpv());
     mpv.flush();
     _PostEvent(p, SyncMrlState, t.local, loads);
     t.local.clear();
@@ -597,8 +595,10 @@ auto PlayEngine::Data::request() -> void
         select(StreamSubtitle);
         mpv.flush();
         _PostEvent(p, StartPlayback, editions, edition);
+        preview->load(mpv.get<MpvFile>("stream-open-filename"));
     });
     mpv.request(MPV_EVENT_END_FILE, [=] (mpv_event *e) {
+        preview->unload();
         post(Loading, false);
         auto ev = static_cast<mpv_event_end_file*>(e->data);
         _PostEvent(p, EndPlayback, t.local, ev->reason, ev->error);

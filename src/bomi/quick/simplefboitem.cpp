@@ -4,8 +4,9 @@
 SimpleFboItem::SimpleFboItem(QQuickItem *parent)
 : SimpleTextureItem(parent) {
     connect(&m_sizeChecker, &QTimer::timeout, [this] () {
-        if (!_Change(m_prevSize, QSizeF(width(), height()).toSize())) {
+        if (!_Change(m_prevSize, size().toSize())) {
             m_sizeChecker.stop();
+            reserve(UpdateMaterial);
             emit targetSizeChanged(m_targetSize = m_prevSize);
         }
     });
@@ -29,9 +30,11 @@ auto SimpleFboItem::geometryChanged(const QRectF &new_, const QRectF &old) -> vo
         if (_Change(m_targetSize, new_.size().toSize()))
             emit targetSizeChanged(m_targetSize);
         m_forced = false;
-    }else
+    } else
         m_sizeChecker.start();
-    reserve(UpdateAll);
+    reserve(UpdateGeometry);
+    if (new_.size() != old.size())
+        reserve(UpdateMaterial);
     SimpleTextureItem::geometryChanged(new_, old);
 }
 

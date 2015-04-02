@@ -32,7 +32,8 @@ public:
     Mpv(QObject *parent = nullptr);
     ~Mpv();
 
-    SCIA getLogContext() -> const char* { return "mpv"; }
+    auto setLogContext(const QByteArray &lctx) -> void { m_logContext = lctx; }
+    auto getLogContext() const -> const char* { return m_logContext.constData(); }
 
     auto handle() const -> mpv_handle* { return m_handle; }
 
@@ -127,6 +128,7 @@ private:
     struct Data; Data *d;
     mpv_handle *m_handle = nullptr;
     QObject *m_observer = nullptr;
+    QByteArray m_logContext = "mpv"_b;
 };
 
 template<class... Args>

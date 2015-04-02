@@ -35,7 +35,7 @@ BaseApp {
 
             function isControlsVisible() {
                 var m = App.window.mouse
-                if (App.theme.showControlsWhenMouseMoved)
+                if (App.theme.controls.showOnMouseMoved)
                     return m.cursor && m.isIn(area)
                 return m.isIn(floating)
             }

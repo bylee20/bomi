@@ -7,15 +7,47 @@ Slider {
     property alias time: seeker.value
     property TimeDuration bind
     property bool toolTip: !bind
+    property VideoPreviewStyle preview: VideoPreviewStyle { }
     property int target: -1
 
+    Rectangle {
+        id: pv
+        width: d.e.preview.width + 4
+        height: d.e.preview.height + 4
+        visible: false
+        y: preview.onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
+        z: 1
+        opacity: 0.0
+        border.width: 1
+        border.color: "black"
+        states: State {
+            name: "shown"
+            when: App.theme.controls.showPreviewOnMouseOverSeekBar
+                  && d.e.seekable && d.e.running && mouseArea.containsMouse
+            PropertyChanges { target: pv; visible: true }
+            PropertyChanges { target: pv; opacity: 1.0 }
+        }
+        transitions: Transition {
+            reversible: true; to: "shown"
+            SequentialAnimation {
+                PropertyAction { property: "visible" }
+                NumberAnimation { property: "opacity"; duration: 200 }
+            }
+        }
+        Component.onCompleted: {
+            d.e.preview.parent = this
+            d.e.preview.width = Qt.binding(function() { return (this.height * this.aspectRatio) | 0; });
+            d.e.preview.height = Qt.binding(function() { return preview.height; });
+            d.e.preview.anchors.centerIn = Qt.binding(function() { return pv; });
+        }
+    }
     onBindChanged: {
         if (bind)
             bind.time = Qt.binding(function ( ) { return mouseArea.time; })
     }
 
     Repeater {
-        model: d.engine.chapters
+        model: d.e.chapters
         Loader {
             readonly property Chapter chapter: modelData
             readonly property Slider control: seeker
@@ -26,7 +58,7 @@ Slider {
             y: vCenter ? (control.height - height) * 0.5 : 0
             sourceComponent: markerStyle
             function updateTarget() {
-                if (item.hovered && seeker.bind)
+                if (item.hovered)
                     seeker.target = chapter.time
                 else
                     seeker.target = -1
@@ -42,23 +74,23 @@ Slider {
 
     QtObject {
         id: d;
-        readonly property Engine engine: App.engine
+        readonly property Engine e: App.engine
         property bool ticking: false
         function target(x) { return (min + (x/seeker.width)*(max - min)); }
         function sync() {
-            seeker.min = engine.begin
-            seeker.max = engine.end
-            seeker.value = engine.time
+            seeker.min = e.begin
+            seeker.max = e.end
+            seeker.value = e.time
         }
     }
 
     Connections {
-        target: d.engine
-        onTick: { d.ticking = true; time = d.engine.time; d.ticking = false; }
+        target: d.e
+        onTick: { d.ticking = true; time = d.e.time; d.ticking = false; }
         onEndChanged: { d.ticking = true; d.sync(); d.ticking = false; }
         onBeginChanged: { d.ticking = true; d.sync(); d.ticking = false; }
     }
-    onValueChanged: { if (!d.ticking) d.engine.seek(value); }
+    onValueChanged: { if (!d.ticking) d.e.seek(value); }
     Component.onCompleted: d.sync()
 
     MouseArea {
@@ -67,7 +99,7 @@ Slider {
         anchors.fill: parent
         hoverEnabled: true
         property bool moving: pressed || containsMouse
-        property int time: target >= 0 ? target : moving ? d.target(mouseX) : d.engine.time
+        property int time: target >= 0 ? target : moving ? d.target(mouseX) : d.e.time
         Text { id: t }
         onMovingChanged: if (toolTip && !moving) App.window.hideToolTip()
         onPositionChanged: {
@@ -75,6 +107,11 @@ Slider {
             if (toolTip)
                 App.window.showToolTip(seeker, mouse.x, mouse.y,
                                        Format.time(val) + "/" + Format.time(max))
+            if (App.theme.controls.showPreviewOnMouseOverSeekBar) {
+                d.e.preview.parent = pv
+                pv.x = mouse.x - pv.width * 0.5
+                d.e.preview.rate = d.e.rate_ms(val);
+            }
             if (pressed)
                 value = val
         }
