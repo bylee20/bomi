@@ -94,7 +94,6 @@ LogOptionWidget::LogOptionWidget(QWidget *parent)
         { grid->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding), r, c); };
 
     d->create(LogOutput::Journal, grid, 0, 0);
-    space(0, 2);
     d->create(LogOutput::StdOut, grid, 0, 3);
     space(0, 5);
     d->create(LogOutput::StdErr, grid, 0, 6);
@@ -106,11 +105,10 @@ LogOptionWidget::LogOptionWidget(QWidget *parent)
     grid->addWidget(d->file, 1, 3, 1, -1);
 
     d->create(LogOutput::Viewer, grid, 2, 0);
-
+    grid->addWidget(new QLabel(tr("Keep")), 2, 2);
     QWidget *vw = new QWidget;
     auto hbox = new QHBoxLayout;
     hbox->setMargin(0);
-    hbox->addWidget(new QLabel(tr("Keep")));
     d->viewer = new QSpinBox;
     d->viewer->setSuffix(tr("Lines"));
     d->viewer->setSpecialValueText(tr("No Limit"));
@@ -119,7 +117,7 @@ LogOptionWidget::LogOptionWidget(QWidget *parent)
     hbox->addWidget(d->viewer);
     hbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
     vw->setLayout(hbox);
-    grid->addWidget(vw, 2, 2, 1, -1);
+    grid->addWidget(vw, 2, 3, 1, -1);
 
     setLayout(grid);
 
