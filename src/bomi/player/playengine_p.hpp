@@ -34,7 +34,7 @@ DECLARE_LOG_CONTEXT(Engine)
 enum EventType {
     UserType = QEvent::User, StateChange, WaitingChange,
     PreparePlayback,EndPlayback, StartPlayback, NotifySeek,
-    SyncMrlState, DiscNavMouseInButton,
+    SyncMrlState,
     EventTypeMax
 };
 

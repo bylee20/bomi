@@ -703,6 +703,16 @@ static int mp_property_disc_menu(void *ctx, struct m_property *prop,
     return m_property_flag_ro(action, arg, !!state);
 }
 
+static int mp_property_mouse_in_button(void *ctx, struct m_property *prop,
+                                       int action, void *arg)
+{
+    MPContext *mpctx = ctx;
+    int state = mp_nav_in_menu(mpctx);
+    if (state < 0)
+        return M_PROPERTY_UNAVAILABLE;
+    return m_property_flag_ro(action, arg, !!state);
+}
+
 /// Current chapter (RW)
 static int mp_property_chapter(void *ctx, struct m_property *prop,
                                int action, void *arg)
@@ -3342,6 +3352,7 @@ static const struct m_property mp_properties[] = {
     {"playback-time", mp_property_playback_time},
     {"disc-title", mp_property_disc_title},
     {"disc-menu-active", mp_property_disc_menu},
+    {"disc-mouse-in-button", mp_property_mouse_in_button},
     {"chapter", mp_property_chapter},
     {"edition", mp_property_edition},
     {"disc-titles", mp_property_disc_titles},

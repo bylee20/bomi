@@ -5,8 +5,6 @@
 #include "subtitle/subtitlemodel.hpp"
 #include "os/os.hpp"
 
-extern void *discnav_ctx;
-
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
     _Debug("Create audio/video plugins");
@@ -185,7 +183,6 @@ PlayEngine::PlayEngine()
 
     _Debug("Make registrations and connections");
 
-    discnav_ctx = this;
     d->mpv.create();
     d->observe();
     d->request();
