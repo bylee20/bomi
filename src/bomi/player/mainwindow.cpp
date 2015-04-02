@@ -72,6 +72,7 @@ MainWindow::MainWindow()
         m_sgInit = true;
         m_engine->initializeGL(context);
         emit sceneGraphInitialized();
+        _Debug("Scene graph initialized.");
     }, Qt::DirectConnection);
     connect(this, &QQuickView::sceneGraphInvalidated, this, [this] () {
         auto context = QOpenGLContext::currentContext();
@@ -80,6 +81,7 @@ MainWindow::MainWindow()
         m_glLogger->deleteLater();
         m_engine->finalizeGL(context);
         m_engine->deleteLater();
+        _Debug("Scene graph invalidated.");
     }, Qt::DirectConnection);
     connect(this, &MainWindow::fullscreenChanged, this,
             [=] (bool fs) { d->setCursorVisible(!fs); });
@@ -100,6 +102,7 @@ MainWindow::~MainWindow() {
     d->clear();
     exit();
     d->deleteDialogs();
+    _Debug("Delete main window.");
     delete d;
 }
 
