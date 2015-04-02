@@ -32,12 +32,12 @@ int main(int argc, char **argv) {
     QApplication::setAttribute(Qt::AA_X11InitThreads);
     registerType();
 
-    App app(argc, argv);
+    QScopedPointer<App> app(new App(argc, argv));
     for (auto fmt : QImageWriter::supportedImageFormats())
         writableImageExts.push_back(QString::fromLatin1(fmt));
 
-    if (app.isUnique()
-            && app.sendMessage(App::CommandLine, _ToJson(app.arguments()))) {
+    if (app->isUnique()
+            && app->sendMessage(App::CommandLine, _ToJson(app->arguments()))) {
         _Info("Another instance of bomi is already running. Exit this...");
         return 0;
     }
@@ -53,17 +53,20 @@ int main(int argc, char **argv) {
         auto button = mbox.addButton(MBox::Button::Close);
         QObject::connect(button, &QPushButton::clicked, qApp, &QApplication::quit);
         mbox.mbox()->show();
-        return app.exec();
+        return app->exec();
     }
     qsrand(QDateTime::currentMSecsSinceEpoch());
 
     MainWindow *mw = new MainWindow;
     _Debug("Show MainWindow.");
     mw->show();
-    app.setMainWindow(mw);
+    app->setMainWindow(mw);
     _Debug("Start main event loop.");
 
-    auto ret = app.exec();
+    auto ret = app->exec();
+    app->sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    app.reset();
     _Debug("Exit...");
+    std::quick_exit(ret);
     return ret;
 }
