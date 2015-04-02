@@ -221,6 +221,9 @@ Player::Player(QObject *parent)
             [this] (bool seekable) {
         sendPropertiesChanged(this, "CanSeek", seekable);
     });
+    connect(d->engine, &PlayEngine::volumeChanged, this, [=] () {
+        sendPropertiesChanged(this, "volume", d->engine->volume());
+    });
     connect(d->engine, &PlayEngine::sought, this,
             [this] () { emit Seeked(time()); });
 
@@ -284,10 +287,7 @@ auto Player::volume() const -> double
 
 auto Player::setVolume(double volume) -> void
 {
-    if (_Change(d->volume, qBound(0.0, volume, 1.0))) {
-        d->engine->setAudioVolume(d->volume*100 + 0.5);
-        sendPropertiesChanged(this, "Volume", d->volume);
-    }
+    d->engine->setAudioVolume(qBound(0.0, volume, 1.0));
 }
 
 auto Player::time() const -> qint64
