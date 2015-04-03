@@ -54,7 +54,8 @@ struct HistoryModel::Data {
     const MrlState default_{};
     const QString table = MrlState::table();
     bool rememberImage = false, reload = true, visible = false;
-    int idx_mrl, idx_last, idx_device, rows = 0;
+    bool mediaTitleLocal = false, mediaTitleUrl = false;
+    int idx_mrl, idx_name, idx_last, idx_device, rows = 0;
     QMutex mutex;
     auto check(const QSqlQuery &query) -> bool
     {
@@ -74,7 +75,7 @@ struct HistoryModel::Data {
     auto load() -> bool
     {
         const QString select = QString::fromLatin1(
-            "SELECT mrl, last_played_date_time, device, "
+            "SELECT mrl, name, last_played_date_time, device, "
             "(SELECT COUNT(*) FROM %1) as total "
             "FROM %2 ORDER BY last_played_date_time DESC"
         );
@@ -85,9 +86,11 @@ struct HistoryModel::Data {
         rows = 0;
         if (loader.next()) {
             rows = loader.value(u"total"_q).toInt();
-            idx_mrl = 0;
-            idx_last = 1;
-            idx_device = 2;
+            int c = 0;
+            idx_mrl = c++;
+            idx_name = c++;
+            idx_last = c++;
+            idx_device = c++;
             loader.seek(-1);
         }
         error = QSqlError();
@@ -224,6 +227,12 @@ auto HistoryModel::play(int row) -> void
         emit playRequested(d->getMrl());
 }
 
+auto HistoryModel::setShowMediaTitleInName(bool local, bool url) -> void
+{
+    if (_Change(d->mediaTitleLocal, local) | _Change(d->mediaTitleUrl, url))
+        d->load();
+}
+
 auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
 {
 //    QMutexLocker locker(&d->mutex);
@@ -246,9 +255,16 @@ auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
         return d->rowCache.mrl;
     };
     switch (role) {
-    case NameRole:
-        return fillMrl().displayName();
-    case LatestPlayRole: {
+    case NameRole: {
+        fillMrl();
+        if ((d->rowCache.mrl.isLocalFile() && d->mediaTitleLocal)
+                || (d->rowCache.mrl.isRemoteUrl() && d->mediaTitleUrl)) {
+            const auto name = d->loader.value(d->idx_name).toString();
+            if (!name.isEmpty())
+                return name;
+        }
+        return d->rowCache.mrl.displayName();
+    } case LatestPlayRole: {
         const auto msecs = d->loader.value(d->idx_last).toLongLong();
         return QDateTime::fromMSecsSinceEpoch(msecs).toString(Qt::ISODate);
     } case LocationRole:
@@ -275,6 +291,26 @@ auto HistoryModel::error() const -> QSqlError
 auto HistoryModel::update() -> void
 {
     d->load();
+}
+
+auto HistoryModel::update(const MrlState *state, const QString &column, bool reload) -> void
+{
+    Q_ASSERT(state);
+    QMutexLocker locker(&d->mutex);
+    if (!d->rememberImage && state->mrl().isImage())
+        return;
+    if (!state->mrl().isUnique())
+        return;
+    const auto f = d->fields.field(column), m = d->fields.field(u"mrl"_q);
+    if (!f.isValid() || !m.isValid())
+        return;
+    Transactor t(&d->db);
+    d->finder.prepare("UPDATE "_a % d->table % " SET "_a % column % "=? WHERE mrl=?"_a);
+    d->finder.bindValue(0, f.sqlData(f.property().read(state)));
+    d->finder.bindValue(1, m.sqlData(m.property().read(state)));
+    d->finder.exec();
+    if (reload)
+        update();
 }
 
 auto HistoryModel::update(const MrlState *state, bool reload) -> void

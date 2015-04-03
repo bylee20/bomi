@@ -20,7 +20,9 @@ public:
     auto roleNames() const -> QHash<int, QByteArray>;
     auto find(const Mrl &mrl) const -> const MrlState*;
     auto getState(MrlState *state) const -> bool;
+    auto update(const MrlState *state, const QString &column, bool reload) -> void;
     auto update(const MrlState *state, bool reload) -> void;
+    auto setShowMediaTitleInName(bool local, bool url) -> void;
     auto setRememberImage(bool on) -> void;
     auto setPropertiesToRestore(const QStringList &properties) -> void;
     auto isRestorable(const char *name) const -> bool;

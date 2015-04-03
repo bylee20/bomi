@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>342</width>
-    <height>145</height>
+    <width>391</width>
+    <height>199</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,6 +25,20 @@
     <widget class="QCheckBox" name="show_locations">
      <property name="text">
       <string>Show locations in playlist</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="show_media_title_local_files">
+     <property name="text">
+      <string>Show media title for local files in name column of history</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="show_media_title_urls">
+     <property name="text">
+      <string>Show media title for remote URLs in name column of history</string>
      </property>
     </widget>
    </item>

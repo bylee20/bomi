@@ -22,6 +22,7 @@ public:
     auto isDvd() const -> bool { return startsWith("dvdnav://"_a); }
     auto isBluray() const -> bool { return startsWith("bdnav://"_a); }
     auto isDisc() const -> bool;
+    auto isRemoteUrl() const -> bool { return !isLocalFile() && !isDisc(); }
     auto scheme() const -> QString {return m_loc.left(m_loc.indexOf("://"_a));}
     auto toLocalFile() const -> QString
         {return isLocalFile() ? m_loc.right(m_loc.size() - 7) : QString();}

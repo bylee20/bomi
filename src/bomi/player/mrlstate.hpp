@@ -77,6 +77,7 @@ private:
 #define PB(type, name, def, min, max, desc, rev) P_GEN(type, name, def, qBound(min, t, max), desc, rev)
 
     P_(Mrl, mrl, {}, "", 0)
+    P_(QString, name, {}, "", 0)
     P_(QString, device, {}, "", 0)
     P_(QDateTime, last_played_date_time, {}, "", 0)
     P_(int, resume_position, 0, "", 0)

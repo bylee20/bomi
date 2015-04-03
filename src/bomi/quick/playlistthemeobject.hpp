@@ -10,9 +10,12 @@ struct ControlsTheme {
     bool showPlaylistOnMouseOverEdge = true;
     bool showHistoryOnMouseOverEdge = true;
     bool showPreviewOnMouseOverSeekBar = false;
+    bool showMediaTitleForLocalFilesInHistory = false;
+    bool showMediaTitleForUrlsInHistory = true;
     DECL_EQ(ControlsTheme, &T::showOnMouseMoved, &T::showLocationsInPlaylist,
             &T::showPlaylistOnMouseOverEdge, &T::showHistoryOnMouseOverEdge,
-            &T::showPreviewOnMouseOverSeekBar)
+            &T::showPreviewOnMouseOverSeekBar, &T::showMediaTitleForUrlsInHistory,
+            &T::showMediaTitleForLocalFilesInHistory)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };

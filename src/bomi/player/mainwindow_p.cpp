@@ -511,12 +511,16 @@ auto MainWindow::Data::applyPref() -> void
     const auto acc = p.sub_enc_autodetection() ? p.sub_enc_accuracy() * 1e-2 : -1;
     EncodingInfo::setDefault(EncodingInfo::Subtitle, p.sub_enc(), acc);
 
+    const auto &controls = p.controls_theme();
+
     youtube.setUserAgent(p.yt_user_agent());
     youtube.setProgram(p.yt_program());
     youtube.setAskVideoQuality(p.yt_ask_video_quality());
     yle.setProgram(p.yle_program());
     history.setRememberImage(p.remember_image());
     history.setPropertiesToRestore(p.restore_properties());
+    history.setShowMediaTitleInName(controls.showMediaTitleForLocalFilesInHistory,
+                                    controls.showMediaTitleForUrlsInHistory);
     if (subFindDlg)
         subFindDlg->setOptions(pref.preserve_downloaded_subtitles(),
                                pref.preserve_file_name_format(),
@@ -594,7 +598,7 @@ auto MainWindow::Data::applyPref() -> void
         p.window_sizes()[i].fillAction(win["size"_a % _N(i)]);
 
     theme.set(p.osd_theme());
-    theme.set(p.controls_theme());
+    theme.set(controls);
     reloadSkin();
     if (tray)
         tray->setVisible(p.enable_system_tray());
@@ -626,7 +630,7 @@ auto MainWindow::Data::applyPref() -> void
     };
 
     e.lock();
-    e.preview()->setActive(p.controls_theme().showPreviewOnMouseOverSeekBar);
+    e.preview()->setActive(controls.showPreviewOnMouseOverSeekBar);
 
     e.setResume_locked(p.remember_stopped());
     e.setPreciseSeeking_locked(p.precise_seeking());
