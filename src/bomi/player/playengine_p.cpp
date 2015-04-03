@@ -246,6 +246,16 @@ auto PlayEngine::Data::onLoad() -> void
             mpv.setAsync("options/subcp", assEncodings[files.names.front()].name().toLatin1());
             mpv.setAsync("file-local-options/sub-file", files);
         }
+        bool sel = false;
+        for (const auto &s : loads) {
+            sel = s.selection();
+            if (sel)
+                break;
+        }
+        if (sel && local->d->preferExternal)
+            mpv.setAsync("file-local-options/sid", "no"_b);
+        else
+            mpv.setAsync("file-local-options/sid", "auto"_b);
     }
 
     local->set_last_played_date_time(QDateTime::currentDateTime());

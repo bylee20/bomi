@@ -140,7 +140,8 @@ public:
     auto lock() -> void;
     auto setHwAcc_locked(bool use, const QList<CodecId> &codecs) -> void;
     auto setSubtitleStyle_locked(const OsdStyle &style) -> void;
-    auto setAutoselectMode_locked(bool enable, AutoselectMode mode, const QString &ext) -> void;
+    auto setAutoselectMode_locked(bool enable, AutoselectMode mode,
+                                  const QString &ext, bool preferExternal) -> void;
     auto setCache_locked(const CacheInfo &info) -> void;
     auto setSmbAuth_locked(const SmbAuth &smb) -> void;
     auto setVolumeNormalizerOption_locked(const AudioNormalizerOption &option) -> void;

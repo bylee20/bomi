@@ -650,7 +650,8 @@ auto MainWindow::Data::applyPref() -> void
     e.setResyncAvWhenFilterToggled_locked(p.audio_filter_resync());
 
     e.setSubtitleStyle_locked(p.sub_style());
-    e.setAutoselectMode_locked(p.sub_enable_autoselect(), p.sub_autoselect(), p.sub_ext());
+    e.setAutoselectMode_locked(p.sub_enable_autoselect(), p.sub_autoselect(),
+                               p.sub_ext(), p.sub_prefer_external());
     e.unlock();
     e.reload();
 }

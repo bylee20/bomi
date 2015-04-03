@@ -117,6 +117,7 @@ private:
     P0(int, sub_enc_accuracy, defaultSubtitleEncodingDetectionAccuracy())
     P0(int, ms_per_char, 500)
     P0(OsdStyle, sub_style, {})
+    P0(bool, sub_prefer_external, true)
 
     P0(bool, enable_system_tray, true)
     P0(bool, hide_rather_close, true)

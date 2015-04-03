@@ -1171,11 +1171,12 @@ auto PlayEngine::params() const -> const MrlState*
 }
 
 auto PlayEngine::setAutoselectMode_locked(bool enable, AutoselectMode mode,
-                                       const QString &ext) -> void
+                                          const QString &ext, bool preferExternal) -> void
 {
     d->params.d->autoselect = enable;
     d->params.d->autoselectMode = mode;
     d->params.d->autoselectExt = ext;
+    d->params.d->preferExternal = preferExternal;
 }
 
 auto PlayEngine::setSubtitleAlignment(VerticalAlignment a) -> void

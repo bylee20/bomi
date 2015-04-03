@@ -10,7 +10,7 @@
 struct MrlState::Data {
     CacheInfo cache;
     SmbAuth smb;
-    bool autoselect = false, disc = false;
+    bool autoselect = false, disc = false, preferExternal = false;
     AutoselectMode autoselectMode = AutoselectMode::Matched;
     QString autoselectExt;
     DeintOptionSet deint;

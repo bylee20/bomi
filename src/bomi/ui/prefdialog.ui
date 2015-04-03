@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>17</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -831,6 +831,13 @@ Playback information
                </widget>
               </item>
              </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="sub_prefer_external">
+              <property name="text">
+               <string>Prefer external files to internal tracks</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
