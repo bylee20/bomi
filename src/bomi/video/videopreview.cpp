@@ -15,8 +15,7 @@ struct VideoPreview::Data {
     VideoPreview *p = nullptr;
     bool redraw = false, active = false;
     QSize displaySize{0, 1};
-    double rate = 0.0, aspect = 4./3.;
-    int percent = 0;
+    double rate = 0.0, aspect = 4./3., percent = 0;
     Mpv mpv;
     auto vo() const -> QByteArray { return "opengl-cb"_b; }
     auto sizeAspect() const -> double
@@ -85,7 +84,7 @@ auto VideoPreview::rate() const -> double
 auto VideoPreview::setRate(double rate) -> void
 {
     if (_Change(d->rate, rate)) {
-        if (_Change(d->percent, qRound(d->rate * 100)))
+        if (_Change(d->percent, qRound(d->rate * 10000)/100.0))
             d->mpv.tellAsync("seek", d->percent, "absolute-percent"_b, "keyframes"_b);
         emit rateChanged(d->rate);
     }
