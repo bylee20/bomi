@@ -53,6 +53,7 @@ VideoPreview::VideoPreview(QQuickItem *parent)
     d->mpv.setOption("ao", "null");
     d->mpv.setOption("pause", "yes");
     d->mpv.setOption("keep-open", "always");
+    d->mpv.setOption("vd-lavc-skiploopfilter", "all");
     d->mpv.initialize();
     d->mpv.setUpdateCallback([=] () { _PostEvent(Qt::HighEventPriority, this, NewFrame); });
 
