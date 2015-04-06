@@ -12,14 +12,10 @@ Slider {
 
     Rectangle {
         id: pv
-        width: d.e.preview.width + 4
-        height: d.e.preview.height + 4
-        visible: false
-        y: preview.onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
-        z: 1
-        opacity: 0.0
-        border.width: 1
-        border.color: "black"
+        width: d.e.preview.width + 4; height: d.e.preview.height + 4
+        y: preview.onTop ? (-height - preview.separation) : (preview.separation + seeker.height); z: 1
+        visible: false; opacity: 0.0
+        border { width: 1; color: "black" }
         states: State {
             name: "shown"
             when: App.theme.controls.showPreviewOnMouseOverSeekBar
@@ -39,6 +35,25 @@ Slider {
             d.e.preview.width = Qt.binding(function() { return (this.height * this.aspectRatio) | 0; });
             d.e.preview.height = Qt.binding(function() { return preview.height; });
             d.e.preview.anchors.centerIn = Qt.binding(function() { return pv; });
+        }
+
+        Rectangle {
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+                top: preview.onTop ? undefined : parent.top
+                topMargin: preview.onTop ? 0 : 10
+                bottom: preview.onTop ? parent.bottom : undefined
+                bottomMargin: preview.onTop ? 10 : 0
+            }
+            width: pvTime.width + 10; height: pvTime.height + 10; z: 1
+            color: Qt.rgba(0, 0, 0, 0.5)
+            TimeText {
+                id: pvTime
+                anchors.centerIn: parent
+                height: contentHeight; width: contentWidth
+                time: 50000
+                textStyle { color: "white"; font.pixelSize: preview.height * 0.11 }
+            }
         }
     }
     onBindChanged: {
@@ -111,6 +126,7 @@ Slider {
                 d.e.preview.parent = pv
                 pv.x = mouse.x - pv.width * 0.5
                 d.e.preview.rate = d.e.rate_ms(val);
+                pvTime.time = val
             }
             if (pressed)
                 value = val
