@@ -37,8 +37,7 @@ B.BaseApp {
 
         Rectangle {
             anchors { bottom: boundary.top; top: parent.top }
-            width: parent.width; color: Qt.rgba(0, 0, 0, 0.5)
-
+            width: parent.width; color: Qt.rgba(0, 0, 0, 0.5); z: 1
             Component {
                 id: sliderStyle
                 SliderStyle {
