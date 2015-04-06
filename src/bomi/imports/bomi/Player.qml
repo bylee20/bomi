@@ -66,9 +66,11 @@ Item {
         property bool show: false
         readonly property int fontSize: parent.height*0.022;
         sourceComponent: show ? playinfo : undefined
-        width: parent.width-fontSize*2;
-        height: parent.height-fontSize*2;
-        anchors.centerIn: parent
+        anchors {
+            fill: parent; leftMargin: fontSize; rightMargin: fontSize
+            topMargin: fontSize + topPadding
+            bottomMargin: fontSize + bottomPadding
+        }
     }
 
     Item {
