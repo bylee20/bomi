@@ -6,4 +6,5 @@ Item {
     property Player player
     property string name
     property size minimumSize: Qt.size(400, 300)
+    readonly property Engine engine: App.engine
 }

@@ -5,81 +5,130 @@ BaseApp {
     id: root
     player: playerItem
 
-    MouseArea {
-        id: area
-        anchors.fill: parent
-        hoverEnabled: true
-        onPressed: mouse.accepted = false
-        onReleased: mouse.accepted = false
-        onEntered: catcher.update();
-        onExited: catcher.update();
-        onPositionChanged: catcher.update();
-    }
-
     Player {
         id: playerItem
         width: parent.width
-        height: App.window.fullscreen ? root.height : root.height - controls.height
-    }
+        height: overlaps ? root.height : root.height - bottomControls.height - topControls.height
+        topPadding: overlaps ? topControls.height + topControls.y : 0
+        bottomPadding: overlaps ? bottomControls.height - bottomControls.y : 0
 
-    property Item controls: Item {}
-
-    function isControlsVisible() {
-        if (!App.window.fullscreen)
-            return true;
-        var m = App.window.mouse
-        if (App.theme.controls.showOnMouseMoved)
-            return m.cursor && m.isIn(area)
-        return m.isIn(catcher)
-    }
-
-    Connections {
-        id: conn
-        function update() {
-            catcher.update()
-            if (target.fullscreen)
-                player.bottomPadding = catcher.height
-            else
-                player.bottomPadding = 0
+        MouseArea {
+            id: area
+            anchors.fill: parent
+            hoverEnabled: true
+            onPressed: mouse.accepted = false
+            onReleased: mouse.accepted = false
+            onEntered: d.updateShown();
+            onExited: d.updateShown();
+            onPositionChanged: d.updateShown();
         }
 
-        target: App.window
-        onFullscreenChanged: update()
+        Component {
+            id: blur
+            SimpleBlur {
+                source: blurSource; textureSize: blurSource.textureSize
+                ShaderEffectSource {
+                    id: blurSource; anchors.fill: parent
+                    sourceItem: playerItem.screen; visible: false
+                    sourceRect: rect
+                    textureSize: Qt.size(width / 2, height / 2)
+                }
+            }
+        }
+
+        Loader {
+            readonly property rect rect: Qt.rect(x, y, width, height)
+            sourceComponent: blurBackground && topControls.height > 0.01 ? blur : undefined
+            width: parent.width; height: playerItem.topPadding
+        }
+
+        Loader {
+            readonly property rect rect: Qt.rect(x, y, width, height)
+            sourceComponent: blurBackground && bottomControls.height > 0.01 ? blur : undefined
+            width: parent.width; height: playerItem.bottomPadding
+            anchors.bottom: parent.bottom
+        }
     }
+
+    property Item topControls: Item {}
+    property Item bottomControls: Item {}
+    property bool overlaps: App.window.fullscreen
+    property bool blurBackground: false
+
+    onOverlapsChanged: d.updateShown()
 
     Connections {
         target: App.window.mouse
-        onCursorChanged: catcher.update();
+        onCursorChanged: d.updateShown();
+    }
+
+    QtObject {
+        id: d
+        property bool shown: true
+        property bool completed: false
+        readonly property bool containsMouse: topCatcher.containsMouse
+                                              || btmCatcher.containsMouse
+        function updateShown() { shown = isControlsVisible(); }
+        function isControlsVisible() {
+            if (!overlaps)
+                return true;
+            var m = App.window.mouse
+            if (App.theme.controls.showOnMouseMoved)
+                return m.cursor && m.isIn(area)
+            return m.isIn(btmCatcher) || m.isIn(topCatcher)
+        }
+        onContainsMouseChanged: {
+            updateShown()
+            App.window.mouse.hidingCursorBlocked = containsMouse
+        }
+    }
+
+    states: State {
+        name: "hidden"; when: !d.shown
+        PropertyChanges { target: topControls; y: -topControls.height }
+        PropertyChanges { target: bottomControls; y: bottomControls.height }
+    }
+
+    transitions: Transition {
+        reversible: true; to: "hidden"
+        ParallelAnimation {
+            NumberAnimation { target: topControls; property: "y"; duration: 200 }
+            NumberAnimation { target: bottomControls; property: "y"; duration: 200 }
+        }
     }
 
     MouseArea {
-        id: catcher; z: player.z+1;
-        width: parent.width
-        height: controls.height
-        anchors.bottom: parent.bottom
-        hoverEnabled: true
-        property bool shown: true
-        function update() { shown = root.isControlsVisible() }
+        id: topCatcher; z: player.z + 1;
+        width: parent.width; height: topControls.height
+        anchors.top: parent.top; hoverEnabled: true
+        Component.onCompleted: App.registerToAccept(topCatcher, App.DoubleClickEvent)
+    }
 
-        onShownChanged: {
-            if (App.window.fullscreen && !shown)
-                sliding.start()
-            else
-                controls.y = 0
-        }
+    MouseArea {
+        id: btmCatcher; z: player.z + 1;
+        width: parent.width; height: bottomControls.height
+        anchors.bottom: parent.bottom; hoverEnabled: true
+        Component.onCompleted: App.registerToAccept(btmCatcher, App.DoubleClickEvent)
+    }
 
-        onContainsMouseChanged: {
-            update()
-            var m = App.window.mouse
-            m.hidingCursorBlocked = containsMouse
-        }
-        NumberAnimation {
-            id: sliding; target: controls; property: "y";
-            duration: 200; from: 0; to: controls.height
+    onBottomControlsChanged: {
+        if (d.completed) {
+            bottomControls.parent = btmCatcher
+            d.updateShown()
         }
     }
+
+    onTopControlsChanged: {
+        if (d.completed) {
+            topControls.parent = topCatcher
+            d.updateShown()
+        }
+    }
+
     Component.onCompleted: {
-        controls.parent = catcher
-        catcher.update();
+        bottomControls.parent = btmCatcher
+        topControls.parent = topCatcher
+        d.updateShown();
+        d.completed = true
     }
 }

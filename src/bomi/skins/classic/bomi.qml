@@ -48,7 +48,7 @@ B.AppWithDock {
         }
     }
 
-    controls: Column {
+    bottomControls: Column {
         id: controls; width: parent.width;
         Rectangle {
             id: line

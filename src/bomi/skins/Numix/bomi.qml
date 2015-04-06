@@ -12,7 +12,6 @@ B.AppWithFloating {
     Component {
         id: sliders
         SliderStyle {
-            readonly property real ratio: (control.value - control.minimumValue)/(control.maximumValue - control.minimumValue)
             groove: Rectangle {
                 height: 4; radius: 2
                 anchors.verticalCenter: parent.verticalCenter
@@ -21,7 +20,7 @@ B.AppWithFloating {
                     GradientStop {position: 1.0; color: "#fff"}
                 }
                 Rectangle {
-                    width: parent.width*ratio; height: parent.height
+                    width: parent.width*control.rate; height: parent.height
                     radius: parent.radius
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "#d64937" }

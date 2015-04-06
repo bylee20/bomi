@@ -31,7 +31,7 @@ B.AppWithDock {
 
     Connections { target: engine.media; onNameChanged: text.content = target.name }
 
-    controls: Item {
+    bottomControls: Item {
         width: parent.width; height: top.height + (fs ? 0 : bottom.height)
         Rectangle {
             id: top

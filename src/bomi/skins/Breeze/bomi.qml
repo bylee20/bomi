@@ -12,7 +12,6 @@ B.AppWithDock {
     Component {
         id: sliders
         SliderStyle {
-            readonly property real ratio: (control.value - control.minimumValue)/(control.maximumValue - control.minimumValue)
             groove: Item {
                 implicitHeight: 2;
                 implicitWidth: 100;
@@ -27,7 +26,7 @@ B.AppWithDock {
                 Rectangle {
                     border { color: "#3daee9"; width: 1 }
                     anchors {top: parent.top; bottom: parent.bottom; left: parent.left; }
-                    width: parent.width*ratio
+                    width: parent.width*control.rate
                     gradient: Gradient {
                         GradientStop {position: 0.0; color: "#7d7d7d"}
                         GradientStop {position: 1.0; color: "#7d7d7d"}
@@ -42,7 +41,7 @@ B.AppWithDock {
         }
     }
 
-    controls: Rectangle {
+    bottomControls: Rectangle {
         width: parent.width; height: 32
         gradient: Gradient {
             GradientStop { position: 0.0; color: "#eff0f1" }

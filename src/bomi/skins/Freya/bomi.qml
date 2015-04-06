@@ -13,7 +13,6 @@ B.BaseApp {
     Component {
         id: sliderstyle
         SliderStyle {
-            readonly property real ratio: (control.value - control.minimumValue)/(control.maximumValue - control.minimumValue)
             groove: Item {
                 implicitHeight: 5;
                 implicitWidth: 100;
@@ -28,7 +27,7 @@ B.BaseApp {
                 Rectangle {
                     radius: 4; border { color: "#6e6e6e"; width: 1 }
                     anchors {top: parent.top; bottom: parent.bottom; left: parent.left; }
-                    width: parent.width*ratio
+                    width: parent.width*control.rate
                     gradient: Gradient {
                         GradientStop {position: 0.0; color: "#818181"}
                         GradientStop {position: 1.0; color: "#8f8f8f"}

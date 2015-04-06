@@ -595,4 +595,5 @@ DISTFILES += \
     skins/air/IconTextButton.qml \
 	imports/bomi/PlayInfoAvOutput.qml \
     imports/bomi/VideoPreviewStyle.qml \
-    skins/Freya/bomi.qml
+    skins/Freya/bomi.qml \
+    imports/bomi/SimpleBlur.qml

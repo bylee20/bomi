@@ -1,40 +1,18 @@
 import QtQuick 2.0
 import QtQuick.Controls.Styles 1.0
 import QtQuick.Layouts 1.0
+import QtGraphicalEffects 1.0
 import bomi 1.0 as B
 
-B.BaseApp {
+B.AppWithDock {
     id: app
     name: "net.xylosper.air"
     minimumSize: Qt.size(450, 200)
+    overlaps: true; blurBackground: true
 
-    readonly property QtObject engine: B.App.engine
-
-    B.Player {
-        id: playerItem
-        anchors.fill: parent
-        topPadding: controls.height + controls.anchors.topMargin
-    }
-
-    player: playerItem
-
-    states: State {
-        name: "hidden"; when: !B.App.window.mouse.cursor
-        PropertyChanges { target: controls; anchors.topMargin: -controls.height }
-    }
-
-    transitions: Transition {
-        reversible: true; to: "hidden"
-        NumberAnimation { target: controls; property: "anchors.topMargin"; duration: 200 }
-    }
-
-    MouseArea {
+    topControls: Item {
         id: controls
-        width: parent.width; height: 56; anchors.top: parent.top
-        hoverEnabled: true
-        onContainsMouseChanged: B.App.window.mouse.hidingCursorBlocked = containsMouse
-        Component.onCompleted: B.App.registerToAccept(controls, B.App.DoubleClickEvent)
-
+        width: parent.width; height: 56
         Rectangle {
             anchors { bottom: boundary.top; top: parent.top }
             width: parent.width; color: Qt.rgba(0, 0, 0, 0.5); z: 1
@@ -60,14 +38,11 @@ B.BaseApp {
             }
 
             Item {
-                anchors {
-                    top: parent.top; bottom: sliders.top; topMargin: timeSlider.y
-                }
+                anchors { top: parent.top; bottom: sliders.top; topMargin: timeSlider.y }
                 width: parent.width
 
                 Row {
-                    id: mediaButtons
-                    opacity: 0.8; spacing: 5
+                    id: mediaButtons; opacity: 0.8; spacing: 5
                     anchors {
                         verticalCenter: parent.verticalCenter
                         left: parent.left; leftMargin: sliders.anchors.leftMargin
@@ -120,7 +95,7 @@ B.BaseApp {
                         verticalCenter: playlist.verticalCenter
                     }
                     opacity: 0.8
-                    content: B.App.engine.media.name
+                    content: engine.media.name
                 }
 
                 Row {

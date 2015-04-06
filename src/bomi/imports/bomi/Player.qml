@@ -18,6 +18,8 @@ Item {
 
     TextOsd {
         id: msgosd;
+        anchors.top: parent.top
+        anchors.topMargin: topPadding
         duration: B.App.theme.osd.message.duration
     }
 

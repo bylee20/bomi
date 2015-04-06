@@ -42,7 +42,7 @@ B.AppWithDock {
         }
     }
 
-    controls: Rectangle {
+    bottomControls: Rectangle {
         width: parent.width; height: 32
         gradient: Gradient {
             GradientStop { position: 0.0; color: "#aaa" }
