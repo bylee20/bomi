@@ -44,9 +44,12 @@ auto ChannelManipulation::toJsonObject() const -> QJsonObject
     QJsonObject json;
     auto jio = json_io<SourceArray>();
     for (int i = 0; i < m_mix.size(); ++i) {
+        if (m_mix[i].isEmpty())
+            continue;
         const auto key = idToName(i);
-        if (!key.isEmpty())
-            json.insert(idToName(i), jio->toJson(m_mix[i]));
+        if (key.isEmpty())
+            continue;
+        json.insert(idToName(i), jio->toJson(m_mix[i]));
     }
     return json;
 }
@@ -64,15 +67,16 @@ auto ChannelManipulation::setFromJsonArray(const QJsonArray &json) -> bool
 
 auto ChannelManipulation::setFromJsonObject(const QJsonObject &json) -> bool
 {
-    if (json.size() != m_mix.size())
+    if (json.size() > m_mix.size())
         return false;
     ChannelManipulation man; auto &mix = man.m_mix;
     auto jio = json_io<SourceArray>();
     for (int i = 0; i < mix.size(); ++i) {
         auto it = json.find(idToName(i));
         if (it == json.end())
-            return false;
-        if (!jio->fromJson(mix[i], it.value()))
+            continue;
+        const auto array = it.value().toArray();
+        if (!jio->fromJson(mix[i], array))
             return false;
     }
     m_mix= mix;
