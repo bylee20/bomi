@@ -9,10 +9,12 @@ Item {
     property real dockZ: 0.0
     property real bottomPadding: 0.0
     property real topPadding: 0.0
+    property bool logoVisible: logo.visible
     readonly property QtObject engine: B.App.engine
-    property Item screen
+    property Item video
+    property Item screen: video && !logo.visible ? video : logo
 
-    Logo { anchors.fill: parent }
+    Logo { id: logo; anchors.fill: parent }
 
     TextOsd {
         id: msgosd;
@@ -92,12 +94,12 @@ Item {
     }
 
     function updateScreenSize() {
-        if (!screen)
+        if (!video)
             return
-        screen.width = width * engine.zoom
-        screen.height = height * engine.zoom
-        screen.x = (width - screen.width) * 0.5
-        screen.y = (height - screen.height) * 0.5
+        video.width = width * engine.zoom
+        video.height = height * engine.zoom
+        video.x = (width - video.width) * 0.5
+        video.y = (height - video.height) * 0.5
     }
 
     Connections { target: engine; onZoomChanged: updateScreenSize() }
