@@ -465,10 +465,8 @@ auto PlayEngine::speed() const -> double
 
 auto PlayEngine::setSpeed(double s) -> void
 {
-    if (d->params.set_play_speed(s)) {
+    if (d->params.set_play_speed(s))
         d->mpv.setAsync("speed", speed());
-        d->resync();
-    }
 }
 
 auto PlayEngine::setSubtitleScale(double by) -> void
