@@ -582,6 +582,14 @@ auto MainWindow::Data::plugMenu() -> void
                 list.save(file);
         }
     });
+    connect(pl[u"regenerate"_q], &QAction::triggered, p, [=] () {
+        const auto mrl = e.mrl();
+        const auto pl = generatePlaylist(mrl);
+        if (!pl.isEmpty()) {
+            playlist.setList(pl);
+            playlist.setLoaded(mrl);
+        }
+    });
     connect(pl[u"clear"_q], &QAction::triggered, p, [=] () { playlist.clear(); });
     connect(pl[u"append-file"_q], &QAction::triggered, p, [this] () {
         const auto files = _GetOpenFiles(nullptr, tr("Open File"), MediaExt);

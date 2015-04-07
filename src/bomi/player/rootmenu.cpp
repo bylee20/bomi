@@ -564,6 +564,7 @@ RootMenu::RootMenu()
             d->separator();
             d->action(u"open"_q, QT_TR_NOOP("Open"));
             d->action(u"save"_q, QT_TR_NOOP("Save"));
+            d->action(u"regenerate"_q, QT_TR_NOOP("Regenerate"));
             d->action(u"clear"_q, QT_TR_NOOP("Clear"));
             d->separator();
             d->action(u"append-file"_q, QT_TR_NOOP("Append File"));
