@@ -44,8 +44,19 @@ public:
     virtual auto endMoveByDrag() -> void;
     virtual auto setImeEnabled(bool enabled) -> void = 0;
     virtual auto isImeEnabled() const -> bool = 0;
+    virtual auto isSnappableToEdge() const -> bool { return false; }
+    auto snapHint(const QPoint &pos, Qt::Edges edges = Qt::TopEdge
+                    | Qt::BottomEdge | Qt::RightEdge | Qt::LeftEdge,
+                  int threshold = 10) const -> QPoint;
+    auto snapHint(const QPoint &pos, const QSize &size,
+                  Qt::Edges edges = Qt::TopEdge | Qt::BottomEdge
+                    | Qt::RightEdge | Qt::LeftEdge,
+                  int threshold = 10) const -> QPoint;
     auto state() const -> Qt::WindowState { return m_state; }
     auto oldState() const -> Qt::WindowState { return m_oldState; }
+    auto positionArea(const QRect &rect, const QSize &size) const -> QRect;
+    auto frameMargins() const -> QMargins
+        { return isFrameVisible() ? m_window->frameMargins() : QMargins(); }
     auto isFrameVisible() const -> bool { return !isFullScreen() && !isFrameless(); }
     auto geometry() const -> QRect { return isFrameVisible() ? m_window->geometry()
                                                              : m_window->frameGeometry(); }

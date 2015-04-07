@@ -2,6 +2,7 @@
 #include "enum/codecid.hpp"
 #include "enum/deintmethod.hpp"
 #include <QFontDatabase>
+#include <QScreen>
 
 namespace OS {
 
@@ -185,10 +186,41 @@ auto WindowAdapter::startMoveByDrag(const QPointF &m) -> void
     m_winStartPos = m_window->position();
 }
 
+auto WindowAdapter::positionArea(const QRect &r, const QSize &s) const -> QRect
+{
+    const auto m = frameMargins();
+    return r.adjusted(m.left(), m.top(), -m.right() - s.width() + 1,
+                      -m.bottom() - s.height() + 1);
+}
+
+auto WindowAdapter::snapHint(const QPoint &pos, const QSize &size,
+                             Qt::Edges edges, int threshold) const -> QPoint
+{
+    auto p = pos;
+    const auto s = positionArea(m_window->screen()->availableGeometry(), size);
+    const auto g = positionArea(m_window->screen()->geometry(), size);
+    auto check = [&] (int &p, int v) -> bool
+        { return (qAbs(p - v) > threshold) ? false : (p = v, true); };
+    bool x = false, y = false;
+    x = !x && (edges & Qt::LeftEdge) && (check(p.rx(), s.left()) || check(p.rx(), g.left()));
+    x = !x && (edges & Qt::RightEdge) && (check(p.rx(), s.right()) || check(p.rx(), g.right()));
+    y = !y && (edges & Qt::TopEdge) && (check(p.ry(), s.top()) || check(p.ry(), g.top()));
+    y = !y && (edges & Qt::BottomEdge) && (check(p.ry(), s.bottom()) || check(p.ry(), g.bottom()));
+    return p;
+}
+
+auto WindowAdapter::snapHint(const QPoint &pos, Qt::Edges edges, int threshold) const -> QPoint
+{
+    return snapHint(pos, m_window->size(), edges, threshold);
+}
+
 auto WindowAdapter::moveByDrag(const QPointF &m) -> void
 {
     if (m_started) {
-        m_window->setPosition(m_winStartPos + (m.toPoint() - m_mouseStartPos));
+        auto p = m_winStartPos + (m.toPoint() - m_mouseStartPos);
+        if (isSnappableToEdge())
+            p = snapHint(p);
+        m_window->setPosition(p);
         setMovingByDrag(true);
     }
 }

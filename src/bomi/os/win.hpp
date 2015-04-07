@@ -25,6 +25,7 @@ public:
     auto isFrameless() const -> bool final { return m_frameless; }
     auto setImeEnabled(bool enabled) -> void final;
     auto isImeEnabled() const -> bool final;
+    auto isSnappableToEdge() const -> bool final { return true; }
 private:
     auto nativeEventFilter(const QByteArray &, void *message, long *result) -> bool final;
     auto eventFilter(QObject *obj, QEvent *ev) -> bool final;

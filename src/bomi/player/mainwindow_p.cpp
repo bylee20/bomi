@@ -240,25 +240,26 @@ auto MainWindow::Data::setVideoSize(const QSize &video) -> void
     if (p->isFullScreen() || p->windowState() == Qt::WindowMaximized)
         return;
     // patched by Handrake
-    const QSizeF screen = screenSize();
     const QSizeF vs(e.screen()->width(), e.screen()->height());
     const QSize size = (p->size() - vs.toSize() + video);
     if (size != p->size()) {
+        const auto s = p->screen()->availableGeometry().adjusted(0, 0, 1, 1);
+        const auto g = p->screen()->geometry().adjusted(0, 0, 1, 1);
+        const auto m = adapter->frameMargins();
+        auto pos = p->position();
+        const auto prev = pos + QPoint(p->width() + m.right(), p->height() + m.bottom());
+        const auto br = pos + QPoint(size.width() + m.right(), size.height() + m.bottom());
         p->resize(size);
-        int dx = 0;
-        const int rightDiff = screen.width() - (p->x() + p->width());
-        if (rightDiff < 10) {
-            if (rightDiff < 0)
-                dx = screen.width() - p->x() - size.width();
-            else
-                dx = p->width() - size.width();
-        }
-        if (dx) {
-            int x = p->x() + dx;
-            if (x < 0)
-                x = 0;
-            p->setPosition(x, p->y());
-        }
+        if (prev.x() <= s.right() && br.x() > s.right())
+            pos.rx() = qMax(s.left(), s.right() - m.right() - size.width() + 1);
+        else if (prev.x() <= g.right() && br.x() > g.right())
+            pos.rx() = qMax(g.left(), g.right() - m.right() - size.width() + 1);
+        if (prev.y() <= s.bottom() && br.y() > s.bottom())
+            pos.ry() = qMax(s.top(), s.bottom() - m.bottom() - size.height() + 1);
+        else if (prev.y() <= g.bottom() && br.y() > g.bottom())
+            pos.ry() = qMax(g.top(), g.bottom() - m.bottom() - size.height() + 1);
+        if (pos != p->position())
+            p->setPosition(pos);
     }
 }
 
