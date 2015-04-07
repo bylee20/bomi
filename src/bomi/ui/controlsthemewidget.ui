@@ -10,9 +10,6 @@
     <height>199</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>GroupBox</string>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QCheckBox" name="show_hidden_on_moved">
