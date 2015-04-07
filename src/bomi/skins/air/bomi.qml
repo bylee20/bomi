@@ -137,25 +137,11 @@ B.AppWithDock {
 
                 B.TimeDuration {
                     id: timeText
-                    property bool showLeftTime: true
                     textStyle {
                         color: "white"; font.pixelSize: 12
                         style: Text.Outline; styleColor: Qt.rgba(0, 0, 0, 0.5)
                     }
                     spacing: 1; opacity: 0.8
-                    duration: showLeftTime ? (engine.time - engine.end) : engine.end
-
-                    B.Button {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onClicked: {
-                            if (mouse.button & Qt.RightButton) {
-                                timeText.showLeftTime = !timeText.showLeftTime
-                            } else {
-                                timeText.msec = !timeText.msec
-                            }
-                        }
-                    }
                 }
 
                 B.VolumeSlider {
@@ -168,18 +154,5 @@ B.AppWithDock {
             id: boundary; anchors.bottom: parent.bottom
             width: parent.width; height: 1; color: Qt.rgba(1, 1, 1, 0.5)
         }
-    }
-
-    Component.onCompleted: {
-        B.Settings.open(name)
-        timeText.msec = B.Settings.getBool("time-msec", false)
-        timeText.showLeftTime = B.Settings.getBool("time-left", true)
-        B.Settings.close()
-    }
-    Component.onDestruction: {
-        B.Settings.open(name)
-        B.Settings.set("time-msec", timeText.msec)
-        B.Settings.set("time-left", timeText.showLeftTime )
-        B.Settings.close()
     }
 }
