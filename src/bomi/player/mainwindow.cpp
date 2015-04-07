@@ -99,8 +99,10 @@ MainWindow::~MainWindow() {
     if (d->jrServer)
         d->jrServer->setInterface(nullptr);
     delete d->jrServer;
-    d->clear();
     exit();
+    setPersistentOpenGLContext(false);
+    setPersistentSceneGraph(false);
+    d->clear();
     d->deleteDialogs();
     _Debug("Delete main window.");
     delete d;

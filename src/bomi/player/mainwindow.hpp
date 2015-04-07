@@ -20,6 +20,7 @@ public:
     auto togglePlayPause() -> void;
     auto play() -> void;
     auto engine() const -> PlayEngine*;
+    auto qmlEngine() const -> QQmlEngine* { return QQuickView::engine(); }
     auto playlist() const -> PlaylistModel*;
     auto exit() -> void;
     auto isSceneGraphInitialized() const -> bool;

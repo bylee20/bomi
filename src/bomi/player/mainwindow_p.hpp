@@ -136,7 +136,7 @@ struct MainWindow::Data {
     template <class T = QObject>
     auto findItem(const QString &name = QString()) -> T*
         { return p->rootObject()->findChild<T*>(name); }
-    auto clear() -> void { p->QQuickView::engine()->clearComponentCache(); }
+    auto clear() -> void;
     auto resizeContainer() -> void;
     auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
         { return pref.mouse_action_map()[mb][event->modifiers()]; }

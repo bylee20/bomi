@@ -685,9 +685,16 @@ auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void
         e.setMrl(mrl);
 }
 
-auto MainWindow::Data::reloadSkin() -> void
+auto MainWindow::Data::clear() -> void
 {
     this->player = nullptr;
+    p->setSource(QUrl());
+    p->qmlEngine()->clearComponentCache();
+    p->releaseResources();
+}
+
+auto MainWindow::Data::reloadSkin() -> void
+{
     clear();
     Skin::apply(p, pref.skin_name());
     if (p->status() == QQuickView::Error) {
