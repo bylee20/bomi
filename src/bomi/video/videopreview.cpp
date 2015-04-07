@@ -38,24 +38,21 @@ VideoPreview::VideoPreview(QQuickItem *parent)
 
     d->mpv.create();
     d->mpv.setOption("hwdec", "no");
-    d->mpv.setOption("softvol", "yes");
-    d->mpv.setOption("mute", "yes");
     d->mpv.setOption("aid", "no");
     d->mpv.setOption("sid", "no");
     d->mpv.setOption("audio-file-auto", "no");
     d->mpv.setOption("sub-auto", "no");
     d->mpv.setOption("osd-level", "0");
     d->mpv.setOption("quiet", "yes");
-    d->mpv.setOption("input-terminal", "no");
     d->mpv.setOption("title", "\"\"");
     d->mpv.setOption("audio-pitch-correction", "no");
     d->mpv.setOption("vo", d->vo());
-    d->mpv.setOption("ao", "null");
     d->mpv.setOption("pause", "yes");
     d->mpv.setOption("keep-open", "always");
     d->mpv.setOption("vd-lavc-skiploopfilter", "all");
+    d->mpv.setOption("use-text-osd", "no");
     d->mpv.initialize();
-    d->mpv.setUpdateCallback([=] () { _PostEvent(Qt::HighEventPriority, this, NewFrame); });
+    d->mpv.setUpdateCallback([=] () { _PostEvent(this, NewFrame); });
 
     d->mpv.start();
 }
