@@ -242,25 +242,26 @@ auto MainWindow::Data::setVideoSize(const QSize &video) -> void
     // patched by Handrake
     const QSizeF vs(e.screen()->width(), e.screen()->height());
     const QSize size = (p->size() - vs.toSize() + video);
-    if (size != p->size()) {
-        const auto s = p->screen()->availableGeometry().adjusted(0, 0, 1, 1);
-        const auto g = p->screen()->geometry().adjusted(0, 0, 1, 1);
-        const auto m = adapter->frameMargins();
-        auto pos = p->position();
-        const auto prev = pos + QPoint(p->width() + m.right(), p->height() + m.bottom());
-        const auto br = pos + QPoint(size.width() + m.right(), size.height() + m.bottom());
-        p->resize(size);
-        if (prev.x() <= s.right() && br.x() > s.right())
-            pos.rx() = qMax(s.left(), s.right() - m.right() - size.width() + 1);
-        else if (prev.x() <= g.right() && br.x() > g.right())
-            pos.rx() = qMax(g.left(), g.right() - m.right() - size.width() + 1);
-        if (prev.y() <= s.bottom() && br.y() > s.bottom())
-            pos.ry() = qMax(s.top(), s.bottom() - m.bottom() - size.height() + 1);
-        else if (prev.y() <= g.bottom() && br.y() > g.bottom())
-            pos.ry() = qMax(g.top(), g.bottom() - m.bottom() - size.height() + 1);
-        if (pos != p->position())
-            p->setPosition(pos);
-    }
+    if (size == p->size())
+        return;
+    const auto s = p->screen()->availableGeometry().adjusted(0, 0, 1, 1);
+    const auto g = p->screen()->geometry().adjusted(0, 0, 1, 1);
+    const auto m = adapter->frameMargins();
+    auto pos = p->position();
+    const auto prev = pos + QPoint(p->width() + m.right(), p->height() + m.bottom());
+    const auto br = pos + QPoint(size.width() + m.right(), size.height() + m.bottom());
+    p->resize(size);
+    auto in = [] (int min, int v, int max) { return min < v && v < max; };
+    if (prev.x() == s.right() || in(prev.x(), s.right(), br.x()))
+        pos.rx() = qMax(s.left(), s.right() - m.right() - size.width());
+    else if (prev.x() == g.right() || in(prev.x(), g.right(), br.x()))
+        pos.rx() = qMax(g.left(), g.right() - m.right() - size.width());
+    if (prev.y() == s.bottom() || in(prev.y(), s.bottom(), br.y()))
+        pos.ry() = qMax(s.top(), s.bottom() - m.bottom() - size.height());
+    else if (prev.y() == g.bottom() || in(prev.y(), g.bottom(), br.y()))
+        pos.ry() = qMax(g.top(), g.bottom() - m.bottom() - size.height());
+    if (pos != p->position())
+        p->setPosition(pos);
 }
 
 auto MainWindow::Data::trigger(QAction *action) -> void
