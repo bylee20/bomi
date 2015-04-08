@@ -4,6 +4,7 @@
 #include "configure.hpp"
 #include "tmp/algorithm.hpp"
 #include <QTextCodec>
+#include <QBuffer>
 #include <cstdlib>
 
 #if HAVE_SYSTEMD
@@ -146,5 +147,11 @@ auto Log::unsubscribe(QObject *o) -> void
 
 auto _ToLog(const QVariant &var) -> QByteArray
 {
-    return "QVariant"_b;
+    QBuffer buffer;
+    buffer.open(QBuffer::WriteOnly);
+    QDebug(&buffer) << var;
+    QByteArray ret = std::move(buffer.buffer());
+    buffer.close();
+    ret.chop(1);
+    return ret;
 }

@@ -42,6 +42,8 @@ SIA _ToLog(const QPointF &p) -> QByteArray
 template<class T>
 SIA _ToLog(const QList<T> &list) -> QByteArray
 {
+    if (list.isEmpty())
+        return "QList()"_b;
     QByteArray log = "QList(";
     for (auto &t : list) {
         log += _ToLog(t);
