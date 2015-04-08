@@ -496,3 +496,12 @@ auto MainWindow::wake() -> void {
     raise();
     requestActivate();
 }
+
+auto MainWindow::eventFilter(QObject *o, QEvent *e) -> bool
+{
+#ifdef Q_OS_WIN
+    if (qobject_cast<QDialog*>(o) && e->type() == QEvent::Show)
+        d->dialogWorkaround.start();
+#endif
+    return QQuickView::eventFilter(o, e);
+}

@@ -33,6 +33,7 @@ private slots:
     void postInitialize();
     void setupSkinPlayer();
 private:
+    auto eventFilter(QObject *o, QEvent *e) -> bool final;
     auto event(QEvent *event) -> bool final;
     auto showEvent(QShowEvent *event) -> void final;
     auto hideEvent(QHideEvent *event) -> void final;
