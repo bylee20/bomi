@@ -1,5 +1,6 @@
 #include "fileassocdialog.hpp"
 #include "bbox.hpp"
+#include "mbox.hpp"
 #include "ui_fileassocdialog.h"
 #include "os/os.hpp"
 #include "misc/simplelistmodel.hpp"
@@ -144,12 +145,18 @@ FileAssocDialog::FileAssocDialog()
     d->storage.restore();
 
     auto win = [=] () { winId(); return windowHandle(); };
-    connect(d->ui.assoc_all, &QPushButton::clicked,
-            this, [=] () { OS::associateFileTypes(win(), true, d->extensions()); });
+    auto alert = [=] () {
+        MBox::error(this, tr("Permission Denied"),
+                    tr("Failed to obtain privilege to access registry."),
+                    { BBox::Ok });
+    };
+
+    connect(d->ui.assoc_all, &QPushButton::clicked, this, [=] ()
+        { if (!OS::associateFileTypes(win(), true, d->extensions())) alert(); });
     connect(d->ui.assoc_current, &QPushButton::clicked,
             this, [=] () { OS::associateFileTypes(win(), false, d->extensions()); });
     connect(d->ui.unassoc_all, &QPushButton::clicked,
-            this, [=] () { OS::unassociateFileTypes(win(), true); });
+            this, [=] () { if (!OS::unassociateFileTypes(win(), true)) alert(); });
     connect(d->ui.unassoc_current, &QPushButton::clicked,
             this, [=] () { OS::unassociateFileTypes(win(), false); });
 }

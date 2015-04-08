@@ -38,7 +38,7 @@ auto translator_load(const Locale &locale) -> bool;
 
 enum class LineCmd {
     Wake, Open, Action, LogLevel, OpenGLDebug, Debug,
-    DumpApiTree, DumpActionList
+    DumpApiTree, DumpActionList, WinAssoc, WinUnassoc
 };
 
 struct App::Data {
@@ -63,11 +63,12 @@ struct App::Data {
 
     LogOption logOption = LogOption::default_();
     Locale locale;
-    QCommandLineOption dummy{u"__dummy__"_q};
     QCommandLineParser cmdParser, msgParser;
     QMap<LineCmd, QCommandLineOption> options;
-    LocalConnection connection = {u"net.xylosper.bomi"_q, nullptr};
     QFont fixedFont = OS::defaultFixedFont();
+
+    LocalConnection connection = {u"net.xylosper.bomi"_q, nullptr};
+    QCommandLineOption dummy{u"__dummy__"_q};
 
     auto open(const Mrl &mrl) -> void
     {
@@ -122,10 +123,6 @@ struct App::Data {
             lvStdOut = qMax(lvStdOut, Log::Debug);
             gldebug = true;
         }
-        if (!main && isSet(LineCmd::DumpApiTree))
-            AppObject::dumpInfo();
-        if (!main && isSet(LineCmd::DumpActionList))
-            RootMenu::dumpInfo();
         return lvStdOut;
     }
     auto getCommandParser(QCommandLineParser *parser) const
@@ -204,6 +201,10 @@ App::App(int &argc, char **argv)
                  tr("Dump API structure tree to stdout."));
     d->addOption(LineCmd::DumpActionList, u"dump-action-list"_q,
                  tr("Dump executable action list to stdout."));
+#ifdef Q_OS_WIN
+    d->addOption(LineCmd::WinAssoc, u"win-assoc"_q, u"Associate given comma-separated extension list."_q, u"ext"_q);
+    d->addOption(LineCmd::WinUnassoc, u"win-unassoc"_q, u"Unassociate all extensions."_q);
+#endif
     d->getCommandParser(&d->cmdParser)->process(arguments());
     d->getCommandParser(&d->msgParser);
     auto lvStdOut = d->execute(&d->cmdParser);
@@ -265,6 +266,27 @@ App::~App() {
     delete d;
     OS::finalize();
     RootMenu::finalize();
+}
+
+auto App::executeCommandLine() const -> bool
+{
+    bool done = false;
+    auto isSet = [&] (LineCmd cmd) {
+        if (!d->cmdParser.isSet(d->options.value(cmd, d->dummy)))
+            return false;
+        return done = true;
+    };
+    auto value = [&] (LineCmd cmd)
+        { return d->cmdParser.value(d->options.value(cmd, d->dummy)); };
+    if (isSet(LineCmd::DumpApiTree))
+        AppObject::dumpInfo();
+    if (isSet(LineCmd::DumpActionList))
+        RootMenu::dumpInfo();
+    if (isSet(LineCmd::WinAssoc))
+        OS::associateFileTypes(nullptr, true, value(LineCmd::WinAssoc).split(','_q));
+    if (isSet(LineCmd::WinUnassoc))
+        OS::unassociateFileTypes(nullptr, true);
+    return done;
 }
 
 auto App::save() const -> void

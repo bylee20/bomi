@@ -21,6 +21,7 @@ public:
     auto mainWindow() const -> MainWindow*;
     auto styleName() const -> QString;
     auto isUnique() const -> bool;
+    auto executeCommandLine() const -> bool;
     auto availableStyleNames() const -> QStringList;
 #ifdef Q_OS_MAC
     auto globalMenuBar() const -> QMenuBar*;

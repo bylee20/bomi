@@ -21,7 +21,7 @@ DECLARE_LOG_CONTEXT(OS)
 
 namespace OS {
 
-SIA uac() -> bool
+SIA isAdmin() -> bool
 {
     SID_IDENTIFIER_AUTHORITY auth = SECURITY_NT_AUTHORITY;
     PSID sid = nullptr;
@@ -31,18 +31,25 @@ SIA uac() -> bool
     BOOL check = FALSE;
     const auto res = CheckTokenMembership(nullptr, sid, &check);
     FreeSid(sid);
-    if (check && res)
-        return true;
+    return (check && res);
+}
 
+SIA uac(QWindow *w, const QString &param) -> bool
+{
     wchar_t path[MAX_PATH];
     if (!GetModuleFileName(nullptr, path, ARRAYSIZE(path)))
         return false;
+    QVector<wchar_t> paramBuf(param.size() * 2);
+    param.toWCharArray(paramBuf.data());
     SHELLEXECUTEINFO info;
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     info.lpVerb = L"runas";
     info.lpFile = path;
+    info.lpParameters = paramBuf.data();
     info.nShow = SW_NORMAL;
+    if (w)
+        info.hwnd = (HWND)w->winId();
     if (ShellExecuteEx(&info))
         return true;
     return false;
@@ -55,10 +62,10 @@ SIA openRegistry(const QString &group) -> QSharedPointer<QSettings>
     return QSharedPointer<QSettings>(new QSettings(group, QSettings::NativeFormat));
 }
 
-auto unassociateFileTypes(bool global) -> bool
+auto unassociateFileTypes(QWindow *w, bool global) -> bool
 {
-    if (global && !uac())
-        return false;
+    if (global && !isAdmin())
+        return uac(w, u"--win-unassoc"_q);
 
     auto s = openRegistry(global ? u"HKEY_LOCAL_MACHINE\\Software"_q
                                  : u"HKEY_CURRENT_USER\\Software"_q);
@@ -82,10 +89,10 @@ auto unassociateFileTypes(bool global) -> bool
     return true;
 }
 
-auto associateFileTypes(bool global, const QStringList &exts) -> bool
+auto associateFileTypes(QWindow *w, bool global, const QStringList &exts) -> bool
 {
-    if (global && !uac())
-        return false;
+    if (global && !isAdmin())
+        return uac(w, u"--win-assoc "_q % exts.join(','_q));
 
     auto s = openRegistry(global ? u"HKEY_LOCAL_MACHINE\\Software"_q
                                  : u"HKEY_CURRENT_USER\\Software"_q);

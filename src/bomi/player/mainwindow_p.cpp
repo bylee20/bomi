@@ -183,6 +183,16 @@ auto MainWindow::Data::initItems() -> void
         }
     });
 
+#ifdef Q_OS_WIN
+    dialogWorkaround.setSingleShot(true);
+    dialogWorkaround.setInterval(1);
+    connect(&dialogWorkaround, &QTimer::timeout, p, [=] () {
+        if (adapter && adapter->isAlwaysOnTop()) {
+            adapter->setAlwaysOnTop(false);
+            adapter->setAlwaysOnTop(true);
+        }
+    });
+#endif
 }
 
 auto MainWindow::Data::updateWaitingMessage() -> void

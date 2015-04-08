@@ -30,6 +30,10 @@ auto WindowObject::set(MainWindow *mw) -> void
 {
     m = mw;
     connect(m, &MainWindow::fullscreenChanged, this, &WindowObject::fullscreenChanged);
+    connect(m, &MainWindow::heightChanged, this, &WindowObject::heightChanged);
+    connect(m, &MainWindow::heightChanged, this, &WindowObject::sizeChanged);
+    connect(m, &MainWindow::widthChanged, this, &WindowObject::widthChanged);
+    connect(m, &MainWindow::widthChanged, this, &WindowObject::sizeChanged);
 }
 
 auto WindowObject::fullscreen() const -> bool
@@ -53,4 +57,19 @@ auto WindowObject::getMouse() -> MouseObject*
 {
     static MouseObject mouse;
     return &mouse;
+}
+
+auto WindowObject::size() const -> QSize
+{
+    return m->size();
+}
+
+auto WindowObject::width() const -> int
+{
+    return m->width();
+}
+
+auto WindowObject::height() const -> int
+{
+    return m->height();
 }

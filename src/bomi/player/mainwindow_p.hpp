@@ -95,7 +95,7 @@ struct MainWindow::Data {
         quint64 unix = 0;
         QMap<QString, std::function<QString(void)>> get;
     } ph;
-    QTimer waiter, hider;
+    QTimer waiter, hider, dialogWorkaround;
     ABRepeatChecker ab;
     QMenu contextMenu;
     QSharedPointer<PrefDialog> prefDlg;
@@ -130,6 +130,9 @@ struct MainWindow::Data {
         dlg->winId();
         Q_ASSERT(p && dlg->windowHandle());
         dlg->windowHandle()->setTransientParent(p);
+#ifdef Q_OS_WIN
+        dlg->installEventFilter(p);
+#endif
         return QSharedPointer<T>(dlg);
     }
 
