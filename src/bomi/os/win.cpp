@@ -48,6 +48,8 @@ SIA uac() -> bool
     return false;
 }
 
+auto canAssociateFileTypes() -> bool { return true; }
+
 SIA openRegistry(const QString &group) -> QSharedPointer<QSettings>
 {
     return QSharedPointer<QSettings>(new QSettings(group, QSettings::NativeFormat));

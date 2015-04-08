@@ -16,37 +16,35 @@ auto _JsonFromString(const QString &str) -> QJsonObject
     return QJsonDocument::fromJson(str.toUtf8()).object();
 }
 
-static const QStringList videoExts = QStringList()
-        << u"3gp"_q
-        << u"asf"_q << u"avi"_q
-        << u"bdm"_q << u"bdmv"_q
-        << u"clpi"_q << u"cpi"_q
-        << u"dat"_q << u"divx"_q << u"dv"_q
-        << u"flac"_q << u"fli"_q << u"flv"_q
-        << u"ifo"_q
-        << u"m2t"_q << u"m2ts"_q << u"m4v"_q << u"mkv"_q << u"mov"_q
-        << u"mp2"_q << u"mp4"_q << u"mpeg"_q << u"mpg"_q << u"mpg2"_q
-        << u"mpg4"_q << u"mpl"_q << u"mpls"_q << u"mts"_q
-        << u"nsv"_q << u"nut"_q << u"nuv"_q
-        << u"ogg"_q << u"ogm"_q
-        << u"qt"_q
-        << u"rm"_q << u"rmvb"_q
-        << u"trp"_q << u"tp"_q << u"ts"_q
-        << u"vcd"_q << u"vfw"_q << u"vob"_q
-        << u"webm"_q << u"wmv"_q;
-static const QStringList audioExts = QStringList()
-        << u"aac"_q << u"ac3"_q << u"aiff"_q
-        << u"m4a"_q << u"mka"_q << u"mp3"_q
-        << u"ogg"_q << u"pcm"_q
-        << u"wav"_q << u"wma"_q;
-static const QStringList subExts = QStringList()
-        << u"ass"_q << u"smi"_q << u"srt"_q << u"ssa"_q << u"sub"_q << u"txt"_q;
-static const QStringList plExts = QStringList()
-        << u"pls"_q << u"m3u"_q << u"m3u8"_q;
-static const QStringList discExts = QStringList() << u"iso"_q;
-static const QStringList imageExts = QStringList()
-        << u"bmp"_q << u"gif"_q << u"jpeg"_q
-        << u"jpg"_q << u"png"_q << u"tif"_q << u"tiff"_q;
+static const QStringList videoExts = {
+    u"3gp"_q, u"asf"_q, u"avi"_q,
+    u"bdm"_q, u"bdmv"_q, u"clpi"_q, u"cpi"_q,
+    u"dat"_q, u"divx"_q, u"dv"_q, u"fli"_q, u"flv"_q, u"ifo"_q,
+    u"m2t"_q, u"m2ts"_q, u"m4v"_q, u"mkv"_q, u"mov"_q,
+    u"mp4"_q, u"mpeg"_q, u"mpg"_q, u"mpg2"_q,
+    u"mpg4"_q, u"mpl"_q, u"mpls"_q, u"mts"_q,
+    u"nsv"_q, u"nut"_q, u"nuv"_q, u"ogg"_q, u"ogm"_q, u"qt"_q,
+    u"rm"_q, u"rmvb"_q, u"trp"_q, u"tp"_q, u"ts"_q,
+    u"vcd"_q, u"vfw"_q, u"vob"_q, u"webm"_q, u"wmv"_q
+};
+
+static const QStringList audioExts = {
+    u"aac"_q, u"ac3"_q, u"aiff"_q, u"flac"_q,
+    u"m4a"_q, u"mka"_q, u"mp2"_q, u"mp3"_q,
+    u"ogg"_q, u"pcm"_q, u"wav"_q, u"wma"_q
+};
+
+static const QStringList subExts = {
+    u"ass"_q, u"smi"_q, u"srt"_q, u"ssa"_q, u"sub"_q, u"txt"_q
+};
+
+static const QStringList plExts = { u"pls"_q, u"m3u"_q, u"m3u8"_q };
+
+static const QStringList discExts = { u"iso"_q };
+
+static const QStringList imageExts = {
+    u"bmp"_q, u"gif"_q, u"jpeg"_q, u"jpg"_q, u"png"_q, u"tif"_q, u"tiff"_q
+};
 
 QStringList writableImageExts;
 
@@ -102,7 +100,7 @@ auto _MimeTypeForSuffix(const QString &suffix) -> QMimeType
     else if (suffix == "ogg"_a)
         mimeName = u"application/ogg"_q;
     else
-        return DB().mimeTypeForFile('.'_q % suffix, DB::MatchExtension);
+        return DB().mimeTypeForFile("a."_a % suffix, DB::MatchExtension);
     return DB().mimeTypeForName(mimeName);
 }
 

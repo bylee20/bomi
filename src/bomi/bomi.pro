@@ -293,7 +293,8 @@ HEADERS += \
     video/mpvosdrenderer.hpp \
     misc/windowsize.hpp \
     enum/framebufferobjectformat.hpp \
-    video/videopreview.hpp
+    video/videopreview.hpp \
+    dialog/fileassocdialog.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -502,7 +503,8 @@ SOURCES += \
     video/mpvosdrenderer.cpp \
     misc/windowsize.cpp \
     enum/framebufferobjectformat.cpp \
-    video/videopreview.cpp
+    video/videopreview.cpp \
+    dialog/fileassocdialog.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
@@ -526,7 +528,8 @@ FORMS += \
     ui/autoloaderwidget.ui \
     ui/logviewer.ui \
     ui/subtitleviewer.ui \
-    ui/controlsthemewidget.ui
+    ui/controlsthemewidget.ui \
+    ui/fileassocdialog.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \

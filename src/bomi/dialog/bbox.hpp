@@ -17,9 +17,12 @@ public:
         { return QDialogButtonBox::addButton(text, role); }
     template<typename F>
     auto addButton(const QString &text, Role role, F func) -> QPushButton*
+        { return addButton<F>(text, role, this, func); }
+    template<typename F>
+    auto addButton(const QString &text, Role role, QObject *ctx, F func) -> QPushButton*
     {
         auto button = addButton(text, role);
-        connect(button, &QPushButton::clicked, this, func);
+        connect(button, &QPushButton::clicked, ctx, func);
         return button;
     }
     auto addButton(QAbstractButton *button, Role role) -> void

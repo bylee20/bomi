@@ -6,6 +6,7 @@
 #include "misc/stepactionpair.hpp"
 #include "misc/encodinginfo.hpp"
 #include "opengl/openglmisc.hpp"
+#include "os/os.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/dithering.hpp"
 #include "enum/movetoward.hpp"
@@ -589,6 +590,9 @@ RootMenu::RootMenu()
         d->separator();
 
         d->action(u"pref"_q, QT_TR_NOOP("Preferences"))->setMenuRole(QAction::PreferencesRole);
+        auto assoc = d->action(u"associate-files"_q, QT_TR_NOOP("Associate Files"));
+//        assoc->setEnabled(OS::canAssociateFileTypes());
+//        assoc->setVisible(OS::canAssociateFileTypes());
         d->action(u"reload-skin"_q, QT_TR_NOOP("Reload Skin"));
 
         d->separator();

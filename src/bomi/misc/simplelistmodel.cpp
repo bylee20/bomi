@@ -276,7 +276,10 @@ auto SimpleListModelBase::setCheckable(int column, bool checkable) -> void
 auto SimpleListModelBase::flags(int row, int column) const -> Qt::ItemFlags
 {
     Q_UNUSED((row | column));
-    return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    auto flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    if (d->checked.contains(column))
+        flags |= Qt::ItemIsUserCheckable;
+    return flags;
 }
 
 auto SimpleListModelBase::header(int column) const -> QString

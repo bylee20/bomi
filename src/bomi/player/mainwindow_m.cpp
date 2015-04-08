@@ -4,6 +4,7 @@
 #include "misc/actiongroup.hpp"
 #include "subtitle/subtitleviewer.hpp"
 #include "subtitle/subtitlemodel.hpp"
+#include "dialog/fileassocdialog.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/audioequalizerdialog.hpp"
 #include "dialog/videocolordialog.hpp"
@@ -689,6 +690,8 @@ auto MainWindow::Data::plugMenu() -> void
             prefDlg->show();
         }
     });
+    connect(tool[u"associate-files"_q], &QAction::triggered,
+            p, [=] () { dialog<FileAssocDialog>()->exec(); });
     connect(tool[u"find-subtitle"_q], &QAction::triggered, p, [this] () {
         if (!subFindDlg) {
             subFindDlg = dialog<SubtitleFindDialog>();

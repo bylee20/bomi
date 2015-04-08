@@ -33,7 +33,6 @@ signals:
     void specialRowChanged(int row);
     void dataChanged(int row, const QVector<int> &roles = QVector<int>());
     void contentsChanged();
-    void checkedChanged(int row, int column);
 protected:
     auto resize(int rows) -> void;
     auto reset(int rows) -> void;

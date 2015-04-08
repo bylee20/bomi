@@ -50,8 +50,6 @@ public:
         connect(this, &MrlStatePropertyListModel::contentsChanged,
                 this, &MrlStatePropertyListModel::valueChanged);
     }
-    auto flags(int row, int column) const -> Qt::ItemFlags
-        { return Super::flags(row, column) | Qt::ItemIsUserCheckable; }
     auto displayData(int row, int /*column*/) const -> QVariant
         { return at(row).description; }
     auto value() const -> QStringList
