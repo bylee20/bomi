@@ -4,6 +4,8 @@
 
 #include "enum/deintmethod.hpp"
 #include "enum/codecid.hpp"
+#include "misc/log.hpp"
+#include "player/app.hpp"
 #include <QScreen>
 #include <QQuickWindow>
 #include <QQuickItem>
@@ -13,8 +15,133 @@
 #include <QSettings>
 #include <QFontDatabase>
 #include <windowsx.h>
+#include <Shlobj.h>
+
+DECLARE_LOG_CONTEXT(OS)
 
 namespace OS {
+
+SIA uac() -> bool
+{
+    SID_IDENTIFIER_AUTHORITY auth = SECURITY_NT_AUTHORITY;
+    PSID sid = nullptr;
+    if (!AllocateAndInitializeSid(&auth, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                  DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &sid))
+        return false;
+    BOOL check = FALSE;
+    const auto res = CheckTokenMembership(nullptr, sid, &check);
+    FreeSid(sid);
+    if (check && res)
+        return true;
+
+    wchar_t path[MAX_PATH];
+    if (!GetModuleFileName(nullptr, path, ARRAYSIZE(path)))
+        return false;
+    SHELLEXECUTEINFO info;
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    info.lpVerb = L"runas";
+    info.lpFile = path;
+    info.nShow = SW_NORMAL;
+    if (ShellExecuteEx(&info))
+        return true;
+    return false;
+}
+
+SIA openRegistry(const QString &group) -> QSharedPointer<QSettings>
+{
+    return QSharedPointer<QSettings>(new QSettings(group, QSettings::NativeFormat));
+}
+
+auto unassociateFileTypes(bool global) -> bool
+{
+    if (global && !uac())
+        return false;
+
+    auto s = openRegistry(global ? u"HKEY_LOCAL_MACHINE\\Software"_q
+                                 : u"HKEY_CURRENT_USER\\Software"_q);
+    s->remove(u"bomi"_q);
+    s->remove(u"Microsoft/Windows/CurrentVersion/App Paths/bomi.exe"_q);
+    s->remove(u"RegisteredApplications/bomi"_q);
+
+    s->beginGroup(u"Classes"_q);
+    s->remove(u"Applications/bomi.exe"_q);
+    const auto children = s->childGroups();
+    for (auto &child : children) {
+        if (child.startsWith('.'_q))
+            s->remove(child % u"/OpenWithProgids/bomi"_q % child);
+        else if (child.startsWith("bomi."_a))
+            s->remove(child);
+    }
+    s->endGroup();
+
+    s.clear();
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSHNOWAIT, nullptr, nullptr);
+    return true;
+}
+
+auto associateFileTypes(bool global, const QStringList &exts) -> bool
+{
+    if (global && !uac())
+        return false;
+
+    auto s = openRegistry(global ? u"HKEY_LOCAL_MACHINE\\Software"_q
+                                 : u"HKEY_CURRENT_USER\\Software"_q);
+
+    const auto exec = QDir::toNativeSeparators(qApp->applicationFilePath());
+    s->beginGroup(u"Microsoft/Windows/CurrentVersion/App Paths/bomi.exe"_q);
+    s->setValue(u"."_q, exec);
+    s->setValue(u"Path"_q, QDir::toNativeSeparators(qApp->applicationDirPath()));
+    s->endGroup();
+
+    s->beginGroup(u"bomi/Capabilities"_q);
+    s->setValue(u"ApplicationDescription"_q, u"multimedia player"_q);
+    s->setValue(u"ApplicationName"_q, cApp.displayName());
+    s->beginGroup(u"FileAssociations"_q);
+    for (auto &ext : exts)
+        s->setValue('.'_q % ext, QString("bomi."_a % ext));
+    s->endGroup();
+    s->endGroup();
+
+    s->setValue(u"RegisteredApplications/bomi"_q, uR"(Software\bomi\Capabilities)"_q);
+
+    const QString cmd = '"'_q % exec % "\" \"%1\""_a;
+    auto shell = [&] () {
+        s->setValue(u"shell/play/command/."_q, cmd);
+        s->setValue(u"shell/play/FriendlyAppName"_q, cApp.displayName());
+        s->setValue(u"shell/open/command/."_q, cmd);
+        s->setValue(u"shell/open/FriendlyAppName"_q, cApp.displayName());
+    };
+
+    s->beginGroup(u"Classes"_q);
+
+    s->beginGroup(u"Applications/bomi.exe"_q);
+    shell();
+    s->endGroup();
+
+    for (auto &ext : exts) {
+        const auto mime = _MimeTypeForSuffix(ext);
+        QString desc = mime.comment();
+        if (mime.isDefault())
+            desc = qApp->translate("Ext", "%1 file").arg(ext.toUpper());
+
+        const QString id = "bomi."_a % ext;
+        s->beginGroup(id);
+        s->setValue(u"."_q, desc);
+        shell();
+        s->endGroup();
+
+        s->beginGroup('.'_q % ext);
+        s->setValue(u"."_q, id);
+        s->setValue("OpenWithProgids/"_a % id, QString());
+        s->endGroup();
+    }
+    s->endGroup();
+
+    s.clear();
+    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSHNOWAIT, nullptr, nullptr);
+    return false;
+}
 
 auto defaultFixedFont() -> QFont
 {

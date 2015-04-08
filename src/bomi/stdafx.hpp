@@ -51,6 +51,7 @@ char *gets(char *str);
 #include <QJsonDocument>
 #include <QtMath>
 #include <QDebug>
+#include <QMimeDatabase>
 
 #include <utility>
 #include <array>

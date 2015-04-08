@@ -17,14 +17,13 @@ auto _JsonFromString(const QString &str) -> QJsonObject
 }
 
 static const QStringList videoExts = QStringList()
-        << u"3gp"_q << u"3iv"_q
+        << u"3gp"_q
         << u"asf"_q << u"avi"_q
         << u"bdm"_q << u"bdmv"_q
-        << u"clpi"_q << u"cpk"_q << u"cpi"_q
+        << u"clpi"_q << u"cpi"_q
         << u"dat"_q << u"divx"_q << u"dv"_q
         << u"flac"_q << u"fli"_q << u"flv"_q
-        << u"h264"_q
-        << u"i263"_q << u"ifo"_q
+        << u"ifo"_q
         << u"m2t"_q << u"m2ts"_q << u"m4v"_q << u"mkv"_q << u"mov"_q
         << u"mp2"_q << u"mp4"_q << u"mpeg"_q << u"mpg"_q << u"mpg2"_q
         << u"mpg4"_q << u"mpl"_q << u"mpls"_q << u"mts"_q
@@ -38,8 +37,8 @@ static const QStringList videoExts = QStringList()
 static const QStringList audioExts = QStringList()
         << u"aac"_q << u"ac3"_q << u"aiff"_q
         << u"m4a"_q << u"mka"_q << u"mp3"_q
-        << u"ogg"_q << u"pcm"_q << u"vaw"_q
-        << u"wav"_q << u"waw"_q << u"wma"_q;
+        << u"ogg"_q << u"pcm"_q
+        << u"wav"_q << u"wma"_q;
 static const QStringList subExts = QStringList()
         << u"ass"_q << u"smi"_q << u"srt"_q << u"ssa"_q << u"sub"_q << u"txt"_q;
 static const QStringList plExts = QStringList()
@@ -55,28 +54,6 @@ static QMap<QString, QString> lastFolders;
 auto open_folders() -> QMap<QString, QString> { return lastFolders; }
 auto set_open_folders(const QMap<QString, QString> &folders) -> void
 { lastFolders = folders; }
-
-auto _ExtList(ExtType ext) -> QStringList
-{
-    switch(ext) {
-    case VideoExt:
-        return videoExts;
-    case AudioExt:
-        return audioExts;
-    case SubtitleExt:
-        return subExts;
-    case ImageExt:
-        return imageExts;
-    case WritableImageExt:
-        return writableImageExts;
-    case PlaylistExt:
-        return plExts;
-    case DiscExt:
-        return discExts;
-    default:
-        return QStringList();
-    }
-}
 
 auto _ExtList(ExtTypes exts) -> QStringList
 {
@@ -98,12 +75,6 @@ auto _ExtList(ExtTypes exts) -> QStringList
     return list;
 }
 
-auto _IsSuffixOf(ExtType ext, const QString &suffix) -> bool
-{
-    static constexpr auto cs = Qt::CaseInsensitive;
-    return _ExtList(ext).contains(suffix, cs);
-}
-
 auto _IsSuffixOf(ExtTypes exts, const QString &suffix) -> bool
 {
     auto check = [&] (ExtType ext, const QStringList &list) -> bool
@@ -112,6 +83,35 @@ auto _IsSuffixOf(ExtTypes exts, const QString &suffix) -> bool
             || check(SubtitleExt, subExts) || check(ImageExt, imageExts)
             || check(WritableImageExt, writableImageExts)
             || check(PlaylistExt, plExts) || check(DiscExt, discExts);
+}
+
+auto _MimeTypeForSuffix(const QString &suffix) -> QMimeType
+{
+    using DB = QMimeDatabase;
+    QString mimeName;
+    if (suffix == u"pcm"_q)
+        mimeName = u"audio/x-adpcm"_q;
+    else if (_IsOneOf(suffix, "tp"_a, "trp"_a))
+        mimeName = u"video/mp2t"_q;
+    else if (suffix == "mpg4"_a)
+        mimeName = u"video/mp4"_q;
+    else if (_IsOneOf(suffix, "dat"_a, "mpg2"_a))
+        mimeName = u"video/mpeg"_q;
+    else if (suffix == "ifo"_a)
+        mimeName = u"x-content/video-dvd"_q;
+    else if (suffix == "ogg"_a)
+        mimeName = u"application/ogg"_q;
+    else
+        return DB().mimeTypeForFile('.'_q % suffix, DB::MatchExtension);
+    return DB().mimeTypeForName(mimeName);
+}
+
+auto _DescriptionForSuffix(const QString &suffix) -> QString
+{
+    const auto type = _MimeTypeForSuffix(suffix);
+    if (!type.isDefault())
+        return type.comment();
+    return qApp->translate("MimeType", "%1 file").arg(suffix.toUpper());
 }
 
 auto _ToAbsPath(const QString &fileName) -> QString

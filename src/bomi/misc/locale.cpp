@@ -257,7 +257,7 @@ struct Data {
 
 static auto data() -> Data& { static Data d; return d; }
 
-#if !BOMI_RELEASE
+#ifdef BOMI_IMPORT_ICU
 
 struct IcuData {
     IcuData() { }
@@ -305,11 +305,9 @@ struct IcuData {
     QString locale;
     QMap<QString, QString> names;
 };
-#endif
 
 auto Locale::importIcu() -> void
 {
-#if !BOMI_RELEASE
     const QString folder = QDir::homePath() % "/icu/source/data/lang/"_a;
 
     QMap<QLocale::Language, QString> iso;
@@ -700,8 +698,8 @@ auto Locale::importIcu() -> void
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
         Q_ASSERT(false);
     file.write(QJsonDocument(json).toJson(QJsonDocument::Indented).replace("    "_b, "\t"_b));
-#endif
 }
+#endif
 
 Locale::Locale(const Locale &rhs)
 {

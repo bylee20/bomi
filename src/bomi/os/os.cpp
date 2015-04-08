@@ -12,6 +12,9 @@ auto defaultFont() -> QFont
 }
 
 #ifndef Q_OS_WIN
+auto unassociateFileTypes(bool) -> bool { return false; }
+auto associateFileTypes(bool, const QStringList &) -> bool { return false; }
+
 auto defaultFixedFont() -> QFont
 {
     return QFontDatabase::systemFont(QFontDatabase::FixedFont);

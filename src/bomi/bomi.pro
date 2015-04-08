@@ -54,7 +54,7 @@ macx {
 	SOURCES += player/mpris.cpp
 } else:win32 {
     RC_ICONS = ../../icons/bomi.ico
-    LIBS += -lopengl32 -lgdi32 -limm32 -lwinmm -lole32 -ldvdcss
+    LIBS += -lopengl32 -lgdi32 -limm32 -lwinmm -lole32 -ldvdcss -lrpcrt4
     HEADERS += os/win.hpp
     SOURCES += os/win.cpp
     CONFIG -= debug

@@ -206,10 +206,10 @@ auto _ToAbsPath(const QString &fileName) -> QString;
 auto _ToAbsFilePath(const QString &fileName) -> QString;
 auto _ToNameFilter(ExtTypes exts) -> QStringList;
 auto _ToFilter(ExtTypes exts) -> QString;
-auto _IsSuffixOf(ExtType ext, const QString &suffix) -> bool;
 auto _IsSuffixOf(ExtTypes ext, const QString &suffix) -> bool;
-auto _ExtList(ExtType ext) -> QStringList;
 auto _ExtList(ExtTypes ext) -> QStringList;
+auto _MimeTypeForSuffix(const QString &suffix) -> QMimeType;
+auto _DescriptionForSuffix(const QString &suffix) -> QString;
 
 auto _GetOpenFiles(QWidget *parent, const QString &title, ExtTypes exts,
                        const QString &key = QString()) -> QStringList;

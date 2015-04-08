@@ -12,6 +12,9 @@ namespace OS {
 auto initialize() -> void;
 auto finalize() -> void;
 
+auto unassociateFileTypes(bool global) -> bool;
+auto associateFileTypes(bool global, const QStringList &exts) -> bool;
+
 auto screensaverMethods() -> QStringList;
 auto setScreensaverMethod(const QString &method) -> void;
 auto setScreensaverEnabled(bool enabled) -> void;

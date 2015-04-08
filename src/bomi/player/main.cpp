@@ -20,8 +20,10 @@ SIA measure(F func, int loop = 100000) -> quint64
 }
 
 int main(int argc, char **argv) {
-//    Locale::importIcu();
-//    return 0;
+#ifdef BOMI_IMPORT_ICU
+    Locale::importIcu();
+    return 0;
+#endif
 #ifdef Q_OS_LINUX
     auto gtk_disable_setlocale
             = (void(*)(void))QLibrary::resolve(u"gtk-x11-2.0"_q,
