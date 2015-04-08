@@ -124,7 +124,8 @@ Slider {
                                        Format.time(val) + "/" + Format.time(max))
             if (App.theme.controls.showPreviewOnMouseOverSeekBar) {
                 d.e.preview.parent = pv
-                pv.x = mouse.x - pv.width * 0.5
+                pv.x = Alg.clamp(mouse.x - pv.width * 0.5, mapFromItem(null, 0, 0).x,
+                                 mapFromItem(null, App.window.width - pv.width, 0).x)
                 d.e.preview.rate = d.e.rate_ms(val);
                 pvTime.time = val
             }
