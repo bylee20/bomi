@@ -222,17 +222,17 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>AudioEqualizerDialog</name>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="25"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="26"/>
         <source>Preset</source>
         <translation>프리셋</translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="39"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="40"/>
         <source>Load</source>
         <translation>불러오기</translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="78"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="79"/>
         <source>Audio Equalizer</source>
         <translation>오디어 이퀄라이저</translation>
     </message>
@@ -1574,13 +1574,13 @@ This requires much more CPU or GPU usage.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="163"/>
-        <location filename="../player/mainwindow_m.cpp" line="574"/>
-        <location filename="../player/mainwindow_m.cpp" line="596"/>
+        <location filename="../player/mainwindow_m.cpp" line="572"/>
+        <location filename="../player/mainwindow_m.cpp" line="594"/>
         <source>Open File</source>
         <translation>파일 열기</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="542"/>
+        <location filename="../player/mainwindow_m.cpp" line="540"/>
         <source>Open Subtitle</source>
         <translation>자막 열기</translation>
     </message>
@@ -1593,13 +1593,13 @@ This requires much more CPU or GPU usage.</source>
         <translation type="vanished">%1개 자막</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="732"/>
+        <location filename="../player/mainwindow_m.cpp" line="729"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>자동 시스템 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="581"/>
-        <location filename="../player/mainwindow_p.cpp" line="971"/>
+        <location filename="../player/mainwindow_m.cpp" line="579"/>
+        <location filename="../player/mainwindow_p.cpp" line="970"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
@@ -1614,19 +1614,19 @@ This requires much more CPU or GPU usage.</source>
         <translation>재생</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="202"/>
+        <location filename="../player/mainwindow_p.cpp" line="201"/>
         <source>%1 ...
 Please wait for a while.</source>
         <translation>%1 ...
 잠시만 기다려주세요.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="547"/>
+        <location filename="../player/mainwindow_p.cpp" line="546"/>
         <source>JSON-RPC Server Error</source>
         <translation>JSON-RPC 서버 오류</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="716"/>
+        <location filename="../player/mainwindow_p.cpp" line="715"/>
         <source>Error on loading skin</source>
         <translation>스킨 불러오기 에러</translation>
     </message>
@@ -1636,28 +1636,28 @@ Please wait for a while.</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="716"/>
+        <location filename="../player/mainwindow_m.cpp" line="713"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>재생목록을 마치면 보미를 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="717"/>
+        <location filename="../player/mainwindow_m.cpp" line="714"/>
         <source>Auto-exit is canceled.</source>
         <translation>자동 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="723"/>
+        <location filename="../player/mainwindow_m.cpp" line="720"/>
         <source>Auto-shutdown</source>
         <translation>자동 시스템 종료</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="724"/>
-        <location filename="../player/mainwindow_m.cpp" line="729"/>
+        <location filename="../player/mainwindow_m.cpp" line="721"/>
+        <location filename="../player/mainwindow_m.cpp" line="726"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>재생목록을 마치면 시스템이 종료됩니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="785"/>
+        <location filename="../player/mainwindow_m.cpp" line="782"/>
         <source>Current Chapter</source>
         <translation>현재 챕터</translation>
     </message>
@@ -1737,7 +1737,7 @@ Cannot open the media.</source>
         <translation type="vanished">선택된 오디오 트랙</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="508"/>
+        <location filename="../player/mainwindow_m.cpp" line="506"/>
         <source>Open Audio File</source>
         <translation>오디오 파일 열기</translation>
     </message>
@@ -1746,7 +1746,7 @@ Cannot open the media.</source>
         <translation type="vanished">선택된 자막 트랙</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="784"/>
+        <location filename="../player/mainwindow_m.cpp" line="781"/>
         <source>Current Title/Edition</source>
         <translation>현재 타이틀/에디션</translation>
     </message>
@@ -1769,17 +1769,17 @@ Cannot open the media.</source>
         <translation type="vanished">스냅샷 저장 실패</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="639"/>
+        <location filename="../player/mainwindow_m.cpp" line="637"/>
         <source>Shuffle Playlist</source>
         <translation>재생 목록 섞기</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="650"/>
+        <location filename="../player/mainwindow_m.cpp" line="648"/>
         <source>Repeat Playlist</source>
         <translation>재생 목록 반복</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="704"/>
+        <location filename="../player/mainwindow_m.cpp" line="701"/>
         <source>Downloaded</source>
         <translation>다운로드</translation>
     </message>
@@ -3593,9 +3593,8 @@ Regular expression is supported.</source>
         <translation>생김새</translation>
     </message>
     <message>
-        <location filename="../pref/prefdialog.cpp" line="115"/>
         <source>Style</source>
-        <translation>스타일</translation>
+        <translation type="vanished">스타일</translation>
     </message>
     <message>
         <location filename="../pref/prefdialog.cpp" line="131"/>
@@ -3641,6 +3640,11 @@ Regular expression is supported.</source>
         <location filename="../pref/prefdialog.cpp" line="112"/>
         <source>Miscellaneous</source>
         <translation>기타</translation>
+    </message>
+    <message>
+        <location filename="../pref/prefdialog.cpp" line="115"/>
+        <source>Theme</source>
+        <translation>테마</translation>
     </message>
     <message>
         <location filename="../pref/prefdialog.cpp" line="116"/>
@@ -4892,17 +4896,17 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SnapshotDialog</name>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="68"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="69"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="35"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="36"/>
         <source>Failed in getting a snapshot!</source>
         <translation>스냅샷을 찍는데 실패하였습니다!</translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="51"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="52"/>
         <source>Take Snapshot</source>
         <translation>스냅샷 찍기</translation>
     </message>
@@ -5038,7 +5042,7 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SubtitleFindDialog</name>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="278"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="280"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
         <translation>자막 찾기(OpenSubtitles.org)</translation>
     </message>
@@ -5049,7 +5053,7 @@ Please confirm authentication informations and try again.</source>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="26"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="238"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="240"/>
         <source>Open</source>
         <translation>열기</translation>
     </message>
@@ -5064,59 +5068,59 @@ Please confirm authentication informations and try again.</source>
         <translation>닫기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="134"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="135"/>
         <source>Connecting...</source>
         <translation>연결중...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="137"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
         <source>Finding...</source>
         <translation>찾는중...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="140"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Find</source>
         <translation>찾기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="161"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="200"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="313"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="315"/>
         <source>Find Subtitle</source>
         <translation>자막 찾기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="163"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation>같은 이름의 파일이 이미 존재합니다. 덮어쓰겠습니까?</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="164"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
         <source>Overwrite</source>
         <translation>덮어쓰기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="166"/>
         <source>Save as...</source>
         <translation>다른 이름으로 저장...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="173"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="174"/>
         <source>Save As...</source>
         <translation>다른 이름으로 저장...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="171"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="172"/>
         <source>Subtitle Files</source>
         <translation>자막 파일</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="202"/>
         <source>Cannot write file!</source>
         <translation>파일을 쓸 수 없습니다!</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="314"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="316"/>
         <source>Cannot find subtitles for %1.</source>
         <translation>%1의 자막을 찾을 수 없습니다.</translation>
     </message>
@@ -5187,7 +5191,7 @@ Please confirm authentication informations and try again.</source>
         <translation>시간을 밀리초 단위로 표시</translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleviewer.cpp" line="121"/>
+        <location filename="../subtitle/subtitleviewer.cpp" line="122"/>
         <source>Next formats are allowed:
 Decimal digits only
  - translated into milliseconds
@@ -5200,7 +5204,7 @@ h:m:s
  - 시간:분:초이고, s는 소수점을 포함할 수 있습니다.</translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleviewer.cpp" line="149"/>
+        <location filename="../subtitle/subtitleviewer.cpp" line="150"/>
         <source>Subtitle Viewer</source>
         <translation>자막 뷰어</translation>
     </message>
@@ -5353,12 +5357,12 @@ h:m:s
 <context>
     <name>VideoColorDialog</name>
     <message>
-        <location filename="../dialog/videocolordialog.cpp" line="19"/>
+        <location filename="../dialog/videocolordialog.cpp" line="20"/>
         <source>Video Color Editor</source>
         <translation>비디오 색상 편집기</translation>
     </message>
     <message>
-        <location filename="../dialog/videocolordialog.cpp" line="40"/>
+        <location filename="../dialog/videocolordialog.cpp" line="41"/>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>

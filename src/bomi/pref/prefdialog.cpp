@@ -112,7 +112,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Miscellaneous"), d->ui.misc, u":/img/applications-education-miscellaneous-32.png"_q);
 
     addCategory(tr("Appearance"));
-    addPage(tr("Style"), d->ui.skin, u":/img/preferences-desktop-theme-32.png"_q);
+    addPage(tr("Theme"), d->ui.skin, u":/img/preferences-desktop-theme-32.png"_q);
     addPage(tr("OSD"), d->ui.osd, u":/img/view-multiple-objects.png"_q);
 
     addCategory(tr("Video"));

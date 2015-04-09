@@ -215,17 +215,17 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>AudioEqualizerDialog</name>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="25"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="26"/>
         <source>Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="39"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="40"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="78"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="79"/>
         <source>Audio Equalizer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1532,13 +1532,13 @@ This requires much more CPU or GPU usage.</source>
     <name>MainWindow</name>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="163"/>
-        <location filename="../player/mainwindow_m.cpp" line="574"/>
-        <location filename="../player/mainwindow_m.cpp" line="596"/>
+        <location filename="../player/mainwindow_m.cpp" line="572"/>
+        <location filename="../player/mainwindow_m.cpp" line="594"/>
         <source>Open File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="542"/>
+        <location filename="../player/mainwindow_m.cpp" line="540"/>
         <source>Open Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1554,7 +1554,7 @@ Cannot open the media.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="732"/>
+        <location filename="../player/mainwindow_m.cpp" line="729"/>
         <source>Auto-shutdown is canceled.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1569,18 +1569,18 @@ Cannot open the media.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="202"/>
+        <location filename="../player/mainwindow_p.cpp" line="201"/>
         <source>%1 ...
 Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="547"/>
+        <location filename="../player/mainwindow_p.cpp" line="546"/>
         <source>JSON-RPC Server Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="716"/>
+        <location filename="../player/mainwindow_p.cpp" line="715"/>
         <source>Error on loading skin</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1600,8 +1600,8 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="581"/>
-        <location filename="../player/mainwindow_p.cpp" line="971"/>
+        <location filename="../player/mainwindow_m.cpp" line="579"/>
+        <location filename="../player/mainwindow_p.cpp" line="970"/>
         <source>Save File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1627,48 +1627,48 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="508"/>
+        <location filename="../player/mainwindow_m.cpp" line="506"/>
         <source>Open Audio File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="639"/>
+        <location filename="../player/mainwindow_m.cpp" line="637"/>
         <source>Shuffle Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="650"/>
+        <location filename="../player/mainwindow_m.cpp" line="648"/>
         <source>Repeat Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="704"/>
+        <location filename="../player/mainwindow_m.cpp" line="701"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="716"/>
+        <location filename="../player/mainwindow_m.cpp" line="713"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="717"/>
+        <location filename="../player/mainwindow_m.cpp" line="714"/>
         <source>Auto-exit is canceled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="723"/>
+        <location filename="../player/mainwindow_m.cpp" line="720"/>
         <source>Auto-shutdown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="724"/>
-        <location filename="../player/mainwindow_m.cpp" line="729"/>
+        <location filename="../player/mainwindow_m.cpp" line="721"/>
+        <location filename="../player/mainwindow_m.cpp" line="726"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="784"/>
+        <location filename="../player/mainwindow_m.cpp" line="781"/>
         <source>Current Title/Edition</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1683,7 +1683,7 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="785"/>
+        <location filename="../player/mainwindow_m.cpp" line="782"/>
         <source>Current Chapter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3162,11 +3162,6 @@ Regular expression is supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../pref/prefdialog.cpp" line="115"/>
-        <source>Style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../pref/prefdialog.cpp" line="116"/>
         <source>OSD</source>
         <translation type="unfinished"></translation>
@@ -3209,6 +3204,11 @@ Regular expression is supported.</source>
     <message>
         <location filename="../pref/prefdialog.cpp" line="109"/>
         <source>Cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../pref/prefdialog.cpp" line="115"/>
+        <source>Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4274,7 +4274,7 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SnapshotDialog</name>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="51"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="52"/>
         <source>Take Snapshot</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4325,12 +4325,12 @@ Please confirm authentication informations and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="68"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="69"/>
         <source>Save File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="35"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="36"/>
         <source>Failed in getting a snapshot!</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4405,7 +4405,7 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SubtitleFindDialog</name>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="278"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="280"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4416,7 +4416,7 @@ Please confirm authentication informations and try again.</source>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="26"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="238"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="240"/>
         <source>Open</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4431,59 +4431,59 @@ Please confirm authentication informations and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="134"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="135"/>
         <source>Connecting...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="137"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
         <source>Finding...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="140"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Find</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="161"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="200"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="313"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="315"/>
         <source>Find Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="163"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="164"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="166"/>
         <source>Save as...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="173"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="174"/>
         <source>Save As...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="171"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="172"/>
         <source>Subtitle Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="202"/>
         <source>Cannot write file!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="314"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="316"/>
         <source>Cannot find subtitles for %1.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4554,7 +4554,7 @@ Please confirm authentication informations and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleviewer.cpp" line="121"/>
+        <location filename="../subtitle/subtitleviewer.cpp" line="122"/>
         <source>Next formats are allowed:
 Decimal digits only
  - translated into milliseconds
@@ -4563,7 +4563,7 @@ h:m:s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleviewer.cpp" line="149"/>
+        <location filename="../subtitle/subtitleviewer.cpp" line="150"/>
         <source>Subtitle Viewer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4700,12 +4700,12 @@ h:m:s
 <context>
     <name>VideoColorDialog</name>
     <message>
-        <location filename="../dialog/videocolordialog.cpp" line="19"/>
+        <location filename="../dialog/videocolordialog.cpp" line="20"/>
         <source>Video Color Editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/videocolordialog.cpp" line="40"/>
+        <location filename="../dialog/videocolordialog.cpp" line="41"/>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>

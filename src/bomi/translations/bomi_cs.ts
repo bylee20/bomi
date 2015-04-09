@@ -222,17 +222,17 @@ E-mail vývojáře: %4</translation>
 <context>
     <name>AudioEqualizerDialog</name>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="25"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="26"/>
         <source>Preset</source>
         <translation>Přednastavení</translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="39"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="40"/>
         <source>Load</source>
         <translation>Nahrát</translation>
     </message>
     <message>
-        <location filename="../dialog/audioequalizerdialog.cpp" line="78"/>
+        <location filename="../dialog/audioequalizerdialog.cpp" line="79"/>
         <source>Audio Equalizer</source>
         <translation>Zvukový ekvalizér</translation>
     </message>
@@ -1568,8 +1568,8 @@ Vyžaduje to mnohem větší zatížení procesoru nebo grafického procesoru.</
     <name>MainWindow</name>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="163"/>
-        <location filename="../player/mainwindow_m.cpp" line="574"/>
-        <location filename="../player/mainwindow_m.cpp" line="596"/>
+        <location filename="../player/mainwindow_m.cpp" line="572"/>
+        <location filename="../player/mainwindow_m.cpp" line="594"/>
         <source>Open File</source>
         <translation>Otevřít soubor</translation>
     </message>
@@ -1585,7 +1585,7 @@ Vyžaduje to mnohem větší zatížení procesoru nebo grafického procesoru.</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="542"/>
+        <location filename="../player/mainwindow_m.cpp" line="540"/>
         <source>Open Subtitle</source>
         <translation>Otevřít titulky</translation>
     </message>
@@ -1610,7 +1610,7 @@ Nelze otevřít záznam.</translation>
         <translation type="vanished">%1 titulky</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="732"/>
+        <location filename="../player/mainwindow_m.cpp" line="729"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>Automatické vypnutí je zrušeno.</translation>
     </message>
@@ -1635,19 +1635,19 @@ Nelze otevřít záznam.</translation>
         <translation>Přehrát</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="202"/>
+        <location filename="../player/mainwindow_p.cpp" line="201"/>
         <source>%1 ...
 Please wait for a while.</source>
         <translation>%1 ...
 Počkejte chvíli, prosím.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="547"/>
+        <location filename="../player/mainwindow_p.cpp" line="546"/>
         <source>JSON-RPC Server Error</source>
         <translation>Chyba serveru JSON-RPC</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="716"/>
+        <location filename="../player/mainwindow_p.cpp" line="715"/>
         <source>Error on loading skin</source>
         <translation>Chyba při nahrávání vzhledu</translation>
     </message>
@@ -1680,8 +1680,8 @@ Počkejte chvíli, prosím.</translation>
         <translation>Ikona v oznamovací oblasti panelu</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="581"/>
-        <location filename="../player/mainwindow_p.cpp" line="971"/>
+        <location filename="../player/mainwindow_m.cpp" line="579"/>
+        <location filename="../player/mainwindow_p.cpp" line="970"/>
         <source>Save File</source>
         <translation>Uložit soubor</translation>
     </message>
@@ -1700,53 +1700,53 @@ Počkejte chvíli, prosím.</translation>
         <translation type="obsolete">Nastavit znovu</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="508"/>
+        <location filename="../player/mainwindow_m.cpp" line="506"/>
         <source>Open Audio File</source>
         <translation>Otevřít zvukový soubor</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="639"/>
+        <location filename="../player/mainwindow_m.cpp" line="637"/>
         <source>Shuffle Playlist</source>
         <translation>Zamíchat seznam skladeb</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="650"/>
+        <location filename="../player/mainwindow_m.cpp" line="648"/>
         <source>Repeat Playlist</source>
         <translation>Opakovat seznam skladeb</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="704"/>
+        <location filename="../player/mainwindow_m.cpp" line="701"/>
         <source>Downloaded</source>
         <translation>Staženo</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="716"/>
+        <location filename="../player/mainwindow_m.cpp" line="713"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>Ukončit bomi po dokončení seznamu skladeb.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="717"/>
+        <location filename="../player/mainwindow_m.cpp" line="714"/>
         <source>Auto-exit is canceled.</source>
         <translation>Automatické ukončení je zrušeno.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="723"/>
+        <location filename="../player/mainwindow_m.cpp" line="720"/>
         <source>Auto-shutdown</source>
         <translation>Automatické vypnutí</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="724"/>
-        <location filename="../player/mainwindow_m.cpp" line="729"/>
+        <location filename="../player/mainwindow_m.cpp" line="721"/>
+        <location filename="../player/mainwindow_m.cpp" line="726"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>Systém bude vypnut po dokončení seznamu skladeb.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="784"/>
+        <location filename="../player/mainwindow_m.cpp" line="781"/>
         <source>Current Title/Edition</source>
         <translation>Nynější titul/díl</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="785"/>
+        <location filename="../player/mainwindow_m.cpp" line="782"/>
         <source>Current Chapter</source>
         <translation>Nynější kapitola</translation>
     </message>
@@ -3494,9 +3494,8 @@ Je podporován regulární výraz.</translation>
         <translation>Vzhled</translation>
     </message>
     <message>
-        <location filename="../pref/prefdialog.cpp" line="115"/>
         <source>Style</source>
-        <translation>Styl</translation>
+        <translation type="vanished">Styl</translation>
     </message>
     <message>
         <location filename="../pref/prefdialog.cpp" line="116"/>
@@ -3541,6 +3540,11 @@ Je podporován regulární výraz.</translation>
         <location filename="../pref/prefdialog.cpp" line="109"/>
         <source>Cache</source>
         <translation>Vyrovnávací paměť</translation>
+    </message>
+    <message>
+        <location filename="../pref/prefdialog.cpp" line="115"/>
+        <source>Theme</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../pref/prefdialog.cpp" line="118"/>
@@ -4749,7 +4753,7 @@ Potvrďte, prosím, údaje pro ověření pravosti a zkuste to znovu.</translati
 <context>
     <name>SnapshotDialog</name>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="51"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="52"/>
         <source>Take Snapshot</source>
         <translation>Udělat snímek obrazovky</translation>
     </message>
@@ -4800,12 +4804,12 @@ Potvrďte, prosím, údaje pro ověření pravosti a zkuste to znovu.</translati
         <translation>Zavřít</translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="68"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="69"/>
         <source>Save File</source>
         <translation>Uložit soubor</translation>
     </message>
     <message>
-        <location filename="../dialog/snapshotdialog.cpp" line="35"/>
+        <location filename="../dialog/snapshotdialog.cpp" line="36"/>
         <source>Failed in getting a snapshot!</source>
         <translation>Snímek se nepodařilo udělat!</translation>
     </message>
@@ -4880,7 +4884,7 @@ Potvrďte, prosím, údaje pro ověření pravosti a zkuste to znovu.</translati
 <context>
     <name>SubtitleFindDialog</name>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="278"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="280"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
         <translation>Hledat titulky na OpenSubtitles.org</translation>
     </message>
@@ -4891,7 +4895,7 @@ Potvrďte, prosím, údaje pro ověření pravosti a zkuste to znovu.</translati
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="26"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="238"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="240"/>
         <source>Open</source>
         <translation>Otevřít</translation>
     </message>
@@ -4906,60 +4910,60 @@ Potvrďte, prosím, údaje pro ověření pravosti a zkuste to znovu.</translati
         <translation>Zavřít</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="134"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="135"/>
         <source>Connecting...</source>
         <translation>Připojuje se...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="137"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
         <source>Finding...</source>
         <translation>Hledá se...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="140"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Find</source>
         <translation>Najít</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="161"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="200"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="313"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="315"/>
         <source>Find Subtitle</source>
         <translation>Najít titulky</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="163"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translatorcomment>Soubor se stejným názvem již existuje. Chcete jej přepsat?</translatorcomment>
         <translation></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="164"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
         <source>Overwrite</source>
         <translation>Přepsat</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="166"/>
         <source>Save as...</source>
         <translation>Uložit jako...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="173"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="174"/>
         <source>Save As...</source>
         <translation>Uložit jako...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="171"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="172"/>
         <source>Subtitle Files</source>
         <translation>Soubory s titulky</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="202"/>
         <source>Cannot write file!</source>
         <translation>Nelze zapsat soubor!</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="314"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="316"/>
         <source>Cannot find subtitles for %1.</source>
         <translation>Nelze najít titulky pro %1.</translation>
     </message>
@@ -5030,7 +5034,7 @@ Potvrďte, prosím, údaje pro ověření pravosti a zkuste to znovu.</translati
         <translation>Čas v milisekundách</translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleviewer.cpp" line="121"/>
+        <location filename="../subtitle/subtitleviewer.cpp" line="122"/>
         <source>Next formats are allowed:
 Decimal digits only
  - translated into milliseconds
@@ -5043,7 +5047,7 @@ h:m:s
  - hodiny:minuty:sekundy, kde s může obsahovat desetinnou tečku (čárku).</translation>
     </message>
     <message>
-        <location filename="../subtitle/subtitleviewer.cpp" line="149"/>
+        <location filename="../subtitle/subtitleviewer.cpp" line="150"/>
         <source>Subtitle Viewer</source>
         <translation>Prohlížeč titulků</translation>
     </message>
@@ -5196,12 +5200,12 @@ h:m:s
 <context>
     <name>VideoColorDialog</name>
     <message>
-        <location filename="../dialog/videocolordialog.cpp" line="19"/>
+        <location filename="../dialog/videocolordialog.cpp" line="20"/>
         <source>Video Color Editor</source>
         <translation>Editor barev obrazu</translation>
     </message>
     <message>
-        <location filename="../dialog/videocolordialog.cpp" line="40"/>
+        <location filename="../dialog/videocolordialog.cpp" line="41"/>
         <source>Reset</source>
         <translation>Nastavit znovu</translation>
     </message>
