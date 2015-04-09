@@ -11,6 +11,8 @@ BaseApp {
         height: overlaps ? root.height : root.height - bottomControls.height - topControls.height
         topPadding: overlaps ? topControls.height + topControls.y : 0
         bottomPadding: overlaps ? bottomControls.height - bottomControls.y : 0
+        dockTopPadding: overlaps ? topControls.height : 0
+        dockBottomPadding: overlaps ? bottomControls.height : 0
 
         MouseArea {
             id: area

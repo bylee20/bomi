@@ -6,9 +6,11 @@ import QtQuick.Controls.Styles 1.0
 Item {
     id: player
     objectName: "player"
-    property real dockZ: 0.0
+    property real dockZ: 1.0
     property real bottomPadding: 0.0
     property real topPadding: 0.0
+    property real dockBottomPadding: bottomPadding
+    property real dockTopPadding: topPadding
     property bool logoVisible: logo.visible
     readonly property QtObject engine: B.App.engine
     property Item video
@@ -81,17 +83,17 @@ Item {
         anchors.fill: parent; z: dockZ
         PlaylistDock {
             id: right
-            y: topPadding
+            y: dockTopPadding
             show: B.App.playlist.visible
             width: Math.min(widthHint, player.width-(left.x+left.width)-20)
-            height: parent.height - bottomPadding - topPadding
+            height: parent.height - dockBottomPadding - dockTopPadding
         }
         HistoryDock {
             id: left
-            y: topPadding
+            y: dockTopPadding
             show: B.App.history.visible
             width: Math.min(widthHint, player.width*0.4)
-            height: parent.height - bottomPadding - topPadding
+            height: parent.height - dockBottomPadding - dockTopPadding
         }
     }
 
