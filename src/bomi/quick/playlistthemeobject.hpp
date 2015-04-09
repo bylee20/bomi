@@ -10,12 +10,13 @@ struct ControlsTheme {
     bool showPlaylistOnMouseOverEdge = true;
     bool showHistoryOnMouseOverEdge = true;
     bool showPreviewOnMouseOverSeekBar = false;
+    bool showKeyframeForPreview = true;
     bool showMediaTitleForLocalFilesInHistory = false;
     bool showMediaTitleForUrlsInHistory = true;
     DECL_EQ(ControlsTheme, &T::showOnMouseMoved, &T::showLocationsInPlaylist,
             &T::showPlaylistOnMouseOverEdge, &T::showHistoryOnMouseOverEdge,
             &T::showPreviewOnMouseOverSeekBar, &T::showMediaTitleForUrlsInHistory,
-            &T::showMediaTitleForLocalFilesInHistory)
+            &T::showMediaTitleForLocalFilesInHistory, &T::showKeyframeForPreview)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };
@@ -29,6 +30,7 @@ class ControlsThemeObject : public QObject {
     THEME_P(bool, showPlaylistOnMouseOverEdge)
     THEME_P(bool, showHistoryOnMouseOverEdge)
     THEME_P(bool, showPreviewOnMouseOverSeekBar)
+    THEME_P(bool, showKeyframeForPreview)
 public:
     ControlsTheme m;
 };

@@ -555,6 +555,11 @@ Desni klik: %2</translation>
         <source>Show preview when mouse hovers on seek bar</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../ui/controlsthemewidget.ui" line="87"/>
+        <source>Show nearest keyframe instead of exact frame</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DeintWidget</name>
@@ -1555,12 +1560,12 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="546"/>
+        <location filename="../player/mainwindow_p.cpp" line="547"/>
         <source>JSON-RPC Server Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="715"/>
+        <location filename="../player/mainwindow_p.cpp" line="716"/>
         <source>Error on loading skin</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1656,7 +1661,7 @@ Please wait for a while.</source>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="579"/>
-        <location filename="../player/mainwindow_p.cpp" line="970"/>
+        <location filename="../player/mainwindow_p.cpp" line="971"/>
         <source>Save File</source>
         <translation>Snimi Fajl</translation>
     </message>

@@ -524,6 +524,7 @@ auto MainWindow::Data::applyPref() -> void
 
     const auto &controls = p.controls_theme();
 
+    e.preview()->setShowKeyframe(controls.showKeyframeForPreview);
     youtube.setUserAgent(p.yt_user_agent());
     youtube.setProgram(p.yt_program());
     youtube.setAskVideoQuality(p.yt_ask_video_quality());

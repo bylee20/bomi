@@ -574,6 +574,11 @@ Right click: %2</source>
         <source>Show preview when mouse hovers on seek bar</source>
         <translation>탐색 막대에 마우스를 올리면 미리보기를 표시</translation>
     </message>
+    <message>
+        <location filename="../ui/controlsthemewidget.ui" line="87"/>
+        <source>Show nearest keyframe instead of exact frame</source>
+        <translation>정확한 프레임 대신 가까운 키프레임을 표시</translation>
+    </message>
 </context>
 <context>
     <name>DeintWidget</name>
@@ -1599,7 +1604,7 @@ This requires much more CPU or GPU usage.</source>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="579"/>
-        <location filename="../player/mainwindow_p.cpp" line="970"/>
+        <location filename="../player/mainwindow_p.cpp" line="971"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
@@ -1621,12 +1626,12 @@ Please wait for a while.</source>
 잠시만 기다려주세요.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="546"/>
+        <location filename="../player/mainwindow_p.cpp" line="547"/>
         <source>JSON-RPC Server Error</source>
         <translation>JSON-RPC 서버 오류</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_p.cpp" line="715"/>
+        <location filename="../player/mainwindow_p.cpp" line="716"/>
         <source>Error on loading skin</source>
         <translation>스킨 불러오기 에러</translation>
     </message>

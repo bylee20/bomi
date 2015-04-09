@@ -24,6 +24,7 @@ public:
     auto aspectRatio() const -> double;
     auto imageSize() const -> QSize final { return size().toSize(); }
     auto setActive(bool active) -> void;
+    auto setShowKeyframe(bool keyframe) -> void;
 signals:
     void rateChanged(double rate);
     void sizeHintChanged();

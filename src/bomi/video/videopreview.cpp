@@ -13,7 +13,7 @@ enum EventType {NewFrame = QEvent::User + 1 };
 
 struct VideoPreview::Data {
     VideoPreview *p = nullptr;
-    bool redraw = false, active = false;
+    bool redraw = false, active = false, keyframe = true;
     QSize displaySize{0, 1};
     double rate = 0.0, aspect = 4./3., percent = 0;
     Mpv mpv;
@@ -83,7 +83,8 @@ auto VideoPreview::setRate(double rate) -> void
 {
     if (_Change(d->rate, rate)) {
         if (_Change(d->percent, qRound(d->rate * 10000)/100.0))
-            d->mpv.tellAsync("seek", d->percent, "absolute-percent"_b, "keyframes"_b);
+            d->mpv.tellAsync("seek", d->percent, "absolute-percent"_b,
+                             d->keyframe ? "keyframes"_b : "exact"_b);
         emit rateChanged(d->rate);
     }
 }
@@ -161,4 +162,9 @@ auto VideoPreview::setActive(bool active) -> void
         if (!d->active)
             unload();
     }
+}
+
+auto VideoPreview::setShowKeyframe(bool keyframe) -> void
+{
+    d->keyframe = keyframe;
 }
