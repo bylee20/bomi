@@ -55,7 +55,7 @@ struct HistoryModel::Data {
     const QString table = MrlState::table();
     bool rememberImage = false, reload = true, visible = false;
     bool mediaTitleLocal = false, mediaTitleUrl = false;
-    int idx_mrl, idx_name, idx_last, idx_device, rows = 0;
+    int idx_mrl, idx_name, idx_last, idx_device, idx_star, rows = 0;
     QMutex mutex;
     auto check(const QSqlQuery &query) -> bool
     {
@@ -75,12 +75,15 @@ struct HistoryModel::Data {
     auto load() -> bool
     {
         const QString select = QString::fromLatin1(
-            "SELECT mrl, name, last_played_date_time, device, "
+            "SELECT mrl, name, last_played_date_time, device, star, "
             "(SELECT COUNT(*) FROM %1) as total "
-            "FROM %2 ORDER BY last_played_date_time DESC"
+            "FROM %2 ORDER BY star DESC, last_played_date_time DESC"
         );
-        if (!loader.exec(select.arg(table).arg(table)))
+        if (!loader.exec(select.arg(table).arg(table))) {
+            _Error("%%", loader.lastError().text());
+            _Error("Query: %%", loader.lastQuery());
             return false;
+        }
         Q_ASSERT(!loader.isForwardOnly());
         p->beginResetModel();
         rows = 0;
@@ -91,6 +94,7 @@ struct HistoryModel::Data {
             idx_name = c++;
             idx_last = c++;
             idx_device = c++;
+            idx_star = c++;
             loader.seek(-1);
         }
         error = QSqlError();
@@ -233,14 +237,12 @@ auto HistoryModel::setShowMediaTitleInName(bool local, bool url) -> void
         d->load();
 }
 
-auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
+auto HistoryModel::getData(const int row, int role) const -> QVariant
 {
-//    QMutexLocker locker(&d->mutex);
     if (d->reload) {
         d->load();
         d->reload = false;
     }
-    const int row = index.row();
     if (!(0 <= row && row < d->rows))
         return QVariant();
     if (!d->loader.seek(row))
@@ -269,9 +271,54 @@ auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
         return QDateTime::fromMSecsSinceEpoch(msecs).toString(Qt::ISODate);
     } case LocationRole:
         return fillMrl().toString();
+    case StarRole:
+        return d->loader.value(d->idx_star);
     default:
         return QVariant();
     }
+}
+
+auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
+{
+    //    QMutexLocker locker(&d->mutex);
+        if (d->reload) {
+            d->load();
+            d->reload = false;
+        }
+        const int row = index.row();
+        if (!(0 <= row && row < d->rows))
+            return QVariant();
+        if (!d->loader.seek(row))
+            return QVariant();
+        if (d->rowCache.row != row) {
+            d->rowCache.row = row;
+            d->rowCache.mrl = Mrl();
+        }
+        auto fillMrl = [this] () -> const Mrl& {
+            if (d->rowCache.mrl.isEmpty())
+                d->rowCache.mrl = d->getMrl();
+            return d->rowCache.mrl;
+        };
+        switch (role) {
+        case NameRole: {
+            fillMrl();
+            if ((d->rowCache.mrl.isLocalFile() && d->mediaTitleLocal)
+                    || (d->rowCache.mrl.isRemoteUrl() && d->mediaTitleUrl)) {
+                const auto name = d->loader.value(d->idx_name).toString();
+                if (!name.isEmpty())
+                    return name;
+            }
+            return d->rowCache.mrl.displayName();
+        } case LatestPlayRole: {
+            const auto msecs = d->loader.value(d->idx_last).toLongLong();
+            return QDateTime::fromMSecsSinceEpoch(msecs).toString(Qt::ISODate);
+        } case LocationRole:
+            return fillMrl().toString();
+        case StarRole:
+            return d->loader.value(d->idx_star);
+        default:
+            return QVariant();
+        }
 }
 
 auto HistoryModel::roleNames() const -> QHash<int, QByteArray>
@@ -280,12 +327,36 @@ auto HistoryModel::roleNames() const -> QHash<int, QByteArray>
     hash[NameRole] = "name"_b;
     hash[LatestPlayRole] = "latestplay"_b;
     hash[LocationRole] = "location"_b;
+    hash[StarRole] = "star"_b;
     return hash;
 }
 
 auto HistoryModel::error() const -> QSqlError
 {
     return d->error;
+}
+
+auto HistoryModel::isStarred(int row) const -> bool
+{
+    return getData(row, StarRole).toBool();
+}
+
+auto HistoryModel::setStarred(int row, bool star) -> void
+{
+    QMutexLocker locker(&d->mutex);
+    if (!d->loader.seek(row)) {
+        _Error("Cannot seek to %% row.", row);
+        return;
+    }
+    const auto mrl = d->getMrl();
+    const auto f = d->fields.field(u"star"_q), m = d->fields.field(u"mrl"_q);
+    Transactor t(&d->db);
+    d->finder.prepare("UPDATE "_a % d->table % " SET star=? WHERE mrl=?"_a);
+    d->finder.bindValue(0, f.sqlData(QVariant::fromValue(star)));
+    d->finder.bindValue(1, m.sqlData(QVariant::fromValue(mrl)));
+    if (!d->finder.exec())
+        qDebug() << d->finder.executedQuery();
+    update();
 }
 
 auto HistoryModel::update() -> void
@@ -364,7 +435,7 @@ auto HistoryModel::clear() -> void
 {
     QMutexLocker locker(&d->mutex);
     Transactor t(&d->db);
-    d->loader.exec("DELETE FROM "_a % d->table);
+    d->loader.exec("DELETE FROM "_a % d->table % " WHERE star != 1 OR star IS NULL"_a);
     t.done();
     d->load();
 }

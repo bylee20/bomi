@@ -163,7 +163,10 @@ Item { id: view
             var pos = list.contentItem.mapFromItem(list, 0.5, y)
             return list.indexAt(pos.x, pos.y);
         }
-
+        function getItem(x, y) {
+            var pos = list.contentItem.mapFromItem(list, x, y)
+            return list.itemAt(pos.x, pos.y);
+        }
 
         Keys.onPressed: {
             event.accepted = true
@@ -210,6 +213,7 @@ Item { id: view
         }
 
         MouseArea {
+            z: -1
             anchors.fill: parent
             onPressed: {
                 var index = list.getIndex(mouse.y)

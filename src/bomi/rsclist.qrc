@@ -50,5 +50,7 @@
         <file>img/green.png</file>
         <file>img/preferences-system-network-sharing.png</file>
         <file>locale-map.json</file>
+        <file>img/fav-on.png</file>
+        <file>img/fav-off.png</file>
     </qresource>
 </RCC>

@@ -654,7 +654,7 @@ auto MainWindow::Data::plugMenu() -> void
 
     auto &hm = tool(u"history"_q);
     connect(hm[u"toggle"_q], &QAction::triggered, &history, &HistoryModel::toggle);
-    connect(hm[u"clear"_q], &QAction::triggered, p, [=] () { history.clear(); });
+    connect(hm[u"clear"_q], &QAction::triggered, &history, &HistoryModel::clear);
 
     connect(tool[u"playinfo"_q], &QAction::triggered, p, [=] () {
         auto toggleTool = [this] (const char *name, bool &visible) {

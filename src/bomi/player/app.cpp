@@ -42,7 +42,9 @@ enum class LineCmd {
 };
 
 struct App::Data {
-    Data(App *p): p(p) {}
+    Data(App *p)
+        : p(p), dummy(u"__dummy__"_q)
+        , connection(u"net.xylosper.bomi"_q, nullptr) {}
     App *p = nullptr;
     bool gldebug = false;
     QStringList styleNames;
@@ -63,12 +65,11 @@ struct App::Data {
 
     LogOption logOption = LogOption::default_();
     Locale locale;
+    QCommandLineOption dummy;
     QCommandLineParser cmdParser, msgParser;
     QMap<LineCmd, QCommandLineOption> options;
     QFont fixedFont = OS::defaultFixedFont();
-
-    LocalConnection connection = {u"net.xylosper.bomi"_q, nullptr};
-    QCommandLineOption dummy{u"__dummy__"_q};
+    LocalConnection connection;
 
     auto open(const Mrl &mrl) -> void
     {

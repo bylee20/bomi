@@ -130,10 +130,8 @@ auto MrlState::metaProperty(const char *property) const -> QMetaProperty
 
 auto MrlState::defaultProperties() -> QStringList
 {
-    QStringList list;
-    list << u"name"_q << u"device"_q << u"last_played_date_time"_q
-         << u"resume_position"_q << u"edition"_q;
-    return list;
+    return { u"name"_q, u"device"_q, u"last_played_date_time"_q,
+             u"resume_position"_q, u"edition"_q, u"star"_q };
 }
 
 auto MrlState::restorableProperties() -> QVector<PropertyInfo>

@@ -81,6 +81,7 @@ private:
     P_(QString, device, {}, "", 0)
     P_(QDateTime, last_played_date_time, {}, "", 0)
     P_(int, resume_position, 0, "", 0)
+    P_(bool, star, false, "", 0)
 
     P_(int, edition, -1, "", 0)
     PB(double, play_speed, 1.0, 0.01, 10.0, QT_TR_NOOP("Playback Speed"), 0)

@@ -10,6 +10,7 @@ Item {
     readonly property real widthHint: view.contentWidth+view.margins*2
     property alias selectedIndex: view.selectedIndex
     property bool show: false
+    readonly property QtObject history: B.App.history
     states: State {
         name: "show"; when: dock.show
         PropertyChanges { target: dock; explicit: true; x: 0 }
@@ -26,15 +27,44 @@ Item {
         onWheel: wheel.accepted = true
     }
 
+    Component {
+        id: starComponent
+        Image {
+            width: 16; height: 16
+            source: starArea.containsMouse || history.isStarred(row) ? "qrc:/img/fav-on.png" : "qrc:/img/fav-off.png"
+            MouseArea {
+                id: starArea
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.LeftButton
+                onClicked: {
+                    history.setStarred(row, !history.isStarred(row))
+                }
+            }
+        }
+    }
+
     B.ModelView {
         id: view
         model: B.App.history
         columns: [
-            ItemColumn { width: 200; title: qsTr("Name"); role: "name" },
+            ItemColumn { width: 200; title: qsTr("Name"); role: "name"; index: 1 },
             ItemColumn { width: 150; title: qsTr("Latest Playback"); role: "latestplay" },
             ItemColumn { width: 400; title: qsTr("Location"); role: "location" }
         ]
-        itemDelegate: Text { text: value; color: "white"; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
+        itemDelegate: Item {
+            Loader {
+                x: -3
+                readonly property int row: index
+                sourceComponent: column.index > 0 ? starComponent : undefined
+            }
+
+            Text {
+                x: column.index > 0 ? 14 : 0; width: parent.width - x
+                text: value; color: "white"; elide: Text.ElideRight
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
         onActivated: B.App.history.play(index)
     }
 

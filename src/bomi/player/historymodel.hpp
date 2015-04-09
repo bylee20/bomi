@@ -9,13 +9,12 @@ class HistoryModel: public QAbstractTableModel {
     Q_OBJECT
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
 public:
-    enum Role {NameRole = Qt::UserRole + 1, LatestPlayRole, LocationRole};
+    enum Role {NameRole = Qt::UserRole + 1, LatestPlayRole, LocationRole, StarRole};
     HistoryModel(QObject *parent = nullptr);
     ~HistoryModel();
     auto rowCount(const QModelIndex &parent = QModelIndex()) const -> int;
     auto columnCount(const QModelIndex &parent = QModelIndex()) const -> int;
-    auto data(const QModelIndex &index,
-              int role = Qt::DisplayRole) const -> QVariant;
+    auto data(const QModelIndex &index, int role = Qt::DisplayRole) const -> QVariant final;
     auto error() const -> QSqlError;
     auto roleNames() const -> QHash<int, QByteArray>;
     auto find(const Mrl &mrl) const -> const MrlState*;
@@ -31,12 +30,15 @@ public:
     auto setVisible(bool visible) -> void;
     auto update() -> void;
     auto toggle() -> void { setVisible(!isVisible()); }
+    Q_INVOKABLE bool isStarred(int row) const;
+    Q_INVOKABLE void setStarred(int row, bool star);
     Q_INVOKABLE void play(int row);
 signals:
     void playRequested(const Mrl &mrl);
     void changeVisibilityRequested(bool visible);
     void visibleChanged(bool visible);
 private:
+    auto getData(int row, int role) const -> QVariant;
     struct Data;
     Data *d;
 };
