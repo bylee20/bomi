@@ -49,7 +49,7 @@ struct HistoryModel::Data {
     RowCache rowCache;
     QSqlQuery loader, finder;
     QSqlError error;
-    MrlStateSqlFieldList fields, restores;
+    MrlStateSqlFieldList fields, restores, writes;
     MrlState cached;
     const MrlState default_{};
     const QString table = MrlState::table();
@@ -65,10 +65,14 @@ struct HistoryModel::Data {
                , query.lastError().text(), query.lastQuery());
         return false;
     }
-    auto insert(const MrlState *state) -> bool
+    auto upsert(const MrlState *state) -> bool
     {
         if (state->mrl() == cached.mrl())
             cached.set_mrl(Mrl());
+        if (!writes.update(finder, state))
+            return check(finder);
+        if (finder.numRowsAffected() > 0)
+            return true;
         fields.insert(finder, state);
         return check(finder);
     }
@@ -89,13 +93,13 @@ struct HistoryModel::Data {
         p->beginResetModel();
         rows = 0;
         if (loader.next()) {
-            rows = loader.value(u"total"_q).toInt();
             int c = 0;
             idx_mrl = c++;
             idx_name = c++;
             idx_last = c++;
             idx_device = c++;
             idx_star = c++;
+            rows = loader.value(c).toInt();
             loader.seek(-1);
         }
         error = QSqlError();
@@ -114,7 +118,7 @@ struct HistoryModel::Data {
 
         finder.exec(u"CREATE TABLE %1 (%2)"_q.arg(table).arg(columns));
         for (auto state : states) {
-            insert(state);
+            upsert(state);
             delete state;
         }
     }
@@ -134,13 +138,17 @@ HistoryModel::HistoryModel(QObject *parent)
     const int offset = metaObject.propertyOffset();
     Q_ASSERT(offset == 1);
     d->fields.reserve(count - offset);
+    d->writes.reserve(d->fields.size() - 1);
     for (int i=offset; i<count; ++i) {
         const auto property = metaObject.property(i);
         const auto def = property.read(&d->default_);
         d->fields.push_back(property, def);
+        if (qstrcmp(property.name(), "star"))
+            d->writes.push_back(d->fields.back());
     }
     d->fields.prepareInsert(d->table);
     d->fields.prepareSelect(d->table, d->fields.field(u"mrl"_q));
+    d->writes.prepareUpdate(d->table, d->fields.field(u"mrl"_q));
     setPropertiesToRestore(QStringList());
 
     d->db = QSqlDatabase::addDatabase(u"QSQLITE"_q, u"history-model"_q);
@@ -281,45 +289,7 @@ auto HistoryModel::getData(const int row, int role) const -> QVariant
 
 auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
 {
-    //    QMutexLocker locker(&d->mutex);
-        if (d->reload) {
-            d->load();
-            d->reload = false;
-        }
-        const int row = index.row();
-        if (!(0 <= row && row < d->rows))
-            return QVariant();
-        if (!d->loader.seek(row))
-            return QVariant();
-        if (d->rowCache.row != row) {
-            d->rowCache.row = row;
-            d->rowCache.mrl = Mrl();
-        }
-        auto fillMrl = [this] () -> const Mrl& {
-            if (d->rowCache.mrl.isEmpty())
-                d->rowCache.mrl = d->getMrl();
-            return d->rowCache.mrl;
-        };
-        switch (role) {
-        case NameRole: {
-            fillMrl();
-            if ((d->rowCache.mrl.isLocalFile() && d->mediaTitleLocal)
-                    || (d->rowCache.mrl.isRemoteUrl() && d->mediaTitleUrl)) {
-                const auto name = d->loader.value(d->idx_name).toString();
-                if (!name.isEmpty())
-                    return name;
-            }
-            return d->rowCache.mrl.displayName();
-        } case LatestPlayRole: {
-            const auto msecs = d->loader.value(d->idx_last).toLongLong();
-            return QDateTime::fromMSecsSinceEpoch(msecs).toString(Qt::ISODate);
-        } case LocationRole:
-            return fillMrl().toString();
-        case StarRole:
-            return d->loader.value(d->idx_star);
-        default:
-            return QVariant();
-        }
+    return getData(index.row(), role);
 }
 
 auto HistoryModel::roleNames() const -> QHash<int, QByteArray>
@@ -357,6 +327,7 @@ auto HistoryModel::setStarred(int row, bool star) -> void
     d->finder.bindValue(1, m.sqlData(QVariant::fromValue(mrl)));
     if (!d->finder.exec())
         qDebug() << d->finder.executedQuery();
+    t.done();
     update();
 }
 
@@ -381,6 +352,7 @@ auto HistoryModel::update(const MrlState *state, const QString &column, bool rel
     d->finder.bindValue(0, f.sqlData(f.property().read(state)));
     d->finder.bindValue(1, m.sqlData(m.property().read(state)));
     d->finder.exec();
+    t.done();
     if (reload)
         update();
 }
@@ -394,7 +366,7 @@ auto HistoryModel::update(const MrlState *state, bool reload) -> void
     if (!state->mrl().isUnique())
         return;
     Transactor t(&d->db);
-    d->insert(state);
+    d->upsert(state);
     t.done();
     if (reload)
         update();

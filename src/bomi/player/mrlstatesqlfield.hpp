@@ -35,7 +35,7 @@ class QSqlQuery;                        class QSqlDatabase;
 class MrlStateSqlFieldList {
     using Field = MrlStateSqlField;
 public:
-    enum QueryType { Insert, Select, MaxType };
+    enum QueryType { Insert, Update, Select, MaxType };
     using iterator = QVector<Field>::iterator;
     using const_iterator =QVector<Field>::const_iterator;
     auto begin() const -> const_iterator { return m_fields.begin(); }
@@ -45,14 +45,18 @@ public:
     auto size() const -> int { return m_fields.size(); }
     auto isEmpty() const -> bool { return m_fields.isEmpty(); }
     auto clear() -> void;
+    auto front() const -> const Field& { return m_fields.front(); }
+    auto back() const -> const Field& { return m_fields.back(); }
     auto reserve(int size) -> void { m_fields.reserve(size); }
     auto push_back(const QMetaProperty &property, const QVariant &def) -> void
         { m_fields.push_back({ property, def }); }
     auto push_back(const Field &field) -> void { m_fields.push_back(field); }
     auto prepareInsert(const QString &table) -> QString;
+    auto prepareUpdate(const QString &table, const Field &where) -> QString;
     auto prepareSelect(const QString &table, const Field &where) -> QString;
     auto field(const QString &name) const -> Field;
     auto insert(QSqlQuery &query, const QObject *object) -> bool;
+    auto update(QSqlQuery &query, const QObject *object) -> bool;
     auto select(QSqlQuery &query, QObject *object) const -> bool
         { return select(query, object, m_where.property().read(object)); }
     auto select(QSqlQuery &q, QObject *o, const QVariant &where) const -> bool;
@@ -60,6 +64,7 @@ public:
     auto select(QSqlQuery &query, QObject *object, const T &t) const -> bool
         { return select(query, object, QVariant::fromValue<T>(t)); }
     auto isInsertPrepared() const -> bool { return isPrepared(Insert); }
+    auto isUpdatePrepared() const -> bool { return isPrepared(Update); }
     auto isSelectPrepared() const -> bool { return isPrepared(Select); }
     auto isPrepared(QueryType type) const -> bool
         { return !m_queries[type].isEmpty(); }
@@ -67,7 +72,7 @@ public:
 private:
     QVector<QString> m_queries = QVector<QString>(MaxType);
     QVector<Field> m_fields;
-    MrlStateSqlField m_where;
+    MrlStateSqlField m_where, m_updateWhere;
 };
 
 #endif // MRLSTATESQLFIELD_HPP

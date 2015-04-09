@@ -140,6 +140,37 @@ auto MrlStateSqlFieldList::prepareSelect(const QString &table,
     return select;
 }
 
+auto MrlStateSqlFieldList::prepareUpdate(const QString &table, const Field &where) -> QString
+{
+    auto &update = m_queries[Update];
+    update.clear();
+    if (m_fields.isEmpty())
+        return QString();
+    m_updateWhere = where;
+    const auto sets = _ToStringList(m_fields, [&] (const auto &field) {
+        return QString(_L(field.property().name()) % "=?"_a);
+    }).join(','_q);
+    update = u"UPDATE %1 SET %2 WHERE %3 = ?"_q
+            .arg(table, sets, _L(m_updateWhere.property().name()));
+    return update;
+}
+
+auto MrlStateSqlFieldList::update(QSqlQuery &query, const QObject *o) -> bool
+{
+    auto &update = m_queries[Update];
+    if (update.isEmpty())
+        return false;
+    if (!query.prepare(update))
+        return false;
+    for (int i = 0; i < m_fields.size(); ++i) {
+        auto &f = m_fields[i];
+        query.bindValue(i, f.sqlData(f.property().read(o)));
+    }
+    const auto where = m_updateWhere.sqlData(m_updateWhere.property().read(o));
+    query.bindValue(m_fields.size(), where);
+    return query.exec();
+}
+
 auto MrlStateSqlFieldList::select(QSqlQuery &query, QObject *object,
                                   const QVariant &where) const -> bool
 {

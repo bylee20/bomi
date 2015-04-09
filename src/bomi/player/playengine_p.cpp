@@ -199,6 +199,7 @@ auto PlayEngine::Data::onLoad() -> void
         local->set_resume_position(-1);
         local->set_edition(-1);
         local->set_device(QString());
+        local->set_star(false);
         local->set_video_tracks(StreamList());
         local->set_audio_tracks(StreamList());
         local->set_sub_tracks(StreamList());
