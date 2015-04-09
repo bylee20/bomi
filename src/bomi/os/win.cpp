@@ -129,14 +129,9 @@ auto associateFileTypes(QWindow *w, bool global, const QStringList &exts) -> boo
     s->endGroup();
 
     for (auto &ext : exts) {
-        const auto mime = _MimeTypeForSuffix(ext);
-        QString desc = mime.comment();
-        if (mime.isDefault())
-            desc = qApp->translate("Ext", "%1 file").arg(ext.toUpper());
-
         const QString id = "bomi."_a % ext;
         s->beginGroup(id);
-        s->setValue(u"."_q, desc);
+        s->setValue(u"."_q, _DescriptionForSuffix(ext));
         shell();
         s->endGroup();
 
