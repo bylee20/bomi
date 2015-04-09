@@ -4,7 +4,6 @@
 #include <QQuickItem>
 
 class GeometryItem : public QQuickItem {
-    Q_OBJECT
 public:
     GeometryItem(QQuickItem *parent = nullptr)
         : QQuickItem(parent) { m_size = size(); }
@@ -15,8 +14,6 @@ public:
     auto size() const -> QSizeF { return {width(), height()}; }
     auto geometry() const -> QRectF { return {position(), size()}; }
     auto rect() const -> QRectF { return {0.0, 0.0, width(), height()}; }
-signals:
-    void sizeChanged(const QSizeF &size);
 protected:
     auto geometryChanged(const QRectF &new_, const QRectF &o) -> void override;
 private:

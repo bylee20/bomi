@@ -18,7 +18,6 @@ SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
     (isSuccess(err) ? true : (_WriteLog(e2l(err), "Failed to " fmt ": %%", __VA_ARGS__, e2s(err)), false))
 
 class Mpv : public QThread {
-    Q_OBJECT
     template<class R, class...Args> using func = std::function<R(Args...)>;
     template<class T> using trait = mpv_trait<T>;
     template<class T> using type  = typename trait<T>::mpv_type;

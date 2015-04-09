@@ -3,7 +3,6 @@
 
 
 class YleDL : public QThread {
-    Q_OBJECT
 public:
     enum Error {
         NoError, Canceled, FailedToStart, Timeout, Crashed,

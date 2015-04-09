@@ -4,7 +4,6 @@
 #include <QNetworkReply>
 
 class XmlRpcClient : public QObject {
-    Q_OBJECT
 public:
     using Connection = QMetaObject::Connection;
     static auto pass(const QVariantList &) -> void {}

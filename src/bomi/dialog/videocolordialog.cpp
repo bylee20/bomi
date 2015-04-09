@@ -11,6 +11,7 @@ struct Line {
 struct VideoColorDialog::Data {
     bool setting = false;
     VideoColor::Array<Line> lines;
+    Update update;
 };
 
 VideoColorDialog::VideoColorDialog(QWidget *parent)
@@ -49,8 +50,8 @@ VideoColorDialog::VideoColorDialog(QWidget *parent)
         connect(l.slider, &QSlider::valueChanged, l.spin, &QSpinBox::setValue);
         connect(SIGNAL_VT(l.spin, valueChanged, int), l.slider, [=] (int v) {
             l.slider->setValue(v);
-            if (!d->setting)
-                emit colorChanged(color());
+            if (!d->setting && d->update)
+                d->update(color());
         });
         connect(button, &QPushButton::clicked, this,
                 [=] () { d->lines[type].spin->setValue(0); });
@@ -80,7 +81,8 @@ auto VideoColorDialog::setColor(const VideoColor &eq) -> void
     d->setting = true;
     VideoColor::for_type([&] (auto type) { d->lines[type].spin->setValue(eq[type]); });
     d->setting = false;
-    emit colorChanged(eq);
+    if (d->update)
+        d->update(eq);
 }
 
 auto VideoColorDialog::color() const -> VideoColor
@@ -90,4 +92,9 @@ auto VideoColorDialog::color() const -> VideoColor
         eq.set(type, d->lines[type].spin->value());
     });
     return eq;
+}
+
+auto VideoColorDialog::setUpdateFunc(Update &&func) -> void
+{
+    d->update = std::move(func);
 }

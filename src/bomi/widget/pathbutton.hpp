@@ -2,7 +2,7 @@
 #define PATHBUTTON_HPP
 
 class PathButton : public QPushButton {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(PathButton)
 public:
     PathButton(QWidget *parent = nullptr);
     ~PathButton();

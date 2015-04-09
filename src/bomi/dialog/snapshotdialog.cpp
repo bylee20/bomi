@@ -28,6 +28,7 @@ struct SnapshotDialog::Data {
     SnapshotDialog *p = nullptr;
     Ui::SnapshotDialog ui;
     QImage video, osd;
+    Take take;
     auto updateSnapshot(bool showSub) -> void
     {
         auto image = showSub ? osd : video;
@@ -98,7 +99,13 @@ auto SnapshotDialog::clear() -> void
 auto SnapshotDialog::take() -> void
 {
     d->ui.take->setEnabled(false);
-    emit request();
+    if (d->take)
+        d->take();
+}
+
+auto SnapshotDialog::setTakeFunc(Take &&func) -> void
+{
+    d->take = std::move(func);
 }
 
 /******************************************************************************/
@@ -146,7 +153,6 @@ auto ImageViewer::zoomOriginal() -> void
 {
     d->label->adjustSize();
     d->scale = 1.0;
-    emit scaleChanged(d->scale);
 }
 
 auto ImageViewer::scale(double factor) -> void
@@ -158,7 +164,6 @@ auto ImageViewer::scale(double factor) -> void
         d->label->resize(d->scale * d->label->pixmap()->size());
         adjustScrollBar(horizontalScrollBar(), factor);
         adjustScrollBar(verticalScrollBar(), factor);
-        emit scaleChanged(d->scale);
     }
 }
 

@@ -5,7 +5,6 @@
 #include <QQmlProperty>
 
 class QtItem : public QObject {
-    Q_OBJECT
 public:
     enum AnchorLine {
         Top, Left, Bottom, Right,
@@ -128,7 +127,6 @@ inline auto QtItem::anchorName(AnchorLine line) -> QString
 /******************************************************************************/
 
 class TextItem : public QtItem {
-    Q_OBJECT
 public:
     explicit TextItem(QQuickItem *parent = nullptr);
     auto text() const -> QString { return m_text.read().toString(); }
@@ -162,7 +160,6 @@ inline auto TextItem::setColor(const QColor &color) -> void
 /******************************************************************************/
 
 class RectangleItem : public QtItem {
-    Q_OBJECT
 public:
     RectangleItem(QQuickItem *parent = nullptr);
     RectangleItem(const QByteArray &source, QQuickItem *parent = nullptr);

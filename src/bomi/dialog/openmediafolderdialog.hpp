@@ -4,7 +4,7 @@
 class Playlist;
 
 class OpenMediaFolderDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(OpenMediaFolderDialog)
 public:
     OpenMediaFolderDialog(QWidget *parent = nullptr,
                           const QString &key = QString());

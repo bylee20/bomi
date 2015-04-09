@@ -4,14 +4,14 @@
 class AudioEqualizer;
 
 class AudioEqualizerDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(AudioEqualizerDialog)
+    using Update = std::function<void(const AudioEqualizer&)>;
 public:
     AudioEqualizerDialog(QWidget *parent = nullptr);
     ~AudioEqualizerDialog();
     auto setEqualizer(const AudioEqualizer &eq) -> void;
     auto equalizer() const -> AudioEqualizer;
-signals:
-    void equalizerChanged(const AudioEqualizer &eq);
+    auto setUpdateFunc(Update &&func) -> void;
 private:
     struct Data;
     Data *d;

@@ -50,6 +50,7 @@ struct SubtitleViewer::Data {
     ObjectStorage storage;
     QRegEx rxFormatTime, rxMSec;
     QString toolTip;
+    Seek seek;
 
     static constexpr int InvalidFormat = -1;
     static constexpr int EmptyText = -2;
@@ -105,9 +106,9 @@ struct SubtitleViewer::Data {
         if (!proxy)
             return;
         const auto src = proxy->mapToSource(idx);
-        auto model = qobject_cast<const SubCompModel*>(src.model());
-        if (model && src.isValid())
-            emit p->seekRequested(model->at(idx.row()).start());
+        auto model = static_cast<const SubCompModel*>(src.model());
+        if (model && src.isValid() && seek)
+            seek(model->at(idx.row()).start());
     };
 };
 
@@ -208,4 +209,9 @@ auto SubtitleViewer::showEvent(QShowEvent *event) -> void
     QDialog::showEvent(event);
     if (d->needToUpdate)
         updateModels();
+}
+
+auto SubtitleViewer::setSeekFunc(Seek &&func) -> void
+{
+    d->seek = std::move(func);
 }

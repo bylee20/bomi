@@ -4,7 +4,6 @@
 #include "json/jriface.hpp"
 
 class JrPlayer : public JrIface {
-    Q_OBJECT
 public:
     JrPlayer(QObject *parent = nullptr);
     ~JrPlayer();

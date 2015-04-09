@@ -6,7 +6,6 @@
 class JrServer;
 
 class JrClient : public QObject {
-    Q_OBJECT
 public:
     JrClient(QIODevice *device, const QString &peer, JrServer *server);
     ~JrClient();
@@ -28,7 +27,6 @@ private:
 };
 
 class JrHttp : public JrClient {
-    Q_OBJECT
 public:
     enum Status {
         Ok = 200,
@@ -47,7 +45,6 @@ private:
 };
 
 class JrRaw : public JrClient {
-    Q_OBJECT
 public:
     JrRaw(QIODevice *device, const QString &peer, JrServer *server);
     ~JrRaw();

@@ -18,15 +18,15 @@ private:
 };
 
 class SnapshotDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(SnapshotDialog)
+    using Take = std::function<void(void)>;
 public:
     SnapshotDialog(QWidget *parent = 0);
     ~SnapshotDialog();
     auto take() -> void;
     auto setImage(const QImage &video, const QImage &osd) -> void;
     auto clear() -> void;
-signals:
-    void request();
+    auto setTakeFunc(Take &&func) -> void;
 private:
     struct Data;
     Data *d;
@@ -35,7 +35,6 @@ private:
 #include <QScrollArea>
 
 class ImageViewer : public QScrollArea {
-    Q_OBJECT
 public:
     ImageViewer(QWidget *parent = 0);
     ~ImageViewer();
@@ -44,8 +43,6 @@ public:
     auto setImage(const QPixmap &image) -> void;
     auto scale(double factor) -> void;
     auto image() const -> QPixmap;
-signals:
-    void scaleChanged(double scale);
 private:
     auto zoomOriginal() -> void;
     auto adjustScrollBar(QScrollBar *scrollBar, double factor) -> void;

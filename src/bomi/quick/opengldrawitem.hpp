@@ -8,7 +8,6 @@
 #include <QSGGeometryNode>
 
 class OpenGLDrawItem : public GeometryItem {
-    Q_OBJECT
 public:
     using AttrSet = QSGGeometry::AttributeSet;
     struct ColorVertex { QPointF vertex; QColor color; };

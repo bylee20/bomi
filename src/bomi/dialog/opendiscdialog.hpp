@@ -2,7 +2,7 @@
 #define OPENDISCDIALOG_HPP
 
 class OpenDiscDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(OpenDiscDialog)
 public:
     OpenDiscDialog(QWidget *parent = 0);
     ~OpenDiscDialog();

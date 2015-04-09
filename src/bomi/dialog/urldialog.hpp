@@ -4,7 +4,7 @@
 class Playlist;                         class EncodingInfo;
 
 class UrlDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(UrlDialog)
 public:
     UrlDialog(QWidget *parent = 0, const QString &key = QString());
     ~UrlDialog();

@@ -345,7 +345,7 @@ auto MainWindow::Data::plugMenu() -> void
         case SnapshotTool: {
             if (!snapshot) {
                 snapshot = dialog<SnapshotDialog>();
-                connect(snapshot.data(), &SnapshotDialog::request, p, [=] () {
+                snapshot->setTakeFunc([=] () {
                     if (e.hasVideoFrame()) {
                         snapshotMode = SnapshotTool;
                         e.takeSnapshot();
@@ -456,8 +456,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(vcolor[u"editor"_q], &QAction::triggered, p, [=] () {
         if (!color) {
             color = dialog<VideoColorDialog>();
-            connect(color.data(), &VideoColorDialog::colorChanged,
-                    &e, &PlayEngine::setVideoEqualizer);
+            color->setUpdateFunc([=] (auto &eq) { e.setVideoEqualizer(eq); });
         }
         color->setColor(e.params()->video_color());
         color->show();
@@ -490,8 +489,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(audio[u"equalizer"_q], &QAction::triggered, p, [=] () {
         if (!eq) {
             eq = dialog<AudioEqualizerDialog>();
-            connect(eq.data(), &AudioEqualizerDialog::equalizerChanged, p,
-                    [=] (const AudioEqualizer &eq) { e.setAudioEqualizer(eq); });
+            eq->setUpdateFunc([=] (auto &eq) { e.setAudioEqualizer(eq); });
         }
         eq->setEqualizer(e.params()->audio_equalizer());
         eq->show();
@@ -668,7 +666,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         if (!sview) {
             sview = dialog<SubtitleViewer>();
-            connect(sview.data(), &SubtitleViewer::seekRequested, &e, &PlayEngine::seek);
+            sview->setSeekFunc([=] (int t) { e.seek(t); });
             connect(&e, &PlayEngine::subtitleSelectionChanged, sview.data(), [=] () {
                 if (sview->isVisible())
                     sview->setComponents(e.subtitleSelection());
@@ -698,8 +696,7 @@ auto MainWindow::Data::plugMenu() -> void
             subFindDlg->setOptions(pref.preserve_downloaded_subtitles(),
                                    pref.preserve_file_name_format(),
                                    pref.preserve_fallback_folder());
-            connect(subFindDlg.data(), &SubtitleFindDialog::loadRequested,
-                    p, [this] (const QString &fileName) {
+            subFindDlg->setLoadFunc([=] (const QString &fileName) {
                 e.addSubtitleFiles(QStringList(fileName), pref.sub_enc());
                 showMessage(tr("Downloaded"), QFileInfo(fileName).fileName());
             });

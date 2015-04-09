@@ -7,6 +7,7 @@ struct RecentInfo::Data {
     Playlist openList, lastList;
     Mrl lastMrl;
     ObjectStorage storage;
+    Update update;
 };
 
 RecentInfo::RecentInfo()
@@ -38,13 +39,15 @@ auto RecentInfo::stack(const Mrl &mrl) -> void
     d->openList.prepend(mrl);
     while (d->openList.size() > d->max)
         d->openList.pop_back();
-    emit openListChanged(d->openList);
+    if (d->update)
+        d->update(d->openList);
 }
 
 auto RecentInfo::clear() -> void
 {
     d->openList.clear();
-    emit openListChanged(d->openList);
+    if (d->update)
+        d->update(d->openList);
 }
 
 auto RecentInfo::save() const -> void
@@ -75,4 +78,9 @@ auto RecentInfo::setLastMrl(const Mrl &mrl) -> void
 auto RecentInfo::lastMrl() const -> Mrl
 {
     return d->lastMrl;
+}
+
+auto RecentInfo::setUpdateFunc(Update &&func) -> void
+{
+    d->update = std::move(func);
 }

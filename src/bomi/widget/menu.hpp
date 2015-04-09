@@ -7,7 +7,6 @@
 class StepActionPair;                   class StepAction;
 
 class Menu : public QMenu {
-    Q_OBJECT
 public:
     using Group = ActionGroup;
     using MenuHash = QMap<QString, Menu*>;

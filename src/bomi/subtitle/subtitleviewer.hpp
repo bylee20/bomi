@@ -5,13 +5,13 @@ class PlayEngine;                       class Subtitle;
 class SubCompModel;                     class SubComp;
 
 class SubtitleViewer : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(SubtitleViewer)
+    using Seek = std::function<void(int)>;
 public:
     SubtitleViewer(QWidget *parent = 0);
     ~SubtitleViewer();
     auto setComponents(const QVector<SubComp> &comps) -> void;
-signals:
-    void seekRequested(int time);
+    auto setSeekFunc(Seek &&func) -> void;
 private:
     auto showEvent(QShowEvent *event) -> void;
     auto updateModels() -> void;

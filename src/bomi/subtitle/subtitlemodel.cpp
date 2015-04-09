@@ -165,7 +165,7 @@ auto SubCompView::setModel(QAbstractItemModel *model) -> void
 {
     if (d->model)
         d->model->disconnect(this);
-    d->model = qobject_cast<SubCompModel*>(model);
+    d->model = dynamic_cast<SubCompModel*>(model);
     d->proxy.setSourceModel(d->model);
     if (d->model) {
         d->model->setTimeInMilliseconds(d->ms);
@@ -183,7 +183,7 @@ auto SubCompView::updateCurrentRow(int row) -> void
 {
     if (!d->model || !d->autoScroll)
         return;
-    auto m = qobject_cast<SubCompModel*>(d->proxy.sourceModel());
+    auto m = static_cast<SubCompModel*>(d->proxy.sourceModel());
     if (!m)
         return;
     const QModelIndex idx = d->proxy.mapFromSource(m->index(row, SubCompModel::Text));

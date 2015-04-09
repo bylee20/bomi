@@ -7,7 +7,6 @@
 class OpenGLTexture2D;
 
 class SimpleTextureItem : public ShaderRenderItem<OGL::TextureVertex> {
-    Q_OBJECT
 public:
     SimpleTextureItem(QQuickItem *parent = nullptr);
     ~SimpleTextureItem();

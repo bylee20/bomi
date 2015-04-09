@@ -7,7 +7,7 @@
 class EncodingComboBox;
 
 class EncodingFileDialog : public QFileDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(EncodingFileDialog)
 public:
     static auto getOpenFileName(QWidget *parent = 0,
                                 const QString &caption = QString(),

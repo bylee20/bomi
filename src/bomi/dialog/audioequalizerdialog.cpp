@@ -10,6 +10,7 @@ struct AudioEqualizerDialog::Data {
     AudioEqualizerDialog *p = nullptr;
     AudioEqualizer eq;
     std::array<QSlider*, Eq::bands()> sliders;
+    Update update;
     QComboBox *presets = nullptr;
 };
 
@@ -68,8 +69,8 @@ AudioEqualizerDialog::AudioEqualizerDialog(QWidget *parent)
         connect(s, &QSlider::valueChanged, this, [=] () {
             const auto v = s->value()/(double)Factor;
             dB->setText((v > 0 ? "+"_a : ""_a) % QString::number(v, 'f', 1) % "dB"_a);
-            if (_Change(d->eq[i], v))
-                emit equalizerChanged(d->eq);
+            if (_Change(d->eq[i], v) && d->update)
+                d->update(d->eq);
         });
     }
     vbox->addLayout(hbox);
@@ -86,7 +87,8 @@ AudioEqualizerDialog::~AudioEqualizerDialog()
 auto AudioEqualizerDialog::setEqualizer(const AudioEqualizer &eq) -> void
 {
     if (_Change(d->eq, eq)) {
-        emit equalizerChanged(d->eq);
+        if (d->update)
+            d->update(d->eq);
         for (int i = 0; i < AudioEqualizer::bands(); ++i)
             d->sliders[i]->setValue(qRound(d->eq[i] * Factor));
     }
@@ -95,4 +97,9 @@ auto AudioEqualizerDialog::setEqualizer(const AudioEqualizer &eq) -> void
 auto AudioEqualizerDialog::equalizer() const -> AudioEqualizer
 {
     return d->eq;
+}
+
+auto AudioEqualizerDialog::setUpdateFunc(Update &&func) -> void
+{
+    d->update = std::move(func);
 }

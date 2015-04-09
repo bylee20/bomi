@@ -4,7 +4,7 @@
 #include <QDialogButtonBox>
 
 class BBox : public QDialogButtonBox {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(BBox)
 public:
     using Role = QDialogButtonBox::ButtonRole;
     using Button = QDialogButtonBox::StandardButton;

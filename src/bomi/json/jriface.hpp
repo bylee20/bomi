@@ -4,7 +4,6 @@
 class JrRequest;                        class JrResponse;
 
 class JrIface : public QObject {
-    Q_OBJECT
 public:
     JrIface(QObject *parent = nullptr): QObject(parent) { }
     ~JrIface() = default;

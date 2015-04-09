@@ -152,8 +152,7 @@ auto MainWindow::Data::plugEngine() -> void
 
 auto MainWindow::Data::initItems() -> void
 {
-    connect(&recent, &RecentInfo::openListChanged,
-            p, [=] (const QList<Mrl> &list) { updateRecentActions(list); });
+    recent.setUpdateFunc([=] (auto &list) { this->updateRecentActions(list); });
     connect(&history, &HistoryModel::playRequested,
             p, [this] (const Mrl &mrl) { openMrl(mrl); });
     connect(&playlist, &PlaylistModel::playRequested,
@@ -543,7 +542,7 @@ auto MainWindow::Data::applyPref() -> void
     if (p.jr_use()) {
         _Renew(jrServer, p.jr_connection(), p.jr_protocol());
         jrServer->setInterface(&jrPlayer);
-        connect(jrServer, &JrServer::error, this->p, [=] () {
+        jrServer->setErrorHandler([=] (auto) {
             MBox::error(nullptr, tr("JSON-RPC Server Error"),
                         jrServer->errorString(), {BBox::Ok});
         });

@@ -4,7 +4,7 @@
 class Playlist;                         class Mrl;
 
 class RecentInfo : public QObject {
-    Q_OBJECT
+    using Update = std::function<void(const QList<Mrl>&)>;
 public:
     RecentInfo();
     ~RecentInfo();
@@ -15,8 +15,7 @@ public:
     auto lastMrl() const -> Mrl;
     auto lastPlaylist() const -> Playlist;
     auto clear() -> void;
-signals:
-    void openListChanged(const QList<Mrl> &list);
+    auto setUpdateFunc(Update &&func) -> void;
 private:
     auto save() const -> void;
     auto load() -> void;

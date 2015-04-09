@@ -2,7 +2,7 @@
 #define ABOUTDIALOG_HPP
 
 class AboutDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(AboutDialog)
 public:
     AboutDialog(QWidget *parent = 0);
     ~AboutDialog();

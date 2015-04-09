@@ -6,15 +6,12 @@
 class OpenGLFramebufferObject;
 
 class SimpleFboItem : public SimpleTextureItem {
-    Q_OBJECT
 public:
     SimpleFboItem(QQuickItem *parent = nullptr);
     auto targetSize() const -> QSize { return m_targetSize; }
     auto forceUpdateTargetSize() -> void { m_forced = true; }
     auto updateVertexOnGeometryChanged() const -> bool override { return true; }
     virtual auto imageSize() const -> QSize { return targetSize(); }
-signals:
-    void targetSizeChanged(const QSize &size);
 protected:
     auto forceRepaint() -> void { reserve(UpdateMaterial); }
     auto finalizeGL() -> void;

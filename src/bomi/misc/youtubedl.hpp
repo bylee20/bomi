@@ -30,7 +30,6 @@ private:
 
 class YouTubeDL : public QObject
 {
-    Q_OBJECT
     using GetFormatFunc = std::function<void(QList<YouTubeFormat>*,const QString&)>;
 public:
     enum Error {
@@ -65,7 +64,7 @@ private:
 };
 
 class YouTubeDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(YouTubeDialog)
 public:
     YouTubeDialog();
     ~YouTubeDialog();

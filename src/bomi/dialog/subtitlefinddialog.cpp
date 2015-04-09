@@ -87,6 +87,7 @@ struct SubtitleFindDialog::Data {
         QString format, fallback;
     } options;
     ObjectStorage storage;
+    Load load;
 
     auto fillLanguage(QVector<SubtitleLink> &links) -> bool
     {
@@ -205,7 +206,8 @@ struct SubtitleFindDialog::Data {
         }
         file->write(data);
         file->close();
-        emit p->loadRequested(file->fileName());
+        if (load)
+            load(file->fileName());
     }
 };
 
@@ -314,4 +316,9 @@ auto SubtitleFindDialog::find(const Mrl &mrl) -> void
                    tr("Cannot find subtitles for %1.").arg(name),
                    { BBox::Ok });
     }
+}
+
+auto SubtitleFindDialog::setLoadFunc(Load &&load) -> void
+{
+    d->load = std::move(load);
 }

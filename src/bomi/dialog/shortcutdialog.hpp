@@ -4,7 +4,7 @@
 #include <functional>
 
 class ShortcutDialog : public QDialog {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(ShortcutDialog)
 public:
     using QueryFunc = std::function<QString(const QString&, const QKeySequence&)>;
     ShortcutDialog(const QKeySequence &shortcut, QWidget *parent = 0);

@@ -6,7 +6,7 @@
 class ShortcutMap;
 
 class RootMenu : public Menu {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(RootMenu)
 public:
     enum Preset {Current, bomi, Movist};
     ~RootMenu();

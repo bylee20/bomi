@@ -104,8 +104,9 @@ struct JrServer::Data {
     JrTransport *transport = nullptr;
     JrIface *iface = nullptr;
     ServerError error = QAbstractSocket::UnknownSocketError;
-    QString errorString = u"No Error"_q;
     QMap<QIODevice*, JrClient*> clients;
+    Error handleError;
+    QString errorString = u"No Error"_q;
 };
 
 JrServer::JrServer(JrConnection connection, JrProtocol protocol, QObject *parent)
@@ -237,6 +238,11 @@ auto JrServer::setInterface(JrIface *iface) -> void
                 [=] () { if (d->iface == iface) d->iface = nullptr; });
 }
 
+auto JrServer::setErrorHandler(Error &&func) -> void
+{
+    d->handleError = std::move(func);
+}
+
 auto JrServer::lastError() const -> ServerError
 {
     return d->error;
@@ -252,7 +258,8 @@ auto JrServer::sendError(ServerError error, const QString &errorString) -> void
     if (error != QAbstractSocket::RemoteHostClosedError) {
         d->error = error;
         d->errorString = errorString;
-        emit this->error(error);
+        if (d->handleError)
+            d->handleError(error);
     }
 }
 

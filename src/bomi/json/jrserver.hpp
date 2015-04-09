@@ -10,6 +10,7 @@ class JrRequest;                        class JrResponse;
 
 class JrServer : public QObject {
     Q_OBJECT
+    using Error = std::function<void(QAbstractSocket::SocketError)>;
 public:
     JrServer(JrConnection connection, JrProtocol protocol, QObject *parent = nullptr);
     ~JrServer();
@@ -20,8 +21,7 @@ public:
     auto serverName() const -> QString;
     auto lastError() const -> QAbstractSocket::SocketError;
     auto errorString() const -> QString;
-signals:
-    void error(QAbstractSocket::SocketError error);
+    auto setErrorHandler(Error &&func) -> void;
 private:
     auto sendError(QAbstractSocket::SocketError error,
                    const QString &errorString) -> void;

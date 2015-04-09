@@ -6,7 +6,7 @@
 using LocaleList = QVector<Locale>;     class EncodingInfo;
 
 class Translator : public QObject {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(Translator)
 public:
     ~Translator();
     static auto load(const Locale &locale = Locale::system()) -> bool;

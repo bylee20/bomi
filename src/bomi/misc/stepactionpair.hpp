@@ -4,7 +4,6 @@
 #include "stepaction.hpp"
 
 class StepActionPair : public QObject {
-    Q_OBJECT
 public:
     StepActionPair(QObject *parent = nullptr)
         : QObject(parent)

@@ -67,11 +67,11 @@ struct RootMenu::Data {
         i.action = action;
         return info = &i;
     }
-    auto newInfo(QMenu *menu, const QString &key) -> MenuActionInfo*
+    auto newInfo(Menu *menu, const QString &key) -> MenuActionInfo*
         { return newInfo(menu->menuAction(), key); }
     static auto translate(QAction *action, const QString &text) -> void
         { if (!text.isEmpty()) action->setText(text); }
-    static auto translate(QMenu *menu, const QString &title) -> void
+    static auto translate(Menu *menu, const QString &title) -> void
         { if (!title.isEmpty()) menu->setTitle(title); }
 
     template<class T>
@@ -704,14 +704,14 @@ auto RootMenu::description(const QString &longId) const -> QString
     if (!action)
         return QString();
     QString desc = action->text();
-    Menu *menu = nullptr;
+    QMenu *menu = nullptr;
     if (action->menu())
-        menu = qobject_cast<Menu*>(action->menu()->parent());
+        menu = qobject_cast<QMenu*>(action->menu()->parent());
     else
-        menu = qobject_cast<Menu*>(action->parent());
+        menu = qobject_cast<QMenu*>(action->parent());
     while (menu && menu != this) {
         desc = menu->title() % '>'_q % desc;
-        menu = qobject_cast<Menu*>(menu->parent());
+        menu = qobject_cast<QMenu*>(menu->parent());
         Q_ASSERT(menu);
     }
     return desc;

@@ -22,7 +22,7 @@ private:
 };
 
 class SubCompModel : public SimpleListModel<SubCompModelData> {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(SubCompModel)
 public:
     enum Column {Start = 0, End, Text, ColumnCount};
     SubCompModel(QObject *parent = 0);
@@ -40,7 +40,7 @@ private:
 };
 
 class SubCompView : public QTreeView {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(SubCompView)
 public:
     SubCompView(QWidget *parent = 0);
     auto setModel(QAbstractItemModel *model) -> void;

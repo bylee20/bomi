@@ -5,7 +5,7 @@
 #include <QMessageBox>
 
 class MBox : public QObject {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(MBox)
 public:
     using Role = BBox::Role;
     using Button = BBox::Button;
