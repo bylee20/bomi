@@ -54,13 +54,12 @@ Item {
         ]
         itemDelegate: Item {
             Loader {
-                x: -3
                 readonly property int row: index
-                sourceComponent: column.index > 0 ? starComponent : undefined
+                x: -3; sourceComponent: column.index > 0 ? starComponent : undefined
             }
 
             Text {
-                x: column.index > 0 ? 14 : 0; width: parent.width - x
+                anchors { fill: parent; leftMargin: column.index > 0 ? 14 : 0 }
                 text: value; color: "white"; elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
             }
