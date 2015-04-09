@@ -75,9 +75,10 @@ struct HistoryModel::Data {
     auto load() -> bool
     {
         const QString select = QString::fromLatin1(
-            "SELECT mrl, name, last_played_date_time, device, star, "
-            "(SELECT COUNT(*) FROM %1) as total "
-            "FROM %2 ORDER BY star DESC, last_played_date_time DESC"
+            "SELECT mrl, name, last_played_date_time, device, star"
+            ", (SELECT COUNT(*) FROM %1) as total FROM %2 ORDER BY "
+            "CASE WHEN star = 1 THEN 1 ELSE 0 END DESC"
+            ", last_played_date_time DESC"
         );
         if (!loader.exec(select.arg(table).arg(table))) {
             _Error("%%", loader.lastError().text());
