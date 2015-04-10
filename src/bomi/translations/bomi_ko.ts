@@ -76,47 +76,47 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>App</name>
     <message>
-        <location filename="../player/app.cpp" line="136"/>
+        <location filename="../player/app.cpp" line="137"/>
         <source>The file path or URL to open.</source>
         <translation>파일 경로 또는 URL.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="189"/>
+        <location filename="../player/app.cpp" line="190"/>
         <source>Open given %1 for file path or URL.</source>
         <translation>주어진 파일 경로 또는 URL의 %1을 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="191"/>
+        <location filename="../player/app.cpp" line="192"/>
         <source>Bring the application window in front.</source>
         <translation>어플리케이션 창을 위로 가져옵니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="193"/>
+        <location filename="../player/app.cpp" line="194"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation>%1 액션을 실행하거나 %1 메뉴를 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="195"/>
+        <location filename="../player/app.cpp" line="196"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation>최대 로그 레벨. %1는 다음 값 중 하나여야 합니다:</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="198"/>
+        <location filename="../player/app.cpp" line="199"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation>OpenGL 디버그 로거를 켭니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="200"/>
+        <location filename="../player/app.cpp" line="201"/>
         <source>Turn on options for debugging.</source>
         <translation>디버깅을 위한 옵션들을 켭니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="202"/>
+        <location filename="../player/app.cpp" line="203"/>
         <source>Dump API structure tree to stdout.</source>
         <translation>API 구조 트리를 표준 출력으로 내보냅니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="204"/>
+        <location filename="../player/app.cpp" line="205"/>
         <source>Dump executable action list to stdout.</source>
         <translation>실행가능한 액션 목록을 표준 출력으로 내보냅니다.</translation>
     </message>
@@ -1221,7 +1221,7 @@ This requires much more CPU or GPU usage.</source>
     <message>
         <location filename="../enum/logoutput.hpp" line="77"/>
         <source>stderr</source>
-        <translation>표준에러</translation>
+        <translation>표준오류</translation>
     </message>
     <message>
         <location filename="../enum/logoutput.hpp" line="78"/>
@@ -1350,31 +1350,37 @@ This requires much more CPU or GPU usage.</source>
     </message>
     <message>
         <location filename="../ui/fileassocdialog.ui" line="80"/>
-        <source>Associate (All Users)</source>
-        <translation>연결하기 (모든 유저)</translation>
+        <source>Associate</source>
+        <translation>연결하기</translation>
     </message>
     <message>
         <location filename="../ui/fileassocdialog.ui" line="87"/>
+        <source>Unassociate All</source>
+        <translation>모든 연결 취소</translation>
+    </message>
+    <message>
+        <source>Associate (All Users)</source>
+        <translation type="vanished">연결하기 (모든 유저)</translation>
+    </message>
+    <message>
         <source>Associate (Current User)</source>
-        <translation>연결하기 (현재 유저)</translation>
+        <translation type="vanished">연결하기 (현재 유저)</translation>
     </message>
     <message>
-        <location filename="../ui/fileassocdialog.ui" line="94"/>
         <source>Unassociate All (All Users)</source>
-        <translation>연결 취소 (모든 유저)</translation>
+        <translation type="vanished">연결 취소 (모든 유저)</translation>
     </message>
     <message>
-        <location filename="../ui/fileassocdialog.ui" line="101"/>
         <source>Unassociate All (Current User)</source>
-        <translation>연결 취소 (현재 유저)</translation>
+        <translation type="vanished">연결 취소 (현재 유저)</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="149"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="159"/>
         <source>Permission Denied</source>
         <translation>권한 거부됨</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="150"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="160"/>
         <source>Failed to obtain privilege to access registry.</source>
         <translation>레지스트리에 접근하기 위한 권한을 획득하는데 실패하였습니다.</translation>
     </message>
@@ -1633,7 +1639,7 @@ Please wait for a while.</source>
     <message>
         <location filename="../player/mainwindow_p.cpp" line="716"/>
         <source>Error on loading skin</source>
-        <translation>스킨 불러오기 에러</translation>
+        <translation>스킨 불러오기 오류</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="259"/>
@@ -1675,7 +1681,7 @@ Please wait for a while.</source>
         <location filename="../player/mainwindow_p.cpp" line="108"/>
         <source>Error!
 Cannot open the media.</source>
-        <translation>에러!
+        <translation>오류!
 미디어를 열 수 없습니다.</translation>
     </message>
     <message>
@@ -1706,7 +1712,7 @@ Cannot open the media.</source>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="375"/>
         <source>Error</source>
-        <translation>에러</translation>
+        <translation>오류</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="375"/>
@@ -1855,32 +1861,32 @@ Cannot open the media.</source>
 <context>
     <name>MediaSuffixModel</name>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="67"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="77"/>
         <source>Audio</source>
         <translation>오디오</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="69"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="79"/>
         <source>Video</source>
         <translation>비디오</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="71"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="81"/>
         <source>Media</source>
         <translation>미디어</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="83"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="93"/>
         <source>Extension</source>
         <translation>확장자</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="85"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="95"/>
         <source>Type</source>
         <translation>종류</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="87"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="97"/>
         <source>Description</source>
         <translation>설명</translation>
     </message>
@@ -2375,7 +2381,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
 <context>
     <name>OpenSubtitlesFinder</name>
     <message>
-        <location filename="../subtitle/opensubtitlesfinder.cpp" line="43"/>
+        <location filename="../subtitle/opensubtitlesfinder.cpp" line="44"/>
         <source>Cannot connect to server</source>
         <translation>서버에 연결할 수 없습니다</translation>
     </message>
@@ -2563,7 +2569,7 @@ OpenGL 지원을 확인하는데 실패하였습니다.
     <message>
         <location filename="../player/playengine.cpp" line="1095"/>
         <source>Error</source>
-        <translation>에러</translation>
+        <translation>오류</translation>
     </message>
     <message>
         <location filename="../player/playengine.cpp" line="1093"/>
@@ -5047,85 +5053,140 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SubtitleFindDialog</name>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="280"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="299"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
         <translation>자막 찾기(OpenSubtitles.org)</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="17"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="151"/>
         <source>Select language</source>
         <translation>언어 선택</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="26"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="240"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="33"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="249"/>
         <source>Open</source>
         <translation>열기</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="74"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="49"/>
+        <source>Find by File</source>
+        <translation>파일로 찾기</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="56"/>
+        <source>Name</source>
+        <translation>이름</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="66"/>
+        <source>Find by Name</source>
+        <translation>이름으로 찾기</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="73"/>
+        <source>Title</source>
+        <translation>제목</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="85"/>
+        <source>Season</source>
+        <translation>시즌</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="92"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="112"/>
+        <source>no</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="105"/>
+        <source>Episode</source>
+        <translation>화</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="130"/>
+        <source>Find by Info</source>
+        <translation>정보로 찾기</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="170"/>
         <source>Get</source>
         <translation>받기</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="84"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="180"/>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="135"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Connecting...</source>
         <translation>연결중...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="143"/>
         <source>Finding...</source>
         <translation>찾는중...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Find</source>
-        <translation>찾기</translation>
+        <translation type="vanished">찾기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="315"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="171"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="210"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="334"/>
         <source>Find Subtitle</source>
         <translation>자막 찾기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="163"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="172"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation>같은 이름의 파일이 이미 존재합니다. 덮어쓰겠습니까?</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="174"/>
         <source>Overwrite</source>
         <translation>덮어쓰기</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="166"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="175"/>
         <source>Save as...</source>
         <translation>다른 이름으로 저장...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="174"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="183"/>
         <source>Save As...</source>
         <translation>다른 이름으로 저장...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="172"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="181"/>
         <source>Subtitle Files</source>
         <translation>자막 파일</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="202"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="145"/>
+        <source>Unavailable</source>
+        <translation>사용 불가</translation>
+    </message>
+    <message>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="147"/>
+        <source>Error</source>
+        <translation>오류</translation>
+    </message>
+    <message>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="149"/>
+        <source>Available</source>
+        <translation>사용 가능</translation>
+    </message>
+    <message>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="211"/>
         <source>Cannot write file!</source>
         <translation>파일을 쓸 수 없습니다!</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="316"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="335"/>
         <source>Cannot find subtitles for %1.</source>
         <translation>%1의 자막을 찾을 수 없습니다.</translation>
     </message>

@@ -73,47 +73,47 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>App</name>
     <message>
-        <location filename="../player/app.cpp" line="136"/>
+        <location filename="../player/app.cpp" line="137"/>
         <source>The file path or URL to open.</source>
         <translation>Pfad der Datei oder URL, die geöffnet werden soll.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="189"/>
+        <location filename="../player/app.cpp" line="190"/>
         <source>Open given %1 for file path or URL.</source>
         <translation>Pfad %1 der Datei oder URL öffnen.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="191"/>
+        <location filename="../player/app.cpp" line="192"/>
         <source>Bring the application window in front.</source>
         <translation>Anwendungsfenster nach vorne bringen.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="193"/>
+        <location filename="../player/app.cpp" line="194"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation>Aktion %1 ausführen oder %1-Menü öffnen.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="195"/>
+        <location filename="../player/app.cpp" line="196"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation>Maximale Ausführlichkeit für Log. %1 sollte eines der folgenden sein:</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="198"/>
+        <location filename="../player/app.cpp" line="199"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation>OpenGL-Debug-Log aktivieren.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="200"/>
+        <location filename="../player/app.cpp" line="201"/>
         <source>Turn on options for debugging.</source>
         <translation>Optionen fürs Debugging aktivieren.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="202"/>
+        <location filename="../player/app.cpp" line="203"/>
         <source>Dump API structure tree to stdout.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="204"/>
+        <location filename="../player/app.cpp" line="205"/>
         <source>Dump executable action list to stdout.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1340,31 +1340,21 @@ This requires much more CPU or GPU usage.</source>
     </message>
     <message>
         <location filename="../ui/fileassocdialog.ui" line="80"/>
-        <source>Associate (All Users)</source>
+        <source>Associate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/fileassocdialog.ui" line="87"/>
-        <source>Associate (Current User)</source>
+        <source>Unassociate All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/fileassocdialog.ui" line="94"/>
-        <source>Unassociate All (All Users)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/fileassocdialog.ui" line="101"/>
-        <source>Unassociate All (Current User)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="149"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="159"/>
         <source>Permission Denied</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="150"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="160"/>
         <source>Failed to obtain privilege to access registry.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1812,32 +1802,32 @@ Please wait for a while.</source>
 <context>
     <name>MediaSuffixModel</name>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="67"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="77"/>
         <source>Audio</source>
         <translation type="unfinished">Audio</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="69"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="79"/>
         <source>Video</source>
         <translation type="unfinished">Video</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="71"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="81"/>
         <source>Media</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="83"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="93"/>
         <source>Extension</source>
         <translation type="unfinished">Erweiterung</translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="85"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="95"/>
         <source>Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/fileassocdialog.cpp" line="87"/>
+        <location filename="../dialog/fileassocdialog.cpp" line="97"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2273,7 +2263,7 @@ It may help to update driver of graphics card.</source>
 <context>
     <name>OpenSubtitlesFinder</name>
     <message>
-        <location filename="../subtitle/opensubtitlesfinder.cpp" line="43"/>
+        <location filename="../subtitle/opensubtitlesfinder.cpp" line="44"/>
         <source>Cannot connect to server</source>
         <translation>Kann nicht mit dem Server verbinden</translation>
     </message>
@@ -4750,85 +4740,140 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SubtitleFindDialog</name>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="280"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="299"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
         <translation>Untertitel bei OpenSubtitles.org suchen</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="17"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="151"/>
         <source>Select language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="26"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="240"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="33"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="249"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="74"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="49"/>
+        <source>Find by File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="56"/>
+        <source>Name</source>
+        <translation type="unfinished">Name</translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="66"/>
+        <source>Find by Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="73"/>
+        <source>Title</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="85"/>
+        <source>Season</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="92"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="112"/>
+        <source>no</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="105"/>
+        <source>Episode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="130"/>
+        <source>Find by Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/subtitlefinddialog.ui" line="170"/>
         <source>Get</source>
         <translation>Herunterladen</translation>
     </message>
     <message>
-        <location filename="../ui/subtitlefinddialog.ui" line="84"/>
+        <location filename="../ui/subtitlefinddialog.ui" line="180"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="135"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Connecting...</source>
         <translation>Verbinden...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="138"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="143"/>
         <source>Finding...</source>
         <translation>Suchen...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="141"/>
         <source>Find</source>
-        <translation>Suchen</translation>
+        <translation type="vanished">Suchen</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="162"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="201"/>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="315"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="171"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="210"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="334"/>
         <source>Find Subtitle</source>
         <translation>Untertitel suchen</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="163"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="172"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation>Eine Datei mit demselben Namen existiert bereits. Soll die Datei überschrieben werden?</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="165"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="174"/>
         <source>Overwrite</source>
         <translation>Überschreiben</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="166"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="175"/>
         <source>Save as...</source>
         <translation>Speichern als...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="174"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="183"/>
         <source>Save As...</source>
         <translation>Speichern als...</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="172"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="181"/>
         <source>Subtitle Files</source>
         <translation>Untertitel-Dateien</translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="202"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="145"/>
+        <source>Unavailable</source>
+        <translation type="unfinished">Nicht verfügbar</translation>
+    </message>
+    <message>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="147"/>
+        <source>Error</source>
+        <translation type="unfinished">Fehler</translation>
+    </message>
+    <message>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="149"/>
+        <source>Available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="211"/>
         <source>Cannot write file!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/subtitlefinddialog.cpp" line="316"/>
+        <location filename="../dialog/subtitlefinddialog.cpp" line="335"/>
         <source>Cannot find subtitles for %1.</source>
         <translation>Kann keine Untertitel für %1 finden.</translation>
     </message>
