@@ -115,7 +115,9 @@ struct SubtitleFindDialog::Data {
     void updateState() {
         const bool ok = finder->isAvailable() && !downloader.isRunning();
         ui.open->setEnabled(ok);
-        ui.state->setEnabled(ok);
+        ui.find_file->setEnabled(ok);
+        ui.find_info->setEnabled(ok);
+        ui.find_name->setEnabled(ok);
         ui.language->setEnabled(ok);
         ui.get->setEnabled(ok);
         ui.view->setEnabled(ok);
@@ -129,18 +131,25 @@ struct SubtitleFindDialog::Data {
             }
         } else
             ui.prog->setRange(0, 0);
-
-        switch (finder->state()) {
-        case OpenSubtitlesFinder::Connecting:
-            ui.state->setText(tr("Connecting..."));
-            break;
-        case OpenSubtitlesFinder::Finding:
-            ui.state->setText(tr("Finding..."));
-            break;
-        default:
-            ui.state->setText(tr("Find"));
-            break;
-        }
+        updateStateText();
+    }
+    auto updateStateText() -> void
+    {
+        auto text = [=] () {
+            switch (finder->state()) {
+            case OpenSubtitlesFinder::Connecting:
+                return tr("Connecting...");
+            case OpenSubtitlesFinder::Finding:
+                return tr("Finding...");
+            case OpenSubtitlesFinder::Unavailable:
+                return tr("Unavailable");
+            case OpenSubtitlesFinder::Error:
+                return tr("Error");
+            default:
+                return tr("Available");
+            }
+        };
+        ui.state->setText(text());
     }
     auto getNameToPreserve(const QString &subName) -> QString
     {
@@ -241,6 +250,16 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         if (!file.isEmpty())
             find(QUrl::fromLocalFile(file));
     });
+    connect(d->ui.find_file, &QPushButton::clicked, this, [=] () {
+        if (d->mediaFile.exists())
+            find(QUrl::fromLocalFile(d->mediaFile.absoluteFilePath()));
+    });
+    connect(d->ui.find_info, &QPushButton::clicked, this, [=] () {
+        d->finder->find(d->ui.query->text(),
+                        d->ui.season->value(), d->ui.episode->value());
+    });
+    connect(d->ui.find_name, &QPushButton::clicked,
+            this, [=] () { d->finder->find(d->ui.tag->text()); });
     connect(d->ui.language, &CheckListWidget::checkedItemsChanged, [=] () {
         auto langs = d->ui.language->checkedData();
         d->proxy.langCodes.clear();
@@ -265,9 +284,9 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         if (d->downloader.start(url))
             d->downloads[d->downloader.url()] = info;
     });
-    connect(d->finder, &OpenSubtitlesFinder::stateChanged,
+    connect(d->finder, &OpenSubtitlesFinder::stateChanged, this,
             [this] () { d->updateState(); });
-    connect(d->finder, &OpenSubtitlesFinder::found,
+    connect(d->finder, &OpenSubtitlesFinder::found, this,
             [this] (QVector<SubtitleLink> links) {
         // Select first entry of list
         d->ui.view->setCurrentIndex(d->ui.view->indexAt(QPoint()));
@@ -275,7 +294,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         d->model.setList(links);
         d->proxy.invalidate();
     });
-    d->updateState();
+    d->updateStateText();
 
     _SetWindowTitle(this, tr("Find Subtitle from OpenSubtitles.org"));
     d->storage.setObject(this, u"subtitle_find_dialog"_q);

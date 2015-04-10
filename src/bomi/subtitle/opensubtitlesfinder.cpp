@@ -11,6 +11,7 @@ struct OpenSubtitlesFinder::Data {
     OpenSubtitlesFinder *p = nullptr;
     XmlRpcClient client;
     QString token, error;
+
     void setState(State s) {
         if (_Change(state, s)) {
             if (state != Error)
@@ -47,6 +48,35 @@ struct OpenSubtitlesFinder::Data {
         this->error = error;
         setState(Error);
     }
+    auto call(const QVariantMap &map) -> void
+    {
+        const auto args = _Args() << token << QVariant(QVariantList() << map);
+        client.call(u"SearchSubtitles"_q, args, [this] (const QVariantList &results) {
+            setState(Available);
+            if (results.isEmpty() || results.first().type() != QVariant::Map) {
+                emit p->found(QVector<SubtitleLink>());
+            } else {
+                const auto list = results.first().toMap()[u"data"_q].toList();
+                QVector<SubtitleLink> links;
+                for (auto &it : list) {
+                    if (it.type() != QVariant::Map)
+                        continue;
+                    auto const map = it.toMap();
+                    SubtitleLink link;
+                    link.fileName = map[u"SubFileName"_q].toString();
+                    link.date = map[u"SubAddDate"_q].toString();
+                    link.url = map[u"SubDownloadLink"_q].toString();
+                    link.langCode = map[u"SubLanguageID"_q].toString();
+                    if (link.langCode.isEmpty())
+                        link.langCode = map[u"ISO639"_q].toString();
+                    if (link.langCode.isEmpty())
+                        link.langCode = map[u"LanguageName"_q].toString();
+                    links.append(link);
+                }
+                emit p->found(links);
+            }
+        });
+    }
 };
 
 OpenSubtitlesFinder::OpenSubtitlesFinder(QObject *parent)
@@ -60,6 +90,34 @@ OpenSubtitlesFinder::OpenSubtitlesFinder(QObject *parent)
 OpenSubtitlesFinder::~OpenSubtitlesFinder() {
     d->logout();
     delete d;
+}
+
+auto OpenSubtitlesFinder::find(const QString &tag) -> bool
+{
+    if (d->state != Available || tag.isEmpty())
+        return false;
+    d->setState(Finding);
+    QVariantMap map;
+    map[u"sublanguageid"_q] = u"all"_q;
+    map[u"tag"_q] = tag;
+    d->call(map);
+    return true;
+}
+
+auto OpenSubtitlesFinder::find(const QString &query, int season, int episode) -> bool
+{
+    if (d->state != Available || query.isEmpty())
+        return false;
+    d->setState(Finding);
+    QVariantMap map;
+    map[u"sublanguageid"_q] = u"all"_q;
+    map[u"query"_q] = query;
+    if (season >= 0)
+        map[u"season"_q] = season;
+    if (episode >= 0)
+        map[u"episode"_q] = episode;
+    d->call(map);
+    return true;
 }
 
 auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
@@ -93,33 +151,7 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
     map[u"sublanguageid"_q] = u"all"_q;
     map[u"moviehash"_q] = hash;
     map[u"moviebytesize"_q] = bytes;
-    const auto args = _Args() << d->token << QVariant(QVariantList() << map);
-    d->client.call(u"SearchSubtitles"_q, args,
-                   [this] (const QVariantList &results) {
-        d->setState(Available);
-        if (results.isEmpty() || results.first().type() != QVariant::Map) {
-            emit found(QVector<SubtitleLink>());
-        } else {
-            const auto list = results.first().toMap()[u"data"_q].toList();
-            QVector<SubtitleLink> links;
-            for (auto &it : list) {
-                if (it.type() != QVariant::Map)
-                    continue;
-                auto const map = it.toMap();
-                SubtitleLink link;
-                link.fileName = map[u"SubFileName"_q].toString();
-                link.date = map[u"SubAddDate"_q].toString();
-                link.url = map[u"SubDownloadLink"_q].toString();
-                link.langCode = map[u"SubLanguageID"_q].toString();
-                if (link.langCode.isEmpty())
-                    link.langCode = map[u"ISO639"_q].toString();
-                if (link.langCode.isEmpty())
-                    link.langCode = map[u"LanguageName"_q].toString();
-                links.append(link);
-            }
-            emit found(links);
-        }
-    });
+    d->call(map);
     return true;
 }
 

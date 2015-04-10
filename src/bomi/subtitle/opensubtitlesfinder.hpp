@@ -17,6 +17,8 @@ public:
     OpenSubtitlesFinder(QObject *parent = nullptr);
     ~OpenSubtitlesFinder();
     auto find(const Mrl &mrl) -> bool;
+    auto find(const QString &tag) -> bool;
+    auto find(const QString &query, int season, int episode) -> bool;
     auto state() const -> State;
     auto isAvailable() const -> bool { return state() == Available; }
     auto error() const -> QString;
