@@ -20,6 +20,16 @@ static const QStringList s_audioCommon = {
     u"ogg"_q, u"pcm"_q, u"wav"_q, u"wma"_q
 };
 
+auto _CommonExtList(ExtTypes ext) -> QStringList
+{
+    QStringList list;
+    if (ext & VideoExt)
+        list.append(s_videoCommon);
+    if (ext & AudioExt)
+        list.append(s_audioCommon);
+    return list;
+}
+
 enum MediaSuffixFlag {
     NoFlag = 0, VideoSuffix = 1, AudioSuffix = 2, CommonSuffix = 4
 };
@@ -151,14 +161,12 @@ FileAssocDialog::FileAssocDialog()
                     { BBox::Ok });
     };
 
-    connect(d->ui.assoc_all, &QPushButton::clicked, this, [=] ()
-        { if (!OS::associateFileTypes(win(), true, d->extensions())) alert(); });
-    connect(d->ui.assoc_current, &QPushButton::clicked,
-            this, [=] () { OS::associateFileTypes(win(), false, d->extensions()); });
-    connect(d->ui.unassoc_all, &QPushButton::clicked,
+    connect(d->ui.assoc, &QPushButton::clicked, this, [=] () {
+        if (!OS::associateFileTypes(win(), true, d->extensions()))
+            alert();
+    });
+    connect(d->ui.unassoc, &QPushButton::clicked,
             this, [=] () { if (!OS::unassociateFileTypes(win(), true)) alert(); });
-    connect(d->ui.unassoc_current, &QPushButton::clicked,
-            this, [=] () { OS::unassociateFileTypes(win(), false); });
 }
 
 FileAssocDialog::~FileAssocDialog()

@@ -75,30 +75,16 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="assoc_all">
+      <widget class="QPushButton" name="assoc">
        <property name="text">
-        <string>Associate (All Users)</string>
+        <string>Associate</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="assoc_current">
+      <widget class="QPushButton" name="unassoc">
        <property name="text">
-        <string>Associate (Current User)</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="unassoc_all">
-       <property name="text">
-        <string>Unassociate All (All Users)</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="unassoc_current">
-       <property name="text">
-        <string>Unassociate All (Current User)</string>
+        <string>Unassociate All</string>
        </property>
       </widget>
      </item>

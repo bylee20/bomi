@@ -144,7 +144,7 @@ auto associateFileTypes(QWindow *w, bool global, const QStringList &exts) -> boo
 
     s.clear();
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST | SHCNF_FLUSHNOWAIT, nullptr, nullptr);
-    return false;
+    return true;
 }
 
 auto defaultFixedFont() -> QFont

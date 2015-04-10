@@ -38,7 +38,8 @@ auto translator_load(const Locale &locale) -> bool;
 
 enum class LineCmd {
     Wake, Open, Action, LogLevel, OpenGLDebug, Debug,
-    DumpApiTree, DumpActionList, WinAssoc, WinUnassoc
+    DumpApiTree, DumpActionList, WinAssoc, WinUnassoc,
+    WinInstall, WinUninstall
 };
 
 struct App::Data {
@@ -205,6 +206,8 @@ App::App(int &argc, char **argv)
 #ifdef Q_OS_WIN
     d->addOption(LineCmd::WinAssoc, u"win-assoc"_q, u"Associate given comma-separated extension list."_q, u"ext"_q);
     d->addOption(LineCmd::WinUnassoc, u"win-unassoc"_q, u"Unassociate all extensions."_q);
+    d->addOption(LineCmd::WinInstall, u"win-install"_q, u"Run jobs for post-installation."_q);
+    d->addOption(LineCmd::WinUninstall, u"win-uninstall"_q, u"Run jobs for pre-uninstallation."_q);
 #endif
     d->getCommandParser(&d->cmdParser)->process(arguments());
     d->getCommandParser(&d->msgParser);
@@ -269,6 +272,8 @@ App::~App() {
     RootMenu::finalize();
 }
 
+auto _CommonExtList(ExtTypes ext) -> QStringList;
+
 auto App::executeCommandLine() const -> bool
 {
     bool done = false;
@@ -285,8 +290,10 @@ auto App::executeCommandLine() const -> bool
         RootMenu::dumpInfo();
     if (isSet(LineCmd::WinAssoc))
         OS::associateFileTypes(nullptr, true, value(LineCmd::WinAssoc).split(','_q));
-    if (isSet(LineCmd::WinUnassoc))
+    if (isSet(LineCmd::WinUnassoc) || isSet(LineCmd::WinUninstall))
         OS::unassociateFileTypes(nullptr, true);
+    if (isSet(LineCmd::WinInstall))
+        OS::associateFileTypes(nullptr, true, _CommonExtList(VideoExt | AudioExt));
     return done;
 }
 
