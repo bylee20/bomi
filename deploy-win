@@ -1,6 +1,7 @@
 #!/bin/sh
 
-dir=build/bomi-win-$(date +%Y%m%d%H%M%S)
+sys=$(echo $MSYSTEM | tr '[:upper:]' '[:lower:]')
+dir=build/bomi-$sys-$(date +%Y%m%d%H%M%S)
 
 #make skins
 #make imports
@@ -16,7 +17,7 @@ cp -r ../translations .
 
 install -d QtQuick
 
-base=/$(echo $MSYSTEM | tr '[:upper:]' '[:lower:]')/qt5-static/share/qt5
+base=/$sys/qt5-static/share/qt5
 
 cp -r $base/qml/QtQuick/{Controls,Layouts,Window.2} QtQuick/
 cp -r $base/qml/QtQuick.2 .
