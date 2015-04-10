@@ -248,11 +248,11 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     connect(d->ui.open, &QPushButton::clicked, [this] () {
         auto file = _GetOpenFile(this, tr("Open"), VideoExt);
         if (!file.isEmpty())
-            find(QUrl::fromLocalFile(file));
+            find(file);
     });
     connect(d->ui.find_file, &QPushButton::clicked, this, [=] () {
         if (d->mediaFile.exists())
-            find(QUrl::fromLocalFile(d->mediaFile.absoluteFilePath()));
+            find(d->mediaFile.absoluteFilePath());
     });
     connect(d->ui.find_info, &QPushButton::clicked, this, [=] () {
         d->finder->find(d->ui.query->text(),

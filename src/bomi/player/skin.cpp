@@ -1,4 +1,5 @@
 #include "skin.hpp"
+#include "dialog/mbox.hpp"
 #include "misc/log.hpp"
 #include "configure.hpp"
 #include <QQuickView>
@@ -61,7 +62,10 @@ auto Skin::apply(QQuickView *view, const QString &name) -> void
     }
     const auto skin = Skin::source(name);
     view->setResizeMode(QQuickView::SizeRootObjectToView);
+    const auto current = QDir::currentPath();
+    QDir::setCurrent(qApp->applicationDirPath());
     view->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));
+    QDir::setCurrent(current);
 }
 
 auto Skin::source(const QString &name) -> QFileInfo
