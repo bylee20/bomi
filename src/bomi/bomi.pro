@@ -599,4 +599,5 @@ DISTFILES += \
     skins/Freya/bomi.qml \
     imports/bomi/SimpleBlur.qml \
     imports/bomi/ToolPlaneStyle.qml \
-    imports/bomi/HistoryView.qml
+    imports/bomi/HistoryView.qml \
+    skins/Tethys/bomi.qml

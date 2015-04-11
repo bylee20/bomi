@@ -8,6 +8,7 @@ BaseApp {
         topMargin: overlaps ? 0 : topControls.height
         bottomMargin: overlaps ? 0 : bottomControls.height
     }
+    property rect excludeMouseArea: Qt.rect(0, 0, 0, 0)
 
     Player {
         id: playerItem
@@ -78,7 +79,7 @@ BaseApp {
                 return true;
             var m = App.window.mouse
             if (App.theme.controls.showOnMouseMoved)
-                return m.cursor && m.isIn(area)
+                return m.cursor && m.isIn(area, excludeMouseArea)
             return m.isIn(btmCatcher) || m.isIn(topCatcher)
         }
         onContainsMouseChanged: {

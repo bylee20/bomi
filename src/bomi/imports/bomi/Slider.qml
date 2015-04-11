@@ -11,6 +11,10 @@ Item {
     property real range: slider.range
     property alias orientation: slider.orientation
     property alias rate: slider.rate
+    property alias __hpressed: slider.hpressed
+    property alias __hhovered: slider.hhovered
+    readonly property alias hpressed: slider.hpressed
+    readonly property alias hhovered: slider.hhovered
     implicitHeight: slider.implicitHeight
     MouseArea {
         anchors.fill: parent
@@ -21,6 +25,8 @@ Item {
             property alias max: slider.maximumValue
             property real range: max - min
             property real rate: (value - min)/(max - min)
+            property bool hpressed: pressed
+            property bool hhovered: hovered
         }
         onWheel: wheel.accepted = true
         onPressed: mouse.accepted = false

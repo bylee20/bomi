@@ -20,6 +20,7 @@ public:
     auto setHidingCursorBlocked(bool b) -> void
         { if (_Change(m_blocked, b)) emit hidingCursorBlockedChanged(b); }
     Q_INVOKABLE bool isIn(QQuickItem *item);
+    Q_INVOKABLE bool isIn(QQuickItem *item, const QRectF &exclude);
     Q_INVOKABLE QPointF posFor(QQuickItem *item);
 signals:
     void cursorChanged();

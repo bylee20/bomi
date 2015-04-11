@@ -144,7 +144,7 @@ auto Pref::defaultSkinName() -> QString
 {
     QString name = QString::fromLatin1(BOMI_DEFAULT_SKIN);
     if (name.isEmpty())
-        name = u"Ardis"_q;
+        name = u"Tethys"_q;
     return name;
 }
 

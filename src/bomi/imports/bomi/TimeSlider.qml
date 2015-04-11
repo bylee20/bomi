@@ -10,6 +10,9 @@ Slider {
     property VideoPreviewStyle preview: VideoPreviewStyle { }
     property int target: -1
 
+    __hpressed: mouseArea.pressed
+    __hhovered: mouseArea.containsMouse
+
     Rectangle {
         id: pv
         width: d.e.preview.width + 4; height: d.e.preview.height + 4
@@ -114,6 +117,7 @@ Slider {
         anchors.fill: parent
         hoverEnabled: true
         property bool moving: pressed || containsMouse
+        property bool hv: false
         property int time: target >= 0 ? target : moving ? d.target(mouseX) : d.e.time
         Text { id: t }
         onMovingChanged: if (toolTip && !moving) App.window.hideToolTip()
