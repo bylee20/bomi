@@ -113,7 +113,7 @@ auto Pref::load() -> void
                 = defaultMouseActionMap()[MouseBehavior::RightClick];
 
         if (json.contains(u"playlist_theme"_q)) {
-            m_controls_theme.showOnMouseMoved = json[u"show_controls_when_mouse_moved"_q].toBool(true);
+            m_controls_theme.showOnMouseMoved = json.value(u"show_controls_when_mouse_moved"_q).toBool(true);
 
             PlaylistTheme playlist;
             playlist.setFromJson(json[u"playlist_theme"_q].toObject());

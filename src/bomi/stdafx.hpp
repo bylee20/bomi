@@ -60,6 +60,13 @@ char *gets(char *str);
 #include <cmath>
 #include <functional>
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+namespace Qt {
+Q_DECLARE_FLAGS(Edges, Edge)
+}
+Q_DECLARE_OPERATORS_FOR_FLAGS(Qt::Edges)
+#endif
+
 #ifdef Q_OS_LINUX
 #include <QtDBus>
 #endif
