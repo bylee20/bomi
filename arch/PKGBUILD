@@ -2,7 +2,7 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=bomi
-pkgver=0.9.4
+pkgver=0.9.6
 pkgrel=1
 pkgdesc="Powerful and easy-to-use GUI multimedia player based on mpv"
 arch=('i686' 'x86_64')
@@ -19,7 +19,7 @@ optdepends=('libaacs: AACS decryption for Blu-ray support'
             'libbdplus: BD+ decryption for Blu-ray support'
             'youtube-dl: streaming website support including YouTube')
 source=($pkgname-$pkgver.tar.gz::https://github.com/xylosper/bomi/archive/v$pkgver.tar.gz)
-md5sums=('30828a5f3726a59ee240f0fe88846879')
+md5sums=('43d188ffc0d446f013df8d88e56de68d')
 #options=(debug !strip)
 
 build() {
