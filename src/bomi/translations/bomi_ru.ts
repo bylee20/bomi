@@ -73,47 +73,47 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>App</name>
     <message>
-        <location filename="../player/app.cpp" line="137"/>
+        <location filename="../player/app.cpp" line="136"/>
         <source>The file path or URL to open.</source>
         <translation>Путь к файлу или URL для открытия.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="190"/>
+        <location filename="../player/app.cpp" line="189"/>
         <source>Open given %1 for file path or URL.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="192"/>
+        <location filename="../player/app.cpp" line="191"/>
         <source>Bring the application window in front.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="194"/>
+        <location filename="../player/app.cpp" line="193"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="196"/>
+        <location filename="../player/app.cpp" line="195"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="199"/>
+        <location filename="../player/app.cpp" line="198"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="201"/>
+        <location filename="../player/app.cpp" line="200"/>
         <source>Turn on options for debugging.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="203"/>
+        <location filename="../player/app.cpp" line="202"/>
         <source>Dump API structure tree to stdout.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="205"/>
+        <location filename="../player/app.cpp" line="204"/>
         <source>Dump executable action list to stdout.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -489,7 +489,7 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>Button</name>
     <message>
-        <location filename="../imports/bomi/Button.qml" line="49"/>
+        <location filename="../imports/bomi/Button.qml" line="50"/>
         <source>Left click: %1
 Right click: %2</source>
         <translation type="unfinished">Left click: %1
@@ -1367,19 +1367,16 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>HistoryDock</name>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="51"/>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation type="vanished">Имя</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="52"/>
         <source>Latest Playback</source>
-        <translation>Последние воспроизведённые</translation>
+        <translation type="vanished">Последние воспроизведённые</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="53"/>
         <source>Location</source>
-        <translation>Расположение</translation>
+        <translation type="vanished">Расположение</translation>
     </message>
 </context>
 <context>
@@ -1533,28 +1530,28 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="713"/>
+        <location filename="../player/mainwindow_m.cpp" line="717"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>Закрыть проигрыватель после окончания списка.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="714"/>
+        <location filename="../player/mainwindow_m.cpp" line="718"/>
         <source>Auto-exit is canceled.</source>
         <translation>Автоматический выход отменяется.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="720"/>
+        <location filename="../player/mainwindow_m.cpp" line="724"/>
         <source>Auto-shutdown</source>
         <translation>Авто выключение</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="721"/>
-        <location filename="../player/mainwindow_m.cpp" line="726"/>
+        <location filename="../player/mainwindow_m.cpp" line="725"/>
+        <location filename="../player/mainwindow_m.cpp" line="730"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>Система будет выключена когда список воспроизведения закончится.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="782"/>
+        <location filename="../player/mainwindow_m.cpp" line="786"/>
         <source>Current Chapter</source>
         <translation>Текущая глава</translation>
     </message>
@@ -1671,17 +1668,27 @@ Cannot open the media.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="701"/>
+        <location filename="../player/mainwindow_m.cpp" line="656"/>
+        <source>Clear History</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/mainwindow_m.cpp" line="656"/>
+        <source>Do you really want clear playback history?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/mainwindow_m.cpp" line="705"/>
         <source>Downloaded</source>
         <translation>Загружено</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="729"/>
+        <location filename="../player/mainwindow_m.cpp" line="733"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>Авто-выключение отменено.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="781"/>
+        <location filename="../player/mainwindow_m.cpp" line="785"/>
         <source>Current Title/Edition</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2564,12 +2571,12 @@ It may help to update driver of graphics card.</source>
 <context>
     <name>Player</name>
     <message>
-        <location filename="../imports/bomi/Player.qml" line="123"/>
+        <location filename="../imports/bomi/Player.qml" line="102"/>
         <source>Download</source>
         <translation>Загрузика</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/Player.qml" line="173"/>
+        <location filename="../imports/bomi/Player.qml" line="152"/>
         <source>Connecting...</source>
         <translation>Подключение...</translation>
     </message>

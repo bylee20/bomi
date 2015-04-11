@@ -69,47 +69,47 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>App</name>
     <message>
-        <location filename="../player/app.cpp" line="137"/>
+        <location filename="../player/app.cpp" line="136"/>
         <source>The file path or URL to open.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="190"/>
+        <location filename="../player/app.cpp" line="189"/>
         <source>Open given %1 for file path or URL.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="192"/>
+        <location filename="../player/app.cpp" line="191"/>
         <source>Bring the application window in front.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="194"/>
+        <location filename="../player/app.cpp" line="193"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="196"/>
+        <location filename="../player/app.cpp" line="195"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="199"/>
+        <location filename="../player/app.cpp" line="198"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="201"/>
+        <location filename="../player/app.cpp" line="200"/>
         <source>Turn on options for debugging.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="203"/>
+        <location filename="../player/app.cpp" line="202"/>
         <source>Dump API structure tree to stdout.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="205"/>
+        <location filename="../player/app.cpp" line="204"/>
         <source>Dump executable action list to stdout.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -485,7 +485,7 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>Button</name>
     <message>
-        <location filename="../imports/bomi/Button.qml" line="49"/>
+        <location filename="../imports/bomi/Button.qml" line="50"/>
         <source>Left click: %1
 Right click: %2</source>
         <translation>Levi klik: %1
@@ -1361,19 +1361,16 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>HistoryDock</name>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="51"/>
         <source>Name</source>
-        <translation>Ime</translation>
+        <translation type="vanished">Ime</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="52"/>
         <source>Latest Playback</source>
-        <translation>Poslednje Reprodukovano</translation>
+        <translation type="vanished">Poslednje Reprodukovano</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="53"/>
         <source>Location</source>
-        <translation>Lokacija</translation>
+        <translation type="vanished">Lokacija</translation>
     </message>
 </context>
 <context>
@@ -1632,7 +1629,7 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="782"/>
+        <location filename="../player/mainwindow_m.cpp" line="786"/>
         <source>Current Chapter</source>
         <translation>Trenutno Poglavlje</translation>
     </message>
@@ -1696,38 +1693,48 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="701"/>
+        <location filename="../player/mainwindow_m.cpp" line="656"/>
+        <source>Clear History</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/mainwindow_m.cpp" line="656"/>
+        <source>Do you really want clear playback history?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/mainwindow_m.cpp" line="705"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="713"/>
+        <location filename="../player/mainwindow_m.cpp" line="717"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>Ugasi CMPLayer kada se lista završi.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="714"/>
+        <location filename="../player/mainwindow_m.cpp" line="718"/>
         <source>Auto-exit is canceled.</source>
         <translation>Auto-Gašenje je otkazano.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="720"/>
+        <location filename="../player/mainwindow_m.cpp" line="724"/>
         <source>Auto-shutdown</source>
         <translation>Automatski-Ugasi</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="721"/>
-        <location filename="../player/mainwindow_m.cpp" line="726"/>
+        <location filename="../player/mainwindow_m.cpp" line="725"/>
+        <location filename="../player/mainwindow_m.cpp" line="730"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>Sistem će se ugasiti kada se lista završi.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="729"/>
+        <location filename="../player/mainwindow_m.cpp" line="733"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>Automatsko-gašenje sistema je otkazano.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="781"/>
+        <location filename="../player/mainwindow_m.cpp" line="785"/>
         <source>Current Title/Edition</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2536,12 +2543,12 @@ It may help to update driver of graphics card.</source>
 <context>
     <name>Player</name>
     <message>
-        <location filename="../imports/bomi/Player.qml" line="123"/>
+        <location filename="../imports/bomi/Player.qml" line="102"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/bomi/Player.qml" line="173"/>
+        <location filename="../imports/bomi/Player.qml" line="152"/>
         <source>Connecting...</source>
         <translation type="unfinished"></translation>
     </message>

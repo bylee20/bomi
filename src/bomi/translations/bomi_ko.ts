@@ -76,47 +76,47 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>App</name>
     <message>
-        <location filename="../player/app.cpp" line="137"/>
+        <location filename="../player/app.cpp" line="136"/>
         <source>The file path or URL to open.</source>
         <translation>파일 경로 또는 URL.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="190"/>
+        <location filename="../player/app.cpp" line="189"/>
         <source>Open given %1 for file path or URL.</source>
         <translation>주어진 파일 경로 또는 URL의 %1을 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="192"/>
+        <location filename="../player/app.cpp" line="191"/>
         <source>Bring the application window in front.</source>
         <translation>어플리케이션 창을 위로 가져옵니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="194"/>
+        <location filename="../player/app.cpp" line="193"/>
         <source>Exectute %1 action or open %1 menu.</source>
         <translation>%1 액션을 실행하거나 %1 메뉴를 엽니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="196"/>
+        <location filename="../player/app.cpp" line="195"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
         <translation>최대 로그 레벨. %1는 다음 값 중 하나여야 합니다:</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="199"/>
+        <location filename="../player/app.cpp" line="198"/>
         <source>Turn on OpenGL debug logger.</source>
         <translation>OpenGL 디버그 로거를 켭니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="201"/>
+        <location filename="../player/app.cpp" line="200"/>
         <source>Turn on options for debugging.</source>
         <translation>디버깅을 위한 옵션들을 켭니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="203"/>
+        <location filename="../player/app.cpp" line="202"/>
         <source>Dump API structure tree to stdout.</source>
         <translation>API 구조 트리를 표준 출력으로 내보냅니다.</translation>
     </message>
     <message>
-        <location filename="../player/app.cpp" line="205"/>
+        <location filename="../player/app.cpp" line="204"/>
         <source>Dump executable action list to stdout.</source>
         <translation>실행가능한 액션 목록을 표준 출력으로 내보냅니다.</translation>
     </message>
@@ -504,7 +504,7 @@ Developer&apos;s E-mail: %4</source>
 <context>
     <name>Button</name>
     <message>
-        <location filename="../imports/bomi/Button.qml" line="49"/>
+        <location filename="../imports/bomi/Button.qml" line="50"/>
         <source>Left click: %1
 Right click: %2</source>
         <translation>왼쪽 클릭: %1
@@ -1411,19 +1411,16 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>HistoryDock</name>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="51"/>
         <source>Name</source>
-        <translation>이름</translation>
+        <translation type="vanished">이름</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="52"/>
         <source>Latest Playback</source>
-        <translation>최근 재생</translation>
+        <translation type="vanished">최근 재생</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/HistoryDock.qml" line="53"/>
         <source>Location</source>
-        <translation>위치</translation>
+        <translation type="vanished">위치</translation>
     </message>
 </context>
 <context>
@@ -1604,7 +1601,7 @@ This requires much more CPU or GPU usage.</source>
         <translation type="vanished">%1개 자막</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="729"/>
+        <location filename="../player/mainwindow_m.cpp" line="733"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>자동 시스템 종료가 취소되었습니다.</translation>
     </message>
@@ -1647,28 +1644,38 @@ Please wait for a while.</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="713"/>
+        <location filename="../player/mainwindow_m.cpp" line="656"/>
+        <source>Clear History</source>
+        <translation>재생 기록 비우기</translation>
+    </message>
+    <message>
+        <location filename="../player/mainwindow_m.cpp" line="656"/>
+        <source>Do you really want clear playback history?</source>
+        <translation>정말로 재생 기록을 비우겠습니까?</translation>
+    </message>
+    <message>
+        <location filename="../player/mainwindow_m.cpp" line="717"/>
         <source>Exit bomi when the playlist has finished.</source>
         <translation>재생목록을 마치면 보미를 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="714"/>
+        <location filename="../player/mainwindow_m.cpp" line="718"/>
         <source>Auto-exit is canceled.</source>
         <translation>자동 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="720"/>
+        <location filename="../player/mainwindow_m.cpp" line="724"/>
         <source>Auto-shutdown</source>
         <translation>자동 시스템 종료</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="721"/>
-        <location filename="../player/mainwindow_m.cpp" line="726"/>
+        <location filename="../player/mainwindow_m.cpp" line="725"/>
+        <location filename="../player/mainwindow_m.cpp" line="730"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>재생목록을 마치면 시스템이 종료됩니다.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="782"/>
+        <location filename="../player/mainwindow_m.cpp" line="786"/>
         <source>Current Chapter</source>
         <translation>현재 챕터</translation>
     </message>
@@ -1757,7 +1764,7 @@ Cannot open the media.</source>
         <translation type="vanished">선택된 자막 트랙</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="781"/>
+        <location filename="../player/mainwindow_m.cpp" line="785"/>
         <source>Current Title/Edition</source>
         <translation>현재 타이틀/에디션</translation>
     </message>
@@ -1790,7 +1797,7 @@ Cannot open the media.</source>
         <translation>재생 목록 반복</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="701"/>
+        <location filename="../player/mainwindow_m.cpp" line="705"/>
         <source>Downloaded</source>
         <translation>다운로드</translation>
     </message>
@@ -2786,12 +2793,12 @@ OpenGL 지원을 확인하는데 실패하였습니다.
 <context>
     <name>Player</name>
     <message>
-        <location filename="../imports/bomi/Player.qml" line="123"/>
+        <location filename="../imports/bomi/Player.qml" line="102"/>
         <source>Download</source>
         <translation>다운로드</translation>
     </message>
     <message>
-        <location filename="../imports/bomi/Player.qml" line="173"/>
+        <location filename="../imports/bomi/Player.qml" line="152"/>
         <source>Connecting...</source>
         <translation>연결중...</translation>
     </message>

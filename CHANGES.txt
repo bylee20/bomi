@@ -1,3 +1,44 @@
+0.9.6
+
+  * New: file name template for quick snapshot (#279)
+  * New: 'Append Folder' for playlist
+  * New: 'Open Folder' can open subfolders recursively (#271)
+  * New: new default skin 'Tethys' designed by Kotus Works
+  * New: 'Find by Name' and 'Find by Info' for find subtitles (#298)
+  * New: starmark to indicate favorite/persistent item for history (#294)
+  * New: 'Tool > Associate Files' menu for Windows
+  * New: snap window to screen edge on Windows (#290)
+  * New: 'Tool > Playlist > Regenerate' menu to regerate playlist (#293)
+  * New: make TimeDuration interactive to display msec/remaining time (#292(
+  * New: 'Freya' skin by varlesh (#288)
+  * New: 'Prefer external files to interanl tracks' option for subtitle autoselction (#280)
+  * New: options to show media title in name column of history (#285)
+  * New: 'Show preview when mouse over seek bar' option in preferences (#287)
+  * New: 'Ask video quality' option for youtube-dl streaming in preferences
+  * New: 'Show hidden controls whenever mouse moved' option in preferences (#264)
+  * New: 'Video > Texture Format'
+  * Mod: don't display zero hours(0:) in time texts
+  * Mod: refine history/playlist design by Kotus Works
+  * Fix: prompt message box when clearing history
+  * Fix: failed to resolve skin path when launched in remote path (#299)
+  * Fix: workaround for dialogs behind main window on Windows
+  * Fix: keep snapped state on edge on window size set by menu
+  * Fix: don't resync on playback speed changed
+  * Fix: channel manipulation options weren't restored (#291)
+  * Fix: wrong volume value for MPRIS v2 interface (#286)
+  * Fix: embedded albumart wasn't displayed on initail playback (#283)
+  * Fix: display album art as 'Album Art' instead of 'Video Track'
+  * Fix: audio file with albumart was recognized as video (#283)
+  * Fix: workaround for choppy window move on Windows (#266)
+  * Fix: use GL_RGBA16 for fbo if supported by default (#282)
+  * Fix: enable 'High Quality Upscaling' only if GL_RGBA16 fbo supported (#282)
+  * Fix: unsigned 8bit integer format for audio was disabled (#281)
+  * Fix: alert if snapshot file is not wriable instead of silent fail
+  * Fix: window wasn't hidden on closed on Windows (#266)
+  * Fix: wrong window frame style when restored from fullscreen to maximized state on Windows
+  * Fix: sort playlist by full path not file name
+  * Fix: wrong restoration for poistion of floating panel in skin (#278)
+
 0.9.5
 
   * Fix: restoring window size didn't work (#276)
