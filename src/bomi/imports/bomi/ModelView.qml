@@ -306,11 +306,17 @@ Item {
             }
         }
 
+        ScrollBar {
+            width: 15; gap: 3
+            anchors {
+                top: list.top; bottom: list.bottom; right: parent.right
+                topMargin: d.pad;
+                bottomMargin: d.pad
+            }
+            target: list; radius: 2; color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
+            border { color: Qt.rgba(0.5, 0.5, 0.5, 0.5); width: 1 }
+        }
+
     }
-    ScrollBar {
-        width: 15; gap: 3
-        anchors { top: list.top; bottom: list.bottom; right: parent.right }
-        target: list; radius: 2; color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
-        border { color: Qt.rgba(0.5, 0.5, 0.5, 0.5); width: 1 }
-    }
+
 }
