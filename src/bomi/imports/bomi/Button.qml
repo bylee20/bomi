@@ -40,6 +40,7 @@ Item {
     property bool adjustIconSize: true
     property int layout: centerIcon
     property real spacing: 0
+    property real emphasize: 0.0
 
     signal clicked(var mouse)
 
@@ -96,6 +97,7 @@ Item {
                         return parent.height - box.sp - text.contentHeight
                     return parent.height
                 }
+                scale: pressed ? (1.0 - emphasize) : hovered ? (1.0 + emphasize) : 1.0
             }
 
             B.Text {

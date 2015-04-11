@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import bomi 1.0
 
 Item { id: item;
     property Flickable target
@@ -35,7 +36,13 @@ Item { id: item;
         anchors.fill: parent
         property bool moving: false
         function move(y) {
-            target.contentY = (target.contentHeight - target.height)*Math.max(0, Math.min(1, (y-gap)/(height-2*gap)))
+            var min = 0, max = 1
+            if (target.headerItem)
+                min -= target.headerItem.height / target.contentHeight
+            if (target.footerItem)
+                max -= target.footerItem.height / target.contentHeight
+            var rate = Alg.clamp((y-gap)/(height-2*gap), min, max)
+            target.contentY = (target.contentHeight - target.height)*rate
         }
         onPressed: move(mouse.y)
         onPositionChanged: if (pressed) move(mouse.y)

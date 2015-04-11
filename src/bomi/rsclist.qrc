@@ -52,5 +52,10 @@
         <file>locale-map.json</file>
         <file>img/fav-on.png</file>
         <file>img/fav-off.png</file>
+        <file>img/list-sep.png</file>
+        <file>img/tool-close.png</file>
+        <file>img/tool-clear.png</file>
+        <file>img/tool-repeat.png</file>
+        <file>img/tool-shuffle.png</file>
     </qresource>
 </RCC>

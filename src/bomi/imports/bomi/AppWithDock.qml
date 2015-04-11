@@ -4,6 +4,10 @@ import bomi 1.0
 BaseApp {
     id: root
     player: playerItem
+    toolStyle {
+        topMargin: overlaps ? 0 : topControls.height
+        bottomMargin: overlaps ? 0 : bottomControls.height
+    }
 
     Player {
         id: playerItem
@@ -11,8 +15,6 @@ BaseApp {
         height: overlaps ? root.height : root.height - bottomControls.height - topControls.height
         topPadding: overlaps ? topControls.height + topControls.y : 0
         bottomPadding: overlaps ? bottomControls.height - bottomControls.y : 0
-        dockTopPadding: overlaps ? topControls.height : 0
-        dockBottomPadding: overlaps ? bottomControls.height : 0
 
         MouseArea {
             id: area

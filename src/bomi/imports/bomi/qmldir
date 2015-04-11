@@ -3,8 +3,8 @@ TextOsd             1.0 TextOsd.qml
 ProgressOsd         1.0 ProgressOsd.qml
 Logo                1.0 Logo.qml
 PlayInfoView        1.0 PlayInfoView.qml
-PlaylistDock        1.0 PlaylistDock.qml
-HistoryDock         1.0 HistoryDock.qml
+PlaylistView        1.0 PlaylistView.qml
+HistoryView         1.0 HistoryView.qml
 Button				1.0 Button.qml
 Player              1.0 Player.qml
 TimeText            1.0 TimeText.qml
@@ -32,3 +32,4 @@ TextStyle			1.0 TextStyle.qml
 PlayInfoAvOutput	1.0 PlayInfoAvOutput.qml
 VideoPreviewStyle   1.0 VideoPreviewStyle.qml
 SimpleBlur			1.0 SimpleBlur.qml
+ToolPlaneStyle		1.0 ToolPlaneStyle.qml

@@ -99,7 +99,8 @@ struct HistoryModel::Data {
             idx_last = c++;
             idx_device = c++;
             idx_star = c++;
-            rows = loader.value(c).toInt();
+            if (_Change(rows,loader.value(c).toInt()))
+                emit p->lengthChanged(rows);
             loader.seek(-1);
         }
         error = QSqlError();

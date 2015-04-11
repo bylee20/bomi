@@ -5,9 +5,9 @@ import bomi 1.0 as B
 
 Item {
     id: dock
-    x: -dock.width; y: 20; visible: false
-    width: 300; height: parent.height-y*2
-    readonly property real widthHint: view.contentWidth+view.margins*2
+    x: -dock.width; visible: false
+    width: 300; height: parent.height
+    readonly property int widthHint: view.contentWidth+view.margins*2
     property alias selectedIndex: view.selectedIndex
     property bool show: false
     readonly property QtObject history: B.App.history
@@ -31,7 +31,8 @@ Item {
         id: starComponent
         Image {
             width: 16; height: 16
-            source: starArea.containsMouse || history.isStarred(row) ? "qrc:/img/fav-on.png" : "qrc:/img/fav-off.png"
+            source: starArea.containsMouse || history.isStarred(row)
+                    ? "qrc:/img/fav-on.png" : "qrc:/img/fav-off.png"
             MouseArea {
                 id: starArea
                 anchors.fill: parent
@@ -47,6 +48,9 @@ Item {
     B.ModelView {
         id: view
         model: B.App.history
+        titlePadding: title.height
+        anchors.rightMargin: 1
+        rowHeight: 26
         columns: [
             ItemColumn { width: 200; title: qsTr("Name"); role: "name"; index: 1 },
             ItemColumn { width: 150; title: qsTr("Latest Playback"); role: "latestplay" },
@@ -55,11 +59,12 @@ Item {
         itemDelegate: Item {
             Loader {
                 readonly property int row: index
-                x: -3; sourceComponent: column.index > 0 ? starComponent : undefined
+                sourceComponent: column.index > 0 ? starComponent : undefined
+                anchors.verticalCenter: parent.verticalCenter
             }
 
             Text {
-                anchors { fill: parent; leftMargin: column.index > 0 ? 14 : 0 }
+                anchors { fill: parent; leftMargin: column.index > 0 ? 18 : 0 }
                 text: value; color: "white"; elide: Text.ElideRight
                 verticalAlignment: Text.AlignVCenter
             }
@@ -67,9 +72,48 @@ Item {
         onActivated: B.App.history.play(index)
     }
 
+    Rectangle {
+        width: 1
+        height: parent.height
+        anchors.left: view.right
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
         onClicked: B.App.execute("tool/history")
+    }
+
+    Text {
+        id: title
+        text: width < 200 ? qsTr("History"): qsTr("Playback History")
+        height: 30
+        width: parent.width - 2 * 20
+        color: "white"
+        font.pixelSize: 16
+        verticalAlignment: Text.AlignVCenter
+        horizontalAlignment: Text.AlignHCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+        B.Button {
+            size: 16
+            icon.source: "qrc:/img/tool-clear.png"
+            anchors {
+                verticalCenter: title.verticalCenter
+                left: parent.left
+            }
+            emphasize: 0.05
+            onClicked: B.App.execute("tool/history/clear")
+        }
+
+        B.Button {
+            size: 16
+            icon.source: "qrc:/img/tool-close.png"
+            anchors {
+                verticalCenter: title.verticalCenter
+                right: parent.right
+            }
+            emphasize: 0.05
+            onClicked: B.App.history.visible = false
+        }
     }
 }

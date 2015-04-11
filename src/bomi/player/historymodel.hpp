@@ -8,6 +8,7 @@ class QSqlError;
 class HistoryModel: public QAbstractTableModel {
     Q_OBJECT
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
+    Q_PROPERTY(int length READ rowCount NOTIFY lengthChanged)
 public:
     enum Role {NameRole = Qt::UserRole + 1, LatestPlayRole, LocationRole, StarRole};
     HistoryModel(QObject *parent = nullptr);
@@ -37,6 +38,7 @@ signals:
     void playRequested(const Mrl &mrl);
     void changeVisibilityRequested(bool visible);
     void visibleChanged(bool visible);
+    void lengthChanged(int length);
 private:
     auto getData(int row, int role) const -> QVariant;
     struct Data;

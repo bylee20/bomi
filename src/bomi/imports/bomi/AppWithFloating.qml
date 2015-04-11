@@ -7,7 +7,6 @@ BaseApp {
         id: player
         parent: root
         anchors.fill: parent
-        dockZ: 1
         MouseArea {
             id: area
             property real pw: -1

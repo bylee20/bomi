@@ -1,82 +1,278 @@
 import QtQuick 2.0
 import bomi 1.0 as B
+import QtQuick.Controls 1.0
+import QtQuick.Controls.Styles 1.0
 
-B.ModelView {
-    id: root
-    model: B.App.playlist
-    margins: 0
+Item {
+    id: dock
+    readonly property real widthHint: 500
+    readonly property QtObject playlist: B.App.playlist
+    property alias selectedIndex: view.selectedIndex
+    property real dest: 0
+    property bool show: false
+    y: 20; width: widthHint; height: parent.height-2*y; visible: false
 
-    QtObject {
-        id: d
-    }
-    Text {
-        id: _name
-        font { pixelSize: 15 }
-        visible: false
-        text: "DUMMY TEXT FOR HEIGHT"
-        readonly property real h: contentHeight
-        function getWidth(text) {
-            return B.App.textWidth(text, font.pixelSize, font.family)
-        }
-    }
-    Text {
-        id: _location
-        readonly property bool show: B.App.theme.controls.showLocationsInPlaylist
-        readonly property real h: contentHeight
-        font { pixelSize: 10; family: B.App.theme.monospace }
-        visible: false
-        text: "DUMMY TEXT FOR HEIGHT"
-        function getWidth(text) {
-            return B.App.textWidth(text, font.pixelSize, font.family)
-        }
+    SequentialAnimation {
+        id: pull
+        PropertyAction { target: dock; property: "visible"; value: true }
+        NumberAnimation { target: dock; property: "x"; to: dock.dest }
     }
 
-    headerVisible: false
-    rowHeight: _name.contentHeight + (_location.show ? _location.contentHeight : 0) + 5;
-
-    currentIndex: model.loaded
-    function contentWidth() {
-        var max = 0;
-        for (var i=0; i<root.count; ++i) {
-            var number = _name.getWidth(model.number(i))
-            var name = _name.getWidth(model.name(i))
-            if (_location.show) {
-                var loc = _location.getWidth(model.location(i))
-                max = Math.max(number + name, loc, max);
-            } else
-                max = Math.max(number + name, max);
-        }
-        return max+30
+    SequentialAnimation {
+        id: push
+        NumberAnimation { target: dock; property: "x"; to: dock.parent.width }
+        PropertyAction { target: dock; property: "visible"; value: false }
     }
-
+    function updateDestination() {
+        dock.dest = dock.parent.width - dock.width
+        push.running = pull.running = false
+        if (show)
+            dock.x = dest
+        else
+            dock.x = parent.width
+        dock.visible = show
+    }
     Connections {
-        target: root.model;
-        onSelectedChanged: root.selectedIndex = target.selected
+        target: parent
+        onWidthChanged: {
+            updateDestination()
+
+        }
     }
-    onSelectedIndexChanged: model.selected = root.selectedIndex
+    onWidthChanged: { updateDestination() }
+    onShowChanged: {
+        if (show) {
+            push.running = false
+            pull.running = true
+        } else {
+            pull.running = false
+            push.running = true
+        }
+    }
 
-    onCountChanged: column.width = contentWidth()
-    columns: B.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
+    MouseArea {
+        anchors.fill: parent
+        onWheel: wheel.accepted = true
+    }
 
-    onActivated: model.play(index)
-    itemDelegate: Item {
-        Column {
-            width: parent.width
-            Text {
-                anchors { margins: 5; left: parent.left; right: parent.right }
-                font {
-                    family: _name.font.family; pixelSize: _name.font.pixelSize
-                    italic: current; bold: current
-                }
-                verticalAlignment: Text.AlignVCenter; height: _name.h
-                color: "white"; text: value; elide: Text.ElideRight
+    Rectangle {
+        width: 1; height: parent.height
+        anchors.left: parent.left
+    }
+
+    B.ModelView {
+        id: view
+        model: B.App.playlist
+        titlePadding: title.height
+        anchors {
+            leftMargin: 1
+            bottomMargin: parent.height - bottomSeparator.y
+        }
+        Text {
+            id: _name
+            font { pixelSize: 15 }
+            visible: false
+            text: "DUMMY TEXT FOR HEIGHT"
+            readonly property real h: contentHeight
+            function getWidth(text) {
+                return B.App.textWidth(text, font.pixelSize, font.family)
             }
-            Text {
-                visible: _location.show
-                anchors { margins: 5; left: parent.left; right: parent.right }
-                font: _location.font
-                width: parent.width; height: _location.h; verticalAlignment: Text.AlignTop
-                color: "white"; text: model.location(index); elide: Text.ElideRight
+        }
+        Text {
+            id: _location
+            readonly property bool show: B.App.theme.controls.showLocationsInPlaylist
+            readonly property real h: contentHeight
+            font { pixelSize: 10; family: B.App.theme.monospace }
+            visible: false
+            text: "DUMMY TEXT FOR HEIGHT"
+            function getWidth(text) {
+                return B.App.textWidth(text, font.pixelSize, font.family)
+            }
+        }
+
+        headerVisible: false
+        rowHeight: _name.contentHeight + (_location.show ? _location.contentHeight : 0) + 14;
+
+        currentIndex: model.loaded
+        function contentWidth() {
+            var max = 0;
+            for (var i=0; i<view.count; ++i) {
+                var number = _name.getWidth(model.number(i))
+                var name = _name.getWidth(model.name(i))
+                if (_location.show) {
+                    var loc = _location.getWidth(model.location(i))
+                    max = Math.max(number + name, loc, max);
+                } else
+                    max = Math.max(number + name, max);
+            }
+            return max+30
+        }
+
+        Connections {
+            target: view.model;
+            onSelectedChanged: view.selectedIndex = target.selected
+        }
+
+        columns: B.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
+
+        onSelectedIndexChanged: model.selected = view.selectedIndex
+        onCountChanged: column.width = contentWidth()
+        onActivated: model.play(index)
+
+        itemDelegate: Item {
+            Column {
+                width: parent.width
+                anchors.verticalCenter: parent.verticalCenter
+                Text {
+                    anchors { margins: 5; left: parent.left; right: parent.right }
+                    font: _name.font
+                    verticalAlignment: Text.AlignVCenter; height: _name.h
+                    color: "white"; text: value; elide: Text.ElideRight
+                }
+                Text {
+                    visible: _location.show
+                    anchors { margins: 5; left: parent.left; right: parent.right }
+                    font: _location.font
+                    width: parent.width; height: _location.h; verticalAlignment: Text.AlignTop
+                    color: "white"; text: view.model.location(index); elide: Text.ElideRight
+                }
+            }
+        }
+    }
+
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onClicked: B.App.execute("tool/playlist")
+    }
+
+    Item {
+        id: title
+        height: 61; width: parent.width - 2 * 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        B.Button {
+            size: 16
+            icon.source: "qrc:/img/tool-close.png"
+            y: 7
+            anchors {
+                left: parent.left
+            }
+            emphasize: 0.05
+            onClicked: B.App.playlist.visible = false
+        }
+
+        Text {
+            text: qsTr("Playlist")
+            color: "white"; font.pixelSize: 16
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+            width: parent.width
+            height: 30
+        }
+        Item {
+            width: Math.min(parent.width, number.width + marqueeItem.width); height: 30
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            B.Text {
+                id: number
+                readonly property QtObject pl: B.App.playlist
+                textStyle {
+                    color: "white"; font.pixelSize: 12
+                    verticalAlignment: Text.AlignVCenter
+                }
+                content: '[' + B.Format.listNumber(pl.currentNumber, pl.length) + ']'
+                width: contentWidth + 2; height: parent.height
+            }
+            Item {
+                id: marqueeItem
+                clip: true
+                x: number.width; height: parent.height
+                width: Math.min(title.width - x, mediaName.width)
+                anchors.bottom: parent.bottom
+                B.Text {
+                    id: mediaName
+                    readonly property real xTo: Math.min(0, -(mediaName.width - parent.width))
+                    anchors.bottom: parent.bottom
+                    width: contentWidth; height: parent.height
+                    textStyle: number.textStyle
+                    content: B.App.engine.media.name// + "asdasdasdasdasdasdasdasdasd1"
+                }
+
+                SequentialAnimation {
+                    id: marquee
+                    NumberAnimation {
+                        target: mediaName
+                        property: "x"
+                        duration: 1500
+                        easing.type: Easing.Linear
+                        from: 0; to: 0
+                    }
+                    NumberAnimation {
+                        target: mediaName
+                        property: "x"
+                        duration: 1000
+                        easing.type: Easing.InOutQuad
+                        from: 0; to: mediaName.xTo
+                    }
+                }
+                Timer {
+                    id: marqueeTimer
+                    interval: 4000
+                    onTriggered: {
+                        marquee.stop()
+                        mediaName.x = 0
+                        if (mediaName.xTo < 0)
+                            marquee.start()
+                    }
+                    repeat: true
+                    running: true
+                    triggeredOnStart: true
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: bottomSeparator
+        width: parent.width; height: 1; anchors.bottom: bbox.top
+    }
+
+    Component {
+        id: checkableButton
+        B.Button {
+            size: 26; emphasize: 0.05
+            icon { source: src; width: 22; height: 22 }
+            background.color: ch ? Qt.rgba(1, 1, 1, 0.2) : Qt.rgba(0, 0, 0, 0);
+            background.radius: 3
+            checked: ch; action: act
+        }
+    }
+
+    Rectangle {
+        id: bbox
+        anchors {
+            bottom: parent.bottom
+            right: parent.right
+            left: parent.left
+            leftMargin: 1
+        }
+        height: 50
+        color: Qt.rgba(0, 0, 0, 0.8)
+        Row {
+            anchors.centerIn: parent
+            spacing: 40
+            Loader {
+                sourceComponent: checkableButton
+                readonly property url src: "qrc:/img/tool-repeat.png"
+                readonly property bool ch: B.App.playlist.repetitive
+                readonly property string act: "tool/playlist/repeat"
+            }
+            Loader {
+                sourceComponent: checkableButton
+                readonly property url src: "qrc:/img/tool-shuffle.png"
+                readonly property bool ch: B.App.playlist.shuffled
+                readonly property string act: "tool/playlist/shuffle"
             }
         }
     }

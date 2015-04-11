@@ -6,11 +6,8 @@ import QtQuick.Controls.Styles 1.0
 Item {
     id: player
     objectName: "player"
-    property real dockZ: 1.0
     property real bottomPadding: 0.0
     property real topPadding: 0.0
-    property real dockBottomPadding: bottomPadding
-    property real dockTopPadding: topPadding
     property bool logoVisible: logo.visible
     readonly property QtObject engine: B.App.engine
     property Item video
@@ -76,24 +73,6 @@ Item {
             fill: parent; leftMargin: fontSize; rightMargin: fontSize
             topMargin: fontSize + topPadding
             bottomMargin: fontSize + bottomPadding
-        }
-    }
-
-    Item {
-        anchors.fill: parent; z: dockZ
-        PlaylistDock {
-            id: right
-            y: dockTopPadding
-            show: B.App.playlist.visible
-            width: Math.min(widthHint, player.width-(left.x+left.width)-20)
-            height: parent.height - dockBottomPadding - dockTopPadding
-        }
-        HistoryDock {
-            id: left
-            y: dockTopPadding
-            show: B.App.history.visible
-            width: Math.min(widthHint, player.width*0.4)
-            height: parent.height - dockBottomPadding - dockTopPadding
         }
     }
 
@@ -184,21 +163,4 @@ Item {
             }
         }
     }
-
-    B.AutoDisplayZone {
-        id: rightEdge
-        y: right.y
-        width: 15; height: right.height; anchors.right: parent.right
-        visible: B.App.theme.controls.showPlaylistOnMouseOverEdge
-        target: B.App.playlist; box: right;
-    }
-
-    B.AutoDisplayZone {
-        id: leftEdge
-        y: left.y
-        width: 15; height: left.height; anchors.left: parent.left
-        visible: B.App.theme.controls.showHistoryOnMouseOverEdge
-        target: B.App.history; box: left;
-    }
-
 }

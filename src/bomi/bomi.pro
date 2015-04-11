@@ -539,8 +539,6 @@ OTHER_FILES += \
 	imports/bomi/Osd.qml \
 	imports/bomi/Logo.qml \
 	skins/simple/bomi.qml \
-	imports/bomi/PlaylistDock.qml \
-	imports/bomi/HistoryDock.qml \
 	imports/bomi/Button.qml \
 	imports/bomi/Player.qml \
 	imports/bomi/TimeText.qml \
@@ -599,4 +597,6 @@ DISTFILES += \
 	imports/bomi/PlayInfoAvOutput.qml \
     imports/bomi/VideoPreviewStyle.qml \
     skins/Freya/bomi.qml \
-    imports/bomi/SimpleBlur.qml
+    imports/bomi/SimpleBlur.qml \
+    imports/bomi/ToolPlaneStyle.qml \
+    imports/bomi/HistoryView.qml
