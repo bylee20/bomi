@@ -10,14 +10,14 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="24"
-   height="24"
-   viewBox="0 0 23.999999 24"
+   width="8"
+   height="8"
+   viewBox="0 0 8 8"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="Bomi_new_skin.svg"
-   inkscape:export-filename="/home/xylosper/dev/bomi/src/bomi/skins/Tethys/volume-muted-pressed.png"
+   sodipodi:docname="icons.svg"
+   inkscape:export-filename="/home/xylosper/dev/bomi/src/bomi/skins/Tethys/marker.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -422,10 +422,10 @@
        inkscape:collect="always"
        style="color-interpolation-filters:sRGB"
        id="filter9017"
-       x="-0.14615997"
+       x="-0.14615998"
        width="1.2923199"
        y="-0.23423085"
-       height="1.4684617">
+       height="1.4684618">
       <feGaussianBlur
          inkscape:collect="always"
          stdDeviation="1.2386383"
@@ -465,11 +465,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8284271"
-     inkscape:cx="-60.338986"
-     inkscape:cy="-49.631358"
+     inkscape:zoom="16"
+     inkscape:cx="27.404765"
+     inkscape:cy="11.478696"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g8518"
      showgrid="false"
      showguides="false"
      units="px"
@@ -494,7 +494,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(0,-1028.3621)">
+     transform="translate(0,-1044.3621)">
     <g
        id="g9624"
        transform="translate(-21.654568,1.2312876)">
@@ -1045,6 +1045,16 @@
          id="path8522"
          d="m -87.540095,882.39713 c 0,1.1928 -11.3346,7.7341 -12.3674,8.3307 -1.033095,0.5963 -12.365395,7.142 -13.398195,6.5453 -1.0331,-0.5966 -1.0305,-13.6834 -1.0305,-14.8765 0,-1.1928 0,-14.2793 1.0305,-14.8763 1.033,-0.5967 12.3653,5.9491 13.398195,6.5452 1.033,0.5966 12.3674,7.1379 12.3674,8.3308"
          inkscape:connector-curvature="0" />
+      <path
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd"
+         id="path8522-3"
+         d="m -51.142608,867.9609 c 0.191939,0 1.244525,2.53796 1.340527,2.76922 0.09595,0.23133 1.149247,2.76878 1.05323,3.00004 -0.096,0.23132 -2.20185,0.23074 -2.393837,0.23074 -0.191938,0 -2.297739,0 -2.393804,-0.23074 -0.09602,-0.2313 0.957293,-2.76876 1.053214,-3.00004 0.096,-0.2313 1.148588,-2.76922 1.340542,-2.76922"
+         inkscape:connector-curvature="0" />
+      <path
+         inkscape:connector-curvature="0"
+         d="m -52.142608,866.9609 c 0.191939,0 1.244525,2.53796 1.340527,2.76922 0.09595,0.23133 1.149247,2.76878 1.05323,3.00004 -0.096,0.23132 -2.20185,0.23074 -2.393837,0.23074 -0.191938,0 -2.297739,0 -2.393804,-0.23074 -0.09602,-0.2313 0.957293,-2.76876 1.053214,-3.00004 0.096,-0.2313 1.148588,-2.76922 1.340542,-2.76922"
+         id="path4413"
+         style="fill:#ffffff;fill-rule:evenodd" />
     </g>
     <g
        id="g8536"

@@ -10,7 +10,7 @@ B.AppWithDock {
     id: app
     name: "net.xylosper.Tethys"
     overlaps: true
-    excludeMouseArea: Qt.rect(0, 0, width, height * 0.2)
+    excludeMouseArea: Qt.rect(0, 0, width, height - Math.max(height * 0.2, bottomControls.height))
 
     readonly property int s_thickness: 4
     readonly property int s_shadow: 1
@@ -56,6 +56,13 @@ B.AppWithDock {
             B.TimeSlider {
                 id: timeslider; style: sliders;
                 width: parent.width; height: 24; bind: time
+                markerStyle: B.Button {
+                    readonly property bool emph: hovered || pressed
+                    size: 8; z: emph ? 1e10 : -1
+                    y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0) - 10
+                    icon.source: "marker.png"
+                    tooltip: chapter.name; delay: 0
+                }
             }
 
             Row {
@@ -163,56 +170,6 @@ B.AppWithDock {
             }
 
         }
-//        RowLayout {
-//            anchors { fill: parent; margins: 4 } spacing: 3;
-
-////            B.Button {
-////                id: playPrev; width: 24; height: 24
-////                action: "play/prev"; icon.prefix: "previous"
-////            }
-
-////            B.Button {
-////                id: playPause; width: 24; height: 24
-////                action: "play/pause"; icon.prefix: engine.playing ? "pause" : "play"
-////            }
-////            B.Button {
-////                id: playStop; width: 24; height: 24
-////                action: "play/stop"; icon.prefix: "stop"
-////            }
-
-////            B.Button {
-////                id: playNext; width: 24; height: 24
-////                action: "play/next"; icon.prefix: "next"
-////            }
-
-
-////            B.TimeDuration {
-////                height: parent.height;
-////                textStyle {
-////                    color: "#1e1e1e"
-////                    monospace: true
-////                    font.pixelSize: 10
-////                }
-////            }
-
-////            Row {
-////                B.Button {
-////                    id: playlistIcon; width: 24; height: 24; icon.prefix: "playlist"
-////                    action: "tool/playlist/toggle"; action2: "tool/playlist"
-////                    tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
-////                }
-////                B.Button {
-////                    id: fullscreen; width: 24; height: 24
-////                    action: "window/full"; icon.prefix: "fullscreen"
-////                }
-////                B.Button {
-////                    id: mute; width: 24; height: 24
-////                    action: "audio/volume/mute"; icon.prefix: engine.muted ? "speaker-off" : "speaker-on"
-////                }
-////            }
-////            B.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
-//        }
-
     }
 
     bottomControls: Rectangle {
