@@ -9,7 +9,7 @@ public:
     FormatObject(QObject *parent = nullptr);
     ~FormatObject();
 public slots:
-    QString time(int msec, bool point = false);
+    QString time(int msec, bool point = false, bool hour = false);
     QString time(int msec, const QString &format);
     QString textNA(const QString &text, const QString &na = "--"_a, const QString &no = "no"_a);
     QString integerNA(int n, int min = 1, const QString &na = "--"_a);

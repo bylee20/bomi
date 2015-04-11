@@ -13,7 +13,7 @@ FormatObject::~FormatObject()
 
 }
 
-QString FormatObject::time(int msec, bool point)
+QString FormatObject::time(int msec, bool point, bool hour)
 {
     QString sign;
     if (msec < 0) {
@@ -27,10 +27,15 @@ QString FormatObject::time(int msec, bool point)
     int secs = msec / 1000;
     msec %= 1000;
 
-    return sign % _N(hours)
-            % (mins < 10 ? ":0"_a : ":"_a) % _N(mins)
+    if (hour || hours > 0)
+        return sign % _N(hours)
+                % (mins < 10 ? ":0"_a : ":"_a) % _N(mins)
+                % (secs < 10 ? ":0"_a : ":"_a) % _N(secs)
+                % (point ? QString('.'_q % _N(msec, 10, 3, '0'_q)) : u""_q);
+    return sign % _N(mins)
             % (secs < 10 ? ":0"_a : ":"_a) % _N(secs)
             % (point ? QString('.'_q % _N(msec, 10, 3, '0'_q)) : u""_q);
+
 }
 
 QString FormatObject::time(int msec, const QString &format)
