@@ -21,7 +21,7 @@ Slider {
         border { width: 1; color: "black" }
         states: State {
             name: "shown"
-            when: App.theme.controls.showPreviewOnMouseOverSeekBar
+            when: App.theme.controls.showPreviewOnMouseOverSeekBar && d.e.preview.hasVideo
                   && d.e.seekable && d.e.running && mouseArea.containsMouse
             PropertyChanges { target: pv; visible: true }
             PropertyChanges { target: pv; opacity: 1.0 }

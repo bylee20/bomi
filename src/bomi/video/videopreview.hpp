@@ -10,6 +10,7 @@ class VideoPreview : public SimpleFboItem {
     Q_PROPERTY(qreal rate READ rate WRITE setRate NOTIFY rateChanged)
     Q_PROPERTY(QSize sizeHint READ sizeHint NOTIFY sizeHintChanged)
     Q_PROPERTY(qreal aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
+    Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
 public:
     VideoPreview(QQuickItem *parent = 0);
     ~VideoPreview();
@@ -20,15 +21,16 @@ public:
     auto rate() const -> double;
     auto sizeHint() const -> QSize;
     auto setSizeHint(const QSize &size) -> void;
-    auto hasFrame() const -> bool;
     auto aspectRatio() const -> double;
     auto imageSize() const -> QSize final { return size().toSize(); }
     auto setActive(bool active) -> void;
     auto setShowKeyframe(bool keyframe) -> void;
+    auto hasVideo() const -> bool;
 signals:
     void rateChanged(double rate);
     void sizeHintChanged();
     void aspectRatioChanged();
+    void hasVideoChanged(bool hasVideo);
 private:
     auto paint(OpenGLFramebufferObject *fbo) -> void final;
     auto initializeGL() -> void final;

@@ -13,15 +13,17 @@ enum EventType {NewFrame = QEvent::User + 1 };
 
 struct VideoPreview::Data {
     VideoPreview *p = nullptr;
-    bool redraw = false, active = false, keyframe = true;
-    QSize displaySize{0, 1};
-    double rate = 0.0, aspect = 4./3., percent = 0;
+    int id = 0;
+    bool redraw = false, active = false, keyframe = true, video = false;
+    QSize displaySize{0, 0};
+    double rate = 0.0, aspect = 0, percent = 0;
     Mpv mpv;
     auto vo() const -> QByteArray { return "opengl-cb"_b; }
+    auto hasVideo() -> bool { return id > 0 && !displaySize.isEmpty(); }
     auto sizeAspect() const -> double
     {
         if (displaySize.isEmpty())
-            return 4./3.;
+            return 0;
         return displaySize.width()/(double)displaySize.height();
     }
 };
@@ -37,6 +39,13 @@ VideoPreview::VideoPreview(QQuickItem *parent)
     d->mpv.setLogContext("mpv/preview"_b);
 
     d->mpv.create();
+
+    d->mpv.setObserver(this);
+    d->mpv.observe("vid", [=] (int id) {
+        if (_Change(d->id, id) && _Change(d->video, d->hasVideo()))
+            emit hasVideoChanged(d->video);
+    });
+
     d->mpv.setOption("hwdec", "no");
     d->mpv.setOption("aid", "no");
     d->mpv.setOption("sid", "no");
@@ -51,6 +60,7 @@ VideoPreview::VideoPreview(QQuickItem *parent)
     d->mpv.setOption("keep-open", "always");
     d->mpv.setOption("vd-lavc-skiploopfilter", "all");
     d->mpv.setOption("use-text-osd", "no");
+    d->mpv.setOption("audio-display", "no");
     d->mpv.initialize();
     d->mpv.setUpdateCallback([=] () { _PostEvent(this, NewFrame); });
 
@@ -107,17 +117,22 @@ auto VideoPreview::customEvent(QEvent *event) -> void
     }
 }
 
-auto VideoPreview::hasFrame() const -> bool
+auto VideoPreview::hasVideo() const -> bool
 {
-    return !d->displaySize.isEmpty();
+    return d->video;
 }
 
 auto VideoPreview::setSizeHint(const QSize &size) -> void
 {
-    if (_Change(d->displaySize, size))
+    const auto dp = _Change(d->displaySize, size);
+    const auto as = _Change(d->aspect, d->sizeAspect());
+    const auto hv = _Change(d->video, d->hasVideo());
+    if (dp)
         emit sizeHintChanged();
-    if (_Change(d->aspect, d->sizeAspect()))
+    if (as)
         emit aspectRatioChanged();
+    if (hv)
+        emit hasVideoChanged(d->video);
 }
 
 auto VideoPreview::sizeHint() const -> QSize
