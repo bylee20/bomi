@@ -10,6 +10,7 @@ Slider {
     property VideoPreviewStyle preview: VideoPreviewStyle { }
     property int target: -1
 
+    z: 1
     __hpressed: mouseArea.pressed
     __hhovered: mouseArea.containsMouse
 
