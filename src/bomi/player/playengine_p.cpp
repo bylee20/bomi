@@ -467,22 +467,12 @@ auto PlayEngine::Data::observe() -> void
             }
         });
     mpv.observe("metadata", [=] () {
-        const auto list = mpv.get<QVariant>("metadata").toList();
+        const auto map = mpv.get<QVariant>("metadata").toMap();
         MetaData metaData;
-        for (int i=0; i+1<list.size(); i+=2) {
-            const auto key = list[i].toString();
-            const auto value = list[i+1].toString();
-            if (key == "title"_a)
-                metaData.m_title = value;
-            else if (key == "artist"_a)
-                metaData.m_artist = value;
-            else if (key == "album"_a)
-                metaData.m_album = value;
-            else if (key == "genre"_a)
-                metaData.m_genre = value;
-            else if (key == "date"_a)
-                metaData.m_date = value;
-        }
+        metaData.m_title = map[u"title"_q].toString();
+        metaData.m_artist = map[u"artist"_q].toString();
+        metaData.m_genre = map[u"genre"_q].toString();
+        metaData.m_date = map[u"date"_q].toString();
         metaData.m_mrl = params.mrl();
         metaData.m_duration = s2ms(mpv.get<double>("length"));
         return metaData;
