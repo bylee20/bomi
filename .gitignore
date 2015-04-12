@@ -1,6 +1,7 @@
 *.conf.bk
 *.directory
-windows/packages/net.xylosper.bomi.*/data/*
+windows/repo/
+windows/packages/net.xylosper.bomi*/data/*
 src/mpv/.git
 src/libchardet*
 src/ffmpeg*
