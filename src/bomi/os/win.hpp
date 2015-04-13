@@ -32,8 +32,9 @@ private:
     auto layer() const -> HWND
         { return m_onTop ? HWND_TOPMOST : HWND_NOTOPMOST; }
     bool m_onTop = false, m_fs = false, m_frameless = false;
+    bool m_wmMove = false, m_sizing = false;
     HIMC m_ime = nullptr;
-    QPoint m_position;
+    QPoint m_startMousePos, m_startWinPos;
 };
 
 }

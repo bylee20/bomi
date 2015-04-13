@@ -39,14 +39,12 @@ SIA uac(QWindow *w, const QString &param) -> bool
     wchar_t path[MAX_PATH];
     if (!GetModuleFileName(nullptr, path, ARRAYSIZE(path)))
         return false;
-    QVector<wchar_t> paramBuf(param.size() * 2);
-    param.toWCharArray(paramBuf.data());
     SHELLEXECUTEINFO info;
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
     info.lpVerb = L"runas";
     info.lpFile = path;
-    info.lpParameters = paramBuf.data();
+    info.lpParameters = (const wchar_t*)param.utf16();
     info.nShow = SW_NORMAL;
     if (w)
         info.hwnd = (HWND)w->winId();
@@ -189,7 +187,6 @@ WinWindowAdapter::WinWindowAdapter(QWindow* w)
 {
     qApp->installNativeEventFilter(this);
     w->installEventFilter(this);
-    m_position = w->position();
 }
 
 auto WinWindowAdapter::isImeEnabled() const -> bool
@@ -251,31 +248,71 @@ auto WinWindowAdapter::eventFilter(QObject *obj, QEvent *ev) -> bool
         return false;
     if (ev->type() != QEvent::Move)
         return false;
-    m_position = static_cast<QMoveEvent*>(ev)->pos();
     return false;
 }
+
+SIA toPoint(LPARAM lParam) -> QPoint
+{ return { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) }; }
 
 auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long *res) -> bool
 {
     auto msg = static_cast<MSG*>(message);
+    if (!msg->hwnd)
+        return false;
     auto w = window();
+    auto available = [&] () { return w->isVisible() && msg->hwnd == (HWND)winId(); };
+
     switch (msg->message) {
-    case WM_MOVE: {
-        if (!w->isVisible())
+    case WM_ENTERSIZEMOVE:
+        m_startMousePos = QPoint(-1, -1);
+        m_sizing = false;
+        if (!available())
             return false;
-        const auto x = GET_X_LPARAM(msg->lParam);
-        const auto y = GET_Y_LPARAM(msg->lParam);
-        QMoveEvent event({x, y}, m_position);
-        qApp->sendEvent(w, &event);
+        m_startMousePos = QCursor::pos();
+        m_startWinPos = w->position();
+        return false;
+    case WM_EXITSIZEMOVE:
+        if (msg->hwnd == (HWND)winId()) {
+            m_startMousePos = QPoint(-1, -1);
+            m_sizing = false;
+        }
+        return false;
+    case WM_SIZING: // not to filter resize event
+        if (msg->hwnd == (HWND)winId()) {
+            m_startMousePos = QPoint(-1, -1);
+            m_sizing = true;
+        }
+        return false;
+    case WM_MOVING: { // to snap to edge
+        if (m_sizing || !available() || m_startMousePos.x() < 0)
+            return false;
+        const auto m = frameMargins();
+        auto r = reinterpret_cast<LPRECT>(msg->lParam);
+        const QSize s(r->right - r->left - m.left() - m.right(),
+                      r->bottom - r->top - m.bottom() - m.top());
+        const auto by = QCursor::pos() - m_startMousePos;
+        const auto p = snapHint(m_startWinPos + by, s);
+        r->left = p.x() - m.left();
+        r->top = p.y() - m.top();
+        r->right = p.x() + s.width() + m.right();
+        r->bottom = p.y() + s.height() + m.bottom();
+        *res = TRUE;
+        return true;
+    } case WM_MOVE: { // for smooth move
+        if (m_sizing || !available() || m_wmMove || isFullScreen())
+            return false;
+        m_wmMove = true;
+        w->setPosition(toPoint(msg->lParam));
         *res = 0;
+        m_wmMove = false;
         return true;
     } case WM_NCACTIVATE: {
-        if (w->windowState() != Qt::WindowMaximized || msg->hwnd != (HWND)winId())
+        if (w->windowState() != Qt::WindowMaximized || !available())
             return false;
         *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
         return true;
     } case WM_NCPAINT: {
-        if (!w->isVisible() || msg->hwnd != (HWND)winId())
+        if (!available())
             return false;
         if (w->windowState() == Qt::WindowMaximized) {
             *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
@@ -299,7 +336,7 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         *res = 0;
         return true;
     } case WM_NCMOUSEMOVE: {
-        if (!m_fs || msg->hwnd != (HWND)winId())
+        if (!m_fs || !available())
             return false;
         QPoint gpos(GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam));
         QPoint pos = w->mapFromGlobal(gpos);
