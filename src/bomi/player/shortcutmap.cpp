@@ -1,6 +1,7 @@
 #include "shortcutmap.hpp"
 #include "misc/log.hpp"
 #include "misc/json.hpp"
+#include "player/rootmenu.hpp"
 
 DECLARE_LOG_CONTEXT(Shortcut)
 
@@ -72,7 +73,7 @@ auto ShortcutMap::preset(Preset p) -> ShortcutMap
         keys[u"play/speed/reset"_q] << Qt::SHIFT + Qt::CTRL + Qt::Key_Backslash;
         keys[u"play/repeat/faster"_q] << Qt::SHIFT + Qt::CTRL + Qt::Key_Right;
         keys[u"play/speed/slower"_q] << Qt::SHIFT + Qt::CTRL + Qt::Key_Left;
-        keys[u"window/full"_q] << Qt::META + Qt::CTRL + Qt::Key_F;
+        keys[u"window/toggle-fs"_q] << Qt::META + Qt::CTRL + Qt::Key_F;
         keys[u"window/size4"_q] << Qt::CTRL + Qt::Key_0;
         keys[u"audio/track/next"_q] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_S;
         keys[u"audio/sync-reset"_q] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Backslash;
@@ -196,7 +197,7 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"window/size2"_q] << Qt::Key_2;
        map[u"window/size3"_q] << Qt::Key_3;
        map[u"window/size4"_q] << Qt::Key_0;
-       map[u"window/full"_q] << Qt::Key_Enter << Qt::Key_Return << Qt::Key_F;
+       map[u"window/toggle-fs"_q] << Qt::Key_Enter << Qt::Key_Return << Qt::Key_F;
        map[u"window/close"_q] << Qt::CTRL + Qt::Key_W;
 
 #ifndef Q_OS_MAC
@@ -287,12 +288,14 @@ auto ShortcutMap::toJson() const -> QJsonObject
 auto ShortcutMap::setFromJson(const QJsonObject &json) -> bool
 {
     d->map.clear();
+    const auto &r = RootMenu::instance();
     for (auto it = json.begin(); it != json.end(); ++it) {
         const auto o = it.value().toObject();
         if (o[u"default"_q].toBool())
             continue;
-        auto &s = d->map[it.key()];
-        s.m_id = it.key();
+        const auto id = r.resolve(it.key());
+        auto &s = d->map[id];
+        s.m_id = id;
         s.m_default = false;
         s.m_keys = _FromJson<QList<Key>>(o[u"keys"_q]);
     }

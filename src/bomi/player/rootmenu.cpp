@@ -269,6 +269,7 @@ RootMenu::RootMenu()
     ALIAS(video/dithering/next, video/dithering/cycle);
     ALIAS(video/interpolator/next, video/interpolator/cycle);
     ALIAS(video/deinterlacing/toggle, video/deinterlacing/cycle);
+    ALIAS(window/full, window/toggle-fs);
 #undef ALIAS
 
     d->parent = this;
@@ -616,12 +617,17 @@ RootMenu::RootMenu()
         const auto sizes = WindowSize::defaults();
         for (int i = 0; i < sizes.size(); ++i)
             sizes[i].fillAction(d->actionToGroup("size"_a % _N(i), "", false, u"size"_q));
-        d->action(u"full"_q, QT_TR_NOOP("Fullscreen"));
 
         d->separator();
 
-        d->action(u"minimize"_q, QT_TR_NOOP("Minimize"));
+        d->action(u"toggle-fs"_q, QT_TR_NOOP("Toggle Fullscreen"));
+        d->action(u"enter-fs"_q, QT_TR_NOOP("Enter Fullscreen"));
+        d->action(u"exit-fs"_q, QT_TR_NOOP("Exit Fullscreen"));
+
+        d->separator();
+
         d->action(u"maximize"_q, QT_TR_NOOP("Maximize"));
+        d->action(u"minimize"_q, QT_TR_NOOP("Minimize"));
         d->action(u"close"_q, QT_TR_NOOP("Close"));
     });
 
@@ -666,6 +672,12 @@ auto RootMenu::execute(const QString &id) -> bool
         _Warn("Cannot execute '%%'", id);
         return false;
     }
+}
+
+auto RootMenu::resolve(const QString &id) const -> QString
+{
+    auto it = d->alias.find(id);
+    return it != d->alias.end() ? *it : id;
 }
 
 auto RootMenu::setShortcutMap(const ShortcutMap &map) -> void

@@ -15,6 +15,7 @@ public:
     auto action(const QString &id) const -> QAction*;
     auto action(const QKeySequence &key) const -> QAction*;
     auto setShortcutMap(const ShortcutMap &map) -> void;
+    auto resolve(const QString &id) const -> QString;
     static auto instance() -> RootMenu&;
     static auto finalize() -> void;
     static auto execute(const QString &id) -> bool;

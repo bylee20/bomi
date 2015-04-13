@@ -749,8 +749,11 @@ auto MainWindow::Data::plugMenu() -> void
             p->showNormal();
         setVideoSize(videoSize(a->data().value<WindowSize>()));
     });
-    connect(win[u"full"_q], &QAction::triggered, p,
+    connect(win[u"toggle-fs"_q], &QAction::triggered, p,
             [=] () { p->setFullScreen(!p->isFullScreen()); });
+    connect(win[u"enter-fs"_q], &QAction::triggered, p, [=] () { p->setFullScreen(true); });
+    connect(win[u"exit-fs"_q], &QAction::triggered, p, [=] () { p->setFullScreen(false); });
+
     connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);
     connect(win[u"maximize"_q], &QAction::triggered, p, &MainWindow::showMaximized);
     connect(win[u"close"_q], &QAction::triggered, p, [=] () { menu.hide(); p->close(); });

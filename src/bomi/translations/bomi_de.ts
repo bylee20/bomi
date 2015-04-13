@@ -1708,7 +1708,7 @@ Please wait for a while.</source>
         <translation>Das System wird heruntergefahren, wenn die Wiedergabeliste beendet wird.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="785"/>
+        <location filename="../player/mainwindow_m.cpp" line="788"/>
         <source>Current Title/Edition</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1723,7 +1723,7 @@ Please wait for a while.</source>
         <translation>Dieses Verhalten kann in den Einstellungen geändert werden. Verwenden sie das &apos;Beenden&apos;-Menü, um bomi zu beenden.</translation>
     </message>
     <message>
-        <location filename="../player/mainwindow_m.cpp" line="786"/>
+        <location filename="../player/mainwindow_m.cpp" line="789"/>
         <source>Current Chapter</source>
         <translation>Derzeitiges Kapitel</translation>
     </message>
@@ -2416,12 +2416,12 @@ It may help to update driver of graphics card.</source>
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../player/playengine_p.cpp" line="581"/>
+        <location filename="../player/playengine_p.cpp" line="571"/>
         <source>Edition %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine_p.cpp" line="581"/>
+        <location filename="../player/playengine_p.cpp" line="571"/>
         <source>Title %1</source>
         <translation>Titel %1</translation>
     </message>
@@ -3731,14 +3731,14 @@ Regular expression is supported.</source>
 <context>
     <name>RootMenu</name>
     <message>
-        <location filename="../player/rootmenu.cpp" line="276"/>
-        <location filename="../player/rootmenu.cpp" line="566"/>
+        <location filename="../player/rootmenu.cpp" line="277"/>
+        <location filename="../player/rootmenu.cpp" line="567"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="459"/>
-        <location filename="../player/rootmenu.cpp" line="493"/>
+        <location filename="../player/rootmenu.cpp" line="460"/>
+        <location filename="../player/rootmenu.cpp" line="494"/>
         <source>Open File</source>
         <translation>Datei öffnen</translation>
     </message>
@@ -3755,19 +3755,19 @@ Regular expression is supported.</source>
         <translation type="vanished">DVD öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="287"/>
-        <location filename="../player/rootmenu.cpp" line="569"/>
-        <location filename="../player/rootmenu.cpp" line="584"/>
+        <location filename="../player/rootmenu.cpp" line="288"/>
+        <location filename="../player/rootmenu.cpp" line="570"/>
+        <location filename="../player/rootmenu.cpp" line="585"/>
         <source>Clear</source>
         <translation>Leeren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="291"/>
+        <location filename="../player/rootmenu.cpp" line="292"/>
         <source>Play</source>
         <translation>Wiedergabe</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="293"/>
+        <location filename="../player/rootmenu.cpp" line="294"/>
         <source>Stop</source>
         <translation>Stopp</translation>
     </message>
@@ -3780,7 +3780,7 @@ Regular expression is supported.</source>
         <translation type="vanished">Nächsten Titel wiedergeben</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="310"/>
+        <location filename="../player/rootmenu.cpp" line="311"/>
         <source>Disc Menu</source>
         <translation>Diskmenü</translation>
     </message>
@@ -3789,22 +3789,22 @@ Regular expression is supported.</source>
         <translation type="vanished">Wiedergabegeschwindigkeit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="302"/>
+        <location filename="../player/rootmenu.cpp" line="303"/>
         <source>A-B Repeat</source>
         <translation>A-B-Wiederholung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="303"/>
+        <location filename="../player/rootmenu.cpp" line="304"/>
         <source>Set Range to Current Time</source>
         <translation>Auswahl auf aktuelle Zeit setzen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="304"/>
+        <location filename="../player/rootmenu.cpp" line="305"/>
         <source>Repeat Current Subtitle</source>
         <translation>Aktuellen Untertitel wiederholen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="311"/>
+        <location filename="../player/rootmenu.cpp" line="312"/>
         <source>Seek</source>
         <translation>Suchen</translation>
     </message>
@@ -3821,195 +3821,195 @@ Regular expression is supported.</source>
         <translation type="vanished">Zum nächsten Untertitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="337"/>
+        <location filename="../player/rootmenu.cpp" line="338"/>
         <source>Chapter</source>
         <translation>Kapitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="488"/>
+        <location filename="../player/rootmenu.cpp" line="489"/>
         <source>Subtitle</source>
         <translation>Untertitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="363"/>
-        <location filename="../player/rootmenu.cpp" line="465"/>
-        <location filename="../player/rootmenu.cpp" line="524"/>
+        <location filename="../player/rootmenu.cpp" line="364"/>
+        <location filename="../player/rootmenu.cpp" line="466"/>
+        <location filename="../player/rootmenu.cpp" line="525"/>
         <source>Select Next</source>
         <translation>Nächste(s) auswählen</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="127"/>
-        <location filename="../player/rootmenu.cpp" line="381"/>
+        <location filename="../player/rootmenu.cpp" line="382"/>
         <source>Reset</source>
         <translation type="unfinished">Zurücksetzen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="277"/>
+        <location filename="../player/rootmenu.cpp" line="278"/>
         <source>File</source>
         <translation type="unfinished">Datei</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="278"/>
+        <location filename="../player/rootmenu.cpp" line="279"/>
         <source>Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="279"/>
+        <location filename="../player/rootmenu.cpp" line="280"/>
         <source>URL</source>
         <translation type="unfinished">URL</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="280"/>
+        <location filename="../player/rootmenu.cpp" line="281"/>
         <source>DVD</source>
         <translation type="unfinished">DVD</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="281"/>
+        <location filename="../player/rootmenu.cpp" line="282"/>
         <source>Blu-ray</source>
         <translation type="unfinished">Blu-ray</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="285"/>
+        <location filename="../player/rootmenu.cpp" line="286"/>
         <source>Recent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="292"/>
+        <location filename="../player/rootmenu.cpp" line="293"/>
         <source>Start</source>
         <translation type="unfinished">Beginn</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="295"/>
-        <location filename="../player/rootmenu.cpp" line="339"/>
+        <location filename="../player/rootmenu.cpp" line="296"/>
+        <location filename="../player/rootmenu.cpp" line="340"/>
         <source>Previous</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="296"/>
-        <location filename="../player/rootmenu.cpp" line="340"/>
+        <location filename="../player/rootmenu.cpp" line="297"/>
+        <location filename="../player/rootmenu.cpp" line="341"/>
         <source>Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="300"/>
+        <location filename="../player/rootmenu.cpp" line="301"/>
         <source>Speed</source>
         <translation type="unfinished">Geschwindigkeit</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="312"/>
+        <location filename="../player/rootmenu.cpp" line="313"/>
         <source>Beginning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="330"/>
+        <location filename="../player/rootmenu.cpp" line="331"/>
         <source>Previous Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="331"/>
+        <location filename="../player/rootmenu.cpp" line="332"/>
         <source>Current Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="332"/>
+        <location filename="../player/rootmenu.cpp" line="333"/>
         <source>Next Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="350"/>
-        <location filename="../player/rootmenu.cpp" line="458"/>
-        <location filename="../player/rootmenu.cpp" line="489"/>
+        <location filename="../player/rootmenu.cpp" line="351"/>
+        <location filename="../player/rootmenu.cpp" line="459"/>
+        <location filename="../player/rootmenu.cpp" line="490"/>
         <source>Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="367"/>
+        <location filename="../player/rootmenu.cpp" line="368"/>
         <source>Same as Source</source>
         <translation type="unfinished">Wie Quelle</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="368"/>
+        <location filename="../player/rootmenu.cpp" line="369"/>
         <source>Same as Window</source>
         <translation type="unfinished">Wie Fenster</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="369"/>
+        <location filename="../player/rootmenu.cpp" line="370"/>
         <source>4:3 (TV)</source>
         <translation type="unfinished">4:3 (TV)</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="370"/>
+        <location filename="../player/rootmenu.cpp" line="371"/>
         <source>16:10 (Wide Monitor)</source>
         <translation type="unfinished">16:10</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="371"/>
+        <location filename="../player/rootmenu.cpp" line="372"/>
         <source>16:9 (HDTV)</source>
         <translation type="unfinished">16:9 (HDTV)</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="372"/>
+        <location filename="../player/rootmenu.cpp" line="373"/>
         <source>1.85:1 (Wide Vision)</source>
         <translation type="unfinished">1.85:1 (Breitbild)</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="373"/>
+        <location filename="../player/rootmenu.cpp" line="374"/>
         <source>2.35:1 (CinemaScope)</source>
         <translation type="unfinished">2,35:1 (CinemaScope)</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="378"/>
+        <location filename="../player/rootmenu.cpp" line="379"/>
         <source>Zoom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="388"/>
+        <location filename="../player/rootmenu.cpp" line="389"/>
         <source>Horizontally %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="390"/>
+        <location filename="../player/rootmenu.cpp" line="391"/>
         <source>Vertically %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="416"/>
+        <location filename="../player/rootmenu.cpp" line="417"/>
         <source>Upscaling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="418"/>
+        <location filename="../player/rootmenu.cpp" line="419"/>
         <source>Downscaling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="421"/>
+        <location filename="../player/rootmenu.cpp" line="422"/>
         <source>Motion Smoothing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="444"/>
+        <location filename="../player/rootmenu.cpp" line="445"/>
         <source>Color Editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="468"/>
-        <location filename="../player/rootmenu.cpp" line="549"/>
+        <location filename="../player/rootmenu.cpp" line="469"/>
+        <location filename="../player/rootmenu.cpp" line="550"/>
         <source>Sync</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="483"/>
+        <location filename="../player/rootmenu.cpp" line="484"/>
         <source>Normalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="525"/>
+        <location filename="../player/rootmenu.cpp" line="526"/>
         <source>Select All</source>
         <translation>Alle auswählen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="526"/>
+        <location filename="../player/rootmenu.cpp" line="527"/>
         <source>Hide</source>
         <translation>Ausblenden</translation>
     </message>
@@ -4018,17 +4018,17 @@ Regular expression is supported.</source>
         <translation type="vanished">Untertitelspur</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="496"/>
+        <location filename="../player/rootmenu.cpp" line="497"/>
         <source>Current Encoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="497"/>
+        <location filename="../player/rootmenu.cpp" line="498"/>
         <source>Autodetect Encoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="349"/>
+        <location filename="../player/rootmenu.cpp" line="350"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
@@ -4037,22 +4037,22 @@ Regular expression is supported.</source>
         <translation type="vanished">Videospur</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="362"/>
+        <location filename="../player/rootmenu.cpp" line="363"/>
         <source>Aspect Ratio</source>
         <translation>Seitenverhältnis</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="377"/>
+        <location filename="../player/rootmenu.cpp" line="378"/>
         <source>Crop</source>
         <translation>Beschneiden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="393"/>
+        <location filename="../player/rootmenu.cpp" line="394"/>
         <source>Screen Alignment</source>
         <translation>Bild-Ausrichtung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="380"/>
+        <location filename="../player/rootmenu.cpp" line="381"/>
         <source>Screen Position</source>
         <translation>Bild-Position</translation>
     </message>
@@ -4073,42 +4073,42 @@ Regular expression is supported.</source>
         <translation type="vanished">%1 s</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="407"/>
+        <location filename="../player/rootmenu.cpp" line="408"/>
         <source>Chroma Upscaler</source>
         <translation>Chroma-Upscaling</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="411"/>
+        <location filename="../player/rootmenu.cpp" line="412"/>
         <source>Interpolator</source>
         <translation>Interpolation</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="427"/>
+        <location filename="../player/rootmenu.cpp" line="428"/>
         <source>Filter</source>
         <translation>Filter</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="430"/>
+        <location filename="../player/rootmenu.cpp" line="431"/>
         <source>Flip Vertically</source>
         <translation>Vertikal spiegeln</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="431"/>
+        <location filename="../player/rootmenu.cpp" line="432"/>
         <source>Flip Horizontally</source>
         <translation>Horizontal spiegeln</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="436"/>
+        <location filename="../player/rootmenu.cpp" line="437"/>
         <source>Grayscale</source>
         <translation>Graustufen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="437"/>
+        <location filename="../player/rootmenu.cpp" line="438"/>
         <source>Invert Color</source>
         <translation>Farben invertieren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="441"/>
+        <location filename="../player/rootmenu.cpp" line="442"/>
         <source>Disable Filters</source>
         <translation>Filter deaktivieren</translation>
     </message>
@@ -4117,12 +4117,12 @@ Regular expression is supported.</source>
         <translation type="vanished">Audiosynchronisierung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="472"/>
+        <location filename="../player/rootmenu.cpp" line="473"/>
         <source>Volume</source>
         <translation>Lautstärke</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="477"/>
+        <location filename="../player/rootmenu.cpp" line="478"/>
         <source>Amp</source>
         <translation>Verstärkung</translation>
     </message>
@@ -4131,27 +4131,27 @@ Regular expression is supported.</source>
         <translation type="vanished">Lautstärkenormalisierung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="484"/>
+        <location filename="../player/rootmenu.cpp" line="485"/>
         <source>Tempo Scaler</source>
         <translation>Geschwindigkeitsanpassung</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="558"/>
+        <location filename="../player/rootmenu.cpp" line="559"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="559"/>
+        <location filename="../player/rootmenu.cpp" line="560"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="573"/>
+        <location filename="../player/rootmenu.cpp" line="574"/>
         <source>Append URL</source>
         <translation>URL anhängen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="588"/>
+        <location filename="../player/rootmenu.cpp" line="589"/>
         <source>Playback Information</source>
         <translation>Wiedergabeinformationen</translation>
     </message>
@@ -4169,12 +4169,12 @@ Regular expression is supported.</source>
         <translation type="vanished">Blu-ray öffnen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="324"/>
+        <location filename="../player/rootmenu.cpp" line="325"/>
         <source>Previous Frame</source>
         <translation>Vorheriges Frame</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="325"/>
+        <location filename="../player/rootmenu.cpp" line="326"/>
         <source>Next Frame</source>
         <translation>Nächstes Frame</translation>
     </message>
@@ -4187,50 +4187,50 @@ Regular expression is supported.</source>
         <translation type="vanished">Nächstes Kapitel</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="443"/>
+        <location filename="../player/rootmenu.cpp" line="444"/>
         <source>Adjust Color</source>
         <translation>Farben anpassen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="354"/>
+        <location filename="../player/rootmenu.cpp" line="355"/>
         <source>Take Snapshot</source>
         <translation>Schnappschuss aufnehmen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="305"/>
+        <location filename="../player/rootmenu.cpp" line="306"/>
         <source>Quit Repetition</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="326"/>
+        <location filename="../player/rootmenu.cpp" line="327"/>
         <source>Next Black Frame</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="334"/>
+        <location filename="../player/rootmenu.cpp" line="335"/>
         <source>Title/Edition</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="346"/>
+        <location filename="../player/rootmenu.cpp" line="347"/>
         <source>Show State</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../player/rootmenu.cpp" line="460"/>
-        <location filename="../player/rootmenu.cpp" line="494"/>
-        <source>Auto-load File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="461"/>
         <location filename="../player/rootmenu.cpp" line="495"/>
-        <source>Reload File</source>
+        <source>Auto-load File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="462"/>
-        <location filename="../player/rootmenu.cpp" line="520"/>
+        <location filename="../player/rootmenu.cpp" line="496"/>
+        <source>Reload File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/rootmenu.cpp" line="463"/>
+        <location filename="../player/rootmenu.cpp" line="521"/>
         <source>Clear File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4243,38 +4243,38 @@ Regular expression is supported.</source>
         <translation type="obsolete">Untertitel ausblenden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="355"/>
+        <location filename="../player/rootmenu.cpp" line="356"/>
         <source>Quick Snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="356"/>
+        <location filename="../player/rootmenu.cpp" line="357"/>
         <source>Quick Snapshot(No Subtitles)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="357"/>
+        <location filename="../player/rootmenu.cpp" line="358"/>
         <source>Snapshot Tool</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="408"/>
-        <location filename="../player/rootmenu.cpp" line="412"/>
+        <location filename="../player/rootmenu.cpp" line="409"/>
+        <location filename="../player/rootmenu.cpp" line="413"/>
         <source>Advanced...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="415"/>
+        <location filename="../player/rootmenu.cpp" line="416"/>
         <source>High Quality Scaling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="435"/>
+        <location filename="../player/rootmenu.cpp" line="436"/>
         <source>Remap</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="457"/>
+        <location filename="../player/rootmenu.cpp" line="458"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
@@ -4283,165 +4283,165 @@ Regular expression is supported.</source>
         <translation type="vanished">Audiospur</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="473"/>
+        <location filename="../player/rootmenu.cpp" line="474"/>
         <source>Mute</source>
         <translation>Ton aus</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="478"/>
+        <location filename="../player/rootmenu.cpp" line="479"/>
         <source>Equalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="538"/>
+        <location filename="../player/rootmenu.cpp" line="539"/>
         <source>Alignment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="534"/>
-        <location filename="../player/rootmenu.cpp" line="540"/>
+        <location filename="../player/rootmenu.cpp" line="535"/>
+        <location filename="../player/rootmenu.cpp" line="541"/>
         <source>Position</source>
         <translation type="unfinished">Position</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="533"/>
+        <location filename="../player/rootmenu.cpp" line="534"/>
         <source>Override ASS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="535"/>
-        <location filename="../player/rootmenu.cpp" line="545"/>
+        <location filename="../player/rootmenu.cpp" line="536"/>
+        <location filename="../player/rootmenu.cpp" line="546"/>
         <source>Scale</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="536"/>
+        <location filename="../player/rootmenu.cpp" line="537"/>
         <source>Text Style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="552"/>
+        <location filename="../player/rootmenu.cpp" line="553"/>
         <source>Bring Previous Lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="553"/>
+        <location filename="../player/rootmenu.cpp" line="554"/>
         <source>Bring Next Lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="557"/>
+        <location filename="../player/rootmenu.cpp" line="558"/>
         <source>Tools</source>
         <translation>Werkzeuge</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="563"/>
+        <location filename="../player/rootmenu.cpp" line="564"/>
         <source>Playlist</source>
         <translation>Wiedergabeliste</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="564"/>
-        <location filename="../player/rootmenu.cpp" line="583"/>
+        <location filename="../player/rootmenu.cpp" line="565"/>
+        <location filename="../player/rootmenu.cpp" line="584"/>
         <source>Show/Hide</source>
         <translation>Anzeigen/Ausblenden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="567"/>
+        <location filename="../player/rootmenu.cpp" line="568"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="568"/>
+        <location filename="../player/rootmenu.cpp" line="569"/>
         <source>Regenerate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="571"/>
+        <location filename="../player/rootmenu.cpp" line="572"/>
         <source>Append File</source>
         <translation>Datei anhängen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="572"/>
+        <location filename="../player/rootmenu.cpp" line="573"/>
         <source>Append Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="574"/>
+        <location filename="../player/rootmenu.cpp" line="575"/>
         <source>Remove</source>
         <translation>Entfernen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="576"/>
+        <location filename="../player/rootmenu.cpp" line="577"/>
         <source>Move Up</source>
         <translation>Nach oben</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="577"/>
+        <location filename="../player/rootmenu.cpp" line="578"/>
         <source>Move Down</source>
         <translation>Nach unten</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="579"/>
+        <location filename="../player/rootmenu.cpp" line="580"/>
         <source>Shuffle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="580"/>
+        <location filename="../player/rootmenu.cpp" line="581"/>
         <source>Repeat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="587"/>
+        <location filename="../player/rootmenu.cpp" line="588"/>
         <source>Subtitle Viewer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="589"/>
+        <location filename="../player/rootmenu.cpp" line="590"/>
         <source>Log Viewer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="582"/>
+        <location filename="../player/rootmenu.cpp" line="583"/>
         <source>History</source>
         <translation>Verlauf</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="586"/>
+        <location filename="../player/rootmenu.cpp" line="587"/>
         <source>Find Subtitle</source>
         <translation>Untertitel suchen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="592"/>
+        <location filename="../player/rootmenu.cpp" line="593"/>
         <source>Preferences</source>
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="593"/>
+        <location filename="../player/rootmenu.cpp" line="594"/>
         <source>Associate Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="596"/>
+        <location filename="../player/rootmenu.cpp" line="597"/>
         <source>Reload Skin</source>
         <translation>Skin neu laden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="600"/>
+        <location filename="../player/rootmenu.cpp" line="601"/>
         <source>Auto-exit</source>
         <translation>Automatisch beenden</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="601"/>
+        <location filename="../player/rootmenu.cpp" line="602"/>
         <source>Auto-shutdown</source>
         <translation>Automatisch herunterfahren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="604"/>
+        <location filename="../player/rootmenu.cpp" line="605"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="606"/>
+        <location filename="../player/rootmenu.cpp" line="607"/>
         <source>Remove Frame</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4450,42 +4450,56 @@ Regular expression is supported.</source>
         <translation type="vanished">Passende Größe</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="619"/>
         <source>Fullscreen</source>
-        <translation>Vollbild</translation>
+        <translation type="vanished">Vollbild</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="623"/>
+        <location filename="../player/rootmenu.cpp" line="630"/>
         <source>Minimize</source>
         <translation>Minimieren</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="624"/>
+        <location filename="../player/rootmenu.cpp" line="629"/>
         <source>Maximize</source>
         <translation>Maximieren</translation>
     </message>
     <message>
+        <location filename="../player/rootmenu.cpp" line="623"/>
+        <source>Toggle Fullscreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/rootmenu.cpp" line="624"/>
+        <source>Enter Fullscreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../player/rootmenu.cpp" line="625"/>
+        <source>Exit Fullscreen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../player/rootmenu.cpp" line="631"/>
         <source>Close</source>
         <translation>Schließen</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="628"/>
+        <location filename="../player/rootmenu.cpp" line="634"/>
         <source>Help</source>
         <translation>Hilfe</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="629"/>
+        <location filename="../player/rootmenu.cpp" line="635"/>
         <source>About bomi</source>
         <translation type="unfinished">Über bomi</translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="632"/>
+        <location filename="../player/rootmenu.cpp" line="638"/>
         <source>Show Context Menu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/rootmenu.cpp" line="633"/>
+        <location filename="../player/rootmenu.cpp" line="639"/>
         <source>Exit</source>
         <translation>Beenden</translation>
     </message>
@@ -5175,12 +5189,12 @@ h:m:s
         <translation>Wiedergabelisten-Menü anzeigen</translation>
     </message>
     <message>
-        <location filename="../skins/GaN/bomi.qml" line="81"/>
+        <location filename="../skins/GaN/bomi.qml" line="74"/>
         <source>Show/Hide milliseconds</source>
         <translation>Millisekunden anzeigen/verstecken</translation>
     </message>
     <message>
-        <location filename="../skins/GaN/bomi.qml" line="86"/>
+        <location filename="../skins/GaN/bomi.qml" line="78"/>
         <source>Toggle end time/left time</source>
         <translation>Zwischen Gesamtzeit/verbleibender Zeit umschalten</translation>
     </message>

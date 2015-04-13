@@ -270,7 +270,7 @@ auto MainWindow::mouseDoubleClickEvent(QMouseEvent *event) -> void
         if (!act)
             return;
 #ifdef Q_OS_MAC
-        if (action == d->menu(u"window"_q)[u"full"_q])
+        if (action == d->menu(u"window"_q)[u"toggle-fs"_q])
             QTimer::singleShot(300, action, SLOT(trigger()));
         else
 #endif
