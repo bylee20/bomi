@@ -32,7 +32,7 @@ QString FormatObject::time(int msec, bool point, bool hour)
                 % (mins < 10 ? ":0"_a : ":"_a) % _N(mins)
                 % (secs < 10 ? ":0"_a : ":"_a) % _N(secs)
                 % (point ? QString('.'_q % _N(msec, 10, 3, '0'_q)) : u""_q);
-    return sign % _N(mins)
+    return sign % (mins < 10 ? "0"_a : ""_a) % _N(mins)
             % (secs < 10 ? ":0"_a : ":"_a) % _N(secs)
             % (point ? QString('.'_q % _N(msec, 10, 3, '0'_q)) : u""_q);
 
