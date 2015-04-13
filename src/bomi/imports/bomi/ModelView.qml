@@ -178,9 +178,7 @@ Item {
         highlight: Item { }
         currentIndex: -1
         anchors {
-            fill: frame;
-            leftMargin: d.pad;
-            rightMargin: d.pad
+            fill: frame; leftMargin: d.pad - 2; rightMargin: d.pad + 2
             topMargin: (headerBox.visible ? headerBox.height : 0)
         }
         clip: true
