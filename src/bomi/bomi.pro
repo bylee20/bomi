@@ -600,4 +600,6 @@ DISTFILES += \
     imports/bomi/SimpleBlur.qml \
     imports/bomi/ToolPlaneStyle.qml \
     imports/bomi/HistoryView.qml \
-    skins/Tethys/bomi.qml
+    skins/Tethys/bomi.qml \
+    skins/metro/bomi.qml \
+    skins/metro/MetroButton.qml
