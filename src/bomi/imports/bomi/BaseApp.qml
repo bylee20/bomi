@@ -16,6 +16,10 @@ Item {
     property real trackingMinY: 0
     property real trackingMaxY: height
 
+    function dismissTools() {
+        App.playlist.visible = App.history.visible = false
+    }
+
     Item {
         anchors {
             fill: parent
@@ -28,7 +32,7 @@ Item {
 
         PlaylistView {
             id: right
-            width: Math.min(widthHint, player.width-(left.x+left.width)-20)
+            width: Math.min(widthHint, player.width-(left.x+left.width)-20) | 0
             height: parent.height; show: App.playlist.visible
         }
         HistoryView {

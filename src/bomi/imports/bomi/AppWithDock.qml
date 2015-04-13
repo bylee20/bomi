@@ -22,7 +22,7 @@ BaseApp {
             id: area
             anchors.fill: parent
             hoverEnabled: true
-            onPressed: mouse.accepted = false
+            onPressed: { mouse.accepted = false; root.dismissTools() }
             onReleased: mouse.accepted = false
             onEntered: d.updateShown();
             onExited: d.updateShown();

@@ -23,7 +23,7 @@ BaseApp {
             acceptedButtons: Qt.AllButtons
             anchors.fill: parent
             hoverEnabled: true;
-            onPressed: mouse.accepted = false
+            onPressed: { mouse.accepted = false; root.dismissTools() }
             onReleased: mouse.accepted = false
             onEntered: floating.shown = isControlsVisible()
             onExited: floating.shown = false
