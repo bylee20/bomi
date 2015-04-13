@@ -184,7 +184,7 @@ auto Pref::defaultOsdTheme() -> OsdTheme
 auto Pref::defaultMouseActionMap() -> MouseActionMap
 {
     MouseActionMap map;
-    map[MouseBehavior::DoubleClick][KeyModifier::None] = u"window/full"_q;
+    map[MouseBehavior::DoubleClick][KeyModifier::None] = u"window/toggle-fs"_q;
     auto &right = map[MouseBehavior::RightClick];
     for (auto item : KeyModifierInfo::items())
         right[item.value] = u"context-menu"_q;
