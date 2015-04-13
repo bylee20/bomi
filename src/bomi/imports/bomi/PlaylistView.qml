@@ -5,7 +5,9 @@ import QtQuick.Controls.Styles 1.0
 
 Item {
     id: dock
-    readonly property real widthHint: 500
+    readonly property real widthHint: Math.min(widthHintForName, widthHintForLocation) + 16
+    readonly property alias widthHintForName: view.nameWidth
+    readonly property alias widthHintForLocation: view.locationWidth
     readonly property QtObject playlist: B.App.playlist
     property alias selectedIndex: view.selectedIndex
     property real dest: 0
@@ -93,19 +95,20 @@ Item {
         headerVisible: false
         rowHeight: _name.contentHeight + (_location.show ? _location.contentHeight : 0) + 14;
 
+        property real nameWidth: 0
+        property real locationWidth: 0
         currentIndex: model.loaded
-        function contentWidth() {
-            var max = 0;
+        function updateWidthHints() {
+            var nameMax = 0, locMax = 0;
             for (var i=0; i<view.count; ++i) {
                 var number = _name.getWidth(model.number(i))
                 var name = _name.getWidth(model.name(i))
-                if (_location.show) {
-                    var loc = _location.getWidth(model.location(i))
-                    max = Math.max(number + name, loc, max);
-                } else
-                    max = Math.max(number + name, max);
+                nameMax = Math.max(nameMax, number + name)
+                if (_location.show)
+                    locMax = Math.max(locMax, _location.getWidth(model.location(i)))
             }
-            return max+30
+            nameWidth = nameMax
+            locationWidth = locMax
         }
 
         Connections {
@@ -116,7 +119,10 @@ Item {
         columns: B.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
 
         onSelectedIndexChanged: model.selected = view.selectedIndex
-        onCountChanged: column.width = contentWidth()
+        onCountChanged: {
+            updateWidthHints()
+            column.width = Math.max(nameWidth, locationWidth)
+        }
         onActivated: model.play(index)
 
         itemDelegate: Item {
