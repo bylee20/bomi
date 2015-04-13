@@ -7,6 +7,8 @@ BaseApp {
     toolStyle {
         topMargin: overlaps ? 0 : topControls.height
         bottomMargin: overlaps ? 0 : bottomControls.height
+        topMarginForInteraction: topControls.height
+        bottomMarginForInteraction: bottomControls.height
     }
 
     Player {

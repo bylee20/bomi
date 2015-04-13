@@ -7,5 +7,7 @@ QtObject {
     property real bottomMargin: margins
     property real leftMargin: margins
     property real rightMargin: margins
+    property real topMarginForInteraction: topMargin
+    property real bottomMarginForInteraction: bottomMargin
 }
 

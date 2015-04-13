@@ -10,7 +10,7 @@ Item {
     property alias selectedIndex: view.selectedIndex
     property real dest: 0
     property bool show: false
-    y: 20; width: widthHint; height: parent.height-2*y; visible: false
+    width: widthHint; height: parent.height-2*y; visible: false
 
     SequentialAnimation {
         id: pull

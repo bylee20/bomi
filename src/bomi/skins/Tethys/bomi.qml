@@ -12,6 +12,7 @@ B.AppWithDock {
 
     readonly property int s_thickness: 4
     readonly property int s_shadow: 1
+    property bool compact: false
 
     overlaps: true
     trackingMinY: height - Math.max(height * 0.35, bottomControls.height)
@@ -46,68 +47,139 @@ B.AppWithDock {
     }
 
     Component {
-        id: large
+        id: rightButtons
+        Row {
+
+            B.Button {
+                size: 24; icon.prefix: "playlist"
+                anchors.verticalCenter: parent.verticalCenter
+                action: "tool/playlist/toggle"; action2: "tool/playlist"
+            }
+            B.Button {
+                size: 24; icon.prefix: "subscale"
+                anchors.verticalCenter: parent.verticalCenter
+                action: "subtitle/scale/increase"; action2: "subtitle/scale/decrease"
+            }
+            B.Button {
+                size: 24; icon.prefix: "sub"
+                anchors.verticalCenter: parent.verticalCenter
+                action: "subtitle/track/next"; action2: "subtitle/track"
+            }
+            B.Button {
+                size: 24; icon.prefix: "audio"
+                anchors.verticalCenter: parent.verticalCenter
+                action: "audio/track/next"; action2: "audio/track"
+            }
+            B.Button {
+                size: 24; icon.prefix: "fs"; action: "window/full"
+                checked: B.App.window.fullscreen
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            B.Button {
+                background.color: "white";
+                background.border {
+                    color: "black"
+                    width: 1
+                }
+                size: 8
+                onClicked: { compact = !compact }
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+    }
+
+    Component {
+        id: mediaButtonComponent
+        Row {
+            spacing: 0
+            B.Button {
+                width: 32; height: 24
+                icon.prefix: "backward"; action: "play/seek/backward1"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            B.Button {
+                size: bigSize; action: "play/pause"
+                icon.prefix: engine.playing ? "pause" : "play"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            B.Button {
+                width: 32; height: 24
+                icon.prefix: "forward"; action: "play/seek/forward1"
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+    }
+
+    Component {
+        id: volumeIcon
         Item {
+            width: 24; height: 24
+            Image { source: engine.muted ? "volume-muted-shadow.png" : "volume-shadow.png" }
+            Image { source: "volume-blur.png"; visible: volumeButton.hovered }
+            B.Button {
+                id: volumeButton
+                size: 24; action: "audio/volume/mute"
+                icon.source: engine.muted ? "volume-mute.png"
+                           : engine.volume < 0.05 ? "volume-0.png"
+                           : engine.volume < 0.4 ? "volume-low.png"
+                           : engine.volume < 0.8 ? "volume-high.png" : "volume-100.png"
+            }
+            Image {
+                visible: volumeButton.pressed
+                source: engine.muted ? "volume-muted-pressed.png" : "volume-pressed.png"
+            }
+        }
+    }
+
+    Component {
+        id: timeslider
+        B.TimeSlider {
+            style: sliders; bind: timeDuration
+            width: parent.width; height: parent.height
+            markerStyle: B.Button {
+                readonly property bool emph: hovered || pressed
+                size: 8; z: emph ? 1e10 : -1
+                y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0) - 10
+                icon.source: "marker.png"
+                tooltip: chapter.name; delay: 0
+            }
+        }
+    }
+
+    Component {
+        id: normalComponent
+        Item {
+            implicitHeight: 80
             anchors {
                 fill: parent
                 leftMargin: 24; rightMargin: anchors.leftMargin
                 topMargin: 10
             }
 
-            B.TimeSlider {
-                id: timeslider; style: sliders;
-                width: parent.width; height: 24; bind: time
-                markerStyle: B.Button {
-                    readonly property bool emph: hovered || pressed
-                    size: 8; z: emph ? 1e10 : -1
-                    y: control.height - 2*(pressed ? 1 : hovered ? -1 : 0) - 10
-                    icon.source: "marker.png"
-                    tooltip: chapter.name; delay: 0
-                }
+            Loader {
+                readonly property var timeDuration: time
+                sourceComponent: timeslider
+                width: parent.width; height: 24
             }
 
             Row {
                 id: mediaButtons; height: 44
                 anchors { bottom: parent.bottom; bottomMargin: 6; left: parent.left }
-                B.Button {
-                    width: 32; height: 24
-                    icon.prefix: "backward"; action: "play/seek/backward1"
+                Loader {
+                    readonly property int bigSize: 44
                     anchors.verticalCenter: parent.verticalCenter
+                    sourceComponent: mediaButtonComponent
                 }
-                B.Button {
-                    size: 44; action: "play/pause"
-                    icon.prefix: engine.playing ? "pause" : "play"
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-                B.Button {
-                    width: 32; height: 24
-                    icon.prefix: "forward"; action: "play/seek/forward1"
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+
                 MouseArea {
                     id: volumeArea
                     width: volume.width + 40; height: 40
                     anchors.verticalCenter: parent.verticalCenter
                     hoverEnabled: true
-                    Item {
-                        width: 24; height: 24
+                    Loader {
+                        sourceComponent: volumeIcon
                         anchors.verticalCenter: parent.verticalCenter
-                        Image { source: engine.muted ? "volume-muted-shadow.png" : "volume-shadow.png" }
-                        Image { source: "volume-blur.png"; visible: volumeButton.hovered }
-                        B.Button {
-                            id: volumeButton
-                            size: 24; action: "audio/volume/mute"
-                            icon.source: engine.muted ? "volume-mute.png"
-                                       : engine.volume < 0.05 ? "volume-0.png"
-                                       : engine.volume < 0.4 ? "volume-low.png"
-                                       : engine.volume < 0.8 ? "volume-high.png" : "volume-100.png"
-                        }
-                        Image {
-                            visible: volumeButton.pressed
-                            source: engine.muted ? "volume-muted-pressed.png" : "volume-pressed.png"
-                        }
                     }
-
                     Item {
                         id: volumeBox; width: 19; height: parent.height; clip:true
                         B.VolumeSlider {
@@ -149,46 +221,78 @@ B.AppWithDock {
                 textStyle { color: "white"; style: Text.Raised; styleColor: "black" }
             }
 
-            Row {
+            Loader {
+                sourceComponent: rightButtons
                 height: 44
                 anchors {
                     bottom: parent.bottom
                     bottomMargin: 6
                     right: parent.right
                 }
-                spacing: 5
-                B.Button {
-                    size: 24; icon.prefix: "playlist"
+            }
+        }
+    }
+
+    Component {
+        id: compactComponent
+        Rectangle {
+            anchors.fill: parent
+            implicitHeight: 36
+            readonly property real bs: 0.6 // button scale
+            readonly property real ss: 24 * bs;
+            color: Qt.rgba(0, 0, 0, 0.6)
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: anchors.leftMargin
+                Loader {
+                    readonly property int bigSize: 32
                     anchors.verticalCenter: parent.verticalCenter
-                    action: "tool/playlist/toggle"; action2: "tool/playlist"
+                    sourceComponent: mediaButtonComponent
                 }
-                B.Button {
-                    size: 24; icon.prefix: "subscale"
+                B.TimeDuration {
+                    id: td; spacing: 2
+                    height: parent.height; width: contentWidth
                     anchors.verticalCenter: parent.verticalCenter
-                    action: "subtitle/scale/increase"; action2: "subtitle/scale/decrease"
+                    textStyle {
+                        color: "white"; style: Text.Raised; styleColor: "black"
+                        font.pixelSize: 9;
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
-                B.Button {
-                    size: 24; icon.prefix: "sub"
+
+                Item { width: 3 }
+
+                Loader {
+                    readonly property var timeDuration: td
                     anchors.verticalCenter: parent.verticalCenter
-                    action: "subtitle/track/next"; action2: "subtitle/track"
+                    width: 100; height: 14
+                    sourceComponent: timeslider
+                    Layout.fillWidth: true
                 }
-                B.Button {
-                    size: 24; icon.prefix: "audio"
+
+                Loader {
+                    sourceComponent: volumeIcon
                     anchors.verticalCenter: parent.verticalCenter
-                    action: "audio/track/next"; action2: "audio/track"
                 }
-                B.Button {
-                    size: 24; icon.prefix: "fs"; action: "window/full"
-                    checked: B.App.window.fullscreen
+
+                B.VolumeSlider {
+                    id: volumeCompact; style: sliders
+                    width: 70; height: 14
                     anchors.verticalCenter: parent.verticalCenter
+                    visible: app.width > 500
+                }
+
+                Loader {
+                    sourceComponent: rightButtons
+                    height: 24
                 }
             }
-
         }
     }
 
     bottomControls: Rectangle {
-        width: parent.width; height: 80
+        width: parent.width; height: controlLoader.implicitHeight
         gradient: Gradient {
             GradientStop {
                 position: 0.0; color: Qt.rgba(0, 0, 0, 0)
@@ -197,10 +301,21 @@ B.AppWithDock {
                 position: 0.9; color: Qt.rgba(0, 0, 0, 0.82)
             }
         }
-
         Loader {
-            sourceComponent: large
+            id: controlLoader
             anchors.fill: parent
+            sourceComponent: compact ? compactComponent : normalComponent
         }
+    }
+
+    Component.onCompleted: {
+        B.Settings.open(app.name)
+        compact = B.Settings.getBool("compact", false)
+        B.Settings.close(app.name)
+    }
+    Component.onDestruction: {
+        B.Settings.open(app.name)
+        B.Settings.set("compact", compact)
+        B.Settings.close(app.name)
     }
 }
