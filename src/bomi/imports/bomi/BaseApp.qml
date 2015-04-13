@@ -8,6 +8,14 @@ Item {
     property size minimumSize: Qt.size(400, 300)
     readonly property Engine engine: App.engine
     property ToolPlaneStyle toolStyle: ToolPlaneStyle { }
+    readonly property real toolMinX: mapFromItem(left, left.x + left.width, 0).x
+    readonly property real toolMaxX: mapFromItem(right, right.x, 0).x
+
+    property real trackingMinX: toolMinX
+    property real trackingMaxX: toolMaxX
+    property real trackingMinY: 0
+    property real trackingMaxY: height
+
     Item {
         anchors {
             fill: parent

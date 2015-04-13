@@ -33,8 +33,14 @@ BaseApp {
                 floating.shown = isControlsVisible()
             }
 
+            readonly property rect track: Qt.rect(trackingMinX, trackingMinY,
+                                                  trackingMaxX - trackingMinX, trackingMaxY - trackingMinY)
+            onTrackChanged: floating.shown = isControlsVisible()
             function isControlsVisible() {
                 var m = App.window.mouse
+                var rect = root.mapToItem(area, track.x, track.y, track.width, track.height)
+                if (!m.isIn(area, Qt.rect(rect.x, rect.y, rect.width, rect.height)))
+                    return false
                 if (App.theme.controls.showOnMouseMoved)
                     return m.cursor && m.isIn(area)
                 return m.isIn(floating)

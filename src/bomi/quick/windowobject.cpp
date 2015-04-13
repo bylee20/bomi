@@ -10,12 +10,12 @@ auto MouseObject::updateCursor(Qt::CursorShape shape) -> void
         emit cursorChanged();
 }
 
-bool MouseObject::isIn(QQuickItem *item, const QRectF &exclude)
+bool MouseObject::isIn(QQuickItem *item, const QRectF &rect)
 {
     if (!item || !item->window())
         return false;
     auto pos = posFor(item);
-    return !exclude.contains(pos) && item->contains(pos);
+    return rect.contains(pos) && item->contains(pos);
 }
 
 auto MouseObject::isIn(QQuickItem *item) -> bool

@@ -8,7 +8,6 @@ BaseApp {
         topMargin: overlaps ? 0 : topControls.height
         bottomMargin: overlaps ? 0 : bottomControls.height
     }
-    property rect excludeMouseArea: Qt.rect(0, 0, 0, 0)
 
     Player {
         id: playerItem
@@ -73,13 +72,19 @@ BaseApp {
         property bool completed: false
         readonly property bool containsMouse: topCatcher.containsMouse
                                               || btmCatcher.containsMouse
+        readonly property rect track: Qt.rect(trackingMinX, trackingMinY,
+                                              trackingMaxX - trackingMinX, trackingMaxY - trackingMinY)
+        onTrackChanged: updateShown()
         function updateShown() { shown = isControlsVisible(); }
         function isControlsVisible() {
             if (!overlaps)
                 return true;
             var m = App.window.mouse
+            var rect = root.mapToItem(area, track.x, track.y, track.width, track.height)
+            if (!m.isIn(playerItem, Qt.rect(rect.x, rect.y, rect.width, rect.height)))
+                return false
             if (App.theme.controls.showOnMouseMoved)
-                return m.cursor && m.isIn(area, excludeMouseArea)
+                return m.cursor && m.isIn(area)
             return m.isIn(btmCatcher) || m.isIn(topCatcher)
         }
         onContainsMouseChanged: {

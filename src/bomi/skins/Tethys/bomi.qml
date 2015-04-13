@@ -9,11 +9,12 @@ import bomi 1.0 as B
 B.AppWithDock {
     id: app
     name: "net.xylosper.Tethys"
-    overlaps: true
-    excludeMouseArea: Qt.rect(0, 0, width, height - Math.max(height * 0.2, bottomControls.height))
 
     readonly property int s_thickness: 4
     readonly property int s_shadow: 1
+
+    overlaps: true
+    trackingMinY: height - Math.max(height * 0.35, bottomControls.height)
 
     Component {
         id: sliders
