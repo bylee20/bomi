@@ -108,16 +108,30 @@ B.AppWithDock {
                     }
 
                     Item {
-                        id: volumeBox; width: 26; height: parent.height; clip:true
+                        id: volumeBox; width: 19; height: parent.height; clip:true
                         B.VolumeSlider {
                             id: volume; style: sliders
                             x: 26; width: Math.min(app.width * 0.09, 80); height: 14
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
+                    property bool changing: false
                     states: State {
-                        name: "show"; when: volumeArea.containsMouse
+                        name: "show"; when: volumeArea.containsMouse || volumeArea.changing
                         PropertyChanges { target: volumeBox; width: volume.width + 40 }
+                    }
+                    Timer {
+                        id: volumeTimer
+                        interval: 1000; repeat: false
+                        onTriggered: volumeArea.changing = false
+                    }
+
+                    Connections {
+                        target: engine
+                        onVolumeChanged: {
+                            volumeArea.changing = true
+                            volumeTimer.stop(); volumeTimer.start()
+                        }
                     }
 
                     transitions: Transition {
