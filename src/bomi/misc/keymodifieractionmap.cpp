@@ -1,5 +1,6 @@
 #include "keymodifieractionmap.hpp"
 #include "json.hpp"
+#include "player/rootmenu.hpp"
 
 KeyModifierActionMap::KeyModifierActionMap()
 {
@@ -15,5 +16,10 @@ auto KeyModifierActionMap::toJson() const -> QJsonObject
 
 auto KeyModifierActionMap::setFromJson(const QJsonObject &json) -> bool
 {
-    return json_io(&m_map)->fromJson(m_map, json);
+    if (!json_io(&m_map)->fromJson(m_map, json))
+        return false;
+    const auto &r = RootMenu::instance();
+    for (auto &id : m_map)
+        id = r.resolve(id);
+    return true;
 }
