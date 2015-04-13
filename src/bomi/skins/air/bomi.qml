@@ -125,7 +125,6 @@ B.AppWithDock {
                 height: 20; spacing: 10
                 B.TimeSlider {
                     id: timeSlider; bind: timeText; style: sliderStyle
-                    preview.onTop: false
                     Layout.fillWidth: true; height: 8
                     markerStyle: B.Button {
                         size: 4; y: (control.height - height)*0.5

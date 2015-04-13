@@ -19,26 +19,19 @@ B.AppWithFloating {
                         anchors { fill: parent; topMargin: 4.5; leftMargin: 10; rightMargin: 10 }
                         TextButton {
                             id: audio
-                            anchors.left: parent.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            icon.prefix: "audios"
-                            action: "audio/track/next"; action2: "audio/track"
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+                            icon.prefix: "audios"; action: "audio/track/next"; action2: "audio/track"
                             text.content: formatTrackNumber(engine.audio)
                         }
                         TextButton {
-                            anchors.left: audio.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: 5
-                            icon.prefix: "subs"
-                            action: "subtitle/track/next"; action2: "subtitle/track"
+                            anchors { left: audio.right; verticalCenter: parent.verticalCenter; leftMargin: 5 }
+                            icon.prefix: "subs"; action: "subtitle/track/next"; action2: "subtitle/track"
                             text.content: formatTrackNumber(engine.subtitle)
                         }
 
                         TextButton {
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            icon.prefix: "playlist"
-                            action: "tool/playlist/toggle"; action2: "tool/playlist"
+                            anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                            icon.prefix: "playlist"; action: "tool/playlist/toggle"; action2: "tool/playlist"
                             text.content: B.Format.listNumber(B.App.playlist.loaded+1, B.App.playlist.count)
                         }
                     }
@@ -78,13 +71,11 @@ B.AppWithFloating {
                         anchors { verticalCenter: parent.verticalCenter; left: parent.left; leftMargin: 10 }
                         TimeText {
                             id: timetext; time: engine.time
-                            tooltip: qsTr("Show/Hide milliseconds")
-                            msec: checked
+                            tooltip: qsTr("Show/Hide milliseconds"); msec: checked
                         }
                         TimeText {
                             id: endtext; time: checked ? (engine.end - engine.time) : engine.end
-                            tooltip: qsTr("Toggle end time/left time")
-                            msec: timetext.msec
+                            tooltip: qsTr("Toggle end time/left time"); msec: timetext.msec
                         }
                     }
 

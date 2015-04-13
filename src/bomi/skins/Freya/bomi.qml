@@ -95,8 +95,7 @@ B.BaseApp {
                 }
             }
             B.TimeSlider {
-                id: seeker; preview.onTop: false
-                style: sliderstyle
+                id: seeker; style: sliderstyle
                 anchors { fill: parent; leftMargin: 130; rightMargin: 130 }
             }
             Row {

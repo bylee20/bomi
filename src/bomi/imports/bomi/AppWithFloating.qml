@@ -3,6 +3,7 @@ import bomi 1.0
 
 BaseApp {
     id: root
+    readonly property Item rootItem: root
     player: Player {
         id: player
         parent: root

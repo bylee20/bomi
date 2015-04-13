@@ -38,6 +38,7 @@ class WindowObject : public QObject {
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(int width READ width NOTIFY widthChanged)
     Q_PROPERTY(int height READ height NOTIFY heightChanged)
+    Q_PROPERTY(QQuickItem *z10 READ z10 CONSTANT FINAL)
 public:
     auto set(MainWindow *mw) -> void;
     auto fullscreen() const -> bool;
@@ -45,6 +46,7 @@ public:
     auto size() const -> QSize;
     auto width() const -> int;
     auto height() const -> int;
+    auto z10() -> QQuickItem* { return &m_z10; }
     static auto getMouse() -> MouseObject*;
     Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos,
                                  const QString &text);
@@ -59,6 +61,7 @@ signals:
     void heightChanged();
 private:
     MainWindow *m = nullptr;
+    QQuickItem m_z10;
 };
 
 #endif // WINDOWOBJECT_HPP

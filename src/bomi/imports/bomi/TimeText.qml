@@ -5,8 +5,9 @@ B.Text {
     id: item
     property int time: 0
     property bool msec: false
+    property bool hour: false
 
     QtObject { id: s; property int time: (item.time/1000) | 0 }
     width: contentWidth; height: parent.height;
-    content: B.Format.time(msec ? time : s.time * 1000, msec)
+    content: B.Format.time(msec ? time : s.time * 1000, msec, hour)
 }

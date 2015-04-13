@@ -16,20 +16,23 @@ Slider {
 
     Rectangle {
         id: pv
-        width: d.e.preview.width + 4; height: d.e.preview.height + 4
-        y: preview.onTop ? (-height - preview.separation) : (preview.separation + seeker.height); z: 1
-        visible: false; opacity: 0.0
-        border { width: 1; color: "black" }
+
+        property bool onTop: true
+        property bool shown: App.theme.controls.showPreviewOnMouseOverSeekBar
+                             && d.e.preview.hasVideo && d.e.seekable
+                             && d.e.running && mouseArea.containsMouse && x >= 0
+        parent: App.window.z10
+        x: -1; width: d.e.preview.width + 4; height: d.e.preview.height + 4
+        y: onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
+        visible: false; opacity: 0.0; z: 10; border { width: 1; color: "black" }
         states: State {
-            name: "shown"
-            when: App.theme.controls.showPreviewOnMouseOverSeekBar && d.e.preview.hasVideo
-                  && d.e.seekable && d.e.running && mouseArea.containsMouse
-            PropertyChanges { target: pv; visible: true }
-            PropertyChanges { target: pv; opacity: 1.0 }
+            name: "shown";
+            PropertyChanges { target: pv; visible: true; opacity: 1.0 }
         }
         transitions: Transition {
             reversible: true; to: "shown"
             SequentialAnimation {
+                PropertyAction { property: "y" }
                 PropertyAction { property: "visible" }
                 NumberAnimation { property: "opacity"; duration: 200 }
             }
@@ -40,22 +43,35 @@ Slider {
             d.e.preview.height = Qt.binding(function() { return preview.height; });
             d.e.preview.anchors.centerIn = Qt.binding(function() { return pv; });
         }
+        onShownChanged: {
+            if (shown) { onTop = updateOnTop(); y = yPos(); }
+            state = shown ? "shown" : "hidden"
+        }
+        function updateOnTop() {
+            if (preview.onTop < 0)
+                return seeker.mapToItem(null, 0, seeker.y).y > App.window.height * 0.5
+            else
+                return preview.onTop
+        }
+        function yPos() {
+            var l = onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
+            return seeker.mapToItem(null, 0, l).y
+        }
+
+        function repos(mx) {
+            var l = onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
+            x = Alg.clamp(mx - pv.width * 0.5, 0, App.window.width - pv.width)
+        }
 
         Rectangle {
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                top: preview.onTop ? undefined : parent.top
-                topMargin: preview.onTop ? 0 : 10
-                bottom: preview.onTop ? parent.bottom : undefined
-                bottomMargin: preview.onTop ? 10 : 0
-            }
-            width: pvTime.width + 10; height: pvTime.height + 10; z: 1
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: pv.onTop ? (parent.height - height - 10) : 10; z: 1
+            width: pvTime.width + 10; height: pvTime.height + 10
             color: Qt.rgba(0, 0, 0, 0.5)
             TimeText {
                 id: pvTime
                 anchors.centerIn: parent
                 height: contentHeight; width: contentWidth
-                time: 50000
                 textStyle { color: "white"; font.pixelSize: preview.height * 0.11 }
             }
         }
@@ -129,8 +145,7 @@ Slider {
                                        Format.time(val) + "/" + Format.time(max))
             if (App.theme.controls.showPreviewOnMouseOverSeekBar) {
                 d.e.preview.parent = pv
-                pv.x = Alg.clamp(mouse.x - pv.width * 0.5, mapFromItem(null, 0, 0).x,
-                                 mapFromItem(null, App.window.width - pv.width, 0).x)
+                pv.repos(mapToItem(null, mouse.x, 0).x)
                 d.e.preview.rate = d.e.rate_ms(val);
                 pvTime.time = val
             }

@@ -37,11 +37,22 @@ auto MouseObject::posFor(QQuickItem *item) -> QPointF
 auto WindowObject::set(MainWindow *mw) -> void
 {
     m = mw;
+    m_z10.setZ(10);
     connect(m, &MainWindow::fullscreenChanged, this, &WindowObject::fullscreenChanged);
-    connect(m, &MainWindow::heightChanged, this, &WindowObject::heightChanged);
-    connect(m, &MainWindow::heightChanged, this, &WindowObject::sizeChanged);
-    connect(m, &MainWindow::widthChanged, this, &WindowObject::widthChanged);
-    connect(m, &MainWindow::widthChanged, this, &WindowObject::sizeChanged);
+    connect(m, &MainWindow::heightChanged, this, [=] () {
+        emit heightChanged();
+        emit sizeChanged();
+        m_z10.setHeight(m->height());
+    });
+    connect(m, &MainWindow::widthChanged, this, [=] () {
+        emit widthChanged();
+        emit sizeChanged();
+        m_z10.setWidth(m->width());
+    });
+    connect(m, &QQuickView::statusChanged, this, [=] (QQuickView::Status s) {
+        const auto root = s == QQuickView::Ready ? m->rootObject() : nullptr;
+        m_z10.setParentItem(root);
+    });
 }
 
 auto WindowObject::fullscreen() const -> bool

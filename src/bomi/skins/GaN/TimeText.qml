@@ -10,6 +10,7 @@ TextButton {
 
     property int time: 0
     property bool msec: false
-    text.content: B.Format.time(time, msec)
+    text.content: B.Format.time(time, msec, true)
+    text.textStyle.monospace: true
     onClicked: checked = !checked
 }
