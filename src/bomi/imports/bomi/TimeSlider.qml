@@ -110,7 +110,7 @@ Slider {
     QtObject {
         id: d;
         readonly property Engine e: App.engine
-        property bool ticking: false
+        property bool ticking: true
         function target(x) { return (min + (x/seeker.width)*(max - min)); }
         function sync() {
             seeker.min = e.begin
@@ -126,7 +126,7 @@ Slider {
         onBeginChanged: { d.ticking = true; d.sync(); d.ticking = false; }
     }
     onValueChanged: { if (!d.ticking) d.e.seek(value); }
-    Component.onCompleted: d.sync()
+    Component.onCompleted: { d.sync(); d.ticking = false; }
 
     MouseArea {
         id: mouseArea

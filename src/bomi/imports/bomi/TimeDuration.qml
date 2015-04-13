@@ -10,8 +10,10 @@ Item {
     property alias time: timeText.time
     property alias duration: endText.time
     property bool interactive: true
-    implicitWidth: timeText.contentWidth + slash.contentWidth + endText.contentWidth
-    implicitHeight: Math.max(timeText.contentHeight, slash.contentHeight, endText.contentHeight)
+    property real contentWidth: timeText.contentWidth + slash.contentWidth + endText.contentWidth + spacing * 2
+    property real contentHeight: Math.max(timeText.contentHeight, slash.contentHeight, endText.contentHeight)
+    implicitWidth: contentWidth
+    implicitHeight: contentHeight
 
     QtObject {
         id: d
