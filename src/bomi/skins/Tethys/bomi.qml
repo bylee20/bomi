@@ -49,7 +49,11 @@ B.AppWithDock {
     Component {
         id: rightButtons
         Row {
-
+            B.Button {
+                size: 16; icon.prefix: compact ? "to-normal" : "to-compact"
+                onClicked: { compact = !compact }
+                anchors.verticalCenter: parent.verticalCenter
+            }
             B.Button {
                 size: 24; icon.prefix: "playlist"
                 anchors.verticalCenter: parent.verticalCenter
@@ -73,16 +77,6 @@ B.AppWithDock {
             B.Button {
                 size: 24; icon.prefix: "fs"; action: "window/full"
                 checked: B.App.window.fullscreen
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            B.Button {
-                background.color: "white";
-                background.border {
-                    color: "black"
-                    width: 1
-                }
-                size: 8
-                onClicked: { compact = !compact }
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
