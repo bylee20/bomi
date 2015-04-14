@@ -27,14 +27,9 @@ Item {
     }
 
     B.TimeText {
-        id: timeText; height: parent.height
-        anchors {
-            right: slash.left; rightMargin: spacing
-            verticalCenter: slash.verticalCenter
-        }
-        time: d.engine.time
-        textStyle: item.textStyle
-        msec: item.msec
+        id: timeText; height: parent.height; textStyle: item.textStyle
+        anchors { left: parent.left; verticalCenter: slash.verticalCenter }
+        time: d.engine.time; msec: item.msec
 
         MouseArea {
             anchors.fill: parent
@@ -44,22 +39,18 @@ Item {
         }
     }
     B.Text {
-        id: slash;
-        height: parent.height; anchors.centerIn: parent
-        content: "/";
+        id: slash; height: parent.height; content: "/";
+        anchors { left: timeText.right; right: endText.left }
         textStyle {
+            horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
         }
     }
     B.TimeText {
         id: endText; height: parent.height
-        anchors {
-            left: slash.right; leftMargin: spacing
-            verticalCenter: slash.verticalCenter
-        }
+        anchors { right: parent.right; verticalCenter: slash.verticalCenter }
         time: remaining ? (d.engine.time - d.engine.end) : d.engine.end
-        textStyle: item.textStyle
-        msec: item.msec
+        textStyle: item.textStyle; msec: item.msec
 
         MouseArea {
             anchors.fill: parent

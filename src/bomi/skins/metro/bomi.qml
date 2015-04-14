@@ -163,7 +163,7 @@ B.AppWithDock {
                             name: "expand"; when: volumeArea.containsMouse
                             PropertyChanges {
                                 target: volumeArea
-                                width: volume.width + vsCompact.width + gap
+                                width: volume.width + vsCompact.width + gap + 7
                             }
                         }
                         transitions: Transition {
@@ -183,7 +183,7 @@ B.AppWithDock {
                         }
                     }
                 }
-                B.TimeDuration { textStyle.color: "white" }
+                B.TimeDuration { width: contentWidth; textStyle.color: "white" }
                 Loader { sourceComponent: rightButtons }
             }
         }
