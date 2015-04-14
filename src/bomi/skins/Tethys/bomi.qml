@@ -142,86 +142,96 @@ B.AppWithDock {
 
     Component {
         id: normalComponent
-        Item {
+        Rectangle {
             implicitHeight: 80
-            anchors {
-                fill: parent
-                leftMargin: 24; rightMargin: anchors.leftMargin
-                topMargin: 10
+            gradient: Gradient {
+                GradientStop {
+                    position: 0.0; color: Qt.rgba(0, 0, 0, 0)
+                }
+                GradientStop {
+                    position: 0.9; color: Qt.rgba(0, 0, 0, 0.82)
+                }
             }
-
-            Loader {
-                readonly property var timeDuration: time
-                sourceComponent: timeslider
-                width: parent.width; height: 24
-            }
-
-            Row {
-                id: mediaButtons; height: 44
-                anchors { bottom: parent.bottom; bottomMargin: 6; left: parent.left }
-                Loader {
-                    readonly property int bigSize: 44
-                    anchors.verticalCenter: parent.verticalCenter
-                    sourceComponent: mediaButtonComponent
+            Item {
+                anchors {
+                    fill: parent
+                    leftMargin: 24; rightMargin: anchors.leftMargin
+                    topMargin: 10
                 }
 
-                MouseArea {
-                    id: volumeArea
-                    width: volume.width + 40; height: 40
-                    anchors.verticalCenter: parent.verticalCenter
-                    hoverEnabled: true
+                Loader {
+                    readonly property var timeDuration: time
+                    sourceComponent: timeslider
+                    width: parent.width; height: 24
+                }
+
+                Row {
+                    id: mediaButtons; height: 44
+                    anchors { bottom: parent.bottom; bottomMargin: 6; left: parent.left }
                     Loader {
-                        sourceComponent: volumeIcon
+                        readonly property int bigSize: 44
                         anchors.verticalCenter: parent.verticalCenter
+                        sourceComponent: mediaButtonComponent
                     }
-                    Item {
-                        id: volumeBox; width: 19; height: parent.height; clip:true
-                        B.VolumeSlider {
-                            id: volume; style: sliders
-                            x: 26; width: Math.min(app.width * 0.09, 80); height: 14
+
+                    MouseArea {
+                        id: volumeArea
+                        width: volume.width + 40; height: 40
+                        anchors.verticalCenter: parent.verticalCenter
+                        hoverEnabled: true
+                        Loader {
+                            sourceComponent: volumeIcon
                             anchors.verticalCenter: parent.verticalCenter
                         }
-                    }
-                    property bool changing: false
-                    states: State {
-                        name: "show"; when: volumeArea.containsMouse || volumeArea.changing
-                        PropertyChanges { target: volumeBox; width: volume.width + 40 }
-                    }
-                    Timer {
-                        id: volumeTimer
-                        interval: 1000; repeat: false
-                        onTriggered: volumeArea.changing = false
-                    }
+                        Item {
+                            id: volumeBox; width: 19; height: parent.height; clip:true
+                            B.VolumeSlider {
+                                id: volume; style: sliders
+                                x: 26; width: Math.min(app.width * 0.09, 80); height: 14
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        property bool changing: false
+                        states: State {
+                            name: "show"; when: volumeArea.containsMouse || volumeArea.changing
+                            PropertyChanges { target: volumeBox; width: volume.width + 40 }
+                        }
+                        Timer {
+                            id: volumeTimer
+                            interval: 1000; repeat: false
+                            onTriggered: volumeArea.changing = false
+                        }
 
-                    Connections {
-                        target: engine
-                        onVolumeChanged: {
-                            volumeArea.changing = true
-                            volumeTimer.stop(); volumeTimer.start()
+                        Connections {
+                            target: engine
+                            onVolumeChanged: {
+                                volumeArea.changing = true
+                                volumeTimer.stop(); volumeTimer.start()
+                            }
+                        }
+
+                        transitions: Transition {
+                            reversible: true; to: "show"
+                            NumberAnimation { target: volumeBox; property: "width"; duration: 200 }
                         }
                     }
-
-                    transitions: Transition {
-                        reversible: true; to: "show"
-                        NumberAnimation { target: volumeBox; property: "width"; duration: 200 }
-                    }
                 }
-            }
 
-            B.TimeDuration {
-                id: time; spacing: 4
-                anchors.verticalCenter: mediaButtons.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-                textStyle { color: "white"; style: Text.Raised; styleColor: "black" }
-            }
+                B.TimeDuration {
+                    id: time; spacing: 4
+                    anchors.verticalCenter: mediaButtons.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    textStyle { color: "white"; style: Text.Raised; styleColor: "black" }
+                }
 
-            Loader {
-                sourceComponent: rightButtons
-                height: 44
-                anchors {
-                    bottom: parent.bottom
-                    bottomMargin: 6
-                    right: parent.right
+                Loader {
+                    sourceComponent: rightButtons
+                    height: 44
+                    anchors {
+                        bottom: parent.bottom
+                        bottomMargin: 6
+                        right: parent.right
+                    }
                 }
             }
         }
@@ -230,7 +240,6 @@ B.AppWithDock {
     Component {
         id: compactComponent
         Rectangle {
-            anchors.fill: parent
             implicitHeight: 36
             readonly property real bs: 0.6 // button scale
             readonly property real ss: 24 * bs;
@@ -285,21 +294,10 @@ B.AppWithDock {
         }
     }
 
-    bottomControls: Rectangle {
+    bottomControls: Loader {
+        id: controlLoader
         width: parent.width; height: controlLoader.implicitHeight
-        gradient: Gradient {
-            GradientStop {
-                position: 0.0; color: Qt.rgba(0, 0, 0, 0)
-            }
-            GradientStop {
-                position: 0.9; color: Qt.rgba(0, 0, 0, 0.82)
-            }
-        }
-        Loader {
-            id: controlLoader
-            anchors.fill: parent
-            sourceComponent: compact ? compactComponent : normalComponent
-        }
+        sourceComponent: compact ? compactComponent : normalComponent
     }
 
     Component.onCompleted: {
