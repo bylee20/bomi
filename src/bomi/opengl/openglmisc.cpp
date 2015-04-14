@@ -103,8 +103,10 @@ auto check() -> QString
         );
         const bool ok = fbo->isValid();
         delete fbo;
-        d.fboFormats.push_back(format);
-        _Info("Available FBO texture format: %%", format);
+        if (ok) {
+            d.fboFormats.push_back(format);
+            _Info("Available FBO texture format: %%", format);
+        }
         return ok;
     };
     testFbo(OGL::RGBA16_UNorm);
