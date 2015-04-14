@@ -3,6 +3,8 @@
 #include "tmp/algorithm.hpp"
 #include "enum/mousebehavior.hpp"
 #include <QHeaderView>
+#include <QElapsedTimer>
+#include <QScrollBar>
 
 PrefMenuTreeItem::PrefMenuTreeItem(QAction *action, QVector<ActionInfo> &list, PrefMenuTreeItem *parent)
     : QTreeWidgetItem(parent, action->menu() ? Menu : action->isSeparator() ? Separator : Action)
@@ -75,10 +77,9 @@ auto PrefMenuTreeItem::reset() -> void
     emitDataChanged();
 }
 
-auto PrefMenuTreeItem::setShortcut(const Shortcut &s) -> void
+auto PrefMenuTreeItem::setShortcut(const Shortcut &s) -> bool
 {
-    if (_Change(m_shortcut, s))
-        emitDataChanged();
+    return _Change(m_shortcut, s);
 }
 
 /******************************************************************************/
@@ -93,6 +94,26 @@ PrefMenuTreeWidget::PrefMenuTreeWidget(QWidget *parent)
     m_actionInfos.prepend({QString(), tr("Unused")});
     header()->resizeSection(0, 200);
     connect(this, &QTreeWidget::itemChanged, this, &PrefMenuTreeWidget::changed);
+}
+
+auto PrefMenuTreeWidget::set(const ShortcutMap &map) -> void {
+    bool changed = false;
+    const int h = horizontalScrollBar()->value();
+    const int v = verticalScrollBar()->value();
+    QList<QTreeWidgetItem*> expanded;
+    for_recursive([&] (auto i) {
+        changed |= i->setShortcut(map.shortcut(i->id()));
+        if (i->isExpanded())
+            expanded.push_back(i);
+    });
+    if (changed) {
+        reset();
+        for (auto i : expanded)
+            i->setExpanded(true);
+        horizontalScrollBar()->setValue(h);
+        verticalScrollBar()->setValue(v);
+        emit this->changed();
+    }
 }
 
 /******************************************************************************/
@@ -152,9 +173,6 @@ auto PrefDelegate::drawHeader(QPainter *painter, const QRect &rect,
 
 /******************************************************************************/
 
-static constexpr auto ModRole = Qt::UserRole + 1;
-static constexpr auto ActionIndexRole = Qt::UserRole + 2;
-
 class MouseActionDelegate : public QStyledItemDelegate {
     const QVector<ActionInfo> *actions = nullptr;
 public:
@@ -175,7 +193,7 @@ public:
     {
         if (!editor)
             return;
-        const int idx = index.model()->data(index, ActionIndexRole).toInt();
+        const int idx = index.model()->data(index, Qt::EditRole).toInt();
         auto combox = static_cast<QComboBox*>(editor);
         combox->setCurrentIndex(idx);
     }
@@ -186,8 +204,7 @@ public:
             return;
         auto combo = static_cast<QComboBox*>(editor);
         const auto idx = combo->currentIndex();
-        model->setData(index, idx, ActionIndexRole);
-        model->setData(index, actions->at(idx).desc);
+        model->setData(index, idx, Qt::EditRole);
     }
     auto updateEditorGeometry(QWidget *w, const QStyleOptionViewItem &opt,
                               const QModelIndex &/*index*/) const -> void
@@ -203,7 +220,37 @@ static const auto mods = QList<KeyModifier>() << KeyModifier::None
                                               << KeyModifier::Alt;
 
 class MouseActionItem : public QTreeWidgetItem {
-
+    struct ChildItem : public QTreeWidgetItem {
+        KeyModifier modifier;
+        const QVector<ActionInfo> *actions = nullptr;
+        int index = 0;
+        auto data(int column, int role) const -> QVariant final
+        {
+            switch (column) {
+            case 0:
+                if (role != Qt::DisplayRole)
+                    return QVariant();
+                if (modifier == KeyModifier::None)
+                    return qApp->translate("PrefDialog", "No modifier");
+                return Key((int)modifier).toString(Key::NativeText);
+            case 1:
+                if (role == Qt::DisplayRole)
+                    return actions ? actions->at(index).desc : QVariant();
+                if (role == Qt::EditRole)
+                    return index;
+                return QVariant();
+            default:
+                return QVariant();
+            }
+        }
+        auto setData(int column, int role, const QVariant &value) -> void final
+        {
+            if (column != 1 || role != Qt::EditRole || !actions)
+                return;
+            if (_Change(index, qBound(0, value.toInt(), actions->size() - 1)))
+                emitDataChanged();
+        }
+    };
 public:
     MouseActionItem(MouseBehavior mb, const QVector<ActionInfo> *actions,
                     QTreeWidget *parent)
@@ -212,13 +259,9 @@ public:
         setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
         setText(0, MouseBehaviorInfo::description(mb));
         for (auto mod : mods) {
-            auto sub = new QTreeWidgetItem;
-            sub->setData(0, ModRole, QVariant::fromValue(mod));
-            if (mod != KeyModifier::None) {
-                const QKeySequence key((int)mod);
-                sub->setText(0, key.toString(QKeySequence::NativeText));
-            } else
-                sub->setText(0, qApp->translate("PrefDialog", "No modifier"));
+            auto sub = new ChildItem;
+            sub->modifier = mod;
+            sub->actions = m_actions;
             sub->setFlags(flags() | Qt::ItemIsEditable);
             addChild(sub);
         }
@@ -227,14 +270,15 @@ public:
     auto compare(const KeyModifierActionMap &map) const -> bool
     {
         for (int i = 0; i < mods.size(); ++i) {
-            const auto idx = child(i)->data(1, ActionIndexRole).toInt();
+            const auto idx = static_cast<const ChildItem*>(child(i))->index;
             if (map[mods[i]] != m_actions->at(idx).id)
                 return false;
         }
         return true;
     }
-    auto set(const KeyModifierActionMap &map) -> void
+    auto set(const KeyModifierActionMap &map) -> bool
     {
+        bool changed = false;
         for (int i = 0; i < mods.size(); ++i) {
             const auto id = map[mods[i]];
             int idx = 0;
@@ -244,16 +288,16 @@ public:
                     break;
                 }
             }
-            auto sub = child(i);
-            sub->setText(1, m_actions->at(idx).desc);
-            sub->setData(1, ActionIndexRole, idx);
+            auto c = static_cast<ChildItem*>(child(i));
+            changed |= _Change(c->index, idx);
         }
+        return changed;
     }
     auto get() const -> KeyModifierActionMap
     {
         KeyModifierActionMap map;
         for (int i = 0; i < mods.size(); ++i) {
-            const auto idx = child(i)->data(1, ActionIndexRole).toInt();
+            const auto idx = child(i)->data(1, Qt::EditRole).toInt();
             map[mods[i]] = m_actions->at(idx).id;
         }
         return map;
@@ -316,10 +360,16 @@ auto PrefMouseActionTree::compare(const QVariant &var) const -> bool
 
 auto PrefMouseActionTree::set(const MouseActionMap &map) -> void
 {
+    bool changed = false;
     for (int i = 0; i < topLevelItemCount(); ++i) {
         const auto item = static_cast<MouseActionItem*>(topLevelItem(i));
-        item->set(map[item->behavior()]);
+        changed |= item->set(map[item->behavior()]);
     }
+    if (!changed)
+        return;
+    reset();
+    expandAll();
+    emit this->changed();
 }
 
 auto PrefMouseActionTree::get() const -> MouseActionMap

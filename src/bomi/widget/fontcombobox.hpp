@@ -9,7 +9,7 @@ public:
     ~FontComboBox();
     auto setCurrentFont(const QFont &font) -> void;
     auto currentFont() const -> QFont;
-    auto setFixedFont(bool fixed) -> void;
+    auto setFixedFontOnly(bool fixed) -> void;
 signals:
     void currentFontChanged();
 private:

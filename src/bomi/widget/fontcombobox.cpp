@@ -132,50 +132,64 @@ static QFontDatabase::WritingSystem writingSystemForFont(QFontDatabase *db, cons
 struct FontData {
     DECL_EQ(FontData, &T::font);
     QFont font;
-    QString sample;
+    QString display;
 };
 
 class FontFamilyModel : public SimpleListModel<FontData> {
     auto displayData(int row, int) const -> QVariant
     {
         auto &data = at(row);
-        if (data.sample.isEmpty())
-            return data.font.family();
-        return QString(data.font.family() % " ("_a % data.sample % ")"_a);
+        return data.display.isEmpty() ? data.font.family() : data.display;
     }
     auto fontData(int row, int) const -> QFont { return at(row).font; }
-
 };
+
+static auto generateList(bool fixedOnly) -> QList<FontData>
+{
+    QList<FontData> list;
+    QFontDatabase db;
+    const auto type = fixedOnly ? QFontDatabase::FixedFont : QFontDatabase::GeneralFont;
+    const auto def = QFontDatabase::systemFont(type);
+    for (auto &family : db.families()) {
+        if (fixedOnly && !db.isFixedPitch(family))
+            continue;
+        FontData data;
+        data.font = def;
+        data.font.setFamily(family);
+        bool hasLatin = false;
+        const auto system = writingSystemForFont(&db, data.font, &hasLatin);
+        const auto sample = db.writingSystemSample(system);
+        if (!sample.isEmpty())
+            data.display = data.font.family() % " ("_a % sample % ")"_a;
+        list.push_back(data);
+    }
+    return list;
+}
+
+static auto getFontDataList(bool fixedOnly) -> QList<FontData>
+{
+    if (fixedOnly) {
+        static const auto list = generateList(true);
+        return list;
+    } else {
+        static const auto all = generateList(false);
+        return all;
+    }
+}
 
 struct FontComboBox::Data {
     FontComboBox *p = nullptr;
     FontFamilyModel *model = nullptr;
-    bool fixed = false;
-    auto generateList() -> QList<FontData>
-    {
-        QList<FontData> list;
-        QFontDatabase db;
-        const auto type = fixed ? QFontDatabase::FixedFont : QFontDatabase::GeneralFont;
-        const auto def = QFontDatabase::systemFont(type);
-        for (auto &family : db.families()) {
-            if (fixed && !db.isFixedPitch(family))
-                continue;
-            FontData data;
-            data.font = def;
-            data.font.setFamily(family);
-            bool hasLatin = false;
-            const auto system = writingSystemForFont(&db, data.font, &hasLatin);
-            data.sample = db.writingSystemSample(system);
-            list.push_back(data);
-        }
-        return list;
-    }
+    bool fixedOnly = false;
+    auto generateList() -> QList<FontData> { return getFontDataList(fixedOnly); }
 };
 
 FontComboBox::FontComboBox(QWidget *parent)
     : QComboBox(parent), d(new Data)
 {
     d->p = this;
+    setSizeAdjustPolicy(AdjustToMinimumContentsLengthWithIcon);
+    setMinimumContentsLength(10);
     connect(SIGNAL_VT(this, currentIndexChanged, int), this, [=] (int idx) {
         emit currentFontChanged();
         if (idx < 0)
@@ -194,9 +208,9 @@ FontComboBox::~FontComboBox()
     delete d;
 }
 
-auto FontComboBox::setFixedFont(bool fixed) -> void
+auto FontComboBox::setFixedFontOnly(bool fixed) -> void
 {
-    if (_Change(d->fixed, fixed)) {
+    if (_Change(d->fixedOnly, fixed)) {
         d->model->setList(d->generateList());
         setCurrentIndex(0);
     }
@@ -206,7 +220,7 @@ auto FontComboBox::setCurrentFont(const QFont &font) -> void
 {
     const auto family = QFontInfo(font).family();
     for (int i = 0; i < d->model->size(); ++i) {
-        if (QFontInfo(d->model->at(i).font).family() == family) {
+        if (d->model->at(i).font.family() == family) {
             setCurrentIndex(i);
             break;
         }

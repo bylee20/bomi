@@ -9,6 +9,7 @@
 #include "misc/simplelistmodel.hpp"
 #include "ui_prefdialog.h"
 #include <QQmlProperty>
+#include <QElapsedTimer>
 
 #ifdef None
 #undef None
@@ -30,6 +31,7 @@ struct PrefDialog::Data {
     QSet<ValueWatcher*> modified;
     QHash<QObject*, QList<ValueWatcher*>> editorToWatcher;
     Pref orig;
+    bool filling = false;
 
     auto retranslate() -> void
     {
@@ -39,9 +41,8 @@ struct PrefDialog::Data {
     auto fillEditors(const Pref *pref) -> void
     {
         for (auto &w : watchers) {
-            if (!w.editor.isValid())
-                continue;
-            w.editor.write(w.property.read(pref));
+            if (w.editor.isValid())
+                w.editor.write(w.property.read(pref));
         }
     }
 
@@ -133,7 +134,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Mouse actions"), d->ui.ui_mouse, u":/img/input-mouse-32.png"_q);
     addPage(tr("Control step"), d->ui.ui_step, u":/img/run-build-32.png"_q);
 
-    d->ui.app_fixed_font->setFixedFont(true);
+    d->ui.app_fixed_font->setFixedFontOnly(true);
     d->ui.enable_hwaccel->setEnabled(OS::hwAcc()->isAvailable());
     d->ui.screensaver_method->addItems(OS::screensaverMethods());
     d->ui.screensaver_method->setVisible(d->ui.screensaver_method->count() > 1);
@@ -271,6 +272,14 @@ PrefDialog::PrefDialog(QWidget *parent)
     auto &mo = Pref::staticMetaObject;
     d->watchers.resize(mo.propertyCount() - mo.propertyOffset());
 
+    // 526
+//    remove(17); // skin
+    // 395
+//    remove(16); // osd
+    // 284
+//    remove(12); // sub_appearance
+    // 120
+
     auto invoke = [&] (const char *funcName) -> QString
     {
         QString ret;
@@ -341,6 +350,8 @@ PrefDialog::~PrefDialog() {
 
 auto PrefDialog::checkModified() -> void
 {
+    if (d->filling)
+        return;
     auto ws = d->editorToWatcher.value(sender());
     if (ws.isEmpty())
         return;
@@ -351,10 +362,12 @@ auto PrefDialog::checkModified() -> void
         else
             d->modified.remove(w);
     }
-    setWindowModified(!d->modified.isEmpty());
+    if (isWindowModified() != !d->modified.isEmpty())
+        setWindowModified(!d->modified.isEmpty());
 }
 
 auto PrefDialog::setAudioDeviceList(const QList<AudioDevice> &devices) -> void {
+    return;
     d->ui.audio_device->clear();
     for (auto &dev : devices)
         d->ui.audio_device->addItem(dev.name, dev.description);
@@ -366,8 +379,10 @@ auto PrefDialog::setAudioDeviceList(const QList<AudioDevice> &devices) -> void {
 
 auto PrefDialog::set(const Pref *p) -> void
 {
+    d->filling = true;
     d->fillEditors(p);
     d->sync();
+    d->filling = false;
 }
 
 auto PrefDialog::get(Pref *p) -> void
@@ -393,4 +408,5 @@ auto PrefDialog::changeEvent(QEvent *event) -> void
 auto PrefDialog::showEvent(QShowEvent *event) -> void
 {
     QDialog::showEvent(event);
+    d->ui.stack->show();
 }

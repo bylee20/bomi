@@ -681,16 +681,25 @@ auto MainWindow::Data::plugMenu() -> void
         sview->setVisible(!sview->isVisible());
     });
     connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
+        QTime time;
+        int t1 = 0, t2 = 0, t3 = 0, t4 = 0;
         if (!prefDlg) {
+            time.start();
             prefDlg = dialog<PrefDialog>();
+            t1 = time.restart();
             prefDlg->setAudioDeviceList(e.audioDeviceList());
+            t2 = time.restart();
             connect(prefDlg.data(), &PrefDialog::applyRequested, p,
                     [this] { prefDlg->get(&pref); applyPref(); });
         }
         if (!prefDlg->isVisible()) {
+            time.restart();
             prefDlg->set(&pref);
+            t3 = time.restart();
             prefDlg->show();
+            t4 = time.restart();
         }
+        qDebug() << t1 << t2 << t3 << t4;
     });
     connect(tool[u"associate-files"_q], &QAction::triggered,
             p, [=] () { dialog<FileAssocDialog>()->exec(); });

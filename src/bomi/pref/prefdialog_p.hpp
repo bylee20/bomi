@@ -10,6 +10,7 @@
 #include <QAction>
 #include <QStyledItemDelegate>
 #include <QTreeWidgetItem>
+#include <QElapsedTimer>
 
 class Menu;
 
@@ -33,7 +34,7 @@ public:
     auto isSeparator() const -> bool { return type() == Separator; }
     auto key(int i) const -> Key {return m_shortcut.key(i);}
     auto setKey(int idx, const QKeySequence &key) -> void;
-    auto setShortcut(const Shortcut &s) -> void;
+    auto setShortcut(const Shortcut &s) -> bool;
     auto shortcut() const -> Shortcut { return m_shortcut; }
     auto contains(const Key &key) -> bool { return m_shortcut.contains(key); }
     auto id() const -> QString { return m_id; }
@@ -46,6 +47,8 @@ private:
     QString m_desc, m_name, m_id; Shortcut m_shortcut;
 };
 
+
+
 class PrefMenuTreeWidget : public QTreeWidget {
     Q_OBJECT
     Q_PROPERTY(ShortcutMap value READ get WRITE set NOTIFY changed)
@@ -53,8 +56,7 @@ class PrefMenuTreeWidget : public QTreeWidget {
 public:
     PrefMenuTreeWidget(QWidget *parent = nullptr);
     auto actionInfoList() const -> const QVector<ActionInfo>& { return m_actionInfos; }
-    auto set(const ShortcutMap &map) -> void
-        { for_recursive([&] (auto i) { i->setShortcut(map.shortcut(i->id())); }); }
+    auto set(const ShortcutMap &map) -> void;
     auto get() -> ShortcutMap
     {
         ShortcutMap map;
@@ -126,6 +128,8 @@ public:
     auto compare(const QVariant &var) const -> bool;
 signals:
     void changed();
+private:
+    QMap<QString, int> m_actIdx;
 };
 
 class PrefStepItem;

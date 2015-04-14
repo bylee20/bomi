@@ -104,6 +104,7 @@ public:
 signals:
     void valueChanged();
 private:
+    auto emitChanged();
     struct Data;
     Data *d;
 };
