@@ -22,6 +22,7 @@ struct ColorAttr {
     auto set(uchar _r, uchar _g, uchar _b, uchar _a) -> void {
         r = _r; g = _g; b = _b; a = _a;
     }
+    auto toColor() const -> QColor { return QColor(r, g, b, a); }
     SIA data(int index) -> AttrData {
         return AttrData::create(index, 4, GL_UNSIGNED_BYTE, false);
     }
@@ -40,6 +41,7 @@ struct CoordAttr {
     SIA data(int index, bool isPos = false) -> AttrData {
         return AttrData::create(index, 2, GL_FLOAT, isPos);
     }
+    auto toPoint() const -> QPointF { return { x, y }; }
     auto set(const QPointF &p) -> void { x = p.x(); y = p.y(); }
     auto set(float x, float y) -> void { this->x = x; this->y = y; }
 

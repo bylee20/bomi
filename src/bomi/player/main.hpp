@@ -24,6 +24,7 @@
 #include "quick/windowobject.hpp"
 #include "quick/busyiconitem.hpp"
 #include "quick/buttonboxitem.hpp"
+#include "quick/triangleitem.hpp"
 #include <QImageWriter>
 
 template<class T>
@@ -41,6 +42,7 @@ auto registerType() -> void
     qmlRegisterType<MaskAreaItem>("bomi", 1, 0, "MaskArea");
     qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Chapter");
     qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Edition");
+    qmlRegisterType<TriangleItem>("bomi", 1, 0, "Triangle");
     qmlRegisterType<TopLevelItem>();
     qmlRegisterType<Downloader>();
     qmlRegisterType<HistoryModel>();

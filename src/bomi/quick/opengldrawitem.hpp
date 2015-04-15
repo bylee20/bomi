@@ -10,7 +10,6 @@
 class OpenGLDrawItem : public GeometryItem {
 public:
     using AttrSet = QSGGeometry::AttributeSet;
-    struct ColorVertex { QPointF vertex; QColor color; };
     enum UpdateHint {
         UpdateGeometry = 1,
         UpdateMaterial = 2,
@@ -68,12 +67,14 @@ inline auto OpenGLDrawItem::tryInitGL() -> void
 
 template <class T>
 class VertexDrawItem : public OpenGLDrawItem {
+protected:
+    using Super = VertexDrawItem<T>;
 public:
     using OpenGLDrawItem::OpenGLDrawItem;
     using Vertex = T;
-    auto vertices() -> QVector<Vertex>& { return m_vertices; }
-    const QVector<Vertex> &vertices() const { return m_vertices; }
+    auto vertices() const -> const QVector<Vertex>& { return m_vertices; }
 protected:
+    auto vertices() -> QVector<Vertex>& { return m_vertices; }
     auto geometryChanged(const QRectF &new_, const QRectF &old) -> void override;
     virtual auto updateVertexOnGeometryChanged() const -> bool { return false; }
 private:
@@ -121,6 +122,8 @@ auto VertexDrawItem<T>::updateGeometry(QSGGeometry *geometry) -> QSGGeometry*
 
 template<class T>
 class ShaderRenderItem : public VertexDrawItem<T> {
+protected:
+    using Super = ShaderRenderItem<T>;
 public:
     using Type = QSGMaterialType;
     using VertexDrawItem<T>::VertexDrawItem;

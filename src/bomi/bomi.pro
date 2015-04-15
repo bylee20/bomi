@@ -145,7 +145,6 @@ HEADERS += \
 	enum/audiodriver.hpp \
 	enum/changevalue.hpp \
 	enum/channellayout.hpp \
-	enum/clippingmethod.hpp \
 	enum/colorrange.hpp \
 	enum/deintmethod.hpp \
 	enum/deintmode.hpp \
@@ -295,7 +294,8 @@ HEADERS += \
     misc/windowsize.hpp \
     enum/framebufferobjectformat.hpp \
     video/videopreview.hpp \
-    dialog/fileassocdialog.hpp
+    dialog/fileassocdialog.hpp \
+    quick/triangleitem.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -368,7 +368,6 @@ SOURCES += \
 	enum/audiodriver.cpp \
 	enum/changevalue.cpp \
 	enum/channellayout.cpp \
-	enum/clippingmethod.cpp \
 	enum/colorrange.cpp \
 	enum/deintmethod.cpp \
 	enum/deintmode.cpp \
@@ -505,7 +504,8 @@ SOURCES += \
     misc/windowsize.cpp \
     enum/framebufferobjectformat.cpp \
     video/videopreview.cpp \
-    dialog/fileassocdialog.cpp
+    dialog/fileassocdialog.cpp \
+    quick/triangleitem.cpp
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
