@@ -53,6 +53,7 @@ macx {
 	HEADERS += player/mpris.hpp
 	SOURCES += player/mpris.cpp
 } else:win32 {
+    QT += winextras
     RC_ICONS = ../../icons/bomi.ico
     LIBS += -lopengl32 -lgdi32 -limm32 -lwinmm -lole32 -ldvdcss -lrpcrt4
     HEADERS += os/win.hpp

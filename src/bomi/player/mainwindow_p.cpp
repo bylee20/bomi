@@ -109,6 +109,25 @@ auto MainWindow::Data::plugEngine() -> void
         }
         if (state != PlayEngine::Paused)
             pausedByHiding = false;
+#ifdef Q_OS_WIN
+        auto prog = taskbar.progress();
+        switch (state) {
+        case PlayEngine::Error:
+            prog->setRange(0, 1);
+            prog->setValue(1);
+        case PlayEngine::Stopped:
+            prog->stop();
+            break;
+        case PlayEngine::Paused:
+            prog->setPaused(true);
+            break;
+        default:
+            prog->setRange(e.begin(), e.end());
+            prog->setValue(e.time());
+            prog->resume();
+            break;
+        }
+#endif
         const auto playing = e.isPlaying();
         const auto running = e.isRunning();
         menu(u"play"_q)[u"pause"_q]->setText(playing ? tr("Pause") : tr("Play"));
@@ -124,9 +143,37 @@ auto MainWindow::Data::plugEngine() -> void
     connect(&e, &PlayEngine::waitingChanged, p, [=] (auto waiting) {
         if (waiting) { waiter.start(); }
         else { waiter.stop(); this->showMessageBox(QString()); }
+#ifdef Q_OS_WIN
+        auto prog = taskbar.progress();
+        switch (waiting) {
+        case PlayEngine::Loading:
+        case PlayEngine::Buffering:
+            prog->setRange(0, 0);
+            prog->resume();
+            break;
+        default:
+            if (prog->maximum() == 0) {
+                prog->setRange(e.begin(), e.end());
+                prog->setValue(e.time());
+                prog->resume();
+            }
+        }
+#endif
     });
-    connect(&e, &PlayEngine::tick, p,
-            [=] (int time) { if (ab.check(time)) e.seek(ab.a()); });
+#ifdef Q_OS_WIN
+    connect(&e, &PlayEngine::beginChanged, p, [=] () {
+        taskbar.progress()->setRange(e.begin(), e.end());
+    });
+    connect(&e, &PlayEngine::endChanged, p, [=] () {
+        taskbar.progress()->setRange(e.begin(), e.end());
+    });
+#endif
+    connect(&e, &PlayEngine::tick, p, [=] (int time) {
+        if (ab.check(time)) e.seek(ab.a());
+#ifdef Q_OS_WIN
+        taskbar.progress()->setValue(time);
+#endif
+    });
     connect(&e, &PlayEngine::beginSyncMrlState, p, [=] () { noMessage = true; });
     connect(&e, &PlayEngine::endSyncMrlState, p, [=] () { noMessage = false; });
     connect(&e, &PlayEngine::started, p, [=] (const Mrl &mrl) { setOpen(mrl); });

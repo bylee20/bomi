@@ -92,6 +92,11 @@ MainWindow::MainWindow()
     d->restoreState();
     d->undo.setActive(true);
     QTimer::singleShot(1, this, SLOT(postInitialize()));
+
+#ifdef Q_OS_WIN
+    d->taskbar.setWindow(this);
+    d->taskbar.progress()->setVisible(true);
+#endif
 }
 
 MainWindow::~MainWindow() {

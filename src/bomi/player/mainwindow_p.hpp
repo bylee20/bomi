@@ -32,6 +32,11 @@
 #include <QQmlProperty>
 #include <QQmlEngine>
 
+#ifdef Q_OS_WIN
+#include <QWinTaskbarButton>
+#include <QWinTaskbarProgress>
+#endif
+
 DECLARE_LOG_CONTEXT(Main)
 
 enum MainWindowEvent {
@@ -76,6 +81,10 @@ struct MainWindow::Data {
     QPoint mouseStartPos, winStartPos;
     YouTubeDL youtube;
     YleDL yle;
+
+#ifdef Q_OS_WIN
+    QWinTaskbarButton taskbar;
+#endif
 
     Qt::MouseButton pressedButton = Qt::NoButton;
     Qt::MouseButton contextMenuButton = Qt::RightButton;

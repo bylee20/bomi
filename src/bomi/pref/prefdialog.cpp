@@ -367,7 +367,6 @@ auto PrefDialog::checkModified() -> void
 }
 
 auto PrefDialog::setAudioDeviceList(const QList<AudioDevice> &devices) -> void {
-    return;
     d->ui.audio_device->clear();
     for (auto &dev : devices)
         d->ui.audio_device->addItem(dev.name, dev.description);
