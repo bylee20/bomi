@@ -1,11 +1,20 @@
 #!/bin/sh
 
-sys=$(echo $MSYSTEM | tr '[:upper:]' '[:lower:]')
-dir=build/bomi-$sys-$(date +%Y%m%d%H%M%S)
+cur=$(pwd)
 
-#make skins
-#make imports
-#make translations
+sys=$(echo $MSYSTEM | tr '[:upper:]' '[:lower:]')
+if [ "$sys" = "mingw64" ]; then
+    arch="x86_64"
+else
+    arch="i386"
+fi
+
+name=bomi-$arch-$(date +%Y%m%d%H%M%S)
+dir=build/$name
+
+rsync -av --delete src/bomi/skins build
+rsync -av --delete src/bomi/imports build
+make translations
 
 install -d $dir
 cp build/bomi.exe $dir
@@ -25,3 +34,6 @@ cp $base/translations/qt_{ar,ca,cs,da,de,es,fa,fi,fr,gl,he}.qm translations/
 
 find QtQuick{,.2} -name 'lib*.a' | xargs rm
 
+dest=$cur/../bomi/windows/packages/net.xylosper.bomi.prog.$arch/data
+rm $dest/*
+7z a $dest/$name.7z *
