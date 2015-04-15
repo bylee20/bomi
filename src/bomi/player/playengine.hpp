@@ -109,7 +109,7 @@ public:
     auto isRunning() const -> bool { return state() & Running; }
     auto speed() const -> double;
     auto state() const -> State;
-    auto load(const Mrl &mrl, bool tryResume = true) -> void;
+    auto load(const Mrl &mrl, bool tryResume = true, const QString &sub = QString()) -> void;
     auto setMrl(const Mrl &mrl) -> void;
     auto edition() const -> EditionObject*;
     auto chapter() const -> ChapterObject*;

@@ -21,7 +21,7 @@ public:
     auto mainWindow() const -> MainWindow*;
     auto styleName() const -> QString;
     auto isUnique() const -> bool;
-    auto executeCommandLine() const -> bool;
+    auto executeToQuit() -> bool;
     auto availableStyleNames() const -> QStringList;
 #ifdef Q_OS_MAC
     auto globalMenuBar() const -> QMenuBar*;
@@ -37,6 +37,7 @@ public:
     auto isOpenGLDebugLoggerRequested() const -> bool;
     auto setMprisActivated(bool activated) -> void;
     auto sendMessage(MessageType type, const QJsonValue &t, int timeout = 5000) -> bool;
+    auto sendMessage(MessageType type, const QStringList &t, int timeout = 5000) -> bool;
     auto save() const -> void;
     auto load() -> void;
     auto setFixedFont(const QFont &font) -> void;

@@ -149,6 +149,7 @@ struct PlayEngine::Data {
     auto autoselect(const MrlState *s, QVector<SubComp> &loads) -> void;
     auto autoloadFiles(StreamType type) -> MpvFileList;
     auto autoloadSubtitle(const MrlState *s) -> T<MpvFileList, QVector<SubComp>>;
+    auto autoloadSubtitle(const MrlState *s, const MpvFileList &files) -> T<MpvFileList, QVector<SubComp>>;
 
     auto af(const MrlState *s) const -> QByteArray;
     auto vf(const MrlState *s) const -> QByteArray;
@@ -164,7 +165,7 @@ struct PlayEngine::Data {
     auto volume(const MrlState *s) const -> double
         { return s->audio_volume() * 100 * s->audio_amplifier() * 100 * 1e-3; }
 
-    auto loadfile(const Mrl &mrl, bool resume) -> void;
+    auto loadfile(const Mrl &mrl, bool resume, const QString &sub = QString()) -> void;
     auto updateMediaName(const QString &name = QString()) -> void;
 
     auto toTracks(const QVariant &var) -> QVector<StreamList>;

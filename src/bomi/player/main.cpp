@@ -38,14 +38,8 @@ int main(int argc, char **argv) {
     for (auto fmt : QImageWriter::supportedImageFormats())
         writableImageExts.push_back(QString::fromLatin1(fmt));
 
-    if (app->executeCommandLine())
+    if (app->executeToQuit())
         return 0;
-
-    if (app->isUnique()
-            && app->sendMessage(App::CommandLine, _ToJson(app->arguments()))) {
-        _Info("Another instance of bomi is already running. Exit this...");
-        return 0;
-    }
 
     const auto error = OGL::check();
     if (!error.isEmpty()) {

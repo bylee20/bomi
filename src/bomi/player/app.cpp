@@ -38,20 +38,95 @@ auto translator_load(const Locale &locale) -> bool;
 
 enum class LineCmd {
     Wake, Open, Action, LogLevel, OpenGLDebug, Debug,
-    DumpApiTree, DumpActionList, WinAssoc, WinUnassoc, WinAssocDefault
+    DumpApiTree, DumpActionList, WinAssoc, WinUnassoc, WinAssocDefault,
+    SetSubtitle, AddSubtitle,
 };
 
+static const QCommandLineOption s_dummy{u"__dummy__"_q};
+
+class CommandParser {
+public:
+    CommandParser();
+    auto addOption(LineCmd cmd, const QString &name, const QString &desc,
+                   const QString &valName = QString(),
+                   const QString &def = QString()) -> void
+        { addOption(cmd, QStringList(name), desc, valName, def); }
+    auto option(LineCmd cmd) const -> QCommandLineOption { return m_options.value(cmd, s_dummy); }
+    auto isSet(LineCmd cmd) const -> bool { return m_parser.isSet(option(cmd)); }
+    auto value(LineCmd cmd) const -> QString  { return m_parser.value(option(cmd)); }
+    auto values(LineCmd cmd) const -> QStringList { return m_parser.values(option(cmd)); }
+    auto parse(const QStringList &args) -> void { m_parser.process(args); }
+    auto name(LineCmd cmd) const -> QString { return option(cmd).names().first(); }
+    auto toJson() const -> QJsonArray
+    {
+        QStringList args;
+        args.push_back(qApp->applicationFilePath());
+        auto put = [&] (LineCmd cmd) {
+            if (!isSet(cmd)) return false;
+            args.push_back("--"_a % name(cmd)); return true;
+        };
+        put(LineCmd::Wake);
+        if (put(LineCmd::SetSubtitle))
+            args.push_back(QFileInfo(value(LineCmd::SetSubtitle)).absoluteFilePath());
+        if (put(LineCmd::AddSubtitle))
+            args.push_back(QFileInfo(value(LineCmd::AddSubtitle)).absoluteFilePath());
+        if (put(LineCmd::Action))
+            args.push_back(value(LineCmd::Action));
+        const auto mrl = this->mrl();
+        if (!mrl.isEmpty())
+            args.push_back(mrl.toString());
+        return _ToJson(args);
+    }
+    auto stdoutLogLevel() const -> Log::Level
+    {
+        Log::Level lv = Log::Off;
+        if (isSet(LineCmd::LogLevel))
+            lv = Log::level(value(LineCmd::LogLevel));
+        if (isSet(LineCmd::Debug))
+            lv = qMax(lv, Log::Debug);
+        return lv;
+    }
+    auto mrl() const -> Mrl
+    {
+        if (isSet(LineCmd::Open)) return Mrl(value(LineCmd::Open));
+        const auto list = m_parser.positionalArguments();
+        return list.isEmpty() ? Mrl() : Mrl(list.first());
+    }
+private:
+    auto addOption(LineCmd cmd, const QStringList &names, const QString &desc,
+                   const QString &valName = QString(),
+                   const QString &def = QString()) -> void;
+    QMap<LineCmd, QCommandLineOption> m_options;
+    QCommandLineParser m_parser;
+};
+
+CommandParser::CommandParser()
+{
+    m_parser.addHelpOption();
+    m_parser.addVersionOption();
+    const auto desc = u"The file path or URL to open."_q;
+    m_parser.addPositionalArgument(u"mrl"_q, desc, u"mrl"_q);
+}
+
+auto CommandParser::addOption(LineCmd cmd, const QStringList &names, const QString &desc,
+                              const QString &valName, const QString &def) -> void
+{
+    if (desc.contains(_L("%1")))
+        m_parser.addOption(*m_options.insert(cmd, QCommandLineOption{ names, desc.arg('<'_q % valName % '>'_q), valName, def }));
+    else
+        m_parser.addOption(*m_options.insert(cmd, QCommandLineOption{ names, desc, valName, def }));
+}
+
 struct App::Data {
-    Data(App *p)
-        : p(p), dummy(u"__dummy__"_q)
-        , connection(u"net.xylosper.bomi"_q, nullptr) {}
+    Data(App *p): p(p), connection(_L("net.xylosper.bomi"), nullptr) {}
+
     App *p = nullptr;
     bool gldebug = false;
     QStringList styleNames;
     QString styleName = qApp->style()->objectName();
     bool unique = true;
     QMap<QString, QVariant> openFolders;
-    Mrl pended;
+    struct { Mrl mrl; QString sub; auto clear() { mrl = {}; sub.clear(); } } pended;
 #ifdef Q_OS_MAC
     QMenuBar *mb = new QMenuBar;
 #else
@@ -65,77 +140,18 @@ struct App::Data {
 
     LogOption logOption = LogOption::default_();
     Locale locale;
-    QCommandLineOption dummy;
-    QCommandLineParser cmdParser, msgParser;
-    QMap<LineCmd, QCommandLineOption> options;
     QFont fixedFont = OS::defaultFixedFont();
     LocalConnection connection;
+    CommandParser *parser = nullptr;
 
-    auto open(const Mrl &mrl) -> void
+    auto open(const Mrl &mrl, const QString &sub) -> void
     {
         if (!main || !main->isSceneGraphInitialized())
-            pended = mrl;
-        else
-            main->openFromFileManager(mrl);
-    }
-    auto addOption(LineCmd cmd, const QString &name, const QString &desc,
-                   const QString &valName = QString(),
-                   const QString &def = QString()) -> void
-    { addOption(cmd, QStringList(name), desc, valName, def); }
-    auto addOption(LineCmd cmd, const QStringList &names, const QString &desc,
-                   const QString &valName = QString(),
-                   const QString &def = QString()) -> void
-    {
-        if (desc.contains("%1"_a)) {
-            const QCommandLineOption opt(names, desc.arg('<'_q % valName % '>'_q),
-                                         valName, def);
-            options.insert(cmd, opt);
-        } else
-            options.insert(cmd, QCommandLineOption(names, desc, valName, def));
-    }
-    auto execute(const QCommandLineParser *parser) -> Log::Level
-    {
-        auto isSet = [parser, this] (LineCmd cmd)
-            { return parser->isSet(options.value(cmd, dummy)); };
-        auto value = [parser, this] (LineCmd cmd)
-            { return parser->value(options.value(cmd, dummy)); };
-        auto values = [parser, this] (LineCmd cmd)
-            { return parser->values(options.value(cmd, dummy)); };
-        Log::Level lvStdOut = Log::Off;
-        if (isSet(LineCmd::LogLevel))
-            lvStdOut = Log::level(value(LineCmd::LogLevel));
-        if (isSet(LineCmd::OpenGLDebug))
-            gldebug = true;
-        if (main) {
-            if (isSet(LineCmd::Wake))
-                main->wake();
-            Mrl mrl;
-            if (isSet(LineCmd::Open))
-                mrl = Mrl(value(LineCmd::Open));
-            if (!parser->positionalArguments().isEmpty())
-                mrl = Mrl(parser->positionalArguments().first());
-            if (!mrl.isEmpty())
-                open(mrl);
-            const auto args = values(LineCmd::Action);
-            if (!args.isEmpty())
-                RootMenu::instance().execute(args[0]);
-        }
-        if (isSet(LineCmd::Debug)) {
-            lvStdOut = qMax(lvStdOut, Log::Debug);
-            gldebug = true;
-        }
-        return lvStdOut;
-    }
-    auto getCommandParser(QCommandLineParser *parser) const
-    -> QCommandLineParser*
-    {
-        for (auto it = options.begin(); it != options.end(); ++it)
-            parser->addOption(*it);
-        parser->addHelpOption();
-        parser->addVersionOption();
-        const auto desc = tr("The file path or URL to open.");
-        parser->addPositionalArgument(u"mrl"_q, desc, u"mrl"_q);
-        return parser;
+            pended = { mrl, sub };
+        else if (!mrl.isEmpty())
+            main->openFromFileManager(mrl, sub);
+        else if (!sub.isEmpty())
+            main->setSubtitle(sub);
     }
 
     auto import() -> bool
@@ -183,33 +199,39 @@ App::App(int &argc, char **argv)
     setOrganizationDomain(u"xylosper.net"_q);
     setApplicationName(_L(name()));
     setApplicationVersion(_L(version()));
+
     OS::initialize();
 
-    d->addOption(LineCmd::Open, u"open"_q,
-                 tr("Open given %1 for file path or URL."), u"mrl"_q);
-    d->addOption(LineCmd::Wake, u"wake"_q,
-                 tr("Bring the application window in front."));
-    d->addOption(LineCmd::Action, u"action"_q,
-                 tr("Exectute %1 action or open %1 menu."), u"id"_q);
-    d->addOption(LineCmd::LogLevel, u"log-level"_q,
-                 tr("Maximum verbosity for log. %1 should be one of nexts:")
-                 % "\n    "_a % Log::levelNames().join(u", "_q), u"lv"_q);
-    d->addOption(LineCmd::OpenGLDebug, u"opengl-debug"_q,
-                 tr("Turn on OpenGL debug logger."));
-    d->addOption(LineCmd::Debug, u"debug"_q,
-                 tr("Turn on options for debugging."));
-    d->addOption(LineCmd::DumpApiTree, u"dump-api-tree"_q,
-                 tr("Dump API structure tree to stdout."));
-    d->addOption(LineCmd::DumpActionList, u"dump-action-list"_q,
-                 tr("Dump executable action list to stdout."));
+    _New(d->parser);
+    d->parser->addOption(LineCmd::Open, u"open"_q,
+                         u"Open given %1 for file path or URL."_q, u"mrl"_q);
+    d->parser->addOption(LineCmd::SetSubtitle, u"set-subtitle"_q,
+                         u"Set subtitle file to display."_q, u"file"_q);
+//    d->parser->addOption(LineCmd::AddSubtitle, u"add-subtitle"_q,
+//                         u"Add subtitle file to display."_q, u"file"_q);
+    d->parser->addOption(LineCmd::Wake, u"wake"_q,
+                         u"Bring the application window in front."_q);
+    d->parser->addOption(LineCmd::Action, u"action"_q,
+                         u"Exectute %1 action or open %1 menu."_q, u"id"_q);
+    d->parser->addOption(LineCmd::LogLevel, u"log-level"_q,
+                         u"Maximum verbosity for log. %1 should be one of nexts:\n    "_q
+                         % Log::levelNames().join(u", "_q), u"lv"_q);
+    d->parser->addOption(LineCmd::OpenGLDebug, u"opengl-debug"_q,
+                         u"Turn on OpenGL debug logger."_q);
+    d->parser->addOption(LineCmd::Debug, u"debug"_q,
+                         u"Turn on options for debugging."_q);
+    d->parser->addOption(LineCmd::DumpApiTree, u"dump-api-tree"_q,
+                         u"Dump API structure tree to stdout."_q);
+    d->parser->addOption(LineCmd::DumpActionList, u"dump-action-list"_q,
+                         u"Dump executable action list to stdout."_q);
 #ifdef Q_OS_WIN
     d->addOption(LineCmd::WinAssoc, u"win-assoc"_q, u"Associate given comma-separated extension list."_q, u"ext"_q);
     d->addOption(LineCmd::WinUnassoc, u"win-unassoc"_q, u"Unassociate all extensions."_q);
     d->addOption(LineCmd::WinAssocDefault, u"win-assoc-default"_q, u"Associate default extensions."_q);
 #endif
-    d->getCommandParser(&d->cmdParser)->process(arguments());
-    d->getCommandParser(&d->msgParser);
-    auto lvStdOut = d->execute(&d->cmdParser);
+    d->parser->parse(arguments());
+    d->gldebug = d->parser->isSet(LineCmd::OpenGLDebug);
+    const auto lvStdOut = d->parser->stdoutLogLevel();
 
     d->import();
 
@@ -268,30 +290,29 @@ App::~App() {
     delete d;
     OS::finalize();
     RootMenu::finalize();
+    delete d->parser;
 }
 
 auto _CommonExtList(ExtTypes ext) -> QStringList;
 
-auto App::executeCommandLine() const -> bool
+auto App::executeToQuit() -> bool
 {
     bool done = false;
-    auto isSet = [&] (LineCmd cmd) {
-        if (!d->cmdParser.isSet(d->options.value(cmd, d->dummy)))
-            return false;
-        return done = true;
-    };
-    auto value = [&] (LineCmd cmd)
-        { return d->cmdParser.value(d->options.value(cmd, d->dummy)); };
+    auto isSet = [&] (LineCmd cmd) { return done |= d->parser->isSet(cmd); };
     if (isSet(LineCmd::DumpApiTree))
         AppObject::dumpInfo();
     if (isSet(LineCmd::DumpActionList))
         RootMenu::dumpInfo();
     if (isSet(LineCmd::WinAssoc))
-        OS::associateFileTypes(nullptr, true, value(LineCmd::WinAssoc).split(','_q));
+        OS::associateFileTypes(nullptr, true, d->parser->value(LineCmd::WinAssoc).split(','_q));
     if (isSet(LineCmd::WinAssocDefault))
         OS::associateFileTypes(nullptr, true, _CommonExtList(VideoExt | AudioExt));
     if (isSet(LineCmd::WinUnassoc))
         OS::unassociateFileTypes(nullptr, true);
+    if (isUnique() && sendMessage(CommandLine, d->parser->toJson())) {
+        done = true;
+        _Info("Another instance of bomi is already running. Exit this...");
+    }
     return done;
 }
 
@@ -315,8 +336,8 @@ auto App::handleMessage(const QByteArray &message) -> void
     const auto contents = msg[u"contents"_q];
     switch (type) {
     case CommandLine:
-        d->msgParser.parse(_FromJson<QStringList>(contents));
-        d->execute(&d->msgParser);
+        d->parser->parse(_FromJson<QStringList>(contents));
+        runCommands();
         break;
     default:
         _Error("Unknown message: %%", message);
@@ -336,10 +357,9 @@ auto App::setMainWindow(MainWindow *mw) -> void
     d->main->setIcon(defaultIcon());
 #endif
     connect(d->main, &MainWindow::sceneGraphInitialized, this, [this] () {
-        if (!d->pended.isEmpty()) {
-            d->main->openFromFileManager(d->pended);
-            d->pended = Mrl();
-        }
+        if (!d->pended.mrl.isEmpty())
+            d->main->openFromFileManager(d->pended.mrl, d->pended.sub);
+        d->pended.clear();
     }, Qt::QueuedConnection);
 }
 
@@ -402,7 +422,7 @@ auto App::event(QEvent *event) -> bool
     switch ((int)event->type()) {
     case QEvent::FileOpen: {
         const auto ev = static_cast<QFileOpenEvent*>(event);
-        d->open(Mrl(ev->url().toString()));
+        d->open(Mrl(ev->url().toString()), QString());
         event->accept();
         return true;
     } case ReopenEvent:
@@ -423,7 +443,18 @@ auto App::globalMenuBar() const -> QMenuBar*
 
 auto App::runCommands() -> void
 {
-    d->execute(&d->cmdParser);
+//    if (isSet(LineCmd::OpenGLDebug))
+//        gldebug = true;
+    if (!d->main)
+        return;
+    if (d->parser->isSet(LineCmd::Wake))
+        d->main->wake();
+    const auto mrl = d->parser->mrl();
+    const auto sub = d->parser->value(LineCmd::SetSubtitle);
+    d->open(mrl, sub);
+    const auto args = d->parser->values(LineCmd::Action);
+    if (!args.isEmpty())
+        RootMenu::instance().execute(args[0]);
 }
 
 auto App::sendMessage(MessageType type, const QJsonValue &json, int timeout) -> bool

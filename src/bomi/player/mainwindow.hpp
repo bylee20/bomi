@@ -13,7 +13,8 @@ class MainWindow : public QQuickView {
 public:
     MainWindow();
     ~MainWindow();
-    auto openFromFileManager(const Mrl &mrl) -> void;
+    auto openFromFileManager(const Mrl &mrl, const QString &sub = QString()) -> void;
+    auto setSubtitle(const QString &sub) -> void;
     auto isFullScreen() const -> bool;
     auto setFullScreen(bool full, bool updateLastGeometry = true) -> void;
     auto wake() -> void;

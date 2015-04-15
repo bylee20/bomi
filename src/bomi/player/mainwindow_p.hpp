@@ -184,14 +184,16 @@ struct MainWindow::Data {
     auto plugEngine() -> void;
     auto initItems() -> void;
     auto plugMenu() -> void;
-    auto load(const Mrl &mrl, bool play = true, bool tryResume = true) -> void;
+    auto load(const Mrl &mrl, bool play = true,
+              bool tryResume = true, const QString &sub = QString()) -> void;
     auto reloadSkin() -> void;
     auto trigger(QAction *action) -> void;
     auto setCursorVisible(bool visible) -> void;
     auto cancelToHideCursor() -> void;
     auto readyToHideCursor() -> void;
     auto initContextMenu() -> void;
-    auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void;
+    auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls,
+                  const QString &sub = QString()) -> void;
     auto openDir(const QString &dir = QString()) -> void;
     auto screenSize() const -> QSize;
     auto updateWaitingMessage() -> void;

@@ -252,16 +252,16 @@ auto MainWindow::Data::updateWaitingMessage() -> void
 }
 
 auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
-                                const QList<Mrl> &mrls) -> void
+                                const QList<Mrl> &mrls, const QString &sub) -> void
 {
     if (mrls.isEmpty())
         return;
     const auto mrl = mrls.first();
-    auto checkAndPlay = [this] (const Mrl &mrl) {
+    auto checkAndPlay = [&] (const Mrl &mrl) {
         if (mrl != e.mrl())
             return false;
         if (!e.isPlaying())
-            load(mrl);
+            load(mrl, true, true, sub);
         return true;
     };
     if (!checkAndPlay(mrl)) {
@@ -285,7 +285,7 @@ auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
                 list.append(mrl);
         }
         playlist.setList(list);
-        load(mrl, mode.start_playback);
+        load(mrl, mode.start_playback, true, sub);
         if (!mrl.isDvd())
             recent.stack(mrl);
     }
@@ -738,10 +738,11 @@ auto MainWindow::Data::videoSize(const WindowSize &hint) -> QSize
     return (video * qSqrt(r)).toSize();
 }
 
-auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume) -> void
+auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume,
+                            const QString &sub) -> void
 {
     if (play)
-        e.load(mrl, tryResume);
+        e.load(mrl, tryResume, sub);
     else
         e.setMrl(mrl);
 }

@@ -146,7 +146,7 @@ auto MainWindow::setupSkinPlayer() -> void
     }
 }
 
-auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
+auto MainWindow::openFromFileManager(const Mrl &mrl, const QString &sub) -> void
 {
     if (mrl.isDir())
         d->openDir(mrl.toLocalFile());
@@ -155,9 +155,14 @@ auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
             d->playlist.open(mrl, EncodingInfo());
         else {
             const auto mode = d->pref.open_media_from_file_manager();
-            d->openWith(mode, QList<Mrl>() << mrl);
+            d->openWith(mode, QList<Mrl>() << mrl, sub);
         }
     }
+}
+
+auto MainWindow::setSubtitle(const QString &sub) -> void
+{
+    d->e.setSubtitleFiles(QStringList{sub}, d->pref.sub_enc());
 }
 
 auto MainWindow::engine() const -> PlayEngine*

@@ -153,7 +153,7 @@ auto PlayEngine::Data::updateVideoSubOptions() -> void
     mpv.tellAsync("vo_cmdline", videoSubOptions(&params));
 }
 
-auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume) -> void
+auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume, const QString &sub) -> void
 {
     QString file = mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
     if (file.isEmpty())
@@ -161,6 +161,8 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume) -> void
     OptionList opts;
     opts.add("pause"_b, p->isPaused() || hasImage);
     opts.add("resume-playback", resume);
+    if (!sub.isEmpty())
+        opts.add("sub-file", sub.toUtf8(), true);
     mpv.tell("loadfile"_b, file.toUtf8(), "replace"_b, opts.get());
 }
 
@@ -182,6 +184,8 @@ auto PlayEngine::Data::updateMediaName(const QString &name) -> void
 auto PlayEngine::Data::onLoad() -> void
 {
     auto file = mpv.get<MpvFile>("stream-open-filename");
+    const auto sub = mpv.get<MpvUtf8>("file-local-options/sub-file").data;
+    mpv.setAsync("file-local-options/sub-file", MpvFileList());
     t.local = localCopy();
     auto local = t.local.data();
 
@@ -236,13 +240,9 @@ auto PlayEngine::Data::onLoad() -> void
         mpv.setAsync("file-local-options/audio-file", autoloadFiles(StreamAudio));
     }
     QVector<SubComp> loads;
-    if (found && local->sub_tracks().isValid()) {
-        setFiles("file-local-options/sub-file"_b, "file-local-options/sid"_b, local->sub_tracks());
-        loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive(), EncodingInfo(), -1);
-    } else {
-        QMutexLocker locker(&mutex);
+    auto loadSub = [&] (auto &&res) {
         MpvFileList files, encs;
-        _R(files, loads) = autoloadSubtitle(local);
+        _R(files, loads) = res;
         if (!files.names.isEmpty()) {
             mpv.setAsync("options/subcp", assEncodings[files.names.front()].name().toLatin1());
             mpv.setAsync("file-local-options/sub-file", files);
@@ -257,6 +257,20 @@ auto PlayEngine::Data::onLoad() -> void
             mpv.setAsync("file-local-options/sid", "no"_b);
         else
             mpv.setAsync("file-local-options/sid", "auto"_b);
+    };
+    if (sub.isEmpty()) {
+        if (found && local->sub_tracks().isValid()) {
+            setFiles("file-local-options/sub-file"_b, "file-local-options/sid"_b, local->sub_tracks());
+            loads = restoreInclusiveSubtitles(local->sub_tracks_inclusive(), EncodingInfo(), -1);
+        } else {
+            QMutexLocker locker(&mutex);
+            loadSub(autoloadSubtitle(local));
+        }
+    } else {
+        QMutexLocker locker(&mutex);
+        loadSub(autoloadSubtitle(local, QStringList{sub}));
+        for (auto &comp : loads)
+            comp.selection() = true;
     }
 
     local->set_last_played_date_time(QDateTime::currentDateTime());
@@ -823,24 +837,29 @@ auto PlayEngine::Data::autoselect(const MrlState *s, QVector<SubComp> &loads) ->
         loads[selected[i]].selection() = true;
 }
 
-auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<MpvFileList, QVector<SubComp>>
+auto PlayEngine::Data::autoloadSubtitle(const MrlState *s, const MpvFileList &subs)
+-> T<MpvFileList, QVector<SubComp>>
 {
-    const auto subs = autoloadFiles(StreamSubtitle);
     MpvFileList files;
     QVector<SubComp> loads;
     for (auto &file : subs.names) {
-        Subtitle sub;
-        const auto enc = EncodingInfo::detect(EncodingInfo::Subtitle, file);
-        if (sub.load(file, enc)) {
-            for (int i = 0; i < sub.size(); ++i)
-                loads.push_back(sub[i]);
-        } else {
-            files.names.push_back(file);
-            assEncodings[file] = enc;
-        }
+       Subtitle sub;
+       const auto enc = EncodingInfo::detect(EncodingInfo::Subtitle, file);
+       if (sub.load(file, enc)) {
+           for (int i = 0; i < sub.size(); ++i)
+               loads.push_back(sub[i]);
+       } else {
+           files.names.push_back(file);
+           assEncodings[file] = enc;
+       }
     }
     autoselect(s, loads);
     return _T(files, loads);
+}
+
+auto PlayEngine::Data::autoloadSubtitle(const MrlState *s) -> T<MpvFileList, QVector<SubComp>>
+{
+    return autoloadSubtitle(s, autoloadFiles(StreamSubtitle));
 }
 
 auto PlayEngine::Data::localCopy() -> QSharedPointer<MrlState>
