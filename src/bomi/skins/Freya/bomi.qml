@@ -86,7 +86,7 @@ B.BaseApp {
 
                 B.Button {
                     id: play; width: 32; height: 32
-                    action: "play/pause"; icon.prefix: engine.playing ? "pause" : "play"
+                    action: "play/play-pause"; icon.prefix: engine.playing ? "pause" : "play"
                 }
 
                 B.Button {

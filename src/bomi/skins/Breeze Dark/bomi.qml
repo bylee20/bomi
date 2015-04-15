@@ -58,7 +58,7 @@ Cp.AppWithDock {
 
             Cp.Button {
                 id: playPause; width: 24; height: 24
-                action: "play/pause"; icon.prefix: engine.running ? "pause" : "play"
+                action: "play/play-pause"; icon.prefix: engine.running ? "pause" : "play"
             }
             Cp.Button {
                 id: playStop; width: 24; height: 24

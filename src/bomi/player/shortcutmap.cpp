@@ -65,7 +65,7 @@ auto ShortcutMap::preset(Preset p) -> ShortcutMap
         keys[u"tool/playlist/append-file"_q] << Qt::CTRL + Qt::ALT + Qt::Key_L;
         keys[u"play/prev"_q] << Qt::ALT + Qt::CTRL + Qt::Key_Left;
         keys[u"play/next"_q] << Qt::ALT + Qt::CTRL + Qt::Key_Right;
-        keys[u"play/pause"_q] << Qt::Key_Space;
+        keys[u"play/play-pause"_q] << Qt::Key_Space;
         keys[u"play/seek/backword1"_q] << Qt::Key_Left;
         keys[u"play/seek/forward1"_q] << Qt::Key_Right;
         keys[u"play/repeat/quit"_q] << Qt::CTRL + Qt::Key_Backslash;
@@ -105,7 +105,7 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"open/file"_q] << Qt::CTRL + Qt::Key_F;
        map[u"open/folder"_q] << Qt::CTRL + Qt::Key_G;
 
-       map[u"play/pause"_q] << Qt::Key_Space;
+       map[u"play/play-pause"_q] << Qt::Key_Space;
        map[u"play/prev"_q] << Qt::CTRL + Qt::Key_Left;
        map[u"play/next"_q] << Qt::CTRL + Qt::Key_Right;
        map[u"play/state"_q] << Qt::Key_Semicolon;

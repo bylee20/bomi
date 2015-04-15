@@ -49,7 +49,7 @@ B.AppWithFloating {
                 MediaButton {
                     id: play; size: 82
                     icon.source: checked ? "pause.png" : "play.png"
-                    action: "play/pause"; checked: engine.playing
+                    action: "play/play-pause"; checked: engine.playing
                 }
                 MediaButton {
                     id: forward; offset: 1

@@ -105,7 +105,7 @@ B.AppWithFloating {
                     }
                     B.Button {
                         id: pause; width: parent.height; height: width
-                        icon.prefix: (engine.playing ? "pause" : "play"); action: "play/pause"
+                        icon.prefix: (engine.playing ? "pause" : "play"); action: "play/play-pause"
                     }
 
                     B.Button {

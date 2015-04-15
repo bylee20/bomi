@@ -290,7 +290,9 @@ RootMenu::RootMenu()
     });
 
     d->menu(u"play"_q, QT_TR_NOOP("Play"), [=] () {
-        d->action(u"pause"_q, QT_TR_NOOP("Start"));
+        d->action(u"play-pause"_q, QT_TR_NOOP("Play"));
+        d->action(u"play"_q, QT_TR_NOOP("Play"))->setVisible(false);
+        d->action(u"pause"_q, QT_TR_NOOP("Pause"))->setVisible(false);
         d->action(u"stop"_q, QT_TR_NOOP("Stop"));
         d->separator();
         d->action(u"prev"_q, QT_TR_NOOP("Previous"));

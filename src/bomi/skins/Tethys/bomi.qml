@@ -92,7 +92,7 @@ B.AppWithDock {
                 anchors.verticalCenter: parent.verticalCenter
             }
             B.Button {
-                size: bigSize; action: "play/pause"
+                size: bigSize; action: "play/play-pause"
                 icon.prefix: engine.playing ? "pause" : "play"
                 anchors.verticalCenter: parent.verticalCenter
             }

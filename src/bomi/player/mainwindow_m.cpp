@@ -204,7 +204,9 @@ auto MainWindow::Data::plugMenu() -> void
     connect(play[u"stop"_q], &QAction::triggered, &e, &PlayEngine::stop);
     PLUG_STEP(play(u"speed"_q).g(), play_speed, setSpeed);
 
-    connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
+    connect(play[u"play-pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
+    connect(play[u"play"_q], &QAction::triggered, p, &MainWindow::play);
+    connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::pause);
     connect(play(u"repeat"_q).g(), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         const int key = a->data().toInt();

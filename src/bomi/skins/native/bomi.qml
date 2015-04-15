@@ -44,7 +44,7 @@ B.AppWithDock {
                 MediaButton { icon: "media-skip-backward"; action: "play/prev" }
                 MediaButton {
                     icon: "media-playback-" + (engine.playing ? "pause" : "start")
-                    action: "play/pause"
+                    action: "play/play-pause"
                 }
                 MediaButton { icon: "media-playback-stop"; action: "play/stop" }
                 MediaButton { icon: "media-skip-forward"; action: "play/next" }

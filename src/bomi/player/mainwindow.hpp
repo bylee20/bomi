@@ -19,6 +19,7 @@ public:
     auto wake() -> void;
     auto togglePlayPause() -> void;
     auto play() -> void;
+    auto pause() -> void;
     auto engine() const -> PlayEngine*;
     auto qmlEngine() const -> QQmlEngine* { return QQuickView::engine(); }
     auto playlist() const -> PlaylistModel*;

@@ -46,7 +46,7 @@ B.AppWithDock {
             anchors { fill: parent; margins: 4 } spacing: 3;
             B.Button {
                 id: playPause; size: parent.height
-                action: "play/pause";
+                action: "play/play-pause";
                 adjustIconSize: true
                 icon.source: engine.playing ? "pause.png" : "play.png"
                 paddings: pressed ? 2 : (hovered ? 0 : 1)

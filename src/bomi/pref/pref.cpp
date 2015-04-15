@@ -183,7 +183,7 @@ auto Pref::defaultMouseActionMap() -> MouseActionMap
     auto &right = map[MouseBehavior::RightClick];
     for (auto item : KeyModifierInfo::items())
         right[item.value] = u"context-menu"_q;
-    map[MouseBehavior::MiddleClick][KeyModifier::None] = u"play/pause"_q;
+    map[MouseBehavior::MiddleClick][KeyModifier::None] = u"play/play-pause"_q;
     map[MouseBehavior::ScrollUp][KeyModifier::None] = u"audio/volume/increase"_q;
     map[MouseBehavior::ScrollUp][KeyModifier::Ctrl] = u"audio/amp/increase"_q;
     map[MouseBehavior::ScrollDown][KeyModifier::None] = u"audio/volume/decrease"_q;

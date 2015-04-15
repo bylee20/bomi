@@ -181,6 +181,15 @@ auto MainWindow::exit() -> void
     }
 }
 
+auto MainWindow::pause() -> void
+{
+    d->pausedByHiding = false;
+    if (d->stateChanging)
+        return;
+    if (d->e.isPlaying())
+        d->e.pause();
+}
+
 auto MainWindow::play() -> void
 {
     if (d->stateChanging)
@@ -204,22 +213,10 @@ auto MainWindow::play() -> void
 
 auto MainWindow::togglePlayPause() -> void
 {
-    d->pausedByHiding = false;
-    if (d->stateChanging)
-        return;
-    if (d->e.mrl().isImage())
-        d->menu(u"play"_q)[u"next"_q]->trigger();
-    else {
-        const auto state = d->e.state();
-        switch (state) {
-        case PlayEngine::Playing:
-            d->e.pause();
-            break;
-        default:
-            play();
-            break;
-        }
-    }
+    if (d->e.isPlaying() && !d->e.mrl().isImage())
+        pause();
+    else
+        play();
 }
 
 auto MainWindow::isSceneGraphInitialized() const -> bool

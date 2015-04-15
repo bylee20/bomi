@@ -59,7 +59,7 @@ B.AppWithDock {
 
             B.Button {
                 id: playPause; width: 24; height: 24
-                action: "play/pause"; icon.prefix: engine.playing ? "pause" : "play"
+                action: "play/play-pause"; icon.prefix: engine.playing ? "pause" : "play"
             }
             B.Button {
                 id: playStop; width: 24; height: 24

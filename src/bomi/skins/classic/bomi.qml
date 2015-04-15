@@ -66,7 +66,7 @@ B.AppWithDock {
             width: parent.width; height: 35
             RowLayout {
                 anchors.margins: 2; anchors.fill: parent; spacing: 1
-                FramedButton { id: pause; width: height; height: parent.height; action: "play/pause"; icon.source: engine.playing ? "pause.png" : "play.png" }
+                FramedButton { id: pause; width: height; height: parent.height; action: "play/play-pause"; icon.source: engine.playing ? "pause.png" : "play.png" }
                 Grid {
                     id: grid; columns: 2; width: h*2; readonly property real h: pause.height/2
                     FramedButton { id: backward; width: grid.h; height: grid.h; action: "play/seek/backward1"; icon.source: "backward.png" }

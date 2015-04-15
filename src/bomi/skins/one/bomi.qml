@@ -180,7 +180,7 @@ B.AppWithFloating {
                 id: play;
                 anchors.centerIn: parent; width: 40; height: 40
                 readonly property string prefix: engine.playing ? "pause" : "play"
-                action: "play/pause"; icon.prefix: prefix
+                action: "play/play-pause"; icon.prefix: prefix
                 mask: prefix + ".png"
                 Item {
                     readonly property real gap: engine.playing ? 4 : 2

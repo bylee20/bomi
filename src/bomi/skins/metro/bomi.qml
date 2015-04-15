@@ -93,11 +93,8 @@ B.AppWithDock {
                     anchors.horizontalCenter: parent.horizontalCenter
                     MetroButton { prefix: "prev"; action: "play/prev" }
                     MetroButton { prefix: "backward"; action: "play/seek/backward1" }
-                    MetroButton { prefix: "pause"; action: engine.stopped ? "" : "play/pause" }
-                    MetroButton {
-                        prefix: engine.running ? "stop" : "play"
-                        action: engine.stopped ? "play/pause" : "play/stop"
-                    }
+                    MetroButton { prefix: "pause"; action: "play/play-pause"; enabled: !engine.stopped }
+                    MetroButton { prefix: engine.running ? "stop" : "play"; action: "play/" + prefix }
                     MetroButton { prefix: "forward"; action: "play/seek/forward1" }
                     MetroButton { prefix: "next"; action: "play/next" }
                 }
@@ -136,7 +133,7 @@ B.AppWithDock {
                 anchors { fill: parent; leftMargin: 20; rightMargin: 20 }
                 MetroButton { prefix: "prev"; action: "play/prev" }
 
-                MetroButton { prefix: engine.playing ? "pause" : "play"; action: "play/pause" }
+                MetroButton { prefix: engine.playing ? "pause" : "play"; action: "play/play-pause" }
                 MetroButton { prefix: "next"; action: "play/next" }
                 Item {
                     height: 30; Layout.fillWidth: true

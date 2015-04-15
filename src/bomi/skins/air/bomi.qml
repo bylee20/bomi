@@ -60,7 +60,7 @@ B.AppWithDock {
                     ImageButton {
                         id: play
                         icon.source: engine.playing ? "pause.png" : "play.png"
-                        action: "play/pause"; size: 28
+                        action: "play/play-pause"; size: 28
                     }
                     ImageButton {
                         id: forward
