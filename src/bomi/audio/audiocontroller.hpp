@@ -6,7 +6,7 @@ struct af_cfg;                          struct af_info;
 struct mp_chmap;                        struct AudioNormalizerOption;
 class ChannelLayoutMap;                 class AudioFormat;
 class AudioEqualizer;
-enum class ClippingMethod;              enum class ChannelLayout;
+enum class ChannelLayout;
 
 class AudioController : public QObject {
     Q_OBJECT
@@ -17,7 +17,7 @@ public:
     auto isTempoScalerActivated() const -> bool;
     auto isNormalizerActivated() const -> bool;
     auto setNormalizerOption(const AudioNormalizerOption &option) -> void;
-    auto setClippingMethod(ClippingMethod method) -> void;
+    auto setSoftClip(bool soft) -> void;
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
     auto setOutputChannelLayout(ChannelLayout layout) -> void;
     auto setEqualizer(const AudioEqualizer &eq) -> void;

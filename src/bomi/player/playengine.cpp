@@ -496,9 +496,9 @@ auto PlayEngine::relativeSeek(int pos) -> void
     d->vp->stopSkipping();
 }
 
-auto PlayEngine::setClippingMethod_locked(ClippingMethod method) -> void
+auto PlayEngine::setSoftClip_locked(bool soft) -> void
 {
-    d->ac->setClippingMethod(method);
+    d->ac->setSoftClip(soft);
 }
 
 auto PlayEngine::setChannelLayoutMap_locked(const ChannelLayoutMap &map) -> void

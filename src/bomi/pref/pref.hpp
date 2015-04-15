@@ -17,7 +17,6 @@
 #include "enum/generateplaylist.hpp"
 #include "enum/autoselectmode.hpp"
 #include "enum/audiodriver.hpp"
-#include "enum/clippingmethod.hpp"
 #include "enum/verticalalignment.hpp"
 #include "enum/quicksnapshotsave.hpp"
 #include "enum/mousebehavior.hpp"
@@ -140,7 +139,8 @@ private:
     P0(ShortcutMap, shortcut_map, {})
 
     P1(QString, audio_device, u"auto"_q, "currentText")
-    P0(ClippingMethod, clipping_method, ClippingMethod::Auto)
+    P0(bool, soft_clip, true)
+    P0(bool, auto_unmute, false)
 
     P0(int, cache_local, 0)
     P0(int, cache_network, 25000)

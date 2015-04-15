@@ -64,7 +64,7 @@ struct AudioController::Data {
     mp_chmap chmap;
     af_instance *af = nullptr;
     AudioNormalizerOption normalizerOption;
-    ClippingMethod clip = ClippingMethod::Auto;
+    bool softClip = false;
     ChannelLayoutMap map = ChannelLayoutMap::default_();
     ChannelLayout layout = ChannelLayoutInfo::default_();
     AudioEqualizer eq;
@@ -105,9 +105,9 @@ AudioController::~AudioController()
     delete d;
 }
 
-auto AudioController::setClippingMethod(ClippingMethod method) -> void
+auto AudioController::setSoftClip(bool soft) -> void
 {
-    d->clip = method;
+    d->softClip = soft;
     d->dirty |= Clip;
 }
 
@@ -201,7 +201,7 @@ auto AudioController::reinitialize(mp_audio *from) -> int
     d->scaler.setFormat(buf_mixer_in);
     d->mixer.setFormat(buf_mixer_in, buf_mixer_out);
     d->mixer.setChannelLayoutMap(d->map);
-    d->mixer.setClippingMethod(d->clip);
+    d->mixer.setSoftClip(d->softClip);
     d->converter.setFormat(buf_to);
 
     d->fmt_to = (af_format)to->format;
@@ -267,7 +267,7 @@ auto AudioController::filter(mp_audio *data) -> int
         if (d->dirty & ChMap)
             d->mixer.setChannelLayoutMap(d->map);
         if (d->dirty & Clip)
-            d->mixer.setClippingMethod(d->clip);
+            d->mixer.setSoftClip(d->softClip);
         if (d->dirty & Equalizer)
             d->mixer.setEqualizer(d->eq);
         d->dirty = 0;

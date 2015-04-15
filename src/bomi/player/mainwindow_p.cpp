@@ -195,6 +195,8 @@ auto MainWindow::Data::plugEngine() -> void
     };
     connect(e.screen(), &QQuickItem::widthChanged, p, showSize);
     connect(e.screen(), &QQuickItem::heightChanged, p, showSize);
+    connect(&e, &PlayEngine::volumeChanged,
+            p, [=] () { if (pref.auto_unmute()) e.setAudioMuted(false); });
 }
 
 auto MainWindow::Data::initItems() -> void
@@ -705,7 +707,7 @@ auto MainWindow::Data::applyPref() -> void
     e.setAudioDevice_locked(p.audio_device());
     e.setVolumeNormalizerOption_locked(p.audio_normalizer());
     e.setChannelLayoutMap_locked(p.channel_manipulation());
-    e.setClippingMethod_locked(p.clipping_method());
+    e.setSoftClip_locked(p.soft_clip());
     e.setResyncAvWhenFilterToggled_locked(p.audio_filter_resync());
 
     e.setSubtitleStyle_locked(p.sub_style());

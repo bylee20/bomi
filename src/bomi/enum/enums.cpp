@@ -12,7 +12,6 @@
 #include "deintmethod.hpp"
 #include "interpolator.hpp"
 #include "audiodriver.hpp"
-#include "clippingmethod.hpp"
 #include "staysontop.hpp"
 #include "seekingstep.hpp"
 #include "generateplaylist.hpp"
@@ -74,9 +73,6 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<AudioDriver>()) {
         conv.variantToName = _EnumVariantToEnumName<AudioDriver>;
         conv.nameToVariant = _EnumNameToEnumVariant<AudioDriver>;
-    } else    if (metaType == qMetaTypeId<ClippingMethod>()) {
-        conv.variantToName = _EnumVariantToEnumName<ClippingMethod>;
-        conv.nameToVariant = _EnumNameToEnumVariant<ClippingMethod>;
     } else    if (metaType == qMetaTypeId<StaysOnTop>()) {
         conv.variantToName = _EnumVariantToEnumName<StaysOnTop>;
         conv.nameToVariant = _EnumNameToEnumVariant<StaysOnTop>;
@@ -138,9 +134,9 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
         return EnumNameVariantConverter();
     return conv;
 }
-auto _EnumMetaTypeIds() -> const std::array<int, 33>&
+auto _EnumMetaTypeIds() -> const std::array<int, 32>&
 {
-    static const std::array<int, 33> ids = {
+    static const std::array<int, 32> ids = {
         qMetaTypeId<TextThemeStyle>(),
         qMetaTypeId<SpeakerId>(),
         qMetaTypeId<ChannelLayout>(),
@@ -154,7 +150,6 @@ auto _EnumMetaTypeIds() -> const std::array<int, 33>&
         qMetaTypeId<DeintMethod>(),
         qMetaTypeId<Interpolator>(),
         qMetaTypeId<AudioDriver>(),
-        qMetaTypeId<ClippingMethod>(),
         qMetaTypeId<StaysOnTop>(),
         qMetaTypeId<SeekingStep>(),
         qMetaTypeId<GeneratePlaylist>(),

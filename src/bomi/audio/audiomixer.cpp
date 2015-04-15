@@ -66,8 +66,7 @@ static constexpr int Bands = AudioEqualizer::bands();
 struct AudioMixer::Data {
     AudioBufferFormat in, out;
     float amp = 1.0;
-    ClippingMethod clip = ClippingMethod::Auto;
-    ClippingMethod realClip = ClippingMethod::Hard;
+    bool softClip = false;
     bool mix = true;
     std::array<int, MP_SPEAKER_ID_COUNT> ch_index_src, ch_index_dst;
     ChannelManipulation ch_man;
@@ -133,7 +132,6 @@ auto AudioMixer::setFormat(const AudioBufferFormat &in, const AudioBufferFormat 
         d->ch_index_dst[out.channels().speaker[i]] = i;
     for (int i=0; i<in.channels().num; ++i)
         d->ch_index_src[in.channels().speaker[i]] = i;
-    setClippingMethod(d->clip);
     setChannelLayoutMap(d->map);
 
     const float fps = out.fps();
@@ -172,7 +170,7 @@ auto AudioMixer::run(AudioBufferPtr &src) -> AudioBufferPtr
         dest = src;
     auto dview = dest->view<float>();
     auto sview = src->constView<float>();
-    auto clip = d->realClip == ClippingMethod::Soft ? softclip : hardclip;
+    auto clip = d->softClip ? softclip : hardclip;
     auto equalize = [=] (float v, int ch) {
         if (!d->eq_zero) {
             const float x = v;
@@ -224,9 +222,7 @@ auto AudioMixer::run(AudioBufferPtr &src) -> AudioBufferPtr
     return dest;
 }
 
-auto AudioMixer::setClippingMethod(ClippingMethod method) -> void
+auto AudioMixer::setSoftClip(bool soft) -> void
 {
-    d->realClip = d->clip = method;
-    if (d->realClip == ClippingMethod::Auto)
-        d->realClip = ClippingMethod::Soft;
+    d->softClip = soft;
 }

@@ -6,7 +6,6 @@
 #include "channellayoutmap.hpp"
 #include "audionormalizeroption.hpp"
 #include "audioequalizer.hpp"
-#include "enum/clippingmethod.hpp"
 
 class AudioMixer : public AudioFilter {
 public:
@@ -16,7 +15,7 @@ public:
     auto setAmplifier(float level) -> void;
     auto setEqualizer(const AudioEqualizer &eq) -> void;
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
-    auto setClippingMethod(ClippingMethod method) -> void;
+    auto setSoftClip(bool soft) -> void;
     auto delay() const -> double override;
     auto run(AudioBufferPtr &in) -> AudioBufferPtr override;
     auto passthrough(const AudioBufferPtr &in) const -> bool override;

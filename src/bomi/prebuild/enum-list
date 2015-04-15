@@ -158,11 +158,6 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -PortAudio
 -OpenAL
 
-+ClippingMethod
--Auto[-Auto-clipping-]
--Soft[-Soft-clipping-]
--Hard[-Hard-clipping-]
-
 +StaysOnTop[[stays-on-top]][-Stays on Top-]
 -None[[off]][-Off-]
 -*Playing[[playing]][-Playing-]	

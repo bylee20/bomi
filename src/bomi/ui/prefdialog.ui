@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>17</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -557,19 +557,20 @@ Playback information
            <property name="title">
             <string>Volume control</string>
            </property>
-           <layout class="QFormLayout" name="formLayout_15">
-            <property name="fieldGrowthPolicy">
-             <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-            </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_50">
+           <layout class="QVBoxLayout" name="verticalLayout_30">
+            <item>
+             <widget class="QCheckBox" name="soft_clip">
               <property name="text">
-               <string>Clipping method</string>
+               <string>Use soft clipping</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="ClippingMethodComboBox" name="clipping_method"/>
+            <item>
+             <widget class="QCheckBox" name="auto_unmute">
+              <property name="text">
+               <string>Unmute when volume adjusted</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -2624,11 +2625,6 @@ You don't need to specify to this if geust is allowed.</string>
    <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>widget/datacombobox.hpp</header>
-  </customwidget>
-  <customwidget>
-   <class>ClippingMethodComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widget/enumcombobox.hpp</header>
   </customwidget>
   <customwidget>
    <class>ChannelManipulationWidget</class>
