@@ -11,6 +11,7 @@ Item {
     readonly property real scrollArea: 10
     property real margins: 0
     property list<ItemColumn> columns
+    readonly property alias blockHiding: d.blockHiding
     readonly property alias titleSeparator: __titleSeparator
     property alias model: list.model
     readonly property real contentWidth: {
@@ -58,6 +59,7 @@ Item {
 
     QtObject { id: d
         readonly property real pad: 15
+        property bool blockHiding: scrollBar.pressed
         function syncContentX(self, sync) {
             if (self.contentX < 0)
                 self.contentX = 0
@@ -304,17 +306,28 @@ Item {
             }
         }
 
-        ScrollBar {
-            width: 15; gap: 3
-            anchors {
-                top: list.top; bottom: list.bottom; right: parent.right
-                topMargin: d.pad;
-                bottomMargin: d.pad
-            }
-            target: list; radius: 2; color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
-            border { color: Qt.rgba(0.5, 0.5, 0.5, 0.5); width: 1 }
-        }
 
     }
+    ScrollBar {
+        id: scrollBar
+        width: 15; gap: 3
+        anchors {
+            top: list.top; bottom: list.bottom; right: parent.right
+//            topMargin: d.pad;
+//            bottomMargin: d.pad
+        }
+        target: list; radius: 2; color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
+        border { color: Qt.rgba(0.5, 0.5, 0.5, 0.5); width: 1 }
+    }
+//    ScrollBar {
+//        width: 15; gap: 3
+//        anchors {
+//            top: list.top; bottom: list.bottom; right: parent.right
+////            topMargin: d.pad;
+////            bottomMargin: d.pad
+//        }
+//        target: list; radius: 2; color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
+//        border { color: Qt.rgba(0.5, 0.5, 0.5, 0.5); width: 1 }
+//    }
 
 }

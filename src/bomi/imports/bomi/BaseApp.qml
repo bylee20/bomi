@@ -57,17 +57,21 @@ Item {
         AutoDisplayZone {
             id: rightEdge
             y: right.y
+            hideDelay: 2500
             width: 15; height: parent.height; anchors.right: parent.right
             auto: App.theme.controls.showToolOnMouseOverEdge
             target: App.playlist; box: right;
+            blockHiding: right.blockHiding
         }
 
         AutoDisplayZone {
             id: leftEdge
             y: left.y
+            hideDelay: 2500
             width: 15; height: parent.height; anchors.left: parent.left
             auto: App.theme.controls.showToolOnMouseOverEdge
             target: App.history; box: left;
+            blockHiding: left.blockHiding
         }
     }
 }

@@ -5,6 +5,7 @@ import QtQuick.Controls.Styles 1.0
 
 Item {
     id: dock
+    readonly property alias blockHiding: view.blockHiding
     readonly property real widthHint: {
         var w = 16
         if (_location.show)

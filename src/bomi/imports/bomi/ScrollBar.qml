@@ -8,6 +8,7 @@ Item { id: item;
     property alias radius: handle.radius
     property alias minimumLength: handle.hMin
     property real gap: 5
+    readonly property alias pressed: mouseArea.pressed
     opacity: 0
 
     Item {
@@ -68,11 +69,15 @@ Item { id: item;
                 }
             }
         }
+//        onWheel: {
+
+//        }
     }
 
     states: State {
         name: "visible"
-        when: target && target.visibleArea.heightRatio < 1 && (target.movingVertically || mouseArea.moving || mouseArea.containsMouse)
+        when: target && target.visibleArea.heightRatio < 1
+              && (target.movingVertically || mouseArea.moving || mouseArea.containsMouse)
         PropertyChanges { target: item; opacity: 1.0 }
     }
 

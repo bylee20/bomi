@@ -7,6 +7,7 @@ Item {
     property alias showDelay: showTimer.interval
     property alias hideDelay: hideTimer.timeout
     property bool auto: false
+    property bool blockHiding: false
     readonly property alias hovered: zone.hovered
     readonly property int status: target.visible ? __ToolVisible
                                 : hovered ? __ToolEdge : __ToolHidden
@@ -36,7 +37,9 @@ Item {
 
         B.HideTimer {
             id: hideTimer; target: zone.target
-            hide: function() { return !B.App.window.mouse.isIn(box) }
+            hide: function() {
+                return !B.App.window.mouse.isIn(box) && !blockHiding
+            }
         }
 
         Timer {

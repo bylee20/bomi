@@ -6,6 +6,7 @@ import bomi 1.0 as B
 Item {
     id: dock
     width: 300; height: parent.height
+    readonly property alias blockHiding: view.blockHiding
     readonly property int widthHint: view.contentWidth+view.margins*2
     property alias selectedIndex: view.selectedIndex
     readonly property QtObject history: B.App.history
