@@ -22,7 +22,14 @@ Item {
         hoverEnabled: true
         onEntered: entered = B.App.window.mouse.isIn(zone)
         onExited: entered = false
-        onHoveredChanged: showTimer.running = auto && hovered && target
+        onHoveredChanged: {
+            if (hovered && status != __ToolVisible)
+                B.App.window.showToolTip(zone, Qt.point(mouseX, mouseY), qsTr("Click to display"))
+            else
+                B.App.window.hideToolTip()
+            showTimer.running = auto && hovered && target
+        }
+        onPressed: mouse.accepted = status != __ToolVisible
         onClicked: { if (!target.visible) display() }
 
         function display() { target.visible = true; hideTimer.run() }
