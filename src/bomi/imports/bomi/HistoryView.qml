@@ -5,21 +5,29 @@ import bomi 1.0 as B
 
 Item {
     id: dock
-    x: -dock.width; visible: false
     width: 300; height: parent.height
     readonly property int widthHint: view.contentWidth+view.margins*2
     property alias selectedIndex: view.selectedIndex
-    property bool show: false
     readonly property QtObject history: B.App.history
-    states: State {
-        name: "show"; when: dock.show
-        PropertyChanges { target: dock; explicit: true; x: 0 }
-        PropertyChanges { target: dock; visible: true }
-    }
+    property int status: __ToolHidden
+    anchors.right: parent.left
+    visible: anchors.rightMargin < 0
+
+    states: [
+        State {
+            name: "hidden"; when: dock.status == __ToolHidden
+            PropertyChanges { target: dock; anchors.rightMargin: 0 }
+        }, State {
+            name: "visible"; when: dock.status == __ToolVisible
+            PropertyChanges { target: dock; anchors.rightMargin: -dock.width }
+        }, State {
+            name: "edge"; when: dock.status == __ToolEdge
+            PropertyChanges { target: dock; anchors.rightMargin: -15 }
+        }
+    ]
+
     transitions: Transition {
-        reversible: true; to: "show"
-        PropertyAction { property: "visible" }
-        NumberAnimation { property: "x" }
+        NumberAnimation { target: dock; property: "anchors.rightMargin" }
     }
 
     MouseArea {

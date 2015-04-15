@@ -10,46 +10,26 @@ Item {
     readonly property alias widthHintForLocation: view.locationWidth
     readonly property QtObject playlist: B.App.playlist
     property alias selectedIndex: view.selectedIndex
-    property real dest: 0
-    property bool show: false
-    width: widthHint; height: parent.height-2*y; visible: false
+    property int status: __ToolHidden
 
-    SequentialAnimation {
-        id: pull
-        PropertyAction { target: dock; property: "visible"; value: true }
-        NumberAnimation { target: dock; property: "x"; to: dock.dest }
-    }
+    width: widthHint; height: parent.height - 2*y; anchors.left: parent.right
+    visible: anchors.leftMargin < 0
 
-    SequentialAnimation {
-        id: push
-        NumberAnimation { target: dock; property: "x"; to: dock.parent.width }
-        PropertyAction { target: dock; property: "visible"; value: false }
-    }
-    function updateDestination() {
-        dock.dest = dock.parent.width - dock.width
-        push.running = pull.running = false
-        if (show)
-            dock.x = dest
-        else
-            dock.x = parent.width
-        dock.visible = show
-    }
-    Connections {
-        target: parent
-        onWidthChanged: {
-            updateDestination()
-
+    states: [
+        State {
+            name: "hidden"; when: dock.status == __ToolHidden
+            PropertyChanges { target: dock; anchors.leftMargin: 0 }
+        }, State {
+            name: "visible"; when: dock.status == __ToolVisible
+            PropertyChanges { target: dock; anchors.leftMargin: -dock.width }
+        }, State {
+            name: "edge"; when: dock.status == __ToolEdge
+            PropertyChanges { target: dock; anchors.leftMargin: -15 }
         }
-    }
-    onWidthChanged: { updateDestination() }
-    onShowChanged: {
-        if (show) {
-            push.running = false
-            pull.running = true
-        } else {
-            pull.running = false
-            push.running = true
-        }
+    ]
+
+    transitions: Transition {
+        NumberAnimation { target: dock; property: "anchors.leftMargin" }
     }
 
     MouseArea {

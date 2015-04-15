@@ -152,7 +152,6 @@ static auto convs() -> const QHash<int, JVConvert>&
         INSERT(OsdTheme);
         INSERT(ControlsTheme);
         INSERT(PlaylistTheme);
-        INSERT(HistoryTheme);
         INSERT(ChannelLayoutMap);
         INSERT(Autoloader);
         INSERT(OsdStyle);

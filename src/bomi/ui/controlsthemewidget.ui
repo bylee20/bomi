@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>391</width>
-    <height>228</height>
+    <height>174</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -40,16 +40,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="show_playlist_on_hovered">
+    <widget class="QCheckBox" name="show_tool_on_hovered">
      <property name="text">
-      <string>Show playlist when mouse hovers on the right edge</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="show_history_on_hovered">
-     <property name="text">
-      <string>Show history when mouse hovers on the left edge</string>
+      <string>Show history/playlist when mouse hovers on screen edge</string>
      </property>
     </widget>
    </item>

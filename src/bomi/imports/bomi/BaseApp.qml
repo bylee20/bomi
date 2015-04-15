@@ -10,6 +10,9 @@ Item {
     property ToolPlaneStyle toolStyle: ToolPlaneStyle { }
     readonly property real toolMinX: (left.x, mapFromItem(left, left.width, 0).x)
     readonly property real toolMaxX: (width, right.x, mapFromItem(right, 0, 0).x)
+    readonly property int __ToolVisible: 2
+    readonly property int __ToolHidden: 0
+    readonly property int __ToolEdge: 1
 
     property real trackingMinX: toolMinX
     property real trackingMaxX: toolMaxX
@@ -33,12 +36,12 @@ Item {
         PlaylistView {
             id: right
             width: Math.min(widthHint, player.width-(left.x+left.width)-20) | 0
-            height: parent.height; show: App.playlist.visible
+            height: parent.height; status: rightEdge.status
         }
         HistoryView {
             id: left
             width: (Math.min(widthHint, player.width*0.4) | 0)
-            height: parent.height; show: App.history.visible
+            height: parent.height; status: leftEdge.status
         }
     }
     Item {
@@ -55,14 +58,15 @@ Item {
             id: rightEdge
             y: right.y
             width: 15; height: parent.height; anchors.right: parent.right
-            visible: App.theme.controls.showPlaylistOnMouseOverEdge
+            auto: App.theme.controls.showToolOnMouseOverEdge
             target: App.playlist; box: right;
         }
+
         AutoDisplayZone {
             id: leftEdge
             y: left.y
             width: 15; height: parent.height; anchors.left: parent.left
-            visible: App.theme.controls.showHistoryOnMouseOverEdge
+            auto: App.theme.controls.showToolOnMouseOverEdge
             target: App.history; box: left;
         }
     }

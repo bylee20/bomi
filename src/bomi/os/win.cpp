@@ -335,15 +335,12 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         ReleaseDC(msg->hwnd, dc);
         *res = 0;
         return true;
-    } case WM_NCMOUSEMOVE: {
+    } case WM_NCHITTEST:
         if (!m_fs || !available())
             return false;
-        QPoint gpos(GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam));
-        QPoint pos = w->mapFromGlobal(gpos);
-        QMouseEvent me(QEvent::MouseMove, pos, gpos, Qt::NoButton, Qt::NoButton, Qt::NoModifier);
-        qApp->sendEvent(w, &me);
-        return false;
-    } default:
+        *res = HTCLIENT;
+        return true;
+    default:
         return false;
     }
 }

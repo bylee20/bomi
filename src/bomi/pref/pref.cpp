@@ -118,11 +118,6 @@ auto Pref::load() -> void
             PlaylistTheme playlist;
             playlist.setFromJson(json[u"playlist_theme"_q].toObject());
             m_controls_theme.showLocationsInPlaylist = playlist.showLocation;
-            m_controls_theme.showPlaylistOnMouseOverEdge = playlist.showOnMouseOverEdge;
-
-            HistoryTheme history;
-            history.setFromJson(json[u"history_theme"_q].toObject());
-            m_controls_theme.showHistoryOnMouseOverEdge = history.showOnMouseOverEdge;
         }
     }
     m_app_unique = cApp.isUnique();

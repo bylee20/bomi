@@ -238,10 +238,32 @@ auto MainWindow::isFullScreen() const -> bool
 
 using MsBh = MouseBehavior;
 
+#ifdef Q_OS_WIN
+#define ME(name) { \
+    if (d->adapter->isFullScreen()) { \
+        auto l = event->localPos(); \
+        auto w = event->windowPos(); \
+        auto g = event->screenPos(); \
+        QPointF dp(0, 0); \
+        if (l.x() < 0) dp.rx() = -l.x(); \
+        else if (l.x() > width()) dp.rx() = width() - l.x(); \
+        if (l.y() < 0) dp.ry() = -l.y(); \
+        else if (l.y() > height()) dp.ry() = height() - l.y(); \
+        l += dp; w += dp; g +=dp; \
+        QMouseEvent ev(event->type(), l, w, g, event->button(), \
+                       event->buttons(), event->modifiers()); \
+        QQuickView::name(&ev); \
+    } else \
+        QQuickView::name(event); \
+}
+#else
+    {QQuickView::name(event);}
+#endif
+
 auto MainWindow::mouseMoveEvent(QMouseEvent *event) -> void
 {
     event->setAccepted(false);
-    QQuickView::mouseMoveEvent(event);
+    ME(mouseMoveEvent);
     d->cancelToHideCursor();
     const bool full = isFullScreen();
     const auto gpos = event->globalPos();
@@ -282,7 +304,7 @@ auto MainWindow::mouseReleaseEvent(QMouseEvent *event) -> void
 {
     d->adapter->endMoveByDrag();
     event->setAccepted(false);
-    QQuickView::mouseReleaseEvent(event);
+    ME(mouseReleaseEvent);
     if (event->isAccepted())
         return;
     const auto singleClickAction = d->singleClick.action;
@@ -308,12 +330,14 @@ auto MainWindow::mouseReleaseEvent(QMouseEvent *event) -> void
         d->trigger(d->menu.action(d->actionId(mb, event)));
 }
 
+
+
 auto MainWindow::mousePressEvent(QMouseEvent *event) -> void
 {
     d->adapter->endMoveByDrag();
     d->top->resetMousePressEventFilterState();
     event->setAccepted(false);
-    QQuickView::mousePressEvent(event);
+    ME(mousePressEvent);
     if (event->isAccepted() && !d->top->filteredMousePressEvent())
         return;
     d->singleClick.unset();

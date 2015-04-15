@@ -6,27 +6,35 @@ Item {
     property Item box: zone
     property alias showDelay: showTimer.interval
     property alias hideDelay: hideTimer.timeout
+    property bool auto: false
+    readonly property alias hovered: zone.hovered
+    readonly property int status: target.visible ? __ToolVisible
+                                : hovered ? __ToolEdge : __ToolHidden
+
     z: 1e10;
+
     MouseArea {
         id: zone
+        property bool hovered: containsMouse && entered
+        property bool entered: false
+
         anchors.fill: parent
         hoverEnabled: true
-        onContainsMouseChanged: { showTimer.running = containsMouse && target }
+        onEntered: entered = B.App.window.mouse.isIn(zone)
+        onExited: entered = false
+        onHoveredChanged: showTimer.running = auto && hovered && target
+        onClicked: { if (!target.visible) display() }
+
+        function display() { target.visible = true; hideTimer.run() }
+
         B.HideTimer {
-            id: hideTimer
-            target: zone.target
+            id: hideTimer; target: zone.target
             hide: function() { return !B.App.window.mouse.isIn(box) }
         }
+
         Timer {
-            id: showTimer
-            repeat: false
-            interval: 200
-            onTriggered: {
-                if (B.App.window.mouse.isIn(zone)) {
-                    target.visible = true
-                    hideTimer.run()
-                }
-            }
+            id: showTimer; repeat: false; interval: 300
+            onTriggered: { if (B.App.window.mouse.isIn(zone)) zone.display() }
         }
     }
 }
