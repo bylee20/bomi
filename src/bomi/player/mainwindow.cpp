@@ -262,7 +262,7 @@ using MsBh = MouseBehavior;
         QQuickView::name(event); \
 }
 #else
-    {QQuickView::name(event);}
+#define ME(name) {QQuickView::name(event);}
 #endif
 
 auto MainWindow::mouseMoveEvent(QMouseEvent *event) -> void
