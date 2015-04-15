@@ -5,7 +5,14 @@ import QtQuick.Controls.Styles 1.0
 
 Item {
     id: dock
-    readonly property real widthHint: Math.min(widthHintForName, widthHintForLocation) + 16
+    readonly property real widthHint: {
+        var w = 16
+        if (_location.show)
+            w += Math.min(widthHintForName, widthHintForLocation)
+        else
+            w += widthHintForName
+        return Math.max(200, w);
+    }
     readonly property alias widthHintForName: view.nameWidth
     readonly property alias widthHintForLocation: view.locationWidth
     readonly property QtObject playlist: B.App.playlist
