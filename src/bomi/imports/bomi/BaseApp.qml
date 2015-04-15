@@ -8,8 +8,8 @@ Item {
     property size minimumSize: Qt.size(400, 300)
     readonly property Engine engine: App.engine
     property ToolPlaneStyle toolStyle: ToolPlaneStyle { }
-    readonly property real toolMinX: (left.x, mapFromItem(left, left.width, 0).x)
-    readonly property real toolMaxX: (width, right.x, mapFromItem(right, 0, 0).x)
+    readonly property real toolMinX: left.status == __ToolEdge ? 0 : (left.x, mapFromItem(left, left.width, 0).x)
+    readonly property real toolMaxX: right.status == __ToolEdge ? width : (width, right.x, mapFromItem(right, 0, 0).x)
     readonly property int __ToolVisible: 2
     readonly property int __ToolHidden: 0
     readonly property int __ToolEdge: 1
