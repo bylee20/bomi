@@ -212,6 +212,7 @@ auto AudioController::reinitialize(mp_audio *from) -> int
         filter->setPool(d->af->out_pool);
         filter->reset();
     }
+    emit gainChanged(d->gain = d->normalizerActivated ? d->analyzer.gain() : -1);
     return true;
 }
 
@@ -277,6 +278,7 @@ auto AudioController::filter(mp_audio *data) -> int
     d->eof = !data;
     if (d->eof)
         return 0;
+    d->measure.push(d->samples += data->samples);
     d->input = AudioBuffer::fromMpAudio(data);
     return 0;
 }
@@ -301,7 +303,6 @@ auto AudioController::output() -> int
         auto audio = buffer->take();
         Q_ASSERT(mp_audio_config_equals(&d->af->fmt_out, audio));
         af_add_output_frame(d->af, audio);
-        d->measure.push(d->samples += audio->samples);
     }
 
     d->af->delay = 0;

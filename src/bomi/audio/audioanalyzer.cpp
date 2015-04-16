@@ -46,17 +46,22 @@ public:
     auto filled() const -> int { return m_filled; }
     auto frames() const -> int { return m_frames; }
     auto isFull() const -> bool { return m_filled >= m_frames; }
-    auto max() const -> float
+    auto max(bool *silence) const -> double
     {
-        float max = 0.0;
+        double max = 0.0, avg = 0.0;
         for (auto &buffer : d) {
             auto view = buffer->constView<float>();
-            for (float v : view)
-                max = std::max(qAbs(v), max);
+            for (float v : view) {
+                const auto a = qAbs(v);
+                max = std::max<double>(a, max);
+                avg += a;
+            }
         }
+        avg /= m_filled * m_format.channels().num;
+        *silence = avg < 1e-4;
         return max;
     }
-    auto rms() const -> float
+    auto rms() const -> double
     {
         double sum2 = 0.0;
         for (auto &buffer : d) {
@@ -78,11 +83,12 @@ struct AudioAnalyzer::Data {
     AudioBufferFormat format;
     AudioNormalizerOption option;
     int frames = 0, gaussian_r = 0;
-    double prevGain = 1.0, currentGain = 1.0, scale = 1.0;
+    double scale = 1.0;
     bool normalizer = false;
     struct {
         std::deque<double> orig, min, smooth;
-        auto clear() { orig.clear(); min.clear(); smooth.clear(); }
+        double prev = 1.0, current = 1.0;
+        auto clear() { prev = current = 1.0; orig.clear(); min.clear(); smooth.clear(); }
     } history;
     std::deque<AudioFrameChunk> inputs, outputs;
     AudioFrameChunk filling;
@@ -100,10 +106,10 @@ struct AudioAnalyzer::Data {
 
     auto update(float gain) -> void
     {
-        if(history.orig.empty()) {
-            currentGain = prevGain = gain;
-            history.orig.insert(history.orig.end(), gaussian_r, prevGain);
-            history.min.insert(history.min.end(), gaussian_r, prevGain);
+        if((int)history.orig.size() < gaussian_r) {
+            history.current = history.prev = gain;
+            history.orig.insert(history.orig.end(), gaussian_r, history.prev);
+            history.min.insert(history.min.end(), gaussian_r, history.prev);
         }
         history.orig.push_back(gain);
 #define PUSH_POP(from, to, filter) while(from.size() >= gaussian_w.size()) \
@@ -131,14 +137,13 @@ auto AudioAnalyzer::setFormat(const AudioBufferFormat &format) -> void
         return;
     d->format = format;
     reset();
+    d->history.clear();
 }
 
 auto AudioAnalyzer::reset() -> void
 {
-    d->currentGain = d->prevGain = 1.0;
     d->inputs.clear();
     d->outputs.clear();
-    d->history.clear();
     d->frames = d->format.secToFrames(d->option.chunk_sec);
     d->filling = d->chunk();
 }
@@ -151,12 +156,12 @@ auto AudioAnalyzer::isNormalizerActive() const -> bool
 auto AudioAnalyzer::setNormalizerActive(bool on) -> void
 {
     if (_Change(d->normalizer, on))
-        d->currentGain = 1.0;
+        d->history.current = 1.0;
 }
 
 auto AudioAnalyzer::gain() const -> float
 {
-    return d->currentGain;
+    return d->history.current;
 }
 
 auto AudioAnalyzer::setScale(double scale) -> void
@@ -200,6 +205,7 @@ auto AudioAnalyzer::setNormalizerOption(const AudioNormalizerOption &opt) -> voi
         d->gaussian_w[i] /= sum; // normalize
 
     reset();
+    d->history.clear();
 }
 
 auto AudioAnalyzer::passthrough(const AudioBufferPtr &) const -> bool
@@ -232,13 +238,17 @@ auto AudioAnalyzer::pull(bool eof) -> AudioBufferPtr
         return flush();
     while (!d->inputs.empty()) {
         auto chunk = tmp::take_front(d->inputs);
-        double gain = 1.0;
-        if (d->option.use_rms) {
-            const double peak = 0.95 / chunk.max();
-            const double rms = d->option.target / chunk.rms();
-            gain = std::min(peak, rms);
-        } else
-            gain = d->option.target / chunk.max();
+        double gain = d->history.prev;
+        bool silence = false;
+        const auto max = chunk.max(&silence);
+        if (!silence) {
+            if (d->option.use_rms) {
+                const double peak = 0.95 / max;
+                const double rms = d->option.target / chunk.rms();
+                gain = std::min(peak, rms);
+            } else
+                gain = d->option.target / max;
+        }
         d->update(cutoff(gain, d->option.max));
         d->outputs.push_back(std::move(chunk));
     }
@@ -247,11 +257,11 @@ auto AudioAnalyzer::pull(bool eof) -> AudioBufferPtr
     Q_ASSERT(!d->outputs.empty());
     auto &chunk = d->outputs.front();
     const auto r = chunk.filled() / double(chunk.frames());
-    d->currentGain = d->prevGain * r + (1.0 - r) * d->history.smooth.front();
+    d->history.current = d->history.prev * r + (1.0 - r) * d->history.smooth.front();
     auto buffer = d->outputs.front().pop();
     if (!buffer) {
         d->outputs.pop_front();
-        d->prevGain = tmp::take_front(d->history.smooth);
+        d->history.prev = tmp::take_front(d->history.smooth);
     }
     return buffer;
 }
