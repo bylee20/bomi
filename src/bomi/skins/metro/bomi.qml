@@ -56,6 +56,12 @@ B.AppWithDock {
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 Rectangle {
+                    x: parent.width * control.rate + 5
+                    width: parent.width * control.arate - x; height: parent.height; color: Qt.rgba(1, 1, 1, 0.4)
+                    anchors.verticalCenter: parent.verticalCenter
+                    onWidthChanged: width
+                }
+                Rectangle {
                     width: parent.width * control.rate - 5; height: parent.height
                     color: Qt.rgba(1, 1, 1, 1)
                 }

@@ -85,6 +85,7 @@ struct PlayEngine::Data {
         SubtitleObject subtitle;
         QVector<EditionChapterObject*> chapters, editions;
         EditionChapterObject chapter, edition;
+        CacheInfoObject cache;
     } info;
 
     MetaData metaData;
@@ -105,8 +106,6 @@ struct PlayEngine::Data {
     bool filterResync = false;
 
     QList<CodecId> hwCodecs;
-
-    struct { int size = 0, used = 0; } cache;
 
     int avSync = 0, reload = -1;
     int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;

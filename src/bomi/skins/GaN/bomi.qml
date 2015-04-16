@@ -51,6 +51,10 @@ B.AppWithFloating {
                     style: SliderStyle {
                         groove: Rectangle {
                             height: 1; anchors.verticalCenter: parent.verticalCenter; color: "white"
+                            Rectangle {
+                                width: parent.width * control.arate; height: parent.height
+                                color: "#0ef"; opacity: 0.8
+                            }
                             Image {
                                 anchors.verticalCenter: parent.verticalCenter
                                 width: parent.width*control.rate; height: 10

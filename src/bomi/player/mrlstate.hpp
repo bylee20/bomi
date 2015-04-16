@@ -20,7 +20,8 @@
 #include <QMetaProperty>
 
 struct CacheInfo {
-    auto get(const Mrl &mrl) const -> int
+    struct Item { double sec = 10; qint64 kb = 0; bool file = false; };
+    auto get(const Mrl &mrl) const -> const Item&
     {
         if (mrl.isLocalFile()) {
             auto path = mrl.toLocalFile();
@@ -34,10 +35,12 @@ struct CacheInfo {
             return disc;
         return network;
     }
-    auto playback(int cache) const -> int { return cache * min_playback; }
-    auto seeking(int cache) const -> int { return cache * min_seeking; }
-    int local = 0, network = 25000, disc = 0;
-    double min_playback = 0, min_seeking = 2;
+    auto playback_kb(qint64 cache) const -> qint64
+        { return qBound<qint64>(0, min_playback_kb, cache * 0.5); }
+    auto seeking_kb(qint64 cache) const -> qint64
+        { return qBound<qint64>(0, min_seeking_kb, cache * 0.5); }
+    Item local, network, disc;
+    qint64 file_kb = 1024 * 1024, min_playback_kb = 0, min_seeking_kb = 500;
     QStringList remotes;
 };
 

@@ -666,11 +666,18 @@ auto MainWindow::Data::applyPref() -> void
 
     auto cache = [&] () {
         CacheInfo cache;
-        cache.local = p.cache_local();
-        cache.network = p.cache_network();
-        cache.disc = p.cache_disc();
-        cache.min_playback = p.cache_min_playback() / 100.;
-        cache.min_seeking = p.cache_min_seeking() / 100.;
+        cache.local.kb = p.cache_local_mb() * 1024.0;
+        cache.network.kb = p.cache_network_mb() * 1024.0;
+        cache.disc.kb = p.cache_disc_mb() * 1024.0;
+        cache.local.sec = p.cache_local_sec();
+        cache.network.sec = p.cache_network_sec();
+        cache.disc.sec = p.cache_disc_sec();
+        cache.local.file = p.cache_local_file();
+        cache.network.file = p.cache_network_file();
+        cache.disc.file = p.cache_disc_file();
+        cache.file_kb = p.cache_file_size_mb() * 1024.0;
+        cache.min_playback_kb = p.cache_min_playback_kb();
+        cache.min_seeking_kb = p.cache_min_seeking_kb();
         cache.remotes = p.network_folders();
         return cache;
     };

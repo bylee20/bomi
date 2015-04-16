@@ -313,14 +313,16 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.setAsync("options/sub-delay", local->sub_sync() * 1e-3);
 
     const auto cache = local->d->cache.get(mrl);
-    t.caching = cache > 0;
+    t.caching = cache.kb > 0LL;
     if (t.caching) {
-        mpv.setAsync("file-local-options/cache", cache);
-        mpv.setAsync("file-local-options/cache-initial", local->d->cache.playback(cache));
-        mpv.setAsync("file-local-options/cache-seek-min", local->d->cache.seeking(cache));
+        mpv.setAsync("file-local-options/cache", cache.kb);
+        mpv.setAsync("file-local-options/cache-initial", local->d->cache.playback_kb(cache.kb));
+        mpv.setAsync("file-local-options/cache-seek-min", local->d->cache.seeking_kb(cache.kb));
+        mpv.setAsync("file-local-options/cache-secs", cache.sec);
+        mpv.setAsync("file-local-options/cache-file", cache.file ? "TMP"_b : ""_b);
+        mpv.setAsync("file-local-options/cache-file-size", local->d->cache.file_kb);
     } else
         mpv.setAsync("file-local-options/cache", "no"_b);
-
 
     static constexpr const auto QCI = Qt::CaseInsensitive;
     if (file.data.startsWith("http://"_a, QCI) || file.data.startsWith("https://"_a, QCI)) {
@@ -399,9 +401,11 @@ auto PlayEngine::Data::observe() -> void
     mpv.observeState("seeking", [=] (bool s) { post(Seeking, s); });
 
     mpv.observe("cache-used", [=] () { return t.caching ? mpv.get<int>("cache-used") : 0; },
-                [=] (int v) { if (_Change(cache.used, v)) emit p->cacheUsedChanged(); });
+                [=] (int v) { info.cache.setUsed(v); });
     mpv.observe("cache-size", [=] () { return t.caching ? mpv.get<int>("cache-size") : 0; },
-                [=] (int v) { if (_Change(cache.size, v)) emit p->cacheSizeChanged(); });
+                [=] (int v) { info.cache.setSize(v); });
+    mpv.observe("demuxer-cache-ahead", [=] (double s) { info.cache.setTime(s2ms(s)); });
+
     mpv.observe("seekable", seekable, [=] () { emit p->seekableChanged(seekable); });
 
     auto updateChapter = [=] (int n) {

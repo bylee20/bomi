@@ -54,6 +54,7 @@ auto registerType() -> void
     qmlRegisterType<AudioObject>();
     qmlRegisterType<CodecObject>();
     qmlRegisterType<SubtitleObject>();
+    qmlRegisterType<CacheInfoObject>();
     qmlRegisterType<PlaylistModel>();
     qmlRegisterType<WindowObject>();
     qmlRegisterType<MemoryObject>();

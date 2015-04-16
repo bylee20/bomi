@@ -138,14 +138,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.enable_hwaccel->setEnabled(OS::hwAcc()->isAvailable());
     d->ui.screensaver_method->addItems(OS::screensaverMethods());
     d->ui.screensaver_method->setVisible(d->ui.screensaver_method->count() > 1);
-
-    connect(d->ui.quick_snapshot_folder_browse, &QPushButton::clicked,
-            this, [this] () {
-        _SetLastOpenPath(d->ui.quick_snapshot_folder->text() % '/'_q, u"snapshot"_q);
-        auto dir = _GetOpenDir(this, tr("Browse for Folder"), u"snapshot"_q);
-        if (!dir.isEmpty())
-            d->ui.quick_snapshot_folder->setText(dir);
-    });
+    d->ui.quick_snapshot_folder_browse->setEditor(d->ui.quick_snapshot_folder);
 
     d->saveQuickSnapshot = new DataButtonGroup(this);
     d->saveQuickSnapshot->setObjectName(u"quick_snapshot_save"_q);

@@ -52,8 +52,8 @@ Item {
             content: formatBracket(name, usage.toFixed(1) + "MiB", (usage/App.memory.total*100.0).toFixed(1) + suffix)
         }
         PlayInfoText {
-            readonly property int used: engine.cacheUsed
-            readonly property int size: engine.cacheSize
+            readonly property int used: engine.cache.used
+            readonly property int size: engine.cache.size
             readonly property real percent: size ? Alg.trunc(100.0*used/size, 1) : 0
             readonly property string suffix: "%/" + Format.integerNA(size) + "KiB"
             readonly property string name: qsTr("Cache")

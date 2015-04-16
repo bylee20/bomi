@@ -280,14 +280,9 @@ auto PlayEngine::setSubtitleDelay(int ms) -> void
         d->mpv.setAsync("sub-delay", ms * 1e-3);
 }
 
-auto PlayEngine::cacheSize() const -> int
+auto PlayEngine::cache() const -> CacheInfoObject*
 {
-    return d->cache.size;
-}
-
-auto PlayEngine::cacheUsed() const -> int
-{
-    return d->cache.used;
+    return &d->info.cache;
 }
 
 auto PlayEngine::begin() const -> int

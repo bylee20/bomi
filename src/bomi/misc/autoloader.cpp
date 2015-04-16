@@ -209,6 +209,7 @@ AutoloaderWidget::AutoloaderWidget(QWidget *parent)
 
     d->ui.search_paths->setModel(d->searchPaths);
     d->ui.search_paths->setItemDelegate(new SearchPathDelegate(this));
+    d->ui.search_path_browse->setEditor(d->ui.search_path_edit);
     d->ui.search_path_edit->setValidator(new SearchPathValidator(this));
     connect(d->ui.search_path_edit, &QLineEdit::textChanged,
             [this] (const QString &text) {
@@ -222,12 +223,6 @@ AutoloaderWidget::AutoloaderWidget(QWidget *parent)
         str.setCaseSensitive(d->ui.search_case_sensitive->isChecked());
         str.setRegEx(d->ui.search_regex->isChecked());
         d->searchPaths->append(str);
-    });
-    connect(d->ui.search_path_browse, &QPushButton::clicked, [this] () {
-        const auto dir = _GetOpenDir(this, tr("Browse for Folder"),
-                                     u"-search-paths"_q);
-        if (!dir.isEmpty())
-            d->searchPaths->append(dir);
     });
     connect(d->ui.search_path_remove, &QPushButton::clicked, [this] () {
         const int idx = d->ui.search_paths->currentIndex().row();

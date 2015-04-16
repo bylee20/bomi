@@ -32,6 +32,10 @@ B.AppWithDock {
                     radius: height * 0.5; color: "#929292"
                     anchors.verticalCenter: parent.verticalCenter
                     Rectangle {
+                        width: parent.width * control.arate; height: parent.height
+                        radius: parent.radius; color: Qt.rgba(1, 1, 1, 0.5)
+                    }
+                    Rectangle {
                         width: parent.width * control.rate; height: parent.height
                         radius: parent.radius; color: "#d73d48"
                     }

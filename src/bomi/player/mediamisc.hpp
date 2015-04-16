@@ -90,4 +90,25 @@ using EditionChapterData = EditionChapterObject::Data;
 //using ChapterPtr = QSharedPointer<ChapterObject>;
 using EditionChapterPtr = QSharedPointer<EditionChapterObject>;
 
+class CacheInfoObject : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(int size READ size NOTIFY sizeChanged)
+    Q_PROPERTY(int used READ used NOTIFY usedChanged)
+    Q_PROPERTY(int time READ time NOTIFY timeChanged)
+public:
+    auto size() const -> int { return m_size; }
+    auto used() const -> int { return m_used; }
+    auto time() const -> int { return m_time; }
+signals:
+    void sizeChanged(int size);
+    void usedChanged(int used);
+    void timeChanged(int time);
+private:
+    friend class PlayEngine;
+    auto setSize(int s) -> void { if (_Change(m_size, s)) emit sizeChanged(s); }
+    auto setUsed(int s) -> void { if (_Change(m_used, s)) emit usedChanged(s); }
+    auto setTime(int s) -> void { if (_Change(m_time, s)) emit timeChanged(s); }
+    int m_size = 0, m_used = 0, m_time = 0;
+};
+
 #endif // MEDIAMISC_HPP

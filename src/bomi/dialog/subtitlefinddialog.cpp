@@ -233,6 +233,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     d->ui.view->header()->resizeSection(1, 450);
     d->ui.view->header()->resizeSection(2, 150);
     d->finder = new OpenSubtitlesFinder;
+    d->ui.open->set(PathButton::SingleFile, PathButton::Open);
     connect(&d->downloader, &Downloader::started, [this] () { d->updateState(); });
     connect(&d->downloader, &Downloader::progressed, [this] (qint64 written, qint64 total) {
         d->ui.prog->setRange(0, total);
@@ -245,11 +246,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         d->downloads.erase(it);
         d->updateState();
     });
-    connect(d->ui.open, &QPushButton::clicked, [this] () {
-        auto file = _GetOpenFile(this, tr("Open"), VideoExt);
-        if (!file.isEmpty())
-            find(file);
-    });
+    connect(d->ui.open, &PathButton::fileSelected,
+            [this] (const QString &file) { if (!file.isEmpty()) find(file); });
     connect(d->ui.find_file, &QPushButton::clicked, this, [=] () {
         if (d->mediaFile.exists())
             find(d->mediaFile.absoluteFilePath());

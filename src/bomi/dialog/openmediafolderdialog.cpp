@@ -90,10 +90,6 @@ struct OpenMediaFolderDialog::Data {
         }
         updateOpenButton();
     }
-    auto getFolder() -> void
-    {
-        p->setFolder(_GetOpenDir(p, tr("Open Folder")));
-    }
 };
 
 OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key)
@@ -104,8 +100,7 @@ OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key
     d->ui.setupUi(this);
     _SetWindowTitle(this, tr("Open Folder"));
 
-    connect(d->ui.get, &QAbstractButton::clicked,
-            this, [=] () { d->getFolder(); });
+    connect(d->ui.get, &PathButton::folderSelected, this, &OpenMediaFolderDialog::setFolder);
     connect(d->ui.videos, &QAbstractButton::toggled,
             this, [=] (bool checked) { d->checkList(d->ui.videos, checked); });
     connect(d->ui.audios, &QAbstractButton::toggled,
@@ -156,7 +151,7 @@ auto OpenMediaFolderDialog::setFolder(const QString &folder) -> void
 auto OpenMediaFolderDialog::exec() -> int
 {
     if (d->ui.folder->text().isEmpty())
-        d->getFolder();
+        setFolder(d->ui.get->getFolder());
     if (d->ui.folder->text().isEmpty())
         return Rejected;
     d->storage.save();

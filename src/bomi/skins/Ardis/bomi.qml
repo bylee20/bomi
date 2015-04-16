@@ -18,6 +18,10 @@ B.AppWithFloating {
             groove: Rectangle {
                 width: control.width; height: 5; color: "#282629"
                 Rectangle {
+                    width: control.width * control.arate; height: parent.height
+                    color: Qt.rgba(1, 1, 1, 0.5)
+                }
+                Rectangle {
                     width: control.width * control.rate; height: parent.height
                     color: "#0078ad"
                 }

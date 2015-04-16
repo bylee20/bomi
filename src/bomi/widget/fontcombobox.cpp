@@ -132,7 +132,7 @@ static QFontDatabase::WritingSystem writingSystemForFont(QFontDatabase *db, cons
 struct FontData {
     DECL_EQ(FontData, &T::font);
     QFont font;
-    QString display;
+    QString display, sys;
 };
 
 class FontFamilyModel : public SimpleListModel<FontData> {
@@ -156,6 +156,7 @@ static auto generateList(bool fixedOnly) -> QList<FontData>
         FontData data;
         data.font = def;
         data.font.setFamily(family);
+        data.sys = QFontInfo(data.font).family();
         bool hasLatin = false;
         const auto system = writingSystemForFont(&db, data.font, &hasLatin);
         const auto sample = db.writingSystemSample(system);
@@ -220,7 +221,7 @@ auto FontComboBox::setCurrentFont(const QFont &font) -> void
 {
     const auto family = QFontInfo(font).family();
     for (int i = 0; i < d->model->size(); ++i) {
-        if (d->model->at(i).font.family() == family) {
+        if (d->model->at(i).sys == family) {
             setCurrentIndex(i);
             break;
         }

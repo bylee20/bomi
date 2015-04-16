@@ -21,10 +21,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="get">
-       <property name="text">
-        <string notr="true"/>
-       </property>
+      <widget class="PathButton" name="get">
        <property name="icon">
         <iconset resource="../rsclist.qrc">
          <normaloff>:/img/document-open-folder.png</normaloff>:/img/document-open-folder.png</iconset>
@@ -89,6 +86,11 @@
    <class>BBox</class>
    <extends>QDialogButtonBox</extends>
    <header>dialog/bbox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>PathButton</class>
+   <extends>QPushButton</extends>
+   <header>widget/pathbutton.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

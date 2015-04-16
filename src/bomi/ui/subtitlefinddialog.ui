@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>512</width>
+    <width>540</width>
     <height>356</height>
    </rect>
   </property>
@@ -28,11 +28,7 @@
        <item row="0" column="0" colspan="2">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QPushButton" name="open">
-           <property name="text">
-            <string>Open</string>
-           </property>
-          </widget>
+          <widget class="PathButton" name="open"/>
          </item>
          <item>
           <widget class="QLineEdit" name="fileName">
@@ -186,6 +182,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>PathButton</class>
+   <extends>QPushButton</extends>
+   <header>widget/pathbutton.hpp</header>
+  </customwidget>
   <customwidget>
    <class>CheckListWidget</class>
    <extends>QListWidget</extends>

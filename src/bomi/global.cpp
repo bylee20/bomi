@@ -205,28 +205,38 @@ auto _LastOpenPath(const QString &key) -> QString
     return lastFolders.value(key);
 }
 
-auto _GetOpenFiles(QWidget *parent, const QString &title, ExtTypes exts,
-                       const QString &key) -> QStringList
+auto _GetOpenFiles(QWidget *parent, const QString &title, const QString &filter,
+                   const QString &key) -> QStringList
 {
     auto &folder = lastFolders[key];
-    const auto list = QFileDialog::getOpenFileNames(parent, title, folder,
-                                                    _ToFilter(exts));
+    const auto list = QFileDialog::getOpenFileNames(parent, title, folder, filter);
     if (list.isEmpty())
         return QStringList();
     folder = _ToAbsPath(list.first());
     return list;
 }
 
-auto _GetOpenFile(QWidget *parent, const QString &title, ExtTypes exts,
-                      const QString &key) -> QString
+auto _GetOpenFile(QWidget *parent, const QString &title, const QString &filter,
+                  const QString &key) -> QString
 {
     auto &folder = lastFolders[key];
-    const auto file = QFileDialog::getOpenFileName(parent, title, folder,
-                                                   _ToFilter(exts));
+    const auto file = QFileDialog::getOpenFileName(parent, title, folder, filter);
     if (file.isEmpty())
         return QString();
     folder = _ToAbsPath(file);
     return file;
+}
+
+auto _GetOpenFiles(QWidget *parent, const QString &title, ExtTypes exts,
+                       const QString &key) -> QStringList
+{
+    return _GetOpenFiles(parent, title, _ToFilter(exts), key);
+}
+
+auto _GetOpenFile(QWidget *parent, const QString &title, ExtTypes exts,
+                      const QString &key) -> QString
+{
+    return _GetOpenFile(parent, title, _ToFilter(exts), key);
 }
 
 auto _GetSaveFile(QWidget *parent, const QString &title,

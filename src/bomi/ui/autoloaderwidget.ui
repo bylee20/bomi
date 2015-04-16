@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>372</width>
+    <width>392</width>
     <height>236</height>
    </rect>
   </property>
@@ -55,11 +55,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="search_path_browse">
-       <property name="text">
-        <string>Browse...</string>
-       </property>
-      </widget>
+      <widget class="PathButton" name="search_path_browse"/>
      </item>
      <item>
       <widget class="QPushButton" name="search_path_remove">
@@ -102,6 +98,11 @@
    <class>AutoloadModeComboBox</class>
    <extends>QComboBox</extends>
    <header>widget/enumcombobox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>PathButton</class>
+   <extends>QPushButton</extends>
+   <header>widget/pathbutton.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

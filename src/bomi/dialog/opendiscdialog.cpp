@@ -13,16 +13,10 @@ OpenDiscDialog::OpenDiscDialog(QWidget *parent)
     d->ok->setEnabled(false);
     connect(d->ui.device, &QComboBox::editTextChanged, this, &OpenDiscDialog::checkDevice);
     checkDevice(d->ui.device->currentText());
-    connect(d->ui.folder, &QPushButton::clicked, this, [this] () {
-        auto dir = _GetOpenDir(this, tr("Open device or folder"));
-        if (!dir.isEmpty())
-            d->ui.device->setCurrentText(dir);
-    });
-    connect(d->ui.iso, &QPushButton::clicked, this, [this] () {
-        auto iso = _GetOpenFile(this, tr("Open ISO file"), DiscExt);
-        if (!iso.isEmpty())
-            d->ui.device->setCurrentText(iso);
-    });
+    d->ui.folder->setEditor(d->ui.device);
+    d->ui.iso->setEditor(d->ui.device);
+    d->ui.iso->setMode(PathButton::SingleFile);
+    d->ui.iso->setFilter(DiscExt);
 }
 
 OpenDiscDialog::~OpenDiscDialog() {

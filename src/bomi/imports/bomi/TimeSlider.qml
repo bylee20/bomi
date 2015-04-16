@@ -13,6 +13,7 @@ Slider {
     z: 1
     __hpressed: mouseArea.pressed
     __hhovered: mouseArea.containsMouse
+    ahead: d.e.cache.time
 
     Rectangle {
         id: pv

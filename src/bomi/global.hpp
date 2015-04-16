@@ -211,15 +211,21 @@ auto _ExtList(ExtTypes ext) -> QStringList;
 auto _MimeTypeForSuffix(const QString &suffix) -> QMimeType;
 auto _DescriptionForSuffix(const QString &suffix) -> QString;
 
+auto _GetOpenFiles(QWidget *parent, const QString &title, const QString &filter,
+                   const QString &key = QString()) -> QStringList;
+
+auto _GetOpenFile(QWidget *parent, const QString &title, const QString &filter,
+                  const QString &key = QString()) -> QString;
+
 auto _GetOpenFiles(QWidget *parent, const QString &title, ExtTypes exts,
-                       const QString &key = QString()) -> QStringList;
+                   const QString &key = QString()) -> QStringList;
 
 auto _GetOpenFile(QWidget *parent, const QString &title, ExtTypes exts,
-                      const QString &key = QString()) -> QString;
+                  const QString &key = QString()) -> QString;
 
 auto _GetSaveFile(QWidget *parent, const QString &title,
-                      const QString &fileName, ExtTypes exts,
-                      const QString &key = QString()) -> QString;
+                  const QString &fileName, ExtTypes exts,
+                  const QString &key = QString()) -> QString;
 
 auto _GetOpenDir(QWidget *parent, const QString &title,
                  const QString &key = QString()) -> QString;

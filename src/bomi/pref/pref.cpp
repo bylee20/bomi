@@ -119,6 +119,12 @@ auto Pref::load() -> void
             playlist.setFromJson(json[u"playlist_theme"_q].toObject());
             m_controls_theme.showLocationsInPlaylist = playlist.showLocation;
         }
+
+        if (json.contains(u"cache_local"_q)) {
+            m_cache_local_mb = json[u"cache_local"_q].toInt() / 1024.;
+            m_cache_network_mb = json[u"cache_network"_q].toInt() / 1024.;
+            m_cache_disc_mb = json[u"cache_disc"_q].toInt() / 1024.;
+        }
     }
     m_app_unique = cApp.isUnique();
     m_app_locale = cApp.locale();

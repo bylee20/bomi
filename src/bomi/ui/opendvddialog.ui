@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>295</width>
-    <height>74</height>
+    <height>87</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -40,12 +40,9 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="folder">
+      <widget class="PathButton" name="folder">
        <property name="toolTip">
         <string>Open device/folder</string>
-       </property>
-       <property name="text">
-        <string/>
        </property>
        <property name="icon">
         <iconset resource="../rsclist.qrc">
@@ -54,12 +51,9 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="iso">
+      <widget class="PathButton" name="iso">
        <property name="toolTip">
         <string>Open ISO file</string>
-       </property>
-       <property name="text">
-        <string/>
        </property>
        <property name="icon">
         <iconset resource="../rsclist.qrc">
@@ -103,6 +97,11 @@
    <class>BBox</class>
    <extends>QDialogButtonBox</extends>
    <header>dialog/bbox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>PathButton</class>
+   <extends>QPushButton</extends>
+   <header>widget/pathbutton.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

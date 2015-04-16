@@ -48,6 +48,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(VideoObject *video READ video CONSTANT FINAL)
     Q_PROPERTY(VideoPreview *preview READ preview CONSTANT FINAL)
     Q_PROPERTY(SubtitleObject* subtitle READ subtitle CONSTANT FINAL)
+    Q_PROPERTY(CacheInfoObject *cache READ cache CONSTANT FINAL)
 
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
@@ -64,8 +65,6 @@ class PlayEngine : public QObject {
     Q_PROPERTY(qreal volume READ volume WRITE setAudioVolume NOTIFY volumeChanged)
     Q_PROPERTY(bool muted READ isMuted WRITE setAudioMuted NOTIFY mutedChanged)
 
-    Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
-    Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)
     Q_PROPERTY(int avSync READ avSync NOTIFY avSyncChanged)
 
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
@@ -207,8 +206,7 @@ public:
     Q_INVOKABLE double rate_ms(int ms) const { return rate(ms); }
     auto rate() const -> double { return rate(time()); }
     auto setRate(qreal r) -> void { seek(begin() + r * duration()); }
-    auto cacheSize() const -> int;
-    auto cacheUsed() const -> int;
+    auto cache() const -> CacheInfoObject*;
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterList() const -> QQmlListProperty<EditionChapterObject>;
     auto editionList() const -> QQmlListProperty<EditionChapterObject>;
@@ -296,7 +294,6 @@ signals:
     void dvdInfoChanged();
     void speedChanged();
     void hwaccChanged();
-    void cacheUsedChanged();
     void hasVideoChanged();
     void chapterChanged();
     void subtitleTrackInfoChanged();
@@ -307,7 +304,6 @@ signals:
     void stoppedChanged();
     void runningChanged();
     void deintOptionsChanged();
-    void cacheSizeChanged();
     void snapshotTaken();
     void subtitleSelectionChanged();
     void framebufferObjectFormatChanged(FramebufferObjectFormat format);
