@@ -388,7 +388,7 @@ auto VideoRenderer::updatePolish() -> void
     if (_Change(d->vtx, d->frameRect({0, 0, width(), height()}, d->offset, &letter))) {
         reserve(UpdateGeometry, false);
         const auto p0 = d->vtx.topLeft();
-        const auto p1 = d->vtx.bottomRight() + QPoint(1, 1);
+        const auto p1 = d->vtx.bottomRight();
 #define NORM(v, vv) (vv - p0.v()) / double(p1.v() - p0.v())
         d->frame.rect.setTop(NORM(y, 0));
         d->frame.rect.setBottom(NORM(y, height()));
@@ -480,7 +480,6 @@ auto VideoRenderer::updateVertex(Vertex *vertex) -> void
     FILL_TS(position, {0, 0}, {width(), height()});
     FILL_TS(frameTexCoord, tl, br);
     FILL_TS(osdTexCoord, d->osd.rect.topLeft(), d->osd.rect.bottomRight());
-
 }
 
 auto VideoRenderer::initializeVertex(Vertex *vertex) const -> void
