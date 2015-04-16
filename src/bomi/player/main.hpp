@@ -25,6 +25,7 @@
 #include "quick/busyiconitem.hpp"
 #include "quick/buttonboxitem.hpp"
 #include "quick/triangleitem.hpp"
+#include "audio/visualizer.hpp"
 #include <QImageWriter>
 
 template<class T>
@@ -43,6 +44,7 @@ auto registerType() -> void
     qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Chapter");
     qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Edition");
     qmlRegisterType<TriangleItem>("bomi", 1, 0, "Triangle");
+    qmlRegisterType<VisualizationHelper>("bomi", 1, 0, "VisualizationHelper");
     qmlRegisterType<TopLevelItem>();
     qmlRegisterType<Downloader>();
     qmlRegisterType<HistoryModel>();

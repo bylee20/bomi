@@ -64,7 +64,7 @@ struct AudioController::Data {
     mp_chmap chmap;
     af_instance *af = nullptr;
     AudioNormalizerOption normalizerOption;
-    bool softClip = false;
+    bool softClip = false, spectrum = false;
     ChannelLayoutMap map = ChannelLayoutMap::default_();
     ChannelLayout layout = ChannelLayoutInfo::default_();
     AudioEqualizer eq;
@@ -79,6 +79,7 @@ struct AudioController::Data {
     AudioMixer mixer;
     AudioConverter converter;
     AudioBufferPtr input;
+    QVector<AudioBufferPtr> forFft;
     QVector<AudioFilter*> filters;
     QVector<AudioFilter*> chain;
 
@@ -290,11 +291,12 @@ auto AudioController::output() -> int
         d->input = AudioBufferPtr();
         d->analyzer.push(buffer);
     }
-    for (;;) {
+    do {
         auto buffer = d->analyzer.pull(d->eof);
         if (!buffer || buffer->isEmpty())
             break;
-
+        if (d->spectrum && d->analyzer.fft()->push(buffer))
+            emit spectrumObtained(d->analyzer.fft()->pull());
         d->mixer.setAmplifier(d->amp * d->analyzer.gain());
         for (auto filter : d->chain) {
             if (!filter->passthrough(buffer))
@@ -303,12 +305,17 @@ auto AudioController::output() -> int
         auto audio = buffer->take();
         Q_ASSERT(mp_audio_config_equals(&d->af->fmt_out, audio));
         af_add_output_frame(d->af, audio);
-    }
+    } while (false);
 
     d->af->delay = 0;
     for (auto filter : d->filters)
         d->af->delay += filter->delay();
     return 0;
+}
+
+auto AudioController::setAnalyzeSpectrum(bool on) -> void
+{
+    d->spectrum = on;
 }
 
 auto AudioController::samplerate() const -> int

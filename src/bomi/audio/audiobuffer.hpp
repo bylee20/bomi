@@ -61,6 +61,8 @@ public:
     auto isEmpty() const -> bool { return !m_audio || frames() <= 0; }
     auto planes() const -> int { return m_audio->num_planes; }
     auto bps() const -> int { return m_audio->bps; }
+    auto fps() const -> int { return m_audio->rate; }
+    auto seconds() const -> double { return double(m_audio->samples) / m_audio->rate; }
     auto fstride() const -> int { return m_audio->sstride; }
     auto pstride() const -> int { return fstride() * frames(); }
     auto isPlanar() const -> bool { return af_fmt_is_planar(m_audio->format); }

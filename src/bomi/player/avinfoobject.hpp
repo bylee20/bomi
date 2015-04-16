@@ -150,6 +150,7 @@ class AudioObject : public AvCommonObject {
     Q_PROPERTY(double normalizer READ normalizer NOTIFY normalizerChanged)
     Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
     Q_PROPERTY(QString device READ device NOTIFY deviceChanged)
+    Q_PROPERTY(QList<qreal> spectrum READ spectrum NOTIFY spectrumChanged)
 public:
     AudioObject();
     auto decoder() const -> const AudioFormatObject* { return &m_decoder; }
@@ -163,6 +164,9 @@ public:
         { if (_Change(m_gain, gain)) emit normalizerChanged(); }
     auto device() const -> QString;
     auto driver() const -> QString { return m_driver; }
+    auto spectrum() const -> QList<qreal> { return m_spectrum; }
+    auto setSpectrum(const QList<qreal> &spectrum) -> void
+        { emit spectrumChanged(m_spectrum = spectrum); }
 public slots:
     void setDriver(const QString &driver);
     void setDevice(const QString &device);
@@ -170,10 +174,12 @@ signals:
     void normalizerChanged();
     void driverChanged();
     void deviceChanged();
+    void spectrumChanged(const QList<qreal> &spectrum);
 private:
     AudioFormatObject m_decoder, m_filter, m_output;
     double m_gain = -1.0;
     QString m_driver, m_device;
+    QList<qreal> m_spectrum;
 };
 
 /******************************************************************************/

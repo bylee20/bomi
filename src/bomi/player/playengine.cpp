@@ -168,7 +168,8 @@ PlayEngine::PlayEngine()
     });
     connect(d->ac, &AudioController::gainChanged,
             &d->info.audio, &AudioObject::setNormalizer);
-
+    connect(d->ac, &AudioController::spectrumObtained,
+            &d->info.audio, &AudioObject::setSpectrum, Qt::QueuedConnection);
     connect(d->sr, &SubtitleRenderer::selectionChanged,
             this, &PlayEngine::subtitleSelectionChanged);
 

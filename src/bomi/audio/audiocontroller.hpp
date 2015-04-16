@@ -25,11 +25,13 @@ public:
     auto inputFormat() const -> AudioFormat;
     auto outputFormat() const -> AudioFormat;
     auto samplerate() const -> int;
+    auto setAnalyzeSpectrum(bool on) -> void;
 signals:
     void inputFormatChanged();
     void outputFormatChanged();
     void samplerateChanged(int sr);
     void gainChanged(double gain);
+    void spectrumObtained(const QList<qreal> &data);
 private:
     static auto open(af_instance *af) -> int;
     static auto test(int fmt_in, int fmt_out) -> bool;

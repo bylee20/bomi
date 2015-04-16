@@ -8,7 +8,7 @@ PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-INCLUDEPATH += ../mpv ../mpv/build
+INCLUDEPATH += ../mpv ../mpv/build kiss_fft
 LIBS += -L$${LIB_DIR} -lbz2 -lz
 
 include(configure.pro)
@@ -295,7 +295,10 @@ HEADERS += \
     enum/framebufferobjectformat.hpp \
     video/videopreview.hpp \
     dialog/fileassocdialog.hpp \
-    quick/triangleitem.hpp
+    quick/triangleitem.hpp \
+    audio/visualizer.hpp \
+    kiss_fft/tools/kiss_fftr.h \
+    kiss_fft/kiss_fft.h
 
 SOURCES += \
 	stdafx.cpp \
@@ -505,7 +508,10 @@ SOURCES += \
     enum/framebufferobjectformat.cpp \
     video/videopreview.cpp \
     dialog/fileassocdialog.cpp \
-    quick/triangleitem.cpp
+    quick/triangleitem.cpp \
+    audio/visualizer.cpp \
+    kiss_fft/tools/kiss_fftr.c \
+    kiss_fft/kiss_fft.c
 
 TRANSLATIONS += translations/bomi_ko.ts \
 	translations/bomi_en.ts \
