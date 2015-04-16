@@ -151,6 +151,7 @@ struct IntrplDialog::Data {
         QLabel *name = nullptr, *value = nullptr;
     } lines[IntrplParam::TypeMax];
     QMap<Interpolator, IntrplParamSet> map;
+    int page = 1, single = 1;
     bool setting = false;
     auto current() -> IntrplParamSet&
         { auto it = map.find(combo->currentEnum()); return it.value(); }
@@ -198,6 +199,9 @@ IntrplDialog::IntrplDialog(QWidget *parent)
             emit paramsChanged(set);
         });
     }
+    d->single = d->lines[0].slider->singleStep();
+    d->page = d->lines[0].slider->pageStep();
+
     vbox->addLayout(grid);
     setLayout(vbox);
     adjustSize();
@@ -227,10 +231,14 @@ auto IntrplDialog::set(const IntrplParamSet &set) -> void
             if (param.isInt()) {
                 l.slider->setRange(0, param.validValues().size() - 1);
                 l.slider->setValue(param.validValues().indexOf(param.toInt()));
+                l.slider->setSingleStep(1);
+                l.slider->setPageStep(1);
                 l.value->setText(QString::number(param.toInt()));
             } else {
                 l.slider->setRange(qRound(param.min() * 100), qRound(param.max() * 100));
                 l.slider->setValue(qRound(param.toDouble() * 100));
+                l.slider->setSingleStep(d->single);
+                l.slider->setPageStep(d->page);
                 l.value->setText(QString::number(param.toDouble()));
             }
         } else
