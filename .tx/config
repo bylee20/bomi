@@ -1,0 +1,9 @@
+[main]
+host = https://www.transifex.com
+
+[bomi.bomi]
+file_filter = src/bomi/translations/bomi_<lang>.ts
+source_file = src/bomi/translations/bomi_en.ts
+source_lang = en
+type = QT
+
