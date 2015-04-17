@@ -31,6 +31,7 @@ class QOpenGLContext;                   class EncodingInfo;
 class SubComp;                          class SmbAuth;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
+class AudioVisualizer;
 
 struct StringPair { QString s1, s2; };
 using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;
@@ -49,6 +50,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(VideoPreview *preview READ preview CONSTANT FINAL)
     Q_PROPERTY(SubtitleObject* subtitle READ subtitle CONSTANT FINAL)
     Q_PROPERTY(CacheInfoObject *cache READ cache CONSTANT FINAL)
+    Q_PROPERTY(AudioVisualizer *visualizer READ visualizer CONSTANT FINAL)
 
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
@@ -116,10 +118,12 @@ public:
     auto chapters() const -> const QVector<ChapterObject*>&;
     auto seekEdition(int number, int from = 0) -> void;
     auto seekChapter(int number) -> void;
+    auto isAudioOnly() const -> bool;
 
     auto setAudioFiles(const QStringList &files) -> void;
     auto addAudioFiles(const QStringList &files) -> void;
     auto clearAudioFiles() -> void;
+    auto visualizer() const -> AudioVisualizer*;
 
     auto subtitleSelection() const -> QVector<SubComp>;
     auto setSubtitleDisplay(SubtitleDisplay sd) -> void;
@@ -308,6 +312,7 @@ signals:
     void snapshotTaken();
     void subtitleSelectionChanged();
     void framebufferObjectFormatChanged(FramebufferObjectFormat format);
+    void audioOnlyChanged(bool audioOnly);
 private:
     auto setVideoTrackSelected(int id, bool s) -> void;
     auto setAudioTrackSelected(int id, bool s) -> void;

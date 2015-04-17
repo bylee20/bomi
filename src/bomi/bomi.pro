@@ -164,6 +164,7 @@ HEADERS += \
 	enum/verticalalignment.hpp \
 	enum/videoratio.hpp \
 	enum/videoeffect.hpp \
+	enum/visualization.hpp \
 	misc/charsetdetector.hpp \
 	misc/downloader.hpp \
 	misc/actiongroup.hpp \
@@ -390,6 +391,7 @@ SOURCES += \
 	enum/verticalalignment.cpp \
 	enum/videoratio.cpp \
 	enum/videoeffect.cpp \
+	enum/visualization.cpp \
 	misc/enumaction.cpp \
 	misc/charsetdetector.cpp \
 	misc/downloader.cpp \
@@ -609,4 +611,5 @@ DISTFILES += \
     imports/bomi/HistoryView.qml \
     skins/Tethys/bomi.qml \
     skins/metro/bomi.qml \
-    skins/metro/MetroButton.qml
+    skins/metro/MetroButton.qml \
+    imports/bomi/BarVisualizer.qml

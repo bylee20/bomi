@@ -91,6 +91,8 @@ auto VideoPreview::rate() const -> double
 
 auto VideoPreview::setRate(double rate) -> void
 {
+    if (!d->active)
+        return;
     if (_Change(d->rate, rate)) {
         if (_Change(d->percent, qRound(d->rate * 10000)/100.0))
             d->mpv.tellAsync("seek", d->percent, "absolute-percent"_b,
@@ -173,10 +175,8 @@ auto VideoPreview::shutdown() -> void
 
 auto VideoPreview::setActive(bool active) -> void
 {
-    if (_Change(d->active, active)) {
-        if (!d->active)
-            unload();
-    }
+    if (_Change(d->active, active) && !d->active)
+        unload();
 }
 
 auto VideoPreview::setShowKeyframe(bool keyframe) -> void

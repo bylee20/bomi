@@ -1,4 +1,5 @@
 #include "audiocontroller.hpp"
+#include "visualizer.hpp"
 #include "audioformat.hpp"
 #include "audiomixer.hpp"
 #include "audioscaler.hpp"
@@ -64,11 +65,12 @@ struct AudioController::Data {
     mp_chmap chmap;
     af_instance *af = nullptr;
     AudioNormalizerOption normalizerOption;
-    bool softClip = false, spectrum = false;
+    bool softClip = false;
     ChannelLayoutMap map = ChannelLayoutMap::default_();
     ChannelLayout layout = ChannelLayoutInfo::default_();
     AudioEqualizer eq;
     AudioFormat from, to;
+    AudioVisualizer vis;
 
     static constexpr af_format fmt_interm = AF_FORMAT_FLOAT;
     af_format fmt_to = AF_FORMAT_UNKNOWN;
@@ -295,8 +297,8 @@ auto AudioController::output() -> int
         auto buffer = d->analyzer.pull(d->eof);
         if (!buffer || buffer->isEmpty())
             break;
-        if (d->spectrum && d->analyzer.fft()->push(buffer))
-            emit spectrumObtained(d->analyzer.fft()->pull());
+        if (d->vis.isActive())
+            d->vis.analyze(buffer);
         d->mixer.setAmplifier(d->amp * d->analyzer.gain());
         for (auto filter : d->chain) {
             if (!filter->passthrough(buffer))
@@ -315,7 +317,7 @@ auto AudioController::output() -> int
 
 auto AudioController::setAnalyzeSpectrum(bool on) -> void
 {
-    d->spectrum = on;
+    d->vis.setActive(on);
 }
 
 auto AudioController::samplerate() const -> int
@@ -397,3 +399,7 @@ auto AudioController::setEqualizer(const AudioEqualizer &eq) -> void
     d->mutex.unlock();
 }
 
+auto AudioController::visualizer() const -> AudioVisualizer*
+{
+    return &d->vis;
+}

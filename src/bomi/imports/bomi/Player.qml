@@ -13,7 +13,31 @@ Item {
     property Item video
     property Item screen: video && !logo.visible ? video : logo
 
+    Component { id: barVis; BarVisualizer { } }
+
+
     Logo { id: logo; anchors.fill: parent }
+
+    Rectangle {
+        anchors.fill: parent
+        width: 300
+        height: 100
+        visible: engine.visualizer.enabled
+        color: "black"
+        Loader {
+            anchors.fill: parent
+            sourceComponent: {
+                if (!engine.visualizer.enabled)
+                    return undefined
+                switch (engine.visualizer.type) {
+                case B.Visualizer.Bar:
+                    return barVis;
+                default:
+                    return undefined
+                }
+            }
+        }
+    }
 
     TextOsd {
         id: msgosd;

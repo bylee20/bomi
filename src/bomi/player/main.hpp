@@ -44,7 +44,7 @@ auto registerType() -> void
     qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Chapter");
     qmlRegisterType<EditionChapterObject>("bomi", 1, 0, "Edition");
     qmlRegisterType<TriangleItem>("bomi", 1, 0, "Triangle");
-    qmlRegisterType<VisualizationHelper>("bomi", 1, 0, "VisualizationHelper");
+    qmlRegisterType<AudioVisualizer>("bomi", 1, 0, "Visualizer");
     qmlRegisterType<TopLevelItem>();
     qmlRegisterType<Downloader>();
     qmlRegisterType<HistoryModel>();
@@ -89,6 +89,8 @@ auto registerType() -> void
     qRegisterMetaType<OsdStyle>();
     qRegisterMetaType<OS::HwAcc::Api>();
     qRegisterMetaType<IntrplParamSetMap>("IntrplParamSetMap");
+    qRegisterMetaType<AudioVisualizer::Type>();
+    qRegisterMetaType<AudioVisualizer::Scale>();
 
     qRegisterMetaTypeStreamOperators<Mrl>();
     qRegisterMetaTypeStreamOperators<Playlist>();

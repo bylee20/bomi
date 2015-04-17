@@ -571,6 +571,7 @@ auto PlayEngine::Data::observe() -> void
         { info.audio.decoder()->setChannels(QString::number(n) % "ch"_a, n); });
     mpv.observe("audio-device", [=] (MpvLatin1 &&d) { info.audio.setDevice(d); });
     mpv.observe("current-ao", [=] (MpvLatin1 &&ao) { info.audio.setDriver(ao); });
+    mpv.observe("audio-only", [=] (bool ao) { if (_Change(audioOnly, ao)) emit p->audioOnlyChanged(ao); });
 
     mpv.observe("disc-mouse-in-button", [=] (bool in) { mouseInButton = in; });
 }

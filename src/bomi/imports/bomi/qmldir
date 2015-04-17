@@ -33,3 +33,4 @@ PlayInfoAvOutput	1.0 PlayInfoAvOutput.qml
 VideoPreviewStyle   1.0 VideoPreviewStyle.qml
 SimpleBlur			1.0 SimpleBlur.qml
 ToolPlaneStyle		1.0 ToolPlaneStyle.qml
+BarVisualizer		1.0 BarVisualizer.qml

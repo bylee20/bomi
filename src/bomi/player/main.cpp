@@ -5,6 +5,8 @@
 #include <QCryptographicHash>
 #include <QElapsedTimer>
 
+extern "C" void _exit(int);
+
 DECLARE_LOG_CONTEXT(Main)
 
 namespace OGL { auto check() -> QString; }
@@ -15,7 +17,7 @@ SIA measure(F func, int loop = 100000) -> quint64
     QElapsedTimer timer;
     timer.start();
     for (int i = 0; i < loop; ++i)
-        func();
+        func(i);
     return timer.nsecsElapsed() / loop;
 }
 

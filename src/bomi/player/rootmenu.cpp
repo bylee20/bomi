@@ -21,6 +21,7 @@
 #include "enum/verticalalignment.hpp"
 #include "enum/horizontalalignment.hpp"
 #include "enum/framebufferobjectformat.hpp"
+#include "enum/visualization.hpp"
 #include <functional>
 
 DECLARE_LOG_CONTEXT(Menu)
@@ -483,6 +484,7 @@ RootMenu::RootMenu()
 
         d->separator();
 
+        d->enumMenuCheckable<Visualization>(true);
         d->action(u"normalizer"_q, QT_TR_NOOP("Normalizer"), true);
         d->action(u"tempo-scaler"_q, QT_TR_NOOP("Tempo Scaler"), true);
     });

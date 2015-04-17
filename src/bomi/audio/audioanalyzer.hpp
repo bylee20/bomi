@@ -6,21 +6,6 @@
 
 class AudioAnalyzer : public AudioFilter {
 public:
-    class FFT {
-    public:
-        FFT();
-        ~FFT();
-        auto push(const AudioBufferPtr &input) -> bool;
-        auto pull() -> QList<qreal>;
-        auto inputSize() const -> int;
-        auto setInputSize(int size) -> void;
-    private:
-        friend class AudioAnalyzer;
-        auto clear() -> void;
-        struct Data;
-        Data *d;
-    };
-
     AudioAnalyzer();
     ~AudioAnalyzer();
     auto reset() -> void;
@@ -36,7 +21,6 @@ public:
     auto pull(bool eof = false) -> AudioBufferPtr;
     auto gain() const -> float;
     auto passthrough(const AudioBufferPtr &in) const -> bool override;
-    auto fft() const -> FFT*;
 private:
     auto flush() -> AudioBufferPtr;
     struct Data;

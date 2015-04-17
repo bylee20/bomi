@@ -73,55 +73,5 @@ Item {
             target: App.history; box: left;
             blockHiding: left.blockHiding
         }
-
-        Component {
-            id: bar
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: 10;
-                height: engine.audio.spectrum[0]
-            }
-        }
-
-//        Rectangle {
-//            id: fft
-//            width: 200
-//            height: 100
-//            anchors.centerIn: parent
-
-//            clip: true
-
-//            VisualizationHelper {
-//                id: vh
-//                count: 100
-//                audio: engine.audio
-//                active: false
-//            }
-
-//            Row {
-//                Repeater {
-//                    model: vh.count
-//                    Rectangle {
-//                        id: rect
-//                        width: 2
-//                        height: vh.spectrum[index]
-//                        anchors.bottom: parent.bottom
-//                        color: "red";
-//                        onHeightChanged: {
-//                            ha.stop(); ha.start()
-//                        }
-
-//                        NumberAnimation {
-//                            id: ha
-//                            target: rect
-//                            property: "height"
-//                            to: 0
-//                            duration: 1000
-//                        }
-//                    }
-//                }
-//                height: parent.height
-//            }
-//        }
     }
 }

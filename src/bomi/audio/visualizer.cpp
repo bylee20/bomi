@@ -1,114 +1,257 @@
 #include "visualizer.hpp"
 #include "opengl/opengltexture2d.hpp"
-#include "player/avinfoobject.hpp"
+#include "audiobuffer.hpp"
+#include "kiss_fft/tools/kiss_fftr.h"
+#include <complex>
 
-struct VisualizationHelper::Data {
-    AudioObject *audio = nullptr;
-    QList<qreal> spectrum;
-    qreal min = 40, max = 20000;
-    bool active = true;
+static const QEvent::Type UpdateData = QEvent::Type(QEvent::User + 1);
+
+class Gaussian {
+public:
+    static auto create(int radius) -> std::vector<double>
+    {
+        const int size = radius * 2 + 1, shift = radius;
+        std::vector<double> weights(size);
+        const double sigma = radius / 3.0;
+        const double c = 2.0 * pow(sigma, 2);
+        auto func = [&] (int i) { return exp(-(pow(i - shift, 2) / c)); };
+        double sum = 0.0;
+        for(int i = 0; i < size; ++i)
+            sum += (weights[i] = func(i));
+        for(int i = 0; i < size; ++i)
+            weights[i] /= sum; // normalize
+        return weights;
+    }
 };
 
-VisualizationHelper::VisualizationHelper(QObject *item)
+class FFT {
+public:
+    FFT() { setInputSize(10); }
+    ~FFT() { kiss_fftr_free(m_kiss); }
+    auto push(const AudioBufferPtr &input) -> bool
+    {
+        if (m_pos < m_size_in) {
+            if (!input || input->isEmpty())
+                return false;
+            m_nq = input->fps() / 2;
+            auto view = input->constView<float>();
+            const float *p = view.plane();
+            const int frames = input->frames();
+            const int nch = input->channels();
+            auto dst = m_input.data() + m_pos;
+            for (int i = 0; i < frames && m_pos < m_size_in; ++i, ++m_pos) {
+                float mix = 0;
+                for (int c = 0; c < nch; ++c) {
+                    mix += *p++;
+                }
+                mix /= nch;
+                *dst++ = mix;
+            }
+        }
+        return m_pos >= m_size_in;
+    }
+    auto run() -> void { kiss_fftr(m_kiss, m_input.data(), (kiss_fft_cpx*)m_output.data()); clear(); }
+    auto output() -> const std::vector<std::complex<float>>& { return m_output; }
+    auto inputSize() const -> int { return m_size_in; }
+    auto setInputSize(int size) -> void
+    {
+        static_assert(sizeof(std::complex<float>) == sizeof(kiss_fft_cpx), "!!!");
+        size = kiss_fftr_next_fast_size_real(size);
+        if (size != (int)m_input.size()) {
+            m_input.resize(size);
+            m_size_in = size;
+            m_output.resize(m_size_in / 2 + 1);
+            kiss_fftr_free(m_kiss);
+            m_kiss = kiss_fftr_alloc(m_size_in, false, nullptr, nullptr);
+        }
+        clear();
+    }
+    auto clear() -> void { m_pos = 0; }
+private:
+    kiss_fftr_cfg m_kiss = nullptr;
+    int m_size_in = 0, m_pos = 0;
+    double m_nq = 20000;
+    std::vector<float> m_input;
+    std::vector<std::complex<float>> m_output;
+};
+
+/******************************************************************************/
+
+struct AudioVisualizer::Data {
+    QList<qreal> data, interm, back;
+    qreal min = 20, max = 20000;
+    bool active = false, enabled = false;
+    int fps = 0, count = 0;
+    Type type = None;
+    QMutex mutex;
+    FFT fft;
+    AudioVisualizer::Scale xs = AudioVisualizer::Log;
+};
+
+AudioVisualizer::AudioVisualizer(QObject *item)
     : QObject(item), d(new Data)
 {
-
+    setCount(5);
 }
 
-VisualizationHelper::~VisualizationHelper()
+AudioVisualizer::~AudioVisualizer()
 {
     delete d;
 }
 
-auto VisualizationHelper::min() const -> qreal
+//        function i2f(i, fps, n) { return i * fps * 0.5 / (n - 1); }
+auto AudioVisualizer::analyze(const QSharedPointer<AudioBuffer> &data) -> void
+{
+    Q_ASSERT(data);
+    if (_Change(d->fps, data->fps()))
+        d->fft.setInputSize(d->fps * 0.1);
+    if (!d->fft.push(data))
+        return;
+    d->fft.run();
+    auto &cpx = d->fft.output();
+
+    const int c = d->count;
+    if (d->back.size() != c) {
+        d->back.clear(); d->back.reserve(c);
+        for (int i = 0; i < c; ++i)
+            d->back.push_back(0.0);
+    }
+    const auto nq = d->fps * 0.5;
+    auto get = [&] (double i) -> double {
+        const int left = i;
+        const int right = left + 1;
+        if (left < 0 || right >= (int)cpx.size())
+            return 0.0;
+        const float a = i - (double)left;
+        return std::abs(cpx.at(left)) * (1.0f - a) + a * std::abs(cpx.at(right));
+    };
+
+    constexpr int radius = 3;
+    static const auto gw = Gaussian::create(radius);
+
+    double min = 1e100, max = 0.0;
+    for (int i = 0; i < c; ++i) {
+        const auto f = d->xs != Log ? d->min + (d->max - d->min) * i / (c - 1)
+            : std::exp(std::log(d->min) + (std::log(d->max) - std::log(d->min)) * i / (c - 1));
+        const double idx = f * (cpx.size() - 1) / nq;
+        double lv = 0.0;
+        int g = 0;
+        for (int j = -radius; j <= radius; ++j, ++g)
+            lv += get(idx + j) * gw[g];
+        if (lv < 1e-4)
+            lv = 0.0;
+        else {
+            lv = std::log(lv);
+            min = std::min(lv, min);
+            max = std::max(lv, max);
+        }
+        d->back[i] = lv;
+    }
+    if (min != max) {
+        for (auto &v : d->back) {
+            if (v != 0.0)
+                v = (v - min) / (max - min);
+        }
+    }
+
+    d->mutex.lock();
+    d->back.swap(d->interm);
+    d->mutex.unlock();
+    qApp->postEvent(this, new QEvent(UpdateData));
+}
+
+auto AudioVisualizer::min() const -> qreal
 {
     return d->min;
 }
 
-auto VisualizationHelper::max() const -> qreal
+auto AudioVisualizer::max() const -> qreal
 {
     return d->max;
 }
 
-auto VisualizationHelper::setMin(qreal min) -> void
+auto AudioVisualizer::setMin(qreal min) -> void
 {
     if (_Change(d->min, min))
         emit minChanged();
 }
 
-auto VisualizationHelper::setMax(qreal max) -> void
+auto AudioVisualizer::setMax(qreal max) -> void
 {
     if (_Change(d->max, max))
         emit maxChanged();
 }
 
-auto VisualizationHelper::count() const -> int
+auto AudioVisualizer::count() const -> int
 {
-    return d->spectrum.size();
+    return d->count;
 }
 
-auto VisualizationHelper::setCount(int count) -> void
+auto AudioVisualizer::setCount(int count) -> void
 {
-    if (d->spectrum.size() != count) {
-        d->spectrum.clear();
-        d->spectrum.reserve(count);
-        for (int i = 0; i < count; ++i)
-            d->spectrum.push_back(0.0);
-    }
+    if (_Change(d->count, count))
+        emit countChanged();
 }
 
-auto VisualizationHelper::audio() const -> AudioObject*
+auto AudioVisualizer::setEnabled(bool enabled) -> void
 {
-    return d->audio;
+    if (_Change(d->enabled, enabled))
+        emit enabledChanged();
 }
 
-auto VisualizationHelper::setAudio(AudioObject *audio) -> void
+auto AudioVisualizer::isEnabled() const -> bool
 {
-    if (_Change(d->audio, audio)) {
-        connect(d->audio, &AudioObject::spectrumChanged, this, &VisualizationHelper::setSpectrum);
-        emit audioChanged();
-    }
+    return d->enabled;
 }
 
-auto VisualizationHelper::spectrum() const -> QList<qreal>
+auto AudioVisualizer::data() const -> QList<qreal>
 {
-    return d->spectrum;
+    return d->data;
 }
 
-auto VisualizationHelper::setSpectrum(const QList<qreal> &orig) -> void
-{
-    if (!d->active)
-        return;
-//    function i2f(i, fps, n) { return i * fps * 0.5 / (n - 1); }
-    const auto nq = d->audio->filter()->samplerate() * 0.5;
-    auto get = [&] (double i) {
-        const int left = i;
-        const int right = left + 1;
-        if (left < 0 || right >= orig.size())
-            return 0.0;
-        const double a = i - (double)left;
-        return orig.at(left) * (1.0 - a) + a * orig.at(right);
-    };
-    const int count = d->spectrum.size();
-    for (int i = 0; i < count; ++i) {
-        const auto f = d->min + (d->max - d->min) * i / (count - 1);
-        const double idx = f * (orig.size() - 1) / nq;
-        double avg = 0.0;
-        constexpr int r = 3;
-        for (int j = -r; j <= r; ++j)
-            avg += get(idx + j);
-        d->spectrum[i] = avg / (2 * r + 1);
-    }
-    emit spectrumChanged();
-}
-
-auto VisualizationHelper::isActive() const -> bool
+auto AudioVisualizer::isActive() const -> bool
 {
     return d->active;
 }
 
-auto VisualizationHelper::setActive(bool active) -> void
+auto AudioVisualizer::setActive(bool active) -> void
 {
-    if (_Change(d->active, active))
-        activeChanged();
+    if (_Change(d->active, active)) {
+        emit activeChanged();
+        setEnabled(d->active && d->type);
+    }
+}
+
+auto AudioVisualizer::customEvent(QEvent *e) -> void
+{
+    if (e->type() == UpdateData) {
+        d->mutex.lock();
+        d->data.swap(d->interm);
+        d->mutex.unlock();
+        emit dataChanged();
+    }
+}
+
+auto AudioVisualizer::setXScale(Scale scale) -> void
+{
+    if (_Change(d->xs, scale))
+        emit xScaleChanged();
+}
+
+auto AudioVisualizer::xScale() const -> Scale
+{
+    return d->xs;
+}
+
+auto AudioVisualizer::type() const -> Type
+{
+    return d->type;
+}
+
+auto AudioVisualizer::setType(Visualization type) -> void
+{
+    if (_Change(d->type, (Type)type)) {
+        emit typeChanged();
+        setEnabled(d->active && d->type);
+    }
 }

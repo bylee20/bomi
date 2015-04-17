@@ -17,6 +17,7 @@
 #include "dialog/subtitlefinddialog.hpp"
 #include "dialog/encodingfiledialog.hpp"
 #include "video/interpolatorparams.hpp"
+#include "audio/visualizer.hpp"
 #include <QThreadPool>
 
 template<class T, class Func>
@@ -499,6 +500,8 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_STEP(audio(u"sync"_q).g(), audio_sync, setAudioSync);
     PLUG_STEP(audio(u"amp"_q).g(), audio_amplifier, setAudioAmp);
     PLUG_ENUM_CHILD(audio, audio_channel_layout, setChannelLayout);
+    plugAppEnumChild(audio, "visualization", &AppState::visualizationChanged);
+    connect(&as, &AppState::visualizationChanged, e.visualizer(), &AudioVisualizer::setType);
     PLUG_FLAG(audio[u"normalizer"_q], audio_volume_normalizer, setAudioVolumeNormalizer);
     PLUG_FLAG(audio[u"tempo-scaler"_q], audio_tempo_scaler, setAudioTempoScaler);
 

@@ -172,6 +172,7 @@ PlayEngine::PlayEngine()
             &d->info.audio, &AudioObject::setSpectrum, Qt::QueuedConnection);
     connect(d->sr, &SubtitleRenderer::selectionChanged,
             this, &PlayEngine::subtitleSelectionChanged);
+    connect(this, &PlayEngine::audioOnlyChanged, d->ac, &AudioController::setAnalyzeSpectrum);
 
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
@@ -1288,4 +1289,14 @@ auto PlayEngine::default_() const -> const MrlState*
 auto PlayEngine::isMouseInButton() const -> bool
 {
     return d->mouseInButton && d->params.d->disc;
+}
+
+auto PlayEngine::isAudioOnly() const -> bool
+{
+    return d->audioOnly;
+}
+
+auto PlayEngine::visualizer() const -> AudioVisualizer*
+{
+    return d->ac->visualizer();
 }

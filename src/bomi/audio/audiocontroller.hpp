@@ -5,7 +5,7 @@ struct af_instance;                     struct mp_audio;
 struct af_cfg;                          struct af_info;
 struct mp_chmap;                        struct AudioNormalizerOption;
 class ChannelLayoutMap;                 class AudioFormat;
-class AudioEqualizer;
+class AudioEqualizer;                   class AudioVisualizer;
 enum class ChannelLayout;
 
 class AudioController : public QObject {
@@ -26,6 +26,7 @@ public:
     auto outputFormat() const -> AudioFormat;
     auto samplerate() const -> int;
     auto setAnalyzeSpectrum(bool on) -> void;
+    auto visualizer() const -> AudioVisualizer*;
 signals:
     void inputFormatChanged();
     void outputFormatChanged();

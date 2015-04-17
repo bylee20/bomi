@@ -30,7 +30,8 @@ static const auto jio = JIO(
     JE(dvd_device),
     JE(bluray_device),
     JE(state),
-    JE(fbo_format)
+    JE(fbo_format),
+    JE(visualization)
 );
 
 #define APP_STATE_FILE QString(_WritablePath(Location::Config) % "/appstate.json"_a)

@@ -38,8 +38,13 @@ auto MainWindow::Data::restoreState() -> void
     pl[u"shuffle"_q]->setChecked(as.playlist_shuffled);
     pl[u"repeat"_q]->setChecked(as.playlist_repeat);
     tool[u"auto-exit"_q]->setChecked(as.auto_exit);
-    emit as.winStaysOnTopChanged(as.win_stays_on_top);
-    emit as.fboFormatChanged(as.fbo_format);
+    const auto mo = as.metaObject();
+    for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+        const auto p = mo->property(i);
+        if (p.hasNotifySignal())
+            p.notifySignal().invoke(&as, QGenericArgument(p.typeName(),
+                                                          p.read(&as).constData()));
+    }
 
     as.state.set_video_tracks(StreamList(StreamVideo));
     as.state.set_audio_tracks(StreamList(StreamAudio));
