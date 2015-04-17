@@ -811,6 +811,15 @@ auto PlayEngine::setDeintOptions_locked(const DeintOptionSet &set) -> void
     emit deintOptionsChanged();
 }
 
+auto PlayEngine::renderSizeHint(const QSize &size) const -> QSize
+{
+    if (!d->vr->hasFrame())
+        return size;
+    auto s = size;
+    d->mpv.renderSize(&s.rwidth(), &s.rheight());
+    return s;
+}
+
 auto PlayEngine::videoSizeHint() const -> QSize
 {
     return d->vr->sizeHint();

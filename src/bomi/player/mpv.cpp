@@ -84,6 +84,11 @@ auto Mpv::initialize() -> void
     d->gl = static_cast<mpv_opengl_cb_context*>(ptr);
 }
 
+auto Mpv::renderSize(int *w, int *h) -> void
+{
+    mpv_opengl_cb_render_size(d->gl, w, h);
+}
+
 auto Mpv::destroy() -> void
 {
     if (m_handle) {

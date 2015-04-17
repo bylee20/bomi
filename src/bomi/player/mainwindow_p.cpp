@@ -742,7 +742,7 @@ auto MainWindow::Data::videoSize(const WindowSize &hint) -> QSize
     const QSizeF video = e.videoSizeHint();
     if (hint.display_based)
         r = area(screenSize()) * hint.rate / area(video);
-    return (video * qSqrt(r)).toSize();
+    return e.renderSizeHint((video * qSqrt(r)).toSize());
 }
 
 auto MainWindow::Data::load(const Mrl &mrl, bool play, bool tryResume,

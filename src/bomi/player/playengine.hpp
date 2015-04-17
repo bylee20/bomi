@@ -171,6 +171,7 @@ public:
     auto hasVideoFrame() const -> bool;
     auto setVideoOffset(const QPointF &offset) -> void;
     auto videoSizeHint() const -> QSize;
+    auto renderSizeHint(const QSize &size) const -> QSize;
     auto hasVideo() const -> bool;
     auto setAudioVolumeNormalizer(bool on) -> void;
     auto setAudioTempoScaler(bool on) -> void;

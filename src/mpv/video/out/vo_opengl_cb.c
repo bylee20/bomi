@@ -283,6 +283,20 @@ int mpv_opengl_cb_render_osd(struct mpv_opengl_cb_context *ctx,
     return 0;
 }
 
+void mpv_opengl_cb_render_size(struct mpv_opengl_cb_context *ctx, int *w, int *h)
+{
+    pthread_mutex_lock(&ctx->lock);
+    struct mp_rect wnd = {0, 0, *w, *h};
+    struct mp_rect src, dst;
+    struct mp_osd_res osd;
+    mp_get_src_dst_rects(ctx->log, &ctx->vo_opts, 0,
+                         &ctx->img_params, wnd.x1 - wnd.x0, wnd.y1 - wnd.y0,
+                         1.0, &src, &dst, &osd);
+    pthread_mutex_unlock(&ctx->lock);
+    *w = dst.x1 - dst.x0;
+    *h = dst.y1 - dst.y0;
+}
+
 int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
 {
     assert(ctx->renderer);
