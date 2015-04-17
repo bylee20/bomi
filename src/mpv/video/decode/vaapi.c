@@ -90,6 +90,9 @@ static const struct hwdec_profile_entry profiles[] = {
     PE(WMV3,        VC1_ADVANCED,       VC1Advanced),
     PE(WMV3,        VC1_MAIN,           VC1Main),
     PE(WMV3,        VC1_SIMPLE,         VC1Simple),
+    PE(VP8,         UNKNOWN,            VP8Version0_3),
+    PE(HEVC,        HEVC_MAIN,          HEVCMain),
+    PE(HEVC,        HEVC_MAIN_10,       HEVCMain10),
     {0}
 };
 
