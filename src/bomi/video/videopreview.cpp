@@ -91,7 +91,7 @@ auto VideoPreview::rate() const -> double
 
 auto VideoPreview::setRate(double rate) -> void
 {
-    if (!d->active)
+    if (!d->active || !d->video)
         return;
     if (_Change(d->rate, rate)) {
         if (_Change(d->percent, qRound(d->rate * 10000)/100.0))

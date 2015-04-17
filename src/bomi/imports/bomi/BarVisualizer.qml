@@ -16,9 +16,11 @@ Item {
 
     Item {
         id: frame
-        height: parent.height - 10
         width: (d.barWidth + d.gap) * vis.count - d.gap
         anchors.bottom: parent.bottom
+        anchors.bottomMargin: parent.height * 0.07
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.1
         x: (parent.width - width) * 0.5 | 0
 
         Repeater {
@@ -83,5 +85,42 @@ Item {
                 }
             }
         }
+    }
+
+    ShaderEffectSource {
+        id: source
+        sourceItem: frame
+        width: frame.width; height: frame.height
+        visible: false
+    }
+
+    ShaderEffect {
+        width: frame.width
+        anchors.top: frame.bottom
+        height: frame.height * 0.1
+        x: frame.x
+        property ShaderEffectSource src: source
+        property real tilt: width * 0.15
+        vertexShader: "
+                   uniform highp mat4 qt_Matrix;
+                   uniform lowp float tilt;
+                   attribute highp vec4 qt_Vertex;
+                   attribute highp vec2 qt_MultiTexCoord0;
+                   varying highp vec2 coord;
+                   void main() {
+                       coord = qt_MultiTexCoord0;
+                       vec4 vtx = qt_Vertex;
+                       vtx.x -= tilt * coord.y;
+                       coord.y = 1.0 - coord.y;
+                       gl_Position = qt_Matrix * vtx;
+                   }"
+        fragmentShader: "
+                   varying highp vec2 coord;
+                   uniform sampler2D src;
+                   uniform lowp float qt_Opacity;
+                   void main() {
+                       lowp vec4 tex = texture2D(src, coord);
+                       gl_FragColor = tex * qt_Opacity * coord.y * coord.y * 0.6;
+                   }"
     }
 }
