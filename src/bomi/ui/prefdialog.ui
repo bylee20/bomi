@@ -850,7 +850,7 @@ Playback information
              <item row="2" column="0">
               <widget class="QLabel" name="label_19">
                <property name="text">
-                <string>Maximum file size</string>
+                <string>Maximum cache file size</string>
                </property>
               </widget>
              </item>
