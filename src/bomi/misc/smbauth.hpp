@@ -1,6 +1,8 @@
 #ifndef SMBAUTH_HPP
 #define SMBAUTH_HPP
 
+class SmbDir;                           class Mrl;
+
 class SmbAuth {
 public:
     enum Error {
@@ -29,6 +31,7 @@ public:
         { m_getAuthInfo = func; }
     auto lastErrorString() const -> QString { return errorString(m_lastError); }
     static auto errorString(Error error) -> QString;
+    auto openDir(const Mrl &mrl) -> QSharedPointer<SmbDir>;
 private:
     QString m_username, m_password;
     std::function<bool(SmbAuth*)> m_getAuthInfo;

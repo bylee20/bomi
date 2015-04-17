@@ -1,4 +1,5 @@
 #include "smbauth.hpp"
+#include "player/mrl.hpp"
 #include "dialog/bbox.hpp"
 #include "configure.hpp"
 #if HAVE_SAMBA
@@ -33,18 +34,86 @@ auto SmbAuth::translate(const QUrl &input) -> QUrl
     return url;
 }
 
+SIA errorForInit(int e) -> SmbAuth::Error
+{
+    switch (e) {
+    case ENOMEM: return SmbAuth::OutOfMemory;
+    case ENOENT: return SmbAuth::NoSmbConf;
+    default:     return SmbAuth::UnknownError;
+    }
+}
+
+class SmbDir {
+public:
+    SmbDir(const QUrl &url)
+    {
+        m_error = SmbAuth::Unsupported;
+#if HAVE_SAMBA
+        m_url = url;
+        m_dh = smbc_opendir(url.toString(QUrl::FullyEncoded).toLatin1());
+        if (m_dh < 0) {
+            switch (errno) {
+            case EACCES:
+                m_error = SmbAuth::NoPermission;
+                break;
+            case EINVAL:
+                m_error = SmbAuth::InvalidUrl;
+                break;
+            case ENOENT:
+                m_error = SmbAuth::NotExistingPath;
+                break;
+            case ENOMEM:
+                m_error = SmbAuth::OutOfMemory;
+                break;
+            case EPERM:
+            case ENODEV:
+                m_error = SmbAuth::NotExistingShare;
+                break;
+            default: break;
+            }
+            return;
+        }
+        smbc_dirent *child = nullptr;
+        while ((child = smbc_readdir(m_dh))) {
+            qDebug() << QByteArray(child->name, child->namelen);
+        }
+#endif
+    }
+    ~SmbDir()
+    {
+        if (m_dh >= 0)
+            smbc_closedir(m_dh);
+    }
+    auto lastError() const -> SmbAuth::Error { return m_error; }
+private:
+    QUrl m_url;
+    Q_DISABLE_COPY(SmbDir)
+    int m_dh = -1;
+    SmbAuth::Error m_error = SmbAuth::NoError;
+};
+
+auto SmbAuth::openDir(const Mrl &mrl) -> QSharedPointer<SmbDir>
+{
+#if HAVE_SAMBA
+    const int err = smbc_init(smb_auth_fn, 1);
+    if (err < 0)
+        return QSharedPointer<SmbDir>();
+    const auto str = mrl.toString();
+    const int idx = str.lastIndexOf('/'_q);
+    if (idx < 0)
+        return QSharedPointer<SmbDir>();
+    return QSharedPointer<SmbDir>(new SmbDir(QUrl(str.left(idx))));
+#else
+    return QSharedPointer<SmbDir>();
+#endif
+}
+
 auto SmbAuth::process(const QUrl &url) -> Error
 {
 #if HAVE_SAMBA
     const int err = smbc_init(smb_auth_fn, 1);
     if (err < 0)
-        return m_lastError = [&] () {
-            switch (errno) {
-            case ENOMEM: return OutOfMemory;
-            case ENOENT: return NoSmbConf;
-            default:     return UnknownError;
-            }
-        }();
+        return m_lastError = errorForInit(errno);
 
     const int fd = smbc_open(url.toString(QUrl::FullyEncoded).toLatin1(), O_RDONLY, 0644);
     if (fd < 0)

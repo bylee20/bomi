@@ -181,6 +181,8 @@ auto PlayEngine::Data::updateMediaName(const QString &name) -> void
     info.media.setType(type);
 }
 
+static constexpr const auto QCI = Qt::CaseInsensitive;
+
 auto PlayEngine::Data::onLoad() -> void
 {
     auto file = mpv.get<MpvFile>("stream-open-filename");
@@ -214,6 +216,31 @@ auto PlayEngine::Data::onLoad() -> void
         local->set_resume_position(reload);
         local->set_device(mrl.device());
         resume = found = true;
+    }
+
+    if (file.data.startsWith("smb://"_a, QCI)) {
+        auto smb = local->d->smb;
+        QUrl url = smb.translate(QUrl(file));
+        bool ok = false;
+        for (;;) {
+            if (smb.process(url) == SmbAuth::NoError) {
+                file = url.toString(QUrl::FullyEncoded);
+                ok = true;
+                break;
+            }
+            _Error("Failed to access smb share: %%", smb.lastErrorString());
+            if (smb.lastError() != SmbAuth::NoPermission)
+                break;
+            if (!smb.getNewAuthInfo()) {
+                _Error("Failed to acquire new authentication for smb://.");
+                break;
+            }
+            url.setUserName(smb.username());
+            url.setPassword(smb.password());
+        }
+        if (ok) {
+//            smb.openDir(Mrl(file.data));
+        }
     }
 
     auto setFiles = [&] (QByteArray &&name, QByteArray &&nid,
@@ -324,7 +351,6 @@ auto PlayEngine::Data::onLoad() -> void
     } else
         mpv.setAsync("file-local-options/cache", "no"_b);
 
-    static constexpr const auto QCI = Qt::CaseInsensitive;
     if (file.data.startsWith("http://"_a, QCI) || file.data.startsWith("https://"_a, QCI)) {
         file = QUrl(file).toString(QUrl::FullyEncoded);
         if (yle && yle->supports(file)) {
@@ -344,24 +370,6 @@ auto PlayEngine::Data::onLoad() -> void
             }
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
-        }
-    } else if (file.data.startsWith("smb://"_a, QCI)) {
-        auto smb = local->d->smb;
-        QUrl url = smb.translate(QUrl(file));
-        for (;;) {
-            if (smb.process(url) == SmbAuth::NoError) {
-                file = url.toString(QUrl::FullyEncoded);
-                break;
-            }
-            _Error("Failed to access smb share: %%", smb.lastErrorString());
-            if (smb.lastError() != SmbAuth::NoPermission)
-                break;
-            if (!smb.getNewAuthInfo()) {
-                _Error("Failed to acquire new authentication for smb://.");
-                break;
-            }
-            url.setUserName(smb.username());
-            url.setPassword(smb.password());
         }
     }
 
