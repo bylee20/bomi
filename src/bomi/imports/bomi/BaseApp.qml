@@ -36,7 +36,7 @@ Item {
                         && !App.window.fullscreen && App.window.frameless
             readonly property real h: visible ? height : 0
             gradient: Gradient {
-                GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.7); }
+                GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.4); }
                 GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.0); }
             }
 

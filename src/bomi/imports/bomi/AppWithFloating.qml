@@ -4,6 +4,7 @@ import bomi 1.0
 BaseApp {
     id: root
     readonly property Item rootItem: root
+    titleBarVisible: true
     player: Player {
         id: player
         parent: root
