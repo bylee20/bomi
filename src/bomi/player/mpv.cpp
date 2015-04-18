@@ -63,12 +63,12 @@ auto Mpv::create() -> void
     if (!m_handle) m_handle = mpv_create();
 }
 
-auto Mpv::initialize() -> void
+auto Mpv::initialize(Log::Level lv) -> void
 {
     Q_ASSERT(m_handle && !d->gl);
 
     QByteArray loglv = "no";
-    switch (Log::maximumLevel()) {
+    switch (lv) {
     case Log::Trace: loglv = "trace"; break;
     case Log::Debug: loglv = "v";     break;
     case Log::Info:  loglv = "info";  break;

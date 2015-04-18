@@ -238,7 +238,7 @@ PlayEngine::PlayEngine()
             }
         }
     }
-    d->mpv.initialize();
+    d->mpv.initialize(Log::maximumLevel());
     _Debug("Initialized");
     d->hook();
     d->mpv.setUpdateCallback([=] ()
