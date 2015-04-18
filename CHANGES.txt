@@ -1,3 +1,40 @@
+0.9.7
+
+  * New: cache file related options in cache tab of preferences
+  * New: implement display of cached state in demuxer in seek bar (#300)
+  * New: internal title bar for frameless mode
+  * New: visualization for audio
+  * New: --set-subtitle option for command line to set subtitle file
+  * New: show history/playlist by clicking left/right edge
+  * New: new option to unmute when volume adjusted (#266)
+  * New: compact mode for Tethys skin
+  * New: hide history/playlist by clicking empty space (#307)
+  * New: skin 'metro' - Windows metro style
+  * New: Enter Fullscreen/Exit Fullscreen menu (#307)
+  * Mod: use soft clipping by default
+  * Fix: enable frameless mode on Windows
+  * Fix: fit window size to rendering size when using window size menu
+  * Fix: wrong calculation of texture coordinate for video frame (#312)
+  * Fix: prevent too high amplification by normalizer on start of playback
+  * Fix: don't reset normalizer history on seeking
+  * Fix: set page step of radius slider to 1 in advanced interpolation dialog
+  * Fix: wrong path for open file from command line when launched bomi not in PATH
+  * Fix: don't hide history/playlist while scrollbar pressed
+  * Fix: reduce delay for initial display of Preferences dialog drastically (#308)
+  * Fix: checking GL_RGBA16 for FBO texture format didn't work (#308)
+  * Fix: reduce width of playlist to fit to item name not location
+  * Fix: don't disturb playback on loading skin
+  * Fix: hide controls when cursor is located in history/playlist (#303)
+  * Fix: adjust y-position of preview automatically
+  * Fix: raise z-order of TimeSlider to prevent preview being obstructed
+  * Fix: metadata wasn't exposured to MPRIS (#304)
+  * Fix: don't display preview when video is not available (#302)
+  * (Windows)New: progress indication in task bar
+  * (Windows)Fix: couldn't close window while playing
+  * (Windows)Fix: window jumped when drag window after drag title bar
+  * (Windows)Fix: reszing window by top/left grib was disabled
+  * (Windows)Fix: 'snap to edge' didn't work when moving by title bar
+
 0.9.6
 
   * New: file name template for quick snapshot (#279)
