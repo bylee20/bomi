@@ -76,15 +76,17 @@ Item {
                 anchors.right:parent.right; anchors.rightMargin: logo.x
                 anchors.verticalCenter: parent.verticalCenter
                 StateButton {
-                    size: 16; prefix: "qrc:/img/window-minimize"; action: "window/minimize"
+                    size: 16; tooltip: ""
+                    prefix: "qrc:/img/window-minimize"; action: "window/minimize"
                 }
                 StateButton {
-                    size: 16
+                    size: 16; tooltip: ""
                     prefix: App.window.maximized ? "qrc:/img/window-normal" : "qrc:/img/window-maximize"
                     onClicked: App.window.maximized ? App.window.showNormal() : App.execute("window/maximize")
                 }
                 StateButton {
-                    size: 16; action: "window/close"; prefix: "qrc:/img/window-close"
+                    size: 16; tooltip: ""
+                    action: "window/close"; prefix: "qrc:/img/window-close"
                 }
             }
         }
