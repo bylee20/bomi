@@ -242,7 +242,7 @@ auto WinWindowAdapter::setAlwaysOnTop(bool onTop) -> void
     setLayer((HWND)winId(), layer());
 }
 
-QMargins frame(DWORD style, DWORD exStyle)
+static auto frame(DWORD style, DWORD exStyle) -> QMargins
 {
     RECT rect = {0,0,0,0};
 #ifndef Q_OS_WINCE
@@ -252,9 +252,6 @@ QMargins frame(DWORD style, DWORD exStyle)
         qErrnoWarning("%s: AdjustWindowRectEx failed", __FUNCTION__);
     const QMargins result(qAbs(rect.left), qAbs(rect.top),
                           qAbs(rect.right), qAbs(rect.bottom));
-//    qCDebug(lcQpaWindows).nospace() << __FUNCTION__ << " style= 0x"
-//        << QString::number(style, 16) << " exStyle=0x" << QString::number(exStyle, 16) << ' ' << rect << ' ' << result;
-
     return result;
 }
 
@@ -272,12 +269,9 @@ auto WinWindowAdapter::setFullScreen(bool fs) -> void
     const auto visible = window()->isVisible();
     if (m_fs)
         m_prevGeometry = window()->geometry();
-    if (m_fs && m_frameless) {
+    if (m_fs && m_frameless)
         setFramelessHint(false);
-    }
     setFullScreenHint(fs);
-    if (visible)
-        window()->setVisible(visible);
     if (fs) {
         const auto hwnd = (HWND)winId();
         auto style = GetWindowLong(hwnd, GWL_STYLE);
@@ -290,6 +284,8 @@ auto WinWindowAdapter::setFullScreen(bool fs) -> void
         window()->setGeometry(m_prevGeometry);
         setLayer((HWND)winId(), layer());
     }
+    if (visible)
+        window()->setVisible(visible);
 }
 
 auto WinWindowAdapter::eventFilter(QObject *obj, QEvent *ev) -> bool
@@ -387,12 +383,12 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         ReleaseDC(msg->hwnd, dc);
         *res = 0;
         return true;
-    } case WM_NCHITTEST:
+    } case WM_NCHITTEST: {
         if (!m_fs || !available())
             return false;
         *res = HTCLIENT;
         return true;
-    default:
+    } default:
         return false;
     }
 }
