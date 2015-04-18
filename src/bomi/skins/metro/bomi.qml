@@ -32,16 +32,10 @@ B.AppWithDock {
         id: rightButtons
         Row {
             spacing: gap; height: 30
-            MetroButton {
-                prefix: compact ? "to-normal" : "to-compact"
-                onClicked: compact = !compact
-            }
+            MetroButton { prefix: compact ? "to-normal" : "to-compact"; onClicked: compact = !compact }
             MetroButton { prefix: "sub"; action: "subtitle/track/cycle"; action2: "subtitle/track" }
             MetroButton { prefix: "audio"; action: "audio/track/cycle"; action2: "audio/track" }
-            MetroButton {
-                prefix: B.App.window.fullscreen ? "exit-fs" : "enter-fs"
-                action: "window/toggle-fs"
-            }
+            MetroButton { prefix: B.App.window.fullscreen ? "exit-fs" : "enter-fs"; action: "window/toggle-fs" }
         }
     }
 

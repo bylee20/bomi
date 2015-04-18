@@ -6,6 +6,7 @@
 #include "player/rootmenu.hpp"
 #include "player/mainwindow.hpp"
 #include "os/os.hpp"
+#include "player/app.hpp"
 #include <QQmlEngine>
 
 extern "C" {
@@ -275,4 +276,9 @@ auto AppObject::dumpInfo() -> void
 {
     QByteArray indent;
     dumpObject("App", &staticMetaObject, indent);
+}
+
+auto AppObject::displayName() const -> QString
+{
+    return cApp.displayName();
 }

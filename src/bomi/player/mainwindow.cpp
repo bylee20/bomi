@@ -536,3 +536,8 @@ auto MainWindow::eventFilter(QObject *o, QEvent *e) -> bool
 #endif
     return QQuickView::eventFilter(o, e);
 }
+
+auto MainWindow::isFrameless() const -> bool
+{
+    return d->as.win_frameless;
+}

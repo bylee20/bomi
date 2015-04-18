@@ -5,6 +5,7 @@
 #define JSON_CLASS ControlsTheme
 
 static const auto jio = JIO(
+    JE(titleBarEnabled),
     JE(showOnMouseMoved),
     JE(showLocationsInPlaylist),
     JE(showToolOnMouseOverEdge),
@@ -29,6 +30,7 @@ ControlsThemeWidget::ControlsThemeWidget(QWidget *parent)
 {
     d->ui.setupUi(this);
     auto signal = &ControlsThemeWidget::valueChanged;
+    PLUG_CHANGED(d->ui.enable_title_bar);
     PLUG_CHANGED(d->ui.show_hidden_on_moved);
     PLUG_CHANGED(d->ui.show_locations);
     PLUG_CHANGED(d->ui.show_tool_on_hovered);
@@ -46,6 +48,7 @@ ControlsThemeWidget::~ControlsThemeWidget()
 auto ControlsThemeWidget::value() const -> ControlsTheme
 {
     ControlsTheme theme;
+    theme.titleBarEnabled = d->ui.enable_title_bar->isChecked();
     theme.showOnMouseMoved = d->ui.show_hidden_on_moved->isChecked();
     theme.showLocationsInPlaylist = d->ui.show_locations->isChecked();
     theme.showToolOnMouseOverEdge = d->ui.show_tool_on_hovered->isChecked();
@@ -58,6 +61,7 @@ auto ControlsThemeWidget::value() const -> ControlsTheme
 
 auto ControlsThemeWidget::setValue(const ControlsTheme &theme) -> void
 {
+    d->ui.enable_title_bar->setChecked(theme.titleBarEnabled);
     d->ui.show_hidden_on_moved->setChecked(theme.showOnMouseMoved);
     d->ui.show_locations->setChecked(theme.showLocationsInPlaylist);
     d->ui.show_tool_on_hovered->setChecked(theme.showToolOnMouseOverEdge);

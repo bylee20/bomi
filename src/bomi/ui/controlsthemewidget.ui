@@ -7,10 +7,17 @@
     <x>0</x>
     <y>0</y>
     <width>391</width>
-    <height>174</height>
+    <height>201</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QCheckBox" name="enable_title_bar">
+     <property name="text">
+      <string>Enable internal title bar in frameless mode</string>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QCheckBox" name="show_hidden_on_moved">
      <property name="text">

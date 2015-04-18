@@ -34,11 +34,14 @@ private:
 class WindowObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged)
+    Q_PROPERTY(bool maximized READ isMaximized NOTIFY maximizedChanged)
+    Q_PROPERTY(bool minimized READ isMinimized NOTIFY minimizedChanged)
     Q_PROPERTY(MouseObject *mouse READ mouse CONSTANT FINAL)
     Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
     Q_PROPERTY(int width READ width NOTIFY widthChanged)
     Q_PROPERTY(int height READ height NOTIFY heightChanged)
     Q_PROPERTY(QQuickItem *z10 READ z10 CONSTANT FINAL)
+    Q_PROPERTY(bool frameless READ isFrameless NOTIFY framelessChanged)
 public:
     auto set(MainWindow *mw) -> void;
     auto fullscreen() const -> bool;
@@ -47,7 +50,11 @@ public:
     auto width() const -> int;
     auto height() const -> int;
     auto z10() -> QQuickItem* { return &m_z10; }
+    auto isMinimized() const -> bool;
+    auto isMaximized() const -> bool;
+    auto isFrameless() const -> bool;
     static auto getMouse() -> MouseObject*;
+    Q_INVOKABLE void showNormal();
     Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos,
                                  const QString &text);
     Q_INVOKABLE void showToolTip(QQuickItem *item, qreal x, qreal y,
@@ -59,9 +66,13 @@ signals:
     void sizeChanged();
     void widthChanged();
     void heightChanged();
+    void maximizedChanged();
+    void minimizedChanged();
+    void framelessChanged();
 private:
     MainWindow *m = nullptr;
     QQuickItem m_z10;
+    bool m_minimized = false, m_maximized = false;
 };
 
 #endif // WINDOWOBJECT_HPP

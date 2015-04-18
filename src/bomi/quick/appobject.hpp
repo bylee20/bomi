@@ -55,6 +55,7 @@ class AppObject : public QObject {
     Q_PROPERTY(WindowObject *window READ window CONSTANT FINAL)
     Q_PROPERTY(MemoryObject *memory READ memory CONSTANT FINAL)
     Q_PROPERTY(CpuObject *cpu READ cpu CONSTANT FINAL)
+    Q_PROPERTY(QString displayName READ displayName NOTIFY displayNameChanged)
 public:
     static const int MouseEvent = 0x1000;
     enum Event {
@@ -72,7 +73,7 @@ public:
     auto window() const -> WindowObject* { return s.window; }
     auto memory() const -> MemoryObject* { return &m_memory; }
     auto cpu() const -> CpuObject* { return &m_cpu; }
-
+    auto displayName() const -> QString;
     Q_INVOKABLE void registerToAccept(QQuickItem *item, Events e);
     Q_INVOKABLE QString description(const QString &actionId) const;
     Q_INVOKABLE double textWidth(const QString &text, int size) const;
@@ -94,6 +95,8 @@ public:
     static auto itemToAccept(Event event, const QPointF &scenePos = QPointF()) -> QQuickItem*;
 
     static auto dumpInfo() -> void;
+signals:
+    void displayNameChanged();
 private:
     struct StaticData {
         PlayEngine *engine = nullptr;

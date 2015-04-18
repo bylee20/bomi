@@ -16,6 +16,7 @@ public:
     auto openFromFileManager(const Mrl &mrl, const QString &sub = QString()) -> void;
     auto setSubtitle(const QString &sub) -> void;
     auto isFullScreen() const -> bool;
+    auto isFrameless() const -> bool;
     auto setFullScreen(bool full, bool updateLastGeometry = true) -> void;
     auto wake() -> void;
     auto togglePlayPause() -> void;
@@ -30,6 +31,7 @@ public:
 signals:
     void cursorChanged(const QCursor &cursor);
     void fullscreenChanged(bool fs);
+    void framelessChanged(bool frameless);
     void sceneGraphInitialized();
 private slots:
     void postInitialize();

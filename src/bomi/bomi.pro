@@ -612,4 +612,5 @@ DISTFILES += \
     skins/Tethys/bomi.qml \
     skins/metro/bomi.qml \
     skins/metro/MetroButton.qml \
-    imports/bomi/BarVisualizer.qml
+    imports/bomi/BarVisualizer.qml \
+    imports/bomi/StateButton.qml

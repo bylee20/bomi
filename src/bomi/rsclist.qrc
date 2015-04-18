@@ -57,5 +57,14 @@
         <file>img/tool-clear.png</file>
         <file>img/tool-repeat.png</file>
         <file>img/tool-shuffle.png</file>
+        <file>img/window-close-filled.png</file>
+        <file>img/window-close.png</file>
+        <file>img/window-logo-filled.png</file>
+        <file>img/window-maximize.png</file>
+        <file>img/window-maximize-filled.png</file>
+        <file>img/window-minimize-filled.png</file>
+        <file>img/window-minimize.png</file>
+        <file>img/window-normal-filled.png</file>
+        <file>img/window-normal.png</file>
     </qresource>
 </RCC>

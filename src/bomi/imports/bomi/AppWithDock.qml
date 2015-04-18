@@ -4,6 +4,7 @@ import bomi 1.0
 BaseApp {
     id: root
     player: playerItem
+    titleBarVisible: topControls.height <= 0
     toolStyle {
         topMargin: overlaps ? 0 : topControls.height
         bottomMargin: overlaps ? 0 : bottomControls.height

@@ -5,6 +5,7 @@
 #include "themeobject_helper.hpp"
 
 struct ControlsTheme {
+    bool titleBarEnabled = true;
     bool showOnMouseMoved = true;
     bool showLocationsInPlaylist = true;
     bool showToolOnMouseOverEdge = false;
@@ -15,7 +16,7 @@ struct ControlsTheme {
     DECL_EQ(ControlsTheme, &T::showOnMouseMoved, &T::showLocationsInPlaylist,
             &T::showToolOnMouseOverEdge, &T::showPreviewOnMouseOverSeekBar,
             &T::showMediaTitleForUrlsInHistory, &T::showKeyframeForPreview,
-            &T::showMediaTitleForLocalFilesInHistory)
+            &T::showMediaTitleForLocalFilesInHistory, &T::titleBarEnabled)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };
@@ -24,6 +25,7 @@ Q_DECLARE_METATYPE(ControlsTheme);
 
 class ControlsThemeObject : public QObject {
     Q_OBJECT
+    THEME_P(bool, titleBarEnabled)
     THEME_P(bool, showOnMouseMoved)
     THEME_P(bool, showLocationsInPlaylist)
     THEME_P(bool, showToolOnMouseOverEdge)

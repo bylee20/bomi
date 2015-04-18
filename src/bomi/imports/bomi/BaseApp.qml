@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtQuick 2.0 as Q
 import bomi 1.0
 
 Item {
@@ -14,6 +15,7 @@ Item {
     readonly property int __ToolHidden: 0
     readonly property int __ToolEdge: 1
 
+    property bool titleBarVisible: false
     property real trackingMinX: toolMinX
     property real trackingMaxX: toolMaxX
     property real trackingMinY: 0
@@ -21,6 +23,71 @@ Item {
 
     function dismissTools() {
         App.playlist.visible = App.history.visible = false
+    }
+
+    MouseArea {
+        width: parent.width; height: 24
+        z: toolStyle.z - 1
+        onPressed: mouse.accepted = false
+        Rectangle {
+            id: titleItem
+            anchors.fill: parent
+            visible: App.theme.controls.titleBarEnabled && titleBarVisible
+                        && !App.window.fullscreen && App.window.frameless
+            readonly property real h: visible ? height : 0
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.7); }
+                GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.0); }
+            }
+
+            Image {
+                id: logo
+                x: y
+                anchors.verticalCenter: parent.verticalCenter
+                width: 16; height: 16; smooth: true
+                source: "qrc:/img/window-logo-filled.png"
+            }
+
+            Text {
+                anchors.centerIn: parent
+                content: (engine.media.name ? (engine.media.name + " - ") : "")
+                            + App.displayName
+                width: parent.width - 16 * 4 * 2
+                textStyle {
+                    font.pixelSize: 12
+                    color: "white"
+                    styleColor: "black"
+                    style: Q.Text.Raised
+                    elide: Q.Text.ElideMiddle
+                    horizontalAlignment: Q.Text.AlignHCenter
+                }
+            }
+
+            Component {
+                id: windowButton
+                Button {
+                    size: 16; action: act
+                    icon.source: pref + (pressed || hovered ? "-filled.png" : ".png")
+                }
+
+            }
+
+            Row {
+                anchors.right:parent.right; anchors.rightMargin: logo.x
+                anchors.verticalCenter: parent.verticalCenter
+                StateButton {
+                    size: 16; prefix: "qrc:/img/window-minimize"; action: "window/minimize"
+                }
+                StateButton {
+                    size: 16
+                    prefix: App.window.maximized ? "qrc:/img/window-normal" : "qrc:/img/window-maximize"
+                    onClicked: App.window.maximized ? App.window.showNormal() : App.execute("window/maximize")
+                }
+                StateButton {
+                    size: 16; action: "window/close"; prefix: "qrc:/img/window-close"
+                }
+            }
+        }
     }
 
     Item {
@@ -55,20 +122,18 @@ Item {
         z: toolStyle.z
 
         AutoDisplayZone {
-            id: rightEdge
-            y: right.y
-            hideDelay: 2500
-            width: 15; height: parent.height; anchors.right: parent.right
+            id: rightEdge; hideDelay: 2500
+            y: right.y + titleItem.h; anchors.right: parent.right
+            width: 15; height: parent.height - titleItem.h
             auto: App.theme.controls.showToolOnMouseOverEdge
             target: App.playlist; box: right;
             blockHiding: right.blockHiding
         }
 
         AutoDisplayZone {
-            id: leftEdge
-            y: left.y
-            hideDelay: 2500
-            width: 15; height: parent.height; anchors.left: parent.left
+            id: leftEdge; hideDelay: 2500
+            y: left.y + titleItem.h; anchors.left: parent.left
+            width: 15; height: parent.height - titleItem.h
             auto: App.theme.controls.showToolOnMouseOverEdge
             target: App.history; box: left;
             blockHiding: left.blockHiding

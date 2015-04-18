@@ -38,7 +38,14 @@ auto WindowObject::set(MainWindow *mw) -> void
 {
     m = mw;
     m_z10.setZ(10);
+    connect(m, &MainWindow::framelessChanged, this, &WindowObject::framelessChanged);
     connect(m, &MainWindow::fullscreenChanged, this, &WindowObject::fullscreenChanged);
+    connect(m, &MainWindow::windowStateChanged, this, [=] (auto state) {
+        if (_Change(m_minimized, state == Qt::WindowMinimized))
+            emit this->minimizedChanged();
+        if (_Change(m_maximized, state == Qt::WindowMaximized))
+            emit this->maximizedChanged();
+    });
     connect(m, &MainWindow::heightChanged, this, [=] () {
         emit heightChanged();
         emit sizeChanged();
@@ -91,4 +98,24 @@ auto WindowObject::width() const -> int
 auto WindowObject::height() const -> int
 {
     return m->height();
+}
+
+auto WindowObject::showNormal() -> void
+{
+    m->showNormal();
+}
+
+auto WindowObject::isMinimized() const -> bool
+{
+    return m_minimized;
+}
+
+auto WindowObject::isMaximized() const -> bool
+{
+    return m_maximized;
+}
+
+auto WindowObject::isFrameless() const -> bool
+{
+    return m->isFrameless();
 }
