@@ -124,4 +124,46 @@ template<class T>
 auto AudioBuffer::constView() const -> AudioBufferConstView<T>
 { return AudioBufferConstView<T>(this); }
 
+class Gaussian {
+public:
+    Gaussian() { setRadius(1); }
+    template<class Iter>
+    auto apply(Iter begin, Iter end) const -> double
+    {
+        Q_ASSERT(std::distance(begin, end) == (int)m_weights.size());
+        int i = 0; double ret = 0.0;
+        for (auto it = begin; it != end; ++it)
+            ret += *it * m_weights[i++];
+        return ret;
+    }
+    auto apply(const std::deque<double> &data) const -> double
+    {
+        return apply(data.begin(), data.end());
+    }
+    auto setRadius(int radius) -> void
+    {
+        if (_Change(m_radius, radius))
+            m_weights = create(radius);
+    }
+    auto radius() const -> int { return m_radius; }
+    auto size() const -> int { return m_weights.size(); }
+    static auto create(int radius) -> std::vector<double>
+    {
+        const int size = radius * 2 + 1, shift = radius;
+        std::vector<double> weights(size);
+        const double sigma = radius / 3.0;
+        const double c = 2.0 * pow(sigma, 2);
+        auto func = [&] (int i) { return exp(-(pow(i - shift, 2) / c)); };
+        double sum = 0.0;
+        for(int i = 0; i < size; ++i)
+            sum += (weights[i] = func(i));
+        for(int i = 0; i < size; ++i)
+            weights[i] /= sum; // normalize
+        return weights;
+    }
+private:
+    int m_radius = 0;
+    std::vector<double> m_weights;
+};
+
 #endif // AUDIOBUFFER_HPP

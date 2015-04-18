@@ -6,24 +6,6 @@
 
 static const QEvent::Type UpdateData = QEvent::Type(QEvent::User + 1);
 
-class Gaussian {
-public:
-    static auto create(int radius) -> std::vector<double>
-    {
-        const int size = radius * 2 + 1, shift = radius;
-        std::vector<double> weights(size);
-        const double sigma = radius / 3.0;
-        const double c = 2.0 * pow(sigma, 2);
-        auto func = [&] (int i) { return exp(-(pow(i - shift, 2) / c)); };
-        double sum = 0.0;
-        for(int i = 0; i < size; ++i)
-            sum += (weights[i] = func(i));
-        for(int i = 0; i < size; ++i)
-            weights[i] /= sum; // normalize
-        return weights;
-    }
-};
-
 class FFT {
 public:
     FFT() { setInputSize(10); }

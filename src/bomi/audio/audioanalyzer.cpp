@@ -6,50 +6,7 @@
 // basic idea and some codes are taken from DynamicAudioNormalizer
 // https://github.com/lordmulder/DynamicAudioNormalizer
 
-class Gaussian {
-public:
-    Gaussian() { setRadius(1); }
-    template<class Iter>
-    auto apply(Iter begin, Iter end) const -> double
-    {
-        Q_ASSERT(std::distance(begin, end) == (int)m_weights.size());
-        int i = 0; double ret = 0.0;
-        for (auto it = begin; it != end; ++it)
-            ret += *it * m_weights[i++];
-        return ret;
-    }
-    auto apply(const std::deque<double> &data) const -> double
-    {
-        return apply(data.begin(), data.end());
-    }
-    auto setRadius(int radius) -> void
-    {
-        const int size = radius * 2 + 1;
-        if ((int)m_weights.size() == size)
-            return;
-        const int shift = m_radius = radius;
-        m_weights.resize(size);
-
-        const double sigma = radius / 3.0;
-        const double c = 2.0 * pow(sigma, 2);
-        auto func = [&] (int i) { return exp(-(pow(i - shift, 2) / c)); };
-        double sum = 0.0;
-        for(int i = 0; i < size; ++i)
-            sum += (m_weights[i] = func(i));
-        for(int i = 0; i < size; ++i)
-            m_weights[i] /= sum; // normalize
-    }
-    auto radius() const -> int { return m_radius; }
-    auto size() const -> int { return m_weights.size(); }
-private:
-    int m_radius = 0;
-    std::vector<double> m_weights;
-};
-
 DECLARE_LOG_CONTEXT(Audio)
-
-
-/******************************************************************************/
 
 class AudioFrameChunk {
 public:
