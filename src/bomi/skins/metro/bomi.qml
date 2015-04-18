@@ -24,7 +24,7 @@ B.AppWithDock {
     property bool ms: false
 
     name: "net.xylosper.metro"
-    minimumSize: Qt.size(500, 300)
+    minimumSize: Qt.size(500, 200)
     overlaps: true
     trackingMinY: height - Math.max(height * 0.35, bottomControls.height)
 

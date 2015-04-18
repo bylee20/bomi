@@ -781,10 +781,10 @@ auto MainWindow::Data::reloadSkin() -> void
     if (!app)
         return;
     auto min = app->property("minimumSize").toSize();
-    if (min.width() < 400)
-        min.rwidth() = 400;
-    if (min.height() < 300)
-        min.rheight() = 300;
+    if (min.width() < 300)
+        min.rwidth() = 300;
+    if (min.height() < 200)
+        min.rheight() = 200;
     p->setMinimumSize(min);
     if (p->width() < min.width() || p->height() < min.height())
         p->resize(min);

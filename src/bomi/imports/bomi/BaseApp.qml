@@ -6,7 +6,7 @@ Item {
     id: root
     property Player player
     property string name
-    property size minimumSize: Qt.size(400, 300)
+    property size minimumSize: Qt.size(300, 200)
     readonly property Engine engine: App.engine
     property ToolPlaneStyle toolStyle: ToolPlaneStyle { }
     readonly property real toolMinX: left.status == __ToolEdge ? 0 : (left.x, mapFromItem(left, left.width, 0).x)
