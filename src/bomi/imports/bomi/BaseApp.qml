@@ -29,49 +29,36 @@ Item {
         width: parent.width; height: 24
         z: toolStyle.z - 1
         onPressed: mouse.accepted = false
-        Rectangle {
+        Item {
             id: titleItem
             anchors.fill: parent
             visible: App.theme.controls.titleBarEnabled && titleBarVisible
                         && !App.window.fullscreen && App.window.frameless
             readonly property real h: visible ? height : 0
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.4); }
-                GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.0); }
+            Rectangle {
+                width: parent.width; height: parent.height + 2
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.6); }
+                    GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.0); }
+                }
             }
-
             Image {
                 id: logo
-                x: y
+                x: y; width: 16; height: 16; smooth: true
                 anchors.verticalCenter: parent.verticalCenter
-                width: 16; height: 16; smooth: true
                 source: "qrc:/img/window-logo-filled.png"
             }
-
             Text {
                 anchors.centerIn: parent
                 content: (engine.media.name ? (engine.media.name + " - ") : "")
                             + App.displayName
                 width: parent.width - 16 * 4 * 2
                 textStyle {
-                    font.pixelSize: 12
-                    color: "white"
-                    styleColor: "black"
-                    style: Q.Text.Raised
-                    elide: Q.Text.ElideMiddle
                     horizontalAlignment: Q.Text.AlignHCenter
+                    color: "white"; styleColor: "black"; style: Q.Text.Raised
+                    font.pixelSize: 12; elide: Q.Text.ElideMiddle
                 }
             }
-
-            Component {
-                id: windowButton
-                Button {
-                    size: 16; action: act
-                    icon.source: pref + (pressed || hovered ? "-filled.png" : ".png")
-                }
-
-            }
-
             Row {
                 anchors.right:parent.right; anchors.rightMargin: logo.x
                 anchors.verticalCenter: parent.verticalCenter
