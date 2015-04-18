@@ -11,7 +11,8 @@ enum class CodecId : int {
     Mpeg4 = (int)3,
     H264 = (int)4,
     Vc1 = (int)5,
-    Wmv3 = (int)6
+    Wmv3 = (int)6,
+    Hevc = (int)7
 };
 
 Q_DECLARE_METATYPE(CodecId)
@@ -51,9 +52,9 @@ public:
         QString name, key;
         QString data;
     };
-    using ItemList = std::array<Item, 7>;
+    using ItemList = std::array<Item, 8>;
     static constexpr auto size() -> int
-    { return 7; }
+    { return 8; }
     static constexpr auto typeName() -> const char*
     { return "CodecId"; }
     static constexpr auto typeKey() -> const char*
@@ -80,6 +81,7 @@ public:
         case Enum::H264: return qApp->translate("EnumInfo", "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10");
         case Enum::Vc1: return qApp->translate("EnumInfo", "SMPTE VC-1");
         case Enum::Wmv3: return qApp->translate("EnumInfo", "Windows Media Video 9");
+        case Enum::Hevc: return qApp->translate("EnumInfo", "H.265 / HEVC (High Efficiency Video Coding)");
         default: return QString();
         }
     }

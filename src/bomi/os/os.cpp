@@ -43,7 +43,7 @@ auto HwAcc::fullCodecList() -> QList<CodecId>
 {
     static const QList<CodecId> ids = QList<CodecId>()
         << CodecId::Mpeg1 << CodecId::Mpeg2 << CodecId::Mpeg4
-        << CodecId::H264 << CodecId::Vc1 << CodecId::Wmv3;
+        << CodecId::H264 << CodecId::Vc1 << CodecId::Wmv3 << CodecId::Hevc;
     return ids;
 }
 

@@ -577,37 +577,43 @@ auto usingMemory() -> double
 
 /******************************************************************************/
 
-#if HAVE_VAAPI && HAVE_VDPAU
-#define HA_CODEC(id, va, vdp) { CodecId::id, va, vdp }
-#elif HAVE_VAAPI
-#define HA_CODEC(id, va, vdp) { CodecId::id, va }
-#elif HAVE_VDPAU
-#define HA_CODEC(id, va, vdp) { CodecId::id, vdp }
-#endif
-
 struct HwAccCodec {
     CodecId id;
-    VA_NOOP(QVector<VAProfile> vaapiProfiles);
-    VDP_NOOP(QVector<VdpDecoderProfile> vdpauProfiles);
+    QVector<uint32_t> profiles;
 };
 
-#if HAVE_VAAPI || HAVE_VDPAU
-
-static const HwAccCodec s_codecs[] = {
-    HA_CODEC(Mpeg1, VA_NOOP({}), VDP_NOOP({VDP_DECODER_PROFILE_MPEG1})),
-    HA_CODEC(Mpeg2, VA_NOOP({VAProfileMPEG2Simple, VAProfileMPEG2Main}),
-                    VDP_NOOP({VDP_DECODER_PROFILE_MPEG2_SIMPLE, VDP_DECODER_PROFILE_MPEG2_MAIN}) ),
-    HA_CODEC(Mpeg4, VA_NOOP({VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Main, VAProfileMPEG4Simple}),
-                    VDP_NOOP({VDP_DECODER_PROFILE_MPEG4_PART2_ASP, VDP_DECODER_PROFILE_MPEG4_PART2_SP}) ),
-    HA_CODEC(H264,  VA_NOOP({VAProfileH264Baseline, VAProfileH264ConstrainedBaseline, VAProfileH264High, VAProfileH264Main}),
-                    VDP_NOOP({VDP_DECODER_PROFILE_H264_BASELINE, VDP_DECODER_PROFILE_H264_MAIN, VDP_DECODER_PROFILE_H264_HIGH}) ),
-    HA_CODEC(Vc1,   VA_NOOP({VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple}), // same as wmv3
-                    VDP_NOOP({VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE}) ),
-    HA_CODEC(Wmv3,  VA_NOOP({VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple}),
-                    VDP_NOOP({VDP_DECODER_PROFILE_VC1_ADVANCED, VDP_DECODER_PROFILE_VC1_MAIN, VDP_DECODER_PROFILE_VC1_SIMPLE}) )
+#define HA_CODEC(c, ...) { CodecId::c, __VA_ARGS__ }
+#if HAVE_VAAPI
+#define VA(v) (VAProfile##v)
+static const HwAccCodec s_vaCodecs[] = {
+//    VA_CODEC(Mpeg1, {}),
+    HA_CODEC(Mpeg2, {VA(MPEG2Simple), VA(MPEG2Main)}),
+    HA_CODEC(Mpeg4, {VA(MPEG4AdvancedSimple), VA(MPEG4Main), VA(MPEG4Simple)}),
+    HA_CODEC(H264,  {VA(H264Baseline), VA(H264High), VA(H264Main)}),
+    HA_CODEC(Vc1,   {VA(VC1Advanced), VA(VC1Main), VA(VC1Simple)}), // same as wmv3
+    HA_CODEC(Wmv3,  {VA(VC1Advanced), VA(VC1Main), VA(VC1Simple)}),
+    HA_CODEC(Hevc,  {VA(HEVCMain), VA(HEVCMain10)})
 };
-
+#undef VA
 #endif
+
+#if HAVE_VDPAU
+#define VDP(v) (VDP_DECODER_PROFILE_##v)
+static const HwAccCodec s_vdpCodecs[] = {
+    HA_CODEC(Mpeg1, {VDP(MPEG1)}),
+    HA_CODEC(Mpeg2, {VDP(MPEG2_SIMPLE), VDP(MPEG2_MAIN)}),
+    HA_CODEC(Mpeg4, {VDP(MPEG4_PART2_ASP), VDP(MPEG4_PART2_SP)}),
+    HA_CODEC(H264,  {VDP(H264_BASELINE), VDP(H264_MAIN), VDP(H264_HIGH),
+                     VDP(H264_EXTENDED), VDP(H264_HIGH_444_PREDICTIVE),
+                     VDP(H264_PROGRESSIVE_HIGH), VDP(H264_CONSTRAINED_HIGH)}),
+    HA_CODEC(Vc1,   {VDP(VC1_ADVANCED), VDP(VC1_MAIN), VDP(VC1_SIMPLE)}),
+    HA_CODEC(Wmv3,  {VDP(VC1_ADVANCED), VDP(VC1_MAIN), VDP(VC1_SIMPLE)}),
+    HA_CODEC(Hevc,  {VDP(HEVC_MAIN), VDP(HEVC_MAIN_10), VDP(HEVC_MAIN_STILL),
+                     VDP(HEVC_MAIN_12), VDP(HEVC_MAIN_444)})
+};
+#undef VDP
+#endif
+#undef HA_CODEC
 
 #if HAVE_VAAPI
 
@@ -649,8 +655,8 @@ VaApiInfo::VaApiInfo(): HwAccX11(VaApiGLX)
             entries.resize(size);
             if (!entries.contains(VAEntrypointVLD))
                 continue;
-            for (auto &codec : s_codecs) {
-                if (codec.vaapiProfiles.contains(profile)) {
+            for (auto &codec : s_vaCodecs) {
+                if (codec.profiles.contains(profile)) {
                     if (!codecs.contains(codec.id))
                         codecs.push_back(codec.id);
                     break;
@@ -731,8 +737,8 @@ VdpauInfo::VdpauInfo()
                                     &w, &h) == VDP_STATUS_OK && supported == VDP_TRUE;
         };
         QList<CodecId> codecs;
-        for (auto &codec : s_codecs) {
-            for (auto profile : codec.vdpauProfiles) {
+        for (auto &codec : s_vdpCodecs) {
+            for (auto profile : codec.profiles) {
                 if (supports(profile)) {
                     codecs.push_back(codec.id);
                     break;

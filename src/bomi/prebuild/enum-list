@@ -286,6 +286,7 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -H264[-H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10-][:u"h264"_q:]
 -Vc1[-SMPTE VC-1-][:u"vc1"_q:]
 -Wmv3[-Windows Media Video 9-][:u"wmv3"_q:]
+-Hevc[-H.265 / HEVC (High Efficiency Video Coding)-][:u"hevc"_q:]
 
 +JrConnection
 -Tcp[-TCP socket-]

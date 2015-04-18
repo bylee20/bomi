@@ -52,7 +52,7 @@ public:
     static constexpr auto typeName() -> const char*
     { return "Visualization"; }
     static constexpr auto typeKey() -> const char*
-    { return "visualizer"; }
+    { return "visualization"; }
     static auto typeDescription() -> QString
     { return qApp->translate("EnumInfo", "Visualization"); }
     static auto item(Enum e) -> const Item*
