@@ -102,6 +102,8 @@ AudioVisualizer::~AudioVisualizer()
 //        function i2f(i, fps, n) { return i * fps * 0.5 / (n - 1); }
 auto AudioVisualizer::analyze(const QSharedPointer<AudioBuffer> &data) -> void
 {
+    if (!d->enabled)
+        return;
     Q_ASSERT(data);
     if (_Change(d->fps, data->fps()))
         d->fft.setInputSize(d->fps * 0.1);
