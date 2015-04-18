@@ -515,13 +515,9 @@ SOURCES += \
     kiss_fft/tools/kiss_fftr.c \
     kiss_fft/kiss_fft.c
 
-TRANSLATIONS += translations/bomi_ko.ts \
-	translations/bomi_en.ts \
-	translations/bomi_de.ts \
-	translations/bomi_ru.ts \
-	translations/bomi_it.ts \
+TRANSLATIONS += translations/bomi_en.ts \
+	translations/bomi_ko.ts \
 	translations/bomi_cs.ts \
-	translations/bomi_sr.ts \
 	translations/bomi_es.ts
 
 FORMS += \
