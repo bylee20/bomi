@@ -27,7 +27,7 @@ Item {
             model: vis.count
             Rectangle {
                 id: rect; parent: frame
-                width: d.barWidth; anchors.bottom: parent.bottom
+                width: d.barWidth; anchors.bottom: parent ? parent.bottom : undefined
                 x: index * (d.barWidth + d.gap)
                 gradient: Gradient {
                     id: grad

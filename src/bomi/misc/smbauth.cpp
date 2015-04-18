@@ -47,6 +47,7 @@ class SmbDir {
 public:
     SmbDir(const QUrl &url)
     {
+        Q_UNUSED(url);
         m_error = SmbAuth::Unsupported;
 #if HAVE_SAMBA
         m_url = url;
@@ -81,8 +82,10 @@ public:
     }
     ~SmbDir()
     {
+#if HAVE_SAMBA
         if (m_dh >= 0)
             smbc_closedir(m_dh);
+#endif
     }
     auto lastError() const -> SmbAuth::Error { return m_error; }
 private:
@@ -94,6 +97,7 @@ private:
 
 auto SmbAuth::openDir(const Mrl &mrl) -> QSharedPointer<SmbDir>
 {
+    Q_UNUSED(mrl);
 #if HAVE_SAMBA
     const int err = smbc_init(smb_auth_fn, 1);
     if (err < 0)

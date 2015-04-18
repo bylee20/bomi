@@ -206,6 +206,7 @@ auto MainWindow::Data::plugMenu() -> void
     PLUG_STEP(play(u"speed"_q).g(), play_speed, setSpeed);
 
     connect(play[u"play-pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
+    connect(play[u"play-stop"_q], &QAction::triggered, p, &MainWindow::togglePlayStop);
     connect(play[u"play"_q], &QAction::triggered, p, &MainWindow::play);
     connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::pause);
     connect(play(u"repeat"_q).g(), &ActionGroup::triggered,

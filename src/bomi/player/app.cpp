@@ -225,9 +225,12 @@ App::App(int &argc, char **argv)
     d->parser->addOption(LineCmd::DumpActionList, u"dump-action-list"_q,
                          u"Dump executable action list to stdout."_q);
 #ifdef Q_OS_WIN
-    d->addOption(LineCmd::WinAssoc, u"win-assoc"_q, u"Associate given comma-separated extension list."_q, u"ext"_q);
-    d->addOption(LineCmd::WinUnassoc, u"win-unassoc"_q, u"Unassociate all extensions."_q);
-    d->addOption(LineCmd::WinAssocDefault, u"win-assoc-default"_q, u"Associate default extensions."_q);
+    d->parser->addOption(LineCmd::WinAssoc, u"win-assoc"_q,
+                         u"Associate given comma-separated extension list."_q, u"ext"_q);
+    d->parser->addOption(LineCmd::WinUnassoc, u"win-unassoc"_q,
+                         u"Unassociate all extensions."_q);
+    d->parser->addOption(LineCmd::WinAssocDefault, u"win-assoc-default"_q,
+                         u"Associate default extensions."_q);
 #endif
     d->parser->parse(arguments());
     d->gldebug = d->parser->isSet(LineCmd::OpenGLDebug);

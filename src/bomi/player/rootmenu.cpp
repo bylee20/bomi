@@ -291,7 +291,8 @@ RootMenu::RootMenu()
     });
 
     d->menu(u"play"_q, QT_TR_NOOP("Play"), [=] () {
-        d->action(u"play-pause"_q, QT_TR_NOOP("Play"));
+        d->action(u"play-pause"_q, QT_TR_NOOP("Play/Pause"));
+        d->action(u"play-stop"_q, QT_TR_NOOP("Play/Stop"))->setVisible(false);
         d->action(u"play"_q, QT_TR_NOOP("Play"))->setVisible(false);
         d->action(u"pause"_q, QT_TR_NOOP("Pause"))->setVisible(false);
         d->action(u"stop"_q, QT_TR_NOOP("Stop"));
@@ -608,13 +609,7 @@ RootMenu::RootMenu()
 
     d->menu(u"window"_q, QT_TR_NOOP("Window"), [=] () {
         d->enumMenuCheckable<StaysOnTop>(true);
-        auto frameless = d->action(u"frameless"_q, QT_TR_NOOP("Remove Frame"), true);
-#ifdef Q_OS_WIN
-        frameless->setVisible(false);
-        frameless->setEnabled(false);
-#else
-        Q_UNUSED(frameless);
-#endif
+        d->action(u"frameless"_q, QT_TR_NOOP("Remove Frame"), true);
 
         d->separator();
 

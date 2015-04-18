@@ -20,6 +20,7 @@ public:
     auto setFullScreen(bool full, bool updateLastGeometry = true) -> void;
     auto wake() -> void;
     auto togglePlayPause() -> void;
+    auto togglePlayStop() -> void;
     auto play() -> void;
     auto pause() -> void;
     auto engine() const -> PlayEngine*;

@@ -122,7 +122,7 @@ auto AppObject::registerToAccept(QQuickItem *item, Events e) -> void
         return true;
     };
     connect(item, &QQuickItem::destroyed, [=] (QObject *obj) {
-        Q_ASSERT(item == obj);
+        Q_UNUSED(obj); Q_ASSERT(item == obj);
         s.itemsToAccept.remove(item);
         pop(item);
     });

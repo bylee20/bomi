@@ -31,10 +31,13 @@ private:
     auto eventFilter(QObject *obj, QEvent *ev) -> bool final;
     auto layer() const -> HWND
         { return m_onTop ? HWND_TOPMOST : HWND_NOTOPMOST; }
+    auto sysFrameMargins() const -> QMargins;
+    auto frameMarginsHack() -> void;
     bool m_onTop = false, m_fs = false, m_frameless = false;
-    bool m_wmMove = false, m_sizing = false;
+    bool m_wmMove = false, m_sizing = false, m_moving = false;
     HIMC m_ime = nullptr;
     QPoint m_startMousePos, m_startWinPos;
+    QRect m_prevGeometry;
 };
 
 }

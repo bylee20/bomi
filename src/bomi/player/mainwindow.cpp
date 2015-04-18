@@ -216,6 +216,14 @@ auto MainWindow::play() -> void
     }
 }
 
+auto MainWindow::togglePlayStop() -> void
+{
+    if (!d->e.isRunning())
+        play();
+    else
+        d->e.stop();
+}
+
 auto MainWindow::togglePlayPause() -> void
 {
     if (d->e.isPlaying() && !d->e.mrl().isImage())
@@ -457,9 +465,8 @@ auto MainWindow::event(QEvent *event) -> bool
                 && d->pref.hide_rather_close()) {
 #ifdef Q_OS_WIN
             setVisible(false);
-#else
-            hide();
 #endif
+            hide();
             if (d->as.ask_system_tray) {
                 MBox mbox(nullptr);
                 mbox.setIcon(MBox::Icon::Information);

@@ -76,6 +76,8 @@ protected:
     WindowAdapter(QWindow *parent);
     auto setMovingByDrag(bool moving) { m_moving = moving; }
     auto setState(Qt::WindowState ws) -> void;
+    auto setFramelessHint(bool frameless) -> void;
+    auto setFullScreenHint(bool fs) -> void;
 private:
     QWindow *m_window = nullptr;
     bool m_started = false, m_moving = false;

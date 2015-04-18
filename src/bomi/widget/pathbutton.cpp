@@ -1,4 +1,5 @@
 #include "pathbutton.hpp"
+#include <QMetaProperty>
 
 struct PathButton::Data {
     PathButton::Mode mode = PathButton::Folder;

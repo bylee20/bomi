@@ -16,6 +16,12 @@
 #include <QFontDatabase>
 #include <windowsx.h>
 #include <Shlobj.h>
+#include <QtGui/private/qguiapplication_p.h>
+#include <QtGui/qpa/qplatformnativeinterface.h>
+#include <QtGui/qpa/qplatformwindow.h>
+#include <QtGui/qpa/qplatformintegration.h>
+
+Q_DECLARE_METATYPE(QMargins)
 
 DECLARE_LOG_CONTEXT(OS)
 
@@ -205,16 +211,24 @@ auto WinWindowAdapter::setImeEnabled(bool enabled) -> void
         m_ime = ImmAssociateContext((HWND)winId(), nullptr);
 }
 
-auto WinWindowAdapter::setFrameless(bool /*frameless*/) -> void
+auto WinWindowAdapter::setFrameless(bool frameless) -> void
 {
-    return;
-//    if (_Change(m_frameless, frameless) && !m_fs) {
-//        auto w = window();
-//        const auto g = w->geometry();
-//        updateFrame();
-//        w->resize(g.width() + 1, g.height());
-//        w->resize(g.width(), g.height());
-//    }
+    if (_Change(m_frameless, frameless) && !m_fs) {
+        const bool visible = window()->isVisible();
+        setFramelessHint(frameless);
+        frameMarginsHack();
+        if (visible)
+            window()->setVisible(true);
+    }
+}
+
+auto WinWindowAdapter::frameMarginsHack() -> void
+{
+    static const auto p = u"WindowsCustomMargins"_q;
+    const auto iface = QGuiApplicationPrivate::platformIntegration()->nativeInterface();
+    const auto h = window()->handle();
+    iface->setWindowProperty(h, p, QVariant::fromValue(QMargins(1, 0, 0, 0)));
+    iface->setWindowProperty(h, p, QVariant::fromValue(QMargins()));
 }
 
 SIA setLayer(HWND hwnd, HWND layer) -> void
@@ -228,16 +242,53 @@ auto WinWindowAdapter::setAlwaysOnTop(bool onTop) -> void
     setLayer((HWND)winId(), layer());
 }
 
+QMargins frame(DWORD style, DWORD exStyle)
+{
+    RECT rect = {0,0,0,0};
+#ifndef Q_OS_WINCE
+    style &= ~(WS_OVERLAPPED); // Not permitted, see docs.
+#endif
+    if (!AdjustWindowRectEx(&rect, style, FALSE, exStyle))
+        qErrnoWarning("%s: AdjustWindowRectEx failed", __FUNCTION__);
+    const QMargins result(qAbs(rect.left), qAbs(rect.top),
+                          qAbs(rect.right), qAbs(rect.bottom));
+//    qCDebug(lcQpaWindows).nospace() << __FUNCTION__ << " style= 0x"
+//        << QString::number(style, 16) << " exStyle=0x" << QString::number(exStyle, 16) << ' ' << rect << ' ' << result;
+
+    return result;
+}
+
+auto WinWindowAdapter::sysFrameMargins() const -> QMargins
+{
+    const auto style = GetWindowLongPtr((HWND)winId(), GWL_STYLE);
+    const auto exStyle = GetWindowLongPtr((HWND)winId(), GWL_EXSTYLE);
+    return frame(style, exStyle);
+}
+
 auto WinWindowAdapter::setFullScreen(bool fs) -> void
 {
     if (!_Change(m_fs, fs))
         return;
-    WindowAdapter::setFullScreen(fs);
+    const auto visible = window()->isVisible();
+    if (m_fs)
+        m_prevGeometry = window()->geometry();
+    if (m_fs && m_frameless) {
+        setFramelessHint(false);
+    }
+    setFullScreenHint(fs);
+    if (visible)
+        window()->setVisible(visible);
     if (fs) {
         const auto hwnd = (HWND)winId();
         auto style = GetWindowLong(hwnd, GWL_STYLE);
         style |= WS_BORDER;
         SetWindowLong(hwnd, GWL_STYLE, style);
+    }
+    if (!m_fs) {
+        if (m_frameless)
+            setFramelessHint(true);
+        window()->setGeometry(m_prevGeometry);
+        setLayer((HWND)winId(), layer());
     }
 }
 
@@ -265,26 +316,27 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
     switch (msg->message) {
     case WM_ENTERSIZEMOVE:
         m_startMousePos = QPoint(-1, -1);
-        m_sizing = false;
+        m_moving = false;
         if (!available())
             return false;
+        m_moving = true;
         m_startMousePos = QCursor::pos();
         m_startWinPos = w->position();
         return false;
     case WM_EXITSIZEMOVE:
         if (msg->hwnd == (HWND)winId()) {
+            m_moving = false;
             m_startMousePos = QPoint(-1, -1);
-            m_sizing = false;
         }
         return false;
     case WM_SIZING: // not to filter resize event
         if (msg->hwnd == (HWND)winId()) {
             m_startMousePos = QPoint(-1, -1);
-            m_sizing = true;
+            m_moving = false;
         }
         return false;
     case WM_MOVING: { // to snap to edge
-        if (m_sizing || !available() || m_startMousePos.x() < 0)
+        if (!m_moving || !available() || m_startMousePos.x() < 0 || isFullScreen())
             return false;
         const auto m = frameMargins();
         auto r = reinterpret_cast<LPRECT>(msg->lParam);
@@ -299,7 +351,9 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         *res = TRUE;
         return true;
     } case WM_MOVE: { // for smooth move
-        if (m_sizing || !available() || m_wmMove || isFullScreen())
+        if (!m_moving && !isMovingByDrag())
+            return false;
+        if (!available() || m_wmMove || isFullScreen())
             return false;
         m_wmMove = true;
         w->setPosition(toPoint(msg->lParam));
@@ -314,12 +368,10 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
     } case WM_NCPAINT: {
         if (!available())
             return false;
-        if (w->windowState() == Qt::WindowMaximized) {
+        if (!m_fs) {
             *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
             return true;
         }
-        if (!m_fs)
-            return false;
         auto dc = GetWindowDC(msg->hwnd);
         if (!dc)
             return false;

@@ -161,6 +161,21 @@ WindowAdapter::WindowAdapter(QWindow *parent)
     connect(m_window, &QWindow::windowStateChanged, this, &WindowAdapter::setState);
 }
 
+auto WindowAdapter::setFramelessHint(bool frameless) -> void
+{
+    auto flags = m_window->flags();
+    if (frameless)
+        flags |= Qt::FramelessWindowHint;
+    else
+        flags &= ~Qt::FramelessWindowHint;
+    m_window->setFlags(flags);
+}
+
+auto WindowAdapter::setFullScreenHint(bool fs) -> void
+{
+    m_window->setWindowState(fs ? Qt::WindowFullScreen : m_oldState);
+}
+
 auto WindowAdapter::isFullScreen() const -> bool
 {
     return m_window->windowState() & Qt::WindowFullScreen;
@@ -169,7 +184,7 @@ auto WindowAdapter::isFullScreen() const -> bool
 auto WindowAdapter::setFullScreen(bool fs) -> void
 {
     auto visible = m_window->isVisible();
-    m_window->setWindowState(fs ? Qt::WindowFullScreen : m_oldState);
+    setFullScreenHint(fs);
     if (visible)
         m_window->setVisible(true);
 }
@@ -245,13 +260,8 @@ auto WindowAdapter::setFrameless(bool frameless) -> void
 {
     if (WindowAdapter::isFrameless() == frameless)
         return;
-    auto flags = m_window->flags();
-    if (frameless)
-        flags |= Qt::FramelessWindowHint;
-    else
-        flags &= ~Qt::FramelessWindowHint;
     const bool visible = m_window->isVisible();
-    m_window->setFlags(flags);
+    setFramelessHint(frameless);
     if (visible)
         m_window->show();
 }

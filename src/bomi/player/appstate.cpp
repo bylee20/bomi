@@ -108,16 +108,6 @@ auto AppState::restoreWindowGeometry(MainWindow *w) -> void
         w->showMaximized();
     else if (win_size == s_fullScreen)
         w->setFullScreen(true, false);
-    else {
-        auto size = win_size;
-#ifdef Q_OS_WIN
-//        const auto a = w->adapter();
-//        if (a->isFrameVisible()) {
-//            const auto m = a->frameMargins();
-//            size.rwidth() += m.left() + m.right();
-//            size.rheight() += m.top() + m.bottom();
-//        }
-#endif
-        loadWindowGeometry(w, win_pos, size);
-    }
+    else
+        loadWindowGeometry(w, win_pos, win_size);
 }
