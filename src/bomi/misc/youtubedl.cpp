@@ -139,6 +139,7 @@ auto YouTubeDL::result() const -> Result
     d->getFormat(&formats, defId);
     if (formats.isEmpty())
         return Result();
+    r.duration = d->json[u"duration"_q].toDouble() * 1000;
     r.url = formats.front().url();
     if (formats.size() > 1)
         r.audio = formats[1].url();

@@ -37,6 +37,15 @@ int main(int argc, char **argv) {
     registerType();
 
     QScopedPointer<App> app(new App(argc, argv));
+
+#ifdef Q_OS_WIN
+    const char sep = ';';
+#else
+    const char sep = ':';
+#endif
+    const auto envPath = qgetenv("PATH");
+    qputenv("PATH", envPath + sep + QApplication::applicationDirPath().toLocal8Bit() + "/tools");
+
     for (auto fmt : QImageWriter::supportedImageFormats())
         writableImageExts.push_back(QString::fromLatin1(fmt));
 

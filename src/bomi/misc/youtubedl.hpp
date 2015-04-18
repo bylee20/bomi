@@ -38,6 +38,7 @@ public:
     };
     struct Result {
         bool direct = false;
+        int duration = -1;
         Playlist playlist;
         QString url, title, audio;
     };
