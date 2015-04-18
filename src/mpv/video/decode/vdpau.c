@@ -53,21 +53,25 @@ static const struct hwdec_profile_entry profiles[] = {
     PE(H264,        H264_HIGH,          H264_HIGH),
     PE(H264,        H264_MAIN,          H264_MAIN),
     PE(H264,        H264_BASELINE,      H264_BASELINE),
+#ifdef VDP_DECODER_PROFILE_H264_HIGH_444_PREDICTIVE
     PE(H264,        H264_EXTENDED,      H264_EXTENDED),
     PE(H264,        H264_HIGH,          H264_PROGRESSIVE_HIGH),
     PE(H264,        H264_HIGH,          H264_CONSTRAINED_HIGH),
     PE(H264,        H264_HIGH_444_PREDICTIVE, H264_HIGH_444_PREDICTIVE),
+#endif
     PE(VC1,         VC1_ADVANCED,       VC1_ADVANCED),
     PE(VC1,         VC1_MAIN,           VC1_MAIN),
     PE(VC1,         VC1_SIMPLE,         VC1_SIMPLE),
     PE(WMV3,        VC1_ADVANCED,       VC1_ADVANCED),
     PE(WMV3,        VC1_MAIN,           VC1_MAIN),
     PE(WMV3,        VC1_SIMPLE,         VC1_SIMPLE),
+#ifdef VDP_DECODER_PROFILE_HEVC_MAIN_444
     PE(HEVC,        HEVC_MAIN,          HEVC_MAIN),
     PE(HEVC,        HEVC_MAIN_10,       HEVC_MAIN_10),
     PE(HEVC,        HEVC_MAIN_STILL_PICTURE, HEVC_MAIN_STILL),
     PE(HEVC,        HEVC_REXT,          HEVC_MAIN_12),
     PE(HEVC,        HEVC_REXT,          HEVC_MAIN_444),
+#endif
     {0}
 };
 

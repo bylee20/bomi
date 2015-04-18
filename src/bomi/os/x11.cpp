@@ -578,6 +578,9 @@ auto usingMemory() -> double
 /******************************************************************************/
 
 struct HwAccCodec {
+    HwAccCodec(CodecId id = CodecId::Invalid,
+               const QVector<uint32_t> &profiles = QVector<uint32_t>())
+        : id(id), profiles(profiles) { }
     CodecId id;
     QVector<uint32_t> profiles;
 };
@@ -587,12 +590,14 @@ struct HwAccCodec {
 #define VA(v) (VAProfile##v)
 static const HwAccCodec s_vaCodecs[] = {
 //    VA_CODEC(Mpeg1, {}),
-    HA_CODEC(Mpeg2, {VA(MPEG2Simple), VA(MPEG2Main)}),
-    HA_CODEC(Mpeg4, {VA(MPEG4AdvancedSimple), VA(MPEG4Main), VA(MPEG4Simple)}),
-    HA_CODEC(H264,  {VA(H264Baseline), VA(H264High), VA(H264Main)}),
-    HA_CODEC(Vc1,   {VA(VC1Advanced), VA(VC1Main), VA(VC1Simple)}), // same as wmv3
-    HA_CODEC(Wmv3,  {VA(VC1Advanced), VA(VC1Main), VA(VC1Simple)}),
-    HA_CODEC(Hevc,  {VA(HEVCMain), VA(HEVCMain10)})
+    HA_CODEC(Mpeg2, {VA(MPEG2Simple), VA(MPEG2Main)})
+  , HA_CODEC(Mpeg4, {VA(MPEG4AdvancedSimple), VA(MPEG4Main), VA(MPEG4Simple)})
+  , HA_CODEC(H264,  {VA(H264Baseline), VA(H264High), VA(H264Main)})
+  , HA_CODEC(Vc1,   {VA(VC1Advanced), VA(VC1Main), VA(VC1Simple)}) // same as wmv3
+  , HA_CODEC(Wmv3,  {VA(VC1Advanced), VA(VC1Main), VA(VC1Simple)})
+#if VA_CHECK_VERSION(0, 37, 0)
+  , HA_CODEC(Hevc,  {VA(HEVCMain), VA(HEVCMain10)})
+#endif
 };
 #undef VA
 #endif
@@ -600,16 +605,21 @@ static const HwAccCodec s_vaCodecs[] = {
 #if HAVE_VDPAU
 #define VDP(v) (VDP_DECODER_PROFILE_##v)
 static const HwAccCodec s_vdpCodecs[] = {
-    HA_CODEC(Mpeg1, {VDP(MPEG1)}),
-    HA_CODEC(Mpeg2, {VDP(MPEG2_SIMPLE), VDP(MPEG2_MAIN)}),
-    HA_CODEC(Mpeg4, {VDP(MPEG4_PART2_ASP), VDP(MPEG4_PART2_SP)}),
-    HA_CODEC(H264,  {VDP(H264_BASELINE), VDP(H264_MAIN), VDP(H264_HIGH),
-                     VDP(H264_EXTENDED), VDP(H264_HIGH_444_PREDICTIVE),
-                     VDP(H264_PROGRESSIVE_HIGH), VDP(H264_CONSTRAINED_HIGH)}),
-    HA_CODEC(Vc1,   {VDP(VC1_ADVANCED), VDP(VC1_MAIN), VDP(VC1_SIMPLE)}),
-    HA_CODEC(Wmv3,  {VDP(VC1_ADVANCED), VDP(VC1_MAIN), VDP(VC1_SIMPLE)}),
-    HA_CODEC(Hevc,  {VDP(HEVC_MAIN), VDP(HEVC_MAIN_10), VDP(HEVC_MAIN_STILL),
-                     VDP(HEVC_MAIN_12), VDP(HEVC_MAIN_444)})
+    HA_CODEC(Mpeg1, {VDP(MPEG1)})
+    , HA_CODEC(Mpeg2, {VDP(MPEG2_SIMPLE), VDP(MPEG2_MAIN)})
+    , HA_CODEC(Mpeg4, {VDP(MPEG4_PART2_ASP), VDP(MPEG4_PART2_SP)})
+    , HA_CODEC(H264,  {VDP(H264_BASELINE), VDP(H264_MAIN), VDP(H264_HIGH)
+#ifdef VDP_DECODER_PROFILE_H264_HIGH_444_PREDICTIVE
+                     , VDP(H264_EXTENDED), VDP(H264_HIGH_444_PREDICTIVE)
+                     , VDP(H264_PROGRESSIVE_HIGH), VDP(H264_CONSTRAINED_HIGH)
+#endif
+    })
+    , HA_CODEC(Vc1,   {VDP(VC1_ADVANCED), VDP(VC1_MAIN), VDP(VC1_SIMPLE)})
+    , HA_CODEC(Wmv3,  {VDP(VC1_ADVANCED), VDP(VC1_MAIN), VDP(VC1_SIMPLE)})
+#ifdef VDP_DECODER_PROFILE_HEVC_MAIN_444
+    , HA_CODEC(Hevc,  {VDP(HEVC_MAIN), VDP(HEVC_MAIN_10), VDP(HEVC_MAIN_STILL)
+                     , VDP(HEVC_MAIN_12), VDP(HEVC_MAIN_444)})
+#endif
 };
 #undef VDP
 #endif
