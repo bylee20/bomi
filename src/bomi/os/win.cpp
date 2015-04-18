@@ -233,7 +233,7 @@ auto WinWindowAdapter::frameMarginsHack() -> void
 
 SIA setLayer(HWND hwnd, HWND layer) -> void
 {
-    SetWindowPos(hwnd, layer, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+    SetWindowPos(hwnd, layer, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 
 auto WinWindowAdapter::setAlwaysOnTop(bool onTop) -> void
