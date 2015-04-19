@@ -13,10 +13,10 @@ public:
     auto setCompressed(bool compressed) -> void;
     auto isCompressed() const -> bool;
     template<class F = decltype(pass)>
-    auto call(const QString &method, F onFinished = pass) -> Connection;
+    auto call(const QString &method, const QObject *ctx, F onFinished = pass) -> Connection;
     template<class F = decltype(pass)>
     auto call(const QString &method, const QVariantList &args,
-              F onFinished = pass) -> Connection;
+              const QObject *ctx, F onFinished = pass) -> Connection;
     auto postCall(const QString &method,
                   const QVariantList &args = QVariantList()) -> QNetworkReply*;
     auto lastCall() const -> QString;
@@ -28,18 +28,18 @@ private:
 };
 
 template<class F>
-inline auto XmlRpcClient::call(const QString &method,
+inline auto XmlRpcClient::call(const QString &method, const QObject *ctx,
                                F onFinished) -> QMetaObject::Connection
-{ return call(method, QVariantList(), onFinished); }
+{ return call(method, QVariantList(), ctx, onFinished); }
 
 template<class F>
 inline auto XmlRpcClient::call(const QString &method,
-                               const QVariantList &args,
+                               const QVariantList &args, const QObject *ctx,
                                F onFinished) -> QMetaObject::Connection
 {
     auto r = postCall(method, args);
     const bool comp = isCompressed();
-    return connect(r, &QNetworkReply::finished, [onFinished, r, comp] () {
+    return connect(r, &QNetworkReply::finished, ctx, [onFinished, r, comp] () {
         onFinished(parseResponse(r->readAll(), comp));
         r->deleteLater();
     });

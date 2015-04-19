@@ -11,6 +11,7 @@ struct OpenSubtitlesFinder::Data {
     OpenSubtitlesFinder *p = nullptr;
     XmlRpcClient client;
     QString token, error;
+    QTimer timer;
 
     void setState(State s) {
         if (_Change(state, s)) {
@@ -21,7 +22,7 @@ struct OpenSubtitlesFinder::Data {
     }
     void logout() {
         if (!token.isEmpty()) {
-            client.call(u"LogOut"_q, QVariantList() << token);
+            client.call(u"LogOut"_q, QVariantList() << token, p);
             token.clear();
         }
         setState(Unavailable);
@@ -32,7 +33,7 @@ struct OpenSubtitlesFinder::Data {
         setState(Connecting);
         const auto args = _Args() << u""_q << u""_q << u""_q
                                   << u"CMPlayerXmlRpcClient v0.1"_q;
-        client.call(u"LogIn"_q, args, [this] (const QVariantList &results) {
+        client.call(u"LogIn"_q, args, p, [this] (const QVariantList &results) {
             if (!results.isEmpty()) {
                 const auto map = results[0].toMap();
                 token = map[u"token"_q].toString();
@@ -51,7 +52,7 @@ struct OpenSubtitlesFinder::Data {
     auto call(const QVariantMap &map) -> void
     {
         const auto args = _Args() << token << QVariant(QVariantList() << map);
-        client.call(u"SearchSubtitles"_q, args, [this] (const QVariantList &results) {
+        client.call(u"SearchSubtitles"_q, args, p, [this] (const QVariantList &results) {
             setState(Available);
             if (results.isEmpty() || results.first().type() != QVariant::Map) {
                 emit p->found(QVector<SubtitleLink>());
@@ -76,6 +77,8 @@ struct OpenSubtitlesFinder::Data {
                 emit p->found(links);
             }
         });
+        timer.stop();
+        timer.start();
     }
 };
 
@@ -85,9 +88,32 @@ OpenSubtitlesFinder::OpenSubtitlesFinder(QObject *parent)
     d->client.setUrl(QUrl(u"http://api.opensubtitles.org/xml-rpc"_q));
     d->client.setCompressed(true);
     d->login();
+    d->timer.setInterval(13 * 60 * 1000);
+    connect(&d->timer, &QTimer::timeout, this, [=] () {
+        if (d->token.isEmpty())
+            return;
+        const auto args = _Args() << d->token;
+        d->client.call(u"NoOperation"_q, args, this, [this] (const QVariantList &results) {
+            if (results.isEmpty() || results.first().type() != QVariant::Map)
+                d->setState(Unavailable);
+            else {
+                const auto status = results.first().toMap()[u"status"_q].toString();
+                if (status.startsWith("20"_a))
+                    return;// good
+                if (status.startsWith("406 "_a)) {
+                    d->setState(Unavailable);
+                    d->token.clear();
+                    d->login();
+                } else
+                    d->setError(status);
+            }
+        });
+    });
+    d->timer.start();
 }
 
 OpenSubtitlesFinder::~OpenSubtitlesFinder() {
+    d->timer.stop();
     d->logout();
     delete d;
 }

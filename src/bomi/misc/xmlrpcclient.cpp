@@ -136,8 +136,11 @@ QVariant parseValue(const QDomElement &elem) {
             member = member.nextSiblingElement(u"member"_q);
         }
         return map;
-    } else
+    } else if (tag == "int"_a)
+        return type.text().toInt();
+    else {
         _Error("'%%' element was not handle.", tag);
+    }
     return QVariant();
 }
 
