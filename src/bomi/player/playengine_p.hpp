@@ -69,6 +69,7 @@ struct PlayEngine::Data {
     SubtitleRenderer *sr = nullptr;
     VideoProcessor *vp = nullptr;
     FramebufferObjectFormat fboFormat = FramebufferObjectFormat::Auto;
+    QByteArray playingVideo, playingAudio;
 
     PlayEngine::Waitings waitings = PlayEngine::NoWaiting;
     PlayEngine::State state = PlayEngine::Stopped;

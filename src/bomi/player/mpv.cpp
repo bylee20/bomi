@@ -45,6 +45,15 @@ struct Mpv::Data {
         Q_ASSERT(event == observations[event - UpdateEventBegin].event);
         return observations[event - UpdateEventBegin];
     }
+    auto reset()
+    {
+        quit = false;
+        observations.clear();
+        events.clear();
+        hooks.clear();
+        updateEventMax = ::UpdateEventBegin;
+        hookId = 0;
+    }
 };
 
 Mpv::Mpv(QObject *parent)
@@ -63,7 +72,7 @@ auto Mpv::create() -> void
     if (!m_handle) m_handle = mpv_create();
 }
 
-auto Mpv::initialize(Log::Level lv) -> void
+auto Mpv::initialize(Log::Level lv, bool ogl) -> void
 {
     Q_ASSERT(m_handle && !d->gl);
 
@@ -80,8 +89,10 @@ auto Mpv::initialize(Log::Level lv) -> void
     mpv_request_log_messages(m_handle, loglv.constData());
 
     fatal(mpv_initialize(m_handle), "Couldn't initialize mpv.");
-    auto ptr = mpv_get_sub_api(m_handle, MPV_SUB_API_OPENGL_CB);
-    d->gl = static_cast<mpv_opengl_cb_context*>(ptr);
+    if (ogl) {
+        auto ptr = mpv_get_sub_api(m_handle, MPV_SUB_API_OPENGL_CB);
+        d->gl = static_cast<mpv_opengl_cb_context*>(ptr);
+    }
 }
 
 auto Mpv::renderSize(int *w, int *h) -> void
@@ -95,6 +106,7 @@ auto Mpv::destroy() -> void
         mpv_terminate_destroy(m_handle);
         m_handle = nullptr;
         d->gl = nullptr;
+        d->reset();
     }
 }
 

@@ -26,6 +26,8 @@ public:
     auto add(const char *property) -> void;
     auto add(QByteArray &&alias, QObject *src, const char *property) -> bool;
     auto add(QCheckBox *cb) -> bool;
+    auto add(QSpinBox *sb) -> bool;
+    auto add(QDoubleSpinBox *sb) -> bool;
     auto add(QLineEdit *le) -> bool;
     template<class T>
     auto add(const char *name, T *data) -> tmp::enable_unless_t<tmp::is_enum<T>()>

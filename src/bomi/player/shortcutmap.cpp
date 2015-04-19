@@ -147,6 +147,8 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
 
        map[u"video/snapshot/quick"_q] << Qt::CTRL + Qt::Key_S;
        map[u"video/snapshot/tool"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_S;
+       map[u"video/clip/range"_q] << Qt::CTRL + Qt::Key_C;
+       map[u"video/clip/advanced"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_C;
        map[u"video/aspect/source"_q] << CTRL+SHIFT+Key_R;
        map[u"video/aspect/increase"_q] << CTRL+SHIFT+Key_A;
        map[u"video/aspect/decrease"_q] << CTRL+SHIFT+Key_D;

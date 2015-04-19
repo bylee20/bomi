@@ -16,7 +16,7 @@ public:
     ~VideoPreview();
     auto shutdown() -> void;
     auto unload() -> void;
-    auto load(const QString &path) -> void;
+    auto load(const QByteArray &path) -> void;
     auto setRate(double rate) -> void;
     auto rate() const -> double;
     auto sizeHint() const -> QSize;

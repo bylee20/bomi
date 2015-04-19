@@ -15,8 +15,10 @@
 #include "dialog/mbox.hpp"
 #include "dialog/openmediafolderdialog.hpp"
 #include "dialog/subtitlefinddialog.hpp"
+#include "dialog/encoderdialog.hpp"
 #include "avinfoobject.hpp"
 #include "misc/smbauth.hpp"
+#include "misc/filenamegenerator.hpp"
 #include <QSessionManager>
 #include <QScreen>
 
@@ -180,7 +182,11 @@ auto MainWindow::Data::plugEngine() -> void
     });
     connect(&e, &PlayEngine::beginSyncMrlState, p, [=] () { noMessage = true; });
     connect(&e, &PlayEngine::endSyncMrlState, p, [=] () { noMessage = false; });
-    connect(&e, &PlayEngine::started, p, [=] (const Mrl &mrl) { setOpen(mrl); });
+    connect(&e, &PlayEngine::started, p, [=] (const Mrl &mrl) {
+        setOpen(mrl);
+        if (encoder && !encoder->isBusy())
+            encoder->hide();
+    });
     connect(&e, &PlayEngine::finished, p, [=] (const Mrl &/*mrl*/, bool eof) {
         if (!eof) return;
         const auto next = playlist.checkNextMrl();
@@ -885,152 +891,14 @@ auto MainWindow::Data::updateWindowState(Qt::WindowState ws) -> void
     prevWindowState = ws;
 }
 
-SIA n2(int v) { return v < 10 ? QString('0'_q % _N(v)) : _N(v); }
-SIA n3(int v) { return v < 10 ? QString("00"_a % _N(v)) : v < 100 ? QString('0'_q % _N(v)) : _N(v); }
-
-auto MainWindow::Data::snapshotPath() -> QString
+auto MainWindow::Data::fileNameGenerator(const QTime &end) const -> FileNameGenerator
 {
-    if (ph.get.isEmpty()) {
-        auto &get = ph.get;
-        get[u"%YEAR%"_q]    = [&] () { return _N(ph.date.year()); };
-        get[u"%YEAR_2%"_q]  = [&] () { return _N(ph.date.year() % 100); };
-        get[u"%MONTH%"_q]   = [&] () { return _N(ph.date.month()); };
-        get[u"%MONTH_0%"_q] = [&] () { return n2(ph.date.month()); };
-        get[u"%MONTH_S%"_q] = [&] () { return QDate::shortDayName(ph.date.month()); };
-        get[u"%MONTH_L%"_q] = [&] () { return QDate::longMonthName(ph.date.month()); };
-        get[u"%DAY%"_q]     = [&] () { return _N(ph.date.day()); };
-        get[u"%DAY_0%"_q]   = [&] () { return n2(ph.date.day()); };
-        get[u"%HOUR%"_q]    = [&] () { return _N(ph.time.hour()); };
-        get[u"%HOUR_0%"_q]  = [&] () { return n2(ph.time.hour()); };
-        get[u"%MIN%"_q]     = [&] () { return _N(ph.time.minute()); };
-        get[u"%MIN_0%"_q]   = [&] () { return n2(ph.time.minute()); };
-        get[u"%SEC%"_q]     = [&] () { return _N(ph.time.second()); };
-        get[u"%SEC_0%"_q]   = [&] () { return n2(ph.time.second()); };
-        get[u"%MSEC%"_q]    = [&] () { return _N(ph.time.msec()); };
-        get[u"%MSEC_0%"_q]  = [&] () { return n3(ph.time.msec()); };
-
-        get[u"%T_HOUR%"_q]   = [&] () { return _N(ph.position.hour()); };
-        get[u"%T_HOUR_0%"_q] = [&] () { return n2(ph.position.hour()); };
-        get[u"%T_MIN%"_q]    = [&] () { return _N(ph.position.minute()); };
-        get[u"%T_MIN_0%"_q]  = [&] () { return n2(ph.position.minute()); };
-        get[u"%T_SEC%"_q]    = [&] () { return _N(ph.position.second()); };
-        get[u"%T_SEC_0%"_q]  = [&] () { return n2(ph.position.second()); };
-        get[u"%T_MSEC%"_q]   = [&] () { return _N(ph.position.msec()); };
-        get[u"%T_MSEC_0%"_q] = [&] () { return n3(ph.position.msec()); };
-        get[u"%MEDIA_NAME%"_q] = [&] () {
-            const auto mrl = e.mrl();
-            if (mrl.isLocalFile())
-                return QFileInfo(mrl.toLocalFile()).fileName();
-            return mrl.toString();
-        };
-        get[u"%MEDIA_DISPLAY_NAME%"_q] = [&] () { return e.media()->name(); };
-
-        get[u"%UNIX%"_q]     = [&] () { return _N(ph.unix / 1000llu); };
-        get[u"%UNIX_MS%"_q]  = [&] () { return _N(ph.unix); };
-    }
-    ph.date = QDate::currentDate();
-    ph.time = QTime::currentTime();
-    ph.unix = QDateTime::currentMSecsSinceEpoch();
-
-    QString base;
-    int pos = 0;
-    const auto format = pref.quick_snapshot_template();
-    const auto suffix = pref.quick_snapshot_format();
-    auto append = [&] (int end) { base += format.midRef(pos, end - pos); pos = end; };
-    QRegEx rxRand(uR"(^%RAND_(\d+)%$)"_q);
-    while (pos < format.size()) {
-        const int from = format.indexOf('%'_q, pos);
-        if (from < 0) {
-            append(format.size());
-            break;
-        }
-        append(from);
-        const int end = format.indexOf('%'_q, from + 1) + 1;
-        if (end <= 0) {
-            append(format.size());
-            break;
-        }
-        const auto name = format.mid(from, end - from);
-        auto get = ph.get.value(name);
-        if (get) {
-            base += get();
-        } else {
-            auto m = rxRand.match(name);
-            if (m.hasMatch()) {
-                const int n = m.capturedRef(1).toInt();
-                for (int i = 0; i < n; ++i)
-                    base += _N(qrand() % 10);
-            } else
-                append(end);
-        }
-        pos = end;
-    }
-
-    for (auto &ch : base) {
-        switch (ch.unicode()) {
-        case '"': case '*': case '/': case '\\':
-        case '<': case '>': case ':': case '|': case '?':
-            ch = '_'_q;
-        default: continue;
-        }
-    }
-
-    QString folder; bool ask = false;
-    switch (pref.quick_snapshot_save()) {
-    case QuickSnapshotSave::Current:
-        if (e.mrl().isLocalFile()) {
-            folder = _ToAbsPath(e.mrl().toLocalFile());
-            break;
-        }
-    case QuickSnapshotSave::Ask:
-        folder = _LastOpenPath();
-        ask = true;
-        break;
-    case QuickSnapshotSave::Fixed:
-        folder = pref.quick_snapshot_folder();
-        break;
-    default:
-        return QString();
-    }
-
-    QDir dir(folder);
-    dir.setNameFilters({ "*."_a % suffix });
-    dir.setFilter(QDir::Files);
-
-    QRegEx rxCounter(uR"(%COUNTER_(\d+)%)"_q);
-    auto m = rxCounter.match(base);
-    if (m.hasMatch()) {
-        base.replace(m.capturedStart(1), m.capturedLength(1), u"XX"_q);
-        base.remove(rxCounter);
-        QString rxs;
-        rxs += '^'_q;
-        for (auto ch : base) {
-            switch (ch.unicode()) {
-            case '^': case '$': case '.': case '+':
-            case '(': case ')': case '[': case ']': case '{': case '}':
-                rxs += '\\'_q;
-            default:
-                rxs += ch;
-            }
-        }
-        rxs += '$'_q;
-        const int n = m.capturedRef(1).toInt();
-        rxs.replace(u"%COUNTER_XX%"_q, "(\\d{"_a % _N(n) % ",})"_a);
-        QRegEx rx(rxs, QRegEx::CaseInsensitiveOption);
-        qint64 max = 0;
-        for (auto &info : dir.entryInfoList()) {
-            auto name = info.completeBaseName();
-            auto m = rx.match(name);
-            if (m.hasMatch())
-                max = std::max(max, m.capturedRef(1).toLongLong());
-        }
-        base.replace(u"%COUNTER_XX%"_q, u"%1"_q.arg(max + 1, n, 10, '0'_q));
-    }
-
-    QString fileName = base % '.'_q % suffix;
-    if (ask)
-        return _GetSaveFile(nullptr, tr("Save File"), fileName, WritableImageExt);
-    for (int i = 1; dir.exists(fileName); ++i)
-        fileName = base % '_'_q % _N(i) % '.'_q % suffix;
-    return dir.absoluteFilePath(fileName);
+    FileNameGenerator g;
+    g.dateTime = QDateTime::currentDateTime();
+    g.start = QTime::fromMSecsSinceStartOfDay(e.time());
+    g.end = end.isNull() ? g.start : end;
+    g.unix = QDateTime::currentMSecsSinceEpoch();
+    g.mrl = e.mrl();
+    g.mediaName = e.media()->name();
+    return g;
 }

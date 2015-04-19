@@ -65,6 +65,7 @@ class SubtitleFindDialog;               class SnapshotDialog;
 class PrefDialog;                       class SubtitleViewer;
 class TrayIcon;                         class AudioEqualizerDialog;
 class IntrplDialog;                     class VideoColorDialog;
+class EncoderDialog;                    class FileNameGenerator;
 
 struct MainWindow::Data {
     Data(MainWindow *p): p(p) { }
@@ -115,6 +116,7 @@ struct MainWindow::Data {
     QSharedPointer<AudioEqualizerDialog> eq;
     QSharedPointer<VideoColorDialog> color;
     QSharedPointer<IntrplDialog> intrpl, chroma;
+    QSharedPointer<EncoderDialog> encoder;
     PlaylistModel playlist;
     QUndoStack undo;
     Downloader downloader;
@@ -131,6 +133,8 @@ struct MainWindow::Data {
     JrServer *jrServer = nullptr;
     JrPlayer jrPlayer;
     Qt::WindowState prevWindowState = Qt::WindowNoState;
+
+    auto fileNameGenerator(const QTime &end = QTime()) const -> FileNameGenerator;
 
     template<class T, class... Args>
     auto dialog(const Args&... args) -> QSharedPointer<T>
@@ -158,7 +162,6 @@ struct MainWindow::Data {
             _SetLastOpenPath(mrl.toLocalFile());
         playlist.setLoaded(mrl);
     }
-    auto snapshotPath() -> QString;
     auto deleteDialogs() -> void;
     auto restoreState() -> void;
     auto applyPref() -> void;

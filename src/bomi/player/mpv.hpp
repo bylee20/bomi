@@ -37,7 +37,7 @@ public:
     auto handle() const -> mpv_handle* { return m_handle; }
 
     auto create() -> void;
-    auto initialize(Log::Level lv) -> void;
+    auto initialize(Log::Level lv, bool ogl = true) -> void;
     auto destroy() -> void;
     auto process(QEvent *event) -> bool;
 

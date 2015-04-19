@@ -61,7 +61,6 @@ extern const struct af_info af_info_convertsignendian;
 extern const struct af_info af_info_rubberband;
 
 static const struct af_info *const filter_list[] = {
-    &af_info_dummy,
     &af_info_delay,
     &af_info_channels,
     &af_info_format,
@@ -96,6 +95,7 @@ static const struct af_info *const filter_list[] = {
     // Must come last, because they're fallback format conversion filter
     &af_info_convert24,
     &af_info_convertsignendian,
+    &af_info_dummy,
     NULL
 };
 

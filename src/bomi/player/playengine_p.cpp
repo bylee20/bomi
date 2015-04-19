@@ -377,6 +377,10 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.flush();
     _PostEvent(p, SyncMrlState, t.local, loads);
     t.local.clear();
+
+    mutex.lock();
+    playingVideo = file.toMpv();
+    mutex.unlock();
 }
 
 auto PlayEngine::Data::onUnload() -> void
@@ -624,7 +628,7 @@ auto PlayEngine::Data::request() -> void
         select(StreamSubtitle);
         mpv.flush();
         _PostEvent(p, StartPlayback, editions, edition);
-        preview->load(mpv.get<MpvFile>("stream-open-filename"));
+        preview->load(mpv.get<QByteArray>("stream-open-filename"));
     });
     mpv.request(MPV_EVENT_END_FILE, [=] (mpv_event *e) {
         preview->unload();

@@ -119,6 +119,9 @@ public:
     auto seekEdition(int number, int from = 0) -> void;
     auto seekChapter(int number) -> void;
     auto isAudioOnly() const -> bool;
+    auto currentVideoStreamName() const -> QByteArray;
+    auto currentAudioStreamName() const -> QByteArray;
+    auto frameSize() const -> QSize;
 
     auto setAudioFiles(const QStringList &files) -> void;
     auto addAudioFiles(const QStringList &files) -> void;

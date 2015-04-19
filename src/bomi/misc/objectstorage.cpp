@@ -187,3 +187,13 @@ auto ObjectStorage::file() const -> QString
 {
     return _WritablePath(Location::Config) % "/objectstorage.ini"_a;
 }
+
+auto ObjectStorage::add(QSpinBox *sb) -> bool
+{
+    return add(sb->objectName().toLatin1(), sb, "value");
+}
+
+auto ObjectStorage::add(QDoubleSpinBox *sb) -> bool
+{
+    return add(sb->objectName().toLatin1(), sb, "value");
+}

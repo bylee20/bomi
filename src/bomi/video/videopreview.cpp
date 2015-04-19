@@ -157,10 +157,10 @@ auto VideoPreview::paint(OpenGLFramebufferObject *fbo) -> void
     fbo->release();
 }
 
-auto VideoPreview::load(const QString &path) -> void
+auto VideoPreview::load(const QByteArray &path) -> void
 {
     if (d->active)
-        d->mpv.tellAsync("loadfile", MpvFile(path));
+        d->mpv.tellAsync("loadfile", path);
 }
 
 auto VideoPreview::unload() -> void

@@ -679,7 +679,7 @@ auto PlayEngine::setAudioMuted(bool muted) -> void
 auto PlayEngine::shutdown() -> void
 {
     d->preview->shutdown();
-    d->mpv.tell("quit", 1);
+    d->mpv.tell("quit");
 }
 
 auto PlayEngine::setResume_locked(bool resume) -> void
@@ -819,6 +819,11 @@ auto PlayEngine::renderSizeHint(const QSize &size) const -> QSize
     auto s = size;
     d->mpv.renderSize(&s.rwidth(), &s.rheight());
     return s;
+}
+
+auto PlayEngine::frameSize() const -> QSize
+{
+    return d->audioOnly ? QSize() : d->displaySize();
 }
 
 auto PlayEngine::videoSizeHint() const -> QSize
@@ -1299,4 +1304,20 @@ auto PlayEngine::isAudioOnly() const -> bool
 auto PlayEngine::visualizer() const -> AudioVisualizer*
 {
     return d->ac->visualizer();
+}
+
+auto PlayEngine::currentVideoStreamName() const -> QByteArray
+{
+    QMutexLocker locker(&d->mutex);
+    return d->playingVideo;
+}
+
+auto PlayEngine::currentAudioStreamName() const -> QByteArray
+{
+    const auto track = d->params.audio_tracks().selection();
+    if (!track)
+        return QByteArray();
+    if (track->isExternal())
+        return MpvFile(track->file()).toMpv();
+    return QByteArray::number(track->id());
 }

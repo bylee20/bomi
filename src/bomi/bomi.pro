@@ -299,7 +299,9 @@ HEADERS += \
     quick/triangleitem.hpp \
     audio/visualizer.hpp \
     kiss_fft/tools/kiss_fftr.h \
-    kiss_fft/kiss_fft.h
+    kiss_fft/kiss_fft.h \
+    dialog/encoderdialog.hpp \
+    misc/filenamegenerator.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -513,7 +515,9 @@ SOURCES += \
     quick/triangleitem.cpp \
     audio/visualizer.cpp \
     kiss_fft/tools/kiss_fftr.c \
-    kiss_fft/kiss_fft.c
+    kiss_fft/kiss_fft.c \
+    dialog/encoderdialog.cpp \
+    misc/filenamegenerator.cpp
 
 TRANSLATIONS += translations/bomi_en.ts \
 	translations/bomi_ko.ts \
@@ -534,7 +538,8 @@ FORMS += \
     ui/logviewer.ui \
     ui/subtitleviewer.ui \
     ui/controlsthemewidget.ui \
-    ui/fileassocdialog.ui
+    ui/fileassocdialog.ui \
+    ui/encoderdialog.ui
 
 OTHER_FILES += \
 	imports/bomi/qmldir \

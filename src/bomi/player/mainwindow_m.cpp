@@ -16,8 +16,10 @@
 #include "dialog/snapshotdialog.hpp"
 #include "dialog/subtitlefinddialog.hpp"
 #include "dialog/encodingfiledialog.hpp"
+#include "dialog/encoderdialog.hpp"
 #include "video/interpolatorparams.hpp"
 #include "audio/visualizer.hpp"
+#include "misc/filenamegenerator.hpp"
 #include <QThreadPool>
 
 template<class T, class Func>
@@ -366,9 +368,32 @@ auto MainWindow::Data::plugMenu() -> void
             auto image = frameOnly;
             if (snapshotMode == QuickSnapshot)
                 image = withOsd;
-            const auto file = snapshotPath();
-            if (file.isEmpty())
+
+            QString folder; bool ask = false;
+            switch (pref.quick_snapshot_save()) {
+            case QuickSnapshotSave::Current:
+                if (e.mrl().isLocalFile()) {
+                    folder = _ToAbsPath(e.mrl().toLocalFile());
+                    break;
+                }
+            case QuickSnapshotSave::Ask:
+                folder = _LastOpenPath();
+                ask = true;
                 break;
+            case QuickSnapshotSave::Fixed:
+                folder = pref.quick_snapshot_folder();
+                break;
+            default:
+                return;
+            }
+            if (folder.isEmpty())
+                return;
+            const auto g = fileNameGenerator();
+            auto file = g.get(folder, pref.quick_snapshot_template(), pref.quick_snapshot_format());
+            if (ask)
+                file = _GetSaveFile(nullptr, tr("Save Snapshot"), file, WritableImageExt);
+            if (file.isEmpty())
+                return;
             const int quality = pref.quick_snapshot_quality();
             const auto saver = new SnapshotSaver(image, file, quality);
             if (saver->isWritable()) {
@@ -383,6 +408,48 @@ auto MainWindow::Data::plugMenu() -> void
             break;
         }
     }, Qt::QueuedConnection);
+    connect(video(u"clip"_q).g(), &ActionGroup::triggered, p, [=] (QAction *act) {
+        if (!encoder)
+            encoder = dialog<EncoderDialog>();
+        switch (act->data().toInt()) {
+        case 'r': {
+            if (e.isStopped())
+                break;
+            if (encoder->isBusy()) {
+                showMessage(tr("Video Clip"), tr("Already working"));
+                encoder->show();
+                break;
+            }
+            static int a = -1, b = -1;
+            const auto t = e.time();
+            if (a < 0) {
+                a = t;
+                showMessage(tr("Video Clip"), tr("Start from %1").arg(_MSecToString(a, u"hh:mm:ss.zzz"_q)));
+            } else if (b < 0) {
+                b = t;
+                if (t  - a < 100)
+                    showMessage(tr("Video Clip"), tr("Range is too short!"));
+                else {
+                    showMessage(tr("Video Clip"), tr("End at %1").arg(_MSecToString(b, u"hh:mm:ss.zzz"_q)));
+                    encoder->setSource(e.currentVideoStreamName(),
+                                       e.frameSize(), fileNameGenerator());
+                    encoder->setAudio(e.currentAudioStreamName());
+                    encoder->setRange(a, b);
+                    encoder->show();
+                }
+                a = b = -1;
+            }
+            break;
+        } case 'a': {
+            encoder->setSource(e.currentVideoStreamName(),
+                               e.frameSize(), fileNameGenerator());
+            encoder->setAudio(e.currentAudioStreamName());
+            encoder->show();
+            break;
+        } default:
+            break;
+        }
+    });
 
     PLUG_ENUM(video(u"align"_q), video_vertical_alignment, setVideoVerticalAlignment);
     PLUG_ENUM(video(u"align"_q), video_horizontal_alignment, setVideoHorizontalAlignment);
@@ -815,5 +882,6 @@ auto MainWindow::Data::deleteDialogs() -> void
     logViewer.clear();
     eq.clear();
     color.clear();
+    encoder.clear();
 }
 

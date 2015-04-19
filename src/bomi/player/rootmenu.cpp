@@ -361,6 +361,10 @@ RootMenu::RootMenu()
             d->action(u"quick-nosub"_q, QT_TR_NOOP("Quick Snapshot(No Subtitles)"));
             d->action(u"tool"_q, QT_TR_NOOP("Snapshot Tool"));
         });
+        d->menu(u"clip"_q, QT_TR_NOOP("Make Video Clip"), [=] () {
+            d->actionToGroup(u"range"_q, QT_TR_NOOP("Set Range to Current Time"))->setData(int('r'));
+            d->actionToGroup(u"advanced"_q, QT_TR_NOOP("Advanced..."))->setData(int('a'));
+        });
 
         d->separator();
 
