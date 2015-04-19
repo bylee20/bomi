@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Post-installation</DisplayName>
+    <Description>Handle post-installation jobs</Description>
+    <Version>0.0.1-1</Version>
+    <ReleaseDate>2015-04-10</ReleaseDate>
+    <ForcedInstallation>true</ForcedInstallation>
+    <Virtual>true</Virtual>
+    <SortingPriority>0</SortingPriority>
+    <Script>installscript.js</Script>
+    <RequiresAdminRights>true</RequiresAdminRights>
+</Package>

@@ -1,6 +1,7 @@
 *.conf.bk
 *.directory
 windows/repo/
+windows/*.exe
 windows/packages/net.xylosper.bomi*/data/*
 src/mpv/.git
 src/libchardet*

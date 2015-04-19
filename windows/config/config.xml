@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>bomi</Name>
+    <Version>0.9.7</Version>
+    <Title>bomi - Multimedia Player</Title>
+    <Publisher>xylosper</Publisher>
+    <ProductUrl>http://bomi-player.github.io</ProductUrl>
+    <StartMenuDir>bomi</StartMenuDir>
+    <TargetDir>@ApplicationsDir@\bomi</TargetDir>
+    <ControlScript>controlscript.js</ControlScript>
+    <InstallerApplicationIcon>bomi</InstallerApplicationIcon>
+    <AllowNonAsciiCharacters>true</AllowNonAsciiCharacters>
+    <RemoteRepositories>
+        <Repository>
+            <Url>http://master.dl.sourceforge.net/project/bomi/windows/repo</Url>
+            <Enabled>1</Enabled>
+        </Repository>
+        <Repository>
+            <Url>http://jaist.dl.sourceforge.net/project/bomi/windows/repo</Url>
+            <Enabled>0</Enabled>
+        </Repository>
+    </RemoteRepositories>
+</Installer>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>bomi for 64bit</DisplayName>
+    <Description>Install bomi for 64bit</Description>
+    <Version>0.9.7-1</Version>
+    <ReleaseDate>2015-04-19</ReleaseDate>
+    <SortingPriority>10</SortingPriority>
+</Package>
