@@ -5,6 +5,8 @@
 #include "ui_encoderdialog.h"
 #include "misc/objectstorage.hpp"
 #include "misc/dataevent.hpp"
+#include "misc/osdstyle.hpp"
+#include "player/streamtrack.hpp"
 #include <QCloseEvent>
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -37,7 +39,9 @@ struct EncoderDialog::Data {
     EncoderDialog *p = nullptr;
     Ui::EncoderDialog ui;
     QSharedPointer<Mpv> mpv;
-    QByteArray source, audio;
+    QByteArray source;
+    StreamTrack audio, sub;
+    OsdStyle style;
     QSize size;
     QPushButton *start = nullptr;
     FileNameGenerator g;
@@ -60,6 +64,7 @@ EncoderDialog::EncoderDialog(QWidget *parent)
     d->storage.add("ac", d->ui.ac, "currentText");
     d->storage.add("fps", d->ui.fps, "currentIndex");
     d->storage.add(d->ui.fps_value);
+    d->storage.add(d->ui.subtitle);
 //    d->storage.add(d->ui.size);
 //    d->storage.add(d->ui.width);
 //    d->storage.add(d->ui.height);
@@ -159,7 +164,7 @@ auto EncoderDialog::setSource(const QByteArray &mrl, const QSize &size,
     d->ui.width->setValue(size.width());
     d->ui.height->setValue(size.height());
     d->resizing = false;
-    d->audio.clear();
+    d->audio = d->sub = StreamTrack();
     d->g = g;
     _SetWindowTitle(this, tr("Encoder: %1").arg(d->g.mediaName));
 }
@@ -170,7 +175,7 @@ auto EncoderDialog::setRange(int start, int end) -> void
     d->ui.b->setTime(QTime::fromMSecsSinceStartOfDay(end));
 }
 
-auto EncoderDialog::setAudio(const QByteArray &audio) -> void
+auto EncoderDialog::setAudio(const StreamTrack &audio) -> void
 {
     d->audio = audio;
 }
@@ -256,16 +261,69 @@ auto EncoderDialog::run() -> QString
             d->mpv->setOption("ovcopts", d->ui.vcopts->text().toUtf8());
         if (!d->ui.acopts->text().isEmpty())
             d->mpv->setOption("oacopts", d->ui.acopts->text().toUtf8());
-        if (!d->audio.isEmpty()) {
-            bool ok = false;
-            d->audio.toInt(&ok);
-            if (ok)
-                d->mpv->setOption("aid", d->audio);
+        if (d->audio.isValid()) {
+            if (d->audio.isExternal())
+                d->mpv->setOption("audio-file", MpvFile(d->audio.file()).toMpv());
             else
-                d->mpv->setOption("audio-file", d->audio);
+                d->mpv->setOption("aid", _n(d->audio.id()));
         }
     }
-    d->mpv->setOption("sid", "no");
+
+    if (!d->ui.subtitle->isChecked())
+        d->mpv->setOption("sid", "no");
+    else {
+        const auto color = [] (const QColor &color) { return color.name(QColor::HexArgb).toLatin1(); };
+        const auto &style = d->style;
+        const auto &font = style.font;
+        d->mpv->setOption("sub-text-color", color(font.color));
+        QStringList fontStyles;
+        if (font.bold())
+            fontStyles.append(u"Bold"_q);
+        if (font.italic())
+            fontStyles.append(u"Italic"_q);
+        QString family = font.family();
+        if (!fontStyles.isEmpty())
+            family += ":style="_a % fontStyles.join(' '_q);
+        const double factor = font.size * 720.0;
+        d->mpv->setOption("sub-text-font", family.toUtf8());
+        d->mpv->setOption("sub-text-font-size", _n(factor));
+        const auto &outline = style.outline;
+        const auto scaled = [factor] (double v)
+            { return qBound(0., v*factor, 10.); };
+        if (outline.enabled) {
+            d->mpv->setOption("sub-text-border-size", _n(scaled(outline.width)));
+            d->mpv->setOption("sub-text-border-color", color(outline.color));
+        } else
+            d->mpv->setOption("sub-text-border-size", "0.0");
+        const auto &bbox = style.bbox;
+        if (bbox.enabled)
+            d->mpv->setOption("sub-text-back-color", color(bbox.color));
+        else
+            d->mpv->setOption("sub-text-back-color", color(Qt::transparent));
+        auto norm = [] (const QPointF &p) { return sqrt(p.x()*p.x() + p.y()*p.y()); };
+        const auto &shadow = style.shadow;
+        if (shadow.enabled) {
+            d->mpv->setOption("sub-text-shadow-color", color(shadow.color));
+            d->mpv->setOption("sub-text-shadow-offset", _n(scaled(norm(shadow.offset))));
+        } else {
+            d->mpv->setOption("sub-text-shadow-color", color(Qt::transparent));
+            d->mpv->setOption("sub-text-shadow-offset", "0.0");
+        }
+        // these should be applied?
+        //    d->mpv.setAsync("ass-force-margins", d->vr->overlayOnLetterbox() && override); };
+        //    d->d->mpv->setAsync("sub-pos", o || !isAss() ? qRound(p * 100) : 100);
+        //    d->d->mpv->setAsync("sub-scale", o || !isAss() ? qMax(0., 1. + s) : 1.);
+        //    d->d->mpv->setAsync("ass-style-override", o ? "force"_b : "yes"_b);
+        if (d->sub.isValid()) {
+            if (d->sub.isExternal()) {
+                d->mpv->setOption("sub-file", MpvFile(d->sub.file()).toMpv());
+                auto cp = d->sub.encoding().name().replace("Windows-"_a, "cp"_a, Qt::CaseInsensitive);
+                d->mpv->setOption("subcp", cp.toLatin1());
+            } else
+                d->mpv->setOption("sid", _n(d->sub.id()));
+        }
+    }
+
     d->mpv->setOption("start", _n(a * 1e-3));
     d->mpv->setOption("end", _n(b * 1e-3));
 
@@ -295,4 +353,10 @@ auto EncoderDialog::customEvent(QEvent *event) -> void
 {
     if (event->type() == TickEvent)
         d->ui.prog->setValue(_GetData<int>(event));
+}
+
+auto EncoderDialog::setSubtitle(const StreamTrack &sub, const OsdStyle &style) -> void
+{
+    d->sub = sub;
+    d->style = style;
 }

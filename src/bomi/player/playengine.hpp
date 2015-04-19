@@ -120,7 +120,8 @@ public:
     auto seekChapter(int number) -> void;
     auto isAudioOnly() const -> bool;
     auto currentVideoStreamName() const -> QByteArray;
-    auto currentAudioStreamName() const -> QByteArray;
+    auto currentAudioStreamTrack() const -> StreamTrack;
+    auto currentSubtitleStreamTrack() const -> StreamTrack;
     auto frameSize() const -> QSize;
 
     auto setAudioFiles(const QStringList &files) -> void;

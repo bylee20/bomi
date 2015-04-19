@@ -411,6 +411,16 @@ auto MainWindow::Data::plugMenu() -> void
     connect(video(u"clip"_q).g(), &ActionGroup::triggered, p, [=] (QAction *act) {
         if (!encoder)
             encoder = dialog<EncoderDialog>();
+        auto setup = [&] (int a, int b) {
+            encoder->setSource(e.currentVideoStreamName(),
+                               e.frameSize(), fileNameGenerator());
+            encoder->setAudio(e.currentAudioStreamTrack());
+            encoder->setSubtitle(e.currentSubtitleStreamTrack(), pref.sub_style());
+            encoder->setRange(a, b);
+            encoder->show();
+        };
+
+        const auto t = e.time();
         switch (act->data().toInt()) {
         case 'r': {
             if (e.isStopped())
@@ -421,33 +431,25 @@ auto MainWindow::Data::plugMenu() -> void
                 break;
             }
             static int a = -1, b = -1;
-            const auto t = e.time();
             if (a < 0) {
                 a = t;
                 showMessage(tr("Video Clip"), tr("Start from %1").arg(_MSecToString(a, u"hh:mm:ss.zzz"_q)));
             } else if (b < 0) {
                 b = t;
-                if (t  - a < 100)
+                if (t  - a < 100) {
                     showMessage(tr("Video Clip"), tr("Range is too short!"));
-                else {
+                } else {
                     showMessage(tr("Video Clip"), tr("End at %1").arg(_MSecToString(b, u"hh:mm:ss.zzz"_q)));
-                    encoder->setSource(e.currentVideoStreamName(),
-                                       e.frameSize(), fileNameGenerator());
-                    encoder->setAudio(e.currentAudioStreamName());
-                    encoder->setRange(a, b);
-                    encoder->show();
+                    setup(a, b);
                 }
                 a = b = -1;
             }
             break;
         } case 'a': {
-            encoder->setSource(e.currentVideoStreamName(),
-                               e.frameSize(), fileNameGenerator());
-            encoder->setAudio(e.currentAudioStreamName());
-            encoder->show();
+            setup(t, t);
             break;
         } default:
-            break;
+            return;
         }
     });
 

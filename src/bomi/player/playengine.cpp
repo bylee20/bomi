@@ -1312,12 +1312,16 @@ auto PlayEngine::currentVideoStreamName() const -> QByteArray
     return d->playingVideo;
 }
 
-auto PlayEngine::currentAudioStreamName() const -> QByteArray
+auto PlayEngine::currentAudioStreamTrack() const -> StreamTrack
 {
     const auto track = d->params.audio_tracks().selection();
+    return track ? *track : StreamTrack();
+}
+
+auto PlayEngine::currentSubtitleStreamTrack() const -> StreamTrack
+{
+    auto track = d->params.sub_tracks().selection();
     if (!track)
-        return QByteArray();
-    if (track->isExternal())
-        return MpvFile(track->file()).toMpv();
-    return QByteArray::number(track->id());
+        track = d->params.sub_tracks_inclusive().selection();
+    return track ? *track : StreamTrack();
 }

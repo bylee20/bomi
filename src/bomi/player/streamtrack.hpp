@@ -32,6 +32,7 @@ public:
     auto file() const -> QString { return m_file; }
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
+    auto isValid() const -> bool { return m_type != StreamUnknown; }
     static auto typeDescription(StreamType type, bool albumart = false) -> QString;
     static auto fromJson(const QJsonObject &json) -> StreamTrack;
     static auto fromMpvData(const QVariant &mpv) -> StreamTrack;
