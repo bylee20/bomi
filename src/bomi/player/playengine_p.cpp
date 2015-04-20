@@ -190,6 +190,7 @@ auto PlayEngine::Data::onLoad() -> void
     const auto sub = mpv.get<MpvUtf8>("file-local-options/sub-file").data;
     mpv.setAsync("file-local-options/sub-file", MpvFileList());
     t.local = localCopy();
+    t.duration = -1;
     auto local = t.local.data();
 
     Mrl mrl(file);
@@ -366,6 +367,7 @@ auto PlayEngine::Data::onLoad() -> void
                     mpv.setAsync("file-local-options/audio-file", MpvFile(r.audio).toMpv());
                     mpv.setAsync("file-local-options/demuxer-lavf-o", "fflags=+ignidx"_b);
                 }
+                t.duration = r.duration;
             }
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
@@ -443,7 +445,11 @@ auto PlayEngine::Data::observe() -> void
             emit p->begin_sChanged();
         updateChapter(mpv.get<int>("chapter"));
     });
-    mpv.observeTime("length", duration, [=] () {
+    mpv.observe("length", [=] () {
+        return t.duration < 0 ? s2ms(mpv.get<double>("length")) : t.duration;
+    }, [=] (int ms) {
+        if (!_Change(duration, ms))
+            return;
         emit p->durationChanged(duration);
         if (_Change(duration_s, duration/1000))
             emit p->duration_sChanged();
