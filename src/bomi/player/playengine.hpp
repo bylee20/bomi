@@ -31,7 +31,7 @@ class QOpenGLContext;                   class EncodingInfo;
 class SubComp;                          class SmbAuth;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
-class AudioVisualizer;
+class AudioVisualizer;                  class QQuickWindow;
 
 struct StringPair { QString s1, s2; };
 using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;
@@ -242,7 +242,7 @@ public:
     auto relativeSeek(int pos) -> void;
     auto seekToNextBlackFrame() -> void;
 
-    auto initializeGL(QOpenGLContext *ctx) -> void;
+    auto initializeGL(const QQuickWindow *w, QOpenGLContext *ctx) -> void;
     auto finalizeGL(QOpenGLContext *ctx) -> void;
 
     auto framebufferObjectFormat() const -> FramebufferObjectFormat;

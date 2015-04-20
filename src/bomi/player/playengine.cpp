@@ -4,6 +4,7 @@
 #include "audio/audionormalizeroption.hpp"
 #include "subtitle/subtitlemodel.hpp"
 #include "os/os.hpp"
+#include <QQuickWindow>
 
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
@@ -268,9 +269,11 @@ PlayEngine::~PlayEngine()
     _Debug("Finalized");
 }
 
-auto PlayEngine::initializeGL(QOpenGLContext *ctx) -> void
+auto PlayEngine::initializeGL(const QQuickWindow *w, QOpenGLContext *ctx) -> void
 {
     d->mpv.initializeGL(ctx);
+    connect(w, &QQuickWindow::frameSwapped,
+            &d->mpv, &Mpv::frameSwapped, Qt::DirectConnection);
 }
 
 auto PlayEngine::finalizeGL(QOpenGLContext */*ctx*/) -> void

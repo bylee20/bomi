@@ -139,6 +139,11 @@ auto Mpv::render(OpenGLFramebufferObject *frame, OpenGLFramebufferObject *osd, c
     return ret;
 }
 
+auto Mpv::frameSwapped() -> void
+{
+    mpv_opengl_cb_report_flip(d->gl, 0);
+}
+
 auto Mpv::initializeGL(QOpenGLContext *ctx) -> void
 {
     auto getProcAddr = [] (void *ctx, const char *name) -> void* {

@@ -70,7 +70,7 @@ MainWindow::MainWindow()
         if (cApp.isOpenGLDebugLoggerRequested())
             m_glLogger->initialize(context);
         m_sgInit = true;
-        m_engine->initializeGL(context);
+        m_engine->initializeGL(this, context);
         emit sceneGraphInitialized();
         _Debug("Scene graph initialized.");
     }, Qt::DirectConnection);
