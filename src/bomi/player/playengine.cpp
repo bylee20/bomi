@@ -1284,8 +1284,8 @@ auto PlayEngine::restore(const MrlState *params) -> void
     d->params.blockSignals(true);
     d->params.copyFrom(params);
     d->params.blockSignals(false);
-    d->params.m_mutex = &d->mutex;
     d->params.notifyAll();
+    d->params.m_mutex = &d->mutex;
 }
 
 auto PlayEngine::subtitleSelection() const -> QVector<SubComp>
