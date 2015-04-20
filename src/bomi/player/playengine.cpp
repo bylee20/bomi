@@ -822,13 +822,27 @@ auto PlayEngine::setDeintOptions_locked(const DeintOptionSet &set) -> void
     emit deintOptionsChanged();
 }
 
+static auto scaleVideoSize(const QSize &src, const QSize &target) -> QSize
+{
+    const int sw = src.width(), sh = src.height();
+    const float aspect = sw / (float)sh;
+    QSize scaled(target.width(), target.width() / aspect);
+    if (!_InRange(sh, scaled.height(), target.height())) {
+        const int w = target.height() * aspect;
+        if (w <= target.width()) {
+            scaled.rheight() = target.height();
+            scaled.rwidth() = w;
+        }
+    }
+    return QSize(std::min(target.width(), scaled.width()),
+                 std::min(target.height(), scaled.height()));
+}
+
 auto PlayEngine::renderSizeHint(const QSize &size) const -> QSize
 {
     if (!d->vr->hasFrame())
         return size;
-    auto s = size;
-    d->mpv.renderSize(&s.rwidth(), &s.rheight());
-    return s;
+    return scaleVideoSize(d->vr->sizeHint(), size);
 }
 
 auto PlayEngine::frameSize() const -> QSize
