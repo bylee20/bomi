@@ -165,7 +165,7 @@ private:
             if (img.width() > 512 || img.height() > 512)
                 img = img.scaled(512, 512, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
             Q_ASSERT(!m_albumArt[0]);
-            m_albumArt[0].reset(new QTemporaryFile(u"bomi-albumart-XXXXXX.png"_q));
+            m_albumArt[0].reset(new QTemporaryFile(QDir::tempPath() % u"/bomi-albumart-XXXXXX.png"_q));
             m_albumArt[0]->open();
             m_albumArt[0]->close();
             if (!img.save(m_albumArt[0]->fileName()))
