@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -116,13 +115,17 @@ const struct m_sub_options vd_lavc_conf = {
     },
 };
 
-extern const struct vd_lavc_hwdec mp_vd_lavc_vdpau;
-extern const struct vd_lavc_hwdec mp_vd_lavc_vda;
-extern const struct vd_lavc_hwdec mp_vd_lavc_vaapi;
-extern const struct vd_lavc_hwdec mp_vd_lavc_vaapi_copy;
-extern const struct vd_lavc_hwdec mp_vd_lavc_dxva2_copy;
+const struct vd_lavc_hwdec mp_vd_lavc_vdpau;
+const struct vd_lavc_hwdec mp_vd_lavc_vda;
+const struct vd_lavc_hwdec mp_vd_lavc_vaapi;
+const struct vd_lavc_hwdec mp_vd_lavc_vaapi_copy;
+const struct vd_lavc_hwdec mp_vd_lavc_dxva2_copy;
+const struct vd_lavc_hwdec mp_vd_lavc_rpi;
 
 static const struct vd_lavc_hwdec *const hwdec_list[] = {
+#if HAVE_RPI
+    &mp_vd_lavc_rpi,
+#endif
 #if HAVE_VDPAU_HWACCEL
     &mp_vd_lavc_vdpau,
 #endif
@@ -130,8 +133,8 @@ static const struct vd_lavc_hwdec *const hwdec_list[] = {
     &mp_vd_lavc_vda,
 #endif
 #if HAVE_VAAPI_HWACCEL
-    &mp_vd_lavc_vaapi,
     &mp_vd_lavc_vaapi_copy,
+    &mp_vd_lavc_vaapi,
 #endif
 #if HAVE_DXVA2_HWACCEL
     &mp_vd_lavc_dxva2_copy,
@@ -296,13 +299,16 @@ static int init(struct dec_video *vd, const char *decoder)
             hwdec = probe_hwdec(vd, false, vd->opts->hwdec_api, decoder);
         }
     } else {
-        MP_VERBOSE(vd, "Not trying to use hardware decoding: "
-                   "codec %s is blacklisted by user.\n", decoder);
+        MP_VERBOSE(vd, "Not trying to use hardware decoding: codec %s is not "
+                   "on whitelist, or does not support hardware acceleration.\n",
+                   decoder);
     }
 
     if (hwdec) {
         ctx->software_fallback_decoder = talloc_strdup(ctx, decoder);
-        MP_INFO(vd, "Trying to use hardware decoding.\n");
+        if (hwdec->get_codec)
+            decoder = hwdec->get_codec(ctx);
+        MP_INFO(vd, "Using hardware decoding.\n");
     } else if (vd->opts->hwdec_api != HWDEC_NONE) {
         MP_INFO(vd, "Using software decoding.\n");
     }
@@ -369,7 +375,8 @@ static void init_avctx(struct dec_video *vd, const char *decoder,
     if (ctx->hwdec) {
         avctx->thread_count    = 1;
         avctx->get_format      = get_format_hwdec;
-        avctx->get_buffer2     = get_buffer2_hwdec;
+        if (ctx->hwdec->allocate_image)
+            avctx->get_buffer2 = get_buffer2_hwdec;
         if (ctx->hwdec->init(ctx) < 0)
             goto error;
     } else {

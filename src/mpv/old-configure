@@ -164,8 +164,6 @@ options_state_machine() {
     opt_yes_no _libguess    "libguess"
     opt_yes_no _termios     "termios database for key codes"
     opt_yes_no _iconv       "iconv for encoding conversion"
-    opt_yes_no _lirc        "LIRC (remote control) support"
-    opt_yes_no _joystick    "joystick support" no
     opt_yes_no _vm          "X video mode extensions"
     opt_yes_no _dvb         "DVB input"
     opt_yes_no _tv          "TV interface (TV/DVB grabbers)" yes
@@ -187,7 +185,6 @@ options_state_machine() {
     opt_yes_no _ffmpeg      "skip FFmpeg/Libav autodetection"
     opt_yes_no _ladspa      "LADSPA plugin support"
     opt_yes_no _libbs2b     "libbs2b audio filter support"
-    opt_yes_no _mpg123      " libmpg123 MP3 decoding support"
     opt_yes_no _libavresample "libavresample (preferred over libswresample)"
     opt_yes_no _libswresample "libswresample"
     opt_yes_no _caca        "CACA  video output"
@@ -327,7 +324,7 @@ test -z "$_bindir"  && _bindir="$_prefix/bin"
 test -z "$_mandir"  && _mandir="$_prefix/share/man"
 test -z "$_confdir" && _confdir="$_prefix/etc/mpv"
 
-mplayer_tmpdir=$(mktemp -d --tmpdir mpv-configure-XXXX)
+mplayer_tmpdir=$(mktemp -d -p ${TMPDIR:=/tmp} mpv-configure-XXXXXX)
 test -n "$mplayer_tmpdir" || die "Unable to create tmpdir."
 trap 'rm -rf "$mplayer_tmpdir"' EXIT
 
@@ -664,6 +661,8 @@ EOF
     _gl_wayland=yes
     libs_mplayer="$libs_mplayer -lGL -lEGL"
     test "$_gl_wayland" = yes && res_comment="$res_comment wayland"
+  else
+    _gl_wayland=no
   fi
   if test "$_x11" = yes && test "$_gl" = yes && pkg_config_add "egl"; then
     _gl_x11_egl=yes
@@ -736,8 +735,6 @@ check_pkg_config "ENCA" $_enca ENCA 'enca'
 
 check_pkg_config "zlib" auto ZLIB 'zlib'
 test $(defretval) = no && die "Unable to find development files for zlib."
-
-check_pkg_config "mpg123 support" $_mpg123 MPG123 'libmpg123 >= 1.14.0'
 
 test "$_dl" = no && _ladspa=no
 check_statement_libs "LADSPA plugin support" $_ladspa LADSPA ladspa.h 'LADSPA_Descriptor ld = {0}'
@@ -818,9 +815,11 @@ test_lua() {
 
 test_lua "lua >= 5.1.0 lua < 5.2.0"
 test_lua "lua5.1 >= 5.1.0" # debian
+test_lua "lua51 >= 5.1.0" # OpenBSD
 test_lua "luajit >= 2.0.0"
 test_lua "lua >= 5.2.0"
 test_lua "lua5.2 >= 5.2.0" # debian
+test_lua "lua52 >= 5.2.0" # OpenBSD
 
 test "$_lua" != yes && check_yes_no no LUA
 
@@ -841,10 +840,6 @@ if test "$_vapoursynth" = no && test "$_vapoursynth_lazy" = no ; then
     _vapoursynth_core=no
 fi
 check_trivial "VapourSynth core" $_vapoursynth_core VAPOURSYNTH_CORE
-
-check_trivial "joystick" $_joystick JOYSTICK
-
-check_statement_libs "lirc" $_lirc LIRC lirc/lirc_client.h "" -llirc_client
 
 check_trivial "encoding" $_encoding ENCODING
 
@@ -937,9 +932,17 @@ cat > $TMPC << EOF
 #define HAVE_NETBSD_THREAD_NAME 0
 #define HAVE_DXVA2_HWACCEL 0
 #define HAVE_FCHMOD 0
+#define HAVE_RPI 0
+#define HAVE_RPI_GLES 0
+#define HAVE_AV_PIX_FMT_MMAL 0
 
+#ifdef __OpenBSD__
+#define DEFAULT_CDROM_DEVICE "/dev/rcd0c"
+#define DEFAULT_DVD_DEVICE   "/dev/rcd0c"
+#else
 #define DEFAULT_CDROM_DEVICE "/dev/cdrom"
 #define DEFAULT_DVD_DEVICE   "/dev/dvd"
+#endif
 #define PATH_DEV_DSP "/dev/dsp"
 #define PATH_DEV_MIXER "/dev/mixer"
 

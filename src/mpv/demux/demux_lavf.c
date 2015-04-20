@@ -1,21 +1,20 @@
 /*
  * Copyright (C) 2004 Michael Niedermayer <michaelni@gmx.at>
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdlib.h>
@@ -66,6 +65,7 @@ struct demux_lavf_opts {
     char *format;
     char *cryptokey;
     char **avopts;
+    int hacks;
     int genptsmode;
 };
 
@@ -79,6 +79,7 @@ const struct m_sub_options demux_lavf_conf = {
         OPT_FLAG("allow-mimetype", allow_mimetype, 0),
         OPT_INTRANGE("probescore", probescore, 0, 1, AVPROBE_SCORE_MAX),
         OPT_STRING("cryptokey", cryptokey, 0),
+        OPT_FLAG("hacks", hacks, 0),
         OPT_CHOICE("genpts-mode", genptsmode, 0,
                    ({"lavf", 1}, {"no", 0})),
         OPT_KEYVALUELIST("o", avopts, 0),
@@ -87,6 +88,7 @@ const struct m_sub_options demux_lavf_conf = {
     .size = sizeof(struct demux_lavf_opts),
     .defaults = &(const struct demux_lavf_opts){
         .allow_mimetype = 1,
+        .hacks = 1,
         // AVPROBE_SCORE_MAX/4 + 1 is the "recommended" limit. Below that, the
         // user is supposed to retry with larger probe sizes until a higher
         // value is reached.
@@ -99,6 +101,7 @@ struct format_hack {
     const char *mime_type;
     int probescore;
     float analyzeduration;
+    unsigned int if_flags;      // additional AVInputFormat.flags flags
     bool max_probe : 1;         // use probescore only if max. probe size reached
     bool ignore : 1;            // blacklisted
     bool no_stream : 1;         // do not wrap struct stream as AVIOContext
@@ -127,6 +130,10 @@ static const struct format_hack format_hacks[] = {
     {"mpeg", .use_stream_ids = true},
     {"mpegts", .use_stream_ids = true},
 
+    // In theory, such streams might contain timestamps, but virtually none do.
+    {"h264", .if_flags = AVFMT_NOTIMESTAMPS },
+    {"hevc", .if_flags = AVFMT_NOTIMESTAMPS },
+
     TEXTSUB("aqtitle"), TEXTSUB("ass"), TEXTSUB("jacosub"), TEXTSUB("microdvd"),
     TEXTSUB("mpl2"), TEXTSUB("mpsub"), TEXTSUB("pjs"), TEXTSUB("realtext"),
     TEXTSUB("sami"), TEXTSUB("srt"), TEXTSUB("stl"), TEXTSUB("subviewer"),
@@ -148,10 +155,10 @@ typedef struct lavf_priv {
     char *filename;
     struct format_hack format_hack;
     AVInputFormat *avif;
+    int avif_flags;
     AVFormatContext *avfc;
     AVIOContext *pb;
     int64_t last_pts;
-    bool init_pts;
     struct sh_stream **streams; // NULL for unknown streams
     int num_streams;
     int cur_program;
@@ -347,6 +354,8 @@ static int lavf_check_file(demuxer_t *demuxer, enum demux_check check)
 
             for (int n = 0; format_hacks[n].ff_name; n++) {
                 const struct format_hack *entry = &format_hacks[n];
+                if (!lavfdopts->hacks)
+                    continue;
                 if (!matches_avinputformat_name(priv, entry->ff_name))
                     continue;
                 if (entry->mime_type && strcasecmp(entry->mime_type, mime_type) != 0)
@@ -384,6 +393,8 @@ static int lavf_check_file(demuxer_t *demuxer, enum demux_check check)
         MP_VERBOSE(demuxer, "Assuming this is an image format.\n");
         priv->format_hack.image_format = true;
     }
+
+    priv->avif_flags = priv->avif->flags | priv->format_hack.if_flags;
 
     demuxer->filetype = priv->avif->name;
 
@@ -577,16 +588,10 @@ static void handle_stream(demuxer_t *demuxer, int i)
         break;
     }
     case AVMEDIA_TYPE_ATTACHMENT: {
-        AVDictionaryEntry *ftag = av_dict_get(st->metadata, "filename",
-                                              NULL, 0);
+        AVDictionaryEntry *ftag = av_dict_get(st->metadata, "filename", NULL, 0);
         char *filename = ftag ? ftag->value : NULL;
-        char *mimetype = NULL;
-        switch (st->codec->codec_id) {
-        case AV_CODEC_ID_TTF: mimetype = "application/x-truetype-font"; break;
-#if LIBAVFORMAT_VERSION_MICRO >= 100
-        case AV_CODEC_ID_OTF: mimetype = "application/vnd.ms-opentype"; break;
-#endif
-        }
+        AVDictionaryEntry *mt = av_dict_get(st->metadata, "mimetype", NULL, 0);
+        char *mimetype = mt ? mt->value : NULL;
         if (mimetype) {
             demuxer_add_attachment(demuxer, bstr0(filename), bstr0(mimetype),
                                    (struct bstr){codec->extradata,
@@ -618,6 +623,7 @@ static void handle_stream(demuxer_t *demuxer, int i)
         sh->hls_bitrate = dict_get_decimal(st->metadata, "variant_bitrate", 0);
         if (!sh->title && sh->hls_bitrate > 0)
             sh->title = talloc_asprintf(sh, "bitrate %d", sh->hls_bitrate);
+        sh->missing_timestamps = !!(priv->avif_flags & AVFMT_NOTIMESTAMPS);
     }
 
     select_tracks(demuxer, i);
@@ -711,7 +717,7 @@ static int demux_open_lavf(demuxer_t *demuxer, enum demux_check check)
 
     AVDictionary *dopts = NULL;
 
-    if ((priv->avif->flags & AVFMT_NOFILE) ||
+    if ((priv->avif_flags & AVFMT_NOFILE) ||
         demuxer->stream->type == STREAMTYPE_AVDEVICE ||
         priv->format_hack.no_stream)
     {
@@ -794,7 +800,8 @@ static int demux_open_lavf(demuxer_t *demuxer, enum demux_check check)
     mp_tags_copy_from_av_dictionary(demuxer->metadata, avfc->metadata);
     update_metadata(demuxer, NULL);
 
-    demuxer->ts_resets_possible = priv->avif->flags & AVFMT_TS_DISCONT;
+    demuxer->ts_resets_possible =
+        priv->avif_flags & (AVFMT_TS_DISCONT | AVFMT_NOTIMESTAMPS);
 
     demuxer->start_time = priv->avfc->start_time == AV_NOPTS_VALUE ?
                           0 : (double)priv->avfc->start_time / AV_TIME_BASE;
@@ -839,12 +846,6 @@ static int demux_lavf_fill_buffer(demuxer_t *demux)
         return 1;
     }
 
-    if (!priv->init_pts && (priv->avfc->flags & AVFMT_NOTIMESTAMPS)) {
-        if (pkt->pts == AV_NOPTS_VALUE && pkt->dts == AV_NOPTS_VALUE)
-            pkt->dts = 0;
-        priv->init_pts = true;
-    }
-
     if (pkt->pts != AV_NOPTS_VALUE)
         dp->pts = pkt->pts * av_q2d(st->time_base);
     if (pkt->dts != AV_NOPTS_VALUE)
@@ -873,8 +874,6 @@ static void demux_seek_lavf(demuxer_t *demuxer, double rel_seek_secs, int flags)
     lavf_priv_t *priv = demuxer->priv;
     int avsflags = 0;
 
-    priv->init_pts = false;
-
     if (flags & SEEK_ABSOLUTE)
         priv->last_pts = 0;
     else if (rel_seek_secs < 0)
@@ -890,7 +889,7 @@ static void demux_seek_lavf(demuxer_t *demuxer, double rel_seek_secs, int flags)
         int64_t end = 0;
         stream_control(s, STREAM_CTRL_GET_SIZE, &end);
         if (end > 0 && demuxer->ts_resets_possible &&
-            !(priv->avif->flags & AVFMT_NO_BYTE_SEEK))
+            !(priv->avif_flags & AVFMT_NO_BYTE_SEEK))
         {
             avsflags |= AVSEEK_FLAG_BYTE;
             priv->last_pts = end * rel_seek_secs;
@@ -903,28 +902,34 @@ static void demux_seek_lavf(demuxer_t *demuxer, double rel_seek_secs, int flags)
         priv->last_pts += rel_seek_secs * AV_TIME_BASE;
     }
 
+    int r;
     if (!priv->avfc->iformat->read_seek2) {
         // Normal seeking.
-        int r = av_seek_frame(priv->avfc, -1, priv->last_pts, avsflags);
+        r = av_seek_frame(priv->avfc, -1, priv->last_pts, avsflags);
         if (r < 0 && (avsflags & AVSEEK_FLAG_BACKWARD)) {
             // When seeking before the beginning of the file, and seeking fails,
             // try again without the backwards flag to make it seek to the
             // beginning.
             avsflags &= ~AVSEEK_FLAG_BACKWARD;
-            av_seek_frame(priv->avfc, -1, priv->last_pts, avsflags);
+            r = av_seek_frame(priv->avfc, -1, priv->last_pts, avsflags);
         }
     } else {
         // av_seek_frame() won't work. Use "new" seeking API. We don't use this
         // API by default, because there are some major issues.
         // Set max_ts==ts, so that demuxing starts from an earlier position in
         // the worst case.
-        int r = avformat_seek_file(priv->avfc, -1, INT64_MIN,
-                                   priv->last_pts, priv->last_pts, avsflags);
+        r = avformat_seek_file(priv->avfc, -1, INT64_MIN,
+                               priv->last_pts, priv->last_pts, avsflags);
         // Similar issue as in the normal seeking codepath.
         if (r < 0) {
-            avformat_seek_file(priv->avfc, -1, INT64_MIN,
-                               priv->last_pts, INT64_MAX, avsflags);
+            r = avformat_seek_file(priv->avfc, -1, INT64_MIN,
+                                   priv->last_pts, INT64_MAX, avsflags);
         }
+    }
+    if (r < 0) {
+        char buf[180];
+        av_strerror(r, buf, sizeof(buf));
+        MP_VERBOSE(demuxer, "Seek failed (%s)\n", buf);
     }
 }
 

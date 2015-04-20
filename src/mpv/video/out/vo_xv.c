@@ -1,23 +1,20 @@
 /*
  * X11 Xv interface
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * Original author: Gerd Knorr <kraxel@goldbach.in-berlin.de>
- *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -51,7 +48,6 @@
 #include "video/mp_image.h"
 #include "video/img_fourcc.h"
 #include "x11_common.h"
-#include "video/memcpy_pic.h"
 #include "sub/osd.h"
 #include "sub/draw_bmp.h"
 #include "video/csputils.h"
@@ -515,8 +511,7 @@ static bool allocate_xvimage(struct vo *vo, int foo)
         ctx->Shminfo[foo].shmid = shmget(IPC_PRIVATE,
                                          ctx->xvimage[foo]->data_size,
                                          IPC_CREAT | 0777);
-        ctx->Shminfo[foo].shmaddr = (char *) shmat(ctx->Shminfo[foo].shmid, 0,
-                                                   0);
+        ctx->Shminfo[foo].shmaddr = shmat(ctx->Shminfo[foo].shmid, 0, 0);
         if (ctx->Shminfo[foo].shmaddr == (void *)-1)
             return false;
         ctx->Shminfo[foo].readOnly = False;
@@ -822,12 +817,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_GET_EQUALIZER: {
         struct voctrl_get_equalizer_args *args = data;
         return xv_get_eq(vo, ctx->xv_port, args->name, args->valueptr);
-    }
-    case VOCTRL_GET_COLORSPACE: {
-        struct mp_image_params *params = data;
-        read_xv_csp(vo);
-        params->colorspace = ctx->cached_csp;
-        return true;
     }
     case VOCTRL_REDRAW_FRAME:
         draw_image(vo, ctx->original_image);

@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -39,6 +38,10 @@
 #include "vo.h"
 #include "win_state.h"
 #include "osdep/timer.h"
+#include "osdep/subprocess.h"
+
+// Specifically for mp_cancel
+#include "stream/stream.h"
 
 #include <X11/Xmd.h>
 #include <X11/Xlib.h>
@@ -471,6 +474,30 @@ static void vo_x11_get_bounding_monitors(struct vo_x11_state *x11, long b[4])
 #endif
 }
 
+static void *screensaver_thread(void *arg)
+{
+    struct vo_x11_state *x11 = arg;
+
+    for (;;) {
+        sem_wait(&x11->screensaver_sem);
+        // don't queue multiple wakeups
+        while (!sem_trywait(&x11->screensaver_sem)) {}
+
+        if (mp_cancel_test(x11->screensaver_terminate))
+            break;
+
+        char *args[] = {"xdg-screensaver", "reset", NULL};
+        if (mp_subprocess(args, x11->screensaver_terminate, NULL, NULL,
+                          NULL, &(char*){0}))
+        {
+            MP_WARN(x11, "Disabling screensaver failed.\n");
+            break;
+        }
+    }
+
+    return NULL;
+}
+
 int vo_x11_init(struct vo *vo)
 {
     struct mp_vo_opts *opts = vo->opts;
@@ -488,6 +515,14 @@ int vo_x11_init(struct vo *vo)
     };
     vo->x11 = x11;
 
+    x11->screensaver_terminate = mp_cancel_new(x11);
+    sem_init(&x11->screensaver_sem, 0, 0);
+    if (pthread_create(&x11->screensaver_thread, NULL, screensaver_thread, x11)) {
+        x11->screensaver_terminate = NULL;
+        sem_destroy(&x11->screensaver_sem);
+        goto error;
+    }
+
     x11_error_output = x11->log;
     XSetErrorHandler(x11_errorhandler);
 
@@ -499,13 +534,7 @@ int vo_x11_init(struct vo *vo)
     if (!x11->display) {
         MP_MSG(x11, vo->probing ? MSGL_V : MSGL_ERR,
                "couldn't open the X11 display (%s)!\n", dispName);
-
-        x11_error_output = NULL;
-        XSetErrorHandler(NULL);
-
-        talloc_free(x11);
-        vo->x11 = NULL;
-        return 0;
+        goto error;
     }
     x11->screen = DefaultScreen(x11->display);  // screen ID
     x11->rootwin = RootWindow(x11->display, x11->screen);   // root window ID
@@ -544,6 +573,10 @@ int vo_x11_init(struct vo *vo)
     vo_x11_update_geometry(vo);
 
     return 1;
+
+error:
+    vo_x11_uninit(vo);
+    return 0;
 }
 
 static const struct mp_keymap keymap[] = {
@@ -692,9 +725,18 @@ void vo_x11_uninit(struct vo *vo)
     MP_VERBOSE(x11, "uninit ...\n");
     if (x11->xim)
         XCloseIM(x11->xim);
-    x11_error_output = NULL;
-    XSetErrorHandler(NULL);
-    XCloseDisplay(x11->display);
+    if (x11->display) {
+        x11_error_output = NULL;
+        XSetErrorHandler(NULL);
+        XCloseDisplay(x11->display);
+    }
+
+    if (x11->screensaver_terminate) {
+        mp_cancel_trigger(x11->screensaver_terminate);
+        sem_post(&x11->screensaver_sem);
+        pthread_join(x11->screensaver_thread, NULL);
+        sem_destroy(&x11->screensaver_sem);
+    }
 
     talloc_free(x11);
     vo->x11 = NULL;
@@ -931,10 +973,14 @@ int vo_x11_check_events(struct vo *vo)
             x11->win_drag_button1_down = false;
             break;
         case LeaveNotify:
+            if (Event.xcrossing.mode != NotifyNormal)
+                break;
             x11->win_drag_button1_down = false;
             mp_input_put_key(vo->input_ctx, MP_KEY_MOUSE_LEAVE);
             break;
         case EnterNotify:
+            if (Event.xcrossing.mode != NotifyNormal)
+                break;
             mp_input_put_key(vo->input_ctx, MP_KEY_MOUSE_ENTER);
             break;
         case ButtonPress:
@@ -1675,6 +1721,7 @@ int vo_x11_control(struct vo *vo, int *events, int request, void *arg)
     case VOCTRL_GET_WIN_STATE: {
         if (!x11->pseudo_mapped)
             return VO_FALSE;
+        *(int *)arg = 0;
         int num_elems;
         long *elems = x11_get_property(x11, x11->window, XA(x11, _NET_WM_STATE),
                                        XA_ATOM, 32, &num_elems);
@@ -1703,6 +1750,8 @@ int vo_x11_control(struct vo *vo, int *events, int request, void *arg)
         return VO_TRUE;
     }
     case VOCTRL_GET_ICC_PROFILE: {
+        if (!x11->pseudo_mapped)
+            return VO_NOTAVAIL;
         int screen = 0; // xinerama screen number
         for (int n = 0; n < x11->num_displays; n++) {
             struct xrandr_display *disp = &x11->displays[n];
@@ -1717,6 +1766,7 @@ int vo_x11_control(struct vo *vo, int *events, int request, void *arg)
             mp_snprintf_cat(prop, sizeof(prop), "_%d", screen);
         x11->icc_profile_property = XAs(x11, prop);
         int len;
+        MP_VERBOSE(x11, "Retrieving ICC profile for display: %d\n", screen);
         void *icc = x11_get_property(x11, x11->rootwin, x11->icc_profile_property,
                                      XA_CARDINAL, 8, &len);
         if (!icc)
@@ -1759,7 +1809,7 @@ static void xscreensaver_heartbeat(struct vo_x11_state *x11)
         (time - x11->screensaver_time_last) >= 10)
     {
         x11->screensaver_time_last = time;
-
+        sem_post(&x11->screensaver_sem);
         XResetScreenSaver(x11->display);
     }
 }
@@ -1783,7 +1833,7 @@ static int xss_suspend(Display *mDisplay, Bool suspend)
 static void set_screensaver(struct vo_x11_state *x11, bool enabled)
 {
     Display *mDisplay = x11->display;
-    if (x11->screensaver_enabled == enabled)
+    if (!mDisplay || x11->screensaver_enabled == enabled)
         return;
     MP_VERBOSE(x11, "%s screensaver.\n", enabled ? "Enabling" : "Disabling");
     x11->screensaver_enabled = enabled;

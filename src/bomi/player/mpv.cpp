@@ -37,7 +37,6 @@ struct Mpv::Data {
     QMap<QByteArray, std::function<void(void)>> hooks;
     int updateEventMax = ::UpdateEventBegin;
     int hookId = 0;
-    int viewport[4] = { 0, 0, 1, 1 };
     std::function<void(void)> update;
     auto observation(int event) -> const PropertyObservation&
     {
@@ -128,12 +127,13 @@ auto Mpv::render(OpenGLFramebufferObject *frame, OpenGLFramebufferObject *osd, c
 {
     int ret = 0;
     if (frame) {
-        d->viewport[2] = frame->width(); d->viewport[3] = frame->height();
-        ret = mpv_opengl_cb_render(d->gl, frame->id(), d->viewport);
+        ret = mpv_opengl_cb_draw(d->gl, frame->id(), frame->width(), frame->height());
     }
     if (osd) {
         d->osd.prepare(osd);
-        mpv_opengl_cb_render_osd(d->gl, osd->width(), osd->height(), m.left(), m.top(), m.right(), m.bottom(), 1.0, MpvOsdRenderer::callback, &d->osd);
+        mpv_opengl_cb_render_osd(d->gl, osd->width(), osd->height(),
+                                 m.left(), m.top(), m.right(), m.bottom(),
+                                 1.0, MpvOsdRenderer::callback, &d->osd);
         d->osd.end();
     }
     return ret;

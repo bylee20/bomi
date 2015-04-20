@@ -1,21 +1,20 @@
 /*
- * This file is part of MPlayer.
- *
  * Based on vo_gl.c by Reimar Doeffinger.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * This file is part of mpv.
+ *
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  *
  * You can alternatively redistribute this file and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,7 +47,6 @@
 #include "gl_hwdec.h"
 #include "gl_osd.h"
 #include "filter_kernels.h"
-#include "video/memcpy_pic.h"
 #include "video/hwdec.h"
 #include "gl_video.h"
 #include "gl_lcms.h"
@@ -73,6 +71,9 @@ struct gl_priv {
     int use_gl_debug;
     int allow_sw;
     int swap_interval;
+    int current_swap_interval;
+    int dwm_flush;
+
     char *backend;
 
     int vo_flipped;
@@ -93,12 +94,11 @@ static void resize(struct gl_priv *p)
 
     MP_VERBOSE(vo, "Resize: %dx%d\n", vo->dwidth, vo->dheight);
 
-    struct mp_rect wnd = {0, 0, vo->dwidth, vo->dheight};
     struct mp_rect src, dst;
     struct mp_osd_res osd;
     vo_get_src_dst_rects(vo, &src, &dst, &osd);
 
-    gl_video_resize(p->renderer, &wnd, &src, &dst, &osd, false);
+    gl_video_resize(p->renderer, vo->dwidth, -vo->dheight, &src, &dst, &osd);
 
     vo->want_redraw = true;
 }
@@ -123,6 +123,9 @@ static void flip_page(struct vo *vo)
 {
     struct gl_priv *p = vo->priv;
     GL *gl = p->gl;
+
+    if (p->glctx->is_active && !p->glctx->is_active(p->glctx))
+        return;
 
     mpgl_lock(p->glctx);
 
@@ -153,6 +156,12 @@ static void flip_page(struct vo *vo)
         }
     }
 
+    if (p->glctx->DwmFlush) {
+        p->current_swap_interval = p->glctx->DwmFlush(p->glctx, p->dwm_flush,
+                                                      p->swap_interval,
+                                                      p->current_swap_interval);
+    }
+
     mpgl_unlock(p->glctx);
 }
 
@@ -161,6 +170,12 @@ static void draw_image_timed(struct vo *vo, mp_image_t *mpi,
 {
     struct gl_priv *p = vo->priv;
     GL *gl = p->gl;
+
+    if (p->glctx->is_active && !p->glctx->is_active(p->glctx)) {
+        if (mpi)
+            gl_video_skip_image(p->renderer, mpi);
+        return;
+    }
 
     if (p->vo_flipped)
         mp_image_vflip(mpi);
@@ -198,7 +213,7 @@ static int query_format(struct vo *vo, int format)
 static void video_resize_redraw_callback(struct vo *vo, int w, int h)
 {
     struct gl_priv *p = vo->priv;
-    gl_video_resize_redraw(p->renderer, w, h);
+    gl_video_resize_redraw(p->renderer, w, -h);
 
 }
 
@@ -254,15 +269,17 @@ static bool get_and_update_icc_profile(struct gl_priv *p, int *events)
 {
     if (p->icc_opts->profile_auto) {
         MP_VERBOSE(p, "Querying ICC profile...\n");
-        bstr icc;
+        bstr icc = bstr0(NULL);
         int r = p->glctx->vo_control(p->vo, events, VOCTRL_GET_ICC_PROFILE, &icc);
 
-        if (r == VO_TRUE) {
+        if (r != VO_NOTAVAIL) {
+            if (r == VO_FALSE) {
+                MP_WARN(p, "Could not retrieve an ICC profile.\n");
+            } else if (r == VO_NOTIMPL) {
+                MP_ERR(p, "icc-profile-auto not implemented on this platform.\n");
+            }
+
             gl_lcms_set_memory_profile(p->cms, &icc);
-        } else if (r == VO_NOTIMPL) {
-            MP_ERR(p, "icc-profile-auto not implemented on this platform.\n");
-        } else {
-            MP_ERR(p, "Could not retrieve an ICC profile.\n");
         }
     }
 
@@ -274,6 +291,19 @@ static bool get_and_update_icc_profile(struct gl_priv *p, int *events)
     gl_video_set_lut3d(p->renderer, lut3d);
     talloc_free(lut3d);
     return true;
+}
+
+static void get_and_update_ambient_lighting(struct gl_priv *p, int *events)
+{
+    int lux;
+    int r = p->glctx->vo_control(p->vo, events, VOCTRL_GET_AMBIENT_LUX, &lux);
+    if (r == VO_TRUE) {
+        gl_video_set_ambient_lux(p->renderer, lux);
+    }
+    if (r != VO_TRUE && p->renderer_opts->gamma_auto) {
+        MP_ERR(p, "gamma_auto option provided, but querying for ambient"
+                  " lighting is not supported on this platform\n");
+    }
 }
 
 static bool reparse_cmdline(struct gl_priv *p, char *args)
@@ -301,8 +331,9 @@ static bool reparse_cmdline(struct gl_priv *p, char *args)
 
     if (r >= 0) {
         mpgl_lock(p->glctx);
-        gl_video_set_options(p->renderer, opts->renderer_opts);
-        vo_set_flip_queue_params(p->vo, 0, opts->renderer_opts->smoothmotion);
+        int queue = 0;
+        gl_video_set_options(p->renderer, opts->renderer_opts, &queue);
+        vo_set_flip_queue_params(p->vo, queue, opts->renderer_opts->interpolation);
         p->vo->want_redraw = true;
         mpgl_unlock(p->glctx);
     }
@@ -343,11 +374,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
             vo->want_redraw = true;
         return r ? VO_TRUE : VO_NOTIMPL;
     }
-    case VOCTRL_GET_COLORSPACE:
-        mpgl_lock(p->glctx);
-        gl_video_get_colorspace(p->renderer, data);
-        mpgl_unlock(p->glctx);
-        return VO_TRUE;
     case VOCTRL_SCREENSHOT_WIN:
         mpgl_lock(p->glctx);
         *(struct mp_image **)data = glGetWindowScreenshot(p->gl);
@@ -362,6 +388,9 @@ static int control(struct vo *vo, uint32_t request, void *data)
         request_hwdec_api(p, data);
         return true;
     case VOCTRL_REDRAW_FRAME:
+        if (p->glctx->is_active && !p->glctx->is_active(p->glctx))
+            return true;
+
         mpgl_lock(p->glctx);
         gl_video_render_frame(p->renderer, 0, NULL);
         mpgl_unlock(p->glctx);
@@ -388,6 +417,10 @@ static int control(struct vo *vo, uint32_t request, void *data)
     int r = p->glctx->vo_control(vo, &events, request, data);
     if (events & VO_EVENT_ICC_PROFILE_CHANGED) {
         get_and_update_icc_profile(p, &events);
+        vo->want_redraw = true;
+    }
+    if (events & VO_EVENT_AMBIENT_LIGHTING_CHANGED) {
+        get_and_update_ambient_lighting(p, &events);
         vo->want_redraw = true;
     }
     if (events & VO_EVENT_RESIZE)
@@ -433,16 +466,22 @@ static int preinit(struct vo *vo)
 
     mpgl_lock(p->glctx);
 
-    if (p->gl->SwapInterval)
+    if (p->gl->SwapInterval) {
         p->gl->SwapInterval(p->swap_interval);
+    } else {
+        MP_VERBOSE(vo, "swap_control extension missing.\n");
+    }
+    p->current_swap_interval = p->swap_interval;
 
-    p->renderer = gl_video_init(p->gl, vo->log, vo->osd);
+    p->renderer = gl_video_init(p->gl, vo->log);
     if (!p->renderer)
         goto err_out;
+    gl_video_set_osd_source(p->renderer, vo->osd);
     gl_video_set_output_depth(p->renderer, p->glctx->depth_r, p->glctx->depth_g,
                               p->glctx->depth_b);
-    gl_video_set_options(p->renderer, p->renderer_opts);
-    vo_set_flip_queue_params(vo, 0, p->renderer_opts->smoothmotion);
+    int queue = 0;
+    gl_video_set_options(p->renderer, p->renderer_opts, &queue);
+    vo_set_flip_queue_params(p->vo, queue, p->renderer_opts->interpolation);
 
     p->cms = gl_lcms_init(p, vo->log, vo->global);
     if (!p->cms)
@@ -468,6 +507,8 @@ static const struct m_option options[] = {
     OPT_FLAG("glfinish", use_glFinish, 0),
     OPT_FLAG("waitvsync", waitvsync, 0),
     OPT_INT("swapinterval", swap_interval, 0, OPTDEF_INT(1)),
+    OPT_CHOICE("dwmflush", dwm_flush, 0,
+               ({"no", 0}, {"windowed", 1}, {"yes", 2})),
     OPT_FLAG("debug", use_gl_debug, 0),
     OPT_STRING_VALIDATE("backend", backend, 0, mpgl_validate_backend_opt),
     OPT_FLAG("sw", allow_sw, 0),

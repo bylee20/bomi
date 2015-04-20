@@ -1,21 +1,20 @@
 /*
  * Copyright (c) 2008 Georgi Petrov (gogothebee) <gogothebee@gmail.com>
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <windows.h>
@@ -35,7 +34,6 @@
 #include "video/csputils.h"
 #include "video/mp_image.h"
 #include "video/img_format.h"
-#include "video/memcpy_pic.h"
 #include "common/msg.h"
 #include "common/common.h"
 #include "w32_common.h"
@@ -103,7 +101,7 @@ struct texplane {
 
 struct osdpart {
     enum sub_bitmap_format format;
-    int bitmap_id, bitmap_pos_id;
+    int change_id;
     struct d3dtex texture;
     int num_vertices;
     vertex_osd *vertices;
@@ -453,7 +451,7 @@ static void destroy_d3d_surfaces(d3d_priv *priv)
     for (int n = 0; n < MAX_OSD_PARTS; n++) {
         struct osdpart *osd = priv->osd[n];
         d3dtex_release(priv, &osd->texture);
-        osd->bitmap_id = osd->bitmap_pos_id = -1;
+        osd->change_id = -1;
     }
 
     if (priv->d3d_backbuf)
@@ -964,7 +962,7 @@ render_osd:
 // Return the high byte of the value that represents white in chroma (U/V)
 static int get_chroma_clear_val(int bit_depth)
 {
-    return 1 << (bit_depth - 1 & 7);
+    return 1 << ((bit_depth - 1) & 7);
 }
 
 // this macro is supposed to work on all formats supported by 3D rendering, and
@@ -1264,15 +1262,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_REDRAW_FRAME:
         d3d_draw_frame(priv);
         return VO_TRUE;
-    case VOCTRL_GET_COLORSPACE: {
-        struct mp_image_params *p = data;
-        if (priv->use_shaders) { // no idea what the heck D3D YUV uses
-            p->colorspace = priv->params.colorspace;
-            p->colorlevels = priv->params.colorlevels;
-            p->outputlevels = priv->params.outputlevels;
-        }
-        return VO_TRUE;
-    }
     case VOCTRL_SET_EQUALIZER: {
         if (!priv->use_shaders)
             break;
@@ -1527,7 +1516,7 @@ static mp_image_t *get_window_screenshot(d3d_priv *priv)
     if (width < 1 || height < 1)
         goto error_exit;
 
-    image = mp_image_alloc(IMGFMT_BGR32, width, height);
+    image = mp_image_alloc(IMGFMT_BGR0, width, height);
     if (!image)
         goto error_exit;
 
@@ -1618,14 +1607,11 @@ static struct osdpart *generate_osd(d3d_priv *priv, struct sub_bitmaps *imgs)
 
     struct osdpart *osd = priv->osd[imgs->render_index];
 
-    if (imgs->bitmap_pos_id != osd->bitmap_pos_id) {
-        if (imgs->bitmap_id != osd->bitmap_id) {
-            if (!upload_osd(priv, osd, imgs))
-                osd->packer->count = 0;
-        }
+    if (imgs->change_id != osd->change_id) {
+        if (!upload_osd(priv, osd, imgs))
+            osd->packer->count = 0;
 
-        osd->bitmap_id = imgs->bitmap_id;
-        osd->bitmap_pos_id = imgs->bitmap_pos_id;
+        osd->change_id = imgs->change_id;
         osd->num_vertices = 0;
     }
 

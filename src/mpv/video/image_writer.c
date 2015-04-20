@@ -1,18 +1,18 @@
 /*
- * This file is part of mplayer.
+ * This file is part of mpv.
  *
- * mplayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * mplayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with mplayer.  If not, see <http://www.gnu.org/licenses/>.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -47,8 +47,6 @@ const struct image_writer_opts image_writer_opts_defaults = {
     .jpeg_quality = 90,
     .jpeg_optimize = 100,
     .jpeg_smooth = 0,
-    .jpeg_dpi = 72,
-    .jpeg_progressive = 0,
     .jpeg_baseline = 1,
     .tag_csp = 1,
 };
@@ -60,8 +58,6 @@ const struct m_sub_options image_writer_conf = {
         OPT_INTRANGE("jpeg-quality", jpeg_quality, 0, 0, 100),
         OPT_INTRANGE("jpeg-optimize", jpeg_optimize, 0, 0, 100),
         OPT_INTRANGE("jpeg-smooth", jpeg_smooth, 0, 0, 100),
-        OPT_INTRANGE("jpeg-dpi", jpeg_dpi, M_OPT_MIN, 1, 99999),
-        OPT_FLAG("jpeg-progressive", jpeg_progressive, 0),
         OPT_FLAG("jpeg-baseline", jpeg_baseline, 0),
         OPT_INTRANGE("png-compression", png_compression, 0, 0, 9),
         OPT_INTRANGE("png-filter", png_filter, 0, 0, 5),
@@ -77,6 +73,7 @@ struct image_writer_ctx {
     struct mp_log *log;
     const struct image_writer_opts *opts;
     const struct img_writer *writer;
+    struct mp_imgfmt_desc original_format;
 };
 
 struct img_writer {
@@ -190,18 +187,14 @@ static bool write_jpeg(struct image_writer_ctx *ctx, mp_image_t *image, FILE *fp
     cinfo.write_JFIF_header = TRUE;
     cinfo.JFIF_major_version = 1;
     cinfo.JFIF_minor_version = 2;
-    cinfo.density_unit = 1; /* 0=unknown, 1=dpi, 2=dpcm */
-    cinfo.X_density = ctx->opts->jpeg_dpi;
-    cinfo.Y_density = ctx->opts->jpeg_dpi;
-    cinfo.write_Adobe_marker = TRUE;
 
     jpeg_set_defaults(&cinfo);
     jpeg_set_quality(&cinfo, ctx->opts->jpeg_quality, ctx->opts->jpeg_baseline);
     cinfo.optimize_coding = ctx->opts->jpeg_optimize;
     cinfo.smoothing_factor = ctx->opts->jpeg_smooth;
 
-    if (ctx->opts->jpeg_progressive)
-        jpeg_simple_progression(&cinfo);
+    cinfo.comp_info[0].h_samp_factor = 1 << ctx->original_format.chroma_xs;
+    cinfo.comp_info[0].v_samp_factor = 1 << ctx->original_format.chroma_ys;
 
     jpeg_start_compress(&cinfo, TRUE);
 
@@ -221,22 +214,42 @@ static bool write_jpeg(struct image_writer_ctx *ctx, mp_image_t *image, FILE *fp
 
 #endif
 
+static int get_target_format(struct image_writer_ctx *ctx, int srcfmt)
+{
+    if (!ctx->writer->lavc_codec)
+        goto unknown;
+
+    struct AVCodec *codec = avcodec_find_encoder(ctx->writer->lavc_codec);
+    if (!codec)
+        goto unknown;
+
+    const enum AVPixelFormat *pix_fmts = codec->pix_fmts;
+    if (!pix_fmts)
+        goto unknown;
+
+    int current = 0;
+    for (int n = 0; pix_fmts[n] != AV_PIX_FMT_NONE; n++) {
+        int fmt = pixfmt2imgfmt(pix_fmts[n]);
+        if (!fmt)
+            continue;
+        current = current ? mp_imgfmt_select_best(current, fmt, srcfmt) : fmt;
+    }
+
+    if (!current)
+        goto unknown;
+
+    return current;
+
+unknown:
+    return IMGFMT_RGB24;
+}
+
 static const struct img_writer img_writers[] = {
     { "png", write_lavc, .lavc_codec = AV_CODEC_ID_PNG },
     { "ppm", write_lavc, .lavc_codec = AV_CODEC_ID_PPM },
-    { "pgm", write_lavc,
-      .lavc_codec = AV_CODEC_ID_PGM,
-      .pixfmts = (const int[]) { IMGFMT_Y8, 0 },
-    },
-    { "pgmyuv", write_lavc,
-      .lavc_codec = AV_CODEC_ID_PGMYUV,
-      .pixfmts = (const int[]) { IMGFMT_420P, 0 },
-    },
-    { "tga", write_lavc,
-      .lavc_codec = AV_CODEC_ID_TARGA,
-      .pixfmts = (const int[]) { IMGFMT_BGR24, IMGFMT_BGRA, IMGFMT_RGB555,
-                                 IMGFMT_Y8, 0},
-    },
+    { "pgm", write_lavc, .lavc_codec = AV_CODEC_ID_PGM },
+    { "pgmyuv", write_lavc, .lavc_codec = AV_CODEC_ID_PGMYUV },
+    { "tga", write_lavc, .lavc_codec = AV_CODEC_ID_TARGA },
 #if HAVE_JPEG
     { "jpg", write_jpeg },
     { "jpeg", write_jpeg },
@@ -302,18 +315,8 @@ bool write_image(struct mp_image *image, const struct image_writer_opts *opts,
         opts = &defs;
 
     const struct img_writer *writer = get_writer(opts);
-    struct image_writer_ctx ctx = { log, opts, writer };
-    int destfmt = IMGFMT_RGB24;
-
-    if (writer->pixfmts) {
-        destfmt = writer->pixfmts[0];   // default to first pixel format
-        for (const int *fmt = writer->pixfmts; *fmt; fmt++) {
-            if (*fmt == image->imgfmt) {
-                destfmt = *fmt;
-                break;
-            }
-        }
-    }
+    struct image_writer_ctx ctx = { log, opts, writer, image->fmt };
+    int destfmt = get_target_format(&ctx, image->imgfmt);
 
     struct mp_image *dst = convert_image(image, destfmt, log);
     if (!dst)

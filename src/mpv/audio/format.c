@@ -1,21 +1,20 @@
 /*
  * Copyright (C) 2005 Alex Beregszaszi
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -43,11 +42,6 @@ int af_fmt2bps(int format)
 int af_fmt2bits(int format)
 {
     return af_fmt2bps(format) * 8;
-}
-
-bool af_fmt_is_float(int format)
-{
-    return !!(format & AF_FORMAT_F);
 }
 
 static int bits_to_mask(int bits)
@@ -105,12 +99,6 @@ int af_fmt_from_planar(int format)
     return format;
 }
 
-// false for interleaved and AF_FORMAT_UNKNOWN
-bool af_fmt_is_planar(int format)
-{
-    return !!(format & AF_FORMAT_PLANAR);
-}
-
 const struct af_fmt_entry af_fmtstr_table[] = {
     {"u8",          AF_FORMAT_U8},
     {"s8",          AF_FORMAT_S8},
@@ -161,7 +149,7 @@ const char *af_fmt_to_str(int format)
 
 int af_fmt_seconds_to_bytes(int format, float seconds, int channels, int samplerate)
 {
-    assert(!af_fmt_is_planar(format));
+    assert(!AF_FORMAT_IS_PLANAR(format));
     int bps      = af_fmt2bps(format);
     int framelen = channels * bps;
     int bytes    = seconds  * bps * samplerate;
@@ -226,4 +214,20 @@ int af_format_conversion_score(int dst_format, int src_format)
     if (FMT_DIFF(AF_FORMAT_TYPE_MASK, dst_format, src_format))
         score -= 2048;  // has to convert float<->int
     return score;
+}
+
+// Return the number of samples that make up one frame in this format.
+// You get the byte size by multiplying them with sample size and channel count.
+int af_format_sample_alignment(int format)
+{
+    switch (format) {
+    case AF_FORMAT_S_AAC:       return 16384 / 4;
+    case AF_FORMAT_S_AC3:       return 6144 / 4;
+    case AF_FORMAT_S_DTSHD:     return 32768 / 16;
+    case AF_FORMAT_S_DTS:       return 2048 / 4;
+    case AF_FORMAT_S_EAC3:      return 24576 / 4;
+    case AF_FORMAT_S_MP3:       return 4608 / 4;
+    case AF_FORMAT_S_TRUEHD:    return 61440 / 16;
+    default:                    return 1;
+    }
 }

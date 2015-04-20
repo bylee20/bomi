@@ -54,10 +54,6 @@ def build(ctx):
         target = "input/input_conf.h")
 
     ctx.file2string(
-        source = "video/out/gl_video_shaders.glsl",
-        target = "video/out/gl_video_shaders.h")
-
-    ctx.file2string(
         source = "sub/osd_font.otf",
         target = "sub/osd_font.h")
 
@@ -74,6 +70,10 @@ def build(ctx):
     ctx.matroska_definitions(
         source = "demux/ebml.c",
         target = "ebml_defs.c")
+
+    main_fn_c = {
+        'win32':  'player/main-fn-win.c',
+    }.get(ctx.env.DEST_OS, "player/main-fn-unix.c")
 
     getch2_c = {
         'win32':  'osdep/terminal-win.c',
@@ -94,7 +94,6 @@ def build(ctx):
         ( "audio/format.c" ),
         ( "audio/mixer.c" ),
         ( "audio/decode/ad_lavc.c" ),
-        ( "audio/decode/ad_mpg123.c",            "mpg123" ),
         ( "audio/decode/ad_spdif.c" ),
         ( "audio/decode/dec_audio.c" ),
         ( "audio/filter/af.c" ),
@@ -175,6 +174,7 @@ def build(ctx):
         ( "demux/demux_mkv_timeline.c" ),
         ( "demux/demux_playlist.c" ),
         ( "demux/demux_raw.c" ),
+        ( "demux/demux_rar.c" ),
         ( "demux/demux_subreader.c" ),
         ( "demux/demux_tv.c",                    "tv" ),
         ( "demux/ebml.c" ),
@@ -189,8 +189,6 @@ def build(ctx):
         ( "input/ipc.c",                         "!mingw" ),
         ( "input/keycodes.c" ),
         ( "input/pipe-win32.c",                  "waio" ),
-        ( "input/joystick.c",                    "joystick" ),
-        ( "input/lirc.c",                        "lirc" ),
 
         ## Misc
         ( "misc/bstr.c" ),
@@ -289,6 +287,7 @@ def build(ctx):
         ( "video/vdpau_mixer.c",                 "vdpau" ),
         ( "video/decode/dec_video.c"),
         ( "video/decode/dxva2.c",                "dxva2-hwaccel" ),
+        ( "video/decode/rpi.c",                  "rpi" ),
         ( "video/decode/vaapi.c",                "vaapi-hwaccel" ),
         ( "video/decode/vd_lavc.c" ),
         ( "video/decode/vda.c",                  "vda-hwaccel" ),
@@ -306,13 +305,12 @@ def build(ctx):
         ( "video/filter/vf_gradfun.c",           "libavfilter"),
         ( "video/filter/vf_hqdn3d.c",            "libavfilter"),
         ( "video/filter/vf_lavfi.c",             "libavfilter"),
-        ( "video/filter/vf_mirror.c" ),
+        ( "video/filter/vf_mirror.c",            "libavfilter"),
         ( "video/filter/vf_noformat.c" ),
         ( "video/filter/vf_noise.c",             "libavfilter"),
         ( "video/filter/vf_pullup.c",            "libavfilter"),
         ( "video/filter/vf_rotate.c",            "libavfilter"),
         ( "video/filter/vf_scale.c" ),
-        ( "video/filter/vf_screenshot.c" ),
         ( "video/filter/vf_stereo3d.c" ),
         ( "video/filter/vf_sub.c" ),
         ( "video/filter/vf_unsharp.c",           "libavfilter"),
@@ -330,13 +328,14 @@ def build(ctx):
         ( "video/out/filter_kernels.c" ),
         ( "video/out/gl_cocoa.c",                "gl-cocoa" ),
         ( "video/out/gl_common.c",               "gl" ),
+        ( "video/out/gl_rpi.c",                  "rpi-gles" ),
         ( "video/out/gl_hwdec.c",                "gl" ),
         ( "video/out/gl_hwdec_vaglx.c",          "vaapi-glx" ),
         ( "video/out/gl_hwdec_vda.c",            "vda-gl" ),
         ( "video/out/gl_hwdec_vdpau.c",          "vdpau-gl-x11" ),
         ( "video/out/gl_lcms.c",                 "gl" ),
         ( "video/out/gl_osd.c",                  "gl" ),
-        ( "video/out/gl_utils.c",               "gl" ),
+        ( "video/out/gl_utils.c",                "gl" ),
         ( "video/out/gl_video.c",                "gl" ),
         ( "video/out/gl_w32.c",                  "gl-win32" ),
         ( "video/out/gl_wayland.c",              "gl-wayland" ),
@@ -344,9 +343,11 @@ def build(ctx):
         ( "video/out/gl_x11egl.c",               "egl-x11" ),
         ( "video/out/vo.c" ),
         ( "video/out/vo_caca.c",                 "caca" ),
+        ( "video/out/vo_drm.c",                  "drm" ),
         ( "video/out/vo_direct3d.c",             "direct3d" ),
         ( "video/out/vo_image.c" ),
         ( "video/out/vo_lavc.c",                 "encoding" ),
+        ( "video/out/vo_rpi.c",                  "rpi" ),
         ( "video/out/vo_null.c" ),
         ( "video/out/vo_opengl.c",               "gl" ),
         ( "video/out/vo_opengl_cb.c",            "gl" ),
@@ -356,12 +357,13 @@ def build(ctx):
         ( "video/out/vo_wayland.c",              "wayland" ),
         ( "video/out/vo_x11.c" ,                 "x11" ),
         ( "video/out/vo_xv.c",                   "xv" ),
-        ( "video/out/w32_common.c",              "gdi" ),
+        ( "video/out/w32_common.c",              "win32" ),
         ( "video/out/wayland_common.c",          "wayland" ),
         ( "video/out/wayland/buffer.c",          "wayland" ),
         ( "video/out/wayland/memfile.c",         "wayland" ),
         ( "video/out/win_state.c"),
         ( "video/out/x11_common.c",              "x11" ),
+        ( "video/out/drm_common.c",              "drm" ),
 
         ## osdep
         ( getch2_c ),
@@ -374,6 +376,7 @@ def build(ctx):
         ( "osdep/macosx_application.m",          "cocoa-application" ),
         ( "osdep/macosx_events.m",               "cocoa" ),
         ( "osdep/semaphore_osx.c" ),
+        ( "osdep/subprocess.c" ),
         ( "osdep/subprocess-posix.c",            "posix-spawn" ),
         ( "osdep/subprocess-win.c",              "os-win32" ),
         ( "osdep/path-macosx.m",                 "cocoa" ),
@@ -421,7 +424,7 @@ def build(ctx):
     if ctx.dependency_satisfied('cplayer'):
         ctx(
             target       = "mpv",
-            source       = "player/main_fn.c",
+            source       = main_fn_c,
             use          = ctx.dependencies_use() + ['objects'],
             includes     = _all_includes(ctx),
             features     = "c cprogram",

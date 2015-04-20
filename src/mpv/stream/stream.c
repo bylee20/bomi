@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -752,6 +751,8 @@ static struct mp_cache_opts check_cache_opts(stream_t *stream,
     struct mp_cache_opts use_opts = *opts;
     if (use_opts.size == -1)
         use_opts.size = stream->streaming ? use_opts.def_size : 0;
+    if (use_opts.size == -2)
+        use_opts.size = use_opts.def_size;
 
     if (stream->mode != STREAM_READ || !stream->allow_caching || use_opts.size < 1)
         use_opts.size = 0;
@@ -987,7 +988,7 @@ void mp_cancel_reset(struct mp_cancel *c)
 // For convenience, c==NULL is allowed.
 bool mp_cancel_test(struct mp_cancel *c)
 {
-    return c ? atomic_load(&c->triggered) : false;
+    return c ? atomic_load_explicit(&c->triggered, memory_order_relaxed) : false;
 }
 
 // Wait until the even is signaled. If the timeout (in seconds) expires, return

@@ -516,10 +516,8 @@ static void *playback_thread(void *p)
 
 int mpv_initialize(mpv_handle *ctx)
 {
-    if (mp_initialize(ctx->mpctx) < 0)
+    if (mp_initialize(ctx->mpctx, NULL) < 0)
         return MPV_ERROR_INVALID_PARAMETER;
-
-    mp_print_version(ctx->mpctx->log, false);
 
     pthread_t thread;
     if (pthread_create(&thread, NULL, playback_thread, ctx->mpctx) != 0)
@@ -902,7 +900,6 @@ int mpv_set_option(mpv_handle *ctx, const char *name, mpv_format format,
     if (format != MPV_FORMAT_NODE) {
         tmp.format = format;
         memcpy(&tmp.u, data, type->type->size);
-        format = MPV_FORMAT_NODE;
         data = &tmp;
     }
     lock_core(ctx);
@@ -1690,7 +1687,7 @@ static mpv_opengl_cb_context *opengl_cb_get_context(mpv_handle *ctx)
 {
     mpv_opengl_cb_context *cb = ctx->mpctx->gl_cb_ctx;
     if (!cb) {
-        cb = mp_opengl_create(ctx->mpctx->global, ctx->mpctx->osd, ctx->clients);
+        cb = mp_opengl_create(ctx->mpctx->global, ctx->clients);
         ctx->mpctx->gl_cb_ctx = cb;
     }
     return cb;
@@ -1711,7 +1708,11 @@ int mpv_opengl_cb_init_gl(mpv_opengl_cb_context *ctx, const char *exts,
 {
     return MPV_ERROR_NOT_IMPLEMENTED;
 }
-int mpv_opengl_cb_render(mpv_opengl_cb_context *ctx, int fbo, int vp[4])
+int mpv_opengl_cb_draw(mpv_opengl_cb_context *ctx, int fbo, int w, int h)
+{
+    return MPV_ERROR_NOT_IMPLEMENTED;
+}
+int mpv_opengl_cb_report_flip(mpv_opengl_cb_context *ctx, int64_t time)
 {
     return MPV_ERROR_NOT_IMPLEMENTED;
 }
@@ -1720,6 +1721,11 @@ int mpv_opengl_cb_uninit_gl(mpv_opengl_cb_context *ctx)
     return MPV_ERROR_NOT_IMPLEMENTED;
 }
 #endif
+
+int mpv_opengl_cb_render(mpv_opengl_cb_context *ctx, int fbo, int vp[4])
+{
+    return mpv_opengl_cb_draw(ctx, fbo, vp[2], vp[3]);
+}
 
 void *mpv_get_sub_api(mpv_handle *ctx, mpv_sub_api sub_api)
 {

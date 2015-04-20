@@ -65,6 +65,8 @@ auto PlayEngine::Data::vf(const MrlState *s) const -> QByteArray
     vf.add("swdec_deint"_b, s->d->deint.swdec.toString().toLatin1());
     vf.add("hwdec_deint"_b, s->d->deint.hwdec.toString().toLatin1());
     vf.add("interpolate"_b, (int)s->video_motion_interpolation());
+    vf.add("color_space"_b, (int)s->video_space());
+    vf.add("color_range"_b, (int)s->video_range());
     return vf.get();
 }
 
@@ -98,8 +100,7 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     };
 
     static const QByteArray shader =
-            "const mat4 c_matrix = mat4(__C_MATRIX__); "
-            "vec4 custom_shader(vec4 color) { return c_matrix * color; }"_b;
+            "const mat4 c_matrix = mat4(__C_MATRIX__); color = c_matrix * color;";
     auto customShader = [] (const QMatrix4x4 &c_matrix) -> QByteArray {
         QByteArray mat;
         for (int c = 0; c < 4; ++c) {
@@ -129,7 +130,7 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     opts.add("frame-drop-mode", "clear"_b);
     opts.add("fancy-downscaling", s->video_hq_downscaling());
     opts.add("sigmoid-upscaling", s->video_hq_upscaling() && OGL::is16bitFramebufferFormatSupported());
-    opts.add("smoothmotion", s->video_motion_interpolation());
+    opts.add("interpolation", s->video_motion_interpolation());
     const bool rgba16 = vr->framebufferObjectFormat() == OGL::RGBA16_UNorm;
     opts.add("fbo-format", rgba16 ? "rgba16"_b : "rgba"_b);
 
@@ -326,8 +327,6 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.setAsync("options/vo", vo(local));
     mpv.setAsync("options/vf", vf(local));
     mpv.setAsync("options/deinterlace", deint ? "yes"_b : "no"_b);
-    mpv.setAsync("options/colormatrix", _EnumData(local->video_space()).option);
-    mpv.setAsync("options/colormatrix-input-range", _EnumData(local->video_range()).option);
 
     mpv.setAsync("options/af", af(local));
     mpv.setAsync("options/volume", volume(local));
@@ -555,16 +554,11 @@ auto PlayEngine::Data::observe() -> void
         auto &video = info.video;
         auto info = video.filter();
         setParams(info, params, u"w"_q, u"h"_q);
-        info->setRange(findEnum<ColorRange>(filterInput("colormatrix-input-range")));
-        info->setSpace(findEnum<ColorSpace>(filterInput("colormatrix")));
-        const QString api = mpv.get<MpvLatin1>("hwdec");
     });
     mpv.observe("video-out-params", [=] (QVariant &&var) {
         const auto params = var.toMap();
         auto info = this->info.video.output();
         setParams(info, params, u"dw"_q, u"dh"_q);
-        info->setRange(findEnum<ColorRange>(params[u"colorlevels"_q].toString()));
-        info->setSpace(findEnum<ColorSpace>(params[u"colormatrix"_q].toString()));
     });
 
     mpv.observe("audio-codec", [=] (MpvLatin1 &&c) { info.audio.codec()->parse(c); });
@@ -592,7 +586,7 @@ auto PlayEngine::Data::request() -> void
         post(Loading, false);
         const auto disc = params.mrl().isDisc();
         if (t.start > 0) {
-            mpv.tellAsync("seek", t.start * 1e-3, 2);
+            mpv.tellAsync("seek", t.start * 1e-3, "absolute"_b);
             t.start = -1;
         }
         const char *listprop = disc ? "disc-titles" : "editions";

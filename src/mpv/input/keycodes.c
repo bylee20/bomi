@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stddef.h>
@@ -118,42 +117,6 @@ static const struct key_name key_names[] = {
   { MP_MOUSE_BTN17_DBL, "MOUSE_BTN17_DBL" },
   { MP_MOUSE_BTN18_DBL, "MOUSE_BTN18_DBL" },
   { MP_MOUSE_BTN19_DBL, "MOUSE_BTN19_DBL" },
-  { MP_JOY_AXIS1_MINUS, "JOY_UP" },
-  { MP_JOY_AXIS1_PLUS, "JOY_DOWN" },
-  { MP_JOY_AXIS0_MINUS, "JOY_LEFT" },
-  { MP_JOY_AXIS0_PLUS, "JOY_RIGHT" },
-
-  { MP_JOY_AXIS0_PLUS,  "JOY_AXIS0_PLUS" },
-  { MP_JOY_AXIS0_MINUS, "JOY_AXIS0_MINUS" },
-  { MP_JOY_AXIS1_PLUS,  "JOY_AXIS1_PLUS" },
-  { MP_JOY_AXIS1_MINUS, "JOY_AXIS1_MINUS" },
-  { MP_JOY_AXIS2_PLUS,  "JOY_AXIS2_PLUS" },
-  { MP_JOY_AXIS2_MINUS, "JOY_AXIS2_MINUS" },
-  { MP_JOY_AXIS3_PLUS,  "JOY_AXIS3_PLUS" },
-  { MP_JOY_AXIS3_MINUS, "JOY_AXIS3_MINUS" },
-  { MP_JOY_AXIS4_PLUS,  "JOY_AXIS4_PLUS" },
-  { MP_JOY_AXIS4_MINUS, "JOY_AXIS4_MINUS" },
-  { MP_JOY_AXIS5_PLUS,  "JOY_AXIS5_PLUS" },
-  { MP_JOY_AXIS5_MINUS, "JOY_AXIS5_MINUS" },
-  { MP_JOY_AXIS6_PLUS,  "JOY_AXIS6_PLUS" },
-  { MP_JOY_AXIS6_MINUS, "JOY_AXIS6_MINUS" },
-  { MP_JOY_AXIS7_PLUS,  "JOY_AXIS7_PLUS" },
-  { MP_JOY_AXIS7_MINUS, "JOY_AXIS7_MINUS" },
-  { MP_JOY_AXIS8_PLUS,  "JOY_AXIS8_PLUS" },
-  { MP_JOY_AXIS8_MINUS, "JOY_AXIS8_MINUS" },
-  { MP_JOY_AXIS9_PLUS,  "JOY_AXIS9_PLUS" },
-  { MP_JOY_AXIS9_MINUS, "JOY_AXIS9_MINUS" },
-
-  { MP_JOY_BTN0,        "JOY_BTN0" },
-  { MP_JOY_BTN1,        "JOY_BTN1" },
-  { MP_JOY_BTN2,        "JOY_BTN2" },
-  { MP_JOY_BTN3,        "JOY_BTN3" },
-  { MP_JOY_BTN4,        "JOY_BTN4" },
-  { MP_JOY_BTN5,        "JOY_BTN5" },
-  { MP_JOY_BTN6,        "JOY_BTN6" },
-  { MP_JOY_BTN7,        "JOY_BTN7" },
-  { MP_JOY_BTN8,        "JOY_BTN8" },
-  { MP_JOY_BTN9,        "JOY_BTN9" },
 
   { MP_AR_PLAY,         "AR_PLAY" },
   { MP_AR_PLAY_HOLD,    "AR_PLAY_HOLD" },

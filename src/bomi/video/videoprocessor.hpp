@@ -4,7 +4,8 @@
 struct vf_instance;                     struct mp_image_params;
 struct vf_info;                         struct mp_image;
 struct MotionIntrplOption;
-enum class DeintMethod;
+enum class DeintMethod;                 enum class ColorSpace;
+enum class ColorRange;
 
 class VideoProcessor : public QObject {
     Q_OBJECT
@@ -20,6 +21,12 @@ public:
     auto isSkipping() const -> bool;
     auto hwdec() const -> QString;
     auto setMotionIntrplOption(const MotionIntrplOption &option) -> void;
+    auto inputColorSpace() const -> ColorSpace;
+    auto inputColorRange() const -> ColorRange;
+    auto outputColorSpace() const -> ColorSpace;
+    auto outputColorRange() const -> ColorRange;
+    auto setOutputColorSpace(ColorSpace space) -> void;
+    auto setOutputColorRange(ColorRange range) -> void;
 signals:
     void hwdecChanged(const QString &api);
     void inputInterlacedChanged();
@@ -28,6 +35,10 @@ signals:
     void skippingChanged(bool skipping);
     void seekRequested(int msec);
     void fpsManimulated(double fps);
+    void inputColorSpaceChanged(ColorSpace space);
+    void inputColorRangeChanged(ColorRange range);
+    void outputColorSpaceChanged(ColorSpace space);
+    void outputColorRangeChanged(ColorRange range);
 private:
     static auto open(vf_instance *vf) -> int;
     static auto queryFormat(vf_instance *vf, uint fmt) -> int;

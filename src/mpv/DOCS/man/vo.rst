@@ -308,24 +308,33 @@ Available video output drivers are:
             This filter corresponds to the old ``lanczos3`` alias if the default
             radius is used, while ``lanczos2`` corresponds to a radius of 2.
 
+            (This filter is an alias for ``sinc``-windowed ``sinc``)
+
         ``ewa_lanczos``
             Elliptic weighted average Lanczos scaling. Also known as Jinc.
             Relatively slow, but very good quality. The radius can be
             controlled with ``scale-radius``. Increasing the radius makes the
             filter sharper but adds more ringing.
 
+            (This filter is an alias for ``jinc``-windowed ``jinc``)
+
         ``ewa_lanczossharp``
             A slightly sharpened version of ewa_lanczos, preconfigured to use
             an ideal radius and parameter. If your hardware can run it, this is
             probably what you should use by default.
 
-            Note: This filter has a fixed radius. Use ``ewa_lanczos`` if you
-            want to adjust it.
-
         ``mitchell``
             Mitchell-Netravali. The ``B`` and ``C`` parameters can be set with
             ``scale-param1`` and ``scale-param2``. This filter is very good at
-            downscaling (see ``scale-down``).
+            downscaling (see ``dscale``).
+
+        ``oversample``
+            A version of nearest neighbour that (naively) oversamples pixels,
+            so that pixels overlapping edges get linearly interpolated instead
+            of rounded. This essentially removes the small imperfections and
+            judder artifacts caused by nearest-neighbour interpolation, in
+            exchange for adding some blur. This filter is good at temporal
+            interpolation, and also known as "smoothmotion" (see ``tscale``).
 
         There are some more filters, but most are not as useful. For a complete
         list, pass ``help`` as value, e.g.::
@@ -336,27 +345,35 @@ Available video output drivers are:
         Set filter parameters. Ignored if the filter is not tunable.
         Currently, this affects the following filter parameters:
 
-        ``kaiser``
-            Window parameter (``alpha``). Defaults to 6.33.
+        bcspline
+            Spline parameters (``B`` and ``C``). Defaults to 0.5 for both.
 
-        ``mitchell``
-            Spline parameters (``B`` and ``C``). Defaults to 1/3 for both.
-
-        ``gaussian``
+        gaussian
             Scale parameter (``t``). Increasing this makes the result blurrier.
             Defaults to 1.
 
-        ``ewa_lanczos``, ``ewa_ginseng``, ``ewa_hanning``
-            Jinc function scaling factor (also known as a blur factor).
-            Decreasing this makes the result sharper, increasing it makes it
-            blurrier. Defaults to 1. Note that setting this too low (eg. 0.5)
-            leads to bad results. It's recommended to stay between 0.9 and 1.1.
+        sharpen3, sharpen5
+            Sharpening strength. Increasing this makes the image sharper but
+            adds more ringing and aliasing. Defaults to 0.5.
 
-    ``scale-radius=<r>``
-        Set radius for filters listed below, must be a float number between 1.0
-        and 16.0. Defaults to be 3.0 if not specified.
+        oversample
+            Minimum distance to an edge before interpolation is used. Setting
+            this to 0 will always interpolate edges, whereas setting it to 0.5
+            will never interpolate, thus behaving as if the regular nearest
+            neighbour algorithm was used. Defaults to 0.0.
 
-            ``sinc``, ``lanczos``, ``blackman``, ``gaussian`` and all EWA filters (eg. ``ewa_lanczos``)
+    ``scale-blur=<value>``
+        Kernel scaling factor (also known as a blur factor). Decreasing this
+        makes the result sharper, increasing it makes it blurrier (default 0).
+        If set to 0, the kernel's preferred blur factor is used. Note that
+        setting this too low (eg. 0.5) leads to bad results. It's generally
+        recommended to stick to values between 0.8 and 1.2.
+
+    ``scale-radius=<value>``
+        Set radius for filters listed below, must be a float number between 0.5
+        and 16.0. Defaults to the filter's preferred radius if not specified.
+
+            ``sinc`` and derivatives, ``jinc`` and derivatives, ``gaussian``, ``box`` and ``triangle``
 
         Note that depending on filter implementation details and video scaling
         ratio, the radius that actually being used might be different
@@ -371,26 +388,29 @@ Available video output drivers are:
         Note that this doesn't affect the special filters ``bilinear``,
         ``bicubic_fast`` or ``sharpen``.
 
+    ``scale-window=<window>``
+        (Advanced users only) Choose a custom windowing function for the kernel.
+        Defaults to the filter's preferred window if unset. Use
+        ``scale-window=help`` to get a list of supported windowing functions.
+
+    ``scale-wparam=<window>``
+        (Advanced users only) Configure the parameter for the window function
+        given by ``scale-window``. Ignored if the window is not tunable.
+        Currently, this affects the following window parameters:
+
+        kaiser
+            Window parameter (alpha). Defaults to 6.33.
+        blackman
+            Window parameter (alpha). Defaults to 0.16.
+        gaussian
+            Scale parameter (t). Increasing this makes the window wider.
+            Defaults to 1.
+
     ``scaler-resizes-only``
         Disable the scaler if the video image is not resized. In that case,
         ``bilinear`` is used instead whatever is set with ``scale``. Bilinear
         will reproduce the source image perfectly if no scaling is performed.
         Note that this option never affects ``cscale``.
-
-    ``srgb``
-        Convert and color correct the output to sRGB before displaying it on
-        the screen. This option enables ``linear-scaling``.
-
-        This option is equivalent to using ``icc-profile`` with an sRGB ICC
-        profile, but it is implemented without a 3DLUT and does not require
-        LittleCMS 2. If both ``srgb`` and ``icc-profile`` are present, the
-        latter takes precedence, as they are somewhat redundant.
-
-        Note: When playing back BT.2020 content with this option enabled, out
-        of gamut colors will be numerically clipped, which can potentially
-        change the hue and/or luminance. If this is not desired, it is
-        recommended to use ``icc-profile`` with an sRGB ICC profile instead,
-        when playing back wide-gamut BT.2020 content.
 
     ``pbo``
         Enable use of PBOs. This is slightly faster, but can sometimes lead to
@@ -437,31 +457,59 @@ Available video output drivers are:
         debug OpenGL context (which does nothing with current graphics drivers
         as of this writing).
 
+    ``interpolation``
+        Reduce stuttering caused by mismatches in the video fps and display
+        refresh rate (also known as judder).
+
+        This essentially attempts to interpolate the missing frames by
+        convoluting the video along the temporal axis. The filter used can be
+        controlled using the ``tscale`` setting.
+
+        Note that this relies on vsync to work, see ``swapinterval`` for more
+        information.
+
     ``swapinterval=<n>``
         Interval in displayed frames between two buffer swaps.
-        1 is equivalent to enable VSYNC, 0 to disable VSYNC.
+        1 is equivalent to enable VSYNC, 0 to disable VSYNC. Defaults to 1 if
+        not specified.
 
-    ``cscale=<filter>``
-        As ``scale``, but for interpolating chroma information. If the image
-        is not subsampled, this option is ignored entirely. Note that the
-        implementation is currently always done as a single pass, so using
-        it with separable filters will result in slow performance for very
-        little visible benefit.
+        Note that this depends on proper OpenGL vsync support. On some platforms
+        and drivers, this only works reliably when in fullscreen mode. It may
+        also require driver-specific hacks if using multiple monitors, to
+        ensure mpv syncs to the right one. Compositing window managers can
+        also lead to bad results, as can missing or incorrect display FPS
+        information (see ``--display-fps``).
 
-    ``scale-down=<filter>``
+    ``dscale=<filter>``
         Like ``scale``, but apply these filters on downscaling instead. If this
         option is unset, the filter implied by ``scale`` will be applied.
 
-    ``cscale-param1``, ``cscale-param2``, ``cscale-radius``, ``cscale-antiring``
-        Set filter parameters and radius for ``cscale``.
+    ``cscale=<filter>``
+        As ``scale``, but for interpolating chroma information. If the image
+        is not subsampled, this option is ignored entirely.
 
-        See ``scale-param1``, ``scale-param2``, ``scale-radius`` and
-        ``scale-antiring``.
+    ``tscale=<filter>``
+        The filter used for interpolating the temporal axis (frames). This is
+        only used if ``interpolation`` is enabled. The only valid choices
+        for ``tscale`` are separable convolution filters (use ``tscale=help``
+        to get a list). The default is ``oversample``.
+
+        Note that the maximum supported filter radius is currently 3, and that
+        using filters with larger radius may introduce issues when pausing or
+        framestepping, proportional to the radius used. It is recommended to
+        stick to a radius of 1 or 2.
+
+    ``dscale-radius``, ``cscale-radius``, ``tscale-radius``, etc.
+        Set filter parameters for ``dscale``, ``cscale`` and ``tscale``,
+        respectively.
+
+        See the corresponding options for ``scale``.
 
     ``linear-scaling``
-        Scale in linear light. This is automatically enabled if ``srgb``,
-        ``icc-profile`` or ``sigmoid-upscaling`` is set. It should only
-        be used with a ``fbo-format`` that has at least 16 bit precision.
+        Scale in linear light. This is automatically enabled if
+        ``target-prim``, ``target-trc``, ``icc-profile`` or
+        ``sigmoid-upscaling`` is set. It should only be used with a
+        ``fbo-format`` that has at least 16 bit precision.
 
     ``fancy-downscaling``
         When using convolution based filters, extend the filter size
@@ -499,6 +547,17 @@ Available video output drivers are:
         possible that this makes video output slower, or has no effect at all.
 
         X11/GLX only.
+
+    ``dwmflush=<no|windowed|yes>``
+        Calls ``DwmFlush`` after swapping buffers on Windows (default: no).
+        It also sets ``SwapInterval(0)`` to ignore the OpenGL timing. Values
+        are: no (disabled), windowed (only in windowed mode), yes (also in
+        full screen).
+        This may help getting more consistent frame intervals, especially with
+        high-fps clips - which might also reduce dropped frames. Typically a
+        value of 1 should be enough since full screen may bypass the DWM.
+
+        Windows only.
 
     ``sw``
         Continue even if a software renderer is detected.
@@ -543,12 +602,66 @@ Available video output drivers are:
         0.8
             Pitch black room
 
+    ``gamma-auto``
+        Automatically corrects the gamma value depending on ambient lighting
+        conditions (adding a gamma boost for dark rooms).
+
+        With ambient illuminance of 64lux, mpv will pick the 1.0 gamma value
+        (no boost), and slightly increase the boost up until 0.8 for 16lux.
+
+        NOTE: Only implemented on OS X.
+
+    ``target-prim=<value>``
+        Specifies the primaries of the display. Video colors will be adapted
+        to this colorspace if necessary. Valid values are:
+
+        auto
+            Disable any adaptation (default)
+        bt.470m
+            ITU-R BT.470 M
+        bt.601-525
+            ITU-R BT.601 (525-line SD systems, eg. NTSC), SMPTE 170M/240M
+        bt.601-625
+            ITU-R BT.601 (625-line SD systems, eg. PAL/SECAM), ITU-R BT.470 B/G
+        bt.709
+            ITU-R BT.709 (HD), IEC 61966-2-4 (sRGB), SMPTE RP177 Annex B
+        bt.2020
+            ITU-R BT.2020 (UHD)
+        apple
+            Apple RGB
+        adobe
+            Adobe RGB (1998)
+        prophoto
+            ProPhoto RGB (ROMM)
+        cie1931
+            CIE 1931 RGB (not to be confused with CIE XYZ)
+
+    ``target-trc=<value>``
+        Specifies the transfer characteristics (gamma) of the display. Video
+        colors will be adjusted to this curve. Valid values are:
+
+        auto
+            Disable any adaptation (default)
+        bt.1886
+            ITU-R BT.1886 curve, without the brightness drop (approx. 1.961)
+        srgb
+            IEC 61966-2-4 (sRGB)
+        linear
+            Linear light output
+        gamma1.8
+            Pure power curve (gamma 1.8), also used for Apple RGB
+        gamma2.2
+            Pure power curve (gamma 2.2)
+        gamma2.8
+            Pure power curve (gamma 2.8), also used for BT.470-BG
+        prophoto
+            ProPhoto RGB (ROMM)
+
     ``icc-profile=<file>``
         Load an ICC profile and use it to transform linear RGB to screen output.
-        Needs LittleCMS 2 support compiled in. This option overrides the ``srgb``
-        property, as using both is somewhat redundant. It also enables
+        Needs LittleCMS 2 support compiled in. This option overrides the
+        ``target-prim`` and ``target-trc`` options. It also enables
         ``linear-scaling``.
-
 
     ``icc-profile-auto``
         Automatically select the ICC display profile currently specified by
@@ -563,9 +676,8 @@ Available video output drivers are:
         Its size depends on the ``3dlut-size``, and can be very big.
 
     ``icc-intent=<value>``
-        Specifies the ICC Intent used for transformations between color spaces.
-        This affects the rendering when using ``icc-profile`` or ``srgb`` and
-        also affects the way DCP XYZ content gets converted to RGB.
+        Specifies the ICC intent used for the color transformation (when using
+        ``icc-profile``).
 
         0
             perceptual
@@ -580,6 +692,28 @@ Available video output drivers are:
         Size of the 3D LUT generated from the ICC profile in each dimension.
         Default is 128x256x64.
         Sizes must be a power of two, and 512 at most.
+
+    ``blend-subtitles=<yes|video|no>``
+        Blend subtitles directly onto upscaled video frames, before
+        interpolation and/or color management (default: no). Enabling this
+        causes subtitles to be affected by ``icc-profile``, ``target-prim``,
+        ``target-trc``, ``interpolation``, ``gamma`` and ``linear-scaling``.
+        It also increases subtitle performance when using ``interpolation``.
+
+        The downside of enabling this is that it restricts subtitles to the
+        visible portion of the video, so you can't have subtitles exist in the
+        black margins below a video (for example).
+
+        If ``video`` is selected, the behavior is similar to ``yes``, but subs
+        are drawn at the video's native resolution, and scaled along with the
+        video.
+
+        .. warning:: This changes the way subtitle colors are handled. Normally,
+                     subtitle colors are assumed to be in sRGB and color managed
+                     as such. Enabling this makes them treated as being in the
+                     video's color space instead. This is good if you want
+                     things like softsubbed ASS signs to match the video colors,
+                     but may cause SRT subtitles or similar to look slightly off.
 
     ``alpha=<blend|yes|no>``
         Decides what to do if the input has an alpha component (default: blend).
@@ -596,10 +730,6 @@ Available video output drivers are:
         no
             Ignore alpha component.
 
-    ``chroma-location=<auto|center|left>``
-        Set the YUV chroma sample location. auto means use the bitstream
-        flags (default: auto).
-
     ``rectangle-textures``
         Force use of rectangle textures (default: no). Normally this shouldn't
         have any advantages over normal textures. Note that hardware decoding
@@ -609,54 +739,12 @@ Available video output drivers are:
         Color used to draw parts of the mpv window not covered by video.
         See ``--osd-color`` option how colors are defined.
 
-    ``smoothmotion``
-        Reduce stuttering caused by mismatches in video fps and display
-        refresh rate (also known as judder).
-
-        Instead of drawing source frames for variable durations, smoothmotion
-        will blend frames that overlap the transition between two frames in
-        the source material.
-
-        For example, a 24 Hz clip played back on a 60 Hz display would normally
-        result in a pattern like this::
-
-            A A A B B C C C D D E E E F F
-
-        which has different lengths, alternating between 3 and 2. This
-        difference in frame duration is what causes judder.
-
-        With smoothmotion enabled, the pattern changes to::
-
-            A A A+B B B C C C+D D D E E E+F F F
-
-        where A+B is a blend of A and B. In this pattern, each frame gets a
-        (consistent) duration of roughly 2.5 - resulting in smooth motion.
-
-        GPU drivers or compositing window managers overriding vsync behavior
-        can lead to bad results. If the framerate is close to or over the
-        display refresh rate, results can be bad as well.
-
-        .. note:: On systems other than Linux or OS X, you currently must set
-                  the ``--display-fps`` option, or the results will be bad.
-
-    ``smoothmotion-threshold=<0.0-0.5>``
-        Mix threshold at which interpolation is skipped (default: 0.0 – never
-        skip).
-
-        For example, with a ``smoothmotion-threshold`` of 0.1, if the
-        smoothmotion algorithm would try to blend two frames by a ratio of
-        95% A + 5% B, it would simply display A instead. (Since the
-        distance, 0.05, is lower than the threshold)
-
-        Setting this to 0.5 would be similar to disabling smoothmotion
-        completely, since it would always just display the nearest frame.
-
 ``opengl-hq``
     Same as ``opengl``, but with default settings for high quality rendering.
 
     This is equivalent to::
 
-        --vo=opengl:scale=spline36:scale-down=mitchell:dither-depth=auto:fbo-format=rgba16:fancy-downscaling:sigmoid-upscaling
+        --vo=opengl:scale=spline36:cscale=spline36:dscale=mitchell:dither-depth=auto:fbo-format=rgba16:fancy-downscaling:sigmoid-upscaling
 
     Note that some cheaper LCDs do dithering that gravely interferes with
     ``opengl``'s dithering. Disabling dithering with ``dither-depth=no`` helps.
@@ -815,7 +903,33 @@ Available video output drivers are:
         clear
             Drop all frames in the frame queue.
 
-    This also supports many of the suboptions the ``opengl`` VO has. Runs
+    This also supports many of the suboptions the ``opengl`` VO has. Run
     ``mpv --vo=opengl-cb:help`` for a list.
 
     This also supports the ``vo_cmdline`` command.
+
+``rpi`` (Raspberry Pi)
+    Native video output on the Raspberry Pi using the MMAL API.
+
+    ``display=<number>``
+        Select the display number on which the video overlay should be shown
+        (default: 0).
+
+    ``layer=<number>``
+        Select the dispmanx layer on which the video overlay should be shown
+        (default: -10). Note that mpv will also use the 2 layers above the
+        selected layer, to handle the window background and OSD. Actual video
+        rendering will happen on the layer above the selected layer.
+
+``drm`` (Direct Rendering Manager)
+    Video output driver using Kernel Mode Setting / Direct Rendering Manager.
+    Does not support hardware acceleration. Should be used when one doesn't
+    want to install full-blown graphical environment (e.g. no X).
+
+    ``connector=<number>``
+        Select the connector to use (usually this is a monitor.) If set to -1,
+        mpv renders the output on the first available connector. (default: -1)
+
+    ``devpath=<filename>``
+        Path to graphic card device.
+        (default: /dev/dri/card0)

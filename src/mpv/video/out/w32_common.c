@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -98,10 +97,16 @@ struct vo_w32_state {
     int mouse_x;
     int mouse_y;
 
+    // Should SetCursor be called when handling VOCTRL_SET_CURSOR_VISIBILITY?
+    bool can_set_cursor;
+
     // UTF-16 decoding state for WM_CHAR and VK_PACKET
     int high_surrogate;
 
     ITaskbarList2 *taskbar_list;
+
+    // updates on move/resize/displaychange
+    double display_fps;
 };
 
 typedef struct tagDropTarget {
@@ -312,16 +317,9 @@ static void subtract_window_borders(HWND hwnd, RECT *rc)
     rc->bottom -= b.bottom;
 }
 
-static bool is_maximized(struct vo_w32_state *w32)
-{
-    WINDOWPLACEMENT wp = { .length = sizeof(WINDOWPLACEMENT) };
-    GetWindowPlacement(w32->window, &wp);
-    return wp.showCmd == SW_SHOWMAXIMIZED;
-}
-
 static LRESULT borderless_nchittest(struct vo_w32_state *w32, int x, int y)
 {
-    if (is_maximized(w32))
+    if (IsMaximized(w32->window))
         return HTCLIENT;
 
     POINT mouse = { x, y };
@@ -403,7 +401,7 @@ static int mod_state(struct vo_w32_state *w32)
 
 static int decode_surrogate_pair(wchar_t lead, wchar_t trail)
 {
-    return 0x10000 + ((lead & 0x3ff) << 10) | (trail & 0x3ff);
+    return 0x10000 + (((lead & 0x3ff) << 10) | (trail & 0x3ff));
 }
 
 static int decode_utf16(struct vo_w32_state *w32, wchar_t c)
@@ -567,6 +565,48 @@ static void wakeup_gui_thread(void *ctx)
     PostMessage(w32->window, WM_USER, 0, 0);
 }
 
+static double vo_w32_get_display_fps(void)
+{
+    DEVMODE dm;
+    dm.dmSize = sizeof(DEVMODE);
+    dm.dmDriverExtra = 0;
+    if (!EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm))
+        return -1;
+
+    // May return 0 or 1 which "represent the display hardware's default refresh rate"
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/dd183565%28v=vs.85%29.aspx
+    // mpv validates this value with a threshold of 1, so don't return exactly 1
+    if (dm.dmDisplayFrequency == 1)
+        return 0;
+
+    // dm.dmDisplayFrequency is an integer which is rounded down, so it's
+    // highly likely that 23 represents 24/1.001, 59 represents 60/1.001, etc.
+    // A caller can always reproduce the original value by using floor.
+    double rv = dm.dmDisplayFrequency;
+    switch (dm.dmDisplayFrequency) {
+        case  23:
+        case  29:
+        case  59:
+        case  71:
+        case 119:
+            rv = (rv + 1) / 1.001;
+    }
+
+    return rv;
+}
+
+static void update_display_fps(void *ctx)
+{
+    struct vo_w32_state *w32 = ctx;
+
+    double fps = vo_w32_get_display_fps();
+    if (fps != w32->display_fps) {
+        w32->display_fps = fps;
+        signal_events(w32, VO_EVENT_WIN_STATE);
+        MP_VERBOSE(w32, "display-fps: %f\n", fps);
+    }
+}
+
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
                                 LPARAM lParam)
 {
@@ -592,6 +632,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
         ClientToScreen(w32->window, &p);
         w32->window_x = p.x;
         w32->window_y = p.y;
+        update_display_fps(w32);  // if we moved between monitors
         MP_VERBOSE(w32, "move window: %d:%d\n", w32->window_x, w32->window_y);
         break;
     }
@@ -600,9 +641,13 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
         if (GetClientRect(w32->window, &r) && r.right > 0 && r.bottom > 0) {
             w32->dw = r.right;
             w32->dh = r.bottom;
+            update_display_fps(w32); // if we moved between monitors
             signal_events(w32, VO_EVENT_RESIZE);
             MP_VERBOSE(w32, "resize window: %d:%d\n", w32->dw, w32->dh);
         }
+
+        // Window may have been minimized or restored
+        signal_events(w32, VO_EVENT_WIN_STATE);
         break;
     }
     case WM_SIZING:
@@ -686,7 +731,10 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
         mp_input_put_key(w32->input_ctx, MP_INPUT_RELEASE_ALL);
         break;
     case WM_SETCURSOR:
-        if (LOWORD(lParam) == HTCLIENT && !w32->cursor_visible) {
+        // The cursor should only be hidden if the mouse is in the client area
+        // and if the window isn't in menu mode (HIWORD(lParam) is non-zero)
+        w32->can_set_cursor = LOWORD(lParam) == HTCLIENT && HIWORD(lParam);
+        if (w32->can_set_cursor && !w32->cursor_visible) {
             SetCursor(NULL);
             return TRUE;
         }
@@ -742,6 +790,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
     case WM_XBUTTONUP:
         mouse_button = HIWORD(wParam) == 1 ? MP_MOUSE_BTN5 : MP_MOUSE_BTN6;
         mouse_button |= MP_KEY_STATE_UP;
+        break;
+    case WM_DISPLAYCHANGE:
+        update_display_fps(w32);
         break;
     }
 
@@ -1208,12 +1259,6 @@ fail:
     return 0;
 }
 
-static bool vo_w32_is_cursor_in_client(struct vo_w32_state *w32)
-{
-    DWORD pos = GetMessagePos();
-    return SendMessage(w32->window, WM_NCHITTEST, 0, pos) == HTCLIENT;
-}
-
 static int gui_thread_control(struct vo_w32_state *w32, int request, void *arg)
 {
     switch (request) {
@@ -1256,10 +1301,13 @@ static int gui_thread_control(struct vo_w32_state *w32, int request, void *arg)
         reinit_window_state(w32);
         return VO_TRUE;
     }
+    case VOCTRL_GET_WIN_STATE:
+        *(int *)arg = IsIconic(w32->window) ? VO_WIN_STATE_MINIMIZED : 0;
+        return VO_TRUE;
     case VOCTRL_SET_CURSOR_VISIBILITY:
         w32->cursor_visible = *(bool *)arg;
 
-        if (vo_w32_is_cursor_in_client(w32)) {
+        if (w32->can_set_cursor && w32->tracking) {
             if (w32->cursor_visible)
                 SetCursor(LoadCursor(NULL, IDC_ARROW));
             else
@@ -1280,6 +1328,10 @@ static int gui_thread_control(struct vo_w32_state *w32, int request, void *arg)
         talloc_free(title);
         return VO_TRUE;
     }
+    case VOCTRL_GET_DISPLAY_FPS:
+        update_display_fps(w32);
+        *(double*) arg = w32->display_fps;
+        return VO_TRUE;
     }
     return VO_NOTIMPL;
 }

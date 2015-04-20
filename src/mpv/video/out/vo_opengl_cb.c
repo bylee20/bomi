@@ -19,6 +19,7 @@
 #include "vo.h"
 #include "video/mp_image.h"
 #include "sub/osd.h"
+#include "osdep/timer.h"
 
 #include "common/global.h"
 #include "player/client.h"
@@ -67,7 +68,7 @@ struct mpv_opengl_cb_context {
     int queued_frames;
     struct mp_image_params img_params;
     bool reconfigured;
-    struct mp_rect wnd;
+    int vp_w, vp_h;
     bool flip;
     bool force_update;
     bool reset;
@@ -78,6 +79,7 @@ struct mpv_opengl_cb_context {
     struct m_config *new_opts_cfg;
     bool eq_changed;
     struct mp_csp_equalizer eq;
+    int64_t recent_flip;
 
     // --- All of these can only be accessed from the thread where the host
     //     application's OpenGL context is current - i.e. only while the
@@ -89,7 +91,6 @@ struct mpv_opengl_cb_context {
 
     // --- Immutable or semi-threadsafe.
 
-    struct osd_state *osd;
     const char *hwapi;
 
     struct vo *active;
@@ -164,7 +165,6 @@ static void free_ctx(void *ptr)
 }
 
 struct mpv_opengl_cb_context *mp_opengl_create(struct mpv_global *g,
-                                               struct osd_state *osd,
                                                struct mp_client_api *client_api)
 {
     mpv_opengl_cb_context *ctx = talloc_zero(NULL, mpv_opengl_cb_context);
@@ -174,7 +174,6 @@ struct mpv_opengl_cb_context *mp_opengl_create(struct mpv_global *g,
     ctx->gl = talloc_zero(ctx, GL);
 
     ctx->log = mp_log_new(ctx, g->log, "opengl-cb");
-    ctx->osd = osd;
     ctx->client_api = client_api;
 
     switch (g->opts->hwdec_api) {
@@ -222,7 +221,7 @@ int mpv_opengl_cb_init_gl(struct mpv_opengl_cb_context *ctx, const char *exts,
 
     mpgl_load_functions2(ctx->gl, get_proc_address, get_proc_address_ctx,
                          exts, ctx->log);
-    ctx->renderer = gl_video_init(ctx->gl, ctx->log, ctx->osd);
+    ctx->renderer = gl_video_init(ctx->gl, ctx->log);
     if (!ctx->renderer)
         return MPV_ERROR_UNSUPPORTED;
 
@@ -297,7 +296,7 @@ void mpv_opengl_cb_render_size(struct mpv_opengl_cb_context *ctx, int *w, int *h
     *h = dst.y1 - dst.y0;
 }
 
-int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
+int mpv_opengl_cb_draw(mpv_opengl_cb_context *ctx, int fbo, int vp_w, int vp_h)
 {
     assert(ctx->renderer);
 
@@ -309,49 +308,41 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
 
     ctx->force_update |= ctx->reconfigured;
 
-    int h = vp[3];
-    bool flip = h < 0 && h > INT_MIN;
-    if (flip)
-        h = -h;
-    struct mp_rect wnd = {vp[0], vp[1], vp[0] + vp[2], vp[1] + h};
-    if (wnd.x0 != ctx->wnd.x0 || wnd.y0 != ctx->wnd.y0 ||
-        wnd.x1 != ctx->wnd.x1 || wnd.y1 != ctx->wnd.y1 ||
-        ctx->flip != flip)
+    if (ctx->vp_w != vp_w || ctx->vp_h != vp_h)
         ctx->force_update = true;
 
     if (ctx->force_update && vo) {
         ctx->force_update = false;
-        ctx->wnd = wnd;
-        ctx->flip = flip;
+        ctx->vp_w = vp_w;
+        ctx->vp_h = vp_h;
 
         struct mp_rect src, dst;
         struct mp_osd_res osd;
         mp_get_src_dst_rects(ctx->log, &ctx->vo_opts, vo->driver->caps,
-                             &ctx->img_params, wnd.x1 - wnd.x0, wnd.y1 - wnd.y0,
+                             &ctx->img_params, vp_w, abs(vp_h),
                              1.0, &src, &dst, &osd);
 
-        gl_video_resize(ctx->renderer, &wnd, &src, &dst, &osd, !ctx->flip);
+        gl_video_resize(ctx->renderer, vp_w, vp_h, &src, &dst, &osd);
     }
 
-    if (vo) {
-        struct vo_priv *p = vo->priv;
-        if (ctx->reconfigured)
-            gl_video_config(ctx->renderer, &ctx->img_params);
-        if (ctx->reconfigured || ctx->update_new_opts) {
-            struct vo_priv *opts = p->ctx->new_opts ? p->ctx->new_opts : p;
-            gl_video_set_options(ctx->renderer, opts->renderer_opts);
+    if (ctx->reconfigured) {
+        gl_video_set_osd_source(ctx->renderer, vo ? vo->osd : NULL);
+        gl_video_config(ctx->renderer, &ctx->img_params);
+    }
+    if (ctx->update_new_opts) {
+        struct vo_priv *p = vo ? vo->priv : NULL;
+        struct vo_priv *opts = ctx->new_opts ? ctx->new_opts : p;
+        if (opts) {
+            gl_video_set_options(ctx->renderer, opts->renderer_opts, NULL);
             ctx->gl->debug_context = opts->use_gl_debug;
             gl_video_set_debug(ctx->renderer, opts->use_gl_debug);
             frame_queue_shrink(ctx, opts->frame_queue_size);
         }
-        if (ctx->reconfigured || ctx->reset) {
+        if (ctx->reconfigured)
             p->ctx->last_timing.next_vsync = 0;
-            gl_video_reset(p->ctx->renderer);
-        }
-        ctx->reconfigured = false;
-        ctx->update_new_opts = false;
-        ctx->reset = false;
     }
+    ctx->reconfigured = false;
+    ctx->update_new_opts = false;
 
     struct mp_csp_equalizer *eq = gl_video_eq_ptr(ctx->renderer);
     if (ctx->eq_changed) {
@@ -392,6 +383,15 @@ int mpv_opengl_cb_render(struct mpv_opengl_cb_context *ctx, int fbo, int vp[4])
     pthread_mutex_unlock(&ctx->lock);
 
     return left;
+}
+
+int mpv_opengl_cb_report_flip(mpv_opengl_cb_context *ctx, int64_t time)
+{
+    pthread_mutex_lock(&ctx->lock);
+    ctx->recent_flip = time > 0 ? time : mp_time_us();
+    pthread_mutex_unlock(&ctx->lock);
+
+    return 0;
 }
 
 static void draw_image(struct vo *vo, mp_image_t *mpi)
@@ -459,7 +459,7 @@ static int reconfig(struct vo *vo, struct mp_image_params *params, int flags)
 #define OPT_BASE_STRUCT struct vo_priv
 static const struct m_option change_opts[] = {
     OPT_FLAG("debug", use_gl_debug, 0),
-    OPT_INTRANGE("frame-queue-size", frame_queue_size, 0, 1, 100, OPTDEF_INT(1)),
+    OPT_INTRANGE("frame-queue-size", frame_queue_size, 0, 1, 100, OPTDEF_INT(2)),
     OPT_CHOICE("frame-drop-mode", frame_drop_mode, 0,
                ({"pop", FRAME_DROP_POP},
                 {"clear", FRAME_DROP_CLEAR})),
@@ -540,12 +540,16 @@ static int control(struct vo *vo, uint32_t request, void *data)
         *arg = p->ctx ? &p->ctx->hwdec_info : NULL;
         return true;
     }
-    case VOCTRL_RESET:
+    case VOCTRL_GET_RECENT_FLIP_TIME: {
+        int r = VO_FALSE;
         pthread_mutex_lock(&p->ctx->lock);
-        p->ctx->reset = true;
-        forget_frames(p->ctx);
+        if (p->ctx->recent_flip) {
+            *(int64_t *)data = p->ctx->recent_flip;
+            r = VO_TRUE;
+        }
         pthread_mutex_unlock(&p->ctx->lock);
-        return true;
+        return r;
+    }
     }
 
     return VO_NOTIMPL;
@@ -560,6 +564,7 @@ static void uninit(struct vo *vo)
     p->ctx->img_params = (struct mp_image_params){0};
     p->ctx->reconfigured = true;
     p->ctx->active = NULL;
+    update(p);
     pthread_mutex_unlock(&p->ctx->lock);
 }
 
@@ -581,7 +586,6 @@ static int preinit(struct vo *vo)
     }
     p->ctx->active = vo;
     p->ctx->reconfigured = true;
-    assert(vo->osd == p->ctx->osd);
     copy_vo_opts(vo);
     pthread_mutex_unlock(&p->ctx->lock);
 
@@ -591,7 +595,7 @@ static int preinit(struct vo *vo)
 #define OPT_BASE_STRUCT struct vo_priv
 static const struct m_option options[] = {
     OPT_FLAG("debug", use_gl_debug, 0),
-    OPT_INTRANGE("frame-queue-size", frame_queue_size, 0, 1, 100, OPTDEF_INT(1)),
+    OPT_INTRANGE("frame-queue-size", frame_queue_size, 0, 1, 100, OPTDEF_INT(2)),
     OPT_CHOICE("frame-drop-mode", frame_drop_mode, 0,
                ({"pop", FRAME_DROP_POP},
                 {"clear", FRAME_DROP_CLEAR})),

@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -99,6 +98,12 @@ const char mp_help_text[] =
 " --list-options    list all mpv options\n"
 "\n";
 
+static const char def_config[] =
+    "[pseudo-gui]\n"
+    "terminal=no\n"
+    "force-window=yes\n"
+    "idle=once\n";
+
 static pthread_mutex_t terminal_owner_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct MPContext *terminal_owner;
 
@@ -112,6 +117,13 @@ static bool cas_terminal_owner(struct MPContext *old, struct MPContext *new)
     return r;
 }
 
+static void update_logging(struct MPContext *mpctx)
+{
+    mp_msg_update_msglevels(mpctx->global);
+    if (mpctx->opts->use_terminal && cas_terminal_owner(NULL, mpctx))
+        terminal_init();
+}
+
 void mp_print_version(struct mp_log *log, int always)
 {
     int v = always ? MSGL_INFO : MSGL_V;
@@ -123,7 +135,7 @@ void mp_print_version(struct mp_log *log, int always)
     // Only in verbose mode.
     if (!always) {
         mp_msg(log, MSGL_V, "Configuration: " CONFIGURATION "\n");
-        mp_msg(log, MSGL_V, "config.h:\n%s\n", FULLCONFIG);
+        mp_msg(log, MSGL_V, "List of enabled features: %s\n", FULLCONFIG);
     }
 }
 
@@ -262,18 +274,14 @@ static bool handle_help_options(struct MPContext *mpctx)
     return opt_exit;
 }
 
-static void osdep_preinit(int *p_argc, char ***p_argv)
+static void osdep_preinit(int argc, char **argv)
 {
     char *enable_talloc = getenv("MPV_LEAK_REPORT");
-    if (*p_argc > 1 && (strcmp((*p_argv)[1], "-leak-report") == 0 ||
-                        strcmp((*p_argv)[1], "--leak-report") == 0))
+    if (argc > 1 && (strcmp(argv[1], "-leak-report") == 0 ||
+                     strcmp(argv[1], "--leak-report") == 0))
         enable_talloc = "1";
     if (enable_talloc && strcmp(enable_talloc, "1") == 0)
         talloc_enable_leak_report();
-
-#ifdef __MINGW32__
-    mp_get_converted_argv(p_argc, p_argv);
-#endif
 
 #ifdef _WIN32
     // stop Windows from showing all kinds of annoying error dialogs
@@ -339,6 +347,7 @@ struct MPContext *mp_create(void)
     mpctx->mconfig->includefunc_ctx = mpctx;
     mpctx->mconfig->use_profiles = true;
     mpctx->mconfig->is_toplevel = true;
+    m_config_parse(mpctx->mconfig, "", bstr0(def_config), NULL, 0);
 
     mpctx->global->opts = mpctx->opts;
 
@@ -361,13 +370,42 @@ void wakeup_playloop(void *ctx)
 // Finish mpctx initialization. This must be done after setting up all options.
 // Some of the initializations depend on the options, and can't be changed or
 // undone later.
-// cplayer: true if called by the command line player, false for client API
+// If options is not NULL, apply them as command line player arguments.
 // Returns: <0 on error, 0 on success.
-int mp_initialize(struct MPContext *mpctx)
+int mp_initialize(struct MPContext *mpctx, char **options)
 {
     struct MPOpts *opts = mpctx->opts;
 
     assert(!mpctx->initialized);
+
+    if (options) {
+        // Preparse the command line, so we can init the terminal early.
+        m_config_preparse_command_line(mpctx->mconfig, mpctx->global, options);
+
+        update_logging(mpctx);
+
+        MP_VERBOSE(mpctx, "Command line options:");
+        for (int i = 0; options[i]; i++)
+            MP_VERBOSE(mpctx, " '%s'", options[i]);
+        MP_VERBOSE(mpctx, "\n");
+    }
+
+    update_logging(mpctx);
+    mp_print_version(mpctx->log, false);
+
+    mp_parse_cfgfiles(mpctx);
+    update_logging(mpctx);
+
+    if (options) {
+        int r = m_config_parse_mp_command_line(mpctx->mconfig, mpctx->playlist,
+                                               mpctx->global, options);
+        if (r < 0)
+            return r <= M_OPT_EXIT ? -2 : -1;
+        update_logging(mpctx);
+    }
+
+    if (handle_help_options(mpctx))
+        return -2;
 
     if (opts->dump_stats && opts->dump_stats[0]) {
         if (mp_msg_open_stats_file(mpctx->global, opts->dump_stats) < 0)
@@ -375,16 +413,14 @@ int mp_initialize(struct MPContext *mpctx)
     }
     MP_STATS(mpctx, "start init");
 
-    if (mpctx->opts->use_terminal && cas_terminal_owner(NULL, mpctx))
-        terminal_init();
-
-    mp_msg_update_msglevels(mpctx->global);
-
     if (opts->slave_mode) {
         MP_WARN(mpctx, "--slave-broken is deprecated (see manpage).\n");
         opts->consolecontrols = 0;
         m_config_set_option0(mpctx->mconfig, "input-file", "/dev/stdin");
     }
+
+    if (!mpctx->playlist->first && !opts->player_idle_mode)
+        return -3;
 
     mp_input_load(mpctx->input);
     mp_input_set_cancel(mpctx->input, mpctx->playback_abort);
@@ -409,8 +445,10 @@ int mp_initialize(struct MPContext *mpctx)
         m_config_set_option0(mpctx->mconfig, "osc", "no");
         m_config_set_option0(mpctx->mconfig, "framedrop", "no");
         // never use auto
-        if (!opts->audio_output_channels.num)
-            m_config_set_option0(mpctx->mconfig, "audio-channels", "stereo");
+        if (!opts->audio_output_channels.num) {
+            m_config_set_option_ext(mpctx->mconfig, bstr0("audio-channels"),
+                                    bstr0("stereo"), M_SETOPT_PRESERVE_CMDLINE);
+        }
         mp_input_enable_section(mpctx->input, "encode", MP_INPUT_EXCLUSIVE);
     }
 #endif
@@ -457,6 +495,11 @@ int mp_initialize(struct MPContext *mpctx)
     mpctx->ipc_ctx = mp_init_ipc(mpctx->clients, mpctx->global);
 #endif
 
+#ifdef _WIN32
+    if (opts->w32_priority > 0)
+        SetPriorityClass(GetCurrentProcess(), opts->w32_priority);
+#endif
+
     prepare_playlist(mpctx, mpctx->playlist);
 
     MP_STATS(mpctx, "end init");
@@ -466,7 +509,7 @@ int mp_initialize(struct MPContext *mpctx)
 
 int mpv_main(int argc, char *argv[])
 {
-    osdep_preinit(&argc, &argv);
+    osdep_preinit(argc, argv);
 
     struct MPContext *mpctx = mp_create();
     struct MPOpts *opts = mpctx->opts;
@@ -475,50 +518,16 @@ int mpv_main(int argc, char *argv[])
     if (verbose_env)
         opts->verbose = atoi(verbose_env);
 
-    // Preparse the command line
-    m_config_preparse_command_line(mpctx->mconfig, mpctx->global, argc, argv);
-
-    if (mpctx->opts->use_terminal && cas_terminal_owner(NULL, mpctx))
-        terminal_init();
-
-    mp_msg_update_msglevels(mpctx->global);
-
-    MP_VERBOSE(mpctx, "Command line:");
-    for (int i = 0; i < argc; i++)
-        MP_VERBOSE(mpctx, " '%s'", argv[i]);
-    MP_VERBOSE(mpctx, "\n");
-
-    mp_print_version(mpctx->log, false);
-
-    mp_parse_cfgfiles(mpctx);
-
-    int r = m_config_parse_mp_command_line(mpctx->mconfig, mpctx->playlist,
-                                           mpctx->global, argc, argv);
-    if (r < 0) {
-        if (r <= M_OPT_EXIT) {
-            return prepare_exit_cplayer(mpctx, EXIT_NONE);
-        } else {
-            return prepare_exit_cplayer(mpctx, EXIT_ERROR);
-        }
-    }
-
-    mp_msg_update_msglevels(mpctx->global);
-
-    if (handle_help_options(mpctx))
+    char **options = argv && argv[0] ? argv + 1 : NULL; // skips program name
+    int r = mp_initialize(mpctx, options);
+    if (r == -2) // help
         return prepare_exit_cplayer(mpctx, EXIT_NONE);
-
-    if (!mpctx->playlist->first && !opts->player_idle_mode) {
+    if (r == -3) { // nothing to play
         mp_print_version(mpctx->log, true);
         MP_INFO(mpctx, "%s", mp_help_text);
         return prepare_exit_cplayer(mpctx, EXIT_NONE);
     }
-
-#ifdef _WIN32
-    if (opts->w32_priority > 0)
-        SetPriorityClass(GetCurrentProcess(), opts->w32_priority);
-#endif
-
-    if (mp_initialize(mpctx) < 0)
+    if (r < 0) // another error
         return prepare_exit_cplayer(mpctx, EXIT_ERROR);
 
     mp_play_files(mpctx);

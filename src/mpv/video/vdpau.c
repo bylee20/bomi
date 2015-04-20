@@ -70,7 +70,7 @@ static struct mp_image *download_image(struct mp_hwdec_ctx *hwctx,
                               mpi, &in) < 0)
         goto error;
 
-    res = mp_image_pool_get(swpool, IMGFMT_BGR32, ctx->getimg_w, ctx->getimg_h);
+    res = mp_image_pool_get(swpool, IMGFMT_BGR0, ctx->getimg_w, ctx->getimg_h);
     if (!res)
         goto error;
 
@@ -164,8 +164,7 @@ static int win_x11_init_vdpau_procs(struct mp_vdpau_ctx *ctx)
     ctx->vdp = vdp;
     ctx->get_proc_address = get_proc_address;
 
-    vdp_st = vdp.preemption_callback_register(ctx->vdp_device,
-                                              preemption_callback, ctx);
+    vdp.preemption_callback_register(ctx->vdp_device, preemption_callback, ctx);
     return 0;
 }
 

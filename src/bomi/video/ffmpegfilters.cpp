@@ -141,7 +141,7 @@ auto BobDeinterlacer::field(DeintMethod method, const MpImage &src, bool top) co
 {
     if (src->num_planes < 1)
         return src;
-    const int h = src->plane_h[0];
+    const int h = src->h;
     if (h < 4)
         return src;
 
@@ -154,7 +154,7 @@ auto BobDeinterlacer::field(DeintMethod method, const MpImage &src, bool top) co
     switch (method) {
     case DeintMethod::Bob: {
         const int srcOffset = !top;
-        const int count = src->plane_h[0] / 2;
+        const int count = src->h / 2;
         for (int i = 0; i < count ; ++i) {
             auto src = in + srcOffset * stride;
             memcpy(out, src, stride);
@@ -223,11 +223,12 @@ auto BobDeinterlacer::field(DeintMethod method, const MpImage &src, bool top) co
         }
         break;
     } default:
-        memcpy(dst->planes[0], src->planes[0], src->plane_h[0]*src->stride[0]);
+        memcpy(dst->planes[0], src->planes[0], src->h*src->stride[0]);
         break;
     }
     for (int i = 1; i < src->num_planes; ++i)
-        memcpy(dst->planes[i], src->planes[i], src->plane_h[i]*src->stride[i]);
+        memcpy(dst->planes[i], src->planes[i],
+               (src->h >> src->fmt.ys[i]) * src->stride[i]);
     return dst;
 }
 

@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /// \file
@@ -61,7 +60,7 @@ char *m_option_strerror(int code)
     case M_OPT_MISSING_PARAM:
         return "option requires parameter";
     case M_OPT_INVALID:
-        return "option parameter could not be parsed";
+        return "option could not be parsed";
     case M_OPT_OUT_OF_RANGE:
         return "parameter is outside values allowed for option";
     case M_OPT_DISALLOW_PARAM:
@@ -522,6 +521,16 @@ const struct m_option_type m_option_type_intpair = {
     .copy  = copy_opt,
 };
 
+const char *m_opt_choice_str(const struct m_opt_choice_alternatives *choices,
+                             int value)
+{
+    for (const struct m_opt_choice_alternatives *c = choices; c->name; c++) {
+        if (c->value == value)
+            return c->name;
+    }
+    return NULL;
+}
+
 static int clamp_choice(const m_option_t *opt, void *val)
 {
     int v = *(int *)val;
@@ -716,6 +725,123 @@ const struct m_option_type m_option_type_choice = {
     .clamp = clamp_choice,
     .set   = choice_set,
     .get   = choice_get,
+};
+
+static int apply_flag(const struct m_option *opt, int *val, bstr flag)
+{
+    struct m_opt_choice_alternatives *alt;
+    for (alt = opt->priv; alt->name; alt++) {
+        if (bstr_equals0(flag, alt->name)) {
+            if (*val & alt->value)
+                return M_OPT_INVALID;
+            *val |= alt->value;
+            return 0;
+        }
+    }
+    return M_OPT_UNKNOWN;
+}
+
+static const char *find_next_flag(const struct m_option *opt, int *val)
+{
+    struct m_opt_choice_alternatives *alt;
+    for (alt = opt->priv; alt->name; alt++) {
+        if (alt->value && (alt->value & (*val)) == alt->value) {
+            *val = *val & ~(unsigned)alt->value;
+            return alt->name;
+        }
+    }
+    *val = 0; // if there are still flags left, there's not much we can do
+    return NULL;
+}
+
+static int parse_flags(struct mp_log *log, const struct m_option *opt,
+                       struct bstr name, struct bstr param, void *dst)
+{
+    int value = 0;
+    while (param.len) {
+        bstr flag;
+        bstr_split_tok(param, "+", &flag, &param);
+        int r = apply_flag(opt, &value, flag);
+        if (r == M_OPT_UNKNOWN) {
+            mp_fatal(log, "Invalid flag for option %.*s: %.*s\n",
+                     BSTR_P(name), BSTR_P(flag));
+            mp_info(log, "Valid flags are:\n");
+            struct m_opt_choice_alternatives *alt;
+            for (alt = opt->priv; alt->name; alt++)
+                mp_info(log, "    %s\n", alt->name);
+            mp_info(log, "Flags can usually be combined with '+'.\n");
+            return M_OPT_INVALID;
+        } else if (r < 0) {
+            mp_fatal(log, "Option %.*s: flag '%.*s' conflicts with a previous "
+                     "flag value.\n", BSTR_P(name), BSTR_P(flag));
+            return M_OPT_INVALID;
+        }
+    }
+    if (dst)
+        *(int *)dst = value;
+    return 1;
+}
+
+static int flags_set(const m_option_t *opt, void *dst, struct mpv_node *src)
+{
+    int value = 0;
+    if (src->format != MPV_FORMAT_NODE_ARRAY)
+        return M_OPT_UNKNOWN;
+    struct mpv_node_list *srclist = src->u.list;
+    for (int n = 0; n < srclist->num; n++) {
+        if (srclist->values[n].format != MPV_FORMAT_STRING)
+            return M_OPT_INVALID;
+        if (apply_flag(opt, &value, bstr0(srclist->values[n].u.string)) < 0)
+            return M_OPT_INVALID;
+    }
+    *(int *)dst = value;
+    return 0;
+}
+
+static int flags_get(const m_option_t *opt, void *ta_parent,
+                     struct mpv_node *dst, void *src)
+{
+    int value = *(int *)src;
+
+    dst->format = MPV_FORMAT_NODE_ARRAY;
+    dst->u.list = talloc_zero(ta_parent, struct mpv_node_list);
+    struct mpv_node_list *list = dst->u.list;
+    while (1) {
+        const char *flag = find_next_flag(opt, &value);
+        if (!flag)
+            break;
+
+        struct mpv_node node;
+        node.format = MPV_FORMAT_STRING;
+        node.u.string = (char *)flag;
+        MP_TARRAY_APPEND(list, list->values, list->num, node);
+    }
+
+    return 1;
+}
+
+static char *print_flags(const m_option_t *opt, const void *val)
+{
+    int value = *(int *)val;
+    char *res = talloc_strdup(NULL, "");
+    while (1) {
+        const char *flag = find_next_flag(opt, &value);
+        if (!flag)
+            break;
+
+        res = talloc_asprintf_append_buffer(res, "%s%s", res[0] ? "+" : "", flag);
+    }
+    return res;
+}
+
+const struct m_option_type m_option_type_flags = {
+    .name  = "Flags",
+    .size  = sizeof(int),
+    .parse = parse_flags,
+    .print = print_flags,
+    .copy  = copy_opt,
+    .set   = flags_set,
+    .get   = flags_get,
 };
 
 // Float
@@ -1610,11 +1736,22 @@ static int read_subparam(struct mp_log *log, bstr optname,
         }
         p = bstr_cut(p, 1);
     } else if (bstr_eatstart0(&p, "[")) {
-        if (!bstr_split_tok(p, "]", &subparam, &p)) {
+        bstr s = p;
+        int balance = 1;
+        while (p.len && balance > 0) {
+            if (p.start[0] == '[') {
+                balance++;
+            } else if (p.start[0] == ']') {
+                balance--;
+            }
+            p = bstr_cut(p, 1);
+        }
+        if (balance != 0) {
             mp_err(log, "Terminating ']' missing for '%.*s'\n",
                    BSTR_P(optname));
             return M_OPT_INVALID;
         }
+        subparam = bstr_splice(s, 0, s.len - p.len - 1);
     } else if (bstr_eatstart0(&p, "%")) {
         int optlen = bstrtoll(p, &p, 0);
         if (!bstr_startswith0(p, "%") || (optlen > p.len - 1)) {
@@ -1873,6 +2010,31 @@ error:
 #undef READ_NUM
 #undef READ_SIGN
 
+#define APPEND_PER(F, F_PER) \
+    res = talloc_asprintf_append(res, "%d%s", gm->F, gm->F_PER ? "%" : "")
+
+static char *print_geometry(const m_option_t *opt, const void *val)
+{
+    const struct m_geometry *gm = val;
+    char *res = talloc_strdup(NULL, "");
+    if (gm->wh_valid || gm->xy_valid) {
+        if (gm->wh_valid) {
+            APPEND_PER(w, w_per);
+            res = talloc_asprintf_append(res, "x");
+            APPEND_PER(h, h_per);
+        }
+        if (gm->xy_valid) {
+            res = talloc_asprintf_append(res, gm->x_sign ? "-" : "+");
+            APPEND_PER(x, x_per);
+            res = talloc_asprintf_append(res, gm->y_sign ? "-" : "+");
+            APPEND_PER(y, y_per);
+        }
+    }
+    return res;
+}
+
+#undef APPEND_PER
+
 // xpos,ypos: position of the left upper corner
 // widw,widh: width and height of the window
 // scrw,scrh: width and height of the current screen
@@ -1936,6 +2098,7 @@ const m_option_type_t m_option_type_geometry = {
     .name  = "Window geometry",
     .size  = sizeof(struct m_geometry),
     .parse = parse_geometry,
+    .print = print_geometry,
     .copy  = copy_opt,
 };
 
@@ -1965,6 +2128,7 @@ const m_option_type_t m_option_type_size_box = {
     .name  = "Window size",
     .size  = sizeof(struct m_geometry),
     .parse = parse_size_box,
+    .print = print_geometry,
     .copy  = copy_opt,
 };
 
@@ -2006,59 +2170,6 @@ const m_option_type_t m_option_type_imgfmt = {
     .size  = sizeof(uint32_t),
     .parse = parse_imgfmt,
     .copy  = copy_opt,
-};
-
-#include "video/csputils.h"
-
-static int parse_stereo_mode(struct mp_log *log, const m_option_t *opt,
-                             struct bstr name, struct bstr param, void *dst)
-{
-    if (param.len == 0)
-        return M_OPT_MISSING_PARAM;
-
-    if (!bstrcmp0(param, "help")) {
-        mp_info(log, "Available modes:");
-        for (int n = 0; n < MP_STEREO3D_COUNT; n++) {
-            if (mp_stereo3d_names[n])
-                mp_info(log, " %s\n", mp_stereo3d_names[n]);
-        }
-        mp_info(log, " none\n");
-        return M_OPT_EXIT - 1;
-    }
-
-    int mode = -1;
-
-    for (int n = 0; n < MP_STEREO3D_COUNT; n++) {
-        if (bstr_equals(param, bstr0(mp_stereo3d_names[n]))) {
-            mode = n;
-            break;
-        }
-    }
-
-    if (mode < 0 && !bstr_equals0(param, "none")) {
-        mp_err(log, "Option %.*s: unknown parameter: '%.*s'\n",
-               BSTR_P(name), BSTR_P(param));
-        return M_OPT_INVALID;
-    }
-
-    if (dst)
-        *((int *)dst) = mode;
-
-    return 1;
-}
-
-static char *print_stereo_mode(const m_option_t *opt, const void *val)
-{
-    int mode = *(int *)val;
-    const char *name = mode >= 0 ? MP_STEREO3D_NAME(mode) : "none";
-    return talloc_strdup(NULL, name);
-}
-
-const m_option_type_t m_option_vid_stereo_mode = {
-    .name  = "Stereo 3D mode",
-    .size  = sizeof(int),
-    .parse = parse_stereo_mode,
-    .print = print_stereo_mode,
 };
 
 static int parse_fourcc(struct mp_log *log, const m_option_t *opt,
@@ -2834,6 +2945,11 @@ static int parse_obj_settings_list(struct mp_log *log, const m_option_t *opt,
     }
 
     if (op == OP_CLR) {
+        if (param.len) {
+            mp_err(log, "Option %.*s: -clr does not take an argument.\n",
+                   BSTR_P(name));
+            return M_OPT_INVALID;
+        }
         if (dst)
             free_obj_settings_list(dst);
         return 0;

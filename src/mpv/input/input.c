@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "config.h"
@@ -163,11 +162,6 @@ struct input_opts {
     // Autorepeat config (be aware of mp_input_set_repeat_info())
     int ar_delay;
     int ar_rate;
-    char *js_dev;
-    int use_joystick;
-    int use_lirc;
-    char *lirc_configfile;
-    int use_lircc;
     int use_alt_gr;
     int use_appleremote;
     int use_media_keys;
@@ -180,25 +174,19 @@ struct input_opts {
 
 const struct m_sub_options input_config = {
     .opts = (const m_option_t[]) {
-        OPT_STRING("conf", config_file, CONF_GLOBAL),
+        OPT_STRING("conf", config_file, CONF_GLOBAL | M_OPT_FILE),
         OPT_INT("ar-delay", ar_delay, CONF_GLOBAL),
         OPT_INT("ar-rate", ar_rate, CONF_GLOBAL),
         OPT_PRINT("keylist", mp_print_key_list),
         OPT_PRINT("cmdlist", mp_print_cmd_list),
-        OPT_STRING("js-dev", js_dev, CONF_GLOBAL),
         OPT_FLAG("default-bindings", default_bindings, CONF_GLOBAL),
         OPT_FLAG("test", test, CONF_GLOBAL),
         OPT_INTRANGE("doubleclick-time", doubleclick_time, 0, 0, 1000),
-        OPT_FLAG("joystick", use_joystick, CONF_GLOBAL),
-        OPT_FLAG("lirc", use_lirc, CONF_GLOBAL),
         OPT_FLAG("right-alt-gr", use_alt_gr, CONF_GLOBAL),
         OPT_INTRANGE("key-fifo-size", key_fifo_size, CONF_GLOBAL, 2, 65000),
         OPT_FLAG("cursor", enable_mouse_movements, CONF_GLOBAL),
         OPT_FLAG("vo-keyboard", vo_key_input, CONF_GLOBAL),
         OPT_FLAG("x11-keyboard", vo_key_input, CONF_GLOBAL), // old alias
-#if HAVE_LIRC
-        OPT_STRING("lirc-conf", lirc_configfile, CONF_GLOBAL),
-#endif
 #if HAVE_COCOA
         OPT_FLAG("appleremote", use_appleremote, CONF_GLOBAL),
         OPT_FLAG("media-keys", use_media_keys, CONF_GLOBAL),
@@ -212,7 +200,6 @@ const struct m_sub_options input_config = {
         .doubleclick_time = 300,
         .ar_delay = 200,
         .ar_rate = 40,
-        .use_lirc = 1,
         .use_alt_gr = 1,
         .enable_mouse_movements = 1,
 #if HAVE_COCOA
@@ -1251,16 +1238,6 @@ void mp_input_load(struct input_ctx *ictx)
     if (!config_ok) {
         MP_VERBOSE(ictx, "Falling back on default (hardcoded) input config\n");
     }
-
-#if HAVE_JOYSTICK
-    if (input_conf->use_joystick)
-        mp_input_joystick_add(ictx, input_conf->js_dev);
-#endif
-
-#if HAVE_LIRC
-    if (input_conf->use_lirc)
-        mp_input_lirc_add(ictx, input_conf->lirc_configfile);
-#endif
 
     if (input_conf->use_alt_gr) {
         ictx->using_alt_gr = true;

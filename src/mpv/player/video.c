@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stddef.h>
@@ -159,7 +158,7 @@ static void filter_reconfig(struct MPContext *mpctx,
     if (params.stereo_in != params.stereo_out &&
         params.stereo_in > 0 && params.stereo_out >= 0)
     {
-        char *to = MP_STEREO3D_NAME(params.stereo_out);
+        char *to = (char *)MP_STEREO3D_NAME(params.stereo_out);
         if (to) {
             char *args[] = {"in", "auto", "out", to, NULL, NULL};
             if (try_filter(mpctx, params, "stereo3d", "stereo3d", args) < 0)
@@ -238,6 +237,7 @@ void uninit_video_out(struct MPContext *mpctx)
     if (mpctx->video_out)
         vo_destroy(mpctx->video_out);
     mpctx->video_out = NULL;
+    mp_notify(mpctx, MPV_EVENT_VIDEO_RECONFIG, NULL);
 }
 
 void uninit_video_chain(struct MPContext *mpctx)
@@ -348,8 +348,10 @@ void mp_force_video_refresh(struct MPContext *mpctx)
         return;
 
     // If not paused, the next frame should come soon enough.
-    if (opts->pause && mpctx->last_vo_pts != MP_NOPTS_VALUE)
-        queue_seek(mpctx, MPSEEK_ABSOLUTE, mpctx->last_vo_pts, 2, true);
+    if (opts->pause && mpctx->last_vo_pts != MP_NOPTS_VALUE) {
+        queue_seek(mpctx, MPSEEK_ABSOLUTE, mpctx->last_vo_pts,
+                   MPSEEK_VERY_EXACT, true);
+    }
 }
 
 static int check_framedrop(struct MPContext *mpctx)
@@ -403,7 +405,8 @@ static int decode_image(struct MPContext *mpctx)
     talloc_free(pkt);
 
     if (had_packet && !d_video->waiting_decoded_mpi &&
-        mpctx->video_status == STATUS_PLAYING)
+        mpctx->video_status == STATUS_PLAYING &&
+        (mpctx->opts->frame_dropping & 2))
     {
         mpctx->dropped_frames_total++;
         mpctx->dropped_frames++;
@@ -544,11 +547,60 @@ static void adjust_sync(struct MPContext *mpctx, double v_pts, double frame_time
     mpctx->total_avsync_change += change;
 }
 
+// Move the frame in next_frame[1] to next_frame[0]. This makes the frame
+// "known" to the playback logic. A frame in next_frame[0] is either "known" or
+// NULL, so the moving must always be done by this function.
+static void shift_new_frame(struct MPContext *mpctx)
+{
+    if (mpctx->next_frame[0] || !mpctx->next_frame[1])
+        return;
+
+    mpctx->next_frame[0] = mpctx->next_frame[1];
+    mpctx->next_frame[1] = NULL;
+
+    double frame_time = 0;
+    double pts = mpctx->next_frame[0]->pts;
+    if (mpctx->video_pts != MP_NOPTS_VALUE) {
+        frame_time = pts - mpctx->video_pts;
+        if (frame_time <= 0 || frame_time >= 60) {
+            // Assume a PTS difference >= 60 seconds is a discontinuity.
+            MP_WARN(mpctx, "Invalid video timestamp: %f -> %f\n",
+                    mpctx->video_pts, pts);
+            frame_time = 0;
+        }
+    }
+    mpctx->video_next_pts = pts;
+    mpctx->delay -= frame_time;
+    if (mpctx->video_status >= STATUS_PLAYING) {
+        mpctx->time_frame += frame_time / mpctx->opts->playback_speed;
+        adjust_sync(mpctx, pts, frame_time);
+    }
+    mpctx->dropped_frames = 0;
+    MP_TRACE(mpctx, "frametime=%5.3f\n", frame_time);
+}
+
+// Whether it's fine to call add_new_frame() now.
+static bool needs_new_frame(struct MPContext *mpctx)
+{
+    return !mpctx->next_frame[1];
+}
+
+// Queue a frame to mpctx->next_frame[]. Call only if needs_new_frame() signals ok.
+static void add_new_frame(struct MPContext *mpctx, struct mp_image *frame)
+{
+    assert(needs_new_frame(mpctx));
+    assert(frame);
+    mpctx->next_frame[1] = frame;
+    shift_new_frame(mpctx);
+}
+
 // Enough video filtered already to push one frame to the VO?
-static bool have_new_frame(struct MPContext *mpctx)
+// Set eof to true if no new frames are to be expected.
+static bool have_new_frame(struct MPContext *mpctx, bool eof)
 {
     bool need_2nd = !!(mpctx->opts->frame_dropping & 1) // we need the duration
-        && mpctx->video_pts != MP_NOPTS_VALUE; // ...except for the 1st frame
+        && mpctx->video_pts != MP_NOPTS_VALUE   // ...except for the 1st frame
+        && !eof;    // on EOF, drain the remaining frames
 
     return mpctx->next_frame[0] && (!need_2nd || mpctx->next_frame[1]);
 }
@@ -572,39 +624,12 @@ static int video_output_image(struct MPContext *mpctx, double endpts)
         return r <= 0 ? VD_EOF : VD_PROGRESS;
     }
 
-    if (have_new_frame(mpctx))
-        return VD_NEW_FRAME;
-
-    if (!mpctx->next_frame[0] && mpctx->next_frame[1]) {
-        mpctx->next_frame[0] = mpctx->next_frame[1];
-        mpctx->next_frame[1] = NULL;
-
-        double pts = mpctx->next_frame[0]->pts;
-        double last_pts = mpctx->video_pts;
-        if (last_pts == MP_NOPTS_VALUE)
-            last_pts = pts;
-        double frame_time = pts - last_pts;
-        if (frame_time < 0 || frame_time >= 60) {
-            // Assume a PTS difference >= 60 seconds is a discontinuity.
-            MP_WARN(mpctx, "Jump in video pts: %f -> %f\n", last_pts, pts);
-            frame_time = 0;
-        }
-        mpctx->video_next_pts = pts;
-        mpctx->delay -= frame_time;
-        if (mpctx->video_status >= STATUS_PLAYING) {
-            mpctx->time_frame += frame_time / mpctx->opts->playback_speed;
-            adjust_sync(mpctx, pts, frame_time);
-        }
-        mpctx->dropped_frames = 0;
-        MP_TRACE(mpctx, "frametime=%5.3f\n", frame_time);
-    }
-
-    if (have_new_frame(mpctx))
+    if (have_new_frame(mpctx, false))
         return VD_NEW_FRAME;
 
     // Get a new frame if we need one.
     int r = VD_PROGRESS;
-    if (!mpctx->next_frame[1]) {
+    if (needs_new_frame(mpctx)) {
         // Filter a new frame.
         r = video_decode_and_filter(mpctx);
         if (r < 0)
@@ -614,39 +639,30 @@ static int video_output_image(struct MPContext *mpctx, double endpts)
             // Always add these; they make backstepping after seeking faster.
             add_frame_pts(mpctx, img->pts);
 
-            bool drop = false;
-            if ((endpts != MP_NOPTS_VALUE && img->pts >= endpts) ||
-                mpctx->max_frames == 0)
-            {
-                drop = true;
+            if (endpts != MP_NOPTS_VALUE && img->pts >= endpts) {
                 r = VD_EOF;
-            }
-            if (!drop && hrseek && mpctx->hrseek_lastframe) {
+            } else if (mpctx->max_frames == 0) {
+                r = VD_EOF;
+            } else if (hrseek && mpctx->hrseek_lastframe) {
                 mp_image_setrefp(&mpctx->saved_frame, img);
-                drop = true;
-            }
-            if (hrseek && img->pts < mpctx->hrseek_pts - .005)
-                drop = true;
-            if (drop) {
-                talloc_free(img);
+            } else if (hrseek && img->pts < mpctx->hrseek_pts - .005) {
+                /* just skip */
             } else {
-                mpctx->next_frame[1] = img;
+                add_new_frame(mpctx, img);
+                img = NULL;
             }
+            talloc_free(img);
         }
     }
 
-    // On EOF, always allow the playloop to use the remaining frame.
-    if (have_new_frame(mpctx) || (r <= 0 && mpctx->next_frame[0]))
-        return VD_NEW_FRAME;
-
     // Last-frame seek
     if (r <= 0 && hrseek && mpctx->hrseek_lastframe && mpctx->saved_frame) {
-        mpctx->next_frame[1] = mpctx->saved_frame;
+        add_new_frame(mpctx, mpctx->saved_frame);
         mpctx->saved_frame = NULL;
-        return VD_PROGRESS;
+        r = VD_PROGRESS;
     }
 
-    return r;
+    return have_new_frame(mpctx, r <= 0) ? VD_NEW_FRAME : r;
 }
 
 /* Update avsync before a new video frame is displayed. Actually, this can be
@@ -769,7 +785,7 @@ void write_video(struct MPContext *mpctx, double endpts)
             vo_still_displaying(vo) ? STATUS_DRAINING : STATUS_EOF;
         mpctx->delay = 0;
         mpctx->last_av_difference = 0;
-        MP_VERBOSE(mpctx, "video EOF (status=%d)\n", mpctx->video_status);
+        MP_DBG(mpctx, "video EOF (status=%d)\n", mpctx->video_status);
         return;
     }
 
@@ -847,6 +863,8 @@ void write_video(struct MPContext *mpctx, double endpts)
 
     vo_queue_frame(vo, mpctx->next_frame[0], pts, duration);
     mpctx->next_frame[0] = NULL;
+
+    shift_new_frame(mpctx);
 
     mpctx->shown_vframes++;
     if (mpctx->video_status < STATUS_PLAYING) {

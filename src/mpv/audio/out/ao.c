@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -199,7 +198,7 @@ static struct ao *ao_init(bool probing, struct mpv_global *global,
 
     ao->sstride = af_fmt2bps(ao->format);
     ao->num_planes = 1;
-    if (af_fmt_is_planar(ao->format)) {
+    if (AF_FORMAT_IS_PLANAR(ao->format)) {
         ao->num_planes = ao->channels.num;
     } else {
         ao->sstride *= ao->channels.num;
@@ -211,6 +210,9 @@ static struct ao *ao_init(bool probing, struct mpv_global *global,
     if (ao->device_buffer)
         MP_VERBOSE(ao, "device buffer: %d samples.\n", ao->device_buffer);
     ao->buffer = MPMAX(ao->device_buffer, ao->def_buffer * ao->samplerate);
+
+    int align = af_format_sample_alignment(ao->format);
+    ao->buffer = (ao->buffer + align - 1) / align * align;
     MP_VERBOSE(ao, "using soft-buffer of %d samples.\n", ao->buffer);
 
     if (ao->api->init(ao) < 0)
@@ -416,7 +418,10 @@ bool ao_chmap_sel_adjust(struct ao *ao, const struct mp_chmap_sel *s,
             MP_DBG(ao, "chmap_sel #%d: %s\n", i, mp_chmap_to_str(&c));
         }
     }
-    return mp_chmap_sel_adjust(s, map);
+    bool r = mp_chmap_sel_adjust(s, map);
+    if (r)
+        MP_DBG(ao, "result: %s\n", mp_chmap_to_str(map));
+    return r;
 }
 
 bool ao_chmap_sel_get_def(struct ao *ao, const struct mp_chmap_sel *s,

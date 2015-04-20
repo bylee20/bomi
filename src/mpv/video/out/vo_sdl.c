@@ -1,22 +1,22 @@
 /*
  * video output driver for SDL 2.0+
+ *
  * Copyright (C) 2012 Rudolf Polzer <divVerent@xonotic.org>
  *
  * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -177,8 +177,7 @@ struct priv {
     struct mp_osd_res osd_res;
     struct formatmap_entry osd_format;
     struct osd_bitmap_surface {
-        int bitmap_id;
-        int bitmap_pos_id;
+        int change_id;
         struct osd_target {
             SDL_Rect source;
             SDL_Rect dest;
@@ -702,7 +701,7 @@ static void generate_osd_part(struct vo *vo, struct sub_bitmaps *imgs)
     if (imgs->format == SUBBITMAP_EMPTY || imgs->num_parts == 0)
         return;
 
-    if (imgs->bitmap_pos_id == sfc->bitmap_pos_id)
+    if (imgs->change_id == sfc->change_id)
         return;
 
     if (imgs->num_parts > sfc->targets_size) {
@@ -725,49 +724,46 @@ static void generate_osd_part(struct vo *vo, struct sub_bitmaps *imgs)
             bmp->x, bmp->y, bmp->dw, bmp->dh
         };
 
-        if (imgs->bitmap_id != sfc->bitmap_id || !target->tex) {
-            // tex: alpha blended texture
-            if (target->tex) {
-                SDL_DestroyTexture(target->tex);
-                target->tex = NULL;
-            }
-            if (!target->tex)
-                target->tex = SDL_CreateTexture(vc->renderer,
-                        vc->osd_format.sdl, SDL_TEXTUREACCESS_STREAMING,
-                        bmp->w, bmp->h);
-            if (!target->tex) {
-                MP_ERR(vo, "Could not create texture\n");
-            }
-            if (target->tex) {
-                SDL_SetTextureBlendMode(target->tex,
-                                        SDL_BLENDMODE_BLEND);
-                SDL_SetTextureColorMod(target->tex, 0, 0, 0);
-                subbitmap_to_texture(vo, target->tex, bmp, 0); // RGBA -> 000A
-            }
+        // tex: alpha blended texture
+        if (target->tex) {
+            SDL_DestroyTexture(target->tex);
+            target->tex = NULL;
+        }
+        if (!target->tex)
+            target->tex = SDL_CreateTexture(vc->renderer,
+                    vc->osd_format.sdl, SDL_TEXTUREACCESS_STREAMING,
+                    bmp->w, bmp->h);
+        if (!target->tex) {
+            MP_ERR(vo, "Could not create texture\n");
+        }
+        if (target->tex) {
+            SDL_SetTextureBlendMode(target->tex,
+                                    SDL_BLENDMODE_BLEND);
+            SDL_SetTextureColorMod(target->tex, 0, 0, 0);
+            subbitmap_to_texture(vo, target->tex, bmp, 0); // RGBA -> 000A
+        }
 
-            // tex2: added texture
-            if (target->tex2) {
-                SDL_DestroyTexture(target->tex2);
-                target->tex2 = NULL;
-            }
-            if (!target->tex2)
-                target->tex2 = SDL_CreateTexture(vc->renderer,
-                        vc->osd_format.sdl, SDL_TEXTUREACCESS_STREAMING,
-                        bmp->w, bmp->h);
-            if (!target->tex2) {
-                MP_ERR(vo, "Could not create texture\n");
-            }
-            if (target->tex2) {
-                SDL_SetTextureBlendMode(target->tex2,
-                                        SDL_BLENDMODE_ADD);
-                subbitmap_to_texture(vo, target->tex2, bmp,
-                                     0xFF000000); // RGBA -> RGB1
-            }
+        // tex2: added texture
+        if (target->tex2) {
+            SDL_DestroyTexture(target->tex2);
+            target->tex2 = NULL;
+        }
+        if (!target->tex2)
+            target->tex2 = SDL_CreateTexture(vc->renderer,
+                    vc->osd_format.sdl, SDL_TEXTUREACCESS_STREAMING,
+                    bmp->w, bmp->h);
+        if (!target->tex2) {
+            MP_ERR(vo, "Could not create texture\n");
+        }
+        if (target->tex2) {
+            SDL_SetTextureBlendMode(target->tex2,
+                                    SDL_BLENDMODE_ADD);
+            subbitmap_to_texture(vo, target->tex2, bmp,
+                                    0xFF000000); // RGBA -> RGB1
         }
     }
 
-    sfc->bitmap_id = imgs->bitmap_id;
-    sfc->bitmap_pos_id = imgs->bitmap_pos_id;
+    sfc->change_id = imgs->change_id;
 }
 
 static void draw_osd_part(struct vo *vo, int index)

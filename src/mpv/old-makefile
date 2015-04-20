@@ -45,8 +45,6 @@ SOURCES-$(LIBBS2B)              += audio/filter/af_bs2b.c
 
 SOURCES-$(LIBSMBCLIENT)         += stream/stream_smb.c
 
-SOURCES-$(MPG123)               += audio/decode/ad_mpg123.c
-
 SOURCES-$(PVR)                  += stream/stream_pvr.c
 
 SOURCES-$(TV)                   += stream/stream_tv.c stream/tv.c \
@@ -75,8 +73,6 @@ SOURCES-$(GL_WAYLAND)           += video/out/wayland_common.c \
                                    video/out/gl_wayland.c
 
 SOURCES-$(JACK)                 += audio/out/ao_jack.c
-SOURCES-$(JOYSTICK)             += input/joystick.c
-SOURCES-$(LIRC)                 += input/lirc.c
 SOURCES-$(OPENAL)               += audio/out/ao_openal.c
 SOURCES-$(OSS_AUDIO)            += audio/out/ao_oss.c
 SOURCES-$(PULSE)                += audio/out/ao_pulse.c
@@ -173,6 +169,7 @@ SOURCES = audio/audio.c \
           demux/demux_mkv.c \
           demux/demux_mkv_timeline.c \
           demux/demux_playlist.c \
+          demux/demux_rar.c \
           demux/demux_raw.c \
           demux/demux_subreader.c \
           demux/ebml.c \
@@ -199,6 +196,7 @@ SOURCES = audio/audio.c \
           options/path.c \
           osdep/io.c \
           osdep/semaphore_osx.c \
+          osdep/subprocess.c \
           osdep/subprocess-posix.c \
           osdep/terminal-unix.c \
           osdep/timer.c \
@@ -265,7 +263,6 @@ SOURCES = audio/audio.c \
           video/filter/vf_mirror.c \
           video/filter/vf_noformat.c \
           video/filter/vf_scale.c \
-          video/filter/vf_screenshot.c \
           video/filter/vf_stereo3d.c \
           video/filter/vf_sub.c \
           video/out/bitmap_packer.c \
@@ -337,7 +334,7 @@ all: $(ALL_TARGETS)
 %.o: %.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@ $<
 
-mpv: $(OBJECTS) player/main_fn.o
+mpv: $(OBJECTS) player/main-fn-unix.o
 	$(CC) -o $@ $^ $(EXTRALIBS)
 
 input/input.c: input/input_conf.h
@@ -357,10 +354,6 @@ demux/ebml_types.h: TOOLS/matroska.pl $(MKVLIB_DEPS)
 demux/ebml.c: demux/ebml_defs.c
 demux/ebml_defs.c: TOOLS/matroska.pl $(MKVLIB_DEPS)
 	./$< --generate-definitions > $@
-
-video/out/gl_video.c: video/out/gl_video_shaders.h
-video/out/gl_video_shaders.h: TOOLS/file2string.pl video/out/gl_video_shaders.glsl
-	./$^ >$@
 
 video/out/x11_common.c: video/out/x11_icon.inc
 video/out/x11_icon.inc: TOOLS/file2string.pl video/out/x11_icon.bin
@@ -475,7 +468,6 @@ clean:
 	-$(RM) input/input_conf.h
 	-$(RM) video/out/vdpau_template.c
 	-$(RM) demux/ebml_types.h demux/ebml_defs.c
-	-$(RM) video/out/gl_video_shaders.h
 	-$(RM) video/out/x11_icon.inc
 	-$(RM) sub/osd_font.h
 	-$(RM) player/lua/defaults.inc

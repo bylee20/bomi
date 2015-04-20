@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "config.h"
@@ -35,7 +34,6 @@
 #include "img_format.h"
 #include "mp_image.h"
 #include "sws_utils.h"
-#include "memcpy_pic.h"
 #include "fmt-conversion.h"
 
 #include "video/filter/vf.h"
@@ -48,12 +46,6 @@ struct m_refcount {
     void *arg;
     // free() is called if refcount reaches 0.
     void (*free)(void *arg);
-    // External refcounted object (such as libavcodec DR buffers). This assumes
-    // that the actual data is managed by the external object, not by
-    // m_refcount. The .ext_* calls use that external object's refcount
-    // primitives.
-    void (*ext_ref)(void *arg);
-    void (*ext_unref)(void *arg);
     bool (*ext_is_unique)(void *arg);
     // Native refcount (there may be additional references if .ext_* are set)
     int refcount;
@@ -80,16 +72,10 @@ static void m_refcount_ref(struct m_refcount *ref)
     refcount_lock();
     ref->refcount++;
     refcount_unlock();
-
-    if (ref->ext_ref)
-        ref->ext_ref(ref->arg);
 }
 
 static void m_refcount_unref(struct m_refcount *ref)
 {
-    if (ref->ext_unref)
-        ref->ext_unref(ref->arg);
-
     bool dead;
     refcount_lock();
     assert(ref->refcount > 0);
@@ -132,7 +118,7 @@ static bool mp_image_alloc_planes(struct mp_image *mpi)
     size_t plane_size[MP_MAX_PLANES];
     for (int n = 0; n < MP_MAX_PLANES; n++) {
         int alloc_h = MP_ALIGN_UP(mpi->h, 32) >> mpi->fmt.ys[n];
-        int line_bytes = (mpi->plane_w[n] * mpi->fmt.bpp[n] + 7) / 8;
+        int line_bytes = (mp_image_plane_w(mpi, n) * mpi->fmt.bpp[n] + 7) / 8;
         mpi->stride[n] = FFALIGN(line_bytes, SWS_MIN_BYTE_ALIGN);
         plane_size[n] = mpi->stride[n] * alloc_h;
     }
@@ -159,10 +145,7 @@ void mp_image_setfmt(struct mp_image *mpi, int out_fmt)
     struct mp_imgfmt_desc fmt = mp_imgfmt_get_desc(out_fmt);
     mpi->params.imgfmt = fmt.id;
     mpi->fmt = fmt;
-    mpi->flags = fmt.flags;
     mpi->imgfmt = fmt.id;
-    mpi->chroma_x_shift = fmt.chroma_xs;
-    mpi->chroma_y_shift = fmt.chroma_ys;
     mpi->num_planes = fmt.num_planes;
     mp_image_set_size(mpi, mpi->w, mpi->h);
 }
@@ -178,18 +161,24 @@ int mp_chroma_div_up(int size, int shift)
     return (size + (1 << shift) - 1) >> shift;
 }
 
+// Return the storage width in pixels of the given plane.
+int mp_image_plane_w(struct mp_image *mpi, int plane)
+{
+    return mp_chroma_div_up(mpi->w, mpi->fmt.xs[plane]);
+}
+
+// Return the storage height in pixels of the given plane.
+int mp_image_plane_h(struct mp_image *mpi, int plane)
+{
+    return mp_chroma_div_up(mpi->h, mpi->fmt.ys[plane]);
+}
+
 // Caller has to make sure this doesn't exceed the allocated plane data/strides.
 void mp_image_set_size(struct mp_image *mpi, int w, int h)
 {
     assert(w >= 0 && h >= 0);
     mpi->w = mpi->params.w = mpi->params.d_w = w;
     mpi->h = mpi->params.h = mpi->params.d_h = h;
-    for (int n = 0; n < mpi->num_planes; n++) {
-        mpi->plane_w[n] = mp_chroma_div_up(mpi->w, mpi->fmt.xs[n]);
-        mpi->plane_h[n] = mp_chroma_div_up(mpi->h, mpi->fmt.ys[n]);
-    }
-    mpi->chroma_width = mpi->plane_w[1];
-    mpi->chroma_height = mpi->plane_h[1];
 }
 
 void mp_image_set_params(struct mp_image *image,
@@ -266,6 +255,26 @@ struct mp_image *mp_image_new_ref(struct mp_image *img)
     return new;
 }
 
+// Return a reference counted reference to img. is_unique us used to connect to
+// an external refcounting API. It is assumed that the new object
+// has an initial reference to that external API. If free is given, that is
+// called after the last unref. All function pointers are optional.
+// On allocation failure, unref the frame and return NULL.
+static struct mp_image *mp_image_new_external_ref(struct mp_image *img, void *arg,
+                                                  bool (*is_unique)(void *arg),
+                                                  void (*free)(void *arg))
+{
+    struct mp_image *new = talloc_ptrtype(NULL, new);
+    talloc_set_destructor(new, mp_image_destructor);
+    *new = *img;
+
+    new->refcount = m_refcount_new();
+    new->refcount->ext_is_unique = is_unique;
+    new->refcount->free = free;
+    new->refcount->arg = arg;
+    return new;
+}
+
 // Return a reference counted reference to img. If the reference count reaches
 // 0, call free(free_arg). The data passed by img must not be free'd before
 // that. The new reference will be writeable.
@@ -273,31 +282,7 @@ struct mp_image *mp_image_new_ref(struct mp_image *img)
 struct mp_image *mp_image_new_custom_ref(struct mp_image *img, void *free_arg,
                                          void (*free)(void *arg))
 {
-    return mp_image_new_external_ref(img, free_arg, NULL, NULL, NULL, free);
-}
-
-// Return a reference counted reference to img. ref/unref/is_unique are used to
-// connect to an external refcounting API. It is assumed that the new object
-// has an initial reference to that external API. If free is given, that is
-// called after the last unref. All function pointers are optional.
-// On allocation failure, unref the frame and return NULL.
-struct mp_image *mp_image_new_external_ref(struct mp_image *img, void *arg,
-                                           void (*ref)(void *arg),
-                                           void (*unref)(void *arg),
-                                           bool (*is_unique)(void *arg),
-                                           void (*free)(void *arg))
-{
-    struct mp_image *new = talloc_ptrtype(NULL, new);
-    talloc_set_destructor(new, mp_image_destructor);
-    *new = *img;
-
-    new->refcount = m_refcount_new();
-    new->refcount->ext_ref = ref;
-    new->refcount->ext_unref = unref;
-    new->refcount->ext_is_unique = is_unique;
-    new->refcount->free = free;
-    new->refcount->arg = arg;
-    return new;
+    return mp_image_new_external_ref(img, free_arg, NULL, free);
 }
 
 bool mp_image_is_writeable(struct mp_image *img)
@@ -347,8 +332,9 @@ void mp_image_copy(struct mp_image *dst, struct mp_image *src)
     assert(dst->w == src->w && dst->h == src->h);
     assert(mp_image_is_writeable(dst));
     for (int n = 0; n < dst->num_planes; n++) {
-        int line_bytes = (dst->plane_w[n] * dst->fmt.bpp[n] + 7) / 8;
-        memcpy_pic(dst->planes[n], src->planes[n], line_bytes, dst->plane_h[n],
+        int line_bytes = (mp_image_plane_w(dst, n) * dst->fmt.bpp[n] + 7) / 8;
+        int plane_h = mp_image_plane_h(dst, n);
+        memcpy_pic(dst->planes[n], src->planes[n], line_bytes, plane_h,
                    dst->stride[n], src->stride[n]);
     }
     // Watch out for AV_PIX_FMT_FLAG_PSEUDOPAL retardation
@@ -372,7 +358,7 @@ void mp_image_copy_attributes(struct mp_image *dst, struct mp_image *src)
     }
     dst->params.primaries = src->params.primaries;
     dst->params.gamma = src->params.gamma;
-    if ((dst->flags & MP_IMGFLAG_YUV) == (src->flags & MP_IMGFLAG_YUV)) {
+    if ((dst->fmt.flags & MP_IMGFLAG_YUV) == (src->fmt.flags & MP_IMGFLAG_YUV)) {
         dst->params.colorspace = src->params.colorspace;
         dst->params.colorlevels = src->params.colorlevels;
         dst->params.chroma_location = src->params.chroma_location;
@@ -428,9 +414,9 @@ void mp_image_clear(struct mp_image *img, int x0, int y0, int x1, int y1)
         plane_clear[0] = av_le2ne16(0x0080);
     } else if (area.imgfmt == IMGFMT_NV12 || area.imgfmt == IMGFMT_NV21) {
         plane_clear[1] = 0x8080;
-    } else if (area.flags & MP_IMGFLAG_YUV_P) {
+    } else if (area.fmt.flags & MP_IMGFLAG_YUV_P) {
         uint16_t chroma_clear = (1 << area.fmt.plane_bits) / 2;
-        if (!(area.flags & MP_IMGFLAG_NE))
+        if (!(area.fmt.flags & MP_IMGFLAG_NE))
             chroma_clear = av_bswap16(chroma_clear);
         if (area.num_planes > 2)
             plane_clear[1] = plane_clear[2] = chroma_clear;
@@ -438,13 +424,13 @@ void mp_image_clear(struct mp_image *img, int x0, int y0, int x1, int y1)
 
     for (int p = 0; p < area.num_planes; p++) {
         int bpp = area.fmt.bpp[p];
-        int bytes = (area.plane_w[p] * bpp + 7) / 8;
+        int bytes = (mp_image_plane_w(&area, p) * bpp + 7) / 8;
         if (bpp <= 8) {
             memset_pic(area.planes[p], plane_clear[p], bytes,
-                       area.plane_h[p], area.stride[p]);
+                       mp_image_plane_h(&area, p), area.stride[p]);
         } else {
             memset16_pic(area.planes[p], plane_clear[p], (bytes + 1) / 2,
-                         area.plane_h[p], area.stride[p]);
+                         mp_image_plane_h(&area, p), area.stride[p]);
         }
     }
 }
@@ -452,7 +438,8 @@ void mp_image_clear(struct mp_image *img, int x0, int y0, int x1, int y1)
 void mp_image_vflip(struct mp_image *img)
 {
     for (int p = 0; p < img->num_planes; p++) {
-        img->planes[p] = img->planes[p] + img->stride[p] * (img->plane_h[p] - 1);
+        int plane_h = mp_image_plane_h(img, p);
+        img->planes[p] = img->planes[p] + img->stride[p] * (plane_h - 1);
         img->stride[p] = -img->stride[p];
     }
 }
@@ -465,11 +452,15 @@ char *mp_image_params_to_str_buf(char *b, size_t bs,
         if (p->w != p->d_w || p->h != p->d_h)
             mp_snprintf_cat(b, bs, "->%dx%d", p->d_w, p->d_h);
         mp_snprintf_cat(b, bs, " %s", mp_imgfmt_to_name(p->imgfmt));
-        mp_snprintf_cat(b, bs, " %s/%s", mp_csp_names[p->colorspace],
-                        mp_csp_levels_names[p->colorlevels]);
-        mp_snprintf_cat(b, bs, " CL=%s", mp_chroma_names[p->chroma_location]);
-        if (p->outputlevels)
-            mp_snprintf_cat(b, bs, " out=%s", mp_csp_levels_names[p->outputlevels]);
+        mp_snprintf_cat(b, bs, " %s/%s",
+                        m_opt_choice_str(mp_csp_names, p->colorspace),
+                        m_opt_choice_str(mp_csp_levels_names, p->colorlevels));
+        mp_snprintf_cat(b, bs, " CL=%s",
+                        m_opt_choice_str(mp_chroma_names, p->chroma_location));
+        if (p->outputlevels) {
+            mp_snprintf_cat(b, bs, " out=%s",
+                    m_opt_choice_str(mp_csp_levels_names, p->outputlevels));
+        }
         if (p->rotate)
             mp_snprintf_cat(b, bs, " rot=%d", p->rotate);
         if (p->stereo_in > 0 || p->stereo_out > 0) {
@@ -492,8 +483,7 @@ bool mp_image_params_valid(const struct mp_image_params *p)
     // ints. We also should (for now) do the same as FFmpeg, to be sure large
     // images don't crash with libswscale or when wrapping with AVFrame and
     // passing the result to filters.
-    // Unlike FFmpeg, consider 0x0 valid (might be needed for OSD/screenshots).
-    if (p->w < 0 || p->h < 0 || (p->w + 128LL) * (p->h + 128LL) >= INT_MAX / 8)
+    if (p->w <= 0 || p->h <= 0 || (p->w + 128LL) * (p->h + 128LL) >= INT_MAX / 8)
         return false;
 
     if (p->d_w <= 0 || p->d_h <= 0)
@@ -694,8 +684,7 @@ struct mp_image *mp_image_from_av_frame(struct AVFrame *av_frame)
         return NULL;
     struct mp_image t = {0};
     mp_image_copy_fields_from_av_frame(&t, new_ref);
-    return mp_image_new_external_ref(&t, new_ref, NULL, NULL, frame_is_unique,
-                                     frame_free);
+    return mp_image_new_external_ref(&t, new_ref, frame_is_unique, frame_free);
 }
 
 static void free_img(void *opaque, uint8_t *data)
@@ -741,4 +730,51 @@ struct AVFrame *mp_image_to_av_frame_and_unref(struct mp_image *img)
     }
     talloc_free(new_ref);
     return frame;
+}
+
+void memcpy_pic(void *dst, const void *src, int bytesPerLine, int height,
+                int dstStride, int srcStride)
+{
+    if (bytesPerLine == dstStride && dstStride == srcStride && height) {
+        if (srcStride < 0) {
+            src = (uint8_t*)src + (height - 1) * srcStride;
+            dst = (uint8_t*)dst + (height - 1) * dstStride;
+            srcStride = -srcStride;
+        }
+
+        memcpy(dst, src, srcStride * (height - 1) + bytesPerLine);
+    } else {
+        for (int i = 0; i < height; i++) {
+            memcpy(dst, src, bytesPerLine);
+            src = (uint8_t*)src + srcStride;
+            dst = (uint8_t*)dst + dstStride;
+        }
+    }
+}
+
+void memset_pic(void *dst, int fill, int bytesPerLine, int height, int stride)
+{
+    if (bytesPerLine == stride && height) {
+        memset(dst, fill, stride * (height - 1) + bytesPerLine);
+    } else {
+        for (int i = 0; i < height; i++) {
+            memset(dst, fill, bytesPerLine);
+            dst = (uint8_t *)dst + stride;
+        }
+    }
+}
+
+void memset16_pic(void *dst, int fill, int unitsPerLine, int height, int stride)
+{
+    if (fill == 0) {
+        memset_pic(dst, 0, unitsPerLine * 2, height, stride);
+    } else {
+        for (int i = 0; i < height; i++) {
+            uint16_t *line = dst;
+            uint16_t *end = line + unitsPerLine;
+            while (line < end)
+                *line++ = fill;
+            dst = (uint8_t *)dst + stride;
+        }
+    }
 }

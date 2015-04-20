@@ -1,21 +1,20 @@
 /*
  * Copyright (C)2002 Anders Johansson ajh@atri.curtin.edu.au
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -59,7 +58,7 @@ static int control(struct af_instance *af, int cmd, void *arg)
         } else {
             mp_audio_set_format(af->data, AF_FORMAT_FLOAT);
         }
-        if (af_fmt_is_planar(in->format))
+        if (AF_FORMAT_IS_PLANAR(in->format))
             mp_audio_set_format(af->data, af_fmt_to_planar(af->data->format));
         s->rgain = 1.0;
         if ((s->rgain_track || s->rgain_album) && af->replaygain_data) {

@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 // Time in seconds the main thread waits for the cache thread. On wakeups, the
@@ -102,6 +101,9 @@ struct priv {
     int64_t reads;          // number of actual read attempts performed
 
     int64_t read_filepos;   // client read position (mirrors cache->pos)
+
+    int64_t eof_pos;
+
     int control;            // requested STREAM_CTRL_... or CACHE_CTRL_...
     void *control_arg;      // temporary for executing STREAM_CTRLs
     int control_res;
@@ -277,8 +279,10 @@ done:
     s->eof = len <= 0;
     s->idle = s->eof;
     s->reads++;
-    if (s->eof)
+    if (s->eof) {
+        s->eof_pos = stream_tell(s->stream);
         MP_TRACE(s, "EOF reached.\n");
+    }
 
     pthread_cond_signal(&s->wakeup);
 
@@ -352,7 +356,7 @@ static void update_cached_controls(struct priv *s)
         talloc_free(s->stream_metadata);
         s->stream_metadata = talloc_steal(s, tags);
     }
-    s->stream_size = -1;
+    s->stream_size = s->eof_pos;
     if (stream_control(s->stream, STREAM_CTRL_GET_SIZE, &i64) == STREAM_OK)
         s->stream_size = i64;
     s->has_avseek = stream_control(s->stream, STREAM_CTRL_HAS_AVSEEK, NULL) > 0;
@@ -610,6 +614,7 @@ int stream_cache_init(stream_t *cache, stream_t *stream,
 
     struct priv *s = talloc_zero(NULL, struct priv);
     s->log = cache->log;
+    s->eof_pos = -1;
 
     cache_drop_contents(s);
 

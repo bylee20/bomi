@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <math.h>
@@ -40,24 +39,6 @@ int af_from_dB(int n, float* in, float* out, float k, float mi, float ma)
   return AF_OK;
 }
 
-/* Convert from gain value to dB. Returns AF_OK if of and AF_ERROR if
- * fail. gain=0 will become -200 dB. k is just a multiplier. */
-int af_to_dB(int n, float* in, float* out, float k)
-{
-  int i = 0;
-  // Sanity check
-  if(!in || !out)
-    return AF_ERROR;
-
-  for(i=0;i<n;i++){
-    if(in[i] == 0.0)
-      out[i]=-200.0;
-    else
-      out[i]=k*log10(in[i]);
-  }
-  return AF_OK;
-}
-
 /* Convert from ms to sample time */
 int af_from_ms(int n, float* in, int* out, int rate, float mi, float ma)
 {
@@ -68,20 +49,6 @@ int af_from_ms(int n, float* in, int* out, int rate, float mi, float ma)
 
   for(i=0;i<n;i++)
     out[i]=(int)((float)rate * MPCLAMP(in[i],mi,ma)/1000.0);
-
-  return AF_OK;
-}
-
-/* Convert from sample time to ms */
-int af_to_ms(int n, int* in, float* out, int rate)
-{
-  int i = 0;
-  // Sanity check
-  if(!in || !out || !rate)
-    return AF_ERROR;
-
-  for(i=0;i<n;i++)
-    out[i]=1000.0 * (float)in[i]/((float)rate);
 
   return AF_OK;
 }

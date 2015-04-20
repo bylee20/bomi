@@ -5,19 +5,18 @@
  *
  * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -242,7 +241,7 @@ static int encode(struct ao *ao, double apts, void **data)
         frame->format = af_to_avformat(ao->format);
         frame->nb_samples = ac->aframesize;
 
-        size_t num_planes = af_fmt_is_planar(ao->format) ? ao->channels.num : 1;
+        size_t num_planes = AF_FORMAT_IS_PLANAR(ao->format) ? ao->channels.num : 1;
         assert(num_planes <= AV_NUM_DATA_POINTERS);
         for (int n = 0; n < num_planes; n++)
             frame->extended_data[n] = data[n];
@@ -351,7 +350,7 @@ static int play(struct ao *ao, void **data, int samples, int flags)
     double pts = ectx->last_audio_in_pts;
     pts += ectx->samples_since_last_pts / (double)ao->samplerate;
 
-    size_t num_planes = af_fmt_is_planar(ao->format) ? ao->channels.num : 1;
+    size_t num_planes = AF_FORMAT_IS_PLANAR(ao->format) ? ao->channels.num : 1;
 
     void *tempdata = NULL;
     void *padded[MP_NUM_CHANNELS];

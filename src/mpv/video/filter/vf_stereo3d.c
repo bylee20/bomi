@@ -1,21 +1,20 @@
 /*
  * Copyright (C) 2010 Gordon Schmidt <gordon.schmidt <at> s2000.tu-chemnitz.de>
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 //==includes==//
@@ -34,8 +33,6 @@
 #include "video/mp_image.h"
 #include "vf.h"
 #include "options/m_option.h"
-
-#include "video/memcpy_pic.h"
 
 #include "vf_lavfi.h"
 
@@ -322,20 +319,18 @@ static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
         case ABOVE_BELOW_2_RL:
         case INTERLEAVE_ROWS_LR:
         case INTERLEAVE_ROWS_RL:
-            memcpy_pic2(dmpi->planes[0] + out_off_left,
+            memcpy_pic(dmpi->planes[0] + out_off_left,
                        mpi->planes[0] + in_off_left,
                        3 * vf->priv->width,
                        vf->priv->height,
                        dmpi->stride[0] * vf->priv->row_step,
-                       mpi->stride[0] * vf->priv->row_step,
-                       vf->priv->row_step != 1);
-            memcpy_pic2(dmpi->planes[0] + out_off_right,
+                       mpi->stride[0] * vf->priv->row_step);
+            memcpy_pic(dmpi->planes[0] + out_off_right,
                        mpi->planes[0] + in_off_right,
                        3 * vf->priv->width,
                        vf->priv->height,
                        dmpi->stride[0] * vf->priv->row_step,
-                       mpi->stride[0] * vf->priv->row_step,
-                       vf->priv->row_step != 1);
+                       mpi->stride[0] * vf->priv->row_step);
             break;
         case MONO_L:
         case MONO_R:
@@ -472,7 +467,7 @@ static const char *rev_map_name(int val)
 }
 
 // Extremely stupid; can be dropped when the internal filter is dropped,
-// and OPT_VID_STEREO_MODE() can be used instead.
+// and OPT_CHOICE_C() can be used instead.
 static int opt_to_stereo3dmode(int val)
 {
     // Find x for rev_map_name(val) == MP_STEREO3D_NAME(x)

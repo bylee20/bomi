@@ -11,21 +11,20 @@
  * module from VideoLAN:
  * Copyright (c) 2006 Derk-Jan Hartman <hartman at videolan dot org>
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * along with MPlayer; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -35,20 +34,17 @@
  * when you are wanting to do good buffering of audio).
  */
 
+#include <CoreAudio/HostTime.h>
+
 #include "config.h"
 #include "ao.h"
 #include "internal.h"
 #include "audio/format.h"
 #include "osdep/timer.h"
 #include "options/m_option.h"
-#include "misc/ring.h"
 #include "common/msg.h"
 #include "audio/out/ao_coreaudio_properties.h"
 #include "audio/out/ao_coreaudio_utils.h"
-
-static void audio_pause(struct ao *ao);
-static void audio_resume(struct ao *ao);
-static void reset(struct ao *ao);
 
 static bool ca_format_is_digital(AudioStreamBasicDescription asbd)
 {
@@ -310,8 +306,6 @@ struct priv {
 
     bool paused;
 
-    struct mp_ring *buffer;
-
     // digital render callback
     AudioDeviceIOProcID render_cb;
 
@@ -332,14 +326,10 @@ struct priv {
 
     bool changed_mixing;
     int stream_asbd_changed;
-    bool muted;
-};
+    bool reload_requested;
 
-static int get_ring_size(struct ao *ao)
-{
-    return af_fmt_seconds_to_bytes(
-            ao->format, 0.5, ao->channels.num, ao->samplerate);
-}
+    uint32_t hw_latency_us;
+};
 
 static OSStatus render_cb_digital(
         AudioDeviceID device, const AudioTimeStamp *ts,
@@ -351,45 +341,31 @@ static OSStatus render_cb_digital(
     AudioBuffer buf  = out_data->mBuffers[p->stream_idx];
     int requested    = buf.mDataByteSize;
 
-    if (p->muted)
-        mp_ring_drain(p->buffer, requested);
-    else
-        mp_ring_read(p->buffer, buf.mData, requested);
+    int pseudo_frames = requested / ao->sstride;
+
+    // we expect the callback to read full frames, which are aligned accordingly
+    if (pseudo_frames * ao->sstride != requested) {
+        MP_ERR(ao, "Unsupported unaligned read of %d bytes.\n", requested);
+        return kAudioHardwareUnspecifiedError;
+    }
+
+    int64_t end = mp_time_us();
+    end += p->hw_latency_us + ca_get_latency(ts)
+        + ca_frames_to_us(ao, pseudo_frames);
+
+    ao_read_data(ao, &buf.mData, pseudo_frames, end);
+
+    // Check whether we need to reset the digital output stream.
+    if (p->stream_asbd_changed) {
+        p->stream_asbd_changed = 0;
+        if (!p->reload_requested && ca_stream_supports_digital(ao, p->stream)) {
+            p->reload_requested = true;
+            ao_request_reload(ao);
+            MP_INFO(ao, "Stream format changed! Reloading.\n");
+        }
+    }
 
     return noErr;
-}
-
-static int control(struct ao *ao, enum aocontrol cmd, void *arg)
-{
-    struct priv *p = ao->priv;
-    ao_control_vol_t *control_vol;
-    switch (cmd) {
-    case AOCONTROL_GET_VOLUME:
-        control_vol = (ao_control_vol_t *)arg;
-        // Digital output has no volume adjust.
-        int digitalvol = p->muted ? 0 : 100;
-        *control_vol = (ao_control_vol_t) {
-            .left = digitalvol, .right = digitalvol,
-        };
-        return CONTROL_TRUE;
-
-    case AOCONTROL_SET_VOLUME:
-        control_vol = (ao_control_vol_t *)arg;
-        // Digital output can not set volume. Here we have to return true
-        // to make mixer forget it. Else mixer will add a soft filter,
-        // that's not we expected and the filter not support ac3 stream
-        // will cause mplayer die.
-
-        // Although not support set volume, but at least we support mute.
-        // MPlayer set mute by set volume to zero, we handle it.
-        if (control_vol->left == 0 && control_vol->right == 0)
-            p->muted = true;
-        else
-            p->muted = false;
-        return CONTROL_TRUE;
-
-    } // end switch
-    return CONTROL_UNKNOWN;
 }
 
 static int init_digital(struct ao *ao, AudioStreamBasicDescription asbd);
@@ -524,16 +500,21 @@ static int init_digital(struct ao *ao, AudioStreamBasicDescription asbd)
                   (p->stream_asbd.mBytesPerPacket /
                    p->stream_asbd.mFramesPerPacket);
 
-    p->buffer = mp_ring_new(p, get_ring_size(ao));
+    uint32_t latency_frames = 0;
+    err = CA_GET_O(p->device, kAudioDevicePropertyLatency, &latency_frames);
+    if (err != noErr) {
+        CHECK_CA_WARN("cannot get device latency");
+        latency_frames = 0;
+    }
+
+    p->hw_latency_us = ca_frames_to_us(ao, latency_frames);
+    MP_VERBOSE(ao, "base latency: %d microseconds\n", (int)p->hw_latency_us);
 
     err = AudioDeviceCreateIOProcID(p->device,
                                     (AudioDeviceIOProc)render_cb_digital,
                                     (void *)ao,
                                     &p->render_cb);
-
     CHECK_CA_ERROR("failed to register digital render callback");
-
-    reset(ao);
 
     return CONTROL_TRUE;
 
@@ -541,52 +522,6 @@ coreaudio_error:
     err = ca_unlock_device(p->device, &p->hog_pid);
     CHECK_CA_WARN("can't release hog mode");
     return CONTROL_ERROR;
-}
-
-static int play(struct ao *ao, void **data, int samples, int flags)
-{
-    struct priv *p   = ao->priv;
-    void *output_samples = data[0];
-    int num_bytes = samples * ao->sstride;
-
-    // Check whether we need to reset the digital output stream.
-    if (p->stream_asbd_changed) {
-        p->stream_asbd_changed = 0;
-        if (ca_stream_supports_digital(ao, p->stream)) {
-            if (!ca_change_format(ao, p->stream, p->stream_asbd)) {
-                MP_WARN(ao , "can't restore digital output\n");
-            } else {
-                MP_WARN(ao, "restoring digital output succeeded.\n");
-                reset(ao);
-            }
-        }
-    }
-
-    int wrote = mp_ring_write(p->buffer, output_samples, num_bytes);
-    audio_resume(ao);
-
-    return wrote / ao->sstride;
-}
-
-static void reset(struct ao *ao)
-{
-    struct priv *p = ao->priv;
-    audio_pause(ao);
-    mp_ring_reset(p->buffer);
-}
-
-static int get_space(struct ao *ao)
-{
-    struct priv *p = ao->priv;
-    return mp_ring_available(p->buffer) / ao->sstride;
-}
-
-static double get_delay(struct ao *ao)
-{
-    // FIXME: should also report the delay of coreaudio itself (hardware +
-    // internal buffers)
-    struct priv *p = ao->priv;
-    return mp_ring_buffered(p->buffer) / (double)ao->bps;
 }
 
 static void uninit(struct ao *ao)
@@ -618,26 +553,16 @@ static void audio_pause(struct ao *ao)
 {
     struct priv *p = ao->priv;
 
-    if (p->paused)
-        return;
-
     OSStatus err = AudioDeviceStop(p->device, p->render_cb);
     CHECK_CA_WARN("can't stop digital device");
-
-    p->paused = true;
 }
 
 static void audio_resume(struct ao *ao)
 {
     struct priv *p = ao->priv;
 
-    if (!p->paused)
-        return;
-
     OSStatus err = AudioDeviceStart(p->device, p->render_cb);
     CHECK_CA_WARN("can't start digital device");
-
-    p->paused = false;
 }
 
 #define OPT_BASE_STRUCT struct priv
@@ -647,17 +572,11 @@ const struct ao_driver audio_out_coreaudio_exclusive = {
     .name      = "coreaudio_exclusive",
     .uninit    = uninit,
     .init      = init,
-    .play      = play,
-    .control   = control,
-    .get_space = get_space,
-    .get_delay = get_delay,
-    .reset     = reset,
     .pause     = audio_pause,
     .resume    = audio_resume,
     .list_devs = ca_get_device_list,
     .priv_size = sizeof(struct priv),
     .priv_defaults = &(const struct priv){
-        .muted = false,
         .stream_asbd_changed = 0,
         .hog_pid = -1,
         .stream = 0,

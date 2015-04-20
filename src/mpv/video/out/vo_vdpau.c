@@ -4,21 +4,20 @@
  * Copyright (C) 2008 NVIDIA (Rajib Mahapatra <rmahapatra@nvidia.com>)
  * Copyright (C) 2009 Uoti Urpala
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -136,8 +135,7 @@ struct vdpctx {
         } *targets;
         int targets_size;
         int render_count;
-        int bitmap_id;
-        int bitmap_pos_id;
+        int change_id;
     } osd_surfaces[MAX_OSD_PARTS];
 
     // Video equalizer
@@ -164,19 +162,10 @@ static int render_video_to_output_surface(struct vo *vo,
     CHECK_VDP_WARNING(vo, "Error when calling "
                       "vdp_presentation_queue_block_until_surface_idle");
 
-    if (!mpi) {
-        // At least clear the screen if there is nothing to render
-        int flags = VDP_OUTPUT_SURFACE_RENDER_ROTATE_0;
-        vdp_st = vdp->output_surface_render_output_surface(output_surface,
-                                                           NULL, vc->black_pixel,
-                                                           NULL, NULL, NULL,
-                                                           flags);
-        return -1;
-    }
-
-    if (vc->rgb_mode) {
-        // Clear the borders between video and window (if there are any).
-        // For some reason, video_mixer_render doesn't need it for YUV.
+    // Clear the borders between video and window (if there are any).
+    // For some reason, video_mixer_render doesn't need it for YUV.
+    // Also, if there is nothing to render, at least clear the screen.
+    if (vc->rgb_mode || !mpi) {
         int flags = VDP_OUTPUT_SURFACE_RENDER_ROTATE_0;
         vdp_st = vdp->output_surface_render_output_surface(output_surface,
                                                            NULL, vc->black_pixel,
@@ -184,6 +173,9 @@ static int render_video_to_output_surface(struct vo *vo,
                                                            flags);
         CHECK_VDP_WARNING(vo, "Error clearing screen");
     }
+
+    if (!mpi)
+        return -1;
 
     struct mp_vdpau_mixer_frame *frame = mp_vdpau_mixed_frame_get(mpi);
     struct mp_vdpau_mixer_opts opts = {0};
@@ -388,7 +380,7 @@ static void mark_vdpau_objects_uninitialized(struct vo *vo)
     for (int i = 0; i < MAX_OSD_PARTS; i++) {
         struct osd_bitmap_surface *sfc = &vc->osd_surfaces[i];
         talloc_free(sfc->packer);
-        sfc->bitmap_id = sfc->bitmap_pos_id = 0;
+        sfc->change_id = 0;
         *sfc = (struct osd_bitmap_surface){
             .surface = VDP_INVALID_HANDLE,
         };
@@ -512,16 +504,13 @@ static void generate_osd_part(struct vo *vo, struct sub_bitmaps *imgs)
     struct osd_bitmap_surface *sfc = &vc->osd_surfaces[imgs->render_index];
     bool need_upload = false;
 
-    if (imgs->bitmap_pos_id == sfc->bitmap_pos_id)
+    if (imgs->change_id == sfc->change_id)
         return; // Nothing changed and we still have the old data
 
     sfc->render_count = 0;
 
     if (imgs->format == SUBBITMAP_EMPTY || imgs->num_parts == 0)
         return;
-
-    if (imgs->bitmap_id == sfc->bitmap_id)
-        goto osd_skip_upload;
 
     need_upload = true;
     VdpRGBAFormat format;
@@ -572,9 +561,9 @@ static void generate_osd_part(struct vo *vo, struct sub_bitmaps *imgs)
                 &(const void *){zeros}, &(uint32_t){0},
                 &(VdpRect){0, 0, sfc->packer->used_width,
                                  sfc->packer->used_height});
+        CHECK_VDP_WARNING(vo, "OSD: error uploading OSD bitmap");
     }
 
-osd_skip_upload:
     if (sfc->surface == VDP_INVALID_HANDLE)
         return;
     if (sfc->packer->count > sfc->targets_size) {
@@ -610,8 +599,7 @@ osd_skip_upload:
         sfc->render_count++;
     }
 
-    sfc->bitmap_id = imgs->bitmap_id;
-    sfc->bitmap_pos_id = imgs->bitmap_pos_id;
+    sfc->change_id = imgs->change_id;
 }
 
 static void draw_osd_cb(void *ctx, struct sub_bitmaps *imgs)
@@ -842,7 +830,7 @@ static struct mp_image *read_output_surface(struct vo *vo,
     if (!vo->params)
         return NULL;
 
-    struct mp_image *image = mp_image_alloc(IMGFMT_BGR32, width, height);
+    struct mp_image *image = mp_image_alloc(IMGFMT_BGR0, width, height);
     if (!image)
         return NULL;
 
@@ -1024,15 +1012,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_GET_EQUALIZER: {
         struct voctrl_get_equalizer_args *args = data;
         return get_equalizer(vo, args->name, args->valueptr);
-    }
-    case VOCTRL_GET_COLORSPACE: {
-        struct mp_image_params *params = data;
-        if (vo->params && !vc->rgb_mode) {
-            params->colorspace = vo->params->colorspace;
-            params->colorlevels = vo->params->colorlevels;
-            params->outputlevels = vo->params->outputlevels;
-        }
-        return true;
     }
     case VOCTRL_REDRAW_FRAME:
         if (status_ok(vo))

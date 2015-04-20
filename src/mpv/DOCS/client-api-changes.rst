@@ -25,6 +25,14 @@ API changes
 
 ::
 
+ --- mpv 0.9.0 will be released ---
+ 1.16   - add mpv_opengl_cb_report_flip()
+        - introduce mpv_opengl_cb_draw() and deprecate mpv_opengl_cb_render()
+ 1.15   - mpv_initialize() will now load config files. This requires setting
+          the "config" and "config-dir" options. In particular, it will load
+          mpv.conf.
+        - minor backwards-compatible change to the "seek" and "screenshot"
+          commands (new flag syntax, old additional args deprecated)
  --- mpv 0.8.0 is released ---
  1.14   - add mpv_wait_async_requests()
         - the --msg-level option changes its native type from a flat string to

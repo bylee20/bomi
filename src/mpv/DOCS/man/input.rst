@@ -86,11 +86,11 @@ List of Input Commands
     disabling default bindings, without disabling all bindings with
     ``--no-input-default-bindings``.
 
-``seek <seconds> [relative|absolute|absolute-percent|- [default-precise|exact|keyframes]]``
+``seek <seconds> [relative|absolute|absolute-percent|exact|keyframes]``
     Change the playback position. By default, seeks by a relative amount of
     seconds.
 
-    The second argument sets the seek mode:
+    The second argument consists of flags controlling the seek mode:
 
     relative (default)
         Seek relative to current position (a negative value seeks backwards).
@@ -98,16 +98,19 @@ List of Input Commands
         Seek to a given time.
     absolute-percent
         Seek to a given percent position.
-
-    The third argument defines how exact the seek is:
-
-    default-precise (default)
-        Follow the default behavior as set by ``--hr-seek``, which by default
-        does imprecise seeks (like ``keyframes``).
-    exact
-        Always do exact/hr/precise seeks (slow).
     keyframes
         Always restart playback at keyframe boundaries (fast).
+    exact
+        Always do exact/hr/precise seeks (slow).
+
+    Multiple flags can be combined, e.g.: ``absolute+keyframes``.
+
+    By default, ``keyframes`` is used for relative seeks, and ``exact`` is used
+    for absolute seeks.
+
+    Before mpv 0.9, the ``keyframes`` and ``exact`` flags had to be passed as
+    3rd parameter (essentially using a space instead of ``+``). The 3rd
+    parameter is still parsed, but is considered deprecated.
 
 ``revert_seek [mode]``
     Undoes the ``seek`` command, and some other commands that seek (but not
@@ -170,16 +173,12 @@ List of Input Commands
         Save the contents of the mpv window. Typically scaled, with OSD and
         subtitles. The exact behavior depends on the selected video output, and
         if no support is available, this will act like ``video``.
-
-    Second argument:
-
-    <single> (default)
-        Take a single screenshot.
     <each-frame>
         Take a screenshot each frame. Issue this command again to stop taking
         screenshots. Note that you should disable frame-dropping when using
         this mode - or you might receive duplicate images in cases when a
-        frame was dropped.
+        frame was dropped. This flag can be combined with the other flags,
+        e.g. ``video+each-frame``.
 
 ``screenshot_to_file "<filename>" [subtitles|video|window]``
     Take a screenshot and save it to a given file. The format of the file will
@@ -188,8 +187,7 @@ List of Input Commands
 
     The second argument is like the first argument to ``screenshot``.
 
-    This command tries to never overwrite files. If the file already exists,
-    it fails.
+    If the file already exists, it's overwritten.
 
     Like all input command parameters, the filename is subject to property
     expansion as described in `Property Expansion`_.
@@ -1279,6 +1277,9 @@ Property list
     ``video-params/primaries``
         The primaries in use as string. (Exact values subject to change.)
 
+    ``video-params/gamma``
+        The gamma function in use as string. (Exact values subject to change.)
+
     ``video-params/chroma-location``
         Chroma location as string. (Exact values subject to change.)
 
@@ -1348,6 +1349,13 @@ Property list
 ``display-names``
     Names of the displays that the mpv window covers. On X11, these
     are the xrandr names (LVDS1, HDMI1, DP1, VGA1, etc.).
+
+``display-fps``
+    The refresh rate of the current display. Currently, this is the lowest FPS
+    of any display covered by the video, as retrieved by the underlying system
+    APIs (e.g. xrandr on X11). It is not the measured FPS. It's not necessarily
+    available on all platforms. Note that any of the listed facts may change
+    any time without a warning.
 
 ``video-aspect`` (RW)
     Video aspect, see ``--video-aspect``.
@@ -1695,6 +1703,10 @@ Property list
 ``audio-out-detected-device``
     Return the audio device selected by the AO driver (only implemented for
     some drivers: currently only ``coreaudio``).
+
+``working-directory``
+    Return the working directory of the mpv process. Can be useful for JSON IPC
+    users, because the command line player usually works with relative paths.
 
 ``mpv-version``
     Return the mpv version/copyright string. Depending on how the binary was

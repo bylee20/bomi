@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -41,7 +40,6 @@
 
 struct parse_state {
     struct m_config *config;
-    int argc;
     char **argv;
 
     bool no_more_opts;
@@ -57,14 +55,13 @@ static int split_opt_silent(struct parse_state *p)
 {
     assert(!p->error);
 
-    if (p->argc < 1)
+    if (!p->argv || !p->argv[0])
         return 1;
 
     p->is_opt = false;
     p->arg = bstr0(p->argv[0]);
     p->param = bstr0(NULL);
 
-    p->argc--;
     p->argv++;
 
     if (p->no_more_opts || !bstr_startswith0(p->arg, "-") || p->arg.len == 1)
@@ -82,13 +79,15 @@ static int split_opt_silent(struct parse_state *p)
 
     bool ambiguous = !bstr_split_tok(p->arg, "=", &p->arg, &p->param);
 
+    if (!p->arg.len)
+        return M_OPT_INVALID;
+
     bool need_param = m_config_option_requires_param(p->config, p->arg) > 0;
 
     if (ambiguous && need_param) {
-        if (p->argc < 1)
+        if (!p->argv[0])
             return M_OPT_MISSING_PARAM;
         p->param = bstr0(p->argv[0]);
-        p->argc--;
         p->argv++;
     }
 
@@ -103,7 +102,7 @@ static bool split_opt(struct parse_state *p)
         return r == 0;
     p->error = true;
 
-    MP_FATAL(p->config, "Error parsing commandline option %.*s: %s\n",
+    MP_FATAL(p->config, "Error parsing command line option '%.*s': %s\n",
              BSTR_P(p->arg), m_option_strerror(r));
     return false;
 }
@@ -132,8 +131,7 @@ static void process_non_option(struct playlist *files, const char *arg)
 
 // returns M_OPT_... error code
 int m_config_parse_mp_command_line(m_config_t *config, struct playlist *files,
-                                   struct mpv_global *global,
-                                   int argc, char **argv)
+                                   struct mpv_global *global, char **argv)
 {
     int ret = M_OPT_UNKNOWN;
     int mode = 0;
@@ -146,7 +144,7 @@ int m_config_parse_mp_command_line(m_config_t *config, struct playlist *files,
 
     mode = GLOBAL;
 
-    struct parse_state p = {config, argc - 1, argv + 1};
+    struct parse_state p = {config, argv};
     while (split_opt(&p)) {
         if (p.is_opt) {
             int flags = M_SETOPT_FROM_CMDLINE;
@@ -158,7 +156,7 @@ int m_config_parse_mp_command_line(m_config_t *config, struct playlist *files,
                 goto err_out;
             }
             if (r < 0) {
-                MP_FATAL(config, "Setting commandline option --%.*s=%.*s failed.\n",
+                MP_FATAL(config, "Setting command line option '--%.*s=%.*s' failed.\n",
                          BSTR_P(p.arg), BSTR_P(p.param));
                 goto err_out;
             }
@@ -283,14 +281,14 @@ err_out:
  * during normal options parsing.
  */
 void m_config_preparse_command_line(m_config_t *config, struct mpv_global *global,
-                                    int argc, char **argv)
+                                    char **argv)
 {
     struct MPOpts *opts = global->opts;
 
     // Hack to shut up parser error messages
     mp_msg_mute(global, true);
 
-    struct parse_state p = {config, argc - 1, argv + 1};
+    struct parse_state p = {config, argv};
     while (split_opt_silent(&p) == 0) {
         if (p.is_opt) {
             // Ignore non-pre-parse options. They will be set later.

@@ -117,7 +117,14 @@ PlayEngine::PlayEngine()
     connect(d->vp, &VideoProcessor::outputInterlacedChanged, this, checkDeint);
     connect(d->vp, &VideoProcessor::deintMethodChanged, this,
             [=] (auto m) { d->info.video.deint()->setDriver(_EnumName(m)); });
-
+    connect(d->vp, &VideoProcessor::inputColorSpaceChanged,
+            d->info.video.filter(), &VideoFormatObject::setSpace, Qt::QueuedConnection);
+    connect(d->vp, &VideoProcessor::inputColorRangeChanged,
+            d->info.video.filter(), &VideoFormatObject::setRange, Qt::QueuedConnection);
+    connect(d->vp, &VideoProcessor::outputColorSpaceChanged,
+            d->info.video.output(), &VideoFormatObject::setSpace, Qt::QueuedConnection);
+    connect(d->vp, &VideoProcessor::outputColorRangeChanged,
+            d->info.video.output(), &VideoFormatObject::setRange, Qt::QueuedConnection);
     connect(d->vp, &VideoProcessor::skippingChanged, this, [=] (bool skipping) {
         if (skipping) {
             d->pauseAfterSkip = isPaused();
@@ -480,14 +487,14 @@ auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
 auto PlayEngine::seek(int pos) -> void
 {
     if (pos >= 0 && !d->hasImage)
-        d->mpv.tell("seek", (double)pos/1000.0, 2);
+        d->mpv.tell("seek", (double)pos/1000.0, "absolute"_b);
     d->vp->stopSkipping();
 }
 
 auto PlayEngine::relativeSeek(int pos) -> void
 {
     if (!d->hasImage) {
-        d->mpv.tell("seek", (double)pos/1000.0, 0);
+        d->mpv.tell("seek", (double)pos/1000.0, "relative"_b);
         emit sought();
     }
     d->vp->stopSkipping();
@@ -945,13 +952,13 @@ auto PlayEngine::setFramebufferObjectFormat(FramebufferObjectFormat format) -> v
 auto PlayEngine::setColorRange(ColorRange range) -> void
 {
     if (d->params.set_video_range(range))
-        d->mpv.setAsync("colormatrix-input-range", _EnumData(range).option);
+        d->mpv.tellAsync("vf", "set"_b, d->vf(&d->params));
 }
 
 auto PlayEngine::setColorSpace(ColorSpace space) -> void
 {
     if (d->params.set_video_space(space))
-        d->mpv.setAsync("colormatrix", _EnumData(space).option);
+        d->mpv.tellAsync("vf", "set"_b, d->vf(&d->params));
 }
 
 auto PlayEngine::setMotionInterpolation(bool on) -> void

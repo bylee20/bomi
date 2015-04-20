@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -30,8 +29,6 @@
 #include "video/img_format.h"
 #include "video/mp_image.h"
 #include "vf.h"
-
-#include "video/memcpy_pic.h"
 
 #include "options/m_option.h"
 
@@ -66,18 +63,12 @@ static int config(struct vf_instance *vf,
     vf->priv->exp_y = vf->priv->cfg_exp_y;
     vf->priv->exp_w = vf->priv->cfg_exp_w;
     vf->priv->exp_h = vf->priv->cfg_exp_h;
-    // calculate the missing parameters:
-#if 0
-    if(vf->priv->exp_w<width) vf->priv->exp_w=width;
-    if(vf->priv->exp_h<height) vf->priv->exp_h=height;
-#else
     if ( vf->priv->exp_w == -1 ) vf->priv->exp_w=width;
       else if (vf->priv->exp_w < -1 ) vf->priv->exp_w=width - vf->priv->exp_w;
         else if ( vf->priv->exp_w<width ) vf->priv->exp_w=width;
     if ( vf->priv->exp_h == -1 ) vf->priv->exp_h=height;
       else if ( vf->priv->exp_h < -1 ) vf->priv->exp_h=height - vf->priv->exp_h;
         else if( vf->priv->exp_h<height ) vf->priv->exp_h=height;
-#endif
     if (vf->priv->aspect) {
         float adjusted_aspect = vf->priv->aspect;
         adjusted_aspect *= ((double)width/height) / ((double)d_width/d_height);
@@ -115,8 +106,10 @@ static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
         return mpi;
 
     struct mp_image *dmpi = vf_alloc_out_image(vf);
-    if (!dmpi)
+    if (!dmpi) {
+        talloc_free(mpi);
         return NULL;
+    }
     mp_image_copy_attributes(dmpi, mpi);
 
     struct mp_image cropped = *dmpi;
@@ -150,13 +143,6 @@ static int vf_open(vf_instance_t *vf){
     vf->config=config;
     vf->query_format=query_format;
     vf->filter=filter;
-    MP_INFO(vf, "Expand: %d x %d, %d ; %d, aspect: %f, round: %d\n",
-    vf->priv->cfg_exp_w,
-    vf->priv->cfg_exp_h,
-    vf->priv->cfg_exp_x,
-    vf->priv->cfg_exp_y,
-    vf->priv->aspect,
-    vf->priv->round);
     return 1;
 }
 

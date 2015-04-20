@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -54,6 +53,7 @@ extern const demuxer_desc_t demuxer_desc_libass;
 extern const demuxer_desc_t demuxer_desc_subreader;
 extern const demuxer_desc_t demuxer_desc_playlist;
 extern const demuxer_desc_t demuxer_desc_disc;
+extern const demuxer_desc_t demuxer_desc_rar;
 
 /* Please do not add any new demuxers here. If you want to implement a new
  * demuxer, add it to libavformat, except for wrappers around external
@@ -72,6 +72,7 @@ const demuxer_desc_t *const demuxer_list[] = {
     &demuxer_desc_libass,
 #endif
     &demuxer_desc_matroska,
+    &demuxer_desc_rar,
     &demuxer_desc_lavf,
     &demuxer_desc_mf,
     &demuxer_desc_playlist,
@@ -1480,6 +1481,11 @@ void demux_unpause(demuxer_t *demuxer)
     in->thread_request_pause--;
     pthread_cond_signal(&in->wakeup);
     pthread_mutex_unlock(&in->lock);
+}
+
+bool demux_cancel_test(struct demuxer *demuxer)
+{
+    return mp_cancel_test(demuxer->stream->cancel);
 }
 
 struct demux_chapter *demux_copy_chapter_data(struct demux_chapter *c, int num)

@@ -207,19 +207,148 @@ Available filters are:
         For a list of available formats, see ``format=fmt=help``.
 
     ``<fmt>``
-        Format name, e.g. rgb15, bgr24, 420p, etc. (default: yuyv).
+        Format name, e.g. rgb15, bgr24, 420p, etc. (default: don't change).
     ``<outfmt>``
-        Format name that should be substituted for the output. If this is not
-        100% compatible with the ``<fmt>`` value, it will crash.
+        Format name that should be substituted for the output. If they do not
+        have the same bytes per pixel and chroma subsamplimg, it will fail.
+    ``<colormatrix>``
+        Controls the YUV to RGB color space conversion when playing video. There
+        are various standards. Normally, BT.601 should be used for SD video, and
+        BT.709 for HD video. (This is done by default.) Using incorrect color space
+        results in slightly under or over saturated and shifted colors.
 
-        .. admonition:: Examples
+        These options are not always supported. Different video outputs provide
+        varying degrees of support. The ``opengl`` and ``vdpau`` video output
+        drivers usually offer full support. The ``xv`` output can set the color
+        space if the system video driver supports it, but not input and output
+        levels. The ``scale`` video filter can configure color space and input
+        levels, but only if the output format is RGB (if the video output driver
+        supports RGB output, you can force this with ``-vf scale,format=rgba``).
 
-            ====================== =====================
-            Valid                  Invalid (will crash)
-            ====================== =====================
-            ``format=rgb24:bgr24`` ``format=rgb24:420p``
-            ``format=yuyv:uyvy``
-            ====================== =====================
+        If this option is set to ``auto`` (which is the default), the video's
+        color space flag will be used. If that flag is unset, the color space
+        will be selected automatically. This is done using a simple heuristic that
+        attempts to distinguish SD and HD video. If the video is larger than
+        1279x576 pixels, BT.709 (HD) will be used; otherwise BT.601 (SD) is
+        selected.
+
+        Available color spaces are:
+
+        :auto:          automatic selection (default)
+        :bt.601:        ITU-R BT.601 (SD)
+        :bt.709:        ITU-R BT.709 (HD)
+        :bt.2020-ncl:   ITU-R BT.2020 non-constant luminance system
+        :bt.2020-cl:    ITU-R BT.2020 constant luminance system
+        :smpte-240m:    SMPTE-240M
+
+    ``<colorlevels>``
+        YUV color levels used with YUV to RGB conversion. This option is only
+        necessary when playing broken files which do not follow standard color
+        levels or which are flagged wrong. If the video does not specify its
+        color range, it is assumed to be limited range.
+
+        The same limitations as with ``<colormatrix>`` apply.
+
+        Available color ranges are:
+
+        :auto:      automatic selection (normally limited range) (default)
+        :limited:   limited range (16-235 for luma, 16-240 for chroma)
+        :full:      full range (0-255 for both luma and chroma)
+
+    ``<outputlevels>``
+        RGB color levels used with YUV to RGB conversion. Normally, output devices
+        such as PC monitors use full range color levels. However, some TVs and
+        video monitors expect studio RGB levels. Providing full range output to a
+        device expecting studio level input results in crushed blacks and whites,
+        the reverse in dim gray blacks and dim whites.
+
+        The same limitations as with ``<colormatrix>`` apply.
+
+        Available color ranges are:
+
+        :auto:      automatic selection (equals to full range) (default)
+        :limited:   limited range (16-235 per component), studio levels
+        :full:      full range (0-255 per component), PC levels
+
+        .. note::
+
+            It is advisable to use your graphics driver's color range option
+            instead, if available.
+
+    ``<primaries>``
+        RGB primaries the source file was encoded with. Normally this should be set
+        in the file header, but when playing broken or mistagged files this can be
+        used to override the setting.
+
+        This option only affects video output drivers that perform color
+        management, for example ``opengl`` with the ``target-prim`` or
+        ``icc-profile`` suboptions set.
+
+        If this option is set to ``auto`` (which is the default), the video's
+        primaries flag will be used. If that flag is unset, the color space will
+        be selected automatically, using the following heuristics: If the
+        ``<colormatrix>`` is set or determined as BT.2020 or BT.709, the
+        corresponding primaries are used. Otherwise, if the video height is
+        exactly 576 (PAL), BT.601-625 is used. If it's exactly 480 or 486 (NTSC),
+        BT.601-525 is used. If the video resolution is anything else, BT.709 is
+        used.
+
+        Available primaries are:
+
+        :auto:         automatic selection (default)
+        :bt.601-525:   ITU-R BT.601 (SD) 525-line systems (NTSC, SMPTE-C)
+        :bt.601-625:   ITU-R BT.601 (SD) 625-line systems (PAL, SECAM)
+        :bt.709:       ITU-R BT.709 (HD) (same primaries as sRGB)
+        :bt.2020:      ITU-R BT.2020 (UHD)
+        :apple:        Apple RGB
+        :adobe:        Adobe RGB (1998)
+        :prophoto:     ProPhoto RGB (ROMM)
+        :cie1931:      CIE 1931 RGB
+
+     ``<gamma>``
+        Gamma function the source file was encoded with. Normally this should be set
+        in the file header, but when playing broken or mistagged files this can be
+        used to override the setting.
+
+        This option only affects video output drivers that perform color management.
+
+        If this option is set to ``auto`` (which is the default), the gamma will
+        be set to BT.1886 for YCbCr content, sRGB for RGB content and Linear for
+        XYZ content.
+
+        Available gamma functions are:
+
+        :auto:         automatic selection (default)
+        :bt.1886:      ITU-R BT.1886 (approximation of BT.601/BT.709/BT.2020 curve)
+        :srgb:         IEC 61966-2-4 (sRGB)
+        :linear:       Linear light
+        :gamma1.8:     Pure power curve (gamma 1.8)
+        :gamma2.2:     Pure power curve (gamma 2.2)
+        :gamma2.8:     Pure power curve (gamma 2.8)
+        :prophoto:     ProPhoto RGB (ROMM) curve
+
+    ``<stereo-in>``
+        Set the stereo mode the video is assumed to be encoded in. Takes the
+        same values as the ``--video-stereo-mode`` option.
+
+    ``<stereo-out>``
+        Set the stereo mode the video should be displayed as. Takes the
+        same values as the ``--video-stereo-mode`` option.
+
+    ``<rotate>``
+        Set the rotation the video is assumed to be encoded with in degrees.
+        The special value ``-1`` uses the input format.
+
+    ``<dw>``, ``<dh>``
+        Set the display size. Note that setting the display size such that
+        the video is scaled in both directions instead of just changing the
+        aspect ratio is an implementation detail, and might change later.
+
+    ``<dar>``
+        Set the display aspect ratio of the video frame. This is a float,
+        but values such as ``[16:9]`` can be passed too (``[...]`` for quoting
+        to prevent the option parser from interpreting the ``:`` character).
+
 
 ``noformat[=fmt]``
     Restricts the color space for the next filter without doing any conversion.
@@ -431,12 +560,6 @@ Available filters are:
         simplify finding the right ``x``,``y``,``w``,``h`` parameters.
     ``show``
         Draw a rectangle showing the area defined by x/y/w/h.
-
-``screenshot``
-    Optional filter for screenshot support. This is only needed if the video
-    output does not provide working direct screenshot support. Note that it is
-    not always safe to insert this filter by default. See `TAKING SCREENSHOTS`_
-    for details.
 
 ``sub=[=bottom-margin:top-margin]``
     Moves subtitle rendering to an arbitrary point in the filter chain, or force

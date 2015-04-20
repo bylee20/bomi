@@ -15,7 +15,10 @@
  * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <strings.h>
+#include <dirent.h>
 
 #include "common/common.h"
 #include "options/options.h"
@@ -23,7 +26,7 @@
 #include "common/playlist.h"
 #include "options/path.h"
 #include "stream/stream.h"
-#include "stream/rar.h"
+#include "osdep/io.h"
 #include "demux.h"
 
 #define PROBE_SIZE (8 * 1024)
@@ -48,6 +51,7 @@ struct pl_parser {
     bool error;
     bool probing;
     bool force;
+    bool add_base;
     enum demux_check check_level;
     struct stream *real_stream;
 };
@@ -189,30 +193,6 @@ static int parse_pls(struct pl_parser *p)
     return 0;
 }
 
-static int parse_rar(struct pl_parser *p)
-{
-    if (RarProbe(p->s))
-        return -1;
-    if (p->probing)
-        return 0;
-
-    int count;
-    rar_file_t **files;
-    if (RarParse(p->s, &count, &files))
-        return -1;
-
-    p->pl->disable_safety = true; // make it load rar://
-    char *prefix = mp_url_escape(p, p->real_stream->url, "~|");
-    for (int n = 0; n < count; n++) {
-        // stream_rar.c does the real work
-        playlist_add_file(p->pl,
-                talloc_asprintf(p, "rar://%s|%s", prefix, files[n]->name));
-        RarFileDelete(files[n]);
-    }
-    talloc_free(files);
-    return 0;
-}
-
 static int parse_txt(struct pl_parser *p)
 {
     if (!p->force)
@@ -229,6 +209,51 @@ static int parse_txt(struct pl_parser *p)
     return 0;
 }
 
+static int cmp_filename(const void *a, const void *b)
+{
+    return strcmp(*(char **)a, *(char **)b);
+}
+
+static int parse_dir(struct pl_parser *p)
+{
+    if (p->real_stream->type != STREAMTYPE_DIR)
+        return -1;
+    if (p->probing)
+        return 0;
+
+    char *path = mp_file_get_path(p, bstr0(p->real_stream->url));
+    if (strlen(path) >= 8192)
+        return -1; // things like mount bind loops
+
+    DIR *dp = opendir(path);
+    if (!dp) {
+        MP_ERR(p, "Could not read directory.\n");
+        return -1;
+    }
+
+    char **files = NULL;
+    int num_files = 0;
+
+    struct dirent *ep;
+    while ((ep = readdir(dp))) {
+        if (strcmp(ep->d_name, ".") == 0 || strcmp(ep->d_name, "..") == 0)
+            continue;
+        MP_TARRAY_APPEND(p, files, num_files, talloc_strdup(p, ep->d_name));
+    }
+
+    if (files)
+        qsort(files, num_files, sizeof(files[0]), cmp_filename);
+
+    for (int n = 0; n < num_files; n++)
+        playlist_add_file(p->pl, mp_path_join(p, bstr0(path), bstr0(files[n])));
+
+    closedir(dp);
+
+    p->add_base = false;
+
+    return num_files > 0 ? 0 : -1;
+}
+
 #define MIME_TYPES(...) \
     .mime_types = (const char*const[]){__VA_ARGS__, NULL}
 
@@ -239,13 +264,13 @@ struct pl_format {
 };
 
 static const struct pl_format formats[] = {
+    {"directory", parse_dir},
     {"m3u", parse_m3u,
      MIME_TYPES("audio/mpegurl", "audio/x-mpegurl", "application/x-mpegurl")},
     {"ini", parse_ref_init},
     {"mov", parse_mov_rtsptext},
     {"pls", parse_pls,
      MIME_TYPES("audio/x-scpls")},
-    {"rar", parse_rar},
     {"txt", parse_txt},
 };
 
@@ -274,6 +299,7 @@ static int open_file(struct demuxer *demuxer, enum demux_check check)
     p->log = demuxer->log;
     p->pl = talloc_zero(p, struct playlist);
     p->real_stream = demuxer->stream;
+    p->add_base = true;
 
     bstr probe_buf = stream_peek(demuxer->stream, PROBE_SIZE);
     p->s = open_memory_stream(probe_buf.start, probe_buf.len);
@@ -295,7 +321,7 @@ static int open_file(struct demuxer *demuxer, enum demux_check check)
     p->s = demuxer->stream;
     p->utf16 = stream_skip_bom(p->s);
     bool ok = fmt->parse(p) >= 0 && !p->error;
-    if (ok)
+    if (p->add_base)
         playlist_add_base_path(p->pl, mp_dirname(demuxer->filename));
     demuxer->playlist = talloc_steal(demuxer, p->pl);
     demuxer->filetype = fmt->name;

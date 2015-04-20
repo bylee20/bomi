@@ -8,6 +8,8 @@
 #include "player/mpv_helper.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include "os/os.hpp"
+#include "enum/colorrange.hpp"
+#include "enum/colorspace.hpp"
 extern "C" {
 #include <video/filter/vf.h>
 #ifdef Q_OS_LINUX
@@ -22,7 +24,7 @@ extern vf_info vf_info_noformat;
 struct bomi_vf_priv {
     VideoProcessor *vp;
     char *address, *swdec_deint, *hwdec_deint;
-    int interpolate;
+    int interpolate, color_range, color_space;
 };
 
 static auto priv(vf_instance *vf) -> VideoProcessor*
@@ -38,6 +40,8 @@ auto create_vf_info() -> vf_info
         MPV_OPTION(swdec_deint),
         MPV_OPTION(hwdec_deint),
         MPV_OPTION(interpolate),
+        MPV_OPTION(color_space),
+        MPV_OPTION(color_range),
         mpv::null_option
     };
 
@@ -81,6 +85,10 @@ struct VideoProcessor::Data {
     MotionInterpolator interpolator;
     MotionIntrplOption intrplOption;
     mp_image_params params;
+    ColorSpace spaceIn = ColorSpace::Auto, spaceOut = ColorSpace::Auto, spaceOpt = ColorSpace::Auto;
+    ColorRange rangeIn = ColorRange::Auto, rangeOut = ColorRange::Auto, rangeOpt = ColorRange::Auto;
+    mp_csp mp_csp_out = MP_CSP_AUTO;
+    mp_csp_levels mp_lv_out = MP_CSP_LEVELS_AUTO;
     int hwdecType = -10;
     bool deint = false, inter_i = false, inter_o = false, interpolate = false;
     bool hwacc = false;
@@ -140,6 +148,8 @@ auto VideoProcessor::open(vf_instance *vf) -> int
     if (p->hwdec_deint)
         d->deint_hwdec = DeintOption::fromString(_L(p->hwdec_deint));
     d->interpolate = p->interpolate;
+    d->spaceOpt = (ColorSpace)p->color_space;
+    d->rangeOpt = (ColorRange)p->color_range;
     d->updateDeint();
     memset(&d->params, 0, sizeof(d->params));
     vf->reconfig = [] (vf_instance *vf, mp_image_params *in,
@@ -175,10 +185,65 @@ auto VideoProcessor::isOutputInterlaced() const -> bool
     return d->inter_o;
 }
 
+#define conv_csp(in, def) [&] () { \
+    switch (in) { \
+    CSP_PAIR(MP_CSP_AUTO, ColorSpace::Auto); \
+    CSP_PAIR(MP_CSP_BT_601, ColorSpace::BT601); \
+    CSP_PAIR(MP_CSP_BT_709, ColorSpace::BT709); \
+    CSP_PAIR(MP_CSP_SMPTE_240M, ColorSpace::SMPTE240M); \
+    CSP_PAIR(MP_CSP_BT_2020_NC, ColorSpace::BT2020NCL); \
+    CSP_PAIR(MP_CSP_BT_2020_C, ColorSpace::BT2020CL); \
+    CSP_PAIR(MP_CSP_XYZ, ColorSpace::XYZ); \
+    CSP_PAIR(MP_CSP_YCGCO, ColorSpace::YCgCo); \
+    default: return def; }}()
+#define CSP_PAIR(m, b) case m: return b;
+static auto mp2enum(mp_csp csp) -> ColorSpace
+    { return conv_csp(csp, ColorSpace::Auto);}
+#undef CSP_PAIR
+#define CSP_PAIR(m, b) case b: return m;
+static auto enum2mp(ColorSpace csp) -> mp_csp
+    { return conv_csp(csp, MP_CSP_AUTO); }
+#undef CSP_PAIR
+#undef conv_csp
+
+#define conv_lv(in, def) [&] () { \
+    switch (in) {\
+    LV_PAIR(MP_CSP_LEVELS_AUTO, ColorRange::Auto); \
+    LV_PAIR(MP_CSP_LEVELS_TV, ColorRange::Limited); \
+    LV_PAIR(MP_CSP_LEVELS_PC, ColorRange::Full); \
+    default: return def; }}()
+#define LV_PAIR(m, b) case m: return b;
+static auto mp2enum(mp_csp_levels lv) -> ColorRange
+    { return conv_lv(lv, ColorRange::Auto); }
+#undef LV_PAIR
+#define LV_PAIR(m, b) case b: return m;
+static auto enum2mp(ColorRange lv) -> mp_csp_levels
+    { return conv_lv(lv, MP_CSP_LEVELS_AUTO); }
+#undef LV_PAIR
+#undef conv_lv
+
+
 auto VideoProcessor::reconfig(mp_image_params *in, mp_image_params *out) -> int
 {
     d->params = *in;
     *out = *in;
+
+    d->mp_csp_out = MP_CSP_AUTO;
+    d->mp_lv_out = MP_CSP_LEVELS_AUTO;
+    if (d->spaceOpt != ColorSpace::Auto)
+        d->mp_csp_out = out->colorspace = enum2mp(d->spaceOpt);
+    if (d->rangeOpt != ColorRange::Auto)
+        d->mp_lv_out = out->colorlevels = enum2mp(d->rangeOpt);
+
+    if (_Change(d->spaceIn, mp2enum(in->colorspace)))
+        emit inputColorSpaceChanged(d->spaceIn);
+    if (_Change(d->rangeIn, mp2enum(in->colorlevels)))
+        emit inputColorRangeChanged(d->rangeIn);
+    if (_Change(d->spaceOut, mp2enum(out->colorspace)))
+        emit outputColorSpaceChanged(d->spaceOut);
+    if (_Change(d->rangeOut, mp2enum(out->colorlevels)))
+        emit outputColorRangeChanged(d->rangeOut);
+
     d->interpolator.setTargetFps(d->intrplOption.fps());
     d->reset();
     d->hwdecType = -10;
@@ -212,10 +277,10 @@ static auto avgLuma(const mp_image *mpi, F &&addLine) -> double
 {
     const uchar *const data = mpi->planes[0];
     double avg = 0;
-    for (int y = 0; y < mpi->plane_h[0]; ++y)
-         addLine(avg, data + y * mpi->stride[0], mpi->plane_w[0]);
+    for (int y = 0; y < mpi->h; ++y)
+         addLine(avg, data + y * mpi->stride[0], mpi->w);
     const int bits = mpi->fmt.plane_bits;
-    avg /= mpi->plane_h[0] * mpi->plane_w[0];
+    avg /= mpi->h * mpi->w;
     avg /= (1 << bits) - 1;
     if (mpi->params.colorlevels == MP_CSP_LEVELS_TV)
         avg = (avg - 16.0/255)*255.0/(235.0 - 16.0);
@@ -370,7 +435,12 @@ auto VideoProcessor::filterOut() -> int
         return 0;
     if (_Change(d->inter_o, d->deinterlacer.pass() ? d->inter_i : false))
         emit outputInterlacedChanged();
-    vf_add_output_frame(d->vf, mpi.take());
+    const auto img = mpi.take();
+    if (d->mp_csp_out != MP_CSP_AUTO)
+        img->params.colorspace = d->mp_csp_out;
+    if (d->mp_lv_out != MP_CSP_LEVELS_AUTO)
+        img->params.colorlevels = d->mp_lv_out;
+    vf_add_output_frame(d->vf, img);
     return 0;
 }
 

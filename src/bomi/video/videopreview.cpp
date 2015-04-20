@@ -95,8 +95,9 @@ auto VideoPreview::setRate(double rate) -> void
         return;
     if (_Change(d->rate, rate)) {
         if (_Change(d->percent, qRound(d->rate * 10000)/100.0))
-            d->mpv.tellAsync("seek", d->percent, "absolute-percent"_b,
-                             d->keyframe ? "keyframes"_b : "exact"_b);
+            d->mpv.tellAsync("seek", d->percent, d->keyframe
+                             ? "absolute-percent+keyframes"_b
+                             : "absolute-percent+exact"_b);
         emit rateChanged(d->rate);
     }
 }

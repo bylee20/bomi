@@ -5,21 +5,20 @@
  * Special thanks go to the xine team and Matthias Hopf, whose video_out_opengl.c
  * gave me lots of good ideas.
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  *
  * You can alternatively redistribute this file and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,7 +54,6 @@ static const struct feature features[] = {
     {MPGL_CAP_VAO,              "VAOs"},
     {MPGL_CAP_FLOAT_TEX,        "Float textures"},
     {MPGL_CAP_TEX_RG,           "RG textures"},
-    {MPGL_CAP_1ST_CLASS_ARRAYS, "1st class shader arrays"},
     {MPGL_CAP_1D_TEX,           "1D textures"},
     {MPGL_CAP_3D_TEX,           "3D textures"},
     {MPGL_CAP_DEBUG,            "debugging extensions"},
@@ -80,14 +78,22 @@ static void GLAPIENTRY dummy_glBindFramebuffer(GLenum target, GLuint framebuffer
     assert(framebuffer == 0);
 }
 
+static bool check_ext(GL *gl, const char *name)
+{
+    const char *exts = gl->extensions;
+    char *s = strstr(exts, name);
+    char *e = s ? s + strlen(name) : NULL;
+    return s && (s == exts || s[-1] == ' ') && (e[0] == ' ' || !e[0]);
+}
+
 #define FN_OFFS(name) offsetof(GL, name)
 
-#define DEF_FN(name)            {FN_OFFS(name), {"gl" # name}}
-#define DEF_FN_NAMES(name, ...) {FN_OFFS(name), {__VA_ARGS__}}
+#define DEF_FN(name)            {FN_OFFS(name), "gl" # name}
+#define DEF_FN_NAME(name, str)  {FN_OFFS(name), str}
 
 struct gl_function {
     ptrdiff_t offset;
-    char *funcnames[7];
+    char *name;
 };
 
 struct gl_functions {
@@ -168,8 +174,7 @@ static const struct gl_functions gl_functions[] = {
     // GL 2.1+ desktop only (and GLSL 120 shaders)
     {
         .ver_core = 210,
-        .provides = MPGL_CAP_ROW_LENGTH | MPGL_CAP_1D_TEX | MPGL_CAP_3D_TEX |
-                    MPGL_CAP_1ST_CLASS_ARRAYS,
+        .provides = MPGL_CAP_ROW_LENGTH | MPGL_CAP_1D_TEX | MPGL_CAP_3D_TEX,
         .functions = (const struct gl_function[]) {
             DEF_FN(DrawBuffer),
             DEF_FN(GetTexLevelParameteriv),
@@ -185,7 +190,7 @@ static const struct gl_functions gl_functions[] = {
     {
         .ver_core = 300,
         .ver_es_core = 300,
-        .provides = MPGL_CAP_3D_TEX | MPGL_CAP_1ST_CLASS_ARRAYS,
+        .provides = MPGL_CAP_3D_TEX,
         .functions = (const struct gl_function[]) {
             DEF_FN(GetStringi),
             // for ES 3.0
@@ -217,21 +222,6 @@ static const struct gl_functions gl_functions[] = {
             {0}
         },
     },
-    // Framebuffers, alternative extension name.
-    {
-        .ver_removed = 300, // don't touch these fn names in 3.x
-        .ver_es_removed = 300,
-        .extension = "GL_EXT_framebuffer_object",
-        .provides = MPGL_CAP_FB,
-        .functions = (const struct gl_function[]) {
-            DEF_FN_NAMES(BindFramebuffer, "glBindFramebufferEXT"),
-            DEF_FN_NAMES(GenFramebuffers, "glGenFramebuffersEXT"),
-            DEF_FN_NAMES(DeleteFramebuffers, "glDeleteFramebuffersEXT"),
-            DEF_FN_NAMES(CheckFramebufferStatus, "glCheckFramebufferStatusEXT"),
-            DEF_FN_NAMES(FramebufferTexture2D, "glFramebufferTexture2DEXT"),
-            {0}
-        },
-    },
     // VAOs, extension in GL 2.x, core in GL 3.x core.
     {
         .ver_core = 300,
@@ -260,20 +250,26 @@ static const struct gl_functions gl_functions[] = {
         .provides = MPGL_CAP_TEX_RG,
     },
     // Swap control, always an OS specific extension
+    // The OSX code loads this manually.
     {
-        .extension = "_swap_control",
+        .extension = "GLX_SGI_swap_control",
         .functions = (const struct gl_function[]) {
-            DEF_FN_NAMES(SwapInterval, "glXSwapIntervalSGI", "glXSwapInterval",
-                         "wglSwapIntervalSGI", "wglSwapInterval",
-                         "wglSwapIntervalEXT"),
-            {0}
+            DEF_FN_NAME(SwapInterval, "glXSwapIntervalSGI"),
+            {0},
+        },
+    },
+    {
+        .extension = "WGL_EXT_swap_control",
+        .functions = (const struct gl_function[]) {
+            DEF_FN_NAME(SwapInterval, "wglSwapIntervalEXT"),
+            {0},
         },
     },
     {
         .extension = "GLX_SGI_video_sync",
         .functions = (const struct gl_function[]) {
-            DEF_FN_NAMES(GetVideoSync, "glXGetVideoSyncSGI"),
-            DEF_FN_NAMES(WaitVideoSync, "glXWaitVideoSyncSGI"),
+            DEF_FN_NAME(GetVideoSync, "glXGetVideoSyncSGI"),
+            DEF_FN_NAME(WaitVideoSync, "glXWaitVideoSyncSGI"),
             {0},
         },
     },
@@ -316,7 +312,7 @@ static const struct gl_functions gl_functions[] = {
 #undef FN_OFFS
 #undef DEF_FN_HARD
 #undef DEF_FN
-#undef DEF_FN_NAMES
+#undef DEF_FN_NAME
 
 
 // Fill the GL struct with function pointers and extensions from the current
@@ -429,7 +425,7 @@ void mpgl_load_functions2(GL *gl, void *(*get_fn)(void *ctx, const char *n),
         if (ver_core)
             must_exist = version >= ver_core;
 
-        if (section->extension && strstr(gl->extensions, section->extension))
+        if (section->extension && check_ext(gl, section->extension))
             exists = true;
 
         exists |= must_exist;
@@ -440,18 +436,13 @@ void mpgl_load_functions2(GL *gl, void *(*get_fn)(void *ctx, const char *n),
         bool all_loaded = true;
         const struct gl_function *fnlist = section->functions;
 
-        for (int i = 0; fnlist && fnlist[i].funcnames[0]; i++) {
+        for (int i = 0; fnlist && fnlist[i].name; i++) {
             const struct gl_function *fn = &fnlist[i];
-            void *ptr = NULL;
-            for (int x = 0; fn->funcnames[x]; x++) {
-                ptr = get_fn(fn_ctx, fn->funcnames[x]);
-                if (ptr)
-                    break;
-            }
+            void *ptr = get_fn(fn_ctx, fn->name);
             if (!ptr) {
                 all_loaded = false;
                 mp_warn(log, "Required function '%s' not "
-                        "found for %s OpenGL %d.%d.\n", fn->funcnames[0],
+                        "found for %s OpenGL %d.%d.\n", fn->name,
                         section->extension ? section->extension : "builtin",
                         MPGL_VER_GET_MAJOR(ver_core),
                         MPGL_VER_GET_MINOR(ver_core));
@@ -467,7 +458,7 @@ void mpgl_load_functions2(GL *gl, void *(*get_fn)(void *ctx, const char *n),
 
         if (all_loaded) {
             gl->mpgl_caps |= section->provides;
-            for (int i = 0; fnlist && fnlist[i].funcnames[0]; i++) {
+            for (int i = 0; fnlist && fnlist[i].name; i++) {
                 const struct gl_function *fn = &fnlist[i];
                 void **funcptr = (void**)(((char*)gl) + fn->offset);
                 if (loaded[i] && !*funcptr)
@@ -537,6 +528,9 @@ struct backend {
 };
 
 static const struct backend backends[] = {
+#if HAVE_RPI_GLES
+    {"rpi", mpgl_set_backend_rpi},
+#endif
 #if HAVE_GL_COCOA
     {"cocoa", mpgl_set_backend_cocoa},
 #endif

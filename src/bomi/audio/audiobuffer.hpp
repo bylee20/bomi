@@ -65,7 +65,7 @@ public:
     auto seconds() const -> double { return double(m_audio->samples) / m_audio->rate; }
     auto fstride() const -> int { return m_audio->sstride; }
     auto pstride() const -> int { return fstride() * frames(); }
-    auto isPlanar() const -> bool { return af_fmt_is_planar(m_audio->format); }
+    auto isPlanar() const -> bool { return AF_FORMAT_IS_PLANAR(m_audio->format); }
     auto data() const -> const uchar** { return (const uchar**)m_audio->planes; }
     auto constData() const -> const uchar** { return data(); }
     auto data() -> uchar** { detach(); return (uchar**)m_audio->planes; }

@@ -1,23 +1,23 @@
 /*
  * Copyright (C) Aaron Holtzman - Aug 1999
+ *
  * Strongly modified, most parts rewritten: A'rpi/ESP-team - 2000-2001
  * (C) MPlayer developers
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_VIDEO_OUT_H
@@ -36,8 +36,10 @@
 #define VO_EVENT_RESIZE 2
 // The ICC profile needs to be reloaded
 #define VO_EVENT_ICC_PROFILE_CHANGED 4
-// Some other window state changed
+// Some other window state changed (position, window state, fps)
 #define VO_EVENT_WIN_STATE 8
+// The ambient light conditions changed and need to be reloaded
+#define VO_EVENT_AMBIENT_LIGHTING_CHANGED 16
 
 // Set of events the player core may be interested in.
 #define VO_EVENTS_USER (VO_EVENT_RESIZE | VO_EVENT_WIN_STATE)
@@ -92,17 +94,13 @@ enum mp_voctrl {
     // names for displays the window is on
     VOCTRL_GET_DISPLAY_NAMES,
 
-    // The VO is supposed to set  "known" fields, and leave the others
-    // untouched or set to 0.
-    // imgfmt/w/h/d_w/d_h can be omitted for convenience.
-    VOCTRL_GET_COLORSPACE,              // struct mp_image_params*
-
     // Retrieve window contents. (Normal screenshots use vo_get_current_frame().)
     VOCTRL_SCREENSHOT_WIN,              // struct mp_image**
 
     VOCTRL_SET_COMMAND_LINE,            // char**
 
     VOCTRL_GET_ICC_PROFILE,             // bstr*
+    VOCTRL_GET_AMBIENT_LUX,             // int*
     VOCTRL_GET_DISPLAY_FPS,             // double*
     VOCTRL_GET_RECENT_FLIP_TIME,        // int64_t* (using mp_time_us())
 
@@ -321,6 +319,8 @@ struct mp_image *vo_get_current_frame(struct vo *vo);
 
 void vo_set_flip_queue_params(struct vo *vo, int64_t offset_us, bool vsync_timed);
 int64_t vo_get_vsync_interval(struct vo *vo);
+double vo_get_display_fps(struct vo *vo);
+
 void vo_wakeup(struct vo *vo);
 
 const char *vo_get_window_title(struct vo *vo);

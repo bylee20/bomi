@@ -3,21 +3,20 @@
  * The format definition only refers to the storage format,
  * not the resolution.
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_AF_FORMAT_H
@@ -96,6 +95,9 @@ enum af_format {
 
 #define AF_FORMAT_IS_IEC61937(f) (((f) & AF_FORMAT_TYPE_MASK) == AF_FORMAT_S)
 #define AF_FORMAT_IS_SPECIAL(f) AF_FORMAT_IS_IEC61937(f)
+#define AF_FORMAT_IS_FLOAT(f) (!!((f) & AF_FORMAT_F))
+// false for interleaved and AF_FORMAT_UNKNOWN
+#define AF_FORMAT_IS_PLANAR(f) (!!((f) & AF_FORMAT_PLANAR))
 
 struct af_fmt_entry {
     const char *name;
@@ -109,12 +111,10 @@ const char *af_fmt_to_str(int format);
 
 int af_fmt2bps(int format);
 int af_fmt2bits(int format);
-bool af_fmt_is_float(int format);
 int af_fmt_change_bits(int format, int bits);
 
 int af_fmt_to_planar(int format);
 int af_fmt_from_planar(int format);
-bool af_fmt_is_planar(int format);
 
 // Amount of bytes that contain audio of the given duration, aligned to frames.
 int af_fmt_seconds_to_bytes(int format, float seconds, int channels, int samplerate);
@@ -124,5 +124,7 @@ bool af_fmt_is_valid(int format);
 void af_fill_silence(void *dst, size_t bytes, int format);
 
 int af_format_conversion_score(int dst_format, int src_format);
+
+int af_format_sample_alignment(int format);
 
 #endif /* MPLAYER_AF_FORMAT_H */

@@ -22,6 +22,8 @@
  * on CoreAudio but not the AUHAL (such as using AudioQueue services).
  */
 
+#include <CoreAudio/HostTime.h>
+
 #include "audio/out/ao_coreaudio_utils.h"
 #include "audio/out/ao_coreaudio_properties.h"
 #include "osdep/timer.h"
@@ -115,12 +117,12 @@ OSStatus ca_select_device(struct ao *ao, char* name, AudioDeviceID *device)
     if (mp_msg_test(ao->log, MSGL_V)) {
         char *desc;
         err = CA_GET_STR(*device, kAudioObjectPropertyName, &desc);
-        CHECK_CA_ERROR("could not get selected audio device name");
-
-        MP_VERBOSE(ao, "selected audio output device: %s (%" PRIu32 ")\n",
-                       desc, *device);
-
-        talloc_free(desc);
+        CHECK_CA_WARN("could not get selected audio device name");
+        if (err == noErr) {
+            MP_VERBOSE(ao, "selected audio output device: %s (%" PRIu32 ")\n",
+                           desc, *device);
+            talloc_free(desc);
+        }
     }
 
 coreaudio_error:
@@ -139,16 +141,17 @@ char *fourcc_repr(void *talloc_ctx, uint32_t code)
     };
 
     bool valid_fourcc = true;
-    for (int i = 0; i < 4; i++)
-        if (fcc[i] >= 32 && fcc[i] < 128)
+    for (int i = 0; i < 4; i++) {
+        if (fcc[i] < 32 || fcc[i] >= 128)
             valid_fourcc = false;
+    }
 
     char *repr;
     if (valid_fourcc)
         repr = talloc_asprintf(talloc_ctx, "'%c%c%c%c'",
                                fcc[0], fcc[1], fcc[2], fcc[3]);
     else
-        repr = talloc_asprintf(NULL, "%d", code);
+        repr = talloc_asprintf(NULL, "%u", (unsigned int)code);
 
     return repr;
 }
@@ -214,3 +217,18 @@ void ca_print_asbd(struct ao *ao, const char *description,
     talloc_free(format);
 }
 
+int64_t ca_frames_to_us(struct ao *ao, uint32_t frames)
+{
+    return frames / (float) ao->samplerate * 1e6;
+}
+
+int64_t ca_get_latency(const AudioTimeStamp *ts)
+{
+    uint64_t out = AudioConvertHostTimeToNanos(ts->mHostTime);
+    uint64_t now = AudioConvertHostTimeToNanos(AudioGetCurrentHostTime());
+
+    if (now > out)
+        return 0;
+
+    return (out - now) * 1e-3;
+}

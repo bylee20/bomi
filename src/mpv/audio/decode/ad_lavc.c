@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -59,7 +58,7 @@ struct ad_lavc_params {
 
 const struct m_sub_options ad_lavc_conf = {
     .opts = (const m_option_t[]) {
-        OPT_FLOATRANGE("ac3drc", ac3drc, 0, 0, 2),
+        OPT_FLOATRANGE("ac3drc", ac3drc, 0, 0, 6),
         OPT_FLAG("downmix", downmix, 0),
         OPT_INTRANGE("threads", threads, 0, 1, 16),
         OPT_KEYVALUELIST("o", avopts, 0),
@@ -67,7 +66,7 @@ const struct m_sub_options ad_lavc_conf = {
     },
     .size = sizeof(struct ad_lavc_params),
     .defaults = &(const struct ad_lavc_params){
-        .ac3drc = 1.,
+        .ac3drc = 0,
         .downmix = 1,
         .threads = 1,
     },

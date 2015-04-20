@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_IMG_FORMAT_H
@@ -66,6 +65,8 @@
 #define MP_IMGFLAG_PAL 0x8000
 // planes don't contain real data; planes[3] contains an API-specific pointer
 #define MP_IMGFLAG_HWACCEL 0x10000
+// Set if the chroma resolution is lower than luma resolution. Unset for non-YUV.
+#define MP_IMGFLAG_SUBSAMPLED 0x20000
 
 // Exactly one of these bits is set in mp_imgfmt_desc.flags
 #define MP_IMGFLAG_COLOR_CLASS_MASK \
@@ -204,6 +205,7 @@ enum mp_imgfmt {
     IMGFMT_VDA,
     IMGFMT_VAAPI,
     IMGFMT_DXVA2,           // IDirect3DSurface9 (NV12)
+    IMGFMT_MMAL,            // MMAL_BUFFER_HEADER_T
 
     // Generic pass-through of AV_PIX_FMT_*. Used for formats which don't have
     // a corresponding IMGFMT_ value.

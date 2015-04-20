@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdlib.h>
@@ -49,8 +48,8 @@ static const struct sd_functions *const sd_list[] = {
     &sd_movtext,
     &sd_srt,
     &sd_lavf_srt,
-    &sd_lavc_conv,
     &sd_microdvd,
+    &sd_lavc_conv,
     NULL
 };
 
@@ -344,7 +343,7 @@ static void multiply_timings(struct packet_list *subs, double factor)
     }
 }
 
-#define MS_TS(f_ts) ((int)((f_ts) * 1000 + 0.5))
+#define MS_TS(f_ts) ((long long)((f_ts) * 1000 + 0.5))
 
 // Remove overlaps and fill gaps between adjacent subtitle packets. This is done
 // by adjusting the duration of the earlier packet. If the gaps or overlap are

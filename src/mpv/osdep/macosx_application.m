@@ -12,8 +12,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with mpv; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -366,7 +365,10 @@ int cocoa_main(mpv_main_fn mpv_main, int argc, char *argv[])
         ctx.argv     = &argv;
 
         if (bundle_started_from_finder(argc, argv)) {
-            argc = 1; // clears out -psn argument is present
+            if (argc > 1) {
+                argc = 1; // clears out -psn argument if present
+                argv[1] = NULL;
+            }
             macosx_redirect_output_to_logfile("mpv");
             init_cocoa_application(true);
         } else {

@@ -18,7 +18,7 @@
 #import <Cocoa/Cocoa.h>
 #include "video/out/vo.h"
 
-@interface MpvCocoaAdapter : NSObject
+@interface MpvCocoaAdapter : NSObject<NSWindowDelegate>
 - (void)setNeedsResize;
 - (void)signalMouseMovement:(NSPoint)point;
 - (void)putKeyEvent:(NSEvent*)event;
@@ -28,6 +28,7 @@
 - (void)handleFilesArray:(NSArray *)files;
 - (void)didChangeWindowedScreenProfile:(NSScreen *)screen;
 - (void)performAsyncResize:(NSSize)size;
+- (void)didChangeMousePosition;
 
 - (BOOL)isInFullScreenMode;
 - (BOOL)keyboardEnabled;

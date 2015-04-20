@@ -10,17 +10,6 @@ extern "C" {
 enum Attr {AttrPosition, AttrTexCoord, AttrColor};
 using Vertex = OGL::TextureColorVertex;
 
-struct Id {
-    Id() noexcept { }
-    Id(const sub_bitmaps *bitmaps) noexcept
-    { image = bitmaps->bitmap_id; pos = bitmaps->bitmap_pos_id; }
-    auto operator == (const Id &rhs) const noexcept -> bool
-    { return image == rhs.image && pos == rhs.pos; }
-    auto operator != (const Id &rhs) const noexcept -> bool
-    { return !operator == (rhs); }
-    int image = -1, pos = -1;
-};
-
 struct PartInfo {
     QPoint map = {0, 0};
     quint32 color = 0;
@@ -30,7 +19,7 @@ struct PartInfo {
 struct MpvOsdRenderer::Data {
     MpvOsdRenderer *p = nullptr;
     struct {
-        Id id;
+        int id = -1;
         OpenGLFramebufferObject *fbo = nullptr;
         QSize size;
     } last;
@@ -194,8 +183,8 @@ auto MpvOsdRenderer::draw(const sub_bitmaps *imgs) -> void
     if (num <= 0 || imgs->format == SUBBITMAP_EMPTY)
         return;
     d->clear = false;
-    const Id id{imgs};
-    if (d->last.id == id && d->last.fbo == d->fbo && d->last.size == d->fbo->size())
+    if (d->last.id == imgs->change_id
+            && d->last.fbo == d->fbo && d->last.size == d->fbo->size())
         return;
 
     d->vbo.bind();
@@ -203,7 +192,7 @@ auto MpvOsdRenderer::draw(const sub_bitmaps *imgs) -> void
     d->func->glActiveTexture(GL_TEXTURE0);
     OpenGLTextureBinder<OGL::Target2D> binder(&d->atlas);
 
-    if (_Change(d->last.id, id)) {
+    if (_Change(d->last.id, imgs->change_id)) {
         d->build(imgs->format);
         d->initializeAtlas(imgs);
         if (d->prevVboSize < static_cast<int>(num*6))

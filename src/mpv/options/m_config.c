@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /// \file
@@ -42,6 +41,8 @@ static const union m_option_value default_value;
 // Profiles allow to predefine some sets of options that can then
 // be applied later on with the internal -profile option.
 #define MAX_PROFILE_DEPTH 20
+// Maximal include depth.
+#define MAX_RECURSION_DEPTH 8
 
 struct m_profile {
     struct m_profile *next;
@@ -66,8 +67,14 @@ static int parse_include(struct m_config *config, struct bstr param, bool set,
         return M_OPT_MISSING_PARAM;
     if (!set)
         return 1;
+    if (config->recursion_depth >= MAX_RECURSION_DEPTH) {
+        MP_ERR(config, "Maximum 'include' nesting depth exceeded.\n");
+        return M_OPT_INVALID;
+    }
     char *filename = bstrdup0(NULL, param);
+    config->recursion_depth += 1;
     config->includefunc(config->includefunc_ctx, filename, flags);
+    config->recursion_depth -= 1;
     talloc_free(filename);
     return 1;
 }
@@ -453,7 +460,9 @@ static void m_config_add_option(struct m_config *config,
 struct m_config_option *m_config_get_co(const struct m_config *config,
                                         struct bstr name)
 {
-    const char *prefix = config->is_toplevel ? "--" : "";
+    if (!name.len)
+        return NULL;
+
     for (int n = 0; n < config->num_opts; n++) {
         struct m_config_option *co = &config->opts[n];
         struct bstr coname = bstr0(co->name);
@@ -466,6 +475,7 @@ struct m_config_option *m_config_get_co(const struct m_config *config,
         } else if (bstrcmp(coname, name) == 0)
             matches = true;
         if (matches) {
+            const char *prefix = config->is_toplevel ? "--" : "";
             if (co->opt->type == &m_option_type_alias) {
                 const char *alias = (const char *)co->opt->priv;
                 if (!co->warning_was_printed) {
@@ -590,7 +600,6 @@ static int m_config_parse_option(struct m_config *config, struct bstr name,
                                  struct bstr param, int flags)
 {
     assert(config != NULL);
-    assert(name.len != 0);
 
     struct m_config_option *co = m_config_get_co(config, name);
     if (!co)

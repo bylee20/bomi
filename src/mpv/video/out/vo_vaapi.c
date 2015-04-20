@@ -4,25 +4,25 @@
  * Copyright (C) 2008-2009 Splitted-Desktop Systems
  * Gwenole Beauchesne <gbeauchesne@splitted-desktop.com>
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <assert.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -31,7 +31,6 @@
 #include "config.h"
 #include "common/msg.h"
 #include "video/out/vo.h"
-#include "video/memcpy_pic.h"
 #include "video/mp_image_pool.h"
 #include "sub/osd.h"
 #include "sub/img_convert.h"
@@ -56,7 +55,7 @@ struct vaapi_subpic {
 
 struct vaapi_osd_part {
     bool active;
-    int bitmap_pos_id;
+    int change_id;
     struct vaapi_osd_image image;
     struct vaapi_subpic subpic;
     struct osd_conv_cache *conv_cache;
@@ -100,6 +99,7 @@ struct priv {
     unsigned int            *va_subpic_flags;
     int                      va_num_subpic_formats;
     VADisplayAttribute      *va_display_attrs;
+    int                     *mp_display_attr;
     int                      va_num_display_attrs;
 };
 
@@ -343,8 +343,8 @@ static void draw_osd_cb(void *pctx, struct sub_bitmaps *imgs)
     struct priv *p = pctx;
 
     struct vaapi_osd_part *part = &p->osd_parts[imgs->render_index];
-    if (imgs->bitmap_pos_id != part->bitmap_pos_id) {
-        part->bitmap_pos_id = imgs->bitmap_pos_id;
+    if (imgs->change_id != part->change_id) {
+        part->change_id = imgs->change_id;
 
         osd_scale_rgba(part->conv_cache, imgs);
 
@@ -446,46 +446,70 @@ static int get_displayattribtype(const char *name)
     return -1;
 }
 
-static VADisplayAttribute *get_display_attribute(struct priv *p,
-                                                 const char *name)
+static int get_display_attribute(struct priv *p, const char *name)
 {
     int type = get_displayattribtype(name);
     for (int n = 0; n < p->va_num_display_attrs; n++) {
         VADisplayAttribute *attr = &p->va_display_attrs[n];
         if (attr->type == type)
-            return attr;
+            return n;
     }
-    return NULL;
+    return -1;
+}
+
+static int mp_eq_to_va(VADisplayAttribute * const attr, int mpvalue)
+{
+    /* normalize to attribute value range */
+    int r = attr->max_value - attr->min_value;
+    if (r == 0)
+        return INT_MIN; // assume INT_MIN is outside allowed min/max range
+    return ((mpvalue + 100) * r + 100) / 200 + attr->min_value;
 }
 
 static int get_equalizer(struct priv *p, const char *name, int *value)
 {
-    VADisplayAttribute * const attr = get_display_attribute(p, name);
+    int index = get_display_attribute(p, name);
+    if (index < 0)
+        return VO_NOTIMPL;
 
-    if (!attr || !(attr->flags & VA_DISPLAY_ATTRIB_GETTABLE))
+    VADisplayAttribute *attr = &p->va_display_attrs[index];
+
+    if (!(attr->flags & VA_DISPLAY_ATTRIB_GETTABLE))
         return VO_NOTIMPL;
 
     /* normalize to -100 .. 100 range */
     int r = attr->max_value - attr->min_value;
     if (r == 0)
         return VO_NOTIMPL;
-    *value = ((attr->value - attr->min_value) * 200) / r - 100;
+
+    *value = ((attr->value - attr->min_value) * 200 + r / 2) / r - 100;
+    if (mp_eq_to_va(attr, p->mp_display_attr[index]) == attr->value)
+        *value = p->mp_display_attr[index];
+
     return VO_TRUE;
 }
 
 static int set_equalizer(struct priv *p, const char *name, int value)
 {
-    VADisplayAttribute * const attr = get_display_attribute(p, name);
     VAStatus status;
-
-    if (!attr || !(attr->flags & VA_DISPLAY_ATTRIB_SETTABLE))
+    int index = get_display_attribute(p, name);
+    if (index < 0)
         return VO_NOTIMPL;
 
-    /* normalize to attribute value range */
-    int r = attr->max_value - attr->min_value;
-    if (r == 0)
+    VADisplayAttribute *attr = &p->va_display_attrs[index];
+
+    if (!(attr->flags & VA_DISPLAY_ATTRIB_SETTABLE))
         return VO_NOTIMPL;
-    attr->value = ((value + 100) * r) / 200 + attr->min_value;
+
+    int r = mp_eq_to_va(attr, value);
+    if (r == INT_MIN)
+        return VO_NOTIMPL;
+
+    attr->value = r;
+    p->mp_display_attr[index] = value;
+
+    MP_VERBOSE(p, "Changing '%s' (range [%d, %d]) to %d\n", name,
+               attr->max_value, attr->min_value, attr->value);
 
     va_lock(p->mpvaapi);
     status = vaSetDisplayAttributes(p->display, attr, 1);
@@ -513,12 +537,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_GET_HWDEC_INFO: {
         struct mp_hwdec_info **arg = data;
         *arg = &p->hwdec_info;
-        return true;
-    }
-    case VOCTRL_GET_COLORSPACE: {
-        struct mp_image_params *params = data;
-        if (va_get_colorspace_flag(p->image_params.colorspace))
-            params->colorspace = p->image_params.colorspace;
         return true;
     }
     case VOCTRL_SET_EQUALIZER: {
@@ -642,6 +660,7 @@ static int preinit(struct vo *vo)
                                           &p->va_num_display_attrs);
         if (!CHECK_VA_STATUS(p, "vaQueryDisplayAttributes()"))
             p->va_num_display_attrs = 0;
+        p->mp_display_attr = talloc_zero_array(vo, int, p->va_num_display_attrs);
     }
     return 0;
 

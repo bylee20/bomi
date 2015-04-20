@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -25,7 +24,6 @@
 
 #include "demux/codec_tags.h"
 
-#include "config.h"
 #include "common/codecs.h"
 #include "common/msg.h"
 #include "misc/bstr.h"
@@ -43,15 +41,11 @@
 
 #include "audio/filter/af.h"
 
-extern const struct ad_functions ad_mpg123;
 extern const struct ad_functions ad_lavc;
 extern const struct ad_functions ad_spdif;
 
 static const struct ad_functions * const ad_drivers[] = {
     &ad_lavc,
-#if HAVE_MPG123
-    &ad_mpg123,
-#endif
     &ad_spdif,
     NULL
 };
@@ -163,6 +157,9 @@ static int decode_new_frame(struct dec_audio *da)
         int ret = da->ad_driver->decode_packet(da, &da->waiting);
         if (ret < 0)
             return ret;
+
+        if (da->pts == MP_NOPTS_VALUE && da->header->missing_timestamps)
+            da->pts = 0;
 
         if (da->waiting) {
             da->pts_offset += da->waiting->samples;

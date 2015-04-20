@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -39,8 +38,6 @@
 #include "video/mp_image_pool.h"
 #include "vf.h"
 
-#include "video/memcpy_pic.h"
-
 extern const vf_info_t vf_info_crop;
 extern const vf_info_t vf_info_expand;
 extern const vf_info_t vf_info_scale;
@@ -57,7 +54,6 @@ extern const vf_info_t vf_info_hqdn3d;
 extern const vf_info_t vf_info_dsize;
 extern const vf_info_t vf_info_pullup;
 extern const vf_info_t vf_info_delogo;
-extern const vf_info_t vf_info_screenshot;
 extern const vf_info_t vf_info_sub;
 extern const vf_info_t vf_info_yadif;
 extern const vf_info_t vf_info_stereo3d;
@@ -77,9 +73,9 @@ static const vf_info_t *const filter_list[] = {
     &vf_info_format,
     &vf_info_noformat,
     &vf_info_flip,
-    &vf_info_mirror,
 
 #if HAVE_LIBAVFILTER
+    &vf_info_mirror,
     &vf_info_lavfi,
     &vf_info_rotate,
     &vf_info_noise,
@@ -90,8 +86,6 @@ static const vf_info_t *const filter_list[] = {
     &vf_info_delogo,
     &vf_info_yadif,
 #endif
-
-    &vf_info_screenshot,
 
     &vf_info_eq,
     &vf_info_dsize,

@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_M_OPTION_H
@@ -52,11 +51,11 @@ extern const m_option_type_t m_option_type_keyvalue_list;
 extern const m_option_type_t m_option_type_time;
 extern const m_option_type_t m_option_type_rel_time;
 extern const m_option_type_t m_option_type_choice;
+extern const m_option_type_t m_option_type_flags;
 extern const m_option_type_t m_option_type_msglevels;
 extern const m_option_type_t m_option_type_print_fn;
 extern const m_option_type_t m_option_type_subconfig;
 extern const m_option_type_t m_option_type_imgfmt;
-extern const m_option_type_t m_option_vid_stereo_mode;
 extern const m_option_type_t m_option_type_fourcc;
 extern const m_option_type_t m_option_type_afmt;
 extern const m_option_type_t m_option_type_color;
@@ -163,6 +162,9 @@ struct m_opt_choice_alternatives {
     char *name;
     int value;
 };
+
+const char *m_opt_choice_str(const struct m_opt_choice_alternatives *choices,
+                             int value);
 
 // For OPT_STRING_VALIDATE(). Behaves like m_option_type.parse().
 typedef int (*m_opt_string_validate_fn)(struct mp_log *log, const m_option_t *opt,
@@ -625,6 +627,14 @@ extern const char m_option_path_separator;
     OPT_CHOICE_(__VA_ARGS__, .type = &m_option_type_choice)
 #define OPT_CHOICE_(optname, varname, flags, choices, ...) \
     OPT_GENERAL(int, optname, varname, flags, M_CHOICES(choices), __VA_ARGS__)
+// Variant which takes a pointer to struct m_opt_choice_alternatives directly
+#define OPT_CHOICE_C(optname, varname, flags, choices) \
+    OPT_GENERAL(int, optname, varname, flags, .priv = (void *) \
+                MP_EXPECT_TYPE(const struct m_opt_choice_alternatives*, choices), \
+                .type = &m_option_type_choice)
+
+#define OPT_FLAGS(...) \
+    OPT_CHOICE_(__VA_ARGS__, .type = &m_option_type_flags)
 
 // Union of choices and an int range. The choice values can be included in the
 // int range, or be completely separate - both works.
@@ -652,9 +662,6 @@ extern const char m_option_path_separator;
 
 #define OPT_TRACKCHOICE(name, var) \
     OPT_CHOICE_OR_INT(name, var, 0, 0, 8190, ({"no", -2}, {"auto", -1}))
-
-#define OPT_VID_STEREO_MODE(...) \
-    OPT_GENERAL(int, __VA_ARGS__, .type = &m_option_vid_stereo_mode)
 
 #define OPT_STRING_VALIDATE_(optname, varname, flags, validate_fn, ...)        \
     OPT_GENERAL(char*, optname, varname, flags, __VA_ARGS__,                   \

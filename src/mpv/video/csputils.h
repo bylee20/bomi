@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  *
  * You can alternatively redistribute this file and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,6 +25,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "options/m_option.h"
 
 /* NOTE: the csp and levels AUTO values are converted to specific ones
  * above vf/vo level. At least vf_scale relies on all valid settings being
@@ -45,8 +46,7 @@ enum mp_csp {
     MP_CSP_COUNT
 };
 
-// Any enum mp_csp value is a valid index (except MP_CSP_COUNT)
-extern const char *const mp_csp_names[MP_CSP_COUNT];
+extern const struct m_opt_choice_alternatives mp_csp_names[];
 
 enum mp_csp_levels {
     MP_CSP_LEVELS_AUTO,
@@ -55,8 +55,7 @@ enum mp_csp_levels {
     MP_CSP_LEVELS_COUNT,
 };
 
-// Any enum mp_csp_levels value is a valid index (except MP_CSP_LEVELS_COUNT)
-extern const char *const mp_csp_levels_names[MP_CSP_LEVELS_COUNT];
+extern const struct m_opt_choice_alternatives mp_csp_levels_names[];
 
 enum mp_csp_prim {
     MP_CSP_PRIM_AUTO,
@@ -65,22 +64,28 @@ enum mp_csp_prim {
     MP_CSP_PRIM_BT_709,
     MP_CSP_PRIM_BT_2020,
     MP_CSP_PRIM_BT_470M,
+    MP_CSP_PRIM_APPLE,
+    MP_CSP_PRIM_ADOBE,
+    MP_CSP_PRIM_PRO_PHOTO,
+    MP_CSP_PRIM_CIE_1931,
     MP_CSP_PRIM_COUNT
 };
 
-// Any enum mp_csp_prim value is a valid index (except MP_CSP_PRIM_COUNT)
-extern const char *const mp_csp_prim_names[MP_CSP_PRIM_COUNT];
+extern const struct m_opt_choice_alternatives mp_csp_prim_names[];
 
 enum mp_csp_trc {
     MP_CSP_TRC_AUTO,
     MP_CSP_TRC_BT_1886,
     MP_CSP_TRC_SRGB,
     MP_CSP_TRC_LINEAR,
+    MP_CSP_TRC_GAMMA18,
+    MP_CSP_TRC_GAMMA22,
+    MP_CSP_TRC_GAMMA28,
+    MP_CSP_TRC_PRO_PHOTO,
     MP_CSP_TRC_COUNT
 };
 
-// Any enum mp_csp_trc value is a valid index (except MP_CSP_TRC_COUNT)
-extern const char *const mp_csp_trc_names[MP_CSP_TRC_COUNT];
+extern const struct m_opt_choice_alternatives mp_csp_trc_names[];
 
 // These constants are based on the ICC specification (Table 23) and match
 // up with the API of LittleCMS, which treats them as integers.
@@ -104,10 +109,10 @@ enum mp_stereo3d_mode {
     MP_STEREO3D_COUNT = 13, // 12 is last valid mode
 };
 
-extern const char *const mp_stereo3d_names[MP_STEREO3D_COUNT];
+extern const struct m_opt_choice_alternatives mp_stereo3d_names[];
 
-#define MP_STEREO3D_NAME(x) \
-    ((x) >= 0 && (x) < MP_STEREO3D_COUNT ? (char *)mp_stereo3d_names[(x)] : NULL)
+#define MP_STEREO3D_NAME(x) m_opt_choice_str(mp_stereo3d_names, x)
+
 #define MP_STEREO3D_NAME_DEF(x, def) \
     (MP_STEREO3D_NAME(x) ? MP_STEREO3D_NAME(x) : (def))
 
@@ -148,7 +153,7 @@ enum mp_chroma_location {
     MP_CHROMA_COUNT,
 };
 
-extern const char *const mp_chroma_names[MP_CHROMA_COUNT];
+extern const struct m_opt_choice_alternatives mp_chroma_names[];
 
 enum mp_csp_equalizer_param {
     MP_CSP_EQ_BRIGHTNESS,

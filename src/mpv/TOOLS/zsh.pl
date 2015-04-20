@@ -7,15 +7,15 @@ use warnings;
 
 my $mpv = $ARGV[0] || 'mpv';
 
-my @opts = parse_main_opts("$mpv --list-options", '^ (\-\-[^\s\*]*)\*?\s*(.*)');
+my @opts = parse_main_opts('--list-options', '^ (\-\-[^\s\*]*)\*?\s*(.*)');
 
-my @ao = parse_opts("$mpv --ao=help", '^  ([^\s\:]*)\s*: (.*)');
-my @vo = parse_opts("$mpv --vo=help", '^  ([^\s\:]*)\s*: (.*)');
+my @ao = parse_opts('--ao=help', '^  ([^\s\:]*)\s*: (.*)');
+my @vo = parse_opts('--vo=help', '^  ([^\s\:]*)\s*: (.*)');
 
-my @af = parse_opts("$mpv --af=help", '^  ([^\s\:]*)\s*: (.*)');
-my @vf = parse_opts("$mpv --vf=help", '^  ([^\s\:]*)\s*: (.*)');
+my @af = parse_opts('--af=help', '^  ([^\s\:]*)\s*: (.*)');
+my @vf = parse_opts('--vf=help', '^  ([^\s\:]*)\s*: (.*)');
 
-my @protos = parse_opts("$mpv --list-protocols", '^ ([^\s]*)');
+my @protos = parse_opts('--list-protocols', '^ ([^\s]*)');
 
 my ($opts_str, $ao_str, $vo_str, $af_str, $vf_str, $protos_str);
 
@@ -34,36 +34,35 @@ chomp $af_str;
 $vf_str .= qq{      '$_' \\\n} foreach (@vf);
 chomp $vf_str;
 
-$protos_str .= qq{$_ } foreach (@protos);
-chomp $protos_str;
+$protos_str = join(' ', @protos);
 
 my $profile_comp = <<'EOS';
-      local -a profiles
-      local current
-      for current in "${(@f)$($words[1] --profile=help)}"; do
-        current=${current//\*/\\\*}
-        current=${current//\:/\\\:}
-        current=${current//\[/\\\[}
-        current=${current//\]/\\\]}
-        if [[ $current =~ $'\t'([^$'\t']*)$'\t'(.*) ]]; then
-          if [[ -n $match[2] ]]; then
-            current="$match[1][$match[2]]"
-          else
-            current="$match[1]"
-          fi
-          profiles=($profiles $current)
+    local -a profiles
+    local current
+    for current in "${(@f)$($words[1] --profile=help)}"; do
+      current=${current//\*/\\\*}
+      current=${current//\:/\\\:}
+      current=${current//\[/\\\[}
+      current=${current//\]/\\\]}
+      if [[ $current =~ $'\t'([^$'\t']*)$'\t'(.*) ]]; then
+        if [[ -n $match[2] ]]; then
+          current="$match[1][$match[2]]"
+        else
+          current="$match[1]"
         fi
-      done
-      if [[ $state == show-profile ]]; then
-        # For --show-profile, only one allowed
-        if (( ${#profiles} > 0 )); then
-          _values 'profile' $profiles && rc=0
-        fi
-      else
-        # For --profile, multiple allowed
-        profiles=($profiles 'help[list profiles]')
-        _values -s , 'profile(s)' $profiles && rc=0
+        profiles=($profiles $current)
       fi
+    done
+    if [[ $state == show-profile ]]; then
+      # For --show-profile, only one allowed
+      if (( ${#profiles} > 0 )); then
+        _values 'profile' $profiles && rc=0
+      fi
+    else
+      # For --profile, multiple allowed
+      profiles=($profiles 'help[list profiles]')
+      _values -s , 'profile(s)' $profiles && rc=0
+    fi
 EOS
 chomp $profile_comp;
 
@@ -83,39 +82,27 @@ $opts_str
 
 case \$state in
   ao)
-    local -a values
-    values=(
+    _values -s , 'audio outputs' \\
 $ao_str
-    )
-
-    _describe -t values 'audio outputs' values && rc=0
+    && rc=0
   ;;
 
   vo)
-    local -a values
-    values=(
+    _values -s , 'video outputs' \\
 $vo_str
-    )
-
-    _describe -t values 'video outputs' values && rc=0
+    && rc=0
   ;;
 
   af)
-    local -a values
-    values=(
+    _values -s , 'audio filters' \\
 $af_str
-    )
-
-    _describe -t values 'audio filters' values && rc=0
+    && rc=0
   ;;
 
   vf)
-    local -a values
-    values=(
+    _values -s , 'video filters' \\
 $vf_str
-    )
-
-    _describe -t values 'video filters' values && rc=0
+    && rc=0
   ;;
 
   profile|show-profile)
@@ -154,7 +141,7 @@ sub parse_main_opts {
     my ($cmd, $regex) = @_;
 
     my @list;
-    my @lines = split /\n/, `$cmd`;
+    my @lines = split /\n/, `"$mpv" --no-config $cmd`;
 
     foreach my $line (@lines) {
         my ($name, $desc) = ($line =~ /^$regex/) or next;
@@ -219,7 +206,7 @@ sub parse_opts {
     my ($cmd, $regex) = @_;
 
     my @list;
-    my @lines = split /\n/, `$cmd`;
+    my @lines = split /\n/, `"$mpv" --no-config $cmd`;
 
     foreach my $line (@lines) {
         if ($line !~ /^$regex/) {
@@ -231,7 +218,7 @@ sub parse_opts {
         if (defined $2) {
             my $desc = $2;
             $desc =~ s/\:/\\:/g;
-            $entry .= ':' . $desc;
+            $entry .= "[$desc]";
         }
 
         push @list, $entry

@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <limits.h>
@@ -51,6 +50,7 @@
 #define OARG_DOUBLE(def)        OPT_DOUBLE(ARG(d), 0, OPTDEF_DOUBLE(def))
 #define OARG_INT(def)           OPT_INT(ARG(i), 0, OPTDEF_INT(def))
 #define OARG_CHOICE(def, c)     OPT_CHOICE(ARG(i), 0, c, OPTDEF_INT(def))
+#define OARG_FLAGS(def, c)      OPT_FLAGS(ARG(i), 0, c, OPTDEF_INT(def))
 #define OARG_STRING(def)        OPT_STRING(ARG(s), 0, OPTDEF_STR(def))
 
 #define OARG_CYCLEDIR(def)      OPT_CYCLEDIR(ARG(d), 0, OPTDEF_DOUBLE(def))
@@ -60,17 +60,20 @@ const struct mp_cmd_def mp_cmds[] = {
 
   { MP_CMD_SEEK, "seek", {
       ARG_TIME,
-      OARG_CHOICE(0, ({"relative", 0},          {"0", 0}, {"-", 0},
-                      {"absolute-percent", 1},  {"1", 1},
-                      {"absolute", 2},          {"2", 2})),
-      OARG_CHOICE(0, ({"default-precise", 0},   {"0", 0},
-                      {"exact", 1},             {"1", 1},
-                      {"keyframes", -1},        {"-1", -1})),
+      OARG_FLAGS(4|0, ({"relative", 4|0}, {"-", 4|0},
+                       {"absolute-percent", 4|1},
+                       {"absolute", 4|2},
+                       {"keyframes", 32|8},
+                       {"exact", 32|16})),
+      // backwards compatibility only
+      OARG_CHOICE(0, ({"unused", 0}, {"default-precise", 0},
+                      {"keyframes", 32|8},
+                      {"exact", 32|16})),
     },
     .allow_auto_repeat = true,
   },
   { MP_CMD_REVERT_SEEK, "revert_seek", {
-      OARG_CHOICE(0, ({"-", 0}, {"mark", 1})),
+      OARG_FLAGS(0, ({"mark", 1})),
   }},
   { MP_CMD_QUIT, "quit", { OARG_INT(0) } },
   { MP_CMD_QUIT_WATCH_LATER, "quit_watch_later", { OARG_INT(0) } },
@@ -79,12 +82,12 @@ const struct mp_cmd_def mp_cmds[] = {
     .on_updown = true },
   { MP_CMD_FRAME_BACK_STEP, "frame_back_step", .allow_auto_repeat = true },
   { MP_CMD_PLAYLIST_NEXT, "playlist_next", {
-      OARG_CHOICE(0, ({"weak", 0},              {"0", 0},
-                      {"force", 1},             {"1", 1})),
+      OARG_CHOICE(0, ({"weak", 0},
+                      {"force", 1})),
   }},
   { MP_CMD_PLAYLIST_PREV, "playlist_prev", {
-      OARG_CHOICE(0, ({"weak", 0},              {"0", 0},
-                      {"force", 1},             {"1", 1})),
+      OARG_CHOICE(0, ({"weak", 0},
+                      {"force", 1})),
   }},
   { MP_CMD_SUB_STEP, "sub_step", { ARG_INT }, .allow_auto_repeat = true },
   { MP_CMD_SUB_SEEK, "sub_seek", { ARG_INT }, .allow_auto_repeat = true },
@@ -102,11 +105,13 @@ const struct mp_cmd_def mp_cmds[] = {
   { MP_CMD_TV_LAST_CHANNEL, "tv_last_channel", },
 
   { MP_CMD_SCREENSHOT, "screenshot", {
-      OARG_CHOICE(2, ({"video", 0},
-                      {"window", 1},
-                      {"subtitles", 2}, {"-", 2})),
-      OARG_CHOICE(0, ({"single", 0},
-                      {"each-frame", 1})),
+      OARG_FLAGS(4|2, ({"video", 4|0}, {"-", 4|0},
+                       {"window", 4|1},
+                       {"subtitles", 4|2},
+                       {"each-frame", 8})),
+      // backwards compatibility
+      OARG_CHOICE(0, ({"unused", 0}, {"single", 0},
+                      {"each-frame", 8})),
   }},
   { MP_CMD_SCREENSHOT_TO_FILE, "screenshot_to_file", {
       ARG_STRING,
@@ -121,15 +126,15 @@ const struct mp_cmd_def mp_cmds[] = {
   }},
   { MP_CMD_LOADFILE, "loadfile", {
       ARG_STRING,
-      OARG_CHOICE(0, ({"replace", 0},          {"0", 0},
-                      {"append", 1},           {"1", 1},
+      OARG_CHOICE(0, ({"replace", 0},
+                      {"append", 1},
                       {"append-play", 2})),
       OPT_KEYVALUELIST(ARG(str_list), MP_CMD_OPT_ARG),
   }},
   { MP_CMD_LOADLIST, "loadlist", {
       ARG_STRING,
-      OARG_CHOICE(0, ({"replace", 0},          {"0", 0},
-                      {"append", 1},           {"1", 1})),
+      OARG_CHOICE(0, ({"replace", 0},
+                      {"append", 1})),
   }},
   { MP_CMD_PLAYLIST_CLEAR, "playlist_clear", },
   { MP_CMD_PLAYLIST_REMOVE, "playlist_remove", {

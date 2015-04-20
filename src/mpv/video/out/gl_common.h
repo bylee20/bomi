@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  *
  * You can alternatively redistribute this file and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,7 +60,6 @@ enum {
     MPGL_CAP_TEX_RG             = (1 << 10),    // GL_ARB_texture_rg / GL 3.x
     MPGL_CAP_VDPAU              = (1 << 11),    // GL_NV_vdpau_interop
     MPGL_CAP_APPLE_RGB_422      = (1 << 12),    // GL_APPLE_rgb_422
-    MPGL_CAP_1ST_CLASS_ARRAYS   = (1 << 13),
     MPGL_CAP_1D_TEX             = (1 << 14),
     MPGL_CAP_3D_TEX             = (1 << 15),
     MPGL_CAP_DEBUG              = (1 << 16),
@@ -94,6 +92,12 @@ typedef struct MPGLContext {
     void (*releaseGlContext)(struct MPGLContext *);
     void (*set_current)(struct MPGLContext *, bool current);
 
+    // Used on windows only, tries to vsync with the DWM, and modifies SwapInterval
+    // when it does so. Returns the possibly modified swapinterval value.
+    int (*DwmFlush)(struct MPGLContext *, int opt_dwmflush,
+                    int opt_swapinterval, int current_swapinterval);
+
+
     // Resize the window, or create a new window if there isn't one yet.
     // On the first call, it creates a GL context according to what's specified
     // in MPGLContext.requested_gl_version. This is just a hint, and if the
@@ -109,6 +113,10 @@ typedef struct MPGLContext {
     // proper resize)
     void (*register_resize_callback)(struct vo *vo,
                                      void (*cb)(struct vo *vo, int w, int h));
+
+    // Optional activity state of context.
+    // If false, OpenGL renderers should not draw anything.
+    bool (*is_active)(struct MPGLContext *);
 
     // For free use by the backend.
     void *priv;
@@ -134,6 +142,7 @@ void mpgl_set_backend_x11es(MPGLContext *ctx);
 void mpgl_set_backend_x11egl(MPGLContext *ctx);
 void mpgl_set_backend_x11egles(MPGLContext *ctx);
 void mpgl_set_backend_wayland(MPGLContext *ctx);
+void mpgl_set_backend_rpi(MPGLContext *ctx);
 
 void mpgl_load_functions(GL *gl, void *(*getProcAddress)(const GLubyte *),
                          const char *ext2, struct mp_log *log);

@@ -28,7 +28,6 @@
 @property(nonatomic, assign) BOOL clearing;
 @property(nonatomic, assign) BOOL hasMouseDown;
 @property(nonatomic, retain) NSTrackingArea *tracker;
-- (void)signalMousePosition;
 - (BOOL)hasDock:(NSScreen*)screen;
 - (BOOL)hasMenubar:(NSScreen*)screen;
 - (int)mpvButtonNumber:(NSEvent*)event;
@@ -167,7 +166,8 @@
 
 - (BOOL)canHideCursor
 {
-    return !self.hasMouseDown && [self containsMouseLocation];
+    return !self.hasMouseDown && [self containsMouseLocation]
+        && [[self window] isKeyWindow];
 }
 
 - (void)mouseEntered:(NSEvent *)event
@@ -210,6 +210,8 @@
 - (void)signalMousePosition
 {
     NSPoint p = [self convertPointToPixels:[self mouseLocation]];
+    p.x = MIN(MAX(p.x, 0), self.bounds.size.width-1);
+    p.y = MIN(MAX(p.y, 0), self.bounds.size.height-1);
     [self.adapter signalMouseMovement:p];
 }
 

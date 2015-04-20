@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_CFG_MPLAYER_H
@@ -109,7 +108,7 @@ const m_option_t mp_opts[] = {
                 .type = &m_option_type_msglevels),
     OPT_STRING("dump-stats", dump_stats, CONF_GLOBAL | CONF_PRE_PARSE),
     OPT_FLAG("msg-color", msg_color, CONF_GLOBAL | CONF_PRE_PARSE),
-    OPT_STRING("log-file", log_file, CONF_GLOBAL | CONF_PRE_PARSE),
+    OPT_STRING("log-file", log_file, CONF_GLOBAL | CONF_PRE_PARSE | M_OPT_FILE),
     OPT_FLAG("msg-module", msg_module, CONF_GLOBAL),
     OPT_FLAG("msg-time", msg_time, CONF_GLOBAL),
 #ifdef _WIN32
@@ -141,7 +140,8 @@ const m_option_t mp_opts[] = {
 
     OPT_CHOICE_OR_INT("cache", stream_cache.size, 0, 32, 0x7fffffff,
                       ({"no", 0},
-                       {"auto", -1})),
+                       {"auto", -1},
+                       {"yes", -2})),
     OPT_CHOICE_OR_INT("cache-default", stream_cache.def_size, 0, 32, 0x7fffffff,
                       ({"no", 0})),
     OPT_INTRANGE("cache-initial", stream_cache.initial, 0, 0, 0x7fffffff),
@@ -291,7 +291,8 @@ const m_option_t mp_opts[] = {
                 {"vda", 2},
                 {"vaapi", 4},
                 {"vaapi-copy", 5},
-                {"dxva2-copy", 6})),
+                {"dxva2-copy", 6},
+                {"rpi", 7})),
     OPT_STRING("hwdec-codecs", hwdec_codecs, 0),
 
     OPT_SUBSTRUCT("sws", vo.sws_opts, sws_conf, 0),
@@ -422,31 +423,9 @@ const m_option_t mp_opts[] = {
     OPT_FLOATRANGE("video-align-y", vo.align_y, 0, -1.0, 1.0),
     OPT_FLAG("video-unscaled", vo.unscaled, 0),
     OPT_FLAG("force-rgba-osd-rendering", force_rgba_osd, 0),
-    OPT_CHOICE("colormatrix", requested_colorspace, 0,
-               ({"auto", MP_CSP_AUTO},
-                {"BT.601", MP_CSP_BT_601},
-                {"BT.709", MP_CSP_BT_709},
-                {"SMPTE-240M", MP_CSP_SMPTE_240M},
-                {"BT.2020-NCL", MP_CSP_BT_2020_NC},
-                {"BT.2020-CL", MP_CSP_BT_2020_C},
-                {"YCgCo", MP_CSP_YCGCO})),
-    OPT_CHOICE("colormatrix-input-range", requested_input_range, 0,
-               ({"auto", MP_CSP_LEVELS_AUTO},
-                {"limited", MP_CSP_LEVELS_TV},
-                {"full", MP_CSP_LEVELS_PC})),
-    OPT_CHOICE("colormatrix-output-range", requested_output_range, 0,
-               ({"auto", MP_CSP_LEVELS_AUTO},
-                {"limited", MP_CSP_LEVELS_TV},
-                {"full", MP_CSP_LEVELS_PC})),
-    OPT_CHOICE("colormatrix-primaries", requested_primaries, 0,
-               ({"auto", MP_CSP_PRIM_AUTO},
-                {"BT.601-525", MP_CSP_PRIM_BT_601_525},
-                {"BT.601-625", MP_CSP_PRIM_BT_601_625},
-                {"BT.709", MP_CSP_PRIM_BT_709},
-                {"BT.2020", MP_CSP_PRIM_BT_2020})),
-    OPT_CHOICE_OR_INT("video-rotate", video_rotate, 0, 0, 359,
+    OPT_CHOICE_OR_INT("video-rotate", video_rotate, 0, 0, 360,
                       ({"no", -1})),
-    OPT_VID_STEREO_MODE("video-stereo-mode", video_stereo_mode, 0),
+    OPT_CHOICE_C("video-stereo-mode", video_stereo_mode, 0, mp_stereo3d_names),
 
     OPT_CHOICE_OR_INT("cursor-autohide", cursor_autohide_delay, 0,
                       0, 30000, ({"no", -1}, {"always", -2})),
@@ -532,7 +511,7 @@ const m_option_t mp_opts[] = {
                ({"auto", 0}, {"decoder", 1}, {"sort", 2})),
     OPT_FLAG("initial-audio-sync", initial_audio_sync, 0),
     OPT_CHOICE("hr-seek", hr_seek, 0,
-               ({"no", -1}, {"absolute", 0}, {"always", 1}, {"yes", 1})),
+               ({"no", -1}, {"absolute", 0}, {"yes", 1}, {"always", 1})),
     OPT_FLOATRANGE("hr-seek-demuxer-offset", hr_seek_demuxer_offset, 0, -9, 99),
     OPT_FLAG("hr-seek-framedrop", hr_seek_framedrop, 0),
     OPT_CHOICE_OR_INT("autosync", autosync, 0, 0, 10000,
@@ -603,7 +582,6 @@ const m_option_t mp_opts[] = {
     OPT_REMOVED("identify", "use TOOLS/mpv_identify.sh"),
     OPT_REMOVED("lavdopts", "use --vd-lavc-..."),
     OPT_REMOVED("lavfdopts", "use --demuxer-lavf-..."),
-    OPT_REPLACED("lircconf", "input-lirc-conf"),
     OPT_REPLACED("lua", "script"),
     OPT_REPLACED("lua-opts", "script-opts"),
     OPT_REMOVED("mixer-channel", "use AO suboptions (alsa, oss)"),
@@ -616,7 +594,6 @@ const m_option_t mp_opts[] = {
     OPT_REPLACED("noar", "no-input-appleremote"),
     OPT_REPLACED("noautosub", "no-sub-auto"),
     OPT_REPLACED("noconsolecontrols", "no-input-terminal"),
-    OPT_REPLACED("nojoystick", "no-input-joystick"),
     OPT_REPLACED("nosound", "no-audio"),
     OPT_REPLACED("osdlevel", "osd-level"),
     OPT_REMOVED("panscanrange", "use --video-zoom, --video-pan-x/y"),
@@ -646,7 +623,6 @@ const m_option_t mp_opts[] = {
     OPT_REMOVED("xy", "use --autofit"),
     OPT_REMOVED("zoom", "Inverse available as ``--video-unscaled"),
     OPT_REPLACED("media-keys", "input-media-keys"),
-    OPT_REPLACED("lirc", "input-lirc"),
     OPT_REPLACED("right-alt-gr", "input-right-alt-gr"),
     OPT_REPLACED("autosub", "sub-auto"),
     OPT_REPLACED("autosub-match", "sub-auto"),
@@ -668,7 +644,7 @@ const struct MPOpts mp_default_opts = {
     .use_terminal = 1,
     .msg_color = 1,
     .audio_driver_list = NULL,
-    .audio_decoders = "-spdif:*", // never select spdif by default
+    .audio_decoders = "lavc:libdcadec,-spdif:*", // never select spdif by default
     .video_decoders = NULL,
     .deinterlace = -1,
     .softvol = SOFTVOL_AUTO,
@@ -729,7 +705,7 @@ const struct MPOpts mp_default_opts = {
     .position_resume = 1,
     .stream_cache = {
         .size = -1,
-        .def_size = 25000,
+        .def_size = 150000,
         .initial = 0,
         .seek_min = 500,
         .file_max = 1024 * 1024,
@@ -798,6 +774,10 @@ const struct MPOpts mp_default_opts = {
     .dvd_angle = 1,
 
     .mf_fps = 1.0,
+
+#if HAVE_RPI
+    .hwdec_api = -1,
+#endif
 
     .display_tags = (char **)(const char*[]){
         "Artist", "Album", "Album_Artist", "Comment", "Composer", "Genre",

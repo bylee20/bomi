@@ -6,21 +6,20 @@
  *   zero terminated path string. This buffer has to be FREED
  *   by the caller.
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <assert.h>
@@ -240,7 +239,7 @@ char *mp_path_join(void *talloc_ctx, struct bstr p1, struct bstr p2)
         return bstrdup0(talloc_ctx, p1);
 
 #if HAVE_DOS_PATHS
-    if (p2.len >= 2 && p2.start[1] == ':'
+    if ((p2.len >= 2 && p2.start[1] == ':')
         || p2.start[0] == '\\' || p2.start[0] == '/')
 #else
     if (p2.start[0] == '/')
@@ -251,7 +250,7 @@ char *mp_path_join(void *talloc_ctx, struct bstr p1, struct bstr p2)
     int endchar1 = p1.start[p1.len - 1];
 #if HAVE_DOS_PATHS
     have_separator = endchar1 == '/' || endchar1 == '\\'
-                     || p1.len == 2 && endchar1 == ':'; // "X:" only
+                     || (p1.len == 2 && endchar1 == ':'); // "X:" only
 #else
     have_separator = endchar1 == '/';
 #endif

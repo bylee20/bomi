@@ -28,14 +28,25 @@ struct lut3d {
     int size[3];
 };
 
+struct scaler_fun {
+    char *name;
+    float params[2];
+    float blur;
+};
+
+struct scaler_config {
+    struct scaler_fun kernel;
+    struct scaler_fun window;
+    float radius;
+    float antiring;
+};
+
 struct gl_video_opts {
-    char *scalers[2];
-    char *dscaler;
-    float scaler_params[2][2];
-    float scaler_radius[2];
-    float scaler_antiring[2];
+    struct scaler_config scaler[4];
     float gamma;
-    int srgb;
+    int gamma_auto;
+    int target_prim;
+    int target_trc;
     int linear_scaling;
     int fancy_downscaling;
     int sigmoid_upscaling;
@@ -54,8 +65,8 @@ struct gl_video_opts {
     int use_rectangle;
     struct m_color background;
     char *custom_shader;
-    int smoothmotion;
-    float smoothmotion_threshold;
+    int interpolation;
+    int blend_subs;
 };
 
 extern const struct m_sub_options gl_video_conf;
@@ -64,25 +75,31 @@ extern const struct gl_video_opts gl_video_opts_def;
 
 struct gl_video;
 
-struct gl_video *gl_video_init(GL *gl, struct mp_log *log, struct osd_state *osd);
+struct gl_video *gl_video_init(GL *gl, struct mp_log *log);
 void gl_video_uninit(struct gl_video *p);
-void gl_video_set_options(struct gl_video *p, struct gl_video_opts *opts);
+void gl_video_set_osd_source(struct gl_video *p, struct osd_state *osd);
+void gl_video_set_options(struct gl_video *p, struct gl_video_opts *opts,
+                          int *queue_size);
 bool gl_video_check_format(struct gl_video *p, int mp_format);
 void gl_video_config(struct gl_video *p, struct mp_image_params *params);
 void gl_video_set_output_depth(struct gl_video *p, int r, int g, int b);
 void gl_video_set_lut3d(struct gl_video *p, struct lut3d *lut3d);
+void gl_video_skip_image(struct gl_video *p, struct mp_image *mpi);
 void gl_video_upload_image(struct gl_video *p, struct mp_image *img);
 void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t);
-void gl_video_resize(struct gl_video *p, struct mp_rect *window,
+void gl_video_resize(struct gl_video *p, int vp_w, int vp_h,
                      struct mp_rect *src, struct mp_rect *dst,
-                     struct mp_osd_res *osd, bool vflip);
-void gl_video_get_colorspace(struct gl_video *p, struct mp_image_params *params);
+                     struct mp_osd_res *osd);
 struct mp_csp_equalizer;
 struct mp_csp_equalizer *gl_video_eq_ptr(struct gl_video *p);
 void gl_video_eq_update(struct gl_video *p);
 
 void gl_video_set_debug(struct gl_video *p, bool enable);
 void gl_video_resize_redraw(struct gl_video *p, int w, int h);
+
+float gl_video_scale_ambient_lux(float lmin, float lmax,
+                                 float rmin, float rmax, float lux);
+void gl_video_set_ambient_lux(struct gl_video *p, int lux);
 
 void gl_video_set_gl_state(struct gl_video *p);
 void gl_video_unset_gl_state(struct gl_video *p);

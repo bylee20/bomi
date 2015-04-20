@@ -14,21 +14,20 @@
  *
  * Copyright (c) 2007 Robert Juliano
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdlib.h>
@@ -76,9 +75,9 @@ typedef struct af_scaletempo_s
     float ms_stride;
     float percent_overlap;
     float ms_search;
+#define SCALE_TEMPO 1
+#define SCALE_PITCH 2
     int speed_opt;
-    short speed_tempo;
-    short speed_pitch;
 } af_scaletempo_t;
 
 static int fill_queue(struct af_instance *af, struct mp_audio *data, int offset)
@@ -282,7 +281,7 @@ static void update_speed(struct af_instance *af, float speed)
 
     s->speed = speed;
 
-    double factor = s->speed_pitch ? 1.0 / s->speed : s->speed;
+    double factor = (s->speed_opt & SCALE_PITCH) ? 1.0 / s->speed : s->speed;
     s->scale = factor * s->scale_nominal;
 
     s->frames_stride_scaled = s->scale * s->frames_stride;
@@ -302,11 +301,6 @@ static int control(struct af_instance *af, int cmd, void *arg)
         float srate  = data->rate / 1000.0;
         int nch = data->nch;
         int use_int = 0;
-
-        if (AF_FORMAT_IS_SPECIAL(data->format)) {
-            MP_ERR(af, "Changing speed is not supported with spdif formats.\n");
-            return AF_DETACH;
-        }
 
         mp_audio_force_interleaved_format(data);
         mp_audio_copy_config(af->data, data);
@@ -433,9 +427,15 @@ static int control(struct af_instance *af, int cmd, void *arg)
         return af_test_output(af, (struct mp_audio *)arg);
     }
     case AF_CONTROL_SET_PLAYBACK_SPEED: {
-        if (s->speed_tempo == s->speed_pitch)
-            break; // doesn't change speed
-        update_speed(af, *(double *)arg);
+        double speed = *(double *)arg;
+        if (s->speed_opt & SCALE_TEMPO) {
+            if (s->speed_opt & SCALE_PITCH)
+                break;
+            update_speed(af, speed);
+        } else if (s->speed_opt & SCALE_PITCH) {
+            update_speed(af, speed);
+            break; // do not signal OK
+        }
         return AF_OK;
     }
     case AF_CONTROL_RESET:
@@ -458,21 +458,12 @@ static void uninit(struct af_instance *af)
     free(s->table_window);
 }
 
-#define SCALE_TEMPO 1
-#define SCALE_PITCH 2
-
 // Allocate memory and set function pointers
 static int af_open(struct af_instance *af)
 {
-    af_scaletempo_t *s = af->priv;
-
     af->control   = control;
     af->uninit    = uninit;
     af->filter_frame = filter;
-
-    s->speed_tempo = !!(s->speed_opt & SCALE_TEMPO);
-    s->speed_pitch = !!(s->speed_opt & SCALE_PITCH);
-
     return AF_OK;
 }
 

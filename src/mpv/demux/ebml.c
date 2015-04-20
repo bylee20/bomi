@@ -4,21 +4,20 @@
  * copyright (c) 2004 Aurelien Jacobs <aurel@gnuage.org>
  * based on the one written by Ronald Bultje for gstreamer
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "config.h"
@@ -228,8 +227,10 @@ int ebml_resync_cluster(struct mp_log *log, stream_t *s)
 {
     int64_t pos = stream_tell(s);
     uint32_t last_4_bytes = 0;
-    mp_err(log, "Corrupt file detected. "
-           "Trying to resync starting from position %"PRId64"...\n", pos);
+    if (!s->eof) {
+        mp_err(log, "Corrupt file detected. "
+               "Trying to resync starting from position %"PRId64"...\n", pos);
+    }
     while (!s->eof) {
         // Assumes MATROSKA_ID_CLUSTER is 4 bytes, with no 0 bytes.
         if (last_4_bytes == MATROSKA_ID_CLUSTER) {

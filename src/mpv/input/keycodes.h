@@ -1,21 +1,20 @@
 /*
  * KEY code definitions for keys/events not passed by ASCII value
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_KEYCODES_H
@@ -96,43 +95,6 @@
 #define MP_KEY_KPINS    (MP_KEY_KEYPAD+11)
 #define MP_KEY_KPDEL    (MP_KEY_KEYPAD+12)
 #define MP_KEY_KPENTER  (MP_KEY_KEYPAD+13)
-
-
-// Joystick input module
-#define MP_JOY_BASE             (MP_KEY_BASE+0x70)
-#define MP_JOY_AXIS0_PLUS       (MP_JOY_BASE+0)
-#define MP_JOY_AXIS0_MINUS      (MP_JOY_BASE+1)
-#define MP_JOY_AXIS1_PLUS       (MP_JOY_BASE+2)
-#define MP_JOY_AXIS1_MINUS      (MP_JOY_BASE+3)
-#define MP_JOY_AXIS2_PLUS       (MP_JOY_BASE+4)
-#define MP_JOY_AXIS2_MINUS      (MP_JOY_BASE+5)
-#define MP_JOY_AXIS3_PLUS       (MP_JOY_BASE+6)
-#define MP_JOY_AXIS3_MINUS      (MP_JOY_BASE+7)
-#define MP_JOY_AXIS4_PLUS       (MP_JOY_BASE+8)
-#define MP_JOY_AXIS4_MINUS      (MP_JOY_BASE+9)
-#define MP_JOY_AXIS5_PLUS       (MP_JOY_BASE+10)
-#define MP_JOY_AXIS5_MINUS      (MP_JOY_BASE+11)
-#define MP_JOY_AXIS6_PLUS       (MP_JOY_BASE+12)
-#define MP_JOY_AXIS6_MINUS      (MP_JOY_BASE+13)
-#define MP_JOY_AXIS7_PLUS       (MP_JOY_BASE+14)
-#define MP_JOY_AXIS7_MINUS      (MP_JOY_BASE+15)
-#define MP_JOY_AXIS8_PLUS       (MP_JOY_BASE+16)
-#define MP_JOY_AXIS8_MINUS      (MP_JOY_BASE+17)
-#define MP_JOY_AXIS9_PLUS       (MP_JOY_BASE+18)
-#define MP_JOY_AXIS9_MINUS      (MP_JOY_BASE+19)
-
-#define MP_JOY_BTN_BASE ((MP_KEY_BASE+0x90)|MP_NO_REPEAT_KEY)
-#define MP_JOY_BTN0 (MP_JOY_BTN_BASE+0)
-#define MP_JOY_BTN1 (MP_JOY_BTN_BASE+1)
-#define MP_JOY_BTN2 (MP_JOY_BTN_BASE+2)
-#define MP_JOY_BTN3 (MP_JOY_BTN_BASE+3)
-#define MP_JOY_BTN4 (MP_JOY_BTN_BASE+4)
-#define MP_JOY_BTN5 (MP_JOY_BTN_BASE+5)
-#define MP_JOY_BTN6 (MP_JOY_BTN_BASE+6)
-#define MP_JOY_BTN7 (MP_JOY_BTN_BASE+7)
-#define MP_JOY_BTN8 (MP_JOY_BTN_BASE+8)
-#define MP_JOY_BTN9 (MP_JOY_BTN_BASE+9)
-
 
 // Mouse events from VOs
 #define MP_MOUSE_BASE   ((MP_KEY_BASE+0xA0)|MP_NO_REPEAT_KEY|MP_KEY_EMIT_ON_UP)

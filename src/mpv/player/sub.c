@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stddef.h>
@@ -127,8 +126,8 @@ void uninit_sub_renderer(struct MPContext *mpctx)
 static void init_sub_renderer(struct MPContext *mpctx) {}
 void uninit_sub_renderer(struct MPContext *mpctx) {}
 
-void mp_ass_configure_fonts(struct ass_renderer *a, struct MPOpts *b,
-                            struct mpv_global *c, struct mp_log *d) {}
+static void mp_ass_configure_fonts(struct ass_renderer *a, struct osd_style_opts *b,
+                                   struct mpv_global *c, struct mp_log *d) {}
 
 #endif
 

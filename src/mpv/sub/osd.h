@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_SUB_H
@@ -70,8 +69,7 @@ struct sub_bitmaps {
     struct sub_bitmap *parts;
     int num_parts;
 
-    // Incremented on each change
-    int bitmap_id, bitmap_pos_id;
+    int change_id;  // Incremented on each change
 };
 
 struct mp_osd_res {
@@ -136,6 +134,7 @@ struct osd_style_opts {
     int align_x;
     int align_y;
     float blur;
+    int bold;
 };
 
 extern const struct m_sub_options osd_style_conf;
@@ -181,6 +180,7 @@ void osd_set_nav_highlight(struct osd_state *osd, void *priv);
 enum mp_osd_draw_flags {
     OSD_DRAW_SUB_FILTER = (1 << 0),
     OSD_DRAW_SUB_ONLY   = (1 << 1),
+    OSD_DRAW_OSD_ONLY   = (1 << 2),
 };
 
 void osd_draw(struct osd_state *osd, struct mp_osd_res res,

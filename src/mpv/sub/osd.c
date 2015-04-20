@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdio.h>
@@ -59,6 +58,7 @@ static const m_option_t style_opts[] = {
     OPT_CHOICE("align-y", align_y, 0,
                ({"top", -1}, {"center", 0}, {"bottom", +1})),
     OPT_FLOATRANGE("blur", blur, 0, 0, 20),
+    OPT_FLAG("bold", bold, 0),
     {0}
 };
 
@@ -263,7 +263,7 @@ static void render_object(struct osd_state *osd, struct osd_object *obj,
     } else if (obj->type == OSDTYPE_EXTERNAL2) {
         if (obj->external2 && obj->external2->format) {
             *out_imgs = *obj->external2;
-            obj->external2->bitmap_id = obj->external2->bitmap_pos_id = 0;
+            obj->external2->change_id = 0;
         }
     } else if (obj->type == OSDTYPE_NAV_HIGHLIGHT) {
         if (obj->highlight_priv)
@@ -272,29 +272,23 @@ static void render_object(struct osd_state *osd, struct osd_object *obj,
         osd_object_get_bitmaps(osd, obj, out_imgs);
     }
 
-    if (obj->force_redraw) {
-        out_imgs->bitmap_id++;
-        out_imgs->bitmap_pos_id++;
-    }
+    if (obj->force_redraw)
+        out_imgs->change_id++;
 
     obj->force_redraw = false;
-    obj->vo_bitmap_id += out_imgs->bitmap_id;
-    obj->vo_bitmap_pos_id += out_imgs->bitmap_pos_id;
+    obj->vo_change_id += out_imgs->change_id;
 
     if (out_imgs->num_parts == 0)
         return;
 
-    if (obj->cached.bitmap_id == obj->vo_bitmap_id
-        && obj->cached.bitmap_pos_id == obj->vo_bitmap_pos_id
-        && formats[obj->cached.format])
+    if (obj->cached.change_id == obj->vo_change_id && formats[obj->cached.format])
     {
         *out_imgs = obj->cached;
         return;
     }
 
     out_imgs->render_index = obj->type;
-    out_imgs->bitmap_id = obj->vo_bitmap_id;
-    out_imgs->bitmap_pos_id = obj->vo_bitmap_pos_id;
+    out_imgs->change_id = obj->vo_change_id;
 
     if (formats[out_imgs->format])
         return;
@@ -337,6 +331,8 @@ void osd_draw(struct osd_state *osd, struct mp_osd_res res,
             !(draw_flags & OSD_DRAW_SUB_FILTER))
             continue;
         if ((draw_flags & OSD_DRAW_SUB_ONLY) && !obj->is_sub)
+            continue;
+        if ((draw_flags & OSD_DRAW_OSD_ONLY) && obj->is_sub)
             continue;
 
         if (obj->sub_state.dec_sub)

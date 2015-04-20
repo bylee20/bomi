@@ -1,19 +1,18 @@
 /*
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MPLAYER_AF_H
@@ -141,7 +140,8 @@ struct af_stream *af_new(struct mpv_global *global);
 void af_destroy(struct af_stream *s);
 int af_init(struct af_stream *s);
 void af_uninit(struct af_stream *s);
-struct af_instance *af_add(struct af_stream *s, char *name, char **args);
+struct af_instance *af_add(struct af_stream *s, char *name, char *label,
+                           char **args);
 int af_remove_by_label(struct af_stream *s, char *label);
 struct af_instance *af_find_by_label(struct af_stream *s, char *label);
 struct af_instance *af_control_any_rev(struct af_stream *s, int cmd, void *arg);
@@ -159,9 +159,7 @@ double af_calc_delay(struct af_stream *s);
 int af_test_output(struct af_instance *af, struct mp_audio *out);
 
 int af_from_dB(int n, float *in, float *out, float k, float mi, float ma);
-int af_to_dB(int n, float *in, float *out, float k);
 int af_from_ms(int n, float *in, int *out, int rate, float mi, float ma);
-int af_to_ms(int n, int *in, float *out, int rate);
 float af_softclip(float a);
 
 #endif /* MPLAYER_AF_H */

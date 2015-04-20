@@ -377,6 +377,11 @@ static int load_lua(struct mpv_handle *client, const char *fname)
         .filename = fname,
     };
 
+    if (LUA_VERSION_NUM != 501 && LUA_VERSION_NUM != 502) {
+        MP_FATAL(ctx, "Only Lua 5.1 and 5.2 are supported.\n");
+        goto error_out;
+    }
+
     lua_State *L = ctx->state = luaL_newstate();
     if (!L)
         goto error_out;
@@ -1091,19 +1096,6 @@ static int script_get_wakeup_pipe(lua_State *L)
     return 1;
 }
 
-static int script_getcwd(lua_State *L)
-{
-    char *cwd = mp_getcwd(NULL);
-    if (!cwd) {
-        lua_pushnil(L);
-        lua_pushstring(L, "error");
-        return 2;
-    }
-    lua_pushstring(L, cwd);
-    talloc_free(cwd);
-    return 1;
-}
-
 static int script_readdir(lua_State *L)
 {
     //                    0      1        2       3
@@ -1162,7 +1154,6 @@ static int script_join_path(lua_State *L)
     return 1;
 }
 
-#if HAVE_POSIX_SPAWN || defined(__MINGW32__)
 struct subprocess_cb_ctx {
     struct mp_log *log;
     void* talloc_ctx;
@@ -1239,7 +1230,6 @@ static int script_subprocess(lua_State *L)
     lua_setfield(L, -2, "stdout"); // res
     return 1;
 }
-#endif
 
 static int script_parse_json(lua_State *L)
 {
@@ -1308,13 +1298,10 @@ static const struct fn_entry main_fns[] = {
 };
 
 static const struct fn_entry utils_fns[] = {
-    FN_ENTRY(getcwd),
     FN_ENTRY(readdir),
     FN_ENTRY(split_path),
     FN_ENTRY(join_path),
-#if HAVE_POSIX_SPAWN || defined(__MINGW32__)
     FN_ENTRY(subprocess),
-#endif
     FN_ENTRY(parse_json),
     {0}
 };

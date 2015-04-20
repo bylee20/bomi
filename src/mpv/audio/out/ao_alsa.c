@@ -10,21 +10,20 @@
  * 04/13/2004 merged with ao_alsa1.x, fixes provided by Jindrich Makovicka
  * 04/25/2004 printfs converted to mp_msg, Zsolt.
  *
- * This file is part of MPlayer.
+ * This file is part of mpv.
  *
- * MPlayer is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * MPlayer is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with MPlayer; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <errno.h>
@@ -64,6 +63,7 @@ struct priv {
     int cfg_mixer_index;
     int cfg_resample;
     int cfg_ni;
+    int cfg_ignore_chmap;
 };
 
 #define BUFFER_TIME 250000  // 250ms
@@ -375,6 +375,7 @@ static int try_open_device(struct ao *ao, const char *device)
                         IEC958_AES1_CON_ORIGINAL | IEC958_AES1_CON_PCM_CODER,
                         map_iec958_srate(ao->samplerate));
         const char *ac3_device = append_params(tmp, device, params);
+        MP_VERBOSE(ao, "opening device '%s' => '%s'\n", device, ac3_device);
         int err = snd_pcm_open
                     (&p->alsa, ac3_device, SND_PCM_STREAM_PLAYBACK, 0);
         talloc_free(tmp);
@@ -382,6 +383,7 @@ static int try_open_device(struct ao *ao, const char *device)
             return 0;
     }
 
+    MP_VERBOSE(ao, "opening device '%s'\n", device);
     return snd_pcm_open(&p->alsa, device, SND_PCM_STREAM_PLAYBACK, 0);
 }
 
@@ -407,22 +409,13 @@ static int init_device(struct ao *ao)
     struct priv *p = ao->priv;
     int err;
 
-    if (!p->cfg_ni)
-        ao->format = af_fmt_from_planar(ao->format);
-
     const char *device = "default";
-    if (AF_FORMAT_IS_IEC61937(ao->format)) {
+    if (AF_FORMAT_IS_IEC61937(ao->format))
         device = "iec958";
-        MP_VERBOSE(ao, "playing AC3/iec61937/iec958, %i channels\n",
-                   ao->channels.num);
-    }
     if (ao->device)
         device = ao->device;
     if (p->cfg_device && p->cfg_device[0])
         device = p->cfg_device;
-
-    MP_VERBOSE(ao, "using device: %s\n", device);
-    MP_VERBOSE(ao, "using ALSA version: %s\n", snd_asoundlib_version());
 
     err = try_open_device(ao, device);
     CHECK_ALSA_ERROR("Playback open error");
@@ -466,11 +459,11 @@ static int init_device(struct ao *ao)
     err = snd_pcm_hw_params_set_format(p->alsa, alsa_hwparams, p->alsa_fmt);
     CHECK_ALSA_ERROR("Unable to set format");
 
-    snd_pcm_access_t access = af_fmt_is_planar(ao->format)
+    snd_pcm_access_t access = AF_FORMAT_IS_PLANAR(ao->format)
                                     ? SND_PCM_ACCESS_RW_NONINTERLEAVED
                                     : SND_PCM_ACCESS_RW_INTERLEAVED;
     err = snd_pcm_hw_params_set_access(p->alsa, alsa_hwparams, access);
-    if (err < 0 && af_fmt_is_planar(ao->format)) {
+    if (err < 0 && AF_FORMAT_IS_PLANAR(ao->format)) {
         ao->format = af_fmt_from_planar(ao->format);
         access = SND_PCM_ACCESS_RW_INTERLEAVED;
         err = snd_pcm_hw_params_set_access(p->alsa, alsa_hwparams, access);
@@ -478,7 +471,7 @@ static int init_device(struct ao *ao)
     CHECK_ALSA_ERROR("Unable to set access type");
 
     struct mp_chmap dev_chmap = ao->channels;
-    if (AF_FORMAT_IS_IEC61937(ao->format)) {
+    if (AF_FORMAT_IS_IEC61937(ao->format) || p->cfg_ignore_chmap) {
         dev_chmap.num = 0; // disable chmap API
     } else if (query_chmaps(ao, &dev_chmap)) {
         ao->channels = dev_chmap;
@@ -499,8 +492,11 @@ static int init_device(struct ao *ao)
     }
 
     if (num_channels != ao->channels.num) {
-        MP_ERR(ao, "Couldn't get requested number of channels.\n");
         mp_chmap_from_channels_alsa(&ao->channels, num_channels);
+        if (!mp_chmap_is_valid(&ao->channels))
+            mp_chmap_from_channels(&ao->channels, 2);
+        MP_ERR(ao, "Couldn't get requested number of channels, fallback to %s.\n",
+               mp_chmap_to_str(&ao->channels));
     }
 
     // Some ALSA drivers have broken delay reporting, so disable the ALSA
@@ -550,8 +546,11 @@ static int init_device(struct ao *ao)
 
         err = snd_pcm_set_chmap(p->alsa, alsa_chmap);
         if (err == -ENXIO) {
-            MP_WARN(ao, "Device does not support requested channel map (%s)\n",
-                    mp_chmap_to_str(&dev_chmap));
+            // I consider this an ALSA bug: the channel map was reported as
+            // supported, but we still can't set it. It happens virtually
+            // always with dmix, though.
+            MP_VERBOSE(ao, "Device does not support requested channel map (%s)\n",
+                       mp_chmap_to_str(&dev_chmap));
         } else {
             CHECK_ALSA_WARN("Channel map setup failed");
         }
@@ -571,7 +570,9 @@ static int init_device(struct ao *ao)
 
         MP_VERBOSE(ao, "which we understand as: %s\n", mp_chmap_to_str(&chmap));
 
-        if (AF_FORMAT_IS_IEC61937(ao->format)) {
+        if (p->cfg_ignore_chmap) {
+            MP_VERBOSE(ao, "user set ignore-chmap; ignoring the channel map.\n");
+        } else if (AF_FORMAT_IS_IEC61937(ao->format)) {
             MP_VERBOSE(ao, "using spdif passthrough; ignoring the channel map.\n");
         } else if (mp_chmap_is_valid(&chmap)) {
             if (mp_chmap_equals(&chmap, &ao->channels)) {
@@ -604,6 +605,7 @@ static int init_device(struct ao *ao)
                 // the number of channels to 2 either, because the hw params
                 // are already set! So just fuck it and reopen the device with
                 // the chmap "cleaned out" of NA entries.
+                MP_VERBOSE(ao, "Working around braindead ALSA behavior.\n");
                 err = snd_pcm_close(p->alsa);
                 p->alsa = NULL;
                 CHECK_ALSA_ERROR("pcm close error");
@@ -675,6 +677,12 @@ alsa_error:
 
 static int init(struct ao *ao)
 {
+    struct priv *p = ao->priv;
+    if (!p->cfg_ni)
+        ao->format = af_fmt_from_planar(ao->format);
+
+    MP_VERBOSE(ao, "using ALSA version: %s\n", snd_asoundlib_version());
+
     int r = init_device(ao);
     if (r == INIT_BRAINDEATH)
         r = init_device(ao); // retry with normalized channel layout
@@ -814,7 +822,7 @@ static int play(struct ao *ao, void **data, int samples, int flags)
         return 0;
 
     do {
-        if (af_fmt_is_planar(ao->format)) {
+        if (AF_FORMAT_IS_PLANAR(ao->format)) {
             res = snd_pcm_writen(p->alsa, data, samples);
         } else {
             res = snd_pcm_writei(p->alsa, data[0], samples);
@@ -934,6 +942,7 @@ const struct ao_driver audio_out_alsa = {
         OPT_STRING("mixer-name", cfg_mixer_name, 0),
         OPT_INTRANGE("mixer-index", cfg_mixer_index, 0, 0, 99),
         OPT_FLAG("non-interleaved", cfg_ni, 0),
+        OPT_FLAG("ignore-chmap", cfg_ignore_chmap, 0),
         {0}
     },
 };
