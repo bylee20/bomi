@@ -306,7 +306,8 @@ static void handle_cmd(stream_t *s, struct mp_nav_cmd *ev)
         handle_menu_input(s, ev->u.menu.action);
         break;
     case MP_NAV_CMD_MOUSE_POS:
-		ev->mouse_in_button = handle_mouse_pos(s, ev->u.mouse_pos.x, ev->u.mouse_pos.y);
+        ev->mouse_on_button = handle_mouse_pos(s, ev->u.mouse_pos.x,
+                                               ev->u.mouse_pos.y);
         break;
     }
 

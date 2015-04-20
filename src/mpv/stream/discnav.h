@@ -80,7 +80,7 @@ struct mp_nav_cmd {
             int x, y;
         } mouse_pos;
     } u;
-    bool mouse_in_button;
+    bool mouse_on_button;
 };
 
 #endif /* MPLAYER_STREAM_DVDNAV_H */

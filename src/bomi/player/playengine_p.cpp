@@ -571,7 +571,7 @@ auto PlayEngine::Data::observe() -> void
     mpv.observe("current-ao", [=] (MpvLatin1 &&ao) { info.audio.setDriver(ao); });
     mpv.observe("audio-only", [=] (bool ao) { if (_Change(audioOnly, ao)) emit p->audioOnlyChanged(ao); });
 
-    mpv.observe("disc-mouse-in-button", [=] (bool in) { mouseInButton = in; });
+    mpv.observe("disc-mouse-on-button", [=] (bool on) { mouseOnButton = on; });
 }
 
 auto PlayEngine::Data::request() -> void

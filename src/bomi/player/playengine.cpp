@@ -1300,7 +1300,7 @@ auto PlayEngine::default_() const -> const MrlState*
 
 auto PlayEngine::isMouseInButton() const -> bool
 {
-    return d->mouseInButton && d->params.d->disc;
+    return d->mouseOnButton && d->params.d->disc;
 }
 
 auto PlayEngine::isAudioOnly() const -> bool

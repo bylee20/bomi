@@ -42,7 +42,7 @@ struct mp_nav_state {
     bool nav_eof;
     bool nav_menu;
     bool nav_draining;
-    bool nav_mouse_in_button;
+    bool nav_mouse_on_button;
 
     // Accessed by OSD (possibly separate thread)
     // Protected by the given lock
@@ -92,23 +92,23 @@ int mp_nav_in_menu(struct MPContext *mpctx)
     return mpctx->nav_state ? mpctx->nav_state->nav_menu : -1;
 }
 
-static void update_mouse_in_button(struct MPContext *mpctx)
+static void update_mouse_on_button(struct MPContext *mpctx)
 {
-    mp_notify_property(mpctx, "disc-mouse-in-button");
+    mp_notify_property(mpctx, "disc-mouse-on-button");
 }
 
-static void set_mouse_in_button(struct MPContext *mpctx, bool in)
+static void set_mouse_on_button(struct MPContext *mpctx, bool in)
 {
     struct mp_nav_state *nav = mpctx->nav_state;
-    if (nav->nav_mouse_in_button != in) {
-        nav->nav_mouse_in_button = in;
-        update_mouse_in_button(mpctx);
+    if (nav->nav_mouse_on_button != in) {
+        nav->nav_mouse_on_button = in;
+        update_mouse_on_button(mpctx);
     }
 }
 
-bool mp_nav_mouse_in_button(struct MPContext *mpctx)
+bool mp_nav_mouse_on_button(struct MPContext *mpctx)
 {
-    return mpctx->nav_state ? mpctx->nav_state->nav_mouse_in_button : false;
+    return mpctx->nav_state ? mpctx->nav_state->nav_mouse_on_button : false;
 }
 
 // If a demuxer is accessing the stream, we have to use demux_stream_control()
@@ -149,7 +149,7 @@ void mp_nav_init(struct MPContext *mpctx)
                 MP_INPUT_ALLOW_VO_DRAGGING | MP_INPUT_ALLOW_HIDE_CURSOR);
 
     update_state(mpctx);
-    update_mouse_in_button(mpctx);
+    update_mouse_on_button(mpctx);
 }
 
 void mp_nav_reset(struct MPContext *mpctx)
@@ -180,7 +180,7 @@ void mp_nav_destroy(struct MPContext *mpctx)
     talloc_free(mpctx->nav_state);
     mpctx->nav_state = NULL;
     update_state(mpctx);
-    update_mouse_in_button(mpctx);
+    update_mouse_on_button(mpctx);
 }
 
 void mp_nav_user_input(struct MPContext *mpctx, char *command)
@@ -204,7 +204,7 @@ void mp_nav_user_input(struct MPContext *mpctx, char *command)
         inp.u.mouse_pos.x = x;
         inp.u.mouse_pos.y = y;
         run_stream_control(mpctx, STREAM_CTRL_NAV_CMD, &inp);
-        set_mouse_in_button(mpctx, inp.mouse_in_button);
+        set_mouse_on_button(mpctx, inp.mouse_on_button);
     } else {
         struct mp_nav_cmd inp = {MP_NAV_CMD_MENU};
         inp.u.menu.action = command;
