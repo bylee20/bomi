@@ -162,8 +162,8 @@ private:
             auto img = _MoveData<QImage>(event);
             if (img.isNull())
                 _PostEvent(p, UpdateAlbumArt, QString());
-            if (img.width() > 256 || img.height() > 265)
-                img = img.scaled(256, 256, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+            if (img.width() > 512 || img.height() > 512)
+                img = img.scaled(512, 512, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
             Q_ASSERT(!m_albumArt[0]);
             m_albumArt[0].reset(new QTemporaryFile(u"bomi-albumart-XXXXXX.png"_q));
             m_albumArt[0]->open();
