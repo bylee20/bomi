@@ -7,7 +7,7 @@ Item {
     id: dock
     readonly property alias blockHiding: view.blockHiding
     readonly property real widthHint: {
-        var w = 16
+        var w = 30
         if (_location.show)
             w += Math.min(widthHintForName, widthHintForLocation)
         else

@@ -91,7 +91,7 @@ Item {
 
         PlaylistView {
             id: right
-            width: Math.min(widthHint, player.width-(left.x+left.width)-20) | 0
+            width: Math.min(widthHint, player.width-(left.x+left.width)-20, player.width * 0.7) | 0
             height: parent.height; status: rightEdge.status
         }
         HistoryView {
