@@ -1325,3 +1325,48 @@ auto PlayEngine::currentSubtitleStreamTrack() const -> StreamTrack
         track = d->params.sub_tracks_inclusive().selection();
     return track ? *track : StreamTrack();
 }
+
+auto PlayEngine::snapshot(bool osd) const -> QImage
+{
+    mpv_node values[2];
+    values[0].format = MPV_FORMAT_STRING;
+    values[0].u.string = const_cast<char*>("screenshot_raw");
+    values[1].format = MPV_FORMAT_STRING;
+    values[1].u.string = const_cast<char*>(osd ? "subtitle" : "video");
+
+    mpv_node_list list;
+    list.num = 2;
+    list.keys = nullptr;
+    list.values = values;
+
+    mpv_node args;
+    args.format = MPV_FORMAT_NODE_ARRAY;
+    args.u.list = &list;
+
+    mpv_node *res = new mpv_node;
+    int error = mpv_command_node(d->mpv.handle(), &args, res);
+    if (error != MPV_ERROR_SUCCESS) {
+        delete res;
+        return QImage();
+    }
+
+    Q_ASSERT(res->format == MPV_FORMAT_NODE_MAP);
+    QSize s; int stride = 0;
+    mpv_byte_array bytes { nullptr, 0 };
+    for (int i = 0; i < res->u.list->num; ++i) {
+        const char *key = res->u.list->keys[i];
+        const auto &node = res->u.list->values[i];
+        if (!qstrcmp(key, "w"))
+            s.rwidth() = node.u.int64;
+        else if (!qstrcmp(key, "h"))
+            s.rheight() = node.u.int64;
+        else if (!qstrcmp(key, "stride"))
+            stride = node.u.int64;
+        else if (!qstrcmp(key, "format"))
+            {}
+        else if (!qstrcmp(key, "data"))
+            bytes = *node.u.ba;
+    }
+    return QImage((uchar*)bytes.data, s.width(), s.height(), stride, QImage::Format_ARGB32,
+                  [] (void *p) { auto res = (mpv_node*)p; mpv_free_node_contents(res); delete res;}, res);
+}

@@ -3,6 +3,8 @@
 #include "playlistmodel.hpp"
 #include "app.hpp"
 #include "mainwindow.hpp"
+#include "player/avinfoobject.hpp"
+#include "misc/dataevent.hpp"
 
 namespace mpris {
 
@@ -71,9 +73,8 @@ MediaPlayer2::MediaPlayer2(QObject *parent)
 : QDBusAbstractAdaptor(parent), d(new Data) {
     d->mw = cApp.mainWindow();
     Q_ASSERT(d->mw);
-    connect(d->mw, &MainWindow::fullscreenChanged, [this] (bool fs) {
-        sendPropertiesChanged(this, "Fullscreen", fs);
-    });
+    connect(d->mw, &MainWindow::fullscreenChanged,
+            [this] (bool fs) { sendPropertiesChanged(this, "Fullscreen", fs); });
 }
 
 MediaPlayer2::~MediaPlayer2() {
@@ -142,13 +143,53 @@ auto MediaPlayer2::supportedMimeTypes() const -> QStringList
 
 /******************************************************************************/
 
+enum {
+    SaveArtAlbum = QEvent::User + 1,
+    UpdateAlbumArt
+};
+
+class Thread : public QThread {
+public:
+    Thread() { }
+    Player *p = nullptr;
+    auto saveAlbumArt(const QImage &image) -> void
+        { _PostEvent(this, SaveArtAlbum, image); }
+private:
+    auto customEvent(QEvent *event) -> void final
+    {
+        switch ((int)event->type()) {
+        case SaveArtAlbum: {
+            auto img = _MoveData<QImage>(event);
+            if (img.isNull())
+                _PostEvent(p, UpdateAlbumArt, QString());
+            if (img.width() > 256 || img.height() > 265)
+                img = img.scaled(256, 256, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+            Q_ASSERT(!m_albumArt[0]);
+            m_albumArt[0].reset(new QTemporaryFile(u"bomi-albumart-XXXXXX.png"_q));
+            m_albumArt[0]->open();
+            m_albumArt[0]->close();
+            if (!img.save(m_albumArt[0]->fileName()))
+                _PostEvent(p, UpdateAlbumArt, QString());
+            else
+                _PostEvent(p, UpdateAlbumArt, m_albumArt[0]->fileName());
+            m_albumArt[1].clear();
+            m_albumArt[0].swap(m_albumArt[1]);
+            break;
+        } default:
+            break;
+        }
+    }
+    QSharedPointer<QTemporaryFile> m_albumArt[2];
+};
+
 struct Player::Data {
     double volume = 1.0;
     MainWindow *mw = nullptr;
     PlayEngine *engine = nullptr;
     PlaylistModel *playlist = nullptr;
-    QString playbackStatus;
+    QString playbackStatus, albumArt;
     QVariantMap metaData;
+    Thread thread;
     struct {
         QTimer timer;
         bool flag = false;
@@ -170,6 +211,8 @@ struct Player::Data {
         const QDBusObjectPath path(dbusTrackId(md.mrl()));
         map[u"mpris:trackid"_q] = QVariant::fromValue(path);
         map[u"mpris:length"_q] = 1000LL*(qint64)md.duration();
+        if (!albumArt.isEmpty())
+            map[u"mpris:artUrl"_q] = QUrl::fromLocalFile(albumArt).toString();
         map[u"xesam:url"_q] = md.mrl().toString();
         map[u"xesam:title"_q] = md.title().isEmpty()
                 ? engine->media()->name() : md.title();
@@ -187,6 +230,8 @@ Player::Player(QObject *parent)
     : QDBusAbstractAdaptor(parent)
     , d(new Data)
 {
+    d->thread.p = this;
+    d->thread.start();
     d->mw = cApp.mainWindow();
     d->engine = d->mw->engine();
     d->playlist = d->mw->playlist();
@@ -194,10 +239,7 @@ Player::Player(QObject *parent)
     d->playbackStatus = d->toDBus(d->engine->state());
     d->volume = d->engine->volume();
     d->metaData = d->toDBus(d->engine->metaData());
-    connect(d->engine, &PlayEngine::metaDataChanged, this, [this] () {
-        d->metaData = d->toDBus(d->engine->metaData());
-        sendPropertiesChanged(this, "Metadata", d->metaData);
-    });
+    connect(d->engine, &PlayEngine::metaDataChanged, this, &Player::updateMetaData);
     connect(d->engine, &PlayEngine::stateChanged, this,
             [this] (PlayEngine::State state) {
         d->playbackStatus = d->toDBus(d->engine->state());
@@ -231,12 +273,22 @@ Player::Player(QObject *parent)
     d->started.timer.setSingleShot(true);
     d->started.timer.setInterval(500);
     connect(d->engine, &PlayEngine::started, this, [=] () { d->started.timer.start(); });
-    connect(d->engine, &PlayEngine::finished, this,
-            [=] () { d->started.timer.stop(); d->started.flag = false; });
-    connect(&d->started.timer, &QTimer::timeout, this, [=] () { d->started.flag = true; });
+    connect(d->engine, &PlayEngine::finished, this, [=] () {
+        d->started.timer.stop(); d->started.flag = false;
+        d->thread.saveAlbumArt(QImage());
+    });
+    connect(&d->started.timer, &QTimer::timeout, this, [=] () {
+        d->started.flag = true;
+        d->thread.saveAlbumArt(d->engine->snapshot());
+    });
+    d->thread.moveToThread(&d->thread);
 }
 
 Player::~Player() {
+    d->thread.quit();
+    if (d->thread.wait(30000))
+        d->thread.terminate();
+    d->thread.wait(30000);
     delete d;
 }
 
@@ -379,6 +431,22 @@ auto Player::SetPosition(const QDBusObjectPath &track, qint64 position) -> void
     position /= 1000;
     if (track.path() == dbusTrackId(d->engine->mrl())) {
         d->engine->seek(position + d->engine->begin());
+    }
+}
+
+auto Player::updateMetaData() -> void
+{
+    d->metaData = d->toDBus(d->engine->metaData());
+    sendPropertiesChanged(this, "Metadata", d->metaData);
+}
+
+auto Player::customEvent(QEvent *ev) -> void
+{
+    switch ((int)ev->type()) {
+    case UpdateAlbumArt:
+        d->albumArt = _MoveData<QString>(ev);
+        updateMetaData();
+        break;
     }
 }
 

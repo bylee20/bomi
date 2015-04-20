@@ -89,6 +89,8 @@ public slots:
 signals:
     void Seeked(qint64 Position);
 private:
+    auto updateMetaData() -> void;
+    auto customEvent(QEvent *ev) -> void final;
     struct Data;
     Data *d;
 };

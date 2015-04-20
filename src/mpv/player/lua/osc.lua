@@ -1979,3 +1979,12 @@ mp.set_key_bindings({
     {"del",                     function() enable_osc(false) end}
 }, "input", "force")
 mp.enable_key_bindings("input")
+
+-- this doesn't belong here
+mp.add_key_binding("y", "screenshot", function()
+    local t = assert(mp.command_native({"screenshot_raw"}))
+    print("w: " .. t.w .. " h: " .. t.h)
+    f = io.open("/tmp/dump.raw", "wb")
+    f:write(t.data)
+    f:close()
+end)

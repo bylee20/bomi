@@ -123,6 +123,7 @@ public:
     auto currentAudioStreamTrack() const -> StreamTrack;
     auto currentSubtitleStreamTrack() const -> StreamTrack;
     auto frameSize() const -> QSize;
+    auto snapshot(bool osd = false) const -> QImage;
 
     auto setAudioFiles(const QStringList &files) -> void;
     auto addAudioFiles(const QStringList &files) -> void;
