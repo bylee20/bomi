@@ -328,7 +328,7 @@ typedef struct MPContext {
     int max_frames;
     bool playing_msg_shown;
 
-    bool paused_for_cache, cache_eof;
+    bool paused_for_cache;
     double cache_stop_time, cache_wait_time;
 
     // Set after showing warning about decoding being too slow for realtime
@@ -491,7 +491,6 @@ int reinit_video_chain(struct MPContext *mpctx);
 int reinit_video_filters(struct MPContext *mpctx);
 void write_video(struct MPContext *mpctx, double endpts);
 void mp_force_video_refresh(struct MPContext *mpctx);
-void update_fps(struct MPContext *mpctx);
 void uninit_video_out(struct MPContext *mpctx);
 void uninit_video_chain(struct MPContext *mpctx);
 

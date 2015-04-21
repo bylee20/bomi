@@ -212,10 +212,9 @@ int mpv_opengl_cb_draw(mpv_opengl_cb_context *ctx, int fbo, int w, int h);
  * was never marked as stable).
  */
 int mpv_opengl_cb_render(mpv_opengl_cb_context *ctx, int fbo, int vp[4]);
-int mpv_opengl_cb_render_osd(struct mpv_opengl_cb_context *ctx, 
+int mpv_opengl_cb_render_osd(struct mpv_opengl_cb_context *ctx,
                              int w, int h, int ml, int mt, int mr, int mb, double dpar,
                              void(*cb)(void*,struct sub_bitmaps*), void *octx);
-void mpv_opengl_cb_render_size(struct mpv_opengl_cb_context *ctx, int *w, int *h);
 
 /**
  * Tell the renderer that a frame was flipped at the given time. This is

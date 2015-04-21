@@ -422,8 +422,8 @@ RootMenu::RootMenu()
             d->enumActionsCheckable<Interpolator>(true);
         });
         d->menu(u"interpolator-down"_q, QT_TR_NOOP("Interpolator (Downscale)"), [=] () {
-            d->action(u"same"_q, QT_TR_NOOP("Same as Interpolator"), true);
             d->action(u"advanced"_q, QT_TR_NOOP("Advanced..."));
+            d->action(u"same"_q, QT_TR_NOOP("Same as Interpolator"), true);
             d->enumActionsCheckable<Interpolator>(true);
         });
         d->menu(u"hq-scaling"_q, QT_TR_NOOP("High Quality Scaling"), [=] () {

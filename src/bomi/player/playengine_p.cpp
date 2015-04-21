@@ -415,7 +415,6 @@ auto PlayEngine::Data::observe() -> void
                 [=] (int v) { info.cache.setUsed(v); });
     mpv.observe("cache-size", [=] () { return t.caching ? mpv.get<int>("cache-size") : 0; },
                 [=] (int v) { info.cache.setSize(v); });
-    mpv.observe("demuxer-cache-ahead", [=] (double s) { info.cache.setTime(s2ms(s)); });
 
     mpv.observe("seekable", seekable, [=] () { emit p->seekableChanged(seekable); });
 
@@ -431,6 +430,10 @@ auto PlayEngine::Data::observe() -> void
 
     mpv.observeTime("avsync", avSync, [=] () { emit p->avSyncChanged(avSync); });
     mpv.observeTime("time-pos", time, [=] () {
+        int ctime = 0;
+        if (t.caching)
+            ctime = s2ms(mpv.get<double>("demuxer-cache-time"));
+        info.cache.setTime(ctime);
         emit p->tick(time);
         if (_Change(time_s, time/1000))
             emit p->time_sChanged();
@@ -485,6 +488,18 @@ auto PlayEngine::Data::observe() -> void
         params.set_video_tracks(strms[StreamVideo]);
         params.set_audio_tracks(strms[StreamAudio]);
         params.set_sub_tracks(strms[StreamSubtitle]);
+
+        auto audioOnly = !strms[StreamAudio].isEmpty();
+        if (audioOnly && !strms[StreamVideo].isEmpty()) {
+            for (auto &track : _C(strms[StreamVideo])) {
+                if (!track.isAlbumArt()) {
+                    audioOnly = false;
+                    break;
+                }
+            }
+        }
+        if (_Change(this->audioOnly, audioOnly))
+            emit p->audioOnlyChanged(audioOnly);
     });
 
     for (auto type : streamTypes)
@@ -573,7 +588,6 @@ auto PlayEngine::Data::observe() -> void
         { info.audio.decoder()->setChannels(QString::number(n) % "ch"_a, n); });
     mpv.observe("audio-device", [=] (MpvLatin1 &&d) { info.audio.setDevice(d); });
     mpv.observe("current-ao", [=] (MpvLatin1 &&ao) { info.audio.setDriver(ao); });
-    mpv.observe("audio-only", [=] (bool ao) { if (_Change(audioOnly, ao)) emit p->audioOnlyChanged(ao); });
 
     mpv.observe("disc-mouse-on-button", [=] (bool on) { mouseOnButton = on; });
 }

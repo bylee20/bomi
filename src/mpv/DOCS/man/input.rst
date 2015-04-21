@@ -636,8 +636,8 @@ Input Commands that are Possibly Subject to Change
     API. The MPV_FORMAT_NODE_MAP returned by this command has the ``w``, ``h``,
     ``stride`` fields set to obvious contents. A ``format`` field is set to
     ``bgr0`` by default. This format is organized as ``B8G8R8X8`` (where ``B``
-    is the LSB). The contents of the padding is undefined. The ``data`` field
-    is of type MPV_FORMAT_BYTE_ARRAY with the actual image data. The image
+    is the LSB). The contents of the padding ``X`` is undefined. The ``data``
+    field is of type MPV_FORMAT_BYTE_ARRAY with the actual image data. The image
     is freed as soon as the result node is freed.
 
 Undocumented commands: ``tv_last_channel`` (TV/DVB only),
@@ -928,6 +928,10 @@ Property list
     a BD or DVD. Use the ``discnav menu`` command to actually enter or leave
     menu mode.
 
+``disc-mouse-on-button``
+    Return ``yes`` when the mouse cursor is located on a button, or ``no``
+    when cursor is outside of any button for disc navigation.
+
 ``chapters``
     Number of chapters.
 
@@ -1086,6 +1090,11 @@ Property list
     guess is very unreliable, and often the property will not be available
     at all, even if data is buffered.
 
+``demuxer-cache-time``
+    Approximate time of video buffered in the demuxer, in seconds. Same as
+    ``demuxer-cache-duration`` but returns the last timestamp of bufferred
+    data in demuxer.
+
 ``demuxer-cache-idle``
     Returns ``yes`` if the demuxer is idle, which means the demuxer cache is
     filled to the requested amount, and is currently not reading more data.
@@ -1130,9 +1139,6 @@ Property list
 
 ``audio-codec``
     Audio codec selected for decoding.
-
-``audio-bitrate``
-    Audio bitrate. This is probably a very bad guess in most cases.
 
 ``audio-samplerate``
     Audio samplerate.
@@ -1229,9 +1235,6 @@ Property list
 
 ``video-codec``
     Video codec selected for decoding.
-
-``video-bitrate``
-    Video bitrate (a bad guess).
 
 ``width``, ``height``
     Video size. This uses the size of the video as decoded, or if no video
@@ -1642,7 +1645,7 @@ Property list
     whether the video window is visible. If the ``--force-window`` option is
     used, this is usually always returns ``yes``.
 
-``packet-video-bitrate``, ``packet-audio-bitrate``, ``packet-sub-bitrate``
+``video-bitrate``, ``audio-bitrate``, ``sub-bitrate``
     Bitrate values calculated on the packet level. This works by dividing the
     bit size of all packets between two keyframes by their presentation
     timestamp distance. (This uses the timestamps are stored in the file, so
@@ -1651,7 +1654,28 @@ Property list
     bitrate. To make the property more UI friendly, updates to these properties
     are throttled in a certain way.
 
+    The unit is bits per second. OSD formatting turns these values in kilobits
+    (or megabits, if appropriate), which can be prevented by using the
+    raw property value, e.g. with ``${=video-bitrate}``.
+
+    Note that the accuracy of these properties is influenced by a few factors.
+    If the underlying demuxer rewrites the packets on demuxing (done for some
+    file formats), the bitrate might be slightly off. If timestamps are bad
+    or jittery (like in Matroska), even constant bitrate streams might show
+    fluctuating bitrate.
+
     How exactly these values are calculated might change in the future.
+
+    In earlier versions of mpv, these properties returned a static (but bad)
+    guess using a completely different method.
+
+``packet-video-bitrate``, ``packet-audio-bitrate``, ``packet-sub-bitrate``
+    Old and deprecated properties for ``video-bitrate``, ``audio-bitrate``,
+    ``sub-bitrate``. They behave exactly the same, but return a value in
+    kilobits. Also, they don't have any OSD formatting, though the same can be
+    achieved with e.g. ``${=video-bitrate}``.
+
+    These properties shouldn't be used anymore.
 
 ``audio-device-list``
     Return the list of discovered audio devices. This is mostly for use with

@@ -93,7 +93,6 @@ public:
                 const QMargins &m) -> int;
     auto initializeGL(QOpenGLContext *ctx) -> void;
     auto finalizeGL() -> void;
-    auto renderSize(int *w, int *h) -> void;
     auto frameSwapped() -> void;
 private:
     static auto e2s(int error) -> const char* { return mpv_error_string(error); }

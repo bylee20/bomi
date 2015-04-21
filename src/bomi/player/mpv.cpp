@@ -94,11 +94,6 @@ auto Mpv::initialize(Log::Level lv, bool ogl) -> void
     }
 }
 
-auto Mpv::renderSize(int *w, int *h) -> void
-{
-    mpv_opengl_cb_render_size(d->gl, w, h);
-}
-
 auto Mpv::destroy() -> void
 {
     if (m_handle) {

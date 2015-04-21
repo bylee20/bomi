@@ -30,7 +30,7 @@ Item {
         readonly property alias ahead: seeker.ahead
         readonly property real range: max - min
         readonly property real rate: (value - min)/(max - min)
-        readonly property real arate: ahead == 0 ? 0 : ahead < 0 ? 1.0 : (ahead + value - min)/(max - min)
+        readonly property real arate: ahead == 0 ? 0 : (ahead - min)/(max - min)
         property bool hpressed: pressed
         property bool hhovered: hovered
         MouseArea {

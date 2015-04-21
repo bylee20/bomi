@@ -209,12 +209,12 @@ static dvdnav_status_t handle_mouse_pos(stream_t *stream, int x, int y)
     pci_t *pci = dvdnav_get_current_nav_pci(nav);
 
     if (!pci)
-		return DVDNAV_STATUS_ERR;
+        return DVDNAV_STATUS_ERR;
 
-	dvdnav_status_t status = dvdnav_mouse_select(nav, pci, x, y);
+    dvdnav_status_t status = dvdnav_mouse_select(nav, pci, x, y);
     priv->mousex = x;
     priv->mousey = y;
-	return status;
+    return status;
 }
 
 /**
@@ -306,8 +306,7 @@ static void handle_cmd(stream_t *s, struct mp_nav_cmd *ev)
         handle_menu_input(s, ev->u.menu.action);
         break;
     case MP_NAV_CMD_MOUSE_POS:
-        ev->mouse_on_button = handle_mouse_pos(s, ev->u.mouse_pos.x,
-                                               ev->u.mouse_pos.y);
+        ev->mouse_on_button = handle_mouse_pos(s, ev->u.mouse_pos.x, ev->u.mouse_pos.y);
         break;
     }
 

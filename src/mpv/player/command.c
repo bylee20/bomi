@@ -216,14 +216,6 @@ static void mark_seek(struct MPContext *mpctx)
     cmd->last_seek_time = now;
 }
 
-static char *format_bitrate(int rate)
-{
-    if (rate < 1024 * 1024)
-        return talloc_asprintf(NULL, "%.3f kbps", rate / 1000.0);
-
-    return talloc_asprintf(NULL, "%.3f mbps", rate / 1000000.0);
-}
-
 static char *format_file_size(int64_t size)
 {
     double s = size;
@@ -702,7 +694,7 @@ static int mp_property_disc_menu(void *ctx, struct m_property *prop,
     return m_property_flag_ro(action, arg, !!state);
 }
 
-static int mp_property_disc_mouse_on_button(void *ctx, struct m_property *prop,
+static int mp_property_mouse_on_button(void *ctx, struct m_property *prop,
                                        int action, void *arg)
 {
     MPContext *mpctx = ctx;
@@ -1391,8 +1383,8 @@ static int mp_property_demuxer_cache_duration(void *ctx, struct m_property *prop
     return m_property_double_ro(action, arg, s.ts_duration);
 }
 
-static int mp_property_demuxer_cache_ahead(void *ctx, struct m_property *prop,
-                                           int action, void *arg)
+static int mp_property_demuxer_cache_time(void *ctx, struct m_property *prop,
+                                          int action, void *arg)
 {
     MPContext *mpctx = ctx;
     if (!mpctx->demuxer)
@@ -1402,15 +1394,10 @@ static int mp_property_demuxer_cache_ahead(void *ctx, struct m_property *prop,
     if (demux_control(mpctx->demuxer, DEMUXER_CTRL_GET_READER_STATE, &s) < 1)
         return M_PROPERTY_UNAVAILABLE;
 
-    if (!s.eof && s.ts_range[1] == MP_NOPTS_VALUE)
+    double ts = s.ts_range[1];
+    if (ts == MP_NOPTS_VALUE)
         return M_PROPERTY_UNAVAILABLE;
-    double ts = -1;
-    if (!s.eof) {
-        double time = get_current_time(mpctx);
-        if (time < 0)
-            return M_PROPERTY_UNAVAILABLE;
-        ts = s.ts_range[1] - time;
-    }
+
     return m_property_double_ro(action, arg, ts);
 }
 
@@ -1665,20 +1652,6 @@ static int mp_property_audio_codec(void *ctx, struct m_property *prop,
     MPContext *mpctx = ctx;
     const char *c = mpctx->d_audio ? mpctx->d_audio->decoder_desc : NULL;
     return m_property_strdup_ro(action, arg, c);
-}
-
-/// Audio bitrate (RO)
-static int mp_property_audio_bitrate(void *ctx, struct m_property *prop,
-                                     int action, void *arg)
-{
-    MPContext *mpctx = ctx;
-    if (!mpctx->d_audio)
-        return M_PROPERTY_UNAVAILABLE;
-    if (action == M_PROPERTY_PRINT) {
-        *(char **)arg = format_bitrate(mpctx->d_audio->bitrate);
-        return M_PROPERTY_OK;
-    }
-    return m_property_int_ro(action, arg, mpctx->d_audio->bitrate);
 }
 
 /// Samplerate (RO)
@@ -1960,26 +1933,6 @@ static int property_list_tracks(void *ctx, struct m_property *prop,
     }
     return m_property_read_list(action, arg, mpctx->num_tracks,
                                 get_track_entry, mpctx);
-}
-
-static int mp_property_audio_only(void *ctx, struct m_property *prop,
-                                    int action, void *arg)
-{
-    MPContext *mpctx = ctx;
-    int ret = 0;
-    if (mpctx->num_tracks > 0) {
-        ret = 1;
-        for (int n = 0; n < mpctx->num_tracks; n++) {
-            struct track *track = mpctx->tracks[n];
-            if (track->type == STREAM_AUDIO)
-                continue;
-            if (track->type == STREAM_VIDEO && track->attached_picture)
-                continue;
-            ret = 0;
-            break;
-        }
-    }
-    return m_property_flag_ro(action, arg, ret);
 }
 
 /// Selected audio id (RW)
@@ -2378,21 +2331,6 @@ static int mp_property_video_codec(void *ctx, struct m_property *prop,
     MPContext *mpctx = ctx;
     const char *c = mpctx->d_video ? mpctx->d_video->decoder_desc : NULL;
     return m_property_strdup_ro(action, arg, c);
-}
-
-
-/// Video bitrate (RO)
-static int mp_property_video_bitrate(void *ctx, struct m_property *prop,
-                                     int action, void *arg)
-{
-    MPContext *mpctx = ctx;
-    if (!mpctx->d_video)
-        return M_PROPERTY_UNAVAILABLE;
-    if (action == M_PROPERTY_PRINT) {
-        *(char **)arg = format_bitrate(mpctx->d_video->bitrate);
-        return M_PROPERTY_OK;
-    }
-    return m_property_int_ro(action, arg, mpctx->d_video->bitrate);
 }
 
 static int property_imgparams(struct mp_image_params p, int action, void *arg)
@@ -3073,7 +3011,8 @@ static int mp_property_packet_bitrate(void *ctx, struct m_property *prop,
                                       int action, void *arg)
 {
     MPContext *mpctx = ctx;
-    int type = (intptr_t)prop->priv;
+    int type = (uintptr_t)prop->priv & ~0x100;
+    bool old = (uintptr_t)prop->priv & 0x100;
 
     if (!mpctx->demuxer)
         return M_PROPERTY_UNAVAILABLE;
@@ -3082,8 +3021,23 @@ static int mp_property_packet_bitrate(void *ctx, struct m_property *prop,
     if (demux_control(mpctx->demuxer, DEMUXER_CTRL_GET_BITRATE_STATS, &r) < 1)
         return M_PROPERTY_UNAVAILABLE;
 
-    // r[type] is in bytes/second -> kilobits
-    return m_property_int64_ro(action, arg, r[type] * 8 / 1000.0 + 0.5);
+    // r[type] is in bytes/second -> bits
+    double rate = r[type] * 8;
+
+    // Same story, but used kilobits for some reason.
+    if (old)
+        return m_property_int64_ro(action, arg, rate / 1000.0 + 0.5);
+
+    if (action == M_PROPERTY_PRINT) {
+        rate /= 1000;
+        if (rate < 1000) {
+            *(char **)arg = talloc_asprintf(NULL, "%d kbps", (int)rate);
+        } else {
+            *(char **)arg = talloc_asprintf(NULL, "%.3f mbps", rate / 1000.0);
+        }
+        return M_PROPERTY_OK;
+    }
+    return m_property_int64_ro(action, arg, rate);
 }
 
 static int mp_property_cwd(void *ctx, struct m_property *prop,
@@ -3313,7 +3267,7 @@ static const struct m_property mp_properties[] = {
     {"playback-time", mp_property_playback_time},
     {"disc-title", mp_property_disc_title},
     {"disc-menu-active", mp_property_disc_menu},
-    {"disc-mouse-on-button", mp_property_disc_mouse_on_button},
+    {"disc-mouse-on-button", mp_property_mouse_on_button},
     {"chapter", mp_property_chapter},
     {"edition", mp_property_edition},
     {"disc-titles", mp_property_disc_titles},
@@ -3335,7 +3289,7 @@ static const struct m_property mp_properties[] = {
     {"cache-size", mp_property_cache_size},
     {"cache-idle", mp_property_cache_idle},
     {"demuxer-cache-duration", mp_property_demuxer_cache_duration},
-    {"demuxer-cache-ahead", mp_property_demuxer_cache_ahead},
+    {"demuxer-cache-time", mp_property_demuxer_cache_time},
     {"demuxer-cache-idle", mp_property_demuxer_cache_idle},
     {"cache-buffering-state", mp_property_cache_buffering},
     {"paused-for-cache", mp_property_paused_for_cache},
@@ -3361,10 +3315,8 @@ static const struct m_property mp_properties[] = {
     {"audio-delay", mp_property_audio_delay},
     {"audio-format", mp_property_audio_format},
     {"audio-codec", mp_property_audio_codec},
-    {"audio-bitrate", mp_property_audio_bitrate},
     {"audio-samplerate", mp_property_samplerate},
     {"audio-channels", mp_property_channels},
-    {"audio-only", mp_property_audio_only},
     {"aid", mp_property_audio},
     {"balance", mp_property_balance},
     {"volume-restore-data", mp_property_volrestore},
@@ -3397,7 +3349,6 @@ static const struct m_property mp_properties[] = {
     {"video-params", mp_property_vd_imgparams},
     {"video-format", mp_property_video_format},
     {"video-codec", mp_property_video_codec},
-    {"video-bitrate", mp_property_video_bitrate},
     M_PROPERTY_ALIAS("dwidth", "video-out-params/dw"),
     M_PROPERTY_ALIAS("dheight", "video-out-params/dh"),
     M_PROPERTY_ALIAS("width", "video-params/w"),
@@ -3444,11 +3395,15 @@ static const struct m_property mp_properties[] = {
     {"ab-loop-a", mp_property_ab_loop},
     {"ab-loop-b", mp_property_ab_loop},
 
-#define PROPERTY_BITRATE(name, type) \
-    {name, mp_property_packet_bitrate, (void *)(intptr_t)type}
-    PROPERTY_BITRATE("packet-video-bitrate", STREAM_VIDEO),
-    PROPERTY_BITRATE("packet-audio-bitrate", STREAM_AUDIO),
-    PROPERTY_BITRATE("packet-sub-bitrate", STREAM_SUB),
+#define PROPERTY_BITRATE(name, old, type) \
+    {name, mp_property_packet_bitrate, (void *)(uintptr_t)((type)|(old?0x100:0))}
+    PROPERTY_BITRATE("packet-video-bitrate", true, STREAM_VIDEO),
+    PROPERTY_BITRATE("packet-audio-bitrate", true, STREAM_AUDIO),
+    PROPERTY_BITRATE("packet-sub-bitrate", true, STREAM_SUB),
+
+    PROPERTY_BITRATE("video-bitrate", false, STREAM_VIDEO),
+    PROPERTY_BITRATE("audio-bitrate", false, STREAM_AUDIO),
+    PROPERTY_BITRATE("sub-bitrate", false, STREAM_SUB),
 
 #define PROPERTY_TV_COLOR(name, type) \
     {name, mp_property_tv_color, (void *)(intptr_t)type}
@@ -3504,7 +3459,7 @@ static const char *const *const mp_event_property_change[] = {
     E(MPV_EVENT_END_FILE, "*"),
     E(MPV_EVENT_FILE_LOADED, "*"),
     E(MP_EVENT_CHANGE_ALL, "*"),
-    E(MPV_EVENT_TRACKS_CHANGED, "track-list", "audio-only"),
+    E(MPV_EVENT_TRACKS_CHANGED, "track-list"),
     E(MPV_EVENT_TRACK_SWITCHED, "vid", "video", "aid", "audio", "sid", "sub",
       "secondary-sid"),
     E(MPV_EVENT_IDLE, "*"),
@@ -3528,8 +3483,7 @@ static const char *const *const mp_event_property_change[] = {
     E(MPV_EVENT_CHAPTER_CHANGE, "chapter", "chapter-metadata"),
     E(MP_EVENT_CACHE_UPDATE, "cache", "cache-free", "cache-used", "cache-idle",
       "demuxer-cache-duration", "demuxer-cache-idle", "paused-for-cache",
-      "demuxer-cache-ahead"
-    ),
+      "demuxer-cache-time"),
     E(MP_EVENT_WIN_RESIZE, "window-scale"),
     E(MP_EVENT_WIN_STATE, "window-minimized", "display-names", "display-fps"),
     E(MP_EVENT_AUDIO_DEVICES, "audio-device-list"),

@@ -635,8 +635,9 @@ typedef enum mpv_format {
      */
     MPV_FORMAT_NODE_MAP         = 8,
     /**
-     * A raw, untyped byte array. Currently only used only with mpv_node, and
-     * only in some very special situations.
+     * A raw, untyped byte array. Only used only with mpv_node, and only in
+     * some very special situations. (Currently, only for the screenshot_raw
+     * command.)
      */
     MPV_FORMAT_BYTE_ARRAY       = 9
 } mpv_format;
