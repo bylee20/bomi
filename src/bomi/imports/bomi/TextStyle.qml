@@ -6,7 +6,7 @@ QtObject {
     property color color: Qt.rgba(0, 0, 0, 1)
     property color styleColor: Qt.rgba(0, 0, 0, 1)
     property int style: Text.Normal
-    property int format: Text.AutoText
+    property int format: Text.PlainText
     property int elide: Text.ElideNone
     property int verticalAlignment: Text.AlignTop
     property int horizontalAlignment: Text.AlignLeft

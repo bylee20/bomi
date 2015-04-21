@@ -15,7 +15,7 @@ struct MrlState::Data {
     QString autoselectExt;
     DeintOptionSet deint;
     QString audioDevice = _L("auto");
-    IntrplParamSetMap intrpl, chroma;
+    IntrplParamSetMap intrpl, chroma, intrplDown;
 };
 
 #endif // MRLSTATE_P_HPP

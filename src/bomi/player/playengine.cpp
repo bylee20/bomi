@@ -986,6 +986,15 @@ auto PlayEngine::setMotionInterpolation(bool on) -> void
     }
 }
 
+auto PlayEngine::setInterpolatorDown(const IntrplParamSet &params) -> void
+{
+    d->mutex.lock();
+    auto changed = _Change(d->params.d->intrplDown[params.type], params);
+    d->mutex.unlock();
+    if (changed | d->params.set_video_interpolator_down(params.type))
+        d->updateVideoSubOptions();
+}
+
 auto PlayEngine::setInterpolator(const IntrplParamSet &params) -> void
 {
     d->mutex.lock();
@@ -1002,6 +1011,16 @@ auto PlayEngine::setChromaUpscaler(const IntrplParamSet &params) -> void
     d->mutex.unlock();
     if (changed | d->params.set_video_chroma_upscaler(params.type))
         d->updateVideoSubOptions();
+}
+
+auto PlayEngine::interpolatorDown() const -> IntrplParamSet
+{
+    return d->params.d->intrplDown[d->params.video_interpolator_down()];
+}
+
+auto PlayEngine::interpolatorDownMap() const -> IntrplParamSetMap
+{
+    return d->params.d->intrplDown;
 }
 
 auto PlayEngine::interpolator() const -> IntrplParamSet
@@ -1024,6 +1043,11 @@ auto PlayEngine::chromaUpscalerMap() const -> IntrplParamSetMap
     return d->params.d->chroma;
 }
 
+auto PlayEngine::setInterpolatorDownMap(const IntrplParamSetMap &map) -> void
+{
+    d->params.d->intrplDown = map;
+}
+
 auto PlayEngine::setInterpolatorMap(const IntrplParamSetMap &map) -> void
 {
     d->params.d->intrpl = map;
@@ -1032,6 +1056,26 @@ auto PlayEngine::setInterpolatorMap(const IntrplParamSetMap &map) -> void
 auto PlayEngine::setChromaUpscalerMap(const IntrplParamSetMap &map) -> void
 {
     d->params.d->chroma = map;
+}
+
+auto PlayEngine::setInterpolatorDown(Interpolator type) -> void
+{
+    if (d->params.set_video_interpolator_down(type))
+        d->updateVideoSubOptions();
+}
+
+auto PlayEngine::setUseInterpolatorDown(bool use) -> void
+{
+    d->mutex.lock();
+    const auto changed = _Change(d->useIntrplDown, use);
+    d->mutex.unlock();
+    if (changed)
+        d->updateVideoSubOptions();
+}
+
+auto PlayEngine::useInterpolatorDown() const -> bool
+{
+    return d->useIntrplDown;
 }
 
 auto PlayEngine::setInterpolator(Interpolator type) -> void

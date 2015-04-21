@@ -44,6 +44,7 @@ auto MrlState::toJson() const -> QJsonObject
 {
     auto json = _JsonFromQObject(this);
     json.insert(u"version"_q, Version);
+    json.insert(u"video_interpolator_down_map"_q, _ToJson(d->intrplDown));
     json.insert(u"video_interpolator_map"_q, _ToJson(d->intrpl));
     json.insert(u"video_chroma_upscaler_map"_q, _ToJson(d->chroma));
     return json;
@@ -65,6 +66,7 @@ auto MrlState::setFromJson(const QJsonObject &json) -> bool
             }
             return true;
         };
+        ret = set(u"video_interpolator_down_map"_q, d->intrplDown) && ret;
         ret = set(u"video_interpolator_map"_q, d->intrpl) && ret;
         ret = set(u"video_chroma_upscaler_map"_q, d->chroma) && ret;
         return ret;

@@ -477,6 +477,7 @@ auto MainWindow::Data::plugMenu() -> void
 
     PLUG_ENUM_CHILD(video, video_deinterlacing, setDeintMode);
     PLUG_ENUM(video(u"interpolator"_q), video_interpolator, setInterpolator);
+    PLUG_ENUM(video(u"interpolator-down"_q), video_interpolator_down, setInterpolatorDown);
     PLUG_ENUM(video(u"chroma-upscaler"_q), video_chroma_upscaler, setChromaUpscaler);
 
 #define PLUG_INTRPL(m, name, dlg, title, setParams, getParams, getMap) \
@@ -496,12 +497,25 @@ auto MainWindow::Data::plugMenu() -> void
                 dlg->show(); \
             } \
         });
+    PLUG_INTRPL(video(u"interpolator-down"_q), interpolator_down, intrplDown,
+                tr("Advanced Downscaling Interpolator Settings"),
+                setInterpolatorDown, interpolatorDown, interpolatorDownMap);
     PLUG_INTRPL(video(u"interpolator"_q), interpolator, intrpl,
                 tr("Advanced Interpolator Settings"),
                 setInterpolator, interpolator, interpolatorMap);
     PLUG_INTRPL(video(u"chroma-upscaler"_q), chroma_upscaler, chroma,
                 tr("Advanced Chroma Upscaler Settings"),
                 setChromaUpscaler, chromaUpscaler, chromaUpscalerMap);
+
+    const auto &dscale = video(u"interpolator-down"_q);
+    const auto downSame = dscale[u"same"_q];
+    connect(&as, &AppState::useInterpolatorDownChanged, p, [=, &dscale] (bool use) {
+        e.setUseInterpolatorDown(use);
+        downSame->setChecked(!use);
+        dscale.g(_L(InterpolatorInfo::typeKey()))->setEnabled(use);
+    });
+    connect(downSame, &QAction::triggered, p, [=] (bool checked)
+        { as.setProperty("use_interpolator_down", !checked); });
 
     PLUG_FLAG(video(u"hq-scaling"_q)[u"down"_q], video_hq_downscaling, setVideoHighQualityDownscaling);
     PLUG_FLAG(video(u"hq-scaling"_q)[u"up"_q], video_hq_upscaling, setVideoHighQualityUpscaling);

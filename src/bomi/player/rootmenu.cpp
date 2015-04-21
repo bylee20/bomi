@@ -421,6 +421,11 @@ RootMenu::RootMenu()
             d->action(u"advanced"_q, QT_TR_NOOP("Advanced..."));
             d->enumActionsCheckable<Interpolator>(true);
         });
+        d->menu(u"interpolator-down"_q, QT_TR_NOOP("Interpolator (Downscale)"), [=] () {
+            d->action(u"same"_q, QT_TR_NOOP("Same as Interpolator"), true);
+            d->action(u"advanced"_q, QT_TR_NOOP("Advanced..."));
+            d->enumActionsCheckable<Interpolator>(true);
+        });
         d->menu(u"hq-scaling"_q, QT_TR_NOOP("High Quality Scaling"), [=] () {
             auto up = d->action(u"up"_q, QT_TR_NOOP("Upscaling"), true);
             up->setEnabled(OGL::is16bitFramebufferFormatSupported());

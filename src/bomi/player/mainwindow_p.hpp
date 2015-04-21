@@ -115,7 +115,7 @@ struct MainWindow::Data {
     QSharedPointer<SubtitleViewer> sview;
     QSharedPointer<AudioEqualizerDialog> eq;
     QSharedPointer<VideoColorDialog> color;
-    QSharedPointer<IntrplDialog> intrpl, chroma;
+    QSharedPointer<IntrplDialog> intrpl, chroma, intrplDown;
     QSharedPointer<EncoderDialog> encoder;
     PlaylistModel playlist;
     QUndoStack undo;

@@ -104,7 +104,7 @@ struct PlayEngine::Data {
     bool hasImage = false, seekable = false, hasVideo = false;
     bool pauseAfterSkip = false, resume = false, hwdec = false;
     bool quit = false, preciseSeeking = false, mouseOnButton = false;
-    bool filterResync = false, audioOnly = false;
+    bool filterResync = false, audioOnly = false, useIntrplDown = false;
 
     QList<CodecId> hwCodecs;
 

@@ -137,7 +137,6 @@ Slider {
         property bool moving: pressed || containsMouse
         property bool hv: false
         property int time: target >= 0 ? target : moving ? d.target(mouseX) : d.e.time
-        Text { id: t }
         onMovingChanged: if (toolTip && !moving) App.window.hideToolTip()
         onPositionChanged: {
             var val = d.target(mouse.x)

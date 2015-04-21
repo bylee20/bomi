@@ -90,6 +90,7 @@ private:
     PB(double, play_speed, 1.0, 0.01, 10.0, QT_TR_NOOP("Playback Speed"), 0)
 
     P_(Interpolator, video_interpolator, Interpolator::Bilinear, QT_TR_NOOP("Video Interpolator"), 0)
+    P_(Interpolator, video_interpolator_down, Interpolator::Bilinear, QT_TR_NOOP("Video Downscaling Interpolator"), 0)
     P_(Interpolator, video_chroma_upscaler, Interpolator::Bilinear, QT_TR_NOOP("Video Chroma Upscaler"), 0)
     P_(double, video_aspect_ratio, _EnumData(VideoRatio::Source), QT_TR_NOOP("Video Aspect Ratio"), 0)
     P_(double, video_crop_ratio, _EnumData(VideoRatio::Source), QT_TR_NOOP("Video Crop Ratio"), 0)

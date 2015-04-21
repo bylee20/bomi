@@ -121,19 +121,17 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     OptionList opts(':');
     opts.add("scale", s->d->intrpl[s->video_interpolator()].toMpvOption("scale"));
     opts.add("cscale", s->d->chroma[s->video_chroma_upscaler()].toMpvOption("cscale"));
+    if (useIntrplDown)
+        opts.add("dscale", s->d->intrplDown[s->video_interpolator_down()].toMpvOption("dscale"));
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(s->video_dithering()));
-    if (vp->isSkipping())
-        opts.add("frame-queue-size", 1);
-    else
-        opts.add("frame-queue-size", 3);
+    opts.add("frame-queue-size", vp->isSkipping() ? 1: 3);
     opts.add("frame-drop-mode", "clear"_b);
     opts.add("fancy-downscaling", s->video_hq_downscaling());
     opts.add("sigmoid-upscaling", s->video_hq_upscaling() && OGL::is16bitFramebufferFormatSupported());
     opts.add("interpolation", s->video_motion_interpolation());
     const bool rgba16 = vr->framebufferObjectFormat() == OGL::RGBA16_UNorm;
     opts.add("fbo-format", rgba16 ? "rgba16"_b : "rgba"_b);
-
     opts.add("custom-shader", customShader(c_matrix()));
     return opts.get();
 }
