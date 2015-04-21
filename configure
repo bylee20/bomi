@@ -452,8 +452,8 @@ if has_arg "developer"; then
     transdir=$(pwd)/src/bomi/translations
 fi
 
-check_pkg_or_exit ffmpeg "libavformat >= 55.12.0" "libavutil >= 52.48.101" "libavcodec >= 55.34.1" "libswresample" "libswscale" "libavfilter"
-check_pkg_or_exit "libass"
+check_pkg_or_exit ffmpeg "libavformat >= 56.01.0" "libavutil >= 54.02.0" "libavcodec >= 56.1.0" "libswscale >= 2.1.3" "libswresample" "libavfilter"
+check_pkg_or_exit "libass >= 0.12.1"
 check_pkg_or_exit "dvdread"
 check_pkg_or_exit "dvdnav"
 check_pkg_or_exit "libbluray"
