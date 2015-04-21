@@ -169,9 +169,8 @@ PlayEngine::PlayEngine()
             [=] () { d->info.audio.filter()->setFormat(d->ac->inputFormat()); });
     connect(d->ac, &AudioController::outputFormatChanged, this,
             [=] () { d->info.audio.output()->setFormat(d->ac->outputFormat()); });
-    connect(d->ac, &AudioController::samplerateChanged, this,
-            [=] (int sr) {
-        d->info.audio.decoder()->setBitrate(d->mpv.get<int>("packet-audio-bitrate"));
+    connect(d->ac, &AudioController::samplerateChanged, this, [=] (int sr) {
+        d->info.audio.decoder()->setBitrate(d->mpv.get<int>("audio-bitrate"));
         d->info.audio.output()->setSampleRate(sr, true);
     });
     connect(d->ac, &AudioController::gainChanged,
@@ -186,7 +185,7 @@ PlayEngine::PlayEngine()
     d->frames.measure.setTimer([=]()
         { d->info.video.output()->setFps(d->frames.measure.get()); }, 100000);
     connect(&d->info.frameTimer, &QTimer::timeout, this, [=] () {
-        d->info.video.decoder()->setBitrate(d->mpv.get<int>("packet-video-bitrate"));
+        d->info.video.decoder()->setBitrate(d->mpv.get<int>("video-bitrate"));
         d->info.video.setDelayedFrames(d->info.delayed);
         d->info.video.setDroppedFrames(d->mpv.get<int64_t>("vo-drop-frame-count"));
     });
