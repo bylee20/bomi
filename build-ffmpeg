@@ -3,7 +3,7 @@
 args="--prefix=`pwd`/build --enable-gpl --disable-debug --disable-shared --enable-static \
   --enable-runtime-cpudetect --disable-doc --disable-programs --enable-gnutls \
   --disable-avdevice --enable-avfilter --enable-swresample --disable-avresample --enable-pthreads \
-  --disable-encoders --disable-muxers --disable-devices --enable-filters"
+  --disable-devices --enable-filters --enable-libx264 --enable-libvorbis --enable-libvpx --enable-libmp3lame"
 
 kern=`uname -s`
 procs=$(nproc)
