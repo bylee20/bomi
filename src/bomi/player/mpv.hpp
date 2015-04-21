@@ -120,7 +120,7 @@ private:
         node.format = MPV_FORMAT_NODE_ARRAY;
         node.u.list = &list;
         fill(list.values, name, args...);
-        const int error = f(&node);
+        int error = f(&node);
         return MPV_CHECK(error, "execute %%", name);
     }
     auto newObservation(const char *name, std::function<void(int)> &&notify,
