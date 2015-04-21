@@ -411,6 +411,9 @@ auto PlayEngine::Data::observe() -> void
     mpv.observeState("core-idle", [=] (bool i) { if (!i) post(Playing); });
     mpv.observeState("paused-for-cache", [=] (bool b) { post(Buffering, b); });
     mpv.observeState("seeking", [=] (bool s) { post(Seeking, s); });
+    mpv.observeTime("demuxer-cache-time", info.cache.m_time, [=] () {
+        emit info.cache.timeChanged(info.cache.m_time);
+    });
 
     mpv.observe("cache-used", [=] () { return t.caching ? mpv.get<int>("cache-used") : 0; },
                 [=] (int v) { info.cache.setUsed(v); });
@@ -430,11 +433,17 @@ auto PlayEngine::Data::observe() -> void
     };
 
     mpv.observeTime("avsync", avSync, [=] () { emit p->avSyncChanged(avSync); });
-    mpv.observeTime("time-pos", time, [=] () {
+    mpv.observe("time-pos", [=] () {
         int ctime = 0;
         if (t.caching)
             ctime = s2ms(mpv.get<double>("demuxer-cache-time"));
-        info.cache.setTime(ctime);
+        if (ctime != info.cache.time())
+            QMetaObject::invokeMethod(&info.cache, "setTime",
+                                      Qt::QueuedConnection, Q_ARG(int, ctime));
+        return s2ms(mpv.get<double>("time-pos"));
+    }, [=] (int pos) {
+        if (!_Change(time, pos))
+            return;
         emit p->tick(time);
         if (_Change(time_s, time/1000))
             emit p->time_sChanged();

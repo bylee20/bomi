@@ -107,7 +107,8 @@ private:
     friend class PlayEngine;
     auto setSize(int s) -> void { if (_Change(m_size, s)) emit sizeChanged(s); }
     auto setUsed(int s) -> void { if (_Change(m_used, s)) emit usedChanged(s); }
-    auto setTime(int s) -> void { if (_Change(m_time, s)) emit timeChanged(s); }
+    Q_INVOKABLE void setTime(int s)
+        { if (_Change(m_time, s)) emit timeChanged(s); }
     int m_size = 0, m_used = 0, m_time = 0;
 };
 
