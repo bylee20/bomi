@@ -17,6 +17,7 @@
 #include "enum/dithering.hpp"
 #include "enum/channellayout.hpp"
 #include "enum/subtitledisplay.hpp"
+#include "enum/rotation.hpp"
 #include <QMetaProperty>
 
 struct CacheInfo {
@@ -94,6 +95,7 @@ private:
     P_(Interpolator, video_chroma_upscaler, Interpolator::Bilinear, QT_TR_NOOP("Video Chroma Upscaler"), 0)
     P_(double, video_aspect_ratio, _EnumData(VideoRatio::Source), QT_TR_NOOP("Video Aspect Ratio"), 0)
     P_(double, video_crop_ratio, _EnumData(VideoRatio::Source), QT_TR_NOOP("Video Crop Ratio"), 0)
+    P_(Rotation, video_rotation, Rotation::D0, QT_TR_NOOP("Video Rotation"), 1);
     P_(DeintMode, video_deinterlacing, DeintMode::Auto, QT_TR_NOOP("Video Deinterlacing"), 0)
     P_(Dithering, video_dithering, Dithering::Fruit, QT_TR_NOOP("Video Dithering"), 0)
     PB(double, video_zoom, 1, 0.1, 10.0, QT_TR_NOOP("Video Screen Zoom"), 0);

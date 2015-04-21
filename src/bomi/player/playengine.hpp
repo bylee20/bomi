@@ -21,6 +21,7 @@ enum class Dithering;                   enum class AutoselectMode;
 enum class VideoRatio;                  enum class SubtitleDisplay;
 enum class VerticalAlignment;           enum class HorizontalAlignment;
 enum class CodecId;                     enum class FramebufferObjectFormat;
+enum class Rotation;
 class AudioObject;                      class VideoObject;
 class YouTubeDL;                        struct AudioDevice;
 class YleDL;                            class AudioEqualizer;
@@ -270,6 +271,7 @@ public:
     auto setMotionInterpolation(bool on) -> void;
     auto setVideoDithering(Dithering dithering) -> void;
     auto setVideoEffects(VideoEffects effects) -> void;
+    auto setVideoRotation(Rotation r) -> void;
     auto takeSnapshot() -> void;
     auto snapshot(QImage *frame, QImage *osd) -> int;
     auto clearSnapshots() -> void;

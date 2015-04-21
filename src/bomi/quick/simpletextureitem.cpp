@@ -32,7 +32,7 @@ struct SimpleTextureShader : public SimpleTextureItem::ShaderIface {
         loc_tex = prog->uniformLocation("tex");
     }
     void update(QOpenGLShaderProgram *prog,
-                const SimpleTextureItem::ShaderData *data) override {
+                SimpleTextureItem::ShaderData *data) override {
         auto d = static_cast<const SimpleTextureData*>(data);
         if (d->texture->id() != GL_NONE && !d->texture->isEmpty()) {
             prog->setUniformValue(loc_tex, 0);

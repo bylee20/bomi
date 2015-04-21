@@ -6,7 +6,7 @@
 #include "opengl/openglmisc.hpp"
 #include <functional>
 
-class OpenGLFramebufferObject;
+class OpenGLFramebufferObject;          enum class Rotation;
 using Fbo = OpenGLFramebufferObject;
 using RenderFrameFunc = std::function<void(Fbo*,Fbo*,const QMargins&)>;
 
@@ -37,6 +37,7 @@ public:
     auto alignment() const -> Qt::Alignment;
     auto sizeHint() const -> QSize;
     auto overlay() const -> QQuickItem*;
+    auto rotation() const -> Rotation;
     auto hasFrame() const -> bool;
     auto frameRect(const QRectF &area) const -> QRectF;
     auto overlayOnLetterbox() const -> bool;
@@ -49,10 +50,12 @@ public:
     auto setAlignment(Qt::Alignment alignment) -> void;
     auto setOffset(const QPointF &offset) -> void;
     auto setCropRatio(double ratio) -> void;
+    auto setRotation(Rotation r) -> void;
     auto setRenderFrameFunction(const RenderFrameFunc &func) -> void;
     auto updateForNewFrame(const QSize &displaySize) -> void;
     auto setFramebufferObjectFormat(OGL::TextureFormat format) -> void;
     auto framebufferObjectFormat() const -> OGL::TextureFormat;
+    auto isPortrait() const -> bool;
 signals:
     void offsetChanged(const QPointF &pos);
     void screenRectChanged(const QRectF &rect);

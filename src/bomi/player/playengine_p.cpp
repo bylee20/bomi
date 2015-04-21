@@ -322,6 +322,7 @@ auto PlayEngine::Data::onLoad() -> void
 
     const auto deint = local->video_deinterlacing() != DeintMode::None;
     mpv.setAsync("speed", local->play_speed());
+    mpv.setAsync("video-rotate", _EnumData(local->video_rotation()));
 
     mpv.setAsync("options/vo", vo(local));
     mpv.setAsync("options/vf", vf(local));
@@ -567,6 +568,7 @@ auto PlayEngine::Data::observe() -> void
         info->setBppSize({p[u"w"_q].toInt(), p[u"h"_q].toInt()},
                          p[u"average-bpp"_q].toInt());
         info->setDepth(p[u"plane-depth"_q].toInt());
+        info->setRotation(p[u"rotate"_q].toInt());
     };
     mpv.observe("video-params", [=] (QVariant &&var) {
         const auto params = var.toMap();

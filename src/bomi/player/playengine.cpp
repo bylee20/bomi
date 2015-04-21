@@ -29,6 +29,7 @@ PlayEngine::PlayEngine()
     connect(&d->params, &MrlState::video_offset_changed, d->vr, &VideoRenderer::setOffset);
     connect(&d->params, &MrlState::video_aspect_ratio_changed, d->vr, &VideoRenderer::setAspectRatio);
     connect(&d->params, &MrlState::video_crop_ratio_changed, d->vr, &VideoRenderer::setCropRatio);
+    connect(&d->params, &MrlState::video_rotation_changed, d->vr, &VideoRenderer::setRotation);
     auto updateLetterBox = [=] (bool override)
         { d->mpv.setAsync("ass-force-margins", d->vr->overlayOnLetterbox() && override); };
     connect(&d->params, &MrlState::sub_display_changed, d->vr, [=] (auto sd) {
@@ -841,7 +842,14 @@ auto PlayEngine::renderSizeHint(const QSize &size) const -> QSize
 {
     if (!d->vr->hasFrame())
         return size;
-    return scaleVideoSize(d->vr->sizeHint(), size);
+    if (!d->vr->isPortrait())
+        return scaleVideoSize(d->vr->sizeHint(), size);
+    auto src = d->vr->sizeHint(), target = size;
+    std::swap(src.rwidth(), src.rheight());
+    std::swap(target.rwidth(), target.rheight());
+    auto ret = scaleVideoSize(src, target);
+    std::swap(ret.rwidth(), ret.rheight());
+    return ret;
 }
 
 auto PlayEngine::frameSize() const -> QSize
@@ -1105,6 +1113,12 @@ auto PlayEngine::setVideoEffects(VideoEffects e) -> void
 {
     if (d->params.set_video_effects(e))
         d->updateVideoSubOptions();
+}
+
+auto PlayEngine::setVideoRotation(Rotation r) -> void
+{
+    if (d->params.set_video_rotation(r))
+        d->mpv.setAsync<int>("video-rotate", _EnumData(r));
 }
 
 auto PlayEngine::takeSnapshot() -> void

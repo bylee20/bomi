@@ -41,8 +41,8 @@ struct SubtitleShader : public SubtitleRenderer::ShaderIface {
         loc_bbox = prog->uniformLocation("bbox");
         loc_bboxColor = prog->uniformLocation("bboxColor");
     }
-    void update(QOpenGLShaderProgram *prog
-                , const SubtitleRenderer::ShaderData *data) override {
+    void update(QOpenGLShaderProgram *prog,
+                SubtitleRenderer::ShaderData *data) override {
         auto d = static_cast<const SubtitleShaderData*>(data);
         auto f = func();
         d->texture->bind(prog, loc_tex, 0);

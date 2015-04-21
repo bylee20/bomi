@@ -32,6 +32,7 @@
 #include "jrprotocol.hpp"
 #include "framebufferobjectformat.hpp"
 #include "visualization.hpp"
+#include "rotation.hpp"
 auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
 {
     EnumNameVariantConverter conv;
@@ -134,13 +135,16 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<Visualization>()) {
         conv.variantToName = _EnumVariantToEnumName<Visualization>;
         conv.nameToVariant = _EnumNameToEnumVariant<Visualization>;
+    } else    if (metaType == qMetaTypeId<Rotation>()) {
+        conv.variantToName = _EnumVariantToEnumName<Rotation>;
+        conv.nameToVariant = _EnumNameToEnumVariant<Rotation>;
     } else
         return EnumNameVariantConverter();
     return conv;
 }
-auto _EnumMetaTypeIds() -> const std::array<int, 33>&
+auto _EnumMetaTypeIds() -> const std::array<int, 34>&
 {
-    static const std::array<int, 33> ids = {
+    static const std::array<int, 34> ids = {
         qMetaTypeId<TextThemeStyle>(),
         qMetaTypeId<SpeakerId>(),
         qMetaTypeId<ChannelLayout>(),
@@ -173,7 +177,8 @@ auto _EnumMetaTypeIds() -> const std::array<int, 33>&
         qMetaTypeId<JrConnection>(),
         qMetaTypeId<JrProtocol>(),
         qMetaTypeId<FramebufferObjectFormat>(),
-        qMetaTypeId<Visualization>()
+        qMetaTypeId<Visualization>(),
+        qMetaTypeId<Rotation>()
     };
     return ids;
 }

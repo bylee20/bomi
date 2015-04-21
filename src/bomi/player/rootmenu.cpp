@@ -22,6 +22,7 @@
 #include "enum/horizontalalignment.hpp"
 #include "enum/framebufferobjectformat.hpp"
 #include "enum/visualization.hpp"
+#include "enum/rotation.hpp"
 #include <functional>
 
 DECLARE_LOG_CONTEXT(Menu)
@@ -385,6 +386,7 @@ RootMenu::RootMenu()
         });
         d->enumMenuCheckable<VideoRatio>(u"crop"_q, QT_TR_NOOP("Crop"), true);
         d->menuStepReset(u"zoom"_q, QT_TR_NOOP("Zoom"));
+        d->enumMenuCheckable<Rotation>(true);
 
         d->menu(u"move"_q, QT_TR_NOOP("Screen Position"), [=] () {
             d->action(u"reset"_q, QT_TR_NOOP("Reset"));

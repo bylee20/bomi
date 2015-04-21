@@ -306,3 +306,9 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 +Visualization[[visualization]][-Visualization-]
 -Off[[off]][-Off-]
 -Bar[[bar]][-Bar-]
+
++Rotation[[rotate]][-Rotate-][:int:]
+-D0[[0]][-0°-][:0:]
+-D90[[90]][-90°-][:90:]
+-D180[[180]][-180°-][:180:]
+-D270[[270]][-270°-][:270:]

@@ -139,8 +139,7 @@ public:
         static auto opacityName() -> const char* { return "qt_Opacity"; }
     private:
         virtual auto resolve(QOpenGLShaderProgram *prog) -> void = 0;
-        virtual auto update(QOpenGLShaderProgram *prog,
-                            const ShaderData *data) -> void = 0;
+        virtual auto update(QOpenGLShaderProgram *prog, ShaderData *data) -> void = 0;
         virtual auto beforeUpdate() -> void { }
         virtual auto afterUpdate() -> void { }
         friend class ShaderRenderItem;

@@ -240,6 +240,9 @@ public:
             updateBitrate();
         }
     }
+    auto rotation() const -> int { return m_degree; }
+    auto setRotation(int deg) -> void
+        { if (_Change(m_degree, deg)) emit rotationChanged(); }
     auto setFps(double fps) -> void
         { if (_Change(m_fps, fps)) { emit fpsChanged(fps); updateBitrate(); } }
 signals:
@@ -247,11 +250,12 @@ signals:
     void spaceChanged();
     void rangeChanged();
     void bppChanged();
+    void rotationChanged();
     void sizeChanged(const QSize &size);
 private:
     auto updateBitrate() -> void
         { setBitrate(m_bpp * width() * height() * m_fps); }
-    int m_bpp = 0; double m_fps = 0;
+    int m_bpp = 0, m_degree = 0; double m_fps = 0;
     QSize m_bppSize, m_size;
     ColorSpace m_space = ColorSpace::Auto;
     ColorRange m_range = ColorRange::Auto;

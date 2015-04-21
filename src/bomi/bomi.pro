@@ -301,7 +301,8 @@ HEADERS += \
     kiss_fft/tools/kiss_fftr.h \
     kiss_fft/kiss_fft.h \
     dialog/encoderdialog.hpp \
-    misc/filenamegenerator.hpp
+    misc/filenamegenerator.hpp \
+    enum/rotation.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -517,7 +518,8 @@ SOURCES += \
     kiss_fft/tools/kiss_fftr.c \
     kiss_fft/kiss_fft.c \
     dialog/encoderdialog.cpp \
-    misc/filenamegenerator.cpp
+    misc/filenamegenerator.cpp \
+    enum/rotation.cpp
 
 TRANSLATIONS += translations/bomi_en.ts \
 	translations/bomi_ko.ts \

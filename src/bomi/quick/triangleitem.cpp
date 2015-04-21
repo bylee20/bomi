@@ -31,7 +31,7 @@ private:
     {
         loc_scaler = prog->uniformLocation("scaler");
     }
-    auto update(QOpenGLShaderProgram *prog, const ShaderData *data) -> void final
+    auto update(QOpenGLShaderProgram *prog, ShaderData *data) -> void final
     {
         auto d = static_cast<const SData*>(data);
         prog->setUniformValue(loc_scaler, d->scaler);

@@ -322,6 +322,7 @@ auto MainWindow::Data::plugMenu() -> void
     ratio = &video(u"crop"_q);
     g = ratio->g();
     PLUG_RATIO(video_crop_ratio, setVideoCropRatio);
+    PLUG_ENUM_CHILD(video, video_rotation, setVideoRotation);
 
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {

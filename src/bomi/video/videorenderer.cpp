@@ -6,6 +6,7 @@
 #include "opengl/opengltexturebinder.hpp"
 #include "misc/dataevent.hpp"
 #include "misc/log.hpp"
+#include "enum/rotation.hpp"
 #include <QQmlProperty>
 #include <QQuickWindow>
 
@@ -13,6 +14,9 @@ DECLARE_LOG_CONTEXT(Video)
 
 enum EventType {NewFrame = QEvent::User + 1 };
 
+enum DirtyFlag {
+    DirtyRot = 1
+};
 
 struct VideoRenderer::VideoShaderData : public VideoRenderer::ShaderData {
     const OpenGLTexture2D *frame = nullptr;
@@ -29,6 +33,7 @@ struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
             varying vec2 frameTexCoord;
             varying vec2 osdTexCoord;
             void main() {
+                const vec2 cc = vec2(0.5, 0.5);
                 frameTexCoord = aFrameTexCoord;
                 osdTexCoord = aOsdTexCoord;
                 gl_Position = qt_Matrix * aPosition;
@@ -52,10 +57,11 @@ struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
         Q_ASSERT(prog->isLinked());
         loc_frameTex = prog->uniformLocation("frameTex");
         loc_osdTex = prog->uniformLocation("osdTex");
+        loc_rot = prog->uniformLocation("rot");
     }
     void update(QOpenGLShaderProgram *prog,
-                const VideoRenderer::ShaderData *data) override {
-        auto d = static_cast<const VideoShaderData*>(data);
+                VideoRenderer::ShaderData *data) override {
+        auto d = static_cast<VideoShaderData*>(data);
         if (d->frame->id() != GL_NONE && !d->frame->isEmpty()) {
             prog->setUniformValue(loc_frameTex, 0);
             prog->setUniformValue(loc_osdTex, 1);
@@ -67,7 +73,7 @@ struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
         }
     }
 private:
-    int loc_frameTex = -1, loc_osdTex = -1;
+    int loc_frameTex = -1, loc_osdTex = -1, loc_rot = -1;
 };
 
 struct FboSet {
@@ -93,16 +99,18 @@ struct FboSet {
 struct VideoRenderer::Data {
     VideoRenderer *p = nullptr;
     double crop = -1.0, aspect = -1.0, dar = 0.0;
-    bool onLetterbox = true, redraw = false;
+    bool onLetterbox = true, redraw = false, portrait = false;
     bool flip_h = false, flip_v = false;
     Qt::Alignment alignment = Qt::AlignCenter;
     QRectF vtx; QPointF offset = {0, 0};
     LetterboxItem *letterbox = nullptr;
     GeometryItem *overlay = nullptr;
+    Rotation rotation = Rotation::D0;
+    int dirty = 0;
 
     FboSet frame, osd;
 
-    QSize displaySize{0, 1};
+    QSize sourceSize{0, 1};
     QTimer sizeChecker;
     RenderFrameFunc render = nullptr;
 
@@ -116,7 +124,7 @@ struct VideoRenderer::Data {
             return itemAspectRatio();
         if (!p->hasFrame())
             return 1.0;
-        return displaySize.width()/(double)displaySize.height();
+        return sourceSize.width()/(double)sourceSize.height();
     }
     auto targetCropRatio(double fallback) const -> double
     {
@@ -134,15 +142,20 @@ struct VideoRenderer::Data {
     {
         if (!p->hasFrame())
             return area;
-        QRectF rect = area;
+
         const double aspect = targetAspectRatio();
         QSizeF frame(aspect, 1.0), letter(targetCropRatio(aspect), 1.0);
+        if (portrait) {
+            std::swap(frame.rwidth(), frame.rheight());
+            std::swap(letter.rwidth(), letter.rheight());
+        }
         letter.scale(area.width(), area.height(), Qt::KeepAspectRatio);
         frame.scale(letter, Qt::KeepAspectRatioByExpanding);
+
         QPointF pos(area.x(), area.y());
         pos.rx() += (area.width() - frame.width())*0.5;
         pos.ry() += (area.height() - frame.height())*0.5;
-        rect = {pos, frame};
+        QRectF rect = {pos, frame};
 
         QPointF xy(area.width(), area.height());
         xy.rx() -= letter.width();
@@ -173,7 +186,9 @@ struct VideoRenderer::Data {
     }
     auto fboSizeHint() const -> QSize
     {
-        auto size = displaySize;
+        auto size = sourceSize;
+        if (portrait)
+            std::swap(size.rwidth(), size.rheight());
         size.scale(qCeil(vtx.width()), qCeil(vtx.height()), Qt::KeepAspectRatio);
         return size;
     }
@@ -265,7 +280,7 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
     switch (static_cast<int>(event->type())) {
     case NewFrame: {
         auto ds = _GetData<QSize>(event);
-        if (_Change(d->displaySize, ds)) {
+        if (_Change(d->sourceSize, ds)) {
             reserve(UpdateGeometry, false);
             d->frame.size = d->fboSizeHint();
             d->osd.size = d->osdSizeHint();
@@ -286,7 +301,7 @@ auto VideoRenderer::overlay() const -> QQuickItem*
 
 auto VideoRenderer::hasFrame() const -> bool
 {
-    return !d->displaySize.isEmpty();
+    return !d->sourceSize.isEmpty();
 }
 
 auto VideoRenderer::screenRect() const -> QRectF
@@ -374,9 +389,11 @@ auto VideoRenderer::sizeHint() const -> QSize
         return QSize(400, 300);
     const double aspect = d->targetAspectRatio();
     QSizeF size(aspect, 1.0);
-    size.scale(d->displaySize, Qt::KeepAspectRatioByExpanding);
+    size.scale(d->sourceSize, Qt::KeepAspectRatioByExpanding);
     QSizeF crop(d->targetCropRatio(aspect), 1.0);
     crop.scale(size, Qt::KeepAspectRatio);
+    if (d->portrait)
+        std::swap(crop.rwidth(), crop.rheight());
     return crop.toSize();
 }
 
@@ -490,3 +507,27 @@ auto VideoRenderer::initializeVertex(Vertex *vertex) const -> void
 }
 
 #undef FILL_TS
+
+auto VideoRenderer::setRotation(Rotation r) -> void
+{
+    if (_Change(d->rotation, r)) {
+        if (_Change(d->portrait, _IsOneOf(r, Rotation::D90, Rotation::D270))) {
+            d->frame.size = d->fboSizeHint();
+            d->redraw = true;
+            reserve(UpdateAll);
+        }
+        d->dirty = DirtyRot;
+        polish();
+        reserve(UpdateGeometry);
+    }
+}
+
+auto VideoRenderer::rotation() const -> Rotation
+{
+    return d->rotation;
+}
+
+auto VideoRenderer::isPortrait() const -> bool
+{
+    return d->portrait;
+}
