@@ -119,7 +119,7 @@ EncoderDialog::EncoderDialog(QWidget *parent)
 
     setDefault(d->ui.vc, codecs.first, { u"libx264"_q, u"mpeg4"_q });
     setDefault(d->ui.ac, codecs.second, { u"libvorbis"_q, u"aac"_q });
-    d->ui.ext->addItems({ u"avi"_q, u"mkv"_q, u"mp4"_q });
+    d->ui.ext->addItems({ u"mkv"_q, u"mp4"_q, u"webm"_q });
     if (codecs.first.contains(u"gif"_q))
         d->ui.ext->addItem(u"gif"_q);
     d->ui.ext->setCurrentText(u"mkv"_q);
