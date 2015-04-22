@@ -464,7 +464,7 @@ def build(ctx):
         if build_shared:
             waftoolsdir = os.path.join(os.path.dirname(__file__), "waftools")
             ctx.load("syms", tooldir=waftoolsdir)
-        vre = '^#define MPV_CLIENT_API_VERSION MPV_MAKE_VERSION\((.*), (.*)\)$'
+        vre = '#define MPV_CLIENT_API_VERSION MPV_MAKE_VERSION\((.*), (.*)\)'
         libmpv_header = ctx.path.find_node("libmpv/client.h").read()
         major, minor = re.search(vre, libmpv_header, re.M).groups()
         libversion = major + '.' + minor + '.0'
