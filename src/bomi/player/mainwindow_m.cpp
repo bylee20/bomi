@@ -418,7 +418,8 @@ auto MainWindow::Data::plugMenu() -> void
                                e.frameSize(), fileNameGenerator());
             encoder->setAudio(e.currentAudioStreamTrack());
             encoder->setSubtitle(e.currentSubtitleStreamTrack(), pref.sub_style());
-            encoder->setRange(a, b);
+            if (a >= 0)
+                encoder->setRange(a, b);
             encoder->show();
         };
 
@@ -448,7 +449,7 @@ auto MainWindow::Data::plugMenu() -> void
             }
             break;
         } case 'a': {
-            setup(t, t);
+            setup(-1, -1);
             break;
         } default:
             return;
