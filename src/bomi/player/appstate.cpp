@@ -4,6 +4,8 @@
 #include "misc/json.hpp"
 #include "misc/jsonstorage.hpp"
 #include "os/os.hpp"
+#include "videosettings.hpp"
+#include "opengl/openglmisc.hpp"
 #include <QScreen>
 
 static_assert(tmp::is_enum_class<StaysOnTop>(), "!!!");
@@ -45,8 +47,14 @@ auto AppState::load() -> void
 {
     JsonStorage storage(APP_STATE_FILE);
     const auto json = storage.read();
-    if (storage.hasError())
+    if (storage.hasError()) {
+        const auto s = VideoSettings::preset(OGL::is16bitFramebufferFormatSupported()
+                                             ? VideoSettings::Normal : VideoSettings::Basic);
+        s.fill(&state);
+        fbo_format = s.fboFormat;
+        use_interpolator_down = s.useIntrplDown;
         return;
+    }
     if (!jio.fromJson(*this, json))
         _Error("Cannot convert JSON object to AppState");
 }

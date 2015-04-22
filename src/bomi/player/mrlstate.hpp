@@ -160,7 +160,7 @@ private:
     auto __set_dummy(const T &) { }
     auto __dummy_int() const -> int { return 0; }
     auto __dummy_string() const -> QString { return QString(); }
-    friend class PlayEngine;
+    friend class PlayEngine; friend class VideoSettings;
     struct TrackInfo {
         StreamList *tracks;
         void(MrlState::*signal)(StreamList);

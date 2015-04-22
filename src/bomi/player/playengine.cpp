@@ -1457,19 +1457,9 @@ auto PlayEngine::setVideoSettings(const VideoSettings &s) -> void
 {
     d->mutex.lock();
     d->params.m_mutex = nullptr;
-
     const auto fbo = _Change(d->fboFormat, s.fboFormat);
-    d->params.set_video_dithering(s.dithering);
-    d->params.set_video_hq_downscaling(s.hqDownscale);
-    d->params.set_video_hq_upscaling(s.hqUpscale);
     _Change(d->useIntrplDown, s.useIntrplDown);
-    d->params.d->intrpl.set(s.interpolator);
-    d->params.set_video_interpolator(s.interpolator.type());
-    d->params.d->intrplDown.set(s.interpolatorDown);
-    d->params.set_video_interpolator_down(s.interpolatorDown.type());
-    d->params.d->chroma.set(s.chromaUpscaler);
-    d->params.set_video_chroma_upscaler(s.chromaUpscaler.type());
-
+    s.fill(&d->params);
     d->params.m_mutex = &d->mutex;
     d->mutex.unlock();
 

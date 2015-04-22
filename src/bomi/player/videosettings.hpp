@@ -6,6 +6,8 @@
 #include "enum/dithering.hpp"
 #include "video/interpolatorparams.hpp"
 
+class MrlState;
+
 struct VideoSettings {
     DECL_EQ(VideoSettings, &T::fboFormat, &T::chromaUpscaler, &T::interpolator,
             &T::interpolatorDown, &T::hqDownscale, &T::hqUpscale, &T::useIntrplDown,
@@ -16,6 +18,7 @@ struct VideoSettings {
     bool hqUpscale = false, hqDownscale = false, useIntrplDown = false;
     Dithering dithering = Dithering::None;
     QString name;
+    auto fill(MrlState *s) const -> void;
     static auto preset(Preset p) -> VideoSettings;
 };
 
