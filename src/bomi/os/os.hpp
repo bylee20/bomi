@@ -49,6 +49,9 @@ public:
     virtual auto setImeEnabled(bool enabled) -> void = 0;
     virtual auto isImeEnabled() const -> bool = 0;
     virtual auto isSnappableToEdge() const -> bool { return false; }
+    virtual auto showMaximized() -> void { m_window->showMaximized(); }
+    virtual auto showMinimized() -> void { m_window->showMinimized(); }
+    virtual auto showNormal() -> void { m_window->showNormal(); }
     auto snapHint(const QPoint &pos, Qt::Edges edges = Qt::TopEdge
                     | Qt::BottomEdge | Qt::RightEdge | Qt::LeftEdge,
                   int threshold = 10) const -> QPoint;

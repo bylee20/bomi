@@ -863,8 +863,8 @@ auto MainWindow::Data::plugMenu() -> void
     connect(win.g(u"size"_q), &ActionGroup::triggered, p, [=] (QAction *a) {
         if (p->isFullScreen())
             p->setFullScreen(false);
-        if (p->windowState() == Qt::WindowMaximized)
-            p->showNormal();
+        if (p->adapter()->state() == Qt::WindowMaximized)
+            p->adapter()->showNormal();
         setVideoSize(videoSize(a->data().value<WindowSize>()));
     });
     connect(win[u"toggle-fs"_q], &QAction::triggered, p,
@@ -872,8 +872,8 @@ auto MainWindow::Data::plugMenu() -> void
     connect(win[u"enter-fs"_q], &QAction::triggered, p, [=] () { p->setFullScreen(true); });
     connect(win[u"exit-fs"_q], &QAction::triggered, p, [=] () { p->setFullScreen(false); });
 
-    connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);
-    connect(win[u"maximize"_q], &QAction::triggered, p, &MainWindow::showMaximized);
+    connect(win[u"minimize"_q], &QAction::triggered, adapter, &OS::WindowAdapter::showMinimized);
+    connect(win[u"maximize"_q], &QAction::triggered, adapter, &OS::WindowAdapter::showMaximized);
     connect(win[u"close"_q], &QAction::triggered, p, [=] () { menu.hide(); p->close(); });
 
     Menu &help = menu(u"help"_q);

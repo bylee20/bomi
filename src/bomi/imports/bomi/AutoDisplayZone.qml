@@ -20,6 +20,7 @@ Item {
         property bool entered: false
 
         anchors.fill: parent
+        anchors.margins: B.App.window.fullscreen && Qt.platform.os == "windows" ? -1 : 0
         hoverEnabled: true
         onEntered: entered = B.App.window.mouse.isIn(zone)
         onExited: entered = false

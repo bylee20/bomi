@@ -158,7 +158,9 @@ WindowAdapter::WindowAdapter(QWindow *parent)
     : QObject(parent)
 {
     m_window = parent;
+#ifndef Q_OS_WIN
     connect(m_window, &QWindow::windowStateChanged, this, &WindowAdapter::setState);
+#endif
 }
 
 auto WindowAdapter::setFramelessHint(bool frameless) -> void

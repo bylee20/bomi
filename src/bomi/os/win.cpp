@@ -193,6 +193,8 @@ WinWindowAdapter::WinWindowAdapter(QWindow* w)
 {
     qApp->installNativeEventFilter(this);
     w->installEventFilter(this);
+    connect(w, &QWindow::visibleChanged, this, [=] (bool visible)
+        { if (!m_hwnd && visible) m_hwnd = (HWND)winId(); });
 }
 
 auto WinWindowAdapter::isImeEnabled() const -> bool
@@ -205,20 +207,45 @@ auto WinWindowAdapter::setImeEnabled(bool enabled) -> void
     if (enabled == isImeEnabled())
         return;
     if (enabled) {
-        ImmAssociateContext((HWND)winId(), m_ime);
+        ImmAssociateContext(m_hwnd, m_ime);
         m_ime = nullptr;
     } else
-        m_ime = ImmAssociateContext((HWND)winId(), nullptr);
+        m_ime = ImmAssociateContext(m_hwnd, nullptr);
+}
+
+auto WinWindowAdapter::showMaximized() -> void
+{
+    if (!m_hwnd)
+        m_hwnd = (HWND)winId();
+    if (m_fs)
+        setFullScreen(false);
+    ShowWindow(m_hwnd, SW_MAXIMIZE);
+}
+
+auto WinWindowAdapter::showMinimized() -> void
+{
+    if (!m_hwnd)
+        m_hwnd = (HWND)winId();
+    ShowWindow(m_hwnd, SW_MINIMIZE);
+}
+
+auto WinWindowAdapter::showNormal() -> void
+{
+    if (!m_hwnd)
+        m_hwnd = (HWND)winId();
+    if (m_fs)
+        setFullScreen(false);
+    ShowWindow(m_hwnd, SW_RESTORE);
 }
 
 auto WinWindowAdapter::setFrameless(bool frameless) -> void
 {
+    if (!m_hwnd)
+        m_hwnd = (HWND)winId();
     if (_Change(m_frameless, frameless) && !m_fs) {
-        const bool visible = window()->isVisible();
-        setFramelessHint(frameless);
-        frameMarginsHack();
-        if (visible)
-            window()->setVisible(true);
+        updateFrame();
+        SetWindowPos(m_hwnd, layer(), 0, 0, 0, 0,
+                     SWP_FRAMECHANGED | SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE);
     }
 }
 
@@ -238,8 +265,10 @@ SIA setLayer(HWND hwnd, HWND layer) -> void
 
 auto WinWindowAdapter::setAlwaysOnTop(bool onTop) -> void
 {
+    if (!m_hwnd)
+        m_hwnd = (HWND)winId();
     m_onTop = onTop;
-    setLayer((HWND)winId(), layer());
+    setLayer(m_hwnd, layer());
 }
 
 static auto frame(DWORD style, DWORD exStyle) -> QMargins
@@ -257,35 +286,38 @@ static auto frame(DWORD style, DWORD exStyle) -> QMargins
 
 auto WinWindowAdapter::sysFrameMargins() const -> QMargins
 {
-    const auto style = GetWindowLongPtr((HWND)winId(), GWL_STYLE);
-    const auto exStyle = GetWindowLongPtr((HWND)winId(), GWL_EXSTYLE);
+    const auto style = GetWindowLongPtr(m_hwnd, GWL_STYLE);
+    const auto exStyle = GetWindowLongPtr(m_hwnd, GWL_EXSTYLE);
     return frame(style, exStyle);
+}
+
+auto WinWindowAdapter::updateFrame() -> void
+{
+    const auto hwnd = m_hwnd;
+    if (!m_frameStyle)
+        m_frameStyle = GetWindowLong(hwnd, GWL_STYLE);
+    auto style = m_frameStyle;
+    if (m_fs)
+        style = WS_POPUP | WS_BORDER;
+    else if (m_frameless)
+        style &= ~(WS_CAPTION | WS_THICKFRAME);
+    SetWindowLong(hwnd, GWL_STYLE, style);
+    frameMarginsHack();
 }
 
 auto WinWindowAdapter::setFullScreen(bool fs) -> void
 {
     if (!_Change(m_fs, fs))
         return;
-    const auto visible = window()->isVisible();
     if (m_fs)
-        m_prevGeometry = window()->geometry();
-    if (m_fs && m_frameless)
-        setFramelessHint(false);
-    setFullScreenHint(fs);
-    if (fs) {
-        const auto hwnd = (HWND)winId();
-        auto style = GetWindowLong(hwnd, GWL_STYLE);
-        style |= WS_BORDER;
-        SetWindowLong(hwnd, GWL_STYLE, style);
-    }
-    if (!m_fs) {
-        if (m_frameless)
-            setFramelessHint(true);
-        window()->setGeometry(m_prevGeometry);
-        setLayer((HWND)winId(), layer());
-    }
-    if (visible)
-        window()->setVisible(visible);
+        m_normalGeometry = window()->frameGeometry();
+    updateFrame();
+    auto g = m_fs ? window()->screen()->geometry() : m_normalGeometry;
+    SetWindowPos(m_hwnd, layer(), g.x(), g.y(), g.width(), g.height(),
+                 SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+    if (!m_fs)
+        m_normalGeometry = QRect();
+    setState(m_fs ? Qt::WindowFullScreen : Qt::WindowNoState);
 }
 
 auto WinWindowAdapter::eventFilter(QObject *obj, QEvent *ev) -> bool
@@ -307,7 +339,7 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
     if (!msg->hwnd)
         return false;
     auto w = window();
-    auto available = [&] () { return w->isVisible() && msg->hwnd == (HWND)winId(); };
+    auto available = [&] () { return w->isVisible() && msg->hwnd == m_hwnd; };
 
     switch (msg->message) {
     case WM_ENTERSIZEMOVE:
@@ -320,15 +352,47 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         m_startWinPos = w->position();
         return false;
     case WM_EXITSIZEMOVE:
-        if (msg->hwnd == (HWND)winId()) {
+        if (msg->hwnd == m_hwnd) {
             m_moving = false;
             m_startMousePos = QPoint(-1, -1);
         }
         return false;
     case WM_SIZING: // not to filter resize event
-        if (msg->hwnd == (HWND)winId()) {
+        if (msg->hwnd == m_hwnd) {
             m_startMousePos = QPoint(-1, -1);
             m_moving = false;
+        }
+        return false;
+    case WM_GETMINMAXINFO: {
+        if (msg->hwnd != m_hwnd || m_fs)
+            return false;
+        auto s = window()->screen();
+        if (qApp->primaryScreen() != s)
+            return false;
+        auto info = reinterpret_cast<LPMINMAXINFO>(msg->lParam);
+        const auto g = s->availableGeometry();
+        info->ptMaxSize.x = g.width();
+        info->ptMaxSize.y = g.height();
+        info->ptMaxPosition.x = g.x();
+        info->ptMaxPosition.y = g.y();
+        *res = 0;
+        return true;
+    } case WM_SIZE:
+        if (msg->hwnd == m_hwnd) {
+            switch (msg->wParam) {
+            case SIZE_MINIMIZED:
+                setState(Qt::WindowMinimized);
+                break;
+            case SIZE_MAXIMIZED:
+                setState(Qt::WindowMaximized);
+                break;
+            case SIZE_RESTORED:
+                if (!m_fs)
+                    setState(Qt::WindowNoState);
+                break;
+            default:
+                break;
+            }
         }
         return false;
     case WM_MOVING: { // to snap to edge
@@ -357,7 +421,7 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         m_wmMove = false;
         return true;
     } case WM_NCACTIVATE: {
-        if (w->windowState() != Qt::WindowMaximized || !available())
+        if (state() != Qt::WindowMaximized || !available())
             return false;
         *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
         return true;

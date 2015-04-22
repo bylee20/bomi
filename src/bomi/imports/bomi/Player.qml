@@ -103,10 +103,15 @@ Item {
     function updateScreenSize() {
         if (!video)
             return
-        video.width = width * engine.zoom
-        video.height = height * engine.zoom
-        video.x = (width - video.width) * 0.5
-        video.y = (height - video.height) * 0.5
+        var w = width, h = height;
+        if (B.App.window.fullscreen && Qt.platform.os == "windows") {
+            w = B.App.window.width + 2;
+            h = B.App.window.height + 2;
+        }
+        video.width = w * engine.zoom
+        video.height = h * engine.zoom
+        video.x = (w - video.width) * 0.5
+        video.y = (h - video.height) * 0.5
     }
 
     Connections { target: engine; onZoomChanged: updateScreenSize() }

@@ -63,7 +63,7 @@ MainWindow::MainWindow()
 
     connect(this, &QQuickView::statusChanged, this, [=] (Status status)
         { if (status == Ready) d->top->setParentItem(contentItem()); });
-    connect(this, &MainWindow::windowStateChanged, this,
+    connect(d->adapter, &OS::WindowAdapter::stateChanged, this,
             [=] (Qt::WindowState ws) { d->updateWindowState(ws); });
     connect(this, &QQuickView::sceneGraphInitialized, this, [this] () {
         auto context = openglContext();

@@ -305,8 +305,12 @@ auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
 
 auto MainWindow::Data::setVideoSize(const QSize &video) -> void
 {
-    if (p->isFullScreen() || p->windowState() == Qt::WindowMaximized)
+    if (p->isFullScreen() || p->adapter()->state() == Qt::WindowMaximized)
         return;
+    if (p->rootObject()->width() != p->width())
+        p->rootObject()->setWidth(p->width());
+    if (p->rootObject()->height() != p->height())
+        p->rootObject()->setHeight(p->height());
     // patched by Handrake
     const QSizeF vs(e.screen()->width(), e.screen()->height());
     const QSize size = (p->size() - vs.toSize() + video);
@@ -736,7 +740,7 @@ auto MainWindow::Data::applyPref() -> void
 
 auto MainWindow::Data::updateStaysOnTop() -> void
 {
-    if (p->windowState() & Qt::WindowMinimized)
+    if (p->adapter()->state() & Qt::WindowMinimized)
         return;
     const auto id = as.win_stays_on_top;
     bool onTop = !p->isFullScreen();
