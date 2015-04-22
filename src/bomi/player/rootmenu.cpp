@@ -414,6 +414,12 @@ RootMenu::RootMenu()
 
         d->separator();
 
+        d->menu(u"preset"_q, QT_TR_NOOP("Quality Preset"), [=] () {
+            d->action(u"highest"_q, QT_TR_NOOP("Highest Quality"));
+            d->action(u"high"_q, QT_TR_NOOP("High Quality"));
+            d->action(u"normal"_q, QT_TR_NOOP("Normal Quality"));
+            d->action(u"basic"_q, QT_TR_NOOP("Basic Quality"));
+        });
         d->enumMenuCheckable<FramebufferObjectFormat>(true);
         d->menu(u"chroma-upscaler"_q, QT_TR_NOOP("Chroma Upscaler"), [=] () {
             d->action(u"advanced"_q, QT_TR_NOOP("Advanced..."));

@@ -44,9 +44,9 @@ auto MrlState::toJson() const -> QJsonObject
 {
     auto json = _JsonFromQObject(this);
     json.insert(u"version"_q, Version);
-    json.insert(u"video_interpolator_down_map"_q, _ToJson(d->intrplDown));
-    json.insert(u"video_interpolator_map"_q, _ToJson(d->intrpl));
-    json.insert(u"video_chroma_upscaler_map"_q, _ToJson(d->chroma));
+    json.insert(u"video_interpolator_down_map"_q, d->intrplDown.toJson());
+    json.insert(u"video_interpolator_map"_q, d->intrpl.toJson());
+    json.insert(u"video_chroma_upscaler_map"_q, d->chroma.toJson());
     return json;
 }
 
@@ -57,14 +57,7 @@ auto MrlState::setFromJson(const QJsonObject &json) -> bool
         bool ret = _JsonToQObject(json, this);
         auto set = [&] (const QString &key, IntrplParamSetMap &map) {
             auto it = json.find(key);
-            if (it == json.end())
-                return false;
-            map = _FromJson<IntrplParamSetMap>(it.value());
-            for (auto &item : InterpolatorInfo::items()) {
-                if (!map.contains(item.value))
-                    map[item.value] = IntrplParamSet::default_(item.value);
-            }
-            return true;
+            return it != json.end() && map.setFromJson(it.value().toArray());
         };
         ret = set(u"video_interpolator_down_map"_q, d->intrplDown) && ret;
         ret = set(u"video_interpolator_map"_q, d->intrpl) && ret;

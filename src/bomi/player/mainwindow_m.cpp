@@ -1,6 +1,7 @@
 #include "mainwindow_p.hpp"
 #include "app.hpp"
 #include "enum/movetoward.hpp"
+#include "player/videosettings.hpp"
 #include "misc/actiongroup.hpp"
 #include "subtitle/subtitleviewer.hpp"
 #include "subtitle/subtitlemodel.hpp"
@@ -473,8 +474,31 @@ auto MainWindow::Data::plugMenu() -> void
 
     PLUG_STEP(video(u"zoom"_q).g(), video_zoom, setVideoZoom);
 
+    auto &vq = video(u"preset"_q);
+    auto plugVideoPreset = [&] (const QString &key, VideoSettings::Preset preset)
+    {
+        auto action = vq[key];
+        connect(action, &QAction::triggered, p, [=] () {
+            auto from = e.videoSettings(); from.name = tr("Restored");
+            auto to = VideoSettings::preset(preset); to.name = action->text();
+            push(to, from, [=] (const VideoSettings &s) {
+                showMessage(tr("Video Quality Preset"), s.name);
+                auto prev = noMessage;
+                noMessage = true;
+                e.setVideoSettings(s);
+                noMessage = prev;
+            });
+        });
+    };
+    plugVideoPreset(u"highest"_q, VideoSettings::Highest);
+    plugVideoPreset(u"high"_q, VideoSettings::High);
+    plugVideoPreset(u"normal"_q, VideoSettings::Normal);
+    plugVideoPreset(u"basic"_q, VideoSettings::Basic);
+
     plugAppEnumChild(video, "fbo_format", &AppState::fboFormatChanged);
     connect(&as, &AppState::fboFormatChanged, &e, &PlayEngine::setFramebufferObjectFormat);
+    connect(&e, &PlayEngine::framebufferObjectFormatChanged, p, [=] (auto f)
+        { as.setProperty("fbo_format", QVariant::fromValue(f)); });
 
     PLUG_ENUM_CHILD(video, video_deinterlacing, setDeintMode);
     PLUG_ENUM(video(u"interpolator"_q), video_interpolator, setInterpolator);
@@ -489,12 +513,12 @@ auto MainWindow::Data::plugMenu() -> void
                     static_cast<Signal<PlayEngine, const IntrplParamSet&>>(&PlayEngine::setParams)); \
                 connect(e.params(), &MrlState::video_##name##_changed, dlg.data(), [=] () { \
                     if (dlg->isVisible()) \
-                        dlg->set(e.getParams().type, e.getMap()); \
+                        dlg->set(e.getParams().type(), e.getMap()); \
                 }); \
             } \
             if (!dlg->isVisible()) { \
                 _SetWindowTitle(dlg.data(), title); \
-                dlg->set(e.getParams().type, e.getMap()); \
+                dlg->set(e.getParams().type(), e.getMap()); \
                 dlg->show(); \
             } \
         });

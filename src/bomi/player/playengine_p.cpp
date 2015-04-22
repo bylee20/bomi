@@ -75,6 +75,8 @@ auto PlayEngine::Data::vo(const MrlState *s) const -> QByteArray
     return "opengl-cb:" + videoSubOptions(s);
 }
 
+#include "misc/json.hpp"
+
 auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
 {
     auto c_matrix = [s] () {
@@ -434,9 +436,7 @@ auto PlayEngine::Data::observe() -> void
 
     mpv.observeTime("avsync", avSync, [=] () { emit p->avSyncChanged(avSync); });
     mpv.observe("time-pos", [=] () {
-        int ctime = 0;
-        if (t.caching)
-            ctime = s2ms(mpv.get<double>("demuxer-cache-time"));
+        int ctime = t.caching ? s2ms(mpv.get<double>("demuxer-cache-time")) : 0;
         if (ctime != info.cache.time())
             QMetaObject::invokeMethod(&info.cache, "setTime",
                                       Qt::QueuedConnection, Q_ARG(int, ctime));

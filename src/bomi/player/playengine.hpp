@@ -33,9 +33,9 @@ class SubComp;                          class SmbAuth;
 struct Autoloader;                      struct CacheInfo;
 struct IntrplParamSet;                  struct MotionIntrplOption;
 class AudioVisualizer;                  class QQuickWindow;
+class VideoSettings;                    class IntrplParamSetMap;
 
 struct StringPair { QString s1, s2; };
-using IntrplParamSetMap = QMap<Interpolator, IntrplParamSet>;
 
 class PlayEngine : public QObject {
     Q_OBJECT
@@ -272,6 +272,8 @@ public:
     auto setVideoDithering(Dithering dithering) -> void;
     auto setVideoEffects(VideoEffects effects) -> void;
     auto setVideoRotation(Rotation r) -> void;
+    auto setVideoSettings(const VideoSettings &s) -> void;
+    auto videoSettings() const -> VideoSettings;
     auto takeSnapshot() -> void;
     auto snapshot(QImage *frame, QImage *osd) -> int;
     auto clearSnapshots() -> void;

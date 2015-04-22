@@ -302,7 +302,8 @@ HEADERS += \
     kiss_fft/kiss_fft.h \
     dialog/encoderdialog.hpp \
     misc/filenamegenerator.hpp \
-    enum/rotation.hpp
+    enum/rotation.hpp \
+    player/videosettings.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -519,7 +520,8 @@ SOURCES += \
     kiss_fft/kiss_fft.c \
     dialog/encoderdialog.cpp \
     misc/filenamegenerator.cpp \
-    enum/rotation.cpp
+    enum/rotation.cpp \
+    player/videosettings.cpp
 
 TRANSLATIONS += translations/bomi_en.ts \
 	translations/bomi_ko.ts \

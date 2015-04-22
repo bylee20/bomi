@@ -1,160 +1,430 @@
 #include "interpolatorparams.hpp"
 #include "widget/enumcombobox.hpp"
 #include "misc/json.hpp"
+#include "tmp/algorithm.hpp"
 
-static const std::array<QByteArray, IntrplParam::TypeMax> s_args = []() {
-    std::array<QByteArray, IntrplParam::TypeMax> args;
-    args[IntrplParam::Radius] = "radius"_b;
-    args[IntrplParam::Param1] = "param1"_b;
-    args[IntrplParam::Param2] = "param2"_b;
-    args[IntrplParam::AntiRinging] = "antiring"_b;
-    return args;
-}();
-
-auto IntrplParam::operator == (const IntrplParam &rhs) const -> bool
+IntrplParamSetMap::IntrplParamSetMap()
 {
-    if (m_type != rhs.m_type || m_available != rhs.m_available)
-        return false;
-    return !m_available || m_value == rhs.m_value;
+    static const auto def = [] () {
+        QVector<IntrplParamSet> sets;
+        for (auto &item : InterpolatorInfo::items())
+            sets.push_back(Interpolator(item.value));
+        return sets;
+    }();
+    m = def;
 }
 
-auto IntrplParam::description() const -> QString
+auto IntrplParamSetMap::toJson() const -> QJsonArray
 {
-    return description(m_type);
-}
-
-auto IntrplParam::description(Type type) -> QString
-{
-    switch (type) {
-    case IntrplParam::Radius:
-        return tr("Radius");
-    case IntrplParam::Param1:
-        return tr("Parameter 1");
-    case IntrplParam::Param2:
-        return tr("Parameter 2");
-    case IntrplParam::AntiRinging:
-        return tr("Anti-ringing");
-    default:
-        Q_ASSERT(false);
-        return QString();
-    }
-}
-
-auto IntrplParamSet::default_(Interpolator type) -> IntrplParamSet
-{
-    IntrplParamSet set;
-    auto &params = set.params;
-    switch (type) {
-    case Interpolator::Bilinear:
-        break;
-    case Interpolator::Bicubic:
-        params[IntrplParam::Param1] = 0.0;
-        params[IntrplParam::Param2] = 0.5;
-        break;
-    case Interpolator::Spline:
-        params[IntrplParam::Radius] = { 3, {2, 3, 4} };
-        break;
-    case Interpolator::Lanczos:
-        params[IntrplParam::Radius] = { 3, {2, 3, 4, 5} };
-        break;
-    case Interpolator::EwaLanczos:
-        params[IntrplParam::Radius] = { 3, {2, 3, 4, 5} };
-        params[IntrplParam::AntiRinging] = 0.0;
-        break;
-    case Interpolator::Sharpen:
-        params[IntrplParam::Radius] = { 5, {3, 5} };
-        params[IntrplParam::Param1] = { 0.5, 0.0, 10 };
-        break;
-    }
-    set.type = type;
-    for (uint i = 0; i < set.params.size(); ++i)
-        set.params[i].m_type = (IntrplParam::Type)i;
-    return set;
-}
-
-auto IntrplParamSet::defaults() -> QMap<Interpolator, IntrplParamSet>
-{
-    IntrplParamSetMap sets;
-    for (auto &item : InterpolatorInfo::items())
-        sets[item.value] = default_(item.value);
-    return sets;
-}
-
-auto IntrplParamSet::toMpvOption(const QByteArray &prefix) const -> QByteArray
-{
-    QByteArray opts;
-    opts += _EnumData(type);
-    const int radius = params[IntrplParam::Radius].toInt();
-    switch (type) {
-    case Interpolator::Spline:
-        switch (radius) {
-        case 2: opts += "16"_b; break;
-        case 3: opts += "36"_b; break;
-        case 4: opts += "64"_b; break;
-        default: Q_ASSERT(false);
-        }
-        break;
-    case Interpolator::Sharpen:
-        opts += QByteArray::number(radius);
-        break;
-    default:
-        break;
-    }
-    for (uint i = 0; i < params.size(); ++i) {
-        if (params[i].isAvailable()) {
-            opts += ':';
-            opts += prefix;
-            opts += '-';
-            opts += s_args[i];
-            opts += '=';
-            opts += params[i].toByteArray();
-        }
-    }
-    return opts;
-}
-
-auto IntrplParamSet::toJson() const -> QJsonObject
-{
-    QJsonObject json;
-    json.insert(u"type"_q, _EnumName(type));
-    QJsonObject params;
-    for (int i = 0; i < IntrplParam::TypeMax; ++i) {
-        if (this->params[i].isAvailable())
-            params.insert(QString::fromLatin1(s_args[i]), this->params[i].value());
-    }
-    json.insert(u"params"_q, params);
+    QJsonArray json;
+    for (auto &s : m)
+        json.push_back(s.toJson());
     return json;
 }
 
-auto IntrplParamSet::setFromJson(const QJsonObject &json) -> bool
+auto IntrplParamSetMap::setFromJson(const QJsonArray &json) -> bool
 {
-    auto it = json.find(u"type"_q);
-    if (it == json.end())
+    IntrplParamSetMap map;
+    if (json.size() != map.size())
         return false;
-    type = _EnumFrom(it.value().toString(), Interpolator::Bilinear);
-    this->params = default_(type).params;
-    const auto params = json[u"params"_q].toObject();
-    for (int i = 0; i < IntrplParam::TypeMax; ++i) {
-        it = params.find(QString::fromLatin1(s_args[i]));
-        if (it != params.end())
-            this->params[i].setValue(it.value().toDouble());
+    for (int i = 0; i < json.size(); ++i) {
+        if (!map.m[i].setFromJson(json[i].toObject()))
+            return false;
     }
+    m = map.m;
     return true;
+}
+
+class BilinearParamSet : public IntrplParamSetData {
+    struct Widget : public IntrplParamSetWidget {
+        auto setParamSet(const IntrplParamSet &) -> void final { }
+        auto paramSet() const -> IntrplParamSet final
+            { return IntrplParamSet(type()); }
+        auto type() const -> Interpolator final { return Interpolator::Bilinear; }
+    };
+public:
+    auto type() const -> Interpolator final { return Interpolator::Bilinear; }
+    auto createEditor() const -> IntrplParamSetWidget* final { return new Widget; }
+    auto compare(const IntrplParamSetData *other) const -> bool final { return other->type() == type(); }
+    auto toMpvOption(const QByteArray &prefix) const -> QByteArray final { Q_UNUSED(prefix); return _EnumData(type()); }
+    auto toJson() const -> QJsonObject final { QJsonObject json; json[u"type"_q] = _ToJson(type()); return json; }
+    auto setFromJson(const QJsonObject &json) -> bool { return _FromJson<Interpolator>(json[u"type"_q]) == type(); }
+    auto copy() const -> IntrplParamSetData* { return _copy(this); }
+};
+
+class BicubicParamSet : public IntrplParamSetData {
+    struct Widget : public IntrplParamSetWidget {
+        Widget()
+        {
+            auto grid = new QGridLayout(this);
+            add(grid, 0, tr("B-parameter"), m_b, 0, 1, 2);
+            add(grid, 1, tr("C-parameter"), m_c, 0, 1, 2);
+            add(grid, 2, tr("Anti-ringing"), m_ar, 0, 1, 2);
+        }
+        auto setParamSet(const IntrplParamSet &set) -> void
+        {
+            Q_ASSERT(set.type() == Interpolator::Bicubic);
+            auto p = static_cast<const BicubicParamSet*>(set.data());
+            m_b->setValue(p->b * 100 + 0.5);
+            m_c->setValue(p->c * 100 + 0.5);
+            m_ar->setValue(p->antiring * 100 + 0.5);
+        }
+        auto paramSet() const -> IntrplParamSet
+        {
+            IntrplParamSet set(Interpolator::Bicubic);
+            auto p = static_cast<BicubicParamSet*>(set.data());
+            p->b = m_b->value() * 1e-2;
+            p->c = m_c->value() * 1e-2;
+            p->antiring = m_ar->value() * 1e-2;
+            return set;
+        }
+        auto type() const -> Interpolator final { return Interpolator::Bicubic; }
+    private:
+        QSlider *m_b, *m_c, *m_ar;
+    };
+public:
+    auto type() const -> Interpolator final { return Interpolator::Bicubic; }
+    auto createEditor() const -> IntrplParamSetWidget* final { return new Widget; }
+    auto compare(const IntrplParamSetData *other) const -> bool final {
+        if (other->type() != type())
+            return false;
+        auto p = static_cast<const BicubicParamSet*>(other);
+        return p->b == b && p->c == c && p->antiring == antiring;
+    }
+    auto toMpvOption(const QByteArray &prefix) const -> QByteArray final
+    {
+        QByteArray opts;
+        opts += _EnumData(type());
+        opts += option(prefix, "param1"_b, b);
+        opts += option(prefix, "param2"_b, c);
+        return opts;
+    }
+    auto toJson() const -> QJsonObject final
+    {
+        QJsonObject json;
+        json[u"type"_q] = _ToJson(type());
+        json[u"b"_q] = b;
+        json[u"c"_q] = c;
+        json[u"antiring"_q] = antiring;
+        return json;
+    }
+    auto setFromJson(const QJsonObject &json) -> bool
+    {
+        if (_FromJson<Interpolator>(json[u"type"_q]) != type())
+            return false;
+        b = json[u"b"_q].toDouble();
+        c = json[u"c"_q].toDouble();
+        antiring = json[u"antiring"_q].toDouble();
+        return true;
+    }
+    auto copy() const -> IntrplParamSetData* final { return _copy(this); }
+    double b = 0.0, c = 0.5; double antiring = 0.0;
+};
+
+template<class T>
+class SimpleRadiusParamSet : public IntrplParamSetData {
+    struct Widget : public IntrplParamSetWidget {
+        Widget()
+        {
+            auto grid = new QGridLayout(this);
+            add(grid, 0, tr("Radius"), m_radius, 2, 4);
+            add(grid, 1, tr("Anti-ringing"), m_antiring, 0, 1, 2);
+        }
+        auto setParamSet(const IntrplParamSet &set) -> void
+        {
+            auto p = static_cast<const SimpleRadiusParamSet*>(set.data());
+            m_radius->setValue(p->radius);
+            m_antiring->setValue(p->antiring * 100 + 0.5);
+        }
+        auto paramSet() const -> IntrplParamSet
+        {
+            IntrplParamSet set(T::_type);
+            auto p = static_cast<T*>(set.data());
+            p->radius = m_radius->value();
+            p->antiring = m_antiring->value() * 1e-2;
+            return set;
+        }
+        auto type() const -> Interpolator final { return T::_type; }
+    private:
+        QSlider *m_radius, *m_antiring;
+    };
+public:
+    auto type() const -> Interpolator final { return T::_type; }
+    auto createEditor() const -> IntrplParamSetWidget* final { return new Widget; }
+    auto compare(const IntrplParamSetData *other) const -> bool final {
+        if (other->type() != type())
+            return false;
+        auto p = static_cast<const SimpleRadiusParamSet*>(other);
+        return p->radius == radius && p->antiring == antiring;
+    }
+    auto toJson() const -> QJsonObject final
+    {
+        QJsonObject json;
+        json[u"type"_q] = _ToJson(type());
+        json[u"radius"_q] = radius;
+        json[u"antiring"_q] = antiring;
+        return json;
+    }
+    auto setFromJson(const QJsonObject &json) -> bool
+    {
+        if (_FromJson<Interpolator>(json[u"type"_q]) != type())
+            return false;
+        radius = json[u"radius"_q].toInt();
+        antiring = json[u"antiring"_q].toDouble();
+        return true;
+    }
+    int radius = 3; double antiring = 0.0;
+};
+
+class SplineParamSet : public SimpleRadiusParamSet<SplineParamSet> {
+public:
+    static constexpr auto _type = Interpolator::Spline;
+    auto toMpvOption(const QByteArray &prefix) const -> QByteArray final
+    {
+        QByteArray opts;
+        opts += _EnumData(type());
+        if (radius == 2)
+            opts += "16"_b;
+        else if (radius == 4)
+            opts += "64"_b;
+        else
+            opts += "36"_b;
+        opts += option(prefix, "antiring"_b, antiring);
+        return opts;
+    }
+    auto copy() const -> IntrplParamSetData* { return _copy(this); }
+};
+
+class LanczosParamSet : public SimpleRadiusParamSet<LanczosParamSet> {
+public:
+    static constexpr auto _type = Interpolator::Lanczos;
+    auto toMpvOption(const QByteArray &prefix) const -> QByteArray final
+    {
+        QByteArray opts;
+        opts += _EnumData(type());
+        opts += option(prefix, "radius"_b, radius);
+        opts += option(prefix, "antiring"_b, antiring);
+        return opts;
+    }
+    auto copy() const -> IntrplParamSetData* { return _copy(this); }
+};
+
+class EwaLanczosParamSet : public IntrplParamSetData {
+    struct Widget : public IntrplParamSetWidget {
+        Widget()
+        {
+            auto grid = new QGridLayout(this);
+            grid->addWidget(new QLabel(tr("Radius")), 0, 0);
+            grid->addWidget(m_radius = new QDoubleSpinBox, 0, 1, 1, -1);
+            m_radius->setDecimals(16);
+            m_radius->setRange(0.5, 16);
+            m_radius->setSingleStep(0.1);
+            connect(SIGNAL_VT(m_radius, valueChanged, double),
+                    this, &IntrplParamSetWidget::changed);
+            grid->addWidget(new QLabel(tr("Blur")), 1, 0);
+            grid->addWidget(m_blur = new QDoubleSpinBox, 1, 1, 1, -1);
+            m_blur->setDecimals(16);
+            m_blur->setRange(0.0, 1.2);
+            m_blur->setSingleStep(0.1);
+            m_blur->setSpecialValueText(tr("Default value"));
+            connect(SIGNAL_VT(m_blur, valueChanged, double),
+                    this, &IntrplParamSetWidget::changed);
+            add(grid, 2, tr("Anti-ringing"), m_antiring, 0, 1, 2);
+        }
+        auto setParamSet(const IntrplParamSet &set) -> void
+        {
+            auto p = static_cast<const EwaLanczosParamSet*>(set.data());
+            m_radius->setValue(p->radius);
+            m_antiring->setValue(p->antiring * 100 + 0.5);
+            m_blur->setValue(p->blur);
+        }
+        auto paramSet() const -> IntrplParamSet
+        {
+            IntrplParamSet set(Interpolator::EwaLanczos);
+            auto p = static_cast<EwaLanczosParamSet*>(set.data());
+            p->radius = m_radius->value();
+            p->antiring = m_antiring->value() * 1e-2;
+            p->blur = m_blur->value();
+            return set;
+        }
+        auto type() const -> Interpolator final { return Interpolator::EwaLanczos; }
+    private:
+        QDoubleSpinBox *m_radius, *m_blur;
+        QSlider *m_antiring;
+    };
+public:
+    auto type() const -> Interpolator final { return Interpolator::EwaLanczos; }
+    auto createEditor() const -> IntrplParamSetWidget* final { return new Widget; }
+    auto compare(const IntrplParamSetData *other) const -> bool final {
+        if (other->type() != type())
+            return false;
+        auto p = static_cast<const EwaLanczosParamSet*>(other);
+        return p->radius == radius && p->antiring == antiring && p->blur == blur;
+    }
+    auto toMpvOption(const QByteArray &prefix) const -> QByteArray final
+    {
+        QByteArray opts;
+        opts += _EnumData(type());
+        opts += option(prefix, "radius"_b, radius);
+        opts += option(prefix, "antiring"_b, antiring);
+        if (blur > 0.4)
+            opts += option(prefix, "blur"_b, blur);
+        return opts;
+    }
+    auto toJson() const -> QJsonObject final
+    {
+        QJsonObject json;
+        json[u"type"_q] = _ToJson(type());
+        json[u"radius"_q] = radius;
+        json[u"antiring"_q] = antiring;
+        json[u"blur"_q] = blur;
+        return json;
+    }
+    auto setFromJson(const QJsonObject &json) -> bool
+    {
+        if (_FromJson<Interpolator>(json[u"type"_q]) != type())
+            return false;
+        radius = json[u"radius"_q].toDouble();
+        antiring = json[u"antiring"_q].toDouble();
+        blur = json[u"blur"_q].toDouble();
+        return true;
+    }
+    auto copy() const -> IntrplParamSetData* { return _copy(this); }
+    double radius = 3, antiring = 0.0, blur = 0.0;
+};
+
+class SharpenParamSet : public IntrplParamSetData {
+    struct Widget : public IntrplParamSetWidget {
+        Widget()
+        {
+            auto grid = new QGridLayout(this);
+            grid->addWidget(new QLabel(tr("Kernel size")), 0, 0);
+            grid->addWidget(m_kernel = new QComboBox, 0, 1, 1, -1);
+            add(grid, 1, tr("Sharpeness"), m_sharpeness, 0, 10, 2);
+            m_kernel->addItem(u"3x3"_q, 3);
+            m_kernel->addItem(u"3x3"_q, 5);
+            connect(SIGNAL_VT(m_kernel, currentIndexChanged, int),
+                    this, &IntrplParamSetWidget::changed);
+        }
+        auto setParamSet(const IntrplParamSet &set) -> void
+        {
+            auto p = static_cast<const SharpenParamSet*>(set.data());
+            m_kernel->setCurrentIndex(m_kernel->findData(p->kernel));
+            m_sharpeness->setValue(p->sharpeness * 100 + 0.5);
+        }
+        auto paramSet() const -> IntrplParamSet
+        {
+            IntrplParamSet set(Interpolator::Sharpen);
+            auto p = static_cast<SharpenParamSet*>(set.data());
+            p->kernel = m_kernel->currentData().toInt();
+            p->sharpeness = m_sharpeness->value() * 1e-2;
+            return set;
+        }
+        auto type() const -> Interpolator final { return Interpolator::Sharpen; }
+    private:
+        QComboBox *m_kernel;
+        QSlider *m_sharpeness;
+    };
+public:
+    auto type() const -> Interpolator final { return Interpolator::Sharpen; }
+    auto createEditor() const -> IntrplParamSetWidget* final { return new Widget; }
+    auto compare(const IntrplParamSetData *other) const -> bool final {
+        if (other->type() != type())
+            return false;
+        auto p = static_cast<const SharpenParamSet*>(other);
+        return p->kernel == kernel && p->sharpeness == sharpeness;
+    }
+    auto toMpvOption(const QByteArray &prefix) const -> QByteArray final
+    {
+        QByteArray opts;
+        opts += _EnumData(type());
+        opts += kernel == 5 ? "5"_b : "3"_b;
+        opts += option(prefix, "param1"_b, sharpeness);
+        return opts;
+    }
+    auto toJson() const -> QJsonObject final
+    {
+        QJsonObject json;
+        json[u"type"_q] = _ToJson(type());
+        json[u"kernel"_q] = kernel;
+        json[u"sharpeness"_q] = sharpeness;
+        return json;
+    }
+    auto setFromJson(const QJsonObject &json) -> bool
+    {
+        if (_FromJson<Interpolator>(json[u"type"_q]) != type())
+            return false;
+        kernel = json[u"kernel"_q].toInt();
+        sharpeness = json[u"sharpeness"_q].toDouble();
+        return true;
+    }
+    auto copy() const -> IntrplParamSetData* { return _copy(this); }
+    int kernel = 3; double sharpeness = 0.5;
+};
+
+auto IntrplParamSetData::create(Interpolator type) -> IntrplParamSetData*
+{
+    switch (type) {
+    case Interpolator::Bilinear:
+        return new BilinearParamSet;
+    case Interpolator::Bicubic:
+        return new BicubicParamSet;
+    case Interpolator::Spline:
+        return new SplineParamSet;
+    case Interpolator::Lanczos:
+        return new LanczosParamSet;
+    case Interpolator::EwaLanczos:
+        return new EwaLanczosParamSet;
+    case Interpolator::Sharpen:
+        return new SharpenParamSet;
+    }
+    abort();
+    return nullptr;
+}
+
+IntrplParamSet::IntrplParamSet(Preset preset)
+    : d(nullptr)
+{
+    switch (preset) {
+    case BSpline:
+    case CatmullRom:
+    case MitchellNetravali: {
+        auto p = new BicubicParamSet;
+        if (preset == BSpline) { p->b = p->c = 0.5; }
+        else if (preset == CatmullRom) { p->b = 0; p->c = 0.5; }
+        else if (preset == MitchellNetravali) { p->b = p->c = 1./3.; }
+        d = p;
+        break;
+    } case EwaLanczosSharp:
+    case EwaLanczosSoft: {
+        auto p = new EwaLanczosParamSet;
+        if (preset == EwaLanczosSharp) {
+            p->radius = 3.2383154841662362;
+            p->blur = 0.9812505644269356;
+        } else if (preset == EwaLanczosSoft) {
+            p->radius = 3.2383154841662362;
+            p->blur = 1.015;
+        }
+        d = p;
+        break;
+    } case Spline36: {
+        auto p = new SplineParamSet;
+        p->radius = 3;
+        d = p;
+        break;
+    }}
+    Q_ASSERT(d);
 }
 
 /******************************************************************************/
 
 struct IntrplDialog::Data {
     InterpolatorComboBox *combo = nullptr;
-    struct {
-        QSlider *slider = nullptr;
-        QLabel *name = nullptr, *value = nullptr;
-    } lines[IntrplParam::TypeMax];
-    QMap<Interpolator, IntrplParamSet> map;
+    IntrplParamSetMap map;
+    IntrplParamSetWidget *widget = nullptr;
     int page = 1, single = 1;
     bool setting = false;
-    auto current() -> IntrplParamSet&
-        { auto it = map.find(combo->currentEnum()); return it.value(); }
+    auto current() const -> IntrplParamSet { return map[combo->currentEnum()]; }
 };
 
 IntrplDialog::IntrplDialog(QWidget *parent)
@@ -166,48 +436,21 @@ IntrplDialog::IntrplDialog(QWidget *parent)
     d->combo = new InterpolatorComboBox;
     d->combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     connect(d->combo, &InterpolatorComboBox::currentDataChanged,
-            this, [=] () { set(d->map[d->combo->currentEnum()]); });
+            this, [=] () { if (!d->setting) setCurrent(d->map[d->combo->currentEnum()]); });
     hbox->addWidget(d->combo);
     auto reset = new QPushButton(tr("Reset"));
+    reset->setDefault(false);
+    reset->setAutoDefault(false);
     connect(reset, &QPushButton::clicked, this,
-            [=] () { set(IntrplParamSet::default_(d->combo->currentEnum())); });
+            [=] () { setCurrent(IntrplParamSet(d->combo->currentEnum())); });
     hbox->addWidget(reset);
     vbox->addLayout(hbox);
-
-    auto grid = new QGridLayout;
-    for (int i = 0; i < IntrplParam::TypeMax; ++i) {
-        auto &l = d->lines[i];
-        l.slider = new QSlider(Qt::Horizontal);
-        l.name = new QLabel(IntrplParam::description((IntrplParam::Type)i));
-        l.value = new QLabel;
-        l.value->setMinimumWidth(50);
-
-        grid->addWidget(l.name,   i, 0);
-        grid->addWidget(l.slider, i, 1);
-        grid->addWidget(l.value,  i, 2);
-
-        connect(l.slider, &QSlider::valueChanged, this, [=, &l] (int v) {
-            auto &set = d->current();
-            auto &param = set.params[i];
-            if (param.isInt()) {
-                param.setInt(param.validValues()[v]);
-                l.value->setText(QString::number(param.toInt()));
-            } else {
-                param.setValue(v/100.0);
-                l.value->setText(QString::number(param.toDouble()));
-            }
-            emit paramsChanged(set);
-        });
-    }
-    d->single = d->lines[0].slider->singleStep();
-    d->page = d->lines[0].slider->pageStep();
-
-    vbox->addLayout(grid);
+    d->widget = d->map[Interpolator::Bilinear].createEditor();
+    vbox->addWidget(d->widget);
+    vbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     setLayout(vbox);
     adjustSize();
     resize(qMax(width(), 400), height());
-
-    set(Interpolator::Bilinear, IntrplParamSet::defaults());
 }
 
 IntrplDialog::~IntrplDialog()
@@ -215,48 +458,26 @@ IntrplDialog::~IntrplDialog()
     delete d;
 }
 
-auto IntrplDialog::set(const IntrplParamSet &set) -> void
+auto IntrplDialog::setCurrent(const IntrplParamSet &set) -> void
 {
-    d->map[set.type] = set;
-
-    d->combo->blockSignals(true);
-    d->combo->setCurrentEnum(set.type);
-    d->combo->blockSignals(false);
-
-    for (int i = 0; i < IntrplParam::TypeMax; ++i) {
-        auto &l = d->lines[i];
-        auto &param = set.params[i];
-        l.slider->blockSignals(true);
-        if (param.isAvailable()) {
-            if (param.isInt()) {
-                l.slider->setRange(0, param.validValues().size() - 1);
-                l.slider->setValue(param.validValues().indexOf(param.toInt()));
-                l.slider->setSingleStep(1);
-                l.slider->setPageStep(1);
-                l.value->setText(QString::number(param.toInt()));
-            } else {
-                l.slider->setRange(qRound(param.min() * 100), qRound(param.max() * 100));
-                l.slider->setValue(qRound(param.toDouble() * 100));
-                l.slider->setSingleStep(d->single);
-                l.slider->setPageStep(d->page);
-                l.value->setText(QString::number(param.toDouble()));
-            }
-        } else
-            l.value->setText("--"_a);
-        l.name->setEnabled(param.isAvailable());
-        l.slider->setEnabled(param.isAvailable());
-        l.value->setEnabled(param.isAvailable());
-        l.slider->blockSignals(false);
+    if (d->widget->type() != set.type()) {
+        delete d->widget;
+        d->widget = set.createEditor();
+        static_cast<QVBoxLayout*>(layout())->insertWidget(1, d->widget);
+        d->widget->setParamSet(set);
+        connect(d->widget, &IntrplParamSetWidget::changed, this, [=] ()
+            { if (!d->setting) emit paramsChanged(d->widget->paramSet()); });
     }
-
-    emit paramsChanged(d->current());
+    d->widget->setParamSet(set);
+    d->combo->setCurrentEnum(set.type());
+    if (!d->setting)
+        emit paramsChanged(d->current());
 }
 
 auto IntrplDialog::set(Interpolator intrpl, const IntrplParamSetMap &sets) -> void
 {
-    for (auto &set : sets)
-        d->map[set.type] = set;
-    blockSignals(true);
-    set(d->map[intrpl]);
-    blockSignals(false);
+    d->map = sets;
+    d->setting = true;
+    setCurrent(d->map[intrpl]);
+    d->setting = false;
 }

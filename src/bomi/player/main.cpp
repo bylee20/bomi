@@ -77,10 +77,6 @@ int main(int argc, char **argv) {
     app->sendPostedEvents(nullptr, QEvent::DeferredDelete);
     app.reset();
     _Debug("Exit...");
-#ifndef Q_OS_WIN
-    std::quick_exit(ret);
-#else
-    std::exit(ret);
-#endif
+    std::_Exit(ret);
     return ret;
 }

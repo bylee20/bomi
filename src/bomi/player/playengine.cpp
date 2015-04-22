@@ -4,6 +4,7 @@
 #include "audio/audionormalizeroption.hpp"
 #include "subtitle/subtitlemodel.hpp"
 #include "os/os.hpp"
+#include "videosettings.hpp"
 #include <QQuickWindow>
 
 PlayEngine::PlayEngine()
@@ -996,27 +997,27 @@ auto PlayEngine::setMotionInterpolation(bool on) -> void
 auto PlayEngine::setInterpolatorDown(const IntrplParamSet &params) -> void
 {
     d->mutex.lock();
-    auto changed = _Change(d->params.d->intrplDown[params.type], params);
+    auto changed = d->params.d->intrplDown.set(params);
     d->mutex.unlock();
-    if (changed | d->params.set_video_interpolator_down(params.type))
+    if (changed | d->params.set_video_interpolator_down(params.type()))
         d->updateVideoSubOptions();
 }
 
 auto PlayEngine::setInterpolator(const IntrplParamSet &params) -> void
 {
     d->mutex.lock();
-    auto changed = _Change(d->params.d->intrpl[params.type], params);
+    auto changed = d->params.d->intrpl.set(params);
     d->mutex.unlock();
-    if (changed | d->params.set_video_interpolator(params.type))
+    if (changed | d->params.set_video_interpolator(params.type()))
         d->updateVideoSubOptions();
 }
 
 auto PlayEngine::setChromaUpscaler(const IntrplParamSet &params) -> void
 {
     d->mutex.lock();
-    auto changed = _Change(d->params.d->chroma[params.type], params);
+    auto changed = d->params.d->chroma.set(params);
     d->mutex.unlock();
-    if (changed | d->params.set_video_chroma_upscaler(params.type))
+    if (changed | d->params.set_video_chroma_upscaler(params.type()))
         d->updateVideoSubOptions();
 }
 
@@ -1450,4 +1451,45 @@ auto PlayEngine::snapshot(bool osd) const -> QImage
     }
     return QImage((uchar*)bytes.data, s.width(), s.height(), stride, QImage::Format_ARGB32,
                   [] (void *p) { auto res = (mpv_node*)p; mpv_free_node_contents(res); delete res;}, res);
+}
+
+auto PlayEngine::setVideoSettings(const VideoSettings &s) -> void
+{
+    d->mutex.lock();
+    d->params.m_mutex = nullptr;
+
+    const auto fbo = _Change(d->fboFormat, s.fboFormat);
+    d->params.set_video_dithering(s.dithering);
+    d->params.set_video_hq_downscaling(s.hqDownscale);
+    d->params.set_video_hq_upscaling(s.hqUpscale);
+    _Change(d->useIntrplDown, s.useIntrplDown);
+    d->params.d->intrpl.set(s.interpolator);
+    d->params.set_video_interpolator(s.interpolator.type());
+    d->params.d->intrplDown.set(s.interpolatorDown);
+    d->params.set_video_interpolator_down(s.interpolatorDown.type());
+    d->params.d->chroma.set(s.chromaUpscaler);
+    d->params.set_video_chroma_upscaler(s.chromaUpscaler.type());
+
+    d->params.m_mutex = &d->mutex;
+    d->mutex.unlock();
+
+    if (fbo) {
+        d->updateVideoRendererFboFormat();
+        emit framebufferObjectFormatChanged(d->fboFormat);
+    }
+    d->updateVideoSubOptions();
+}
+
+auto PlayEngine::videoSettings() const -> VideoSettings
+{
+    VideoSettings s;
+    s.fboFormat = d->fboFormat;
+    s.hqDownscale = d->params.video_hq_downscaling();
+    s.hqUpscale = d->params.video_hq_upscaling();
+    s.dithering = d->params.video_dithering();
+    s.chromaUpscaler = d->params.d->chroma[d->params.video_chroma_upscaler()];
+    s.interpolator = d->params.d->intrpl[d->params.video_interpolator()];
+    s.interpolatorDown = d->params.d->intrplDown[d->params.video_interpolator_down()];
+    s.useIntrplDown = d->useIntrplDown;
+    return s;
 }
