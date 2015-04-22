@@ -57,9 +57,9 @@ class BicubicParamSet : public IntrplParamSetData {
         Widget()
         {
             auto grid = new QGridLayout(this);
-            add(grid, 0, tr("B-parameter"), m_b, 0, 1, 2);
-            add(grid, 1, tr("C-parameter"), m_c, 0, 1, 2);
-            add(grid, 2, tr("Anti-ringing"), m_ar, 0, 1, 2);
+            add(grid, 0, IntrplParamSetWidget::tr("B-parameter"), m_b, 0, 1, 2);
+            add(grid, 1, IntrplParamSetWidget::tr("C-parameter"), m_c, 0, 1, 2);
+            add(grid, 2, IntrplParamSetWidget::tr("Anti-ringing"), m_ar, 0, 1, 2);
         }
         auto setParamSet(const IntrplParamSet &set) -> void
         {
@@ -127,8 +127,8 @@ class SimpleRadiusParamSet : public IntrplParamSetData {
         Widget()
         {
             auto grid = new QGridLayout(this);
-            add(grid, 0, tr("Radius"), m_radius, 2, 4);
-            add(grid, 1, tr("Anti-ringing"), m_antiring, 0, 1, 2);
+            add(grid, 0, IntrplParamSetWidget::tr("Radius"), m_radius, 2, 4);
+            add(grid, 1, IntrplParamSetWidget::tr("Anti-ringing"), m_antiring, 0, 1, 2);
         }
         auto setParamSet(const IntrplParamSet &set) -> void
         {
@@ -214,22 +214,22 @@ class EwaLanczosParamSet : public IntrplParamSetData {
         Widget()
         {
             auto grid = new QGridLayout(this);
-            grid->addWidget(new QLabel(tr("Radius")), 0, 0);
+            grid->addWidget(new QLabel(IntrplParamSetWidget::tr("Radius")), 0, 0);
             grid->addWidget(m_radius = new QDoubleSpinBox, 0, 1, 1, -1);
             m_radius->setDecimals(16);
             m_radius->setRange(0.5, 16);
             m_radius->setSingleStep(0.1);
             connect(SIGNAL_VT(m_radius, valueChanged, double),
                     this, &IntrplParamSetWidget::changed);
-            grid->addWidget(new QLabel(tr("Blur")), 1, 0);
+            grid->addWidget(new QLabel(IntrplParamSetWidget::tr("Blur")), 1, 0);
             grid->addWidget(m_blur = new QDoubleSpinBox, 1, 1, 1, -1);
             m_blur->setDecimals(16);
             m_blur->setRange(0.0, 1.2);
             m_blur->setSingleStep(0.1);
-            m_blur->setSpecialValueText(tr("Default value"));
+            m_blur->setSpecialValueText(IntrplParamSetWidget::tr("Default value"));
             connect(SIGNAL_VT(m_blur, valueChanged, double),
                     this, &IntrplParamSetWidget::changed);
-            add(grid, 2, tr("Anti-ringing"), m_antiring, 0, 1, 2);
+            add(grid, 2, IntrplParamSetWidget::tr("Anti-ringing"), m_antiring, 0, 1, 2);
         }
         auto setParamSet(const IntrplParamSet &set) -> void
         {
@@ -298,9 +298,9 @@ class SharpenParamSet : public IntrplParamSetData {
         Widget()
         {
             auto grid = new QGridLayout(this);
-            grid->addWidget(new QLabel(tr("Kernel size")), 0, 0);
+            grid->addWidget(new QLabel(IntrplParamSetWidget::tr("Kernel size")), 0, 0);
             grid->addWidget(m_kernel = new QComboBox, 0, 1, 1, -1);
-            add(grid, 1, tr("Sharpeness"), m_sharpeness, 0, 10, 2);
+            add(grid, 1, IntrplParamSetWidget::tr("Sharpeness"), m_sharpeness, 0, 10, 2);
             m_kernel->addItem(u"3x3"_q, 3);
             m_kernel->addItem(u"3x3"_q, 5);
             connect(SIGNAL_VT(m_kernel, currentIndexChanged, int),

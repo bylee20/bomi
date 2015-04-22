@@ -482,7 +482,7 @@ auto MainWindow::Data::plugMenu() -> void
             auto from = e.videoSettings(); from.name = tr("Restored");
             auto to = VideoSettings::preset(preset); to.name = action->text();
             push(to, from, [=] (const VideoSettings &s) {
-                showMessage(tr("Video Quality Preset"), s.name);
+                showMessage(tr("Video Quality Settings"), s.name);
                 auto prev = noMessage;
                 noMessage = true;
                 e.setVideoSettings(s);
