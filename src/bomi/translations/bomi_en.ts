@@ -548,72 +548,67 @@ This requires much more CPU or GPU usage.</source>
 <context>
     <name>EncoderDialog</name>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="14"/>
-        <source>Dialog</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/encoderdialog.ui" line="22"/>
+        <location filename="../ui/encoderdialog.ui" line="19"/>
         <source>Range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="31"/>
+        <location filename="../ui/encoderdialog.ui" line="28"/>
         <source>From</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="48"/>
+        <location filename="../ui/encoderdialog.ui" line="45"/>
         <source>To</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="83"/>
+        <location filename="../ui/encoderdialog.ui" line="80"/>
         <source>Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="100"/>
+        <location filename="../ui/encoderdialog.ui" line="97"/>
         <source>File name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="113"/>
+        <location filename="../ui/encoderdialog.ui" line="110"/>
         <source>Include subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="120"/>
+        <location filename="../ui/encoderdialog.ui" line="117"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="171"/>
+        <location filename="../ui/encoderdialog.ui" line="168"/>
         <source>Frame rate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="179"/>
+        <location filename="../ui/encoderdialog.ui" line="176"/>
         <source>Constant (Auto)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="184"/>
+        <location filename="../ui/encoderdialog.ui" line="181"/>
         <source>Constant (Manual)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="189"/>
+        <location filename="../ui/encoderdialog.ui" line="186"/>
         <source>Variable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="224"/>
+        <location filename="../ui/encoderdialog.ui" line="221"/>
         <source>Video codec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/encoderdialog.ui" line="237"/>
+        <location filename="../ui/encoderdialog.ui" line="234"/>
         <source>Audio codec</source>
         <translation type="unfinished"></translation>
     </message>
