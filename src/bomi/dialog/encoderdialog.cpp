@@ -18,20 +18,17 @@ enum FrameRate { CFRAuto, CFRManul, VFR };
 
 static auto allCodecs() -> QPair<QStringList, QStringList>
 {
-    static const auto list = [] () {
-        QPair<QStringList, QStringList> list;
-        AVCodec *c = nullptr;
-        while ((c = av_codec_next(c))) {
-            if (!av_codec_is_encoder(c))
-                continue;
-            if (c->type == AVMEDIA_TYPE_VIDEO)
-                list.first.push_back(_L(c->name));
-            else if (c->type == AVMEDIA_TYPE_AUDIO)
-                list.second.push_back(_L(c->name));
-        }
-        av_free(c);
-        return list;
-    }();
+    QPair<QStringList, QStringList> list;
+    AVCodec *c = nullptr;
+    while ((c = av_codec_next(c))) {
+        if (!av_codec_is_encoder(c))
+            continue;
+        if (c->type == AVMEDIA_TYPE_VIDEO)
+            list.first.push_back(_L(c->name));
+        else if (c->type == AVMEDIA_TYPE_AUDIO)
+            list.second.push_back(_L(c->name));
+    }
+    av_free(c);
     return list;
 }
 
@@ -46,8 +43,9 @@ struct EncoderDialog::Data {
     QPushButton *start = nullptr;
     FileNameGenerator g;
     ObjectStorage storage;
-    int tick = -1;
-    int error = MPV_ERROR_SUCCESS;
+    QMap<QString, QVariant> copts;
+    QString ac, vc;
+    int tick = -1, error = MPV_ERROR_SUCCESS;
     bool resizing = false;
     auto aspect() const -> double
         { return size.isEmpty() ? 1.0 : size.width() / (double)size.height(); }
@@ -68,8 +66,7 @@ EncoderDialog::EncoderDialog(QWidget *parent)
 //    d->storage.add(d->ui.size);
 //    d->storage.add(d->ui.width);
 //    d->storage.add(d->ui.height);
-    d->storage.add(d->ui.vcopts);
-    d->storage.add(d->ui.acopts);
+    d->storage.add("copts", &d->copts);
     d->storage.add(d->ui.file);
     d->storage.add(d->ui.folder);
     d->storage.add("ext", d->ui.ext, "currentText");
@@ -81,8 +78,8 @@ EncoderDialog::EncoderDialog(QWidget *parent)
             [=] (int idx) { d->ui.fps_value->setEnabled(idx == CFRManul); });
     connect(SIGNAL_VT(d->ui.ext, currentIndexChanged, int), this, [=] () {
         const auto gif = d->ui.ext->currentText() == u"gif"_q;
+        d->ui.vc->setCurrentText(u"gif"_q);
         d->ui.vc->setEnabled(!gif);
-        d->ui.vcopts->setEnabled(!gif);
         d->ui.ac->setEnabled(!gif);
         d->ui.acopts->setEnabled(!gif);
     });
@@ -100,6 +97,7 @@ EncoderDialog::EncoderDialog(QWidget *parent)
             d->resizing = false;
         }
     });
+
     d->ui.file->setToolTip(FileNameGenerator::toolTip());
     d->ui.browse->setKey(u"encoder-folder"_q);
     d->ui.browse->setEditor(d->ui.folder);
@@ -129,6 +127,22 @@ EncoderDialog::EncoderDialog(QWidget *parent)
     d->ui.file->setText(u"%MEDIA_DISPLAY_NAME%-%T_HOUR_0%%T_MIN_0%%T_SEC_0%-%E_HOUR_0%%E_MIN_0%%E_SEC_0%"_q);
 
     d->storage.restore();
+
+    d->vc = d->ui.vc->currentText();
+    d->ac = d->ui.ac->currentText();
+    d->ui.vcopts->setText(_C(d->copts)[d->vc].toString());
+    d->ui.acopts->setText(_C(d->copts)[d->ac].toString());
+
+    connect(SIGNAL_VT(d->ui.ac, currentTextChanged, const QString&),
+            this, [=] (const QString &c) {
+        d->copts[d->ac] = d->ui.acopts->text();
+        d->ui.acopts->setText(_C(d->copts)[c].toString());
+    });
+    connect(SIGNAL_VT(d->ui.vc, currentTextChanged, const QString&),
+            this, [=] (const QString &c) {
+        d->copts[d->vc] = d->ui.vcopts->text();
+        d->ui.vcopts->setText(_C(d->copts)[c].toString());
+    });
 }
 
 EncoderDialog::~EncoderDialog()
@@ -253,6 +267,8 @@ auto EncoderDialog::run() -> QString
 
     if (d->ui.ext->currentText() == u"gif"_q) {
         d->mpv->setOption("ovc", "gif"_b);
+        if (!d->ui.vcopts->text().isEmpty())
+            d->mpv->setOption("ovcopts", d->ui.vcopts->text().toUtf8());
         d->mpv->setOption("aid", "no"_b);
     } else {
         d->mpv->setOption("ovc", d->ui.vc->currentText().toLatin1());
