@@ -131,12 +131,12 @@ EncoderDialog::EncoderDialog(QWidget *parent)
     d->fmts[u"mp4"_q] = { u"aac"_q, u"libx264"_q };
     d->fmts[u"webm"_q] = { u"libvorbis"_q, u"libvpx"_q };
     d->fmts[u"gif"_q] = { QString(), u"gif"_q };
+    d->ext = u"mkv"_q;
     d->copts[u"libvpx"_q] = u"b=1M"_q;
 
     d->ui.ext->addItems(d->fmts.keys());
     d->ui.ac->addItems(allCodecs().ac);
     d->ui.vc->addItems(allCodecs().vc);
-    d->ui.ext->setCurrentText(u"mkv"_q);
     d->ui.folder->setText(_WritablePath(Location::Movies));
     d->ui.fps->setCurrentIndex(::CFRAuto);
     d->ui.fps_value->setValue(30.0);
