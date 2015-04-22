@@ -296,6 +296,11 @@ App::~App() {
     delete d->parser;
 }
 
+auto App::version() -> const char*
+{
+    return "0.9.8";
+}
+
 auto _CommonExtList(ExtTypes ext) -> QStringList;
 
 auto App::executeToQuit() -> bool

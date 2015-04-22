@@ -1,3 +1,16 @@
+0.9.8
+
+  * New: Video > Quality Preset
+  * New: Video > Rotate
+  * New: Video > Interpolator (Downscale)
+  * New: Video > Make Vide Clip (#313)
+  * Fix: wrong bitrate values for decoder
+  * Fix: wrong window size hint when aspect ratio adjusted
+  * Fix: display proper duration for DASH formats from YouTube
+  * Fix: deadlock on execution when 'Unmute when volume adjusted' enabled
+  * Fix: keep session connected with opensubtitles.org (#314)
+  * (Linux)Fix: send mpris:artUrl metadata for MPRIS (#304)
+
 0.9.7
 
   * New: cache file related options in cache tab of preferences
