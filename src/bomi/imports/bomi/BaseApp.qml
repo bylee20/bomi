@@ -36,9 +36,9 @@ Item {
                         && !App.window.fullscreen && App.window.frameless
             readonly property real h: visible ? height : 0
             Rectangle {
-                width: parent.width; height: parent.height + 2
+                width: parent.width; height: parent.height
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.6); }
+                    GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.4); }
                     GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.0); }
                 }
             }
