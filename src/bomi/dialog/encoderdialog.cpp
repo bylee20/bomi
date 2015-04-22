@@ -14,22 +14,35 @@ extern "C" {
 
 static constexpr int TickEvent = QEvent::User + 1;
 
-enum FrameRate { CFRAuto, CFRManul, VFR };
+enum FrameRate { CFRAuto, CFRManual, VFR };
 
-static auto allCodecs() -> QPair<QStringList, QStringList>
+struct CodecListPair { QStringList ac, vc; };
+
+static auto allCodecs() -> const CodecListPair&
 {
-    QPair<QStringList, QStringList> list;
-    AVCodec *c = nullptr;
-    while ((c = av_codec_next(c))) {
-        if (!av_codec_is_encoder(c))
-            continue;
-        if (c->type == AVMEDIA_TYPE_VIDEO)
-            list.first.push_back(_L(c->name));
-        else if (c->type == AVMEDIA_TYPE_AUDIO)
-            list.second.push_back(_L(c->name));
-    }
-    av_free(c);
+    static const auto list = [] () {
+        CodecListPair list;
+        AVCodec *c = nullptr;
+        while ((c = av_codec_next(c))) {
+            if (!av_codec_is_encoder(c))
+                continue;
+            if (c->type == AVMEDIA_TYPE_VIDEO)
+                list.vc.push_back(_L(c->name));
+            else if (c->type == AVMEDIA_TYPE_AUDIO)
+                list.ac.push_back(_L(c->name));
+        }
+        av_free(c);
+        qSort(list.ac);
+        qSort(list.vc);
+        return list;
+    }();
     return list;
+}
+
+struct CodecPair { QString ac, vc; };
+auto operator << (QDebug dbg, const CodecPair &cp) -> QDebug
+{
+    return dbg << cp.ac << cp.vc;
 }
 
 struct EncoderDialog::Data {
@@ -44,7 +57,8 @@ struct EncoderDialog::Data {
     FileNameGenerator g;
     ObjectStorage storage;
     QMap<QString, QVariant> copts;
-    QString ac, vc;
+    QMap<QString, CodecPair> fmts;
+    QString ext;
     int tick = -1, error = MPV_ERROR_SUCCESS;
     bool resizing = false;
     auto aspect() const -> double
@@ -58,31 +72,41 @@ EncoderDialog::EncoderDialog(QWidget *parent)
     d->ui.setupUi(this);
 
     d->storage.setObject(this, u"encoder-dialog"_q);
-    d->storage.add("vc", d->ui.vc, "currentText");
-    d->storage.add("ac", d->ui.ac, "currentText");
     d->storage.add("fps", d->ui.fps, "currentIndex");
     d->storage.add(d->ui.fps_value);
     d->storage.add(d->ui.subtitle);
 //    d->storage.add(d->ui.size);
 //    d->storage.add(d->ui.width);
 //    d->storage.add(d->ui.height);
+    d->storage.add("ext", &d->ext);
     d->storage.add("copts", &d->copts);
+    d->storage.add("fmts", [=] () -> QVariant {
+        QMap<QString, QVariant> var;
+        for (auto it = d->fmts.begin(); it != d->fmts.end(); ++it)
+            var[it.key()] = QStringList() << it->ac << it->vc;
+        return var;
+    }, [=] (const QVariant &var) {
+        const auto &list = allCodecs();
+        const auto map = var.toMap();
+        for (auto it = map.begin(); it != map.end(); ++it) {
+            const auto strs = it.value().toStringList();
+            auto i = d->fmts.find(it.key());
+            if (strs.size() != 2 || i == d->fmts.end())
+                continue;
+            if (std::binary_search(list.ac.begin(), list.ac.end(), strs[0]))
+                i->ac = strs[0];
+            if (std::binary_search(list.vc.begin(), list.vc.end(), strs[1]))
+                i->vc = strs[1];
+        }
+    });
     d->storage.add(d->ui.file);
     d->storage.add(d->ui.folder);
-    d->storage.add("ext", d->ui.ext, "currentText");
 
     d->start = d->ui.bbox->addButton(tr("Start"), BBox::ActionRole, this, [=] () { start(); });
     connect(d->ui.bbox->button(BBox::Close), &QAbstractButton::clicked,
             this, &EncoderDialog::close);
     connect(SIGNAL_VT(d->ui.fps, currentIndexChanged, int), this,
-            [=] (int idx) { d->ui.fps_value->setEnabled(idx == CFRManul); });
-    connect(SIGNAL_VT(d->ui.ext, currentIndexChanged, int), this, [=] () {
-        const auto gif = d->ui.ext->currentText() == u"gif"_q;
-        d->ui.vc->setCurrentText(u"gif"_q);
-        d->ui.vc->setEnabled(!gif);
-        d->ui.ac->setEnabled(!gif);
-        d->ui.acopts->setEnabled(!gif);
-    });
+            [=] (int idx) { d->ui.fps_value->setEnabled(idx == CFRAuto); });
     connect(SIGNAL_VT(d->ui.width, valueChanged, int), this, [=] (int w) {
         if (d->ui.size->isChecked() && !d->resizing) {
             d->resizing = true;
@@ -103,51 +127,55 @@ EncoderDialog::EncoderDialog(QWidget *parent)
     d->ui.browse->setEditor(d->ui.folder);
     d->ui.size->setChecked(true);
 
-    const auto codecs = allCodecs();
-    auto setDefault = [&] (QComboBox *c, const QStringList &items, const QStringList &fallbacks)
-    {
-        c->addItems(items);
-        for (auto &fb : fallbacks) {
-            if (items.contains(fb)) {
-                c->setCurrentText(fb);
-                return;
-            }
-        }
-    };
-
-    setDefault(d->ui.vc, codecs.first, { u"libx264"_q, u"mpeg4"_q });
-    setDefault(d->ui.ac, codecs.second, { u"libvorbis"_q, u"aac"_q });
-    d->ui.ext->addItems({ u"mkv"_q, u"mp4"_q, u"webm"_q });
-    if (codecs.first.contains(u"gif"_q))
-        d->ui.ext->addItem(u"gif"_q);
+    d->fmts[u"mkv"_q] = { u"libvorbis"_q, u"libx264"_q };
+    d->fmts[u"mp4"_q] = { u"aac"_q, u"libx264"_q };
+    d->fmts[u"webm"_q] = { u"libvorbis"_q, u"libvpx"_q };
+    d->fmts[u"gif"_q] = { QString(), u"gif"_q };
+    d->ui.ext->addItems(d->fmts.keys());
+    d->ui.ac->addItems(allCodecs().ac);
+    d->ui.vc->addItems(allCodecs().vc);
     d->ui.ext->setCurrentText(u"mkv"_q);
     d->ui.folder->setText(_WritablePath(Location::Movies));
-    d->ui.fps->setCurrentIndex(::CFRManul);
+    d->ui.fps->setCurrentIndex(::CFRAuto);
     d->ui.fps_value->setValue(30.0);
     d->ui.file->setText(u"%MEDIA_DISPLAY_NAME%-%T_HOUR_0%%T_MIN_0%%T_SEC_0%-%E_HOUR_0%%E_MIN_0%%E_SEC_0%"_q);
 
     d->storage.restore();
 
-    d->vc = d->ui.vc->currentText();
-    d->ac = d->ui.ac->currentText();
-    d->ui.vcopts->setText(_C(d->copts)[d->vc].toString());
-    d->ui.acopts->setText(_C(d->copts)[d->ac].toString());
-
-    connect(SIGNAL_VT(d->ui.ac, currentTextChanged, const QString&),
-            this, [=] (const QString &c) {
-        d->copts[d->ac] = d->ui.acopts->text();
-        d->ui.acopts->setText(_C(d->copts)[c].toString());
-    });
-    connect(SIGNAL_VT(d->ui.vc, currentTextChanged, const QString&),
-            this, [=] (const QString &c) {
-        d->copts[d->vc] = d->ui.vcopts->text();
-        d->ui.vcopts->setText(_C(d->copts)[c].toString());
+    const auto vc = d->fmts[d->ext].vc;
+    const auto ac = d->fmts[d->ext].ac;
+    d->ui.ext->setCurrentText(d->ext);
+    d->ui.vc->setCurrentText(vc);
+    d->ui.ac->setCurrentText(ac);
+    d->ui.vcopts->setText(_C(d->copts)[vc].toString());
+    d->ui.acopts->setText(_C(d->copts)[ac].toString());
+#define PLUG(av) \
+    connect(SIGNAL_VT(d->ui.av##c, currentTextChanged, const QString&), \
+            this, [=] (const QString &c) { \
+        auto &avc = d->fmts[d->ext].av##c; d->copts[avc] = d->ui.av##copts->text(); \
+        d->ui.av##copts->setText(_C(d->copts)[c].toString()); avc = c; });
+    PLUG(a); PLUG(v);
+#undef PLUG
+    connect(SIGNAL_VT(d->ui.ext, currentTextChanged, const QString&), this, [=] (const QString &ext) {
+        d->fmts[d->ext] = { d->ui.ac->currentText(), d->ui.vc->currentText() };
+        auto &av = d->fmts[d->ext = ext];
+        d->ui.ac->setCurrentText(av.ac);
+        d->ui.vc->setCurrentText(av.vc);
+        const auto gif = ext == u"gif"_q;
+        d->ui.vc->setEnabled(!gif);
+        d->ui.ac->setEnabled(!gif);
+        d->ui.acopts->setEnabled(!gif);
     });
 }
 
 EncoderDialog::~EncoderDialog()
 {
     cancel();
+    const auto ac = d->ui.ac->currentText();
+    const auto vc = d->ui.vc->currentText();
+    d->fmts[d->ext] = { ac, vc };
+    d->copts[ac] = d->ui.acopts->text();
+    d->copts[vc] = d->ui.vcopts->text();
     d->storage.save();
     delete d;
 }
@@ -253,7 +281,7 @@ auto EncoderDialog::run() -> QString
 
     d->mpv->setOption("o", MpvFile(file).toMpv());
     switch (d->ui.fps->currentIndex()) {
-    case CFRManul:
+    case CFRManual:
         d->mpv->setOption("ofps", _n(d->ui.fps_value->value()));
         break;
     case CFRAuto:
