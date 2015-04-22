@@ -439,13 +439,12 @@ RootMenu::RootMenu()
             up->setEnabled(OGL::is16bitFramebufferFormatSupported());
             d->action(u"down"_q, QT_TR_NOOP("Downscaling"), true);
         });
-
-        d->action(u"motion"_q, QT_TR_NOOP("Motion Smoothing"), true);
+        d->enumMenuCheckable<Dithering>(true);
 
         d->separator();
 
+        d->action(u"motion"_q, QT_TR_NOOP("Motion Smoothing"), true);
         d->enumMenuCheckable<DeintMode>(true);
-        d->enumMenuCheckable<Dithering>(true);
         d->menu(u"filter"_q, QT_TR_NOOP("Filter"), [=] () {
             d->group()->setExclusive(false);
 
