@@ -39,8 +39,8 @@ B.AppWithDock {
             anchors.bottom: bottom.top; color: palette.window
             RowLayout {
                 id: layout; spacing: 0
-                width: parent.width - (fs ? 10 : 0); height: implicitHeight
-                anchors.centerIn: parent
+                width: parent.width - (fs ? (right.width + 10) : 0); height: implicitHeight
+                anchors.verticalCenter: parent.verticalCenter
                 MediaButton { icon: "media-skip-backward"; action: "play/prev" }
                 MediaButton {
                     icon: "media-playback-" + (engine.playing ? "pause" : "start")
@@ -57,9 +57,9 @@ B.AppWithDock {
                     icon: {
                         if (engine.muted)
                             return "audio-volume-muted"
-                        if (engine.volume < 30)
+                        if (engine.volume < 0.3)
                             return "audio-volume-low"
-                        if (engine.volume < 80)
+                        if (engine.volume < 0.8)
                             return "audio-volume-medium"
                         return "audio-volume-high"
                     }
@@ -82,19 +82,20 @@ B.AppWithDock {
                 }
 
                 Item { visible: fs; width: 5; Layout.fillHeight: true }
-
-                Rectangle {
-                    id: right
-                    color: "black"
-                    visible: fs
-                    width: fs ? (timeText2.implicitWidth + 10) : 0
-                    Layout.fillHeight: true
-                    B.TimeDuration {
-                        id: timeText2
-                        anchors.centerIn: parent
-                        height: parent.height
-                        textStyle: text.textStyle
-                        onTextStyleChanged: textStyle.font.pixelSize = 14
+            }
+            Rectangle {
+                id: right
+                color: "black"; visible: fs; width: fs ? (timeText2.implicitWidth + 10) : 0
+                anchors { top: parent.top; bottom: parent.bottom; right: parent.right; margins: 5 }
+                B.TimeDuration {
+                    id: timeText2
+                    anchors.centerIn: parent
+                    height: parent.height
+                    onMsecChanged: timeText.msec = msec
+                    onRemainingChanged: timeText.remaining = remaining
+                    textStyle {
+                        color: "white"; font.pixelSize: 14
+                        verticalAlignment: Text.AlignVCenter
                     }
                 }
             }
@@ -112,14 +113,15 @@ B.AppWithDock {
                     id: text;
                     anchors { fill: parent; rightMargin: timeText.width }
                     textStyle {
-                        elide: Text.ElideRight
-                        color: "white";
+                        elide: Text.ElideRight; color: "white";
                         verticalAlignment: Text.AlignVCenter
                     }
                 }
                 B.TimeDuration {
                     id: timeText; anchors.right: parent.right
-                    textStyle: text.textStyle
+                    onMsecChanged: timeText2.msec = msec
+                    onRemainingChanged: timeText2.remaining = remaining
+                    textStyle { color: "white"; verticalAlignment: Text.AlignVCenter }
                 }
             }
         }
