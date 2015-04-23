@@ -257,6 +257,8 @@ auto MainWindow::Data::plugMenu() -> void
 
     auto &seek = play(u"seek"_q);
     connect(seek[u"begin"_q], &QAction::triggered, p, [=] () { e.seek(e.begin()); });
+    connect(seek[u"record"_q], &QAction::triggered, p, [=] ()
+        { const int pos = e.params()->resume_position(); if (pos > 0) e.seek(pos); });
     connect(seek.g(u"relative"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         const auto action = static_cast<StepAction*>(a);

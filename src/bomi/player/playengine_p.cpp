@@ -203,6 +203,7 @@ auto PlayEngine::Data::onLoad() -> void
     mutex.unlock();
 
     bool found = false, resume = false;
+    int start = -1;
     if (reload < 0) {
         local->set_resume_position(-1);
         local->set_edition(-1);
@@ -214,8 +215,10 @@ auto PlayEngine::Data::onLoad() -> void
         local->set_sub_tracks_inclusive(StreamList());
         found = history->getState(local);
         resume = mpv.get<bool>("options/resume-playback") && this->resume;
+        if (resume)
+            start = local->resume_position();
     } else {
-        local->set_resume_position(reload);
+        start = reload;
         local->set_device(mrl.device());
         resume = found = true;
     }
@@ -306,11 +309,12 @@ auto PlayEngine::Data::onLoad() -> void
     local->set_device(mrl.device());
     local->set_mrl(mrl);
 
-    int edition = -1, start = -1;
-    if (resume && mrl.isUnique() && !mrl.isImage()) {
+    int edition = -1;
+    if (resume && mrl.isUnique() && !mrl.isImage())
         edition = local->edition();
-        start = local->resume_position();
-    }
+    else
+        start = -1;
+
     if (local->d->disc) {
         file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
         t.start = start;

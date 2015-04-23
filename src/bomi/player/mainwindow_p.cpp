@@ -181,7 +181,10 @@ auto MainWindow::Data::plugEngine() -> void
 #endif
     });
     connect(&e, &PlayEngine::beginSyncMrlState, p, [=] () { noMessage = true; });
-    connect(&e, &PlayEngine::endSyncMrlState, p, [=] () { noMessage = false; });
+    connect(&e, &PlayEngine::endSyncMrlState, p, [=] () {
+        noMessage = false; const auto recorded = e.params()->resume_position() > 0;
+        menu(u"play"_q)(u"seek"_q)[u"record"_q]->setEnabled(recorded);
+    });
     connect(&e, &PlayEngine::started, p, [=] (const Mrl &mrl) {
         setOpen(mrl);
         if (encoder && !encoder->isBusy())
