@@ -2069,7 +2069,7 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
 
         debug_check_gl(p, "after video rendering");
     }
-
+/*
     gl->BindFramebuffer(GL_FRAMEBUFFER, fbo);
 
     if (p->osd) {
@@ -2077,7 +2077,7 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
                       p->osd_pts, p->osd_rect, p->vp_w, p->vp_h, fbo, true);
         debug_check_gl(p, "after OSD rendering");
     }
-
+*/
     gl->UseProgram(0);
     gl->BindFramebuffer(GL_FRAMEBUFFER, 0);
 
