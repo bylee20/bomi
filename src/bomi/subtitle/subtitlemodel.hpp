@@ -48,6 +48,7 @@ public:
     auto setTimeVisible(bool visible) -> void;
     auto setTimeInMilliseconds(bool ms) -> void;
     auto setFilter(int start, int end, const MatchString &caption) -> void;
+    auto adjustColumns() -> void;
 private:
     auto updateCurrentRow(int row) -> void;
     auto setModelToNull() -> void;

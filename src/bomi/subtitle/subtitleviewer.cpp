@@ -188,6 +188,7 @@ auto SubtitleViewer::updateModels() -> void
             v->setAutoScrollEnabled(d->ui.autoscroll->isChecked());
             v->setTimeVisible(d->ui.time_visible->isChecked());
             v->setTimeInMilliseconds(d->ui.time_ms->isChecked());
+            v->adjustColumns();
         }
         d->comps.clear();
         d->filter();

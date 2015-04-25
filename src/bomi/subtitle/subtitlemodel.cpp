@@ -133,7 +133,7 @@ struct SubCompView::Data {
     SubCompModel *model = nullptr;
     SubCompFilterModel proxy;
     bool autoScroll = false;
-    bool ms = false, time = false;
+    bool ms = false, time = true;
     auto updateHeader()
     {
         p->setColumnHidden(SubCompModel::Start, !time);
@@ -156,6 +156,12 @@ SubCompView::SubCompView(QWidget *parent)
     QTreeView::setModel(&d->proxy);
 }
 
+auto SubCompView::adjustColumns() -> void
+{
+    for (int i=0; i<SubCompModel::ColumnCount; ++i)
+        resizeColumnToContents(i);
+}
+
 auto SubCompView::setModelToNull() -> void
 {
     d->proxy.setSourceModel(nullptr);
@@ -174,8 +180,6 @@ auto SubCompView::setModel(QAbstractItemModel *model) -> void
                 this, &SubCompView::setModelToNull, Qt::DirectConnection);
         connect(d->model, &SubCompModel::specialRowChanged,
                 this, &SubCompView::updateCurrentRow);
-        for (int i=0; i<SubCompModel::ColumnCount; ++i)
-            resizeColumnToContents(i);
     }
 }
 
