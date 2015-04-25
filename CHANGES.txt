@@ -1,3 +1,15 @@
+0.9.9
+
+  * New: Play > Seek > Previous Playback (#134)
+  * Fix: duplicated internal subtitle handling causes high CPU usage (#324,#326,#327)
+  * Fix: crop paddings added by VDPAU for non-standard res. videos (#324)
+  * Fix: Start/End time filters in subtitle viewer didn't follow system palette (#328)
+  * Fix: seeking in subtitle viewer was broken when captions are filtered (#328)
+  * Fix: 'Scroll to current time' in subtitle viewer was broken (#328)
+  * Fix: wrong intial state for 'Show start/end time' in Subtitle Viewer
+  * Fix: adjust column widths for Start and End automatically in Subtitle Viewer (#328)
+  * Fix: wrong time text width for native skin (#323)
+
 0.9.8
 
   * New: Video > Quality Preset
