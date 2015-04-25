@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.4
 import bomi 1.0
 
 Item {
@@ -38,38 +38,38 @@ Item {
                 }
 
                 readonly property real value: vis.data[index] * frame.height
-                property bool run: false
 
                 onValueChanged: {
                     if (height < value) {
-                        run = false
-                        an.to = value
-                        an.duration = 100
-                        an.easing.type = Easing.OutQuad
-                        run = true
+                        sani.stop()
+                        sani.value = value
+                        sani.start()
                     }
                 }
                 onHeightChanged: {
-                    if (height >= value)
-                    {
-                        run = false
-                        an.to = 0
-                        an.duration = 1500
-                        an.easing.type = Easing.Linear
-                        run = true
-                    }
                     if (height > top.anchors.bottomMargin)
                         top.anchors.bottomMargin = height
                 }
 
-                NumberAnimation {
-                    id: an
-                    target: rect
-                    property: "height"
-                    easing.type: Easing.Linear
-                    running: rect.run && App.engine.playing
+                SequentialAnimation {
+                    id: sani
+                    property real value: 0
+                    running: App.engine.playing
+                    NumberAnimation {
+                        target: rect
+                        property: "height"
+                        easing.type: Easing.OutQuad
+                        duration: 100
+                        to: sani.value
+                    }
+                    NumberAnimation {
+                        target: rect
+                        property: "height"
+                        easing.type: Easing.Linear
+                        duration: 1000
+                        to: 0
+                    }
                 }
-
                 Rectangle {
                     id: top; parent: frame
                     width: d.barWidth; height: Math.max(1, Math.min(5, width * 0.5)) | 0
