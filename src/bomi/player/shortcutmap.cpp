@@ -116,6 +116,7 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        map[u"play/repeat/subtitle"_q] << Qt::Key_E;
        map[u"play/repeat/quit"_q] << Qt::Key_Escape;
        map[u"play/seek/begin"_q] << Qt::CTRL + Qt::Key_Home;
+       map[u"play/seek/record"_q] << Qt::ALT + Qt::Key_Home;
        map[u"play/seek/forward1"_q] << Qt::Key_Right;
        map[u"play/seek/forward2"_q] << Qt::Key_PageDown;
        map[u"play/seek/forward3"_q] << Qt::Key_End;

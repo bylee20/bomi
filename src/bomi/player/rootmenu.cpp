@@ -316,7 +316,7 @@ RootMenu::RootMenu()
         d->action(u"disc-menu"_q, QT_TR_NOOP("Disc Menu"));
         d->menu(u"seek"_q, QT_TR_NOOP("Seek"), [=] () {
             d->action(u"begin"_q, QT_TR_NOOP("Beginning"));
-            d->action(u"record"_q, QT_TR_NOOP("Recorded Position"));
+            d->action(u"record"_q, QT_TR_NOOP("Previous Playback"));
 
             d->separator();
 
