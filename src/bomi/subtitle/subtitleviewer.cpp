@@ -110,8 +110,8 @@ struct SubtitleViewer::Data {
         const auto src = proxy->mapToSource(idx);
         auto model = static_cast<const SubCompModel*>(src.model());
         if (model && src.isValid() && seek)
-            seek(model->at(idx.row()).start());
-    };
+            seek(model->at(src.row()).start());
+    }
 };
 
 SubtitleViewer::SubtitleViewer(QWidget *parent)
