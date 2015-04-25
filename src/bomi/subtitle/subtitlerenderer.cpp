@@ -60,7 +60,7 @@ struct SubtitleRenderer::Data {
     QList<SubComp*> loaded;
     QSize imageSize{0, 0};
     SubtitleDrawer drawer;
-    int delay = 0, msec = 0;
+    int delay = 0, msec = 0, lastTime = -1;
     bool selecting = false, textChanged = true;
     bool top = false, hidden = false, empty = true;
     double pos = 1.0;
@@ -299,10 +299,13 @@ auto SubtitleRenderer::updateTexture(OpenGLTexture2D *texture) -> void
     const int spacing = d->drawer.style().font.height()
             * d->drawer.scale(geometry())
             * d->drawer.style().spacing.paragraph + 0.5;
-    d->selection.forImages([=] (const SubCompImage &image) {
+    int lastTime = -1;
+    d->selection.forImages([&] (const SubCompImage &image) {
         if (d->imageSize.width() < image.width())
             d->imageSize.rwidth() = image.width();
         d->imageSize.rheight() += image.height() + spacing;
+        if (image.isValid())
+            lastTime = std::max(image.iterator().key(), lastTime);
     });
     d->imageSize.rheight() -= spacing;
     if (!d->imageSize.isEmpty()) {
@@ -331,6 +334,8 @@ auto SubtitleRenderer::updateTexture(OpenGLTexture2D *texture) -> void
         });
         reserve(UpdateGeometry, false);
     }
+    if (_Change(d->lastTime, lastTime))
+        emit updated(d->lastTime);
 }
 
 auto SubtitleRenderer::afterUpdate() -> void
@@ -444,6 +449,11 @@ auto SubtitleRenderer::select(int id) -> void
 //    }
 //    return true;
 //}
+
+auto SubtitleRenderer::lastUpdatedTime() const -> int
+{
+    return d->lastTime;
+}
 
 auto SubtitleRenderer::start(int time) const -> int
 {

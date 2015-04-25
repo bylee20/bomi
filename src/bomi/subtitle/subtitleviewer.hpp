@@ -12,6 +12,7 @@ public:
     ~SubtitleViewer();
     auto setComponents(const QVector<SubComp> &comps) -> void;
     auto setSeekFunc(Seek &&func) -> void;
+    auto setCurrentTime(int time) -> void;
 private:
     auto showEvent(QShowEvent *event) -> void;
     auto updateModels() -> void;

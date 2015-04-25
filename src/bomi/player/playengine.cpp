@@ -179,9 +179,10 @@ PlayEngine::PlayEngine()
             &d->info.audio, &AudioObject::setNormalizer);
     connect(d->ac, &AudioController::spectrumObtained,
             &d->info.audio, &AudioObject::setSpectrum, Qt::QueuedConnection);
+    connect(this, &PlayEngine::audioOnlyChanged, d->ac, &AudioController::setAnalyzeSpectrum);
     connect(d->sr, &SubtitleRenderer::selectionChanged,
             this, &PlayEngine::subtitleSelectionChanged);
-    connect(this, &PlayEngine::audioOnlyChanged, d->ac, &AudioController::setAnalyzeSpectrum);
+    connect(d->sr, &SubtitleRenderer::updated, this, &PlayEngine::subtitleUpdated);
 
     d->updateMediaName();
     d->frames.measure.setTimer([=]()
@@ -1482,4 +1483,9 @@ auto PlayEngine::videoSettings() const -> VideoSettings
     s.interpolatorDown = d->params.d->intrplDown[d->params.video_interpolator_down()];
     s.useIntrplDown = d->useIntrplDown;
     return s;
+}
+
+auto PlayEngine::lastSubtitleUpdatedTime() const -> int
+{
+    return d->sr->lastUpdatedTime();
 }

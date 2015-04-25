@@ -13,6 +13,7 @@ public:
     CompView(QWidget *parent = nullptr);
     auto setComponent(const SubComp &comp) -> void;
     auto view() const -> SubCompView* {return m_view;}
+    auto setCurrentTime(int time) -> void { m_model.setCurrentCaption(time); }
 private:
     SubCompView *m_view;
     SubCompModel m_model;
@@ -51,6 +52,7 @@ struct SubtitleViewer::Data {
     QRegEx rxFormatTime, rxMSec;
     QString toolTip;
     Seek seek;
+    int lastTime = -1;
 
     static constexpr int InvalidFormat = -1;
     static constexpr int EmptyText = -2;
@@ -184,6 +186,7 @@ auto SubtitleViewer::updateModels() -> void
         }
         for (int i=0; i<d->views.size(); ++i) {
             d->views[i]->setComponent(d->comps[i]);
+            d->views[i]->setCurrentTime(d->lastTime);
             const auto v = d->views[i]->view();
             v->setAutoScrollEnabled(d->ui.autoscroll->isChecked());
             v->setTimeVisible(d->ui.time_visible->isChecked());
@@ -194,6 +197,14 @@ auto SubtitleViewer::updateModels() -> void
         d->filter();
     }
     d->needToUpdate = false;
+}
+
+auto SubtitleViewer::setCurrentTime(int time) -> void
+{
+    if (_Change(d->lastTime, time)) {
+        for (auto v : d->views)
+            v->setCurrentTime(time);
+    }
 }
 
 auto SubtitleViewer::setComponents(const QVector<SubComp> &comps) -> void

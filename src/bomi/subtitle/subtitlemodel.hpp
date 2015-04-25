@@ -28,7 +28,7 @@ public:
     SubCompModel(QObject *parent = 0);
     auto name() const -> QString;
     auto setFps(double fps) -> void;
-    auto setCurrentCaption(const SubCapt *caption) -> void;
+    auto setCurrentCaption(int time) -> void;
     auto setVisible(bool visible) -> void;
     auto setTimeInMilliseconds(bool ms) -> void;
     auto setComponent(const SubComp &comp) -> void;

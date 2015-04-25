@@ -5,7 +5,7 @@
 #include "player/streamtrack.hpp"
 
 class SubComp;                          class Subtitle;
-class RichTextDocument;                 class SubCompModel;
+class RichTextDocument;
 struct OsdStyle;                        class SubtitleDrawer;
 enum class AutoselectMode;
 
@@ -46,8 +46,10 @@ public:
     auto setTopAligned(bool top) -> void;
     auto setFPS(double fps) -> void;
     auto toTrackList() const -> StreamList;
+    auto lastUpdatedTime() const -> int;
 //    auto load(const QVector<StreamTrack> &tracks) -> void;
 signals:
+    void updated(int time);
     void selectionChanged();
 private:
     auto initializeGL() -> void;

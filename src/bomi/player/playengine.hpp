@@ -142,6 +142,7 @@ public:
     auto captionBeginTime(int direction) -> int;
     auto captionEndTime() -> int;
     auto subtitleImage(const QRect &rect, QRectF *subRect = nullptr) const -> QImage;
+    auto lastSubtitleUpdatedTime() const -> int;
 
     auto clearAllSubtitleSelection() -> void;
     auto setTrackSelected(StreamType type, int id, bool s) -> void;
@@ -329,6 +330,7 @@ signals:
     void subtitleSelectionChanged();
     void framebufferObjectFormatChanged(FramebufferObjectFormat format);
     void audioOnlyChanged(bool audioOnly);
+    void subtitleUpdated(int time);
 private:
     auto setVideoTrackSelected(int id, bool s) -> void;
     auto setAudioTrackSelected(int id, bool s) -> void;

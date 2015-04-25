@@ -787,11 +787,13 @@ auto MainWindow::Data::plugMenu() -> void
     connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         if (!sview) {
             sview = dialog<SubtitleViewer>();
+            sview->setCurrentTime(e.lastSubtitleUpdatedTime());
             sview->setSeekFunc([=] (int t) { e.seek(t); });
             connect(&e, &PlayEngine::subtitleSelectionChanged, sview.data(), [=] () {
                 if (sview->isVisible())
                     sview->setComponents(e.subtitleSelection());
             });
+            connect(&e, &PlayEngine::subtitleUpdated, sview.data(), &SubtitleViewer::setCurrentTime);
         }
         if (!sview->isVisible())
             sview->setComponents(e.subtitleSelection());

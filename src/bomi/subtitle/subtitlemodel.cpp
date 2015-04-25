@@ -3,10 +3,14 @@
 #include <QScrollBar>
 #include <QSortFilterProxyModel>
 
+SIA operator < (int lhs, const SubCompModelData &rhs) -> bool
+{
+    return lhs < rhs.start();
+}
+
 struct SubCompModel::Data {
     bool visible = false, ms = false, fps = false;
     QString name;
-    const SubCapt *pended = nullptr;
 };
 
 SubCompModel::SubCompModel(QObject *parent)
@@ -92,21 +96,14 @@ auto SubCompModel::setFps(double fps) -> void
 
 auto SubCompModel::setVisible(bool visible) -> void
 {
-    if (d->visible != visible) {
+    if (d->visible != visible)
         d->visible = visible;
-        if (d->visible && d->pended)
-            setCurrentCaption(d->pended);
-    }
 }
 
-auto SubCompModel::setCurrentCaption(const SubCapt *caption) -> void
+auto SubCompModel::setCurrentCaption(int time) -> void
 {
-    if (!d->visible) {
-        d->pended = caption;
-    } else {
-        d->pended = 0;
-        setSpecialRow(caption ? caption->index : -1);
-    }
+    auto &l = this->list();
+    setSpecialRow((std::upper_bound(l.begin(), l.end(), time) - l.begin()) - 1);
 }
 
 /******************************************************************************/
