@@ -93,12 +93,10 @@ struct SubtitleViewer::Data {
     }
     auto validate(QLineEdit *edit) -> void
     {
-        auto p = edit->palette();
+        auto p = ui.caption->palette();
         const QString text = edit->text();
-        if (text.isEmpty() || rxFormatTime.match(text).hasMatch()
-                           || rxMSec.match(text).hasMatch())
-            p.setColor(QPalette::Text, Qt::black);
-        else
+        if (!text.isEmpty() && !rxFormatTime.match(text).hasMatch()
+                && !rxMSec.match(text).hasMatch())
             p.setColor(QPalette::Text, Qt::red);
         edit->setPalette(p);
     }
