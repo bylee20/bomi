@@ -64,10 +64,12 @@ struct AudioVisualizer::Data {
     qreal min = 20, max = 20000;
     bool active = false, enabled = false;
     int fps = 0, count = 0;
+    double minLv = _Max<double>(), maxLv = 0;
     Type type = None;
     QMutex mutex;
     FFT fft;
     AudioVisualizer::Scale xs = AudioVisualizer::Log;
+    AudioVisualizer::Scale ys = AudioVisualizer::Log, tys = ys;
 };
 
 AudioVisualizer::AudioVisualizer(QObject *item)
@@ -79,6 +81,12 @@ AudioVisualizer::AudioVisualizer(QObject *item)
 AudioVisualizer::~AudioVisualizer()
 {
     delete d;
+}
+
+auto AudioVisualizer::reset() -> void
+{
+    d->maxLv = 0.0;
+    d->minLv = _Max<double>();
 }
 
 //        function i2f(i, fps, n) { return i * fps * 0.5 / (n - 1); }
@@ -113,7 +121,10 @@ auto AudioVisualizer::analyze(const QSharedPointer<AudioBuffer> &data) -> void
     constexpr int radius = 3;
     static const auto gw = Gaussian::create(radius);
 
-    double min = 1e100, max = 0.0;
+    if (_Change(d->tys, d->ys))
+        reset();
+
+    double &min = d->minLv, &max = d->maxLv;
     for (int i = 0; i < c; ++i) {
         const auto f = d->xs != Log ? d->min + (d->max - d->min) * i / (c - 1)
             : std::exp(std::log(d->min) + (std::log(d->max) - std::log(d->min)) * i / (c - 1));
@@ -125,12 +136,15 @@ auto AudioVisualizer::analyze(const QSharedPointer<AudioBuffer> &data) -> void
         if (lv < 1e-4)
             lv = 0.0;
         else {
-            lv = std::log(lv);
+            if (d->tys == Log)
+                lv = std::log(lv);
             min = std::min(lv, min);
             max = std::max(lv, max);
         }
         d->back[i] = lv;
     }
+    if (d->tys != Log)
+        min = 0;
     if (min != max) {
         for (auto &v : d->back) {
             if (v != 0.0)
@@ -225,6 +239,17 @@ auto AudioVisualizer::setXScale(Scale scale) -> void
 auto AudioVisualizer::xScale() const -> Scale
 {
     return d->xs;
+}
+
+auto AudioVisualizer::setYScale(Scale scale) -> void
+{
+    if (_Change(d->ys, scale))
+        emit yScaleChanged();
+}
+
+auto AudioVisualizer::yScale() const -> Scale
+{
+    return d->ys;
 }
 
 auto AudioVisualizer::type() const -> Type

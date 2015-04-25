@@ -15,6 +15,7 @@ class AudioVisualizer : public QObject {
     Q_PROPERTY(bool active READ isActive NOTIFY activeChanged)
     Q_PROPERTY(bool enabled READ isEnabled NOTIFY enabledChanged)
     Q_PROPERTY(Scale xScale READ xScale WRITE setXScale NOTIFY xScaleChanged)
+    Q_PROPERTY(Scale yScale READ yScale WRITE setYScale NOTIFY yScaleChanged)
     Q_PROPERTY(Type type READ type NOTIFY typeChanged)
     Q_ENUMS(Scale)
     Q_ENUMS(Type)
@@ -38,10 +39,13 @@ public:
     auto isEnabled() const -> bool;
     auto xScale() const -> Scale;
     auto setXScale(Scale scale) -> void;
+    auto yScale() const -> Scale;
+    auto setYScale(Scale scale) -> void;
     auto setType(Visualization type) -> void;
     auto type() const -> Type;
     // in af thread
     auto analyze(const QSharedPointer<AudioBuffer> &data) -> void;
+    auto reset() -> void;
 signals:
     void audioChanged();
     void countChanged();
@@ -51,6 +55,7 @@ signals:
     void activeChanged();
     void enabledChanged();
     void xScaleChanged();
+    void yScaleChanged();
     void typeChanged();
 private:
     auto setEnabled(bool enabled) -> void;

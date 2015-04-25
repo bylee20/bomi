@@ -215,6 +215,7 @@ auto AudioController::reinitialize(mp_audio *from) -> int
         filter->setPool(d->af->out_pool);
         filter->reset();
     }
+    d->vis.reset();
     emit gainChanged(d->gain = d->normalizerActivated ? d->analyzer.gain() : -1);
     return true;
 }
