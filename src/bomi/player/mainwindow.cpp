@@ -137,7 +137,6 @@ auto MainWindow::setupSkinPlayer() -> void
     d->e.screen()->setParentItem(d->player);
     d->e.screen()->setWidth(d->player->width());
     d->e.screen()->setHeight(d->player->height());
-    d->player->setProperty("video", QVariant::fromValue(d->e.screen()));
     if (auto item = d->findItem(u"playinfo"_q))
         item->setProperty("show", d->as.playinfo_visible);
     if (auto item = d->findItem(u"logo"_q)) {

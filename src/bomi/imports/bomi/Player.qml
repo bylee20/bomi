@@ -10,8 +10,8 @@ Item {
     property real topPadding: 0.0
     property bool logoVisible: logo.visible
     readonly property QtObject engine: B.App.engine
-    property Item video
-    property Item screen: video && !logo.visible ? video : logo
+    readonly property Item video: B.App.engine.video.screen
+    property Item screen: !logo.visible ? video : logo
 
     Component { id: barVis; BarVisualizer { } }
 
@@ -37,6 +37,24 @@ Item {
                 }
             }
         }
+    }
+
+    Item {
+        id: letterbox
+        parent: video
+        anchors.fill: parent
+
+//        Rectangle {
+//            anchors.top: parent.top
+//            width: parent.width
+//            height: video.letterbox.y
+//            color: "blue"
+//        }
+//        Rectangle {
+//            anchors.bottom: parent.bottom
+//            width: parent.width
+//            height: parent.height - (video.letterbox.y + video.letterbox.height)
+//        }
     }
 
     TextOsd {
@@ -191,5 +209,9 @@ Item {
                 text: prog.sizeText(B.App.download.totalSize)
             }
         }
+    }
+
+    Component.onCompleted: {
+        video.z = -1
     }
 }

@@ -4,7 +4,6 @@ import bomi 1.0
 
 Item {
     id: root
-    property Player player
     property string name
     property size minimumSize: Qt.size(300, 200)
     readonly property Engine engine: App.engine

@@ -4,9 +4,10 @@ import bomi 1.0
 BaseApp {
     id: root
     readonly property Item rootItem: root
+    readonly property alias player: playerItem
     titleBarVisible: true
-    player: Player {
-        id: player
+    Player {
+        id: playerItem
         parent: root
         anchors.fill: parent
         MouseArea {

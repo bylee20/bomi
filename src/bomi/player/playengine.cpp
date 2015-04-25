@@ -19,6 +19,7 @@ PlayEngine::PlayEngine()
     d->vr->setRenderFrameFunction([this] (Fbo *frame, Fbo* osd, const QMargins &m)
         { d->renderVideoFrame(frame, osd, m); });
     d->updateVideoRendererFboFormat();
+    d->info.video.setScreen(d->vr);
 
     d->params.m_mutex = &d->mutex;
 

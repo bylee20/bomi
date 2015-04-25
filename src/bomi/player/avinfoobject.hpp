@@ -6,7 +6,7 @@
 #include <QQmlListProperty>
 
 class AudioFormat;                      class StreamTrack;
-class StreamList;
+class StreamList;                       class VideoRenderer;
 
 class CodecObject : public QObject {
     Q_OBJECT
@@ -268,6 +268,7 @@ class VideoObject : public AvCommonObject {
     Q_PROPERTY(VideoFormatObject *output READ output CONSTANT FINAL)
     Q_PROPERTY(VideoToolObject *hardwareAcceleration READ hwacc CONSTANT FINAL)
     Q_PROPERTY(VideoToolObject *deinterlacer READ deint CONSTANT FINAL)
+    Q_PROPERTY(VideoRenderer *screen READ screen CONSTANT FINAL)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(int delayedFrames READ delayedFrames NOTIFY delayedFramesChanged)
     Q_PROPERTY(qreal delayedTime READ delayedTime NOTIFY delayedTimeChanged)
@@ -301,6 +302,8 @@ public:
         { if (_Change(m_frameNumber, n)) emit frameNumberChanged(); }
     auto frameNumber() const -> qint64 { return m_frameNumber; }
     auto frameCount() const -> qint64 { return m_frameCount; }
+    auto screen() const -> VideoRenderer* { return m_screen; }
+    auto setScreen(VideoRenderer *vr) { m_screen = vr; }
 signals:
     void frameCountChanged();
     void frameNumberChanged();
@@ -315,6 +318,7 @@ private:
     qreal m_droppedFps = 0.0, m_fpsMp = 1;
     qint64 m_frameCount = 0, m_frameNumber = 0;
     QTime m_time;
+    VideoRenderer *m_screen = nullptr;
 };
 
 /******************************************************************************/

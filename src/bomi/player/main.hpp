@@ -12,6 +12,7 @@
 #include "audio/audioformat.hpp"
 #include "video/interpolatorparams.hpp"
 #include "video/videopreview.hpp"
+#include "video/videorenderer.hpp"
 #include "misc/downloader.hpp"
 #include "quick/algorithmobject.hpp"
 #include "quick/circularimageitem.hpp"
@@ -68,6 +69,7 @@ auto registerType() -> void
     qmlRegisterType<MessageThemeObject>();
     qmlRegisterType<MouseEventObject>();
     qmlRegisterType<VideoPreview>();
+    qmlRegisterType<VideoRenderer>();
 
     qmlRegisterSingletonType<AppObject>("bomi", 1, 0, "App", _QmlSingleton<AppObject>);
     qmlRegisterSingletonType<FormatObject>("bomi", 1, 0, "Format", _QmlSingleton<FormatObject>);
