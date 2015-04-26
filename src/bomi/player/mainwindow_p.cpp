@@ -873,7 +873,7 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
     } else {
         if (!pref.pause_minimized() || !e.isPlaying())
             return;
-        if (pref.pause_video_only() && e.video()->track()->isAlbumArt())
+        if (pref.pause_video_only() && e.isAudioOnly())
             return;
         pausedByHiding = true;
         e.pause();
