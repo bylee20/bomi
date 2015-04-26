@@ -1,4 +1,4 @@
-import QtQuick 2.4
+import QtQuick 2.2
 import bomi 1.0
 
 Item {
