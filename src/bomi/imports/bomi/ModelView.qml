@@ -176,6 +176,7 @@ Item {
         onSelectedItemChanged: selection.reposition()
         onContentYChanged: {selection.reposition(); current.reposition()}
         onHeightChanged: {selection.reposition(); current.reposition()}
+        highlightMoveDuration: 500
 
         highlight: Item { }
         currentIndex: -1
