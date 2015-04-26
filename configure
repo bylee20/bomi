@@ -29,12 +29,11 @@ if [ "$kern" = "Darwin" ]; then
 elif [ "$kern" = "Linux" ]; then
     os="linux"
     mpv_args="$mpv_args --enable-alsa --enable-oss-audio"
-    mpv_args="$mpv_args --enable-gl-x11 --enable-x11 "
     njobs=$(nproc)
     echo "configure for Linux..."
 elif [[ "$kern" = MINGW* ]]; then
     os="win"
-    mpv_args="$mpv_args --enable-gl-win32 --enable-dsound --enable-wasapi --enable-dxva2-hwaccel"
+    mpv_args="$mpv_args --enable-dsound --enable-wasapi --enable-dxva2-hwaccel"
     njobs=$(nproc)
     mkspec=win32-g++
 	if [[ "$kern" = MINGW64* ]]; then
