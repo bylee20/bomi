@@ -607,21 +607,37 @@ video_output_features = [
         'func': check_statement('windows.h', 'wglCreateContext(0)',
                                 lib='opengl32')
     } , {
+        'name': '--gl-dummy',
+        'desc': 'OpenGL Dummy Backend',
+        'groups': [ 'gl' ],
+        'func': check_true,
+        'default': 'disable',
+    } , {
         'name': '--vdpau',
         'desc': 'VDPAU acceleration',
-        'deps': [ 'x11' ],
         'func': check_pkg_config('vdpau', '>= 0.2'),
+    } , {
+        'name': '--vdpau-vo',
+        'desc': 'Video Output for VDPAU acceleration',
+        'deps': [ 'vdpau' ],
+        'func': check_true,
     } , {
         'name': '--vdpau-gl-x11',
         'desc': 'VDPAU with OpenGL/X11',
-        'deps': [ 'vdpau', 'gl-x11' ],
+        'deps': [ 'vdpau' ],
+        'deps_any': [ 'gl-dummy', 'gl-x11' ],
         'func': check_true,
     }, {
         'name': '--vaapi',
         'desc': 'VAAPI acceleration',
-        'deps': [ 'x11', 'libdl' ],
+        'deps': [ 'libdl' ],
         'func': check_pkg_config(
             'libva', '>= 0.32.0', 'libva-x11', '>= 0.32.0'),
+    }, {
+        'name': '--vaapi-vo',
+        'desc': 'Video Output for VAAPI acceleration',
+        'deps': [ 'vaapi' ],
+        'func': check_true
     }, {
         'name': '--vaapi-vpp',
         'desc': 'VAAPI VPP',
@@ -630,7 +646,8 @@ video_output_features = [
     }, {
         'name': '--vaapi-glx',
         'desc': 'VAAPI GLX',
-        'deps': [ 'vaapi', 'gl-x11' ],
+        'deps': [ 'vaapi' ],
+        'deps_any': [ 'gl-dummy', 'gl-x11' ],
         'func': check_true,
     }, {
         'name': '--caca',
@@ -682,7 +699,7 @@ video_output_features = [
     } , {
         'name': '--gl',
         'desc': 'OpenGL video outputs',
-        'deps_any': [ 'gl-cocoa', 'gl-x11', 'gl-win32', 'gl-wayland', 'rpi-gles' ],
+        'deps_any': [ 'gl-cocoa', 'gl-x11', 'gl-win32', 'gl-wayland', 'rpi-gles', 'gl-dummy' ],
         'func': check_true
     }
 ]
@@ -705,8 +722,9 @@ hwaccel_features = [
     }, {
         'name': '--vda-gl',
         'desc': 'VDA with OpenGL',
-        'deps': [ 'gl-cocoa', 'vda-hwaccel' ],
-        'func': check_true
+        'deps': [ 'vda-hwaccel' ],
+        'deps_any': [ 'gl-cocoa', 'gl-dummy' ],
+        'func': check_true,
     }, {
         'name': '--vdpau-hwaccel',
         'desc': 'libavcodec VDPAU hwaccel',
@@ -717,7 +735,7 @@ hwaccel_features = [
     }, {
         'name': '--dxva2-hwaccel',
         'desc': 'libavcodec DXVA2 hwaccel',
-        'deps': [ 'win32' ],
+        'deps_any': [ 'os-win32', 'os-cygwin' ],
         'func': check_headers('libavcodec/dxva2.h', use='libav'),
     }
 ]

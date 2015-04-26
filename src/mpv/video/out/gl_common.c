@@ -550,6 +550,9 @@ static const struct backend backends[] = {
     {"x11egl", mpgl_set_backend_x11egl},
     {"x11egles", mpgl_set_backend_x11egles},
 #endif
+#if HAVE_GL_DUMMY
+    {"dummy", mpgl_set_backend_dummy},
+#endif
     {0}
 };
 
