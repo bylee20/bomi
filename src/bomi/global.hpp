@@ -196,6 +196,7 @@ enum ExtType {
     DiscExt     = 1 << 4,
     PlaylistExt = 1 << 5,
     WritableImageExt = 1 << 6,
+    WritablePlaylistExt = 1 << 7,
 
     MediaExt    = AudioExt | VideoExt | ImageExt
 };
