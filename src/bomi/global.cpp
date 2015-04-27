@@ -29,9 +29,9 @@ static const QStringList videoExts = {
 };
 
 static const QStringList audioExts = {
-    u"aac"_q, u"ac3"_q, u"aiff"_q, u"flac"_q,
+    u"aac"_q, u"ac3"_q, u"aiff"_q, u"ape"_q, u"flac"_q, u"it"_q,
     u"m4a"_q, u"mka"_q, u"mod"_q, u"mp2"_q, u"mp3"_q,
-    u"ogg"_q, u"pcm"_q, u"wav"_q, u"wma"_q
+    u"ogg"_q, u"pcm"_q, u"wav"_q, u"wma"_q, u"xm"_q
 };
 
 static const QStringList subExts = {
