@@ -393,15 +393,18 @@ auto MainWindow::wheelEvent(QWheelEvent *event) -> void
 {
     event->setAccepted(false);
     QQuickView::wheelEvent(event);
-    if (event->isAccepted())
-        return;
-    const auto delta = event->delta();
-    if (delta) {
-        const bool up = d->pref.invert_wheel() ? delta < 0 : delta > 0;
-        const auto id = d->actionId(up ? MsBh::ScrollUp : MsBh::ScrollDown, event);
-        d->trigger(d->menu.action(id));
-        event->accept();
+    if (!event->isAccepted()) {
+        d->wheelAngles += event->angleDelta().y();
+        const int delta = d->wheelAngles >= 120 ? 1 : d->wheelAngles <= -120 ? -1 : 0;
+        if (delta) {
+            const bool up = d->pref.invert_wheel() ? delta < 0 : delta > 0;
+            const auto id = d->actionId(up ? MsBh::ScrollUp : MsBh::ScrollDown, event);
+            d->trigger(d->menu.action(id));
+            event->accept();
+        }
     }
+    if (event->isAccepted())
+        d->wheelAngles = 0;
 }
 
 auto MainWindow::resizeEvent(QResizeEvent *event) -> void

@@ -292,6 +292,29 @@ Item {
             }
         }
 
+        function calcVelocity(angle, smooth, pos, min, max) {
+            var v = angle
+            if (v > 0 && pos > min)
+                return Math.max(v - smooth, maximumFlickVelocity / 4)
+            else if (v < 0 && pos < max)
+                return Math.min(v - smooth, -maximumFlickVelocity / 4)
+            return 0
+        }
+
+        function wheelScroll(angle, pixel) {
+            if (pixel.x !== 0 || pixel.y !== 0) {
+                contentX -= pixel.x
+                contentY -= pixel.y
+                returnToBounds()
+            } else {
+                var vx = calcVelocity(angle.x, horizontalVelocity, contentX,
+                                      0, contentWidth - list.width)
+                var vy = calcVelocity(angle.y, verticalVelocity, contentY,
+                                      -headerItem.height, contentHeight - list.height - footerItem.height)
+                flick(vx, vy)
+            }
+        }
+
         MouseArea {
             z: -1
             anchors.fill: parent
@@ -305,30 +328,14 @@ Item {
                 if (index !== -1)
                     view.activated(index)
             }
+            onWheel: list.wheelScroll(wheel.angleDelta, wheel.pixelDelta)
         }
-
-
     }
     ScrollBar {
         id: scrollBar
         width: 15; gap: 3
-        anchors {
-            top: list.top; bottom: list.bottom; right: parent.right
-//            topMargin: d.pad;
-//            bottomMargin: d.pad
-        }
+        anchors { top: list.top; bottom: list.bottom; right: parent.right }
         target: list; radius: 2; color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
         border { color: Qt.rgba(0.5, 0.5, 0.5, 0.5); width: 1 }
     }
-//    ScrollBar {
-//        width: 15; gap: 3
-//        anchors {
-//            top: list.top; bottom: list.bottom; right: parent.right
-////            topMargin: d.pad;
-////            bottomMargin: d.pad
-//        }
-//        target: list; radius: 2; color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
-//        border { color: Qt.rgba(0.5, 0.5, 0.5, 0.5); width: 1 }
-//    }
-
 }

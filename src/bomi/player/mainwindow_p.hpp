@@ -133,6 +133,7 @@ struct MainWindow::Data {
     JrServer *jrServer = nullptr;
     JrPlayer jrPlayer;
     Qt::WindowState prevWindowState = Qt::WindowNoState;
+    int wheelAngles = 0;
 
     auto fileNameGenerator(const QTime &end = QTime()) const -> FileNameGenerator;
 

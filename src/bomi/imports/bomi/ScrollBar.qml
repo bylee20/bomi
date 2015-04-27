@@ -69,9 +69,7 @@ Item { id: item;
                 }
             }
         }
-//        onWheel: {
-
-//        }
+        onWheel: target.wheelScroll(wheel.angleDelta, wheel.pixelDelta)
     }
 
     states: State {
