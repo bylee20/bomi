@@ -5,6 +5,7 @@
 
 class Mrl {
 public:
+    struct CueTrack { QString file; int start = -1, end = -1; };
     Mrl() {}
     Mrl(const QUrl &url);
     Mrl(const QString &location, const QString &name = QString());
@@ -22,6 +23,7 @@ public:
     auto isDvd() const -> bool { return startsWith("dvdnav://"_a); }
     auto isBluray() const -> bool { return startsWith("bdnav://"_a); }
     auto isDisc() const -> bool;
+    auto isCueTrack() const -> bool;
     auto isRemoteUrl() const -> bool { return !isLocalFile() && !isDisc(); }
     auto scheme() const -> QString {return m_loc.left(m_loc.indexOf("://"_a));}
     auto toLocalFile() const -> QString
@@ -43,13 +45,20 @@ public:
     auto isUnique() const -> bool { return !isDisc() || !m_hash.isEmpty(); }
     auto toUnique() const -> Mrl;
     auto isDir() const -> bool;
+    auto start() const -> int;
+    auto end() const -> int;
+    auto toCueTrack() const -> CueTrack;
+    auto cueSheet() const -> QString;
     static auto fromString(const QString str) -> Mrl
         { Mrl mrl; mrl.m_loc = str; return mrl; }
     static auto fromDisc(const QString &scheme, const QString &device,
                          int title, bool hash) -> Mrl;
+    static auto fromCueTrack(const QString &cue, const CueTrack &track,
+                             const QString &name) -> Mrl;
     static auto calculateHash(const Mrl &mrl) -> QByteArray;
     static auto fromUniqueId(const QString &id,
-                             const QString &device = QString()) -> Mrl;
+                             const QString &device = QString(),
+                             const QString &name = QString()) -> Mrl;
 private:
     auto path() const -> QString;
     QString m_loc = {};

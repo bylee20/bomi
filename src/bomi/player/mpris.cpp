@@ -212,7 +212,7 @@ struct Player::Data {
         map[u"mpris:trackid"_q] = QVariant::fromValue(path);
         map[u"mpris:length"_q] = 1000LL*(qint64)md.duration();
         if (!albumArt.isEmpty())
-            map[u"mpris:artUrl"_q] = QUrl::fromLocalFile(albumArt).toString();
+            map[u"mpris:artUrl"_q] = _UrlFromLocalFile(albumArt).toString();
         map[u"xesam:url"_q] = md.mrl().toString();
         map[u"xesam:title"_q] = md.title().isEmpty()
                 ? engine->media()->name() : md.title();

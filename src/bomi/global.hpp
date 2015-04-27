@@ -235,6 +235,8 @@ auto _SetLastOpenPath(const QString &path, const QString &k = QString()) -> void
 
 auto _LastOpenPath(const QString &key = QString()) -> QString;
 
+auto _UrlFromLocalFile(const QString &file) -> QUrl;
+
 }
 
 using namespace Global;

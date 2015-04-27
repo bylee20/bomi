@@ -279,6 +279,9 @@ auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
     };
     if (!checkAndPlay(mrl)) {
         Playlist pl;
+        if (mrl.isCueTrack())
+            pl.load(mrl.cueSheet());
+
         switch (mode.behavior) {
         case OpenMediaBehavior::Append:
             pl.append(mrls);
@@ -289,7 +292,7 @@ auto MainWindow::Data::openWith(const OpenMediaInfo &mode,
             break;
         case OpenMediaBehavior::NewPlaylist:
             playlist.clear();
-            pl = generatePlaylist(mrl);
+            pl += generatePlaylist(mrl);
             break;
         }
         auto list = playlist.list();
@@ -514,6 +517,8 @@ auto MainWindow::Data::openMimeData(const QMimeData *md) -> void
 
 auto MainWindow::Data::generatePlaylist(const Mrl &mrl) const -> Playlist
 {
+    if (mrl.isCueTrack())
+        { Playlist list;  list.load(mrl.cueSheet()); return list; }
     if (!mrl.isLocalFile() || !pref.enable_generate_playlist())
         return Playlist(mrl);
 

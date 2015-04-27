@@ -27,7 +27,7 @@ Item {
         stepSize: 0
         readonly property alias min: slider.minimumValue
         readonly property alias max: slider.maximumValue
-        readonly property alias ahead: seeker.ahead
+        readonly property real ahead: Math.min(seeker.ahead, max)
         readonly property real range: max - min
         readonly property real rate: (value - min)/(max - min)
         readonly property real arate: ahead == 0 ? 0 : (ahead - min)/(max - min)

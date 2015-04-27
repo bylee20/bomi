@@ -9,7 +9,7 @@ class EncodingInfo;                     class ObjectStorage;
 
 class Playlist : public QList<Mrl> {
 public:
-    enum Type {Unknown, PLS, M3U, M3U8};
+    enum Type {Unknown, PLS, M3U, M3U8, Cue};
     Playlist();
     Playlist(const Playlist &rhs);
     Playlist(const Mrl &mrl);
@@ -32,6 +32,7 @@ private:
               const QUrl &url = QUrl()) -> bool;
     auto loadPLS(QTextStream &in, const QUrl &url = QUrl()) -> bool;
     auto loadM3U(QTextStream &in, const QUrl &url = QUrl()) -> bool;
+    auto loadCue(QTextStream &in, const QUrl &url = QUrl()) -> bool;
 };
 
 Q_DECLARE_METATYPE(Playlist)

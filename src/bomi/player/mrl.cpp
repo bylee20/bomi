@@ -19,7 +19,7 @@ Mrl::Mrl(const QString &location, const QString &name) {
         m_loc = "file://"_a % _ToAbsFilePath(location);
     else if (startsWith("file://"_a))
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
-    else if (startsWith("dvdnav://"_a) || startsWith("bdnav://"_a))
+    else if (startsWith("dvdnav://"_a) || startsWith("bdnav://"_a) || startsWith("cue://"_a))
         m_loc = location;
     else
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
@@ -116,6 +116,42 @@ auto Mrl::fromDisc(const QString &scheme, const QString &device,
     if (hash)
         mrl.updateHash();
     return mrl;
+}
+
+auto Mrl::fromCueTrack(const QString &cue, const CueTrack &track,
+                       const QString &name) -> Mrl
+{
+    const QStringList list { "cue://"_a % cue, track.file, _N(track.start), _N(track.end) };
+    return Mrl(list.join(u":;"_q), name);
+}
+
+auto Mrl::isCueTrack() const -> bool
+{
+    return m_loc.startsWith("cue://"_a);
+}
+
+auto Mrl::cueSheet() const -> QString
+{
+    if (!isCueTrack())
+        return QString();
+    const int end = m_loc.indexOf(u":;"_q, 6);
+    if (end < 6)
+        return QString();
+    return m_loc.mid(6, end - 6);
+}
+
+auto Mrl::toCueTrack() const -> CueTrack
+{
+    if (!isCueTrack())
+        return CueTrack();
+    const auto strs = m_loc.midRef(6).split(u":;"_q);
+    if (strs.size() != 4)
+        return CueTrack();
+    CueTrack track;
+    track.file = strs[1].toString();
+    track.start = strs[2].toInt();
+    track.end = strs[3].toInt();
+    return track;
 }
 
 auto Mrl::titleMrl(int title) const -> Mrl
@@ -234,10 +270,11 @@ auto Mrl::toUnique() const -> Mrl
     return mrl;
 }
 
-auto Mrl::fromUniqueId(const QString &id, const QString &device) -> Mrl
+auto Mrl::fromUniqueId(const QString &id, const QString &device, const QString &name) -> Mrl
 {
     Mrl mrl;
     mrl.m_loc = id;
+    mrl.m_name = name;
     if (!mrl.isDisc())
         return mrl;
     mrl.m_hash = mrl.device().toUtf8();

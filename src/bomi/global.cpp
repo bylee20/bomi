@@ -336,4 +336,13 @@ QByteArray _Uncompress(const QByteArray &data) {
     return result;
 }
 
+auto _UrlFromLocalFile(const QString &file) -> QUrl
+{
+    const auto current = QDir::currentPath();
+    QDir::setCurrent(qApp->applicationDirPath());
+    auto url = QUrl::fromLocalFile(file);
+    QDir::setCurrent(current);
+    return url;
+}
+
 }

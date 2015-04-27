@@ -38,6 +38,8 @@ public:
         { add(key, QByteArray::number(value)); }
     auto add(const QByteArray &key, bool value) -> void
         { add(key, value ? "yes"_b : "no"_b); }
+    auto addRaw(const QByteArray &key, const QByteArray &data) -> void
+        { add(key, '%' + QByteArray::number(data.length()) + '%' + data); }
     auto get() const -> const QByteArray& { return m_data; }
     auto data() const -> const char* { return m_data.data(); }
 private:
@@ -164,6 +166,8 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, bool resume, const QString &sub)
     opts.add("resume-playback", resume);
     if (!sub.isEmpty())
         opts.add("sub-file", sub.toUtf8(), true);
+    if (!mrl.name().isEmpty() && mrl.isCueTrack())
+        opts.addRaw("media-title", mrl.name().toUtf8());
     mpv.tell("loadfile"_b, file.toUtf8(), "replace"_b, opts.get());
 }
 
@@ -190,7 +194,7 @@ auto PlayEngine::Data::onLoad() -> void
     const auto sub = mpv.get<MpvUtf8>("file-local-options/sub-file").data;
     mpv.setAsync("file-local-options/sub-file", MpvFileList());
     t.local = localCopy();
-    t.duration = -1;
+    t.begin = t.duration = -1;
     auto local = t.local.data();
 
     Mrl mrl(file);
@@ -221,6 +225,17 @@ auto PlayEngine::Data::onLoad() -> void
         start = reload;
         local->set_device(mrl.device());
         resume = found = true;
+    }
+
+    if (mrl.isCueTrack()) {
+        const auto track = mrl.toCueTrack();
+        file.data = track.file;
+        t.begin = track.start;
+        mpv.setAsync("file-local-options/start", QByteArray::number(track.start * 1e-3, 'f'));
+        if (track.end != -1) {
+            mpv.setAsync("file-local-options/end", QByteArray::number(track.end * 1e-3, 'f'));
+            t.duration = track.end - t.begin;
+        }
     }
 
     if (file.data.startsWith("smb://"_a, QCI)) {
@@ -454,14 +469,23 @@ auto PlayEngine::Data::observe() -> void
         sr->render(time);
         info.video.setFrameNumber(calcFrameCount(info.video.decoder()->fps(), time - begin));
     });
-    mpv.observeTime("time-start", begin, [=] () {
+    mpv.observe("time-start", [=] () {
+        return t.begin < 0 ? s2ms(mpv.get<double>("time-start")) : t.begin;
+    }, [=] (int ms) {
+        if (!_Change(begin, ms))
+            return;
         emit p->beginChanged(begin);
         if (_Change(begin_s, begin/1000))
             emit p->begin_sChanged();
         updateChapter(mpv.get<int>("chapter"));
     });
     mpv.observe("length", [=] () {
-        return t.duration < 0 ? s2ms(mpv.get<double>("length")) : t.duration;
+        if (t.duration >= 0)
+            return t.duration;
+        const int len = s2ms(mpv.get<double>("length"));
+        if (t.begin >= 0)
+            return t.duration = s2ms(mpv.get<double>("time-start")) + len - t.begin;
+        return len;
     }, [=] (int ms) {
         if (!_Change(duration, ms))
             return;

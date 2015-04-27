@@ -493,14 +493,16 @@ auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
 auto PlayEngine::seek(int pos) -> void
 {
     if (pos >= 0 && !d->hasImage)
-        d->mpv.tell("seek", (double)pos/1000.0, "absolute"_b);
+        d->mpv.tell("seek", std::max(d->begin, pos)/1000.0, "absolute"_b);
     d->vp->stopSkipping();
 }
 
 auto PlayEngine::relativeSeek(int pos) -> void
 {
     if (!d->hasImage) {
-        d->mpv.tell("seek", (double)pos/1000.0, "relative"_b);
+        if (pos < d->begin - d->time)
+            pos = d->begin - d->time;
+        d->mpv.tell("seek", pos/1000.0, "relative"_b);
         emit sought();
     }
     d->vp->stopSkipping();

@@ -127,7 +127,8 @@ struct HistoryModel::Data {
     {
         const auto id = loader.value(idx_mrl).toString();
         const auto dev = loader.value(idx_device).toString();
-        return Mrl::fromUniqueId(id, dev);
+        const auto name = loader.value(idx_name).toString();
+        return Mrl::fromUniqueId(id, dev, name);
     }
 };
 

@@ -164,9 +164,16 @@ auto MainWindow::Data::plugMenu() -> void
 
     Menu &open = menu(u"open"_q);
     connect(open[u"file"_q], &QAction::triggered, p, [this] () {
-        const auto file = _GetOpenFile(nullptr, tr("Open File"), MediaExt);
-        if (!file.isEmpty())
-            openMrl(Mrl(file));
+        const auto file = _GetOpenFile(nullptr, tr("Open File"), MediaExt | PlaylistExt);
+        if (!file.isEmpty()) {
+            const Mrl mrl(file);
+            if (_IsSuffixOf(PlaylistExt, mrl.suffix())) {
+                Playlist list;
+                if (list.load(file))
+                    playlist.setList(list);
+            } else
+                openMrl(mrl);
+        }
     });
     connect(open[u"folder"_q], &QAction::triggered, p, [this] () { openDir(); });
     connect(open[u"url"_q], &QAction::triggered, p, [this] () {
@@ -685,6 +692,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(pl[u"open"_q], &QAction::triggered, p, [this] () {
         EncodingInfo enc;
         const auto filter = _ToFilter(PlaylistExt);
+        qDebug() <<filter;
         const auto file = EncodingFileDialog::getOpenFileName
                 (nullptr, tr("Open File"), QString(), filter, &enc);
         if (!file.isEmpty())
@@ -693,7 +701,7 @@ auto MainWindow::Data::plugMenu() -> void
     connect(pl[u"save"_q], &QAction::triggered, p, [this] () {
         const auto &list = playlist.list();
         if (!list.isEmpty()) {
-            auto file = _GetSaveFile(nullptr, tr("Save File"), u""_q, PlaylistExt);
+            auto file = _GetSaveFile(nullptr, tr("Save File"), u""_q, WritablePlaylistExt);
             if (!file.isEmpty())
                 list.save(file);
         }
@@ -708,10 +716,17 @@ auto MainWindow::Data::plugMenu() -> void
     });
     connect(pl[u"clear"_q], &QAction::triggered, p, [=] () { playlist.clear(); });
     connect(pl[u"append-file"_q], &QAction::triggered, p, [this] () {
-        const auto files = _GetOpenFiles(nullptr, tr("Open File"), MediaExt);
+        const auto files = _GetOpenFiles(nullptr, tr("Open File"), MediaExt | PlaylistExt);
         Playlist list;
-        for (int i=0; i<files.size(); ++i)
-            list.push_back(Mrl(files[i]));
+        for (int i=0; i < files.size(); ++i) {
+            const Mrl mrl(files[i]);
+            if (_IsSuffixOf(PlaylistExt, mrl.suffix())) {
+                Playlist pl;
+                if (pl.load(files[i]))
+                    list += pl;
+            } else
+                list.push_back(mrl);
+        }
         playlist.append(list);
     });
     connect(pl[u"append-folder"_q], &QAction::triggered, p, [this] () {

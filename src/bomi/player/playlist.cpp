@@ -61,15 +61,23 @@ auto Playlist::load(QTextStream &in, const EncodingInfo &_enc,
         enc = EncodingInfo::utf8();
     if (enc.isValid())
         in.setCodec(enc.codec());
-    switch (type) {
-    case PLS:
-        return loadPLS(in, url);
-    case M3U:
-    case M3U8:
-        return loadM3U(in, url);
-    default:
-        return false;
-    }
+    const qint64 pos = in.pos();
+    in.seek(0);
+    auto ret = [&] () {
+        switch (type) {
+        case PLS:
+            return loadPLS(in, url);
+        case M3U:
+        case M3U8:
+            return loadM3U(in, url);
+        case Cue:
+            return loadCue(in, url);
+        default:
+            return false;
+        }
+    }();
+    in.seek(pos);
+    return ret;
 }
 
 auto Playlist::load(const QUrl &url, QByteArray *data,
@@ -87,7 +95,7 @@ auto Playlist::load(const QString &filePath, const EncodingInfo &enc, Type type)
     if (type == Unknown)
         type = guessType(filePath);
     QTextStream in(&file);
-    return load(in, enc, type);
+    return load(in, enc, type, _UrlFromLocalFile(filePath));
 }
 
 auto Playlist::load(const Mrl &mrl, const EncodingInfo &enc, Type type) -> bool
@@ -100,14 +108,15 @@ auto Playlist::load(const Mrl &mrl, const EncodingInfo &enc, Type type) -> bool
 auto Playlist::typeForSuffix(const QString &str) -> Type
 {
     const auto suffix = str.toLower();
+    if (suffix == "cue"_a)
+        return Cue;
     if (suffix == "pls"_a)
         return PLS;
-    else if (suffix == "m3u"_a)
+    if (suffix == "m3u"_a)
         return M3U;
-    else if (suffix == "m3u8"_a)
+    if (suffix == "m3u8"_a)
         return M3U8;
-    else
-        return Unknown;
+    return Unknown;
 }
 
 auto Playlist::guessType(const QString &fileName) -> Playlist::Type
@@ -137,11 +146,8 @@ auto Playlist::saveM3U(QTextStream &out) const -> bool
     return true;
 }
 
-
 auto Playlist::loadPLS(QTextStream &in, const QUrl &url) -> bool
 {
-    const qint64 pos = in.pos();
-    in.seek(0);
     while (!in.atEnd()) {
         const QString line = in.readLine();
         if (line.isEmpty())
@@ -151,14 +157,11 @@ auto Playlist::loadPLS(QTextStream &in, const QUrl &url) -> bool
         if (match.hasMatch())
             push_back(Mrl(resolve(match.captured(1), url)));
     }
-    in.seek(pos);
     return true;
 }
 
 auto Playlist::loadM3U(QTextStream &in, const QUrl &url) -> bool
 {
-    const qint64 pos = in.pos();
-    in.seek(0);
     auto getNextLocation = [&in] () -> QString {
         while (!in.atEnd()) {
             const QString line = in.readLine().trimmed();
@@ -185,7 +188,97 @@ auto Playlist::loadM3U(QTextStream &in, const QUrl &url) -> bool
         if (!location.isEmpty())
             push_back(Mrl(resolve(location, url), name));
     }
-    in.seek(pos);
+    return true;
+}
+
+struct CueTrack {
+    QString title, writer, performer, file;
+    int idx00 = -1, idx01 = -1;
+    auto toMrl(const QString &cue, const CueTrack *next) const -> Mrl
+    {
+        Mrl::CueTrack track;
+        track.file = file;
+        track.start = idx01;
+        if (next)
+            track.end = next->idx00 != -1 ? next->idx00 : next->idx01;
+        QString name;
+        if (!title.isEmpty())
+            name += title;
+        if (!performer.isEmpty()) {
+            if (!name.isEmpty())
+                name += " - "_a;
+            name += performer;
+        }
+        return Mrl::fromCueTrack(cue, track, name);
+    }
+};
+
+auto Playlist::loadCue(QTextStream &in, const QUrl &url) -> bool
+{
+    CueTrack init;
+    CueTrack *current = &init;
+    QRegEx rxField(uR"#(^(\w+)\s+(.*)\s*$)#"_q);
+    QRegEx rxText(uR"#(^\s*"(.*)"\s*$)#"_q);
+    QRegEx rxFile(uR"#(^\s*"(.*)"\s+\w+\s*$)#"_q);
+    QRegEx rxIndex(uR"(^\s*(\d\d)\s+(\d\d):(\d\d):(\d\d)\s*$)"_q);
+    QVector<CueTrack> tracks;
+    while (!in.atEnd()) {
+        const auto line = in.readLine().trimmed();
+        auto m = rxField.match(line);
+        if (!m.hasMatch())
+            continue;
+        const auto key = m.captured(1);
+        if (key == "REM"_a)
+            continue;
+        const auto value = m.captured(2);
+        if (key == "TRACK"_a) {
+            tracks.push_back(*current);
+            current = &tracks.last();
+            current->idx00 = current->idx01 = -1;
+            continue;
+        }
+        if (key == "FILE"_a) {
+            m = rxFile.match(value);
+            if (!m.hasMatch())
+                return false;
+            current->file = resolve(m.captured(1), url);
+            continue;
+        }
+        if (key == "INDEX"_a) {
+            m = rxIndex.match(value);
+            if (!m.hasMatch())
+                return false;
+            const auto idx = m.capturedRef(1).toInt();
+            const auto min = m.capturedRef(2).toInt();
+            const auto sec = m.capturedRef(3).toInt()
+                    + m.capturedRef(4).toInt() / 75.0;
+            const auto msec = (min * 60 + sec) * 1000;
+            if (idx == 1)
+                current->idx01 = msec;
+            else if (idx == 0)
+                current->idx00 = msec;
+            continue;
+        }
+#define TEST_TEXT(name, var) \
+        if (key == name) { \
+            m = rxText.match(value); \
+            if (!m.hasMatch()) \
+                return false; \
+            var = m.captured(1); \
+            continue; \
+        }
+        TEST_TEXT("TITLE"_a, current->title);
+        TEST_TEXT("PERFORMER"_a, current->performer);
+        TEST_TEXT("SONGWRITER"_a, current->writer);
+#undef TEST_TEXT
+    }
+
+    const auto cue = url.toLocalFile();
+    reserve(tracks.size());
+    for (int i = 0; i < tracks.size(); ++i) {
+        const auto next = i + 1 < tracks.size() ? &tracks[i+1] : nullptr;
+        push_back(tracks[i].toMrl(cue, next));
+    }
     return true;
 }
 
