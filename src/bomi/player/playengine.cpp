@@ -493,7 +493,7 @@ auto PlayEngine::setSubtitleStyle_locked(const OsdStyle &style) -> void
 auto PlayEngine::seek(int pos) -> void
 {
     if (pos >= 0 && !d->hasImage)
-        d->mpv.tell("seek", std::max(d->begin, pos)/1000.0, "absolute"_b);
+        d->mpv.tell("seek", (std::max(d->begin, pos) + d->t.offset)/1000.0, "absolute"_b);
     d->vp->stopSkipping();
 }
 
@@ -523,7 +523,7 @@ auto PlayEngine::reload() -> void
     if (isStopped())
         return;
     d->mutex.lock();
-    d->reload = d->time;
+    d->reload = d->time + d->t.offset;
     d->mutex.unlock();
     load(d->mrl);
 }

@@ -195,6 +195,7 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.setAsync("file-local-options/sub-file", MpvFileList());
     t.local = localCopy();
     t.begin = t.duration = -1;
+    t.offset = 0;
     auto local = t.local.data();
 
     Mrl mrl(file);
@@ -230,7 +231,7 @@ auto PlayEngine::Data::onLoad() -> void
     if (mrl.isCueTrack()) {
         const auto track = mrl.toCueTrack();
         file.data = track.file;
-        t.begin = track.start;
+        t.offset = t.begin = track.start;
         mpv.setAsync("file-local-options/start", QByteArray::number(track.start * 1e-3, 'f'));
         if (track.end != -1) {
             mpv.setAsync("file-local-options/end", QByteArray::number(track.end * 1e-3, 'f'));
@@ -432,9 +433,6 @@ auto PlayEngine::Data::observe() -> void
     mpv.observeState("core-idle", [=] (bool i) { if (!i) post(Playing); });
     mpv.observeState("paused-for-cache", [=] (bool b) { post(Buffering, b); });
     mpv.observeState("seeking", [=] (bool s) { post(Seeking, s); });
-    mpv.observeTime("demuxer-cache-time", info.cache.m_time, [=] () {
-        emit info.cache.timeChanged(info.cache.m_time);
-    });
 
     mpv.observe("cache-used", [=] () { return t.caching ? mpv.get<int>("cache-used") : 0; },
                 [=] (int v) { info.cache.setUsed(v); });
@@ -455,11 +453,13 @@ auto PlayEngine::Data::observe() -> void
 
     mpv.observeTime("avsync", avSync, [=] () { emit p->avSyncChanged(avSync); });
     mpv.observe("time-pos", [=] () {
-        int ctime = t.caching ? s2ms(mpv.get<double>("demuxer-cache-time")) : 0;
+        int ctime = 0;
+        if (t.caching)
+            ctime = s2ms(mpv.get<double>("demuxer-cache-time")) - t.offset;
         if (ctime != info.cache.time())
             QMetaObject::invokeMethod(&info.cache, "setTime",
                                       Qt::QueuedConnection, Q_ARG(int, ctime));
-        return s2ms(mpv.get<double>("time-pos"));
+        return s2ms(mpv.get<double>("time-pos")) - t.offset;
     }, [=] (int pos) {
         if (!_Change(time, pos))
             return;
@@ -470,7 +470,7 @@ auto PlayEngine::Data::observe() -> void
         info.video.setFrameNumber(calcFrameCount(info.video.decoder()->fps(), time - begin));
     });
     mpv.observe("time-start", [=] () {
-        return t.begin < 0 ? s2ms(mpv.get<double>("time-start")) : t.begin;
+        return (t.begin < 0 ? s2ms(mpv.get<double>("time-start")) : t.begin) - t.offset;
     }, [=] (int ms) {
         if (!_Change(begin, ms))
             return;
@@ -479,14 +479,16 @@ auto PlayEngine::Data::observe() -> void
             emit p->begin_sChanged();
         updateChapter(mpv.get<int>("chapter"));
     });
-    mpv.observe("length", [=] () {
+
+    auto length = [=] () {
         if (t.duration >= 0)
             return t.duration;
         const int len = s2ms(mpv.get<double>("length"));
         if (t.begin >= 0)
             return t.duration = s2ms(mpv.get<double>("time-start")) + len - t.begin;
         return len;
-    }, [=] (int ms) {
+    };
+    mpv.observe("length", [=] () { return length(); }, [=] (int ms) {
         if (!_Change(duration, ms))
             return;
         emit p->durationChanged(duration);
@@ -502,7 +504,7 @@ auto PlayEngine::Data::observe() -> void
         for (int i=0; i<array.size(); ++i) {
             const auto map = array[i].toMap();
             data[i].number = i;
-            data[i].time = s2ms(map[u"time"_q].toDouble());
+            data[i].time = s2ms(map[u"time"_q].toDouble()) - t.offset;
             data[i].name = map[u"title"_q].toString();
             if (data[i].name.isEmpty())
                 data[i].name = _MSecToString(data[i].time, u"hh:mm:ss.zzz"_q);
@@ -560,7 +562,7 @@ auto PlayEngine::Data::observe() -> void
         metaData.m_genre = map[u"genre"_q].toString();
         metaData.m_date = map[u"date"_q].toString();
         metaData.m_mrl = params.mrl();
-        metaData.m_duration = s2ms(mpv.get<double>("length"));
+        metaData.m_duration = length();
         return metaData;
     }, [=] (auto &&md) {
         if (_Change(metaData, md))
