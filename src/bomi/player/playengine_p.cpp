@@ -681,7 +681,10 @@ auto PlayEngine::Data::request() -> void
         select(StreamSubtitle);
         mpv.flush();
         _PostEvent(p, StartPlayback, editions, edition);
-        preview->load(mpv.get<QByteArray>("stream-open-filename"));
+        auto path = mpv.get<MpvFile>("stream-open-filename");
+        if (disc && edition.number >= 0)
+            path = Mrl(path.data).titleMrl(edition.number).toString();
+        preview->load(path.toMpv());
     });
     mpv.request(MPV_EVENT_END_FILE, [=] (mpv_event *e) {
         preview->unload();
