@@ -24,8 +24,11 @@ struct CacheInfo {
     struct Item { double sec = 10; qint64 kb = 0; bool file = false; };
     auto get(const Mrl &mrl) const -> const Item&
     {
-        if (mrl.isLocalFile()) {
-            auto path = mrl.toLocalFile();
+        Mrl file = mrl;
+        if (mrl.isCueTrack())
+            file = Mrl(mrl.toCueTrack().file);
+        if (file.isLocalFile()) {
+            auto path = file.toLocalFile();
             for (auto &folder : remotes) {
                 if (path.startsWith(folder))
                     return network;
