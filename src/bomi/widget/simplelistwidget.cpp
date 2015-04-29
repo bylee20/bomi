@@ -5,7 +5,7 @@ SimpleListWidgetBase::SimpleListWidgetBase(QWidget *parent)
 {
     m_view = new QTreeView(this);
     m_add = new QPushButton(tr("Add"), this);
-    m_erase = new QPushButton(tr("Erase"), this);
+    m_erase = new QPushButton(tr("Remove"), this);
     m_up = new QPushButton(tr("Move Up"), this);
     m_down = new QPushButton(tr("Move Down"), this);
 
