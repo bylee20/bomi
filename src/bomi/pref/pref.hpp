@@ -96,12 +96,6 @@ private:
     P0(OsdTheme, osd_theme, defaultOsdTheme())
     P0(ControlsTheme, controls_theme, {})
 
-    P0(int, blur_kern_c, 1)
-    P0(int, blur_kern_n, 2)
-    P0(int, blur_kern_d, 1)
-    P0(int, sharpen_kern_c, 5)
-    P0(int, sharpen_kern_n, -1)
-    P0(int, sharpen_kern_d, 0)
     P0(MotionIntrplOption, motion_interpolation, {})
 
     P0(ChannelLayoutMap, channel_manipulation, ChannelLayoutMap::default_())

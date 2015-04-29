@@ -13,10 +13,14 @@ struct ControlsTheme {
     bool showKeyframeForPreview = true;
     bool showMediaTitleForLocalFilesInHistory = false;
     bool showMediaTitleForUrlsInHistory = true;
+    qreal previewSize = 0.2;
+    int previewMinimumSize = 100;
+    int previewMaximumSize = 200;
     DECL_EQ(ControlsTheme, &T::showOnMouseMoved, &T::showLocationsInPlaylist,
             &T::showToolOnMouseOverEdge, &T::showPreviewOnMouseOverSeekBar,
             &T::showMediaTitleForUrlsInHistory, &T::showKeyframeForPreview,
-            &T::showMediaTitleForLocalFilesInHistory, &T::titleBarEnabled)
+            &T::showMediaTitleForLocalFilesInHistory, &T::titleBarEnabled,
+            &T::previewSize, &T::previewMinimumSize, &T::previewMaximumSize)
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
 };
@@ -31,6 +35,9 @@ class ControlsThemeObject : public QObject {
     THEME_P(bool, showToolOnMouseOverEdge)
     THEME_P(bool, showPreviewOnMouseOverSeekBar)
     THEME_P(bool, showKeyframeForPreview)
+    THEME_P(qreal, previewSize)
+    THEME_P(int, previewMinimumSize)
+    THEME_P(int, previewMaximumSize)
 public:
     ControlsTheme m;
 };

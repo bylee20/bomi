@@ -23,8 +23,7 @@ Slider {
                              && d.e.preview.hasVideo && d.e.seekable
                              && d.e.running && mouseArea.containsMouse && x >= 0
         parent: App.window.z10
-        x: -1; width: d.e.preview.width + 4; height: d.e.preview.height + 4
-        y: onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
+        x: -1; width: (d.e.preview.width + 4); height: (d.e.preview.height + 4)
         visible: false; opacity: 0.0; z: 10; border { width: 1; color: "black" }
         states: State {
             name: "shown";
@@ -41,7 +40,7 @@ Slider {
         Component.onCompleted: {
             d.e.preview.parent = this
             d.e.preview.width = Qt.binding(function() { return (this.height * this.aspectRatio) | 0; });
-            d.e.preview.height = Qt.binding(function() { return preview.height; });
+            d.e.preview.height = Qt.binding(function() { return preview.height | 0; });
             d.e.preview.anchors.centerIn = Qt.binding(function() { return pv; });
         }
         onShownChanged: {
@@ -56,13 +55,10 @@ Slider {
         }
         function yPos() {
             var l = onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
-            return seeker.mapToItem(null, 0, l).y
+            return seeker.mapToItem(null, 0, l).y | 0
         }
 
-        function repos(mx) {
-            var l = onTop ? (-height - preview.separation) : (preview.separation + seeker.height)
-            x = Alg.clamp(mx - pv.width * 0.5, 0, App.window.width - pv.width)
-        }
+        function repos(mx) { x = Alg.clamp(mx - pv.width * 0.5, 0, App.window.width - pv.width) | 0 }
 
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter

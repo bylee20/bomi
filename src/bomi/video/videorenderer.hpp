@@ -26,6 +26,7 @@ struct VideoFrameOsdVertex {
 class VideoRenderer : public ShaderRenderItem<VideoFrameOsdVertex> {
     Q_OBJECT
     using Super = ShaderRenderItem<VideoFrameOsdVertex>;
+    Q_PROPERTY(QRectF frameRect READ screenRect NOTIFY screenRectChanged)
 public:
     VideoRenderer(QQuickItem *parent = 0);
     ~VideoRenderer();
