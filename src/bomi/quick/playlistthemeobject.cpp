@@ -59,6 +59,7 @@ ControlsThemeWidget::ControlsThemeWidget(QWidget *parent)
     d->showPreviewOnMouseOverSeekBar = d->addItem(tr("Show preview when mouse hovers on seek bar"));
     d->showKeyframeForPreview = d->addItem(tr("Show nearest keyframe instead of exact frame"), d->showPreviewOnMouseOverSeekBar);
     d->previewSize = new QTreeWidgetItem(d->showPreviewOnMouseOverSeekBar);
+    d->previewSize->setFlags(Qt::ItemIsEnabled);
     d->ui.tree->setItemWidget(d->previewSize, 0, d->ui.preview_size_widget);
 
     d->ui.tree->expandAll();
