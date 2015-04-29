@@ -1,4 +1,5 @@
 #include "simplelistwidget.hpp"
+#include "dialog/bbox.hpp"
 
 SimpleListWidgetBase::SimpleListWidgetBase(QWidget *parent)
     : QWidget(parent)
@@ -102,15 +103,10 @@ auto StringListWidget::getNewItem(QString *item) -> bool
 {
     QDialog dlg(this);
     _SetWindowTitle(&dlg, tr("Add"));
-    QLineEdit *edit = new QLineEdit(&dlg);
-    QPushButton *ok = new QPushButton(tr("&Ok"), &dlg);
-    QPushButton *cancel = new QPushButton(tr("&Cancel"), &dlg);
-    QHBoxLayout *hbox = new QHBoxLayout(&dlg);
+    auto edit = new QLineEdit(&dlg);
+    auto hbox = new QHBoxLayout(&dlg);
     hbox->addWidget(edit);
-    hbox->addWidget(ok);
-    hbox->addWidget(cancel);
-    connect(ok, &QPushButton::clicked, &dlg, &QDialog::accept);
-    connect(cancel, &QPushButton::clicked, &dlg, &QDialog::reject);
+    hbox->addWidget(BBox::make(&dlg));
     if (!dlg.exec())
         return false;
     *item = edit->text();
