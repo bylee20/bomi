@@ -42,7 +42,7 @@ MotionIntrplOptionWidget::MotionIntrplOptionWidget(QWidget *parent)
 
     auto r2 = new QRadioButton(tr("Target framerate"));
     d->fps = new QDoubleSpinBox;
-    d->fps->setSuffix("fps"_a);
+    d->fps->setSuffix(" fps"_a);
     d->fps->setDecimals(2);
     d->fps->setMaximum(999);
     d->fps->setMinimum(10);

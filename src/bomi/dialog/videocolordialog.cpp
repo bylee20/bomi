@@ -46,7 +46,7 @@ VideoColorDialog::VideoColorDialog(QWidget *parent)
         grid->addWidget(l.spin, type + offset, 2);
         l.slider->setRange(-100, 100);
         l.spin->setRange(-100, 100);
-        l.spin->setSuffix("%"_a);
+        l.spin->setSuffix(qApp->translate("PrefDialog", " %"));
         connect(l.slider, &QSlider::valueChanged, l.spin, &QSpinBox::setValue);
         connect(SIGNAL_VT(l.spin, valueChanged, int), l.slider, [=] (int v) {
             l.slider->setValue(v);

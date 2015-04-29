@@ -58,7 +58,7 @@ struct StepInfo {
     const bool sign = false;
     auto text(double step, double prop) const -> QString;
     auto text(double step, ChangeValue direction, bool sign) const -> QString;
-    auto suffix() const -> QString { return qApp->translate("Pref", m_suffix); }
+    auto suffix() const -> QString { return qApp->translate("PrefDialog", m_suffix); }
     auto value(Steps *s) const -> StepValue& { return (s->*m_mem); }
     auto value(const Steps *s) const -> const StepValue& { return (s->*m_mem); }
 private:

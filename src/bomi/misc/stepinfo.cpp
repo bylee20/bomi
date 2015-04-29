@@ -38,25 +38,27 @@ Steps::Steps() {
 #define STEP(name, val, ...) { \
     static const StepInfo info(#name, &Steps::name, __VA_ARGS__);\
     name = {val, &info}; }
-#define TIME(name, tm, sng) STEP(name, tm, 999, sng, 3, QT_TR_NOOP("sec"), true, 1000)
+    const auto sec = QT_TRANSLATE_NOOP("PrefDialog", " sec");
+    const auto pct = QT_TRANSLATE_NOOP("PrefDialog", " %");
+#define TIME(name, tm, sng) STEP(name, tm, 999, sng, 3, sec, true, 1000)
 
     TIME(seek1_sec,  5, 1);
     TIME(seek2_sec, 30, 1);
     TIME(seek3_sec, 60, 1);
-    STEP(speed_pct, 10, 99, 1, 0, "%", false, 1e-2);
+    STEP(speed_pct, 10, 99, 1, 0, pct, false, 1e-2);
 
     STEP(aspect_ratio, 0.001, 9.99999, 0.001, 5, "", false, 1);
-    STEP(color_pct, 1, 99, 1, 0, "%", true, 1);
-    STEP(zoom_pct, 0.1, 99.999, 0.1, 3, "%", false, 1e-2);
-    STEP(video_offset_pct, 0.1, 99.999, 0.1, 3, "%", true, 1e-2);
+    STEP(color_pct, 1, 99, 1, 0, pct, true, 1);
+    STEP(zoom_pct, 0.1, 99.999, 0.1, 3, pct, false, 1e-2);
+    STEP(video_offset_pct, 0.1, 99.999, 0.1, 3, pct, true, 1e-2);
 
-    STEP(volume_pct, 2, 99, 1, 0, "%", false, 1e-2);
-    STEP(amp_pct, 10, 99, 1, 0, "%", false, 1e-2);
+    STEP(volume_pct, 2, 99, 1, 0, pct, false, 1e-2);
+    STEP(amp_pct, 10, 99, 1, 0, pct, false, 1e-2);
     TIME(audio_sync_sec, 0.2, 0.1);
 
     TIME(sub_sync_sec, 0.2, 0.1);
-    STEP(sub_pos_pct, 1, 99, 1, 0, "%", false, 1e-2);
-    STEP(sub_scale_pct, 1.0, 99.9, 1.0, 1, "%", true, 1e-2);
+    STEP(sub_pos_pct, 1, 99, 1, 0, pct, false, 1e-2);
+    STEP(sub_scale_pct, 1.0, 99.9, 1.0, 1, pct, true, 1e-2);
 
 #undef STEP
 #undef TIME

@@ -33,7 +33,8 @@ auto WindowSize::baseText(bool dis) -> QString
 
 auto WindowSize::fillAction(QAction *action) const -> void
 {
-    action->setText(baseText(display_based) % " x"_a % _N(qRound(rate * 100)) % '%'_q);
+    action->setText(baseText(display_based) % " x"_a % _N(qRound(rate * 100)) %
+                    qApp->translate("PrefDialog", " %"));
     action->setData(QVariant::fromValue(*this));
 }
 
@@ -83,7 +84,7 @@ WindowSizeWidget::WindowSizeWidget(QWidget *parent)
         pcnt->setRange(10, 900);
         pcnt->setSingleStep(5);
         pcnt->setAccelerated(true);
-        pcnt->setSuffix(u"%"_q);
+        pcnt->setSuffix(qApp->translate("PrefDialog", " %"));
 
         PLUG_CHANGED(base);
         PLUG_CHANGED(pcnt);

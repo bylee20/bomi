@@ -110,7 +110,7 @@ LogOptionWidget::LogOptionWidget(QWidget *parent)
     auto hbox = new QHBoxLayout;
     hbox->setMargin(0);
     d->viewer = new QSpinBox;
-    d->viewer->setSuffix(tr("Lines"));
+    d->viewer->setSuffix(tr(" Lines"));
     d->viewer->setSpecialValueText(tr("No Limit"));
     d->viewer->setRange(0, 9999999);
     d->viewer->setAccelerated(true);

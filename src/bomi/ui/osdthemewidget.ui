@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>295</width>
-    <height>272</height>
+    <width>298</width>
+    <height>290</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -58,7 +58,7 @@
         <item>
          <widget class="QDoubleSpinBox" name="message_duration">
           <property name="suffix">
-           <string>sec</string>
+           <string> sec</string>
           </property>
           <property name="decimals">
            <number>1</number>
@@ -117,7 +117,7 @@
         <item>
          <widget class="QSpinBox" name="timeline_margin">
           <property name="suffix">
-           <string>% of height</string>
+           <string> % of height</string>
           </property>
           <property name="maximum">
            <number>50</number>
@@ -151,7 +151,7 @@
         <item>
          <widget class="QDoubleSpinBox" name="timeline_duration">
           <property name="suffix">
-           <string>sec</string>
+           <string> sec</string>
           </property>
           <property name="decimals">
            <number>1</number>
