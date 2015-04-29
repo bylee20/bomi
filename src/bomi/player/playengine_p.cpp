@@ -337,8 +337,10 @@ auto PlayEngine::Data::onLoad() -> void
     } else {
         if (edition >= 0)
             mpv.setAsync("file-local-options/edition", edition);
-        if (start > 0)
-            mpv.setAsync("file-local-options/start", QByteArray::number(start * 1e-3, 'f'));
+        if (start > 0) {
+            const auto secs = QByteArray::number((start + t.offset) * 1e-3, 'f');
+            mpv.setAsync("file-local-options/start", secs);
+        }
         t.start = -1;
     }
 
