@@ -300,7 +300,7 @@ class SharpenParamSet : public IntrplParamSetData {
             auto grid = new QGridLayout(this);
             grid->addWidget(new QLabel(IntrplParamSetWidget::tr("Kernel size")), 0, 0);
             grid->addWidget(m_kernel = new QComboBox, 0, 1, 1, -1);
-            add(grid, 1, IntrplParamSetWidget::tr("Sharpeness"), m_sharpeness, 0, 10, 2);
+            add(grid, 1, IntrplParamSetWidget::tr("Sharpness"), m_sharpness, 0, 10, 2);
             m_kernel->addItem(u"3x3"_q, 3);
             m_kernel->addItem(u"3x3"_q, 5);
             connect(SIGNAL_VT(m_kernel, currentIndexChanged, int),
@@ -310,20 +310,20 @@ class SharpenParamSet : public IntrplParamSetData {
         {
             auto p = static_cast<const SharpenParamSet*>(set.data());
             m_kernel->setCurrentIndex(m_kernel->findData(p->kernel));
-            m_sharpeness->setValue(p->sharpeness * 100 + 0.5);
+            m_sharpness->setValue(p->sharpeness * 100 + 0.5);
         }
         auto paramSet() const -> IntrplParamSet
         {
             IntrplParamSet set(Interpolator::Sharpen);
             auto p = static_cast<SharpenParamSet*>(set.data());
             p->kernel = m_kernel->currentData().toInt();
-            p->sharpeness = m_sharpeness->value() * 1e-2;
+            p->sharpeness = m_sharpness->value() * 1e-2;
             return set;
         }
         auto type() const -> Interpolator final { return Interpolator::Sharpen; }
     private:
         QComboBox *m_kernel;
-        QSlider *m_sharpeness;
+        QSlider *m_sharpness;
     };
 public:
     auto type() const -> Interpolator final { return Interpolator::Sharpen; }
