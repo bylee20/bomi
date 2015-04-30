@@ -214,18 +214,15 @@ public Q_SLOTS:
 Q_SIGNALS:
     void colorChanged(const QColor &);
 
-protected:
-    void paintEvent(QPaintEvent *e);
-
 private Q_SLOTS:
     void buttonPressed(bool toggled);
     void popupClosed();
 
 private:
+    auto getIcon(const QColor &color) const -> QPixmap;
     ColorPickerPopup *popup;
     QColor col;
     bool withColorDialog;
-    bool dirty;
     bool firstInserted;
 };
 
