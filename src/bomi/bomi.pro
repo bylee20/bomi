@@ -528,7 +528,8 @@ TRANSLATIONS += translations/bomi_en.ts \
 	translations/bomi_cs.ts \
 	translations/bomi_es.ts \
 	translations/bomi_ru.ts \
-	translations/bomi_pl.ts
+	translations/bomi_pl.ts \
+	translations/bomi_zh_CN.ts
 
 FORMS += \
     ui/aboutdialog.ui \
@@ -547,77 +548,74 @@ FORMS += \
     ui/fileassocdialog.ui \
     ui/encoderdialog.ui
 
+OBJECTIVE_SOURCES +=
+
 OTHER_FILES += \
-	imports/bomi/qmldir \
-	imports/bomi/TextOsd.qml \
-	imports/bomi/ProgressOsd.qml \
-	imports/bomi/PlayInfoView.qml \
-	imports/bomi/Osd.qml \
-	imports/bomi/Logo.qml \
-	skins/simple/bomi.qml \
-	imports/bomi/Button.qml \
-	imports/bomi/Player.qml \
-	imports/bomi/TimeText.qml \
+    imports/bomi/AppWithDock.qml \
+    imports/bomi/AppWithFloating.qml \
+    imports/bomi/AutoDisplayZone.qml \
+    imports/bomi/BarVisualizer.qml \
+    imports/bomi/BaseApp.qml \
+    imports/bomi/Button.qml \
+    imports/bomi/ButtonIcon.qml \
+    imports/bomi/Circle.qml \
+    imports/bomi/HideTimer.qml \
+    imports/bomi/HistoryView.qml \
+    imports/bomi/ItemColumn.qml \
+    imports/bomi/Logo.qml \
+    imports/bomi/MessageBox.qml \
+    imports/bomi/ModelView.qml \
+    imports/bomi/Osd.qml \
+    imports/bomi/Player.qml \
+    imports/bomi/PlayInfoAudioOutput.qml \
+    imports/bomi/PlayInfoAvOutput.qml \
+    imports/bomi/PlayInfoText.qml \
+    imports/bomi/PlayInfoTrack.qml \
+    imports/bomi/PlayInfoVideoOutput.qml \
+    imports/bomi/PlayInfoView.qml \
+    imports/bomi/PlaylistView.qml \
+    imports/bomi/ProgressBar.qml \
+    imports/bomi/ProgressOsd.qml \
+    imports/bomi/ScrollBar.qml \
+    imports/bomi/SimpleBlur.qml \
+    imports/bomi/Slider.qml \
+    imports/bomi/StateButton.qml \
+    imports/bomi/Text.qml \
+    imports/bomi/TextOsd.qml \
+    imports/bomi/TextStyle.qml \
+    imports/bomi/TimeDuration.qml \
+    imports/bomi/TimeSlider.qml \
+    imports/bomi/TimeText.qml \
+    imports/bomi/ToolPlaneStyle.qml \
+    imports/bomi/VideoPreviewStyle.qml \
+    imports/bomi/VolumeSlider.qml \
+    skins/air/bomi.qml \
+    skins/air/IconTextButton.qml \
+    skins/air/ImageButton.qml \
+    skins/Ardis/bomi.qml \
+    skins/Ardis/MediaButton.qml \
+    skins/Ardis/SmallButton.qml \
+    skins/Breeze/bomi.qml \
+    skins/Breeze Dark/bomi.qml \
+    skins/classic/bomi.qml \
     skins/classic/FramedButton.qml \
-	skins/classic/bomi.qml \
-	skins/modern/bomi.qml \
-    emptyskin.qml \
-	imports/bomi/AppWithFloating.qml \
-	imports/bomi/AppWithDock.qml \
-	imports/bomi/TimeSlider.qml \
-	imports/bomi/VolumeSlider.qml \
-	imports/bomi/PlayInfoText.qml \
-	skins/GaN/bomi.qml \
-	imports/bomi/ItemColumn.qml \
-	imports/bomi/ModelView.qml \
-	imports/bomi/ScrollBar.qml \
-	imports/bomi/MessageBox.qml \
-	imports/bomi/ProgressBar.qml \
-	skins/Faenza-Zukitwo/bomi.qml \
-	imports/bomi/PlayInfoVideoOutput.qml \
-	imports/bomi/PlayInfoAudioOutput.qml \
-	imports/bomi/PlayInfoTrack.qml \
-	skins/one/bomi.qml
+    skins/Faenza-Zukitwo/bomi.qml \
+    skins/Freya/bomi.qml \
+    skins/GaN/bomi.qml \
+    skins/GaN/TextButton.qml \
+    skins/GaN/TimeText.qml \
+    skins/metro/bomi.qml \
+    skins/metro/MetroButton.qml \
+    skins/modern/bomi.qml \
+    skins/native/bomi.qml \
+    skins/native/MediaButton.qml \
+    skins/Numix/bomi.qml \
+    skins/one/bomi.qml \
+    skins/one/IconButton.qml \
+    skins/simple/bomi.qml \
+    skins/Tethys/bomi.qml
+
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}
 }
-
-OBJECTIVE_SOURCES +=
-
-DISTFILES += \
-	imports/bomi/Slider.qml \
-    imports/bomi/Circle.qml \
-    skins/one/IconButton.qml \
-    imports/bomi/TimeDuration.qml \
-    imports/bomi/Text.qml \
-    skins/Breeze/bomi.qml \
-	"skins/Breeze Dark/bomi.qm"l \
-    skins/GaN/TextButton.qml \
-    imports/bomi/ButtonIcon.qml \
-    skins/GaN/TimeText.qml \
-    skins/Ardis/SmallButton.qml \
-    skins/Ardis/MediaButton.qml \
-    skins/Ardis/bomi.qml \
-    imports/bomi/HideTimer.qml \
-    skins/Numix/bomi.qml \
-    skins/native/bomi.qml \
-    skins/native/MediaButton.qml \
-    imports/bomi/AutoDisplayZone.qml \
-    imports/bomi/BaseApp.qml \
-    imports/bomi/PlaylistView.qml \
-    imports/bomi/TextStyle.qml \
-    skins/air/bomi.qml \
-    skins/air/ImageButton.qml \
-    skins/air/IconTextButton.qml \
-	imports/bomi/PlayInfoAvOutput.qml \
-    imports/bomi/VideoPreviewStyle.qml \
-    skins/Freya/bomi.qml \
-    imports/bomi/SimpleBlur.qml \
-    imports/bomi/ToolPlaneStyle.qml \
-    imports/bomi/HistoryView.qml \
-    skins/Tethys/bomi.qml \
-    skins/metro/bomi.qml \
-    skins/metro/MetroButton.qml \
-    imports/bomi/BarVisualizer.qml \
-    imports/bomi/StateButton.qml
