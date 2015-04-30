@@ -308,8 +308,7 @@ auto MainWindow::Data::plugMenu() -> void
     Menu &video = menu(u"video"_q);
 
     auto ratio = &video(u"aspect"_q);
-    g = ratio->g(u"preset"_q);
-#define PLUG_RATIO(prop, s) {\
+#define PLUG_RATIO(prop, s) g = ratio->g(u"preset"_q); {\
     PROP_NOTIFY(prop, [=] (double v) { \
         if (auto checked = g->setChecked(v)) return checked->text(); \
         const auto size = e.videoSizeHint(); \
@@ -330,7 +329,6 @@ auto MainWindow::Data::plugMenu() -> void
     });
 
     ratio = &video(u"crop"_q);
-    g = ratio->g();
     PLUG_RATIO(video_crop_ratio, setVideoCropRatio);
     PLUG_ENUM_CHILD(video, video_rotation, setVideoRotation);
 

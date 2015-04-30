@@ -370,7 +370,7 @@ RootMenu::RootMenu()
 
         d->separator();
 
-        d->menu(u"aspect"_q, QT_TR_NOOP("Aspect Ratio"), [=] () {
+        auto addRatioActions = [&] () {
             d->action(u"cycle"_q, QT_TR_NOOP("Select Next"));
             d->separator();
             auto g = u"preset"_q;
@@ -382,10 +382,13 @@ RootMenu::RootMenu()
             d->actionToGroup(u"16:9"_q, QT_TR_NOOP("16:9 (HDTV)"), true, g)->setData(16./9.);
             d->actionToGroup(u"1.85:1"_q, QT_TR_NOOP("1.85:1 (Wide Vision)"), true, g)->setData(1.85);
             d->actionToGroup(u"2.35:1"_q, QT_TR_NOOP("2.35:1 (CinemaScope)"), true, g)->setData(2.35);
+        };
+        d->menu(u"aspect"_q, QT_TR_NOOP("Aspect Ratio"), [=] () {
+            addRatioActions();
             d->separator();
             d->stepPair(u"adjust"_q);
         });
-        d->enumMenuCheckable<VideoRatio>(u"crop"_q, QT_TR_NOOP("Crop"), true);
+        d->menu(u"crop"_q, QT_TR_NOOP("Crop"), [=] () { addRatioActions(); });
         d->menuStepReset(u"zoom"_q, QT_TR_NOOP("Zoom"));
         d->enumMenuCheckable<Rotation>(true);
 
