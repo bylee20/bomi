@@ -3,7 +3,15 @@
 
 #include "channelmanipulation.hpp"
 
-struct ChannelName {const char *abbr; const char *desc;};
+struct ChannelName {
+    ChannelName(const char *abbr, const char *desc)
+        : abbr(abbr), desc(desc) { }
+    const char *abbr;
+    auto description() const -> QString;
+private:
+    friend class ChannelLayoutMap;
+    const char *desc;
+};
 
 class ChannelLayoutMap {
 public:

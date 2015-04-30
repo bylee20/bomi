@@ -131,7 +131,7 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     for (auto &name : ChannelLayoutMap::channelNames()) {
         if (!ex.isEmpty())
             ex += '\n'_q;
-        ex += _L(name.abbr) % ": "_a % _L(name.desc);
+        ex += _L(name.abbr) % ": "_a % name.description();
     }
     grid->addWidget(new QLabel(ex), 0, 2, 2, 1);
     auto onComboChanged = [this] () { d->fillMap(); d->makeTable(); };

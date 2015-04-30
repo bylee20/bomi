@@ -10,20 +10,6 @@ auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool
     return mp_chmap_from_str(chmap, bstr0(data.constData()));
 }
 
-static const QVector<ChannelName> ChNames = {
-    { "FL", "Front Left" },
-    { "FR", "Front Right" },
-    { "FC", "Front Center" },
-    { "LFE", "Low Frequency Effects" },
-    { "BL", "Back Left" },
-    { "BR", "Back Right" },
-    { "FLC", "Front Left-of-Center" },
-    { "FRC", "Front Right-of-Center" },
-    { "BC", "Back Center" },
-    { "SL", "Side Left" },
-    { "SR", "Side Right" }
-};
-
 SIA to_mp_speaker_id(SpeakerId speaker) -> mp_speaker_id
     { return SpeakerIdInfo::data(speaker); }
 
@@ -219,8 +205,26 @@ auto ChannelLayoutMap::fromString(const QString &text) -> ChannelLayoutMap
     return map;
 }
 
+auto ChannelName::description() const -> QString
+{
+    return qApp->translate("SpeakerId", desc);
+}
+
 auto ChannelLayoutMap::channelNames() -> const QVector<ChannelName>&
 {
+    static const QVector<ChannelName> ChNames = {
+        { "FL",  QT_TRANSLATE_NOOP("SpeakerId", "Front Left") },
+        { "FR",  QT_TRANSLATE_NOOP("SpeakerId", "Front Right") },
+        { "FC",  QT_TRANSLATE_NOOP("SpeakerId", "Front Center") },
+        { "LFE", QT_TRANSLATE_NOOP("SpeakerId", "Low Frequency Effects") },
+        { "BL",  QT_TRANSLATE_NOOP("SpeakerId", "Back Left") },
+        { "BR",  QT_TRANSLATE_NOOP("SpeakerId", "Back Right") },
+        { "FLC", QT_TRANSLATE_NOOP("SpeakerId", "Front Left-of-Center") },
+        { "FRC", QT_TRANSLATE_NOOP("SpeakerId", "Front Right-of-Center") },
+        { "BC",  QT_TRANSLATE_NOOP("SpeakerId", "Back Center") },
+        { "SL",  QT_TRANSLATE_NOOP("SpeakerId", "Side Left") },
+        { "SR",  QT_TRANSLATE_NOOP("SpeakerId", "Side Right") }
+    };
     return ChNames;
 }
 

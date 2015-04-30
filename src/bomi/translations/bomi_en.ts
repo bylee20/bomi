@@ -4658,6 +4658,64 @@ Please confirm authentication informations and try again.</source>
     </message>
 </context>
 <context>
+    <name>SpeakerId</name>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="216"/>
+        <source>Front Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="217"/>
+        <source>Front Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="218"/>
+        <source>Front Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="219"/>
+        <source>Low Frequency Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="220"/>
+        <source>Back Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="221"/>
+        <source>Back Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="222"/>
+        <source>Front Left-of-Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="223"/>
+        <source>Front Right-of-Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="224"/>
+        <source>Back Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="225"/>
+        <source>Side Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../audio/channellayoutmap.cpp" line="226"/>
+        <source>Side Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>StreamTrack</name>
     <message>
         <location filename="../player/streamtrack.cpp" line="61"/>
