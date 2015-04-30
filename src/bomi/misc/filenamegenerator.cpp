@@ -150,7 +150,7 @@ auto FileNameGenerator::toolTip() -> QString
     return qApp->translate("PrefDialog",
         "Placeholders\n\n"
 
-        "Ones with _0 suffix correspons to with-leading-zero version.\n"
+        "Ones with _0 suffix correspond to with-leading-zero version.\n"
         "Small n in suffix represents a positive integer.\n\n"
 
         "Current date/time\n"
