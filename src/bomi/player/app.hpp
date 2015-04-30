@@ -23,6 +23,8 @@ public:
     auto isUnique() const -> bool;
     auto executeToQuit() -> bool;
     auto availableStyleNames() const -> QStringList;
+    auto setUseLocalConfig(bool local) -> void;
+    auto useLocalConfig() const -> bool;
 #ifdef Q_OS_MAC
     auto globalMenuBar() const -> QMenuBar*;
 #endif

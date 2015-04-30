@@ -8,6 +8,7 @@ class SettingsObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString name READ name)
 public:
+    SettingsObject();
     ~SettingsObject() { close(); }
     auto name() const -> QString { return m_name; }
     auto get(const QString &key, const QVariant &def) const -> QVariant;

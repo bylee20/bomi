@@ -34,6 +34,11 @@ int main(int argc, char **argv) {
         gtk_disable_setlocale();
 #endif
     QApplication::setAttribute(Qt::AA_X11InitThreads);
+    QApplication::setOrganizationName(u"xylosper"_q);
+    QApplication::setOrganizationDomain(u"xylosper.net"_q);
+    QApplication::setApplicationName(_L(cApp.name()));
+    QApplication::setApplicationVersion(_L(cApp.version()));
+
     registerType();
 
     QScopedPointer<App> app(new App(argc, argv));

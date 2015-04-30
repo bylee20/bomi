@@ -1,5 +1,11 @@
 #include "settingsobject.hpp"
 
+SettingsObject::SettingsObject()
+    : m_set(_WritablePath(Location::Config) % "/skinsettings.ini"_a, QSettings::IniFormat)
+{
+
+}
+
 auto SettingsObject::open(const QString &name) -> void
 {
     if (m_name != name) {

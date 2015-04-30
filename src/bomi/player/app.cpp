@@ -30,8 +30,10 @@ DECLARE_LOG_CONTEXT(App)
 namespace Global {
 auto open_folders() -> QMap<QString, QString>;
 auto set_open_folders(const QMap<QString, QString> &folders) -> void;
+auto _OldWritablePath(Location loc) -> QString;
 auto _SetWindowTitle(QWidget *w, const QString &title) -> void
 { cApp.setWindowTitle(w, title); }
+extern bool useLocalConfig;
 }
 
 auto translator_load(const Locale &locale) -> bool;
@@ -124,7 +126,7 @@ struct App::Data {
     bool gldebug = false;
     QStringList styleNames;
     QString styleName = qApp->style()->objectName();
-    bool unique = true;
+    bool unique = true, useLocalConfig = Global::useLocalConfig;
     QMap<QString, QVariant> openFolders;
     struct { Mrl mrl; QString sub; auto clear() { mrl = {}; sub.clear(); } } pended;
 #ifdef Q_OS_MAC
@@ -154,7 +156,7 @@ struct App::Data {
             main->setSubtitle(sub);
     }
 
-    auto import() -> bool
+    auto import() -> void
     {
         auto copy = [] (const QString &from, const QString &to) -> bool
         {
@@ -168,6 +170,15 @@ struct App::Data {
                 return false;
             }
         };
+
+        const auto config = _WritablePath(Location::Config, false);
+        const auto old = _OldWritablePath(Location::Config);
+        if (config != old && !QDir(config).exists() && QDir(old).exists()) {
+            QDir().mkpath(config);
+            auto files = QDir(old).entryInfoList(QDir::Files);
+            for (auto &file : files)
+                copy(file.absoluteFilePath(), config % '/'_q % file.fileName());
+        }
 
         auto path = [] (Location loc, const QString &fileName) -> QString
         {
@@ -186,19 +197,40 @@ struct App::Data {
         copy(path(Location::Data, "/appstate.json"_a), _WritablePath(Location::Config) % "/appstate.json"_a);
         copy(path(Location::Data, "/history.db"_a), _WritablePath(Location::Config) % "/history.db"_a);
         copy(path(Location::Config, "/pref.json"_a), _WritablePath(Location::Config) % "/pref.json"_a);
-        return copy(path(Location::Config, ".conf"_a), _WritablePath(Location::Config) % ".conf"_a);
+    }
+
+    auto copyConfig(const QString &from, const QString &to) -> void
+    {
+        if (to != from) {
+            QDir().mkpath(to);
+            auto files = QDir(from).entryInfoList(QDir::Files);
+            for (auto &file : files) {
+                const QString dest = to % '/'_q % file.fileName();
+                qDebug() << "remove" << dest << QFile::remove(dest);
+                qDebug() << "copy" << file.absoluteFilePath() << dest << QFile::copy(file.absoluteFilePath(), dest);
+            }
+        }
     }
 };
 
 App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
+    if (QFile::exists(applicationDirPath() % "/bomi.ini"_a)) {
+        QSettings set(applicationDirPath() % "/bomi.ini"_a, QSettings::IniFormat);
+        d->useLocalConfig = set.value(u"app/use-local-config"_q, false).toBool();
+        Global::useLocalConfig = set.value(u"global/use-local-config"_q, false).toBool();
+        if (d->useLocalConfig != Global::useLocalConfig) {
+            const auto from = _WritablePath(Location::Config, false);
+            Global::useLocalConfig = d->useLocalConfig;
+            const auto to = _WritablePath(Location::Config, false);
+            d->copyConfig(from, to);
+            set.setValue(u"global/use-local-config"_q, Global::useLocalConfig);
+        }
+    }
+
 #ifdef Q_OS_LINUX
     setlocale(LC_NUMERIC,"C");
 #endif
-    setOrganizationName(u"xylosper"_q);
-    setOrganizationDomain(u"xylosper.net"_q);
-    setApplicationName(_L(name()));
-    setApplicationVersion(_L(version()));
 
     OS::initialize();
 
@@ -482,6 +514,19 @@ auto App::setLocale(const Locale &locale) -> void
 auto App::locale() const -> Locale
 {
     return d->locale;
+}
+
+auto App::setUseLocalConfig(bool local) -> void
+{
+    if (_Change(d->useLocalConfig, local)) {
+        QSettings set(applicationDirPath() % "/bomi.ini"_a, QSettings::IniFormat);
+        set.setValue(u"app/use-local-config"_q, d->useLocalConfig);
+    }
+}
+
+auto App::useLocalConfig() const -> bool
+{
+    return d->useLocalConfig;
 }
 
 auto App::defaultStyleName() const -> QString

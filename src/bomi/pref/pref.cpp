@@ -52,6 +52,7 @@ auto Pref::save() const -> void
     QJsonObject json = _JsonFromQObject(this);
     storage.write(json);
     cApp.setUnique(m_app_unique);
+    cApp.setUseLocalConfig(m_app_use_local_config);
     cApp.setLocale(m_app_locale);
     cApp.setStyleName(m_app_style);
     cApp.setLogOption(m_app_log_option);
@@ -127,6 +128,7 @@ auto Pref::load() -> void
         }
     }
     m_app_unique = cApp.isUnique();
+    m_app_use_local_config = cApp.useLocalConfig();
     m_app_locale = cApp.locale();
     m_app_style = cApp.styleName().toLower();
     m_app_log_option = cApp.logOption();

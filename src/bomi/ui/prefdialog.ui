@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>13</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1383,18 +1383,6 @@
        <widget class="QWidget" name="gen_behaviours">
         <layout class="QVBoxLayout" name="verticalLayout_28">
          <item>
-          <widget class="QGroupBox" name="groupBox_16">
-           <property name="title">
-            <string>Window style (Restart required)</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_20">
-            <item>
-             <widget class="DataComboBox" name="app_style"/>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
           <widget class="QGroupBox" name="system_tray_group">
            <property name="title">
             <string>System tray</string>
@@ -1509,6 +1497,20 @@
           </widget>
          </item>
          <item>
+          <widget class="QCheckBox" name="app_unique">
+           <property name="text">
+            <string>Run only single bomi application at the same time</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="app_use_local_config">
+           <property name="text">
+            <string>Save persistent data in application folder (restart required)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <layout class="QHBoxLayout" name="horizontalLayout_10">
            <item>
             <widget class="QCheckBox" name="disable_screensaver">
@@ -1538,13 +1540,6 @@
             </spacer>
            </item>
           </layout>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="app_unique">
-           <property name="text">
-            <string>Run only single bomi application at the same time</string>
-           </property>
-          </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="fit_to_video">
@@ -1624,6 +1619,18 @@
                </widget>
               </item>
              </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_16">
+           <property name="title">
+            <string>Window style (Restart required)</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_20">
+            <item>
+             <widget class="DataComboBox" name="app_style"/>
             </item>
            </layout>
           </widget>

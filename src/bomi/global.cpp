@@ -280,15 +280,32 @@ auto _GetOpenDir(QWidget *parent, const QString &title,
     return ret;
 }
 
-auto _WritablePath(Location loc) -> QString
+bool useLocalConfig = false;
+
+auto _WritablePath(Location loc, bool create) -> QString
+{
+    QString path;
+    if (loc == Location::Config && useLocalConfig)
+        path = QCoreApplication::applicationDirPath() % "/config"_a;
+    else {
+        const auto std = static_cast<QStandardPaths::StandardLocation>(loc);
+        path = QStandardPaths::writableLocation(std);
+        if (loc == Location::Config || loc == Location::Cache)
+            path += '/'_q % qApp->organizationName()
+                  % '/'_q % qApp->applicationName();
+    }
+    if (create && !QDir().mkpath(path))
+        return QString();
+    return path;
+}
+
+auto _OldWritablePath(Location loc) -> QString
 {
     const auto std = static_cast<QStandardPaths::StandardLocation>(loc);
     auto path = QStandardPaths::writableLocation(std);
     if (loc == Location::Config)
         path += '/'_q % qApp->organizationName()
               % '/'_q % qApp->applicationName();
-    if (!QDir().mkpath(path))
-        return QString();
     return path;
 }
 

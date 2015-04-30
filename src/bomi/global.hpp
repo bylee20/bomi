@@ -179,13 +179,13 @@ enum class Location {
     Temp        = QStandardPaths::TempLocation,
     Home        = QStandardPaths::HomeLocation,
     Data        = QStandardPaths::DataLocation,
-    Cache       = QStandardPaths::CacheLocation,
+    Cache       = QStandardPaths::GenericCacheLocation,
     Runtime     = QStandardPaths::RuntimeLocation,
-    Config      = QStandardPaths::ConfigLocation,
+    Config      = QStandardPaths::GenericConfigLocation,
     Download    = QStandardPaths::DownloadLocation
 };
 
-auto _WritablePath(Location loc) -> QString;
+auto _WritablePath(Location loc, bool create = true) -> QString;
 
 enum ExtType {
     AllExt      = 0,
