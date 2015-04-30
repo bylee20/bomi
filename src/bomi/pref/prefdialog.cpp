@@ -1,6 +1,7 @@
 #include "prefdialog.hpp"
 #include "prefdialog_p.hpp"
 #include "pref.hpp"
+#include "misc/filenamegenerator.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/shortcutdialog.hpp"
 #include "player/app.hpp"
@@ -151,6 +152,7 @@ PrefDialog::PrefDialog(QWidget *parent)
                                     QVariant::fromValue(QuickSnapshotSave::Ask));
     d->saveQuickSnapshot->setCurrentData(QVariant::fromValue(QuickSnapshotSave::Current));
     d->ui.quick_snapshot_format->addItems(_ExtList(WritableImageExt));
+    d->ui.quick_snapshot_template->setToolTip(FileNameGenerator::toolTip());
 
     d->ui.sub_ext->addItem(QString(), QString());
     d->ui.sub_ext->addItemTextData(_ExtList(SubtitleExt));

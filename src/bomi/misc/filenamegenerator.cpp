@@ -158,7 +158,7 @@ auto FileNameGenerator::toolTip() -> QString
         "%MONTH%, %MONTH_0%, %MONTH_S%(short name), %MONTH_L%(long name),\n"
         "%DAY%, %DAY_0%,\n"
         "%HOUR%, %MIN%, %SEC%, %MSEC%,\n"
-        "%HOUR_0%, %MIN_0%, %SEC_0%, %MSEC_0%\n"
+        "%HOUR_0%, %MIN_0%, %SEC_0%, %MSEC_0%\n\n"
 
         "Playback information\n"
         "%T_HOUR%, %T_MIN%, %T_SEC%, %T_MSEC%,\n"
