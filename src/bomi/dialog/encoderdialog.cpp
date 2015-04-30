@@ -58,7 +58,7 @@ struct EncoderDialog::Data {
     ObjectStorage storage;
     QMap<QString, QVariant> copts;
     QMap<QString, CodecPair> fmts;
-    QString ext;
+    QString ext, ac, vc;
     QRect crop;
     int tick = -1, error = MPV_ERROR_SUCCESS;
     bool resizing = false;
@@ -110,25 +110,10 @@ EncoderDialog::EncoderDialog(QWidget *parent)
             this, &EncoderDialog::close);
     connect(SIGNAL_VT(d->ui.fps, currentIndexChanged, int), this,
             [=] (int idx) { d->ui.fps_value->setEnabled(idx == CFRAuto); });
-//    connect(SIGNAL_VT(d->ui.cw, valueChanged, int), this, [=] (int w) {
-//        if (d->ui.size->isChecked() && !d->resizing) {
-//            d->resizing = true;
-//            d->ui.ch->setValue(w / d->aspect() + 0.5);
-//            d->resizing = false;
-//        }
-//    });
-//    connect(SIGNAL_VT(d->ui.ch, valueChanged, int), this, [=] (int h) {
-//        if (d->ui.size->isChecked() && !d->resizing) {
-//            d->resizing = true;
-//            d->ui.cw->setValue(h * d->aspect() + 0.5);
-//            d->resizing = false;
-//        }
-//    });
 
     d->ui.file->setToolTip(FileNameGenerator::toolTip());
     d->ui.browse->setKey(u"encoder-folder"_q);
     d->ui.browse->setEditor(d->ui.folder);
-//    d->ui.size->setChecked(true);
 
     d->fmts[u"mkv"_q] = { u"libvorbis"_q, u"libx264"_q };
     d->fmts[u"mp4"_q] = { u"aac"_q, u"libx264"_q };
@@ -147,18 +132,18 @@ EncoderDialog::EncoderDialog(QWidget *parent)
 
     d->storage.restore();
 
-    const auto vc = d->fmts[d->ext].vc;
-    const auto ac = d->fmts[d->ext].ac;
+    d->vc = d->fmts[d->ext].vc;
+    d->ac = d->fmts[d->ext].ac;
     d->ui.ext->setCurrentText(d->ext);
-    d->ui.vc->setCurrentText(vc);
-    d->ui.ac->setCurrentText(ac);
-    d->ui.vcopts->setText(_C(d->copts)[vc].toString());
-    d->ui.acopts->setText(_C(d->copts)[ac].toString());
+    d->ui.vc->setCurrentText(d->vc);
+    d->ui.ac->setCurrentText(d->ac);
+    d->ui.vcopts->setText(_C(d->copts)[d->vc].toString());
+    d->ui.acopts->setText(_C(d->copts)[d->ac].toString());
 #define PLUG(av) \
     connect(SIGNAL_VT(d->ui.av##c, currentTextChanged, const QString&), \
             this, [=] (const QString &c) { \
-        auto &avc = d->fmts[d->ext].av##c; d->copts[avc] = d->ui.av##copts->text(); \
-        d->ui.av##copts->setText(_C(d->copts)[c].toString()); avc = c; });
+        d->copts[d->av##c] = d->ui.av##copts->text(); \
+        d->ui.av##copts->setText(_C(d->copts)[c].toString()); d->av##c = c; });
     PLUG(a); PLUG(v);
 #undef PLUG
     connect(SIGNAL_VT(d->ui.ext, currentTextChanged, const QString&), this, [=] (const QString &ext) {
@@ -191,11 +176,11 @@ EncoderDialog::EncoderDialog(QWidget *parent)
 EncoderDialog::~EncoderDialog()
 {
     cancel();
-    const auto ac = d->ui.ac->currentText();
-    const auto vc = d->ui.vc->currentText();
-    d->fmts[d->ext] = { ac, vc };
-    d->copts[ac] = d->ui.acopts->text();
-    d->copts[vc] = d->ui.vcopts->text();
+    d->ac = d->ui.ac->currentText();
+    d->vc = d->ui.vc->currentText();
+    d->fmts[d->ext] = { d->ac, d->vc };
+    d->copts[d->ac] = d->ui.acopts->text();
+    d->copts[d->vc] = d->ui.vcopts->text();
     d->storage.save();
     delete d;
 }
