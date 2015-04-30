@@ -15,6 +15,7 @@ struct VideoPreview::Data {
     VideoPreview *p = nullptr;
     int id = 0;
     bool redraw = false, active = false, keyframe = true, video = false;
+    bool loaded = false;
     QSize displaySize{0, 0};
     double rate = 0.0, aspect = 0, percent = 0;
     Mpv mpv;
@@ -45,7 +46,8 @@ VideoPreview::VideoPreview(QQuickItem *parent)
         if (_Change(d->id, id) && _Change(d->video, d->hasVideo()))
             emit hasVideoChanged(d->video);
     });
-
+    d->mpv.request(MPV_EVENT_START_FILE, [=] () { d->loaded = true; });
+    d->mpv.request(MPV_EVENT_END_FILE, [=] () { d->loaded = false; });
     d->mpv.setOption("hwdec", "no");
     d->mpv.setOption("aid", "no");
     d->mpv.setOption("sid", "no");
@@ -91,7 +93,7 @@ auto VideoPreview::rate() const -> double
 
 auto VideoPreview::setRate(double rate) -> void
 {
-    if (!d->active || !d->video)
+    if (!d->active || !d->video || !d->loaded)
         return;
     if (_Change(d->rate, rate)) {
         if (_Change(d->percent, qRound(d->rate * 10000)/100.0))
@@ -160,6 +162,8 @@ auto VideoPreview::paint(OpenGLFramebufferObject *fbo) -> void
 
 auto VideoPreview::load(const QByteArray &path) -> void
 {
+    if (path.contains("bomi-yle-"_b))
+        return;
     if (d->active)
         d->mpv.tellAsync("loadfile", path);
 }

@@ -331,19 +331,6 @@ auto PlayEngine::Data::onLoad() -> void
     else
         start = -1;
 
-    if (local->d->disc) {
-        file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
-        t.start = start;
-    } else {
-        if (edition >= 0)
-            mpv.setAsync("file-local-options/edition", edition);
-        if (start > 0) {
-            const auto secs = QByteArray::number((start + t.offset) * 1e-3, 'f');
-            mpv.setAsync("file-local-options/start", secs);
-        }
-        t.start = -1;
-    }
-
     const auto deint = local->video_deinterlacing() != DeintMode::None;
     mpv.setAsync("speed", local->play_speed());
     mpv.setAsync("video-rotate", _EnumData(local->video_rotation()));
@@ -377,8 +364,10 @@ auto PlayEngine::Data::onLoad() -> void
     if (file.data.startsWith("http://"_a, QCI) || file.data.startsWith("https://"_a, QCI)) {
         file = QUrl(file).toString(QUrl::FullyEncoded);
         if (yle && yle->supports(file)) {
-            if (yle->run(file))
+            if (yle->run(file)) {
+                start = -1;
                 file = yle->url();
+            }
         } else if (youtube && youtube->run(file)) {
             mpv.setAsync("file-local-options/cookies", true);
             mpv.setAsync("file-local-options/cookies-file", MpvFile(youtube->cookies()).toMpv());
@@ -395,6 +384,19 @@ auto PlayEngine::Data::onLoad() -> void
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
         }
+    }
+
+    if (local->d->disc) {
+        file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
+        t.start = start;
+    } else {
+        if (edition >= 0)
+            mpv.setAsync("file-local-options/edition", edition);
+        if (start > 0) {
+            const auto secs = QByteArray::number((start + t.offset) * 1e-3, 'f');
+            mpv.setAsync("file-local-options/start", secs);
+        }
+        t.start = -1;
     }
 
     mpv.setAsync("stream-open-filename", file.toMpv());

@@ -97,7 +97,7 @@ auto YleDL::run() -> void
     QProcess proc;
     proc.setStandardOutputFile(d->fifo, QIODevice::WriteOnly);
     QStringList args;
-    args << u"-o"_q << (d->fifo % u".flv"_q) << u"--pipe"_q;;
+    args << u"--pipe"_q;;
 
     d->mutex.lock();
     d->proc = &proc;
@@ -105,7 +105,7 @@ auto YleDL::run() -> void
     d->mutex.unlock();
 
     proc.start(d->program, args);
-    proc.waitForFinished();
+    proc.waitForFinished(-1);
 
     d->mutex.lock();
     d->proc = nullptr;
