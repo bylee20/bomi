@@ -5,6 +5,7 @@ class FileNameGenerator;                class OsdStyle;
 class StreamTrack;
 
 class EncoderDialog : public QDialog {
+    Q_OBJECT
 public:
     EncoderDialog(QWidget *parent = nullptr);
     ~EncoderDialog();
@@ -15,7 +16,14 @@ public:
     auto setSubtitle(const StreamTrack &sub, const OsdStyle &style) -> void;
     auto start() -> bool;
     auto cancel() -> void;
+    auto cropArea() const -> QRect;
+signals:
+    void visibleChanged(bool visible);
+    void cropAreaChanged(const QRect &rect);
 private:
+    auto updateCropArea() -> void;
+    auto showEvent(QShowEvent *event) -> void final;
+    auto hideEvent(QHideEvent *event) -> void final;
     auto closeEvent(QCloseEvent *event) -> void final;
     auto customEvent(QEvent *event) -> void final;
     auto run() -> QString;

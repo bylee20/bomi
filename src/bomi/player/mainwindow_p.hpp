@@ -74,7 +74,7 @@ struct MainWindow::Data {
     SIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
 
     MainWindow *p = nullptr;
-    QQuickItem *player = nullptr;
+    QQuickItem *player = nullptr, *cropbox = nullptr;
     RootMenu &menu = RootMenu::instance();
     RecentInfo recent;
     AppState as;

@@ -420,8 +420,22 @@ auto MainWindow::Data::plugMenu() -> void
         }
     }, Qt::QueuedConnection);
     connect(video(u"clip"_q).g(), &ActionGroup::triggered, p, [=] (QAction *act) {
-        if (!encoder)
+        if (!encoder) {
             encoder = dialog<EncoderDialog>();
+            connect(encoder.data(), &EncoderDialog::cropAreaChanged, p, [=] (const QRect &rect) {
+                if (cropbox) {
+                    cropbox->setProperty("cx", rect.x());
+                    cropbox->setProperty("cy", rect.y());
+                    cropbox->setProperty("cw", rect.width());
+                    cropbox->setProperty("ch", rect.height());
+                    QMetaObject::invokeMethod(cropbox, "updateArea");
+                }
+            });
+            connect(encoder.data(), &EncoderDialog::visibleChanged, p, [=] (bool visible) {
+               if (cropbox)
+                   cropbox->setVisible(visible);
+            });
+        }
         auto setup = [&] (int a, int b) {
             encoder->setSource(e.currentVideoStreamName(),
                                e.frameSize(), fileNameGenerator());

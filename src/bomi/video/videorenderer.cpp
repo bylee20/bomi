@@ -531,3 +531,21 @@ auto VideoRenderer::isPortrait() const -> bool
 {
     return d->portrait;
 }
+
+QRectF VideoRenderer::mapFromVideo(const QRect &rect)
+{
+    const auto src = sizeHint();
+    const auto rx = d->vtx.width() / src.width();
+    const auto ry = d->vtx.height() / src.height();
+
+    QPointF tl = rect.topLeft();
+    tl.rx() *= rx;
+    tl.ry() *= ry;
+    tl += d->vtx.topLeft();
+
+    QSizeF size = rect.size();
+    size.rwidth() *= rx;
+    size.rheight() *= ry;
+
+    return { tl, size };
+}

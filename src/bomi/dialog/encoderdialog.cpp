@@ -59,6 +59,7 @@ struct EncoderDialog::Data {
     QMap<QString, QVariant> copts;
     QMap<QString, CodecPair> fmts;
     QString ext;
+    QRect crop;
     int tick = -1, error = MPV_ERROR_SUCCESS;
     bool resizing = false;
     auto aspect() const -> double
@@ -75,9 +76,11 @@ EncoderDialog::EncoderDialog(QWidget *parent)
     d->storage.add("fps", d->ui.fps, "currentIndex");
     d->storage.add(d->ui.fps_value);
     d->storage.add(d->ui.subtitle);
-//    d->storage.add(d->ui.size);
-//    d->storage.add(d->ui.width);
-//    d->storage.add(d->ui.height);
+    d->storage.add(d->ui.cx);
+    d->storage.add(d->ui.cy);
+    d->storage.add(d->ui.cw);
+    d->storage.add(d->ui.ch);
+    d->storage.add(d->ui.scale);
     d->storage.add("ext", &d->ext);
     d->storage.add("copts", &d->copts);
     d->storage.add("fmts", [=] () -> QVariant {
@@ -107,25 +110,25 @@ EncoderDialog::EncoderDialog(QWidget *parent)
             this, &EncoderDialog::close);
     connect(SIGNAL_VT(d->ui.fps, currentIndexChanged, int), this,
             [=] (int idx) { d->ui.fps_value->setEnabled(idx == CFRAuto); });
-    connect(SIGNAL_VT(d->ui.width, valueChanged, int), this, [=] (int w) {
-        if (d->ui.size->isChecked() && !d->resizing) {
-            d->resizing = true;
-            d->ui.height->setValue(w / d->aspect() + 0.5);
-            d->resizing = false;
-        }
-    });
-    connect(SIGNAL_VT(d->ui.height, valueChanged, int), this, [=] (int h) {
-        if (d->ui.size->isChecked() && !d->resizing) {
-            d->resizing = true;
-            d->ui.width->setValue(h * d->aspect() + 0.5);
-            d->resizing = false;
-        }
-    });
+//    connect(SIGNAL_VT(d->ui.cw, valueChanged, int), this, [=] (int w) {
+//        if (d->ui.size->isChecked() && !d->resizing) {
+//            d->resizing = true;
+//            d->ui.ch->setValue(w / d->aspect() + 0.5);
+//            d->resizing = false;
+//        }
+//    });
+//    connect(SIGNAL_VT(d->ui.ch, valueChanged, int), this, [=] (int h) {
+//        if (d->ui.size->isChecked() && !d->resizing) {
+//            d->resizing = true;
+//            d->ui.cw->setValue(h * d->aspect() + 0.5);
+//            d->resizing = false;
+//        }
+//    });
 
     d->ui.file->setToolTip(FileNameGenerator::toolTip());
     d->ui.browse->setKey(u"encoder-folder"_q);
     d->ui.browse->setEditor(d->ui.folder);
-    d->ui.size->setChecked(true);
+//    d->ui.size->setChecked(true);
 
     d->fmts[u"mkv"_q] = { u"libvorbis"_q, u"libx264"_q };
     d->fmts[u"mp4"_q] = { u"aac"_q, u"libx264"_q };
@@ -168,6 +171,21 @@ EncoderDialog::EncoderDialog(QWidget *parent)
         d->ui.ac->setEnabled(!gif);
         d->ui.acopts->setEnabled(!gif);
     });
+
+    auto updateResultSize = [=] () {
+        auto s = (d->crop & QRect(0, 0, d->size.width(), d->size.height())).size();
+        s *= d->ui.scale->value() * 1e-2;
+        d->ui.result_size->setText(u" (%1x%2)"_q.arg(s.width()).arg(s.height()));
+    };
+    connect(SIGNAL_VT(d->ui.cx, valueChanged, int), this, &EncoderDialog::updateCropArea);
+    connect(SIGNAL_VT(d->ui.cy, valueChanged, int), this, &EncoderDialog::updateCropArea);
+    connect(SIGNAL_VT(d->ui.cw, valueChanged, int), this, &EncoderDialog::updateCropArea);
+    connect(SIGNAL_VT(d->ui.ch, valueChanged, int), this, &EncoderDialog::updateCropArea);
+    connect(this, &EncoderDialog::cropAreaChanged, this, updateResultSize);
+    connect(SIGNAL_VT(d->ui.scale, valueChanged, double), this, updateResultSize);
+
+    updateCropArea();
+    updateResultSize();
 }
 
 EncoderDialog::~EncoderDialog()
@@ -180,6 +198,17 @@ EncoderDialog::~EncoderDialog()
     d->copts[vc] = d->ui.vcopts->text();
     d->storage.save();
     delete d;
+}
+
+auto EncoderDialog::updateCropArea() -> void
+{
+    const QRect crop(d->ui.cx->value(), d->ui.cy->value(),
+                     d->ui.cw->value(), d->ui.ch->value());
+    const auto s = (crop & QRect(0, 0, d->size.width(), d->size.height())).size();
+    d->ui.cw->setValue(s.width());
+    d->ui.ch->setValue(s.height());
+    if (_Change(d->crop, crop))
+        emit cropAreaChanged(d->crop);
 }
 
 auto EncoderDialog::cancel() -> void
@@ -208,12 +237,13 @@ auto EncoderDialog::setSource(const QByteArray &mrl, const QSize &size,
     }
     d->size = size;
     d->resizing = true;
-    d->ui.width->setValue(size.width());
-    d->ui.height->setValue(size.height());
+    d->ui.cw->setValue(size.width());
+    d->ui.ch->setValue(size.height());
     d->resizing = false;
     d->audio = d->sub = StreamTrack();
     d->g = g;
     _SetWindowTitle(this, tr("Encoder: %1").arg(d->g.mediaName));
+    updateCropArea();
 }
 
 auto EncoderDialog::setRange(int start, int end) -> void
@@ -294,9 +324,24 @@ auto EncoderDialog::run() -> QString
         break;
     }
 
-    const QSize s(d->ui.width->value(), d->ui.height->value());
-    if (d->size != s)
-        d->mpv->setOption("vf", "scale=" + _n(s.width()) + ':' + _n(s.height()));
+    const QRect orig(0, 0, d->size.width(), d->size.height());
+    auto crop = d->crop & orig;
+    crop.setWidth((crop.width() / 2) * 2);
+    crop.setHeight((crop.height() / 2) * 2);
+    QByteArray vf;
+    if (crop != orig) {
+        vf = "crop=" + _n(crop.width()) + ':' + _n(crop.height())
+                + ':' + _n(crop.x())
+                + ':' + _n(crop.y());
+    }
+    const auto size = crop.size() * d->ui.scale->value() * 1e-2;
+    if (size != crop.size()) {
+        if (!vf.isEmpty())
+            vf += ',';
+        vf += "scale=" + _n(size.width()) + ':' + _n(size.height());
+    }
+    if (!vf.isEmpty())
+        d->mpv->setOption("vf", vf);
 
     if (d->ui.ext->currentText() == u"gif"_q) {
         d->mpv->setOption("ovc", "gif"_b);
@@ -408,4 +453,21 @@ auto EncoderDialog::setSubtitle(const StreamTrack &sub, const OsdStyle &style) -
 {
     d->sub = sub;
     d->style = style;
+}
+
+auto EncoderDialog::showEvent(QShowEvent *event) -> void
+{
+    QDialog::showEvent(event);
+    emit visibleChanged(true);
+}
+
+auto EncoderDialog::hideEvent(QHideEvent *event) -> void
+{
+    QDialog::hideEvent(event);
+    emit visibleChanged(false);
+}
+
+auto EncoderDialog::cropArea() const -> QRect
+{
+    return d->crop;
 }

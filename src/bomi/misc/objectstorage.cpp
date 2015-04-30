@@ -178,7 +178,7 @@ auto ObjectStorage::add(QLineEdit *le) -> bool
     return add(le->objectName().toLatin1(), le, "text");
 }
 
-auto ObjectStorage::add(QCheckBox *cb) -> bool
+auto ObjectStorage::add(QAbstractButton *cb) -> bool
 {
     return add(cb->objectName().toLatin1(), cb, "checked");
 }

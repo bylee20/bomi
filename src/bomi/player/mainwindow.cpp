@@ -2,6 +2,7 @@
 #include "app.hpp"
 #include "misc/trayicon.hpp"
 #include "dialog/mbox.hpp"
+#include "dialog/encoderdialog.hpp"
 #include "quick/appobject.hpp"
 #include <QSessionManager>
 
@@ -131,9 +132,13 @@ auto MainWindow::adapter() const -> OS::WindowAdapter*
 
 auto MainWindow::setupSkinPlayer() -> void
 {
+    d->cropbox = nullptr;
     d->player = rootObject()->property("player").value<QQuickItem*>();
     if (!d->player)
         return;
+    d->cropbox = d->findItem<QQuickItem>(u"cropbox"_q);
+    if (d->encoder)
+        d->cropbox->setVisible(d->encoder->isVisible());
     d->e.screen()->setParentItem(d->player);
     d->e.screen()->setWidth(d->player->width());
     d->e.screen()->setHeight(d->player->height());

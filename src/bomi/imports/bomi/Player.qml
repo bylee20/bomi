@@ -15,6 +15,68 @@ Item {
 
     Component { id: barVis; BarVisualizer { } }
 
+    Item {
+        id: cropbox
+        objectName: "cropbox"
+        visible: false
+        anchors.fill: parent
+        property int cx: 0
+        property int cy: 0
+        property int cw: 0
+        property int ch: 0
+        property color shade: Qt.rgba(1, 0, 0, 0.3)
+        function updateArea() {
+            var rect = video.mapFromVideo(Qt.rect(cx, cy, cw, ch))
+            cropArea.x = rect.x
+            cropArea.y = rect.y
+            cropArea.width = rect.width
+            cropArea.height = rect.height
+        }
+        Connections {
+            target: B.App.engine.video.screen
+            onFrameRectChanged: cropbox.updateArea()
+            onWidthChanged: cropbox.updateArea()
+            onHeightChanged: cropbox.updateArea()
+        }
+
+        Item {
+            id: cropArea
+//            MouseArea {
+//                anchors.fill: parent
+//                drag.target: cropArea; drag.axis: Drag.XAndYAxis
+//                drag.minimumX: 0; drag.maximumX: player.width-width
+//                drag.minimumY: 0; drag.maximumY: player.height-height
+//            }
+        }
+        Rectangle {
+            anchors {
+                top: parent.top; bottom: cropArea.top
+                left: parent.left; right: parent.right;
+            }
+            color: parent.shade
+        }
+        Rectangle {
+            anchors {
+                top: cropArea.top; bottom: cropArea.bottom
+                left: parent.left; right: cropArea.left
+            }
+            color: parent.shade
+        }
+        Rectangle {
+            anchors {
+                top: cropArea.top; bottom: cropArea.bottom
+                left: cropArea.right; right: parent.right
+            }
+            color: parent.shade
+        }
+        Rectangle {
+            anchors {
+                top: cropArea.bottom; bottom: parent.bottom
+                left: parent.left; right: parent.right
+            }
+            color: parent.shade
+        }
+    }
 
     Logo { id: logo; anchors.fill: parent }
 
@@ -37,24 +99,6 @@ Item {
                 }
             }
         }
-    }
-
-    Item {
-        id: letterbox
-        parent: video
-        anchors.fill: parent
-
-//        Rectangle {
-//            anchors.top: parent.top
-//            width: parent.width
-//            height: video.letterbox.y
-//            color: "blue"
-//        }
-//        Rectangle {
-//            anchors.bottom: parent.bottom
-//            width: parent.width
-//            height: parent.height - (video.letterbox.y + video.letterbox.height)
-//        }
     }
 
     TextOsd {

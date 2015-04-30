@@ -25,7 +25,7 @@ public:
         { return read(name, QVariant::fromValue<T>(def)).template value<T>(); }
     auto add(const char *property) -> void;
     auto add(QByteArray &&alias, QObject *src, const char *property) -> bool;
-    auto add(QCheckBox *cb) -> bool;
+    auto add(QAbstractButton *cb) -> bool;
     auto add(QSpinBox *sb) -> bool;
     auto add(QDoubleSpinBox *sb) -> bool;
     auto add(QLineEdit *le) -> bool;
