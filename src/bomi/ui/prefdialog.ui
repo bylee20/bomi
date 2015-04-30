@@ -1180,7 +1180,7 @@
             <item>
              <widget class="QSpinBox" name="ms_per_char">
               <property name="toolTip">
-               <string>When display time is not specifid in subtitle, caculate interval wih this value.</string>
+               <string>When display time is not specified in subtitle, calculate interval with this value.</string>
               </property>
               <property name="accelerated">
                <bool>true</bool>
