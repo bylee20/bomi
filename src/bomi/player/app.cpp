@@ -39,7 +39,7 @@ extern bool useLocalConfig;
 auto translator_load(const Locale &locale) -> bool;
 
 enum class LineCmd {
-    Wake, Open, Action, LogLevel, OpenGLDebug, Debug,
+    Wake, Open, Action, LogLevel, Debug,
     DumpApiTree, DumpActionList, WinAssoc, WinUnassoc, WinAssocDefault,
     SetSubtitle, AddSubtitle,
 };
@@ -248,8 +248,6 @@ App::App(int &argc, char **argv)
     d->parser->addOption(LineCmd::LogLevel, u"log-level"_q,
                          u"Maximum verbosity for log. %1 should be one of nexts:\n    "_q
                          % Log::levelNames().join(u", "_q), u"lv"_q);
-    d->parser->addOption(LineCmd::OpenGLDebug, u"opengl-debug"_q,
-                         u"Turn on OpenGL debug logger."_q);
     d->parser->addOption(LineCmd::Debug, u"debug"_q,
                          u"Turn on options for debugging."_q);
     d->parser->addOption(LineCmd::DumpApiTree, u"dump-api-tree"_q,
@@ -265,7 +263,7 @@ App::App(int &argc, char **argv)
                          u"Associate default extensions."_q);
 #endif
     d->parser->parse(arguments());
-    d->gldebug = d->parser->isSet(LineCmd::OpenGLDebug);
+    d->gldebug = d->parser->isSet(LineCmd::Debug);
     const auto lvStdOut = d->parser->stdoutLogLevel();
 
     d->import();
