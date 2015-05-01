@@ -91,7 +91,8 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
         auto eq = s->video_color();
         if (s->video_effects() & VideoEffect::Gray)
             eq.setSaturation(-100);
-        matrix *= eq.matrix();
+        if (!eq.isZero())
+            matrix *= eq.matrix();
         if (s->video_effects() & VideoEffect::Remap) {
             const float a = 255.0 / (235.0 - 16.0);
             const float b = -16.0 / 255.0 * a;
@@ -136,7 +137,9 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     opts.add("interpolation", s->video_motion_interpolation());
     const bool rgba16 = vr->framebufferObjectFormat() == OGL::RGBA16_UNorm;
     opts.add("fbo-format", rgba16 ? "rgba16"_b : "rgba"_b);
-    opts.add("custom-shader", customShader(c_matrix()));
+    const auto cmat = c_matrix();
+    if (!cmat.isIdentity())
+        opts.add("custom-shader", customShader(cmat));
     return opts.get();
 }
 
