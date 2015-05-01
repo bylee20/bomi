@@ -473,7 +473,6 @@ auto VideoRenderer::updateData(ShaderData *_data) -> void
     } else if (!d->frame.size.isEmpty()) {
         d->redraw = false;
         d->frame.renew();
-        qDebug() << d->frame.size;
         d->osd.renew();
         auto w = window();
         if (w && d->render) {
