@@ -204,7 +204,7 @@ auto PlayEngine::Data::onLoad() -> void
     const auto sub = mpv.get<MpvUtf8>("file-local-options/sub-file").data;
     mpv.setAsync("file-local-options/sub-file", MpvFileList());
     t.local = localCopy();
-    t.begin = t.duration = -1;
+    t.seekable = t.begin = t.duration = -1;
     t.offset = 0;
     auto local = t.local.data();
 
@@ -390,6 +390,10 @@ auto PlayEngine::Data::onLoad() -> void
                     mpv.setAsync("file-local-options/demuxer-lavf-o", "fflags=+ignidx"_b);
                 }
                 t.duration = r.duration;
+                if (r.live) {
+                    start = -1;
+                    t.seekable = false;
+                }
             }
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
@@ -453,7 +457,9 @@ auto PlayEngine::Data::observe() -> void
     mpv.observe("cache-size", [=] () { return t.caching ? mpv.get<int>("cache-size") : 0; },
                 [=] (int v) { info.cache.setSize(v); });
 
-    mpv.observe("seekable", seekable, [=] () { emit p->seekableChanged(seekable); });
+    mpv.observe("seekable", [=] () {
+        return t.seekable >= 0 ? !!t.seekable : mpv.get<bool>("seekable");
+    }, [=] (bool s) { if (_Change(seekable, s)) emit p->seekableChanged(seekable); });
 
     auto updateChapter = [=] (int n) {
         info.chapter.invalidate();

@@ -8,6 +8,25 @@
 
 DECLARE_LOG_CONTEXT(YouTubeDL)
 
+auto YouTubeFormat::operator < (const YouTubeFormat &rhs) const -> bool
+{
+    auto &lhs = *this;
+    if (lhs.isAudio() != rhs.isAudio())
+        return lhs.isAudio();
+    if (lhs.isAudio()) {
+        if (lhs.tbr() != rhs.tbr())
+            return lhs.tbr() > rhs.tbr();
+        return lhs.fps() > rhs.fps();
+    }
+    const auto ls = lhs.width() * lhs.height();
+    const auto rs = rhs.width() * rhs.height();
+    if (ls != rs)
+        return ls > rs;
+    if (lhs.fps() != rhs.fps())
+        return lhs.fps() > rhs.fps();
+    return lhs.tbr() > rhs.tbr();
+}
+
 auto YouTubeFormat::isValid() const -> bool
 {
     if (m_url.isEmpty() || m_id.isEmpty())
@@ -29,6 +48,7 @@ auto YouTubeFormat::fromJson(const QJsonObject &json) -> YouTubeFormat
     format.m_ext = json[u"ext"_q].toString();
     const auto note = json[u"format_note"_q].toString();
     const auto audio = note.contains("DASH audio"_a);
+    format.m_live = note.contains("HLS"_a);
     format.m_dash = note.contains("DASH "_a);
     format.m_audio = audio;
     format.m_3d = note.contains("3D"_a);
@@ -42,8 +62,15 @@ auto YouTubeFormat::fromJson(const QJsonObject &json) -> YouTubeFormat
         format.m_bps = json[u"vbr"_q].toInt();
         format.m_width = json[u"width"_q].toInt();
         format.m_height = json[u"height"_q].toInt();
+        if (format.m_live && !format.m_width)
+            format.m_width = format.m_height * 16.0 / 9.0 + 0.5;
     }
     return format;
+}
+
+auto YouTubeFormat::isLive() const -> bool
+{
+    return m_live;
 }
 
 /******************************************************************************/
@@ -117,25 +144,46 @@ auto YouTubeDL::result() const -> Result
     r.title = d->json[u"title"_q].toString();
 
     QList<YouTubeFormat> formats;
+    bool live = false;
     for (auto fmt : d->json[u"formats"_q].toArray()) {
         auto format = YouTubeFormat::fromJson(fmt.toObject());
+        live |= format.isLive();
         if (format.isValid())
             formats.push_back(format);
+    }
+    if (live) {
+        QList<YouTubeFormat> fmts;
+        for (auto &fmt : formats) {
+            if (fmt.isLive())
+                fmts.push_back(fmt);
+        }
+        formats = std::move(fmts);
     }
     d->mutex.lock();
     const bool ask = d->ask;
     d->mutex.unlock();
-    if (!ask || formats.isEmpty()) {
-        r.url = d->json[u"url"_q].toString();
-        if (r.url.isEmpty()) {
-            _Error("No URL found.");
-            return Result();
+    const auto defId = d->json[u"format_id"_q].toString();
+    if (!ask) {
+        if (formats.isEmpty()) {
+            r.url = d->json[u"url"_q].toString();
+            if (r.url.isEmpty()) {
+                _Error("No URL found.");
+                return Result();
+            }
+            return r;
         }
+        for (auto &fmt : formats) {
+            if (fmt.id() == defId) {
+                r.url = fmt.url();
+                return r;
+            }
+        }
+        qSort(formats);
+        r.url = formats.front().url();
         return r;
     }
     if (!d->getFormat)
         return Result();
-    const auto defId = d->json[u"format_id"_q].toString();
     d->getFormat(&formats, defId);
     if (formats.isEmpty())
         return Result();
@@ -143,6 +191,7 @@ auto YouTubeDL::result() const -> Result
     r.url = formats.front().url();
     if (formats.size() > 1)
         r.audio = formats[1].url();
+    r.live = formats.front().isLive();
     return r;
 }
 
@@ -317,13 +366,16 @@ auto YouTubeDialog::setFormats(const QList<YouTubeFormat> &formats, const QStrin
         const auto &f = d->formats[i];
         if (f.is3D())
             continue;
+        auto _n = [] (int v) { return v ? _N(v) : u"--"_q; };
         QString desc;
         if (f.isAudio())
-            desc = _N(f.fps(), 0) % "Hz@"_a % _N(f.bitrate());
+            desc = _n(f.fps() + 0.5) % "Hz@"_a % _n(f.bitrate());
         else {
             if (f.isDash())
                 desc = '['_q % tr("Video Only") % ']'_q;
-            desc += _N(f.width()) % 'x'_q % _N(f.height()) % ','_q % _N(f.fps(), 0) % "fps"_a;
+            else if (f.isLive())
+                desc = '['_q % tr("Live") % ']'_q;
+            desc += _n(f.width()) % 'x'_q % _n(f.height()) % ','_q % _n(f.fps() + 0.5) % "fps"_a;
         }
         desc += '('_q % f.codec() % ','_q % f.extension() % ')'_q;
         (f.isAudio() ? d->audio : d->video)->addItem(desc, i);

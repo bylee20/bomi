@@ -97,7 +97,7 @@ struct PlayEngine::Data {
 
     struct {
         bool caching = false;
-        int start = -1, begin = -1, duration = -1, offset = 0;
+        int start = -1, begin = -1, duration = -1, offset = 0, seekable = -1;
         QSharedPointer<MrlState> local;
     } t; // thread local
 

@@ -9,7 +9,7 @@ Slider {
     property bool toolTip: !bind
     property VideoPreviewStyle preview: VideoPreviewStyle { }
     property int target: -1
-
+    enabled: d.e.seekable
     z: 1
     __hpressed: mouseArea.pressed
     __hhovered: mouseArea.containsMouse

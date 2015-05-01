@@ -5,6 +5,7 @@
 #include "player/playlist.hpp"
 
 struct YouTubeFormat {
+    auto operator < (const YouTubeFormat &rhs) const -> bool;
     auto id() const -> QString { return m_id; }
     auto extension() const -> QString { return m_ext; }
     auto height() const -> int { return m_height; }
@@ -20,10 +21,11 @@ struct YouTubeFormat {
     auto is3D() const -> bool { return m_3d; }
     auto url() const -> QString { return m_url; }
     auto isValid() const -> bool;
+    auto isLive() const -> bool;
     static auto fromJson(const QJsonObject &json) -> YouTubeFormat;
 private:
     QString m_ext, m_url, m_id, m_codec;
-    bool m_dash = false, m_audio = false, m_3d = false;
+    bool m_dash = false, m_audio = false, m_3d = false, m_live = false;
     int m_height = 0, m_width = 0, m_prefer = 0, m_tbr = 0, m_bps = 0;
     double m_fps = 0.0;
 };
@@ -37,7 +39,7 @@ public:
         ReadError, UnknownError, Unsupported
     };
     struct Result {
-        bool direct = false;
+        bool direct = false, live = false;
         int duration = -1;
         Playlist playlist;
         QString url, title, audio;
