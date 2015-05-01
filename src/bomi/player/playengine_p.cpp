@@ -554,13 +554,15 @@ auto PlayEngine::Data::observe() -> void
         }
         if (_Change(this->audioOnly, audioOnly))
             emit p->audioOnlyChanged(audioOnly);
-        vr->setOsdVisible(!strms[StreamSubtitle].isEmpty());
+        if (strms[StreamSubtitle].isEmpty())
+            vr->setOsdVisible(false);
     });
 
     for (auto type : streamTypes)
         mpv.observe(streams[type].pid, [=] (QVariant &&var) {
+            int current = -1;
             if (var.type() == QVariant::Int)
-                params.select(type, var.toInt());
+                params.select(type, current = var.toInt());
             else if (var.type() == QVariant::String) {
                 const auto id = var.toString();
                 if (id == "no"_a)
@@ -568,6 +570,8 @@ auto PlayEngine::Data::observe() -> void
                 else if (id != "auto"_a)
                     _Error("'%%' is not a valid id for stream id.", var.toString());
             }
+            if (type == StreamSubtitle)
+                vr->setOsdVisible(current > 0);
         });
     mpv.observe("metadata", [=] () {
         const auto map = mpv.get<QVariant>("metadata").toMap();
