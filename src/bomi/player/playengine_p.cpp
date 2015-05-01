@@ -554,6 +554,7 @@ auto PlayEngine::Data::observe() -> void
         }
         if (_Change(this->audioOnly, audioOnly))
             emit p->audioOnlyChanged(audioOnly);
+        vr->setOsdVisible(!strms[StreamSubtitle].isEmpty());
     });
 
     for (auto type : streamTypes)

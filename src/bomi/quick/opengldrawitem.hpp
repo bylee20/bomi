@@ -31,6 +31,7 @@ protected:
     virtual auto drawingMode() const -> GLenum { return GL_TRIANGLE_STRIP; }
     virtual auto attributeSet() const -> const AttrSet&;
     virtual auto vertexCount() const -> int { return 0; }
+    virtual auto createNode() const -> QSGGeometryNode*;
     virtual auto createGeometry() const -> QSGGeometry* = 0;
     virtual auto createMaterial() const -> QSGMaterial* = 0;
     virtual auto updateGeometry(QSGGeometry *geometry) -> QSGGeometry* = 0;
@@ -145,6 +146,9 @@ public:
         friend class ShaderRenderItem;
     };
     virtual auto isOpaque() const -> bool { return false; }
+protected:
+    static auto shaderData(QSGMaterial *m) -> ShaderData*
+        { return static_cast<Material*>(m)->data(); }
 private:
     virtual auto type() const -> Type* = 0;
     virtual auto createShader() const -> ShaderIface* = 0;

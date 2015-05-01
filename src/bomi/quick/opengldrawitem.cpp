@@ -27,13 +27,18 @@ auto OpenGLDrawItem::devicePixelRatio() const -> double
     return m_win ? m_win->devicePixelRatio() : 1.0;
 }
 
+auto OpenGLDrawItem::createNode() const -> QSGGeometryNode*
+{
+    return new QSGGeometryNode;
+}
+
 auto OpenGLDrawItem::updatePaintNode(QSGNode *old,
                                      UpdatePaintNodeData *) -> QSGNode*
 {
     tryInitGL();
     m_node = static_cast<QSGGeometryNode*>(old);
     if (!m_node) {
-        m_node = new QSGGeometryNode;
+        m_node = createNode();
         m_node->setGeometry(createGeometry());
         m_node->setMaterial(createMaterial());
         m_node->setFlags(QSGNode::OwnsGeometry | QSGNode::OwnsMaterial);

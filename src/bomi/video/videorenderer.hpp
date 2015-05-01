@@ -58,6 +58,7 @@ public:
     auto framebufferObjectFormat() const -> OGL::TextureFormat;
     auto isPortrait() const -> bool;
     auto setScalerEnabled(bool on) -> void;
+    auto setOsdVisible(bool visible) -> void;
     Q_INVOKABLE QRectF mapFromVideo(const QRect &rect);
 signals:
     void offsetChanged(const QPointF &pos);
@@ -68,11 +69,12 @@ private:
     auto initializeGL() -> void final;
     auto finalizeGL() -> void final;
     auto initializeVertex(Vertex *vertex) const -> void final;
+    auto createNode() const -> QSGGeometryNode* final;
     auto createShader() const -> ShaderIface* final;
     auto createData() const -> ShaderData* final;
     auto updateData(ShaderData *data) -> void final;
     auto drawingMode() const -> GLenum final { return GL_TRIANGLE_STRIP; }
-    auto type() const -> Type* final { static Type type; return &type; }
+    auto type() const -> Type* final;
     auto vertexCount() const -> int final { return 4; }
     auto updateVertex(Vertex *vertex) -> void final;
     auto updateVertexOnGeometryChanged() const -> bool final { return true; }
@@ -80,9 +82,11 @@ private:
     auto geometryChanged(const QRectF &new_, const QRectF&) -> void final;
     auto updatePolish() -> void final;
     auto customEvent(QEvent *event) -> void final;
-
     struct VideoShaderData;
     struct VideoShaderIface;
+    struct Node;
+
+    auto render(VideoShaderData *data) -> void;
 
     struct Data;
     Data *d;

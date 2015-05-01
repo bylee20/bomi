@@ -18,64 +18,6 @@ enum DirtyFlag {
     DirtyRot = 1
 };
 
-struct VideoRenderer::VideoShaderData : public VideoRenderer::ShaderData {
-    const OpenGLTexture2D *frame = nullptr;
-    const OpenGLTexture2D *osd = nullptr;
-};
-
-struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
-    VideoShaderIface() {
-        vertexShader = R"(
-            uniform mat4 qt_Matrix;
-            attribute vec4 aPosition;
-            attribute vec2 aFrameTexCoord;
-            attribute vec2 aOsdTexCoord;
-            varying vec2 frameTexCoord;
-            varying vec2 osdTexCoord;
-            void main() {
-                const vec2 cc = vec2(0.5, 0.5);
-                frameTexCoord = aFrameTexCoord;
-                osdTexCoord = aOsdTexCoord;
-                gl_Position = qt_Matrix * aPosition;
-            }
-        )";
-        fragmentShader = R"(
-            varying vec2 frameTexCoord;
-            varying vec2 osdTexCoord;
-            uniform float qt_Opacity;
-            uniform sampler2D frameTex;
-            uniform sampler2D osdTex;
-            void main() {
-                vec4 frame = texture2D(frameTex, frameTexCoord);
-                vec4 osd = texture2D(osdTex, osdTexCoord);
-                gl_FragColor = (frame * (1.0 - osd.a) + osd) * qt_Opacity;
-            }
-        )";
-        attributes << "aPosition" << "aFrameTexCoord" << "aOsdTexCoord";
-    }
-    void resolve(QOpenGLShaderProgram *prog) override {
-        Q_ASSERT(prog->isLinked());
-        loc_frameTex = prog->uniformLocation("frameTex");
-        loc_osdTex = prog->uniformLocation("osdTex");
-        loc_rot = prog->uniformLocation("rot");
-    }
-    void update(QOpenGLShaderProgram *prog,
-                VideoRenderer::ShaderData *data) override {
-        auto d = static_cast<VideoShaderData*>(data);
-        if (d->frame->id() != GL_NONE && !d->frame->isEmpty()) {
-            prog->setUniformValue(loc_frameTex, 0);
-            prog->setUniformValue(loc_osdTex, 1);
-            func()->glActiveTexture(GL_TEXTURE0);
-            d->frame->bind();
-            func()->glActiveTexture(GL_TEXTURE1);
-            d->osd->bind();
-            func()->glActiveTexture(GL_TEXTURE0);
-        }
-    }
-private:
-    int loc_frameTex = -1, loc_osdTex = -1, loc_rot = -1;
-};
-
 struct FboSet {
     OpenGLFramebufferObject *fbo = nullptr;
     QSize size;
@@ -83,17 +25,113 @@ struct FboSet {
     QMargins margins;
     QRectF rect;
     OGL::TextureFormat format = OGL::RGBA8_UNorm;
+    bool visible = true;
     auto texture() const -> const OpenGLTexture2D*
     {
-        if (fbo && !fbo->size().isEmpty())
+        if (visible && fbo && !fbo->size().isEmpty())
             return &fbo->texture();
         return &fallback;
     }
-    auto renew() -> void
+    auto renew() -> bool
     {
-        if (!fbo || fbo->size() != size || fbo->format() != format)
-            _Renew(fbo, size, format);
+        if (!visible || (fbo && fbo->size() == size && fbo->format() == format))
+            return false;
+        _Renew(fbo, size, format);
+        return true;
     }
+};
+
+struct VideoRenderer::VideoShaderData : public VideoRenderer::ShaderData {
+    bool redraw = false, osdVisible = false;
+    const FboSet *frame = nullptr, *osd = nullptr;
+    QMargins osdMargins;
+};
+
+struct VideoRenderer::VideoShaderIface : public VideoRenderer::ShaderIface {
+    VideoShaderIface(bool osd): m_osd(osd) {
+        if (osd) {
+            vertexShader = R"(
+                uniform mat4 qt_Matrix;
+                attribute vec4 aPosition;
+                attribute vec2 aFrameTexCoord;
+                attribute vec2 aOsdTexCoord;
+                varying vec2 frameTexCoord;
+                varying vec2 osdTexCoord;
+                void main() {
+                    frameTexCoord = aFrameTexCoord;
+                    osdTexCoord = aOsdTexCoord;
+                    gl_Position = qt_Matrix * aPosition;
+                }
+            )";
+            fragmentShader = R"(
+                varying vec2 frameTexCoord;
+                varying vec2 osdTexCoord;
+                uniform sampler2D frameTex;
+                uniform sampler2D osdTex;
+                void main() {
+                    vec4 frame = texture2D(frameTex, frameTexCoord);
+                    vec4 osd = texture2D(osdTex, osdTexCoord);
+                    gl_FragColor = (frame * (1.0 - osd.a) + osd);
+                }
+            )";
+        } else {
+            vertexShader = R"(
+                uniform mat4 qt_Matrix;
+                attribute vec4 aPosition;
+                attribute vec2 aFrameTexCoord;
+                attribute vec2 aOsdTexCoord;
+                varying vec2 frameTexCoord;
+                void main() {
+                    frameTexCoord = aFrameTexCoord;
+                    gl_Position = qt_Matrix * aPosition;
+                }
+            )";
+            fragmentShader = R"(
+                varying vec2 frameTexCoord;
+                uniform sampler2D frameTex;
+                void main() {
+                    gl_FragColor = texture2D(frameTex, frameTexCoord);
+                }
+            )";
+        }
+        attributes << "aPosition" << "aFrameTexCoord" << "aOsdTexCoord";
+    }
+    void resolve(QOpenGLShaderProgram *prog) override {
+        Q_ASSERT(prog->isLinked());
+        loc_frameTex = prog->uniformLocation("frameTex");
+        if (m_osd)
+            loc_osdTex = prog->uniformLocation("osdTex");
+    }
+    void update(QOpenGLShaderProgram *prog,
+                VideoRenderer::ShaderData *data) override {
+        auto d = static_cast<VideoShaderData*>(data);
+        const auto frame = d->frame->texture();
+        if (frame->id() != GL_NONE && !frame->isEmpty()) {
+            prog->setUniformValue(loc_frameTex, 0);
+            prog->setUniformValue(loc_osdTex, 1);
+            func()->glActiveTexture(GL_TEXTURE0);
+            frame->bind();
+            if (m_osd && d->osdVisible) {
+                func()->glActiveTexture(GL_TEXTURE1);
+                d->osd->texture()->bind();
+                func()->glActiveTexture(GL_TEXTURE0);
+            }
+        }
+    }
+private:
+    int loc_frameTex = -1, loc_osdTex = -1;
+    bool m_osd = false;
+};
+
+struct VideoRenderer::Node : public QSGGeometryNode {
+    Node(VideoRenderer *r): r(r) { setFlag(UsePreprocess, true); }
+    auto preprocess() -> void final
+    {
+        auto d = shaderData(material());
+        r->render(static_cast<VideoRenderer::VideoShaderData*>(d));
+    }
+private:
+    VideoRenderer *r;
 };
 
 struct VideoRenderer::Data {
@@ -451,18 +489,41 @@ auto VideoRenderer::geometryChanged(const QRectF &new_, const QRectF& old) -> vo
         polish();
 }
 
+auto VideoRenderer::type() const -> Type*
+{
+    static Type type[2];
+    return &type[d->osd.visible];
+}
 
 auto VideoRenderer::createShader() const -> ShaderIface*
 {
-    return new VideoShaderIface;
+    return new VideoShaderIface(d->osd.visible);
 }
 
 auto VideoRenderer::createData() const -> ShaderData*
 {
     auto data = new VideoShaderData;
-    data->frame = d->frame.texture();
-    data->osd = d->osd.texture();
+    data->frame = &d->frame;
+    data->osd = &d->osd;
     return data;
+}
+
+auto VideoRenderer::createNode() const -> QSGGeometryNode*
+{
+    return new Node(const_cast<VideoRenderer*>(this));
+}
+
+auto VideoRenderer::render(VideoShaderData *data) -> void
+{
+    if (!data->redraw)
+        return;
+    data->redraw = false;
+    auto w = window();
+    if (w && d->render) {
+        w->resetOpenGLState();
+        d->render(d->frame.fbo, data->osdVisible ? d->osd.fbo : nullptr, data->osdMargins);
+        w->resetOpenGLState();
+    }
 }
 
 auto VideoRenderer::updateData(ShaderData *_data) -> void
@@ -474,15 +535,10 @@ auto VideoRenderer::updateData(ShaderData *_data) -> void
         d->redraw = false;
         d->frame.renew();
         d->osd.renew();
-        auto w = window();
-        if (w && d->render) {
-            w->resetOpenGLState();
-            d->render(d->frame.fbo, d->osd.fbo, d->osd.margins);
-            w->resetOpenGLState();
-        }
+        data->redraw = true;
+        data->osdMargins = d->osd.margins;
+        data->osdVisible = d->osd.visible;
     }
-    data->frame = d->frame.texture();
-    data->osd = d->osd.texture();
 }
 
 #define FILL_TS(...) OGL::CoordAttr::fillTriangleStrip(vertex, &Vertex:: __VA_ARGS__)
@@ -553,6 +609,7 @@ auto VideoRenderer::mapFromVideo(const QRect &rect) -> QRectF
 
 auto VideoRenderer::setScalerEnabled(bool on) -> void
 {
+    return;
     if (_Change(d->scaler, on)) {
         d->frame.size = d->fboSizeHint();
         d->redraw = true;
@@ -561,3 +618,10 @@ auto VideoRenderer::setScalerEnabled(bool on) -> void
     }
 }
 
+auto VideoRenderer::setOsdVisible(bool visible) -> void
+{
+    if (_Change(d->osd.visible, visible)) {
+        d->redraw = true;
+        reserve(UpdateAll);
+    }
+}
