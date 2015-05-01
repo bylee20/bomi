@@ -109,7 +109,7 @@ EncoderDialog::EncoderDialog(QWidget *parent)
     connect(d->ui.bbox->button(BBox::Close), &QAbstractButton::clicked,
             this, &EncoderDialog::close);
     connect(SIGNAL_VT(d->ui.fps, currentIndexChanged, int), this,
-            [=] (int idx) { d->ui.fps_value->setEnabled(idx == CFRAuto); });
+            [=] (int idx) { d->ui.fps_value->setEnabled(idx == CFRManual); });
 
     d->ui.file->setToolTip(FileNameGenerator::toolTip());
     d->ui.browse->setKey(u"encoder-folder"_q);
