@@ -140,6 +140,13 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
     return opts.get();
 }
 
+auto PlayEngine::Data::updateVideoScaler() -> void
+{
+    bool use = params.video_interpolator() != Interpolator::Bilinear;
+    use |= (useIntrplDown && params.video_interpolator_down() != Interpolator::Bilinear);
+    vr->setScalerEnabled(use);
+}
+
 auto PlayEngine::Data::updateVideoRendererFboFormat() -> void
 {
     auto gl = _EnumData(fboFormat);

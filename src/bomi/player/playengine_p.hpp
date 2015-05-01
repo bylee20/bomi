@@ -154,6 +154,7 @@ struct PlayEngine::Data {
     auto af(const MrlState *s) const -> QByteArray;
     auto vf(const MrlState *s) const -> QByteArray;
     auto vo(const MrlState *s) const -> QByteArray;
+    auto updateVideoScaler() -> void;
     auto videoSubOptions(const MrlState *s) const -> QByteArray;
     auto updateVideoSubOptions() -> void;
     auto updateVideoRendererFboFormat() -> void;

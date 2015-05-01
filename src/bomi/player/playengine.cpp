@@ -54,6 +54,8 @@ PlayEngine::PlayEngine()
             emit hasVideoChanged();
         d->info.video.setTracks(list);
     });
+    connect(&d->params, &MrlState::video_interpolator_changed, this, [=] () { d->updateVideoScaler(); });
+    connect(&d->params, &MrlState::video_interpolator_down_changed, this, [=] () { d->updateVideoScaler(); });
 
     connect(&d->params, &MrlState::audio_volume_changed, this, &PlayEngine::volumeChanged);
     connect(&d->params, &MrlState::audio_muted_changed, this, &PlayEngine::mutedChanged);
@@ -254,6 +256,7 @@ PlayEngine::PlayEngine()
     d->hook();
     d->mpv.setUpdateCallback([=] ()
         { d->vr->updateForNewFrame(d->info.video.output()->size()); });
+    d->updateVideoScaler();
 }
 
 PlayEngine::~PlayEngine()
@@ -1084,8 +1087,10 @@ auto PlayEngine::setUseInterpolatorDown(bool use) -> void
     d->mutex.lock();
     const auto changed = _Change(d->useIntrplDown, use);
     d->mutex.unlock();
-    if (changed)
+    if (changed) {
         d->updateVideoSubOptions();
+        d->updateVideoScaler();
+    }
 }
 
 auto PlayEngine::useInterpolatorDown() const -> bool

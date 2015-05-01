@@ -57,6 +57,7 @@ public:
     auto setFramebufferObjectFormat(OGL::TextureFormat format) -> void;
     auto framebufferObjectFormat() const -> OGL::TextureFormat;
     auto isPortrait() const -> bool;
+    auto setScalerEnabled(bool on) -> void;
     Q_INVOKABLE QRectF mapFromVideo(const QRect &rect);
 signals:
     void offsetChanged(const QPointF &pos);

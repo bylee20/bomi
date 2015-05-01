@@ -100,7 +100,7 @@ struct VideoRenderer::Data {
     VideoRenderer *p = nullptr;
     double crop = -1.0, aspect = -1.0, dar = 0.0;
     bool onLetterbox = true, redraw = false, portrait = false;
-    bool flip_h = false, flip_v = false;
+    bool flip_h = false, flip_v = false, scaler = false;
     Qt::Alignment alignment = Qt::AlignCenter;
     QRectF vtx; QPointF offset = {0, 0};
     LetterboxItem *letterbox = nullptr;
@@ -189,7 +189,8 @@ struct VideoRenderer::Data {
         auto size = sourceSize;
         if (portrait)
             std::swap(size.rwidth(), size.rheight());
-        size.scale(qCeil(vtx.width()), qCeil(vtx.height()), Qt::KeepAspectRatio);
+        if (scaler)
+            size.scale(qCeil(vtx.width()), qCeil(vtx.height()), Qt::KeepAspectRatio);
         return size;
     }
 };
@@ -472,6 +473,7 @@ auto VideoRenderer::updateData(ShaderData *_data) -> void
     } else if (!d->frame.size.isEmpty()) {
         d->redraw = false;
         d->frame.renew();
+        qDebug() << d->frame.size;
         d->osd.renew();
         auto w = window();
         if (w && d->render) {
@@ -532,7 +534,7 @@ auto VideoRenderer::isPortrait() const -> bool
     return d->portrait;
 }
 
-QRectF VideoRenderer::mapFromVideo(const QRect &rect)
+auto VideoRenderer::mapFromVideo(const QRect &rect) -> QRectF
 {
     const auto src = sizeHint();
     const auto rx = d->vtx.width() / src.width();
@@ -549,3 +551,14 @@ QRectF VideoRenderer::mapFromVideo(const QRect &rect)
 
     return { tl, size };
 }
+
+auto VideoRenderer::setScalerEnabled(bool on) -> void
+{
+    if (_Change(d->scaler, on)) {
+        d->frame.size = d->fboSizeHint();
+        d->redraw = true;
+        polish();
+        reserve(UpdateAll);
+    }
+}
+
