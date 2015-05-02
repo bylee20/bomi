@@ -1,5 +1,7 @@
 *.conf.bk
 *.directory
+windows/Makefile*
+windows/latest/*
 windows/repo/
 windows/*.exe
 windows/packages/net.xylosper.bomi*/data/*

@@ -3,8 +3,8 @@
     <DisplayName>bomi</DisplayName>
     <DisplayName xml:lang="ko">보미</DisplayName>
     <Description>Install bomi</Description>
-    <Version>0.9.7-1</Version>
-    <ReleaseDate>2015-04-19</ReleaseDate>
+    <Version>0.9.10-2</Version>
+    <ReleaseDate>2015-05-02</ReleaseDate>
     <Licenses>
         <License name="GPLv2" file="gpl-2.0.txt" />
     </Licenses>

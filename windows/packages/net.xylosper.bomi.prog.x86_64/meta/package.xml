@@ -2,7 +2,7 @@
 <Package>
     <DisplayName>bomi for 64bit</DisplayName>
     <Description>Install bomi for 64bit</Description>
-    <Version>0.9.7-1</Version>
-    <ReleaseDate>2015-04-19</ReleaseDate>
+    <Version>0.9.10-2</Version>
+    <ReleaseDate>2015-05-02</ReleaseDate>
     <SortingPriority>10</SortingPriority>
 </Package>
