@@ -3,10 +3,13 @@
 cur=$(pwd)
 
 sys=$(echo $MSYSTEM | tr '[:upper:]' '[:lower:]')
+bit=
 if [ "$sys" = "mingw64" ]; then
     arch="x86_64"
+    bit=64
 else
     arch="i386"
+    bit=32
 fi
 
 name=bomi-$arch-$(date +%Y%m%d%H%M%S)
@@ -30,10 +33,20 @@ base=/$sys/qt5-static/share/qt5
 
 cp -r $base/qml/QtQuick/{Controls,Layouts,Window.2} QtQuick/
 cp -r $base/qml/QtQuick.2 .
-cp $base/translations/qt_{ar,ca,cs,da,de,es,fa,fi,fr,gl,he}.qm translations/
+cp $base/translations/qt_{ar,ca,cs,da,de,es,fa,fi,fr,gl,he,hu,it,ja,ko,lt,pl,pt,ru,sk,sl,sv,uk,zh_CN,zh_TW}.qm translations/
 
 find QtQuick{,.2} -name 'lib*.a' | xargs rm
 
 dest=$cur/../bomi/windows/packages/net.xylosper.bomi.prog.$arch/data
 rm $dest/*
 7z a $dest/$name.7z *
+
+cd $cur/build
+mv bomi.exe bomi-tmp.exe
+mv $name bomi
+dest=$cur/../bomi/windows/latest/bomi-${bit}bit.7z
+rm $dest
+7z a $dest bomi
+mv bomi $name
+mv bomi-tmp.exe bomi.exe
+
