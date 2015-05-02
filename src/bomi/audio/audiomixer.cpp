@@ -3,7 +3,7 @@
 static auto LambertW1(const double z) -> double {
     const double eps=4.0e-16, em1=0.3678794411714423215955237701614608;
     double p = 1.0, e, t, w, l1, l2;
-    Q_ASSERT(-em1 <= z && z <0.0);
+    Q_ASSERT(-em1 <= z && z <0.0); Q_UNUSED(em1);
     /* initial approx for iteration... */
     if (z < -1e-6) { /* series about -1/e */
         p = -sqrt(2.0 * (2.7182818284590452353602874713526625 * z + 1.0));

@@ -70,6 +70,7 @@ auto SimpleTextureItem::createData() const -> SimpleTextureItem::ShaderData*
 auto SimpleTextureItem::updateData(ShaderData *data) -> void
 {
     Q_ASSERT(static_cast<SimpleTextureData*>(data)->texture == m_texture);
+    Q_UNUSED(data);
     updateTexture(m_texture);
 }
 
