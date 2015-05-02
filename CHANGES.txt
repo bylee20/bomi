@@ -1,3 +1,34 @@
+0.9.10
+
+  * New: 'Open > From Clipboard' to open URL from clipboard data
+  * New: 'Play > Streaming' Format to select YouTube format
+  * New: options to select default format for youtube-dl script
+  * New: option to save persitent data in application folder
+  * New: crop functionality for video clip maker
+  * New: options to configure preview size in Theme tab in preferences (#341)
+  * New: add playlist name filter for open/append file menus (#336, #337)
+  * New: handle cue sheet as  playlist (#336)
+  * Fix: prefer webm & small resolution format for preview (#355)
+  * Fix: YouTube Live streaming didn't work (#356)
+  * Fix: turn on OpenGL debugger when --debug option given
+  * Fix: don't blend subtitle FBO when no subtitle exist
+  * Fix: render video frame in scene graph thread
+  * Fix: apply color matrix only if required
+  * Fix: fps spin box wasn't enabled for Constant framerate
+  * Fix: use original size FBO for bilinear scaler
+  * Fix: codec options in video clip maker were not saved properly
+  * Fix: wrong termination of yle-dl before end of playback
+  * Fix: disable resuming playbak/preview for yle-dl streaming
+  * Fix: 'Video > Crop' was broken
+  * Fix: some color picker buttons had wrong size in preferences dialog (#347)
+  * Fix: video preview was broken for disc playback (#338)
+  * Fix: wrong name filter for playlist file
+  * Fix: support fine-resolution wheels or touchpad (#333)
+  * Fix: add extensions .ape, .it, .xm for audio files (#332)
+  * Fix: add missing '.mod' extension for audio files (#332)
+  * Fix: 'pause when hidden' was always applied all files (#332)
+  * Fix: set maximum duration for animtion to show current playing item in playlist (#331)
+
 0.9.9
 
   * New: Play > Seek > Previous Playback (#134)
