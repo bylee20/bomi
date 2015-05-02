@@ -153,7 +153,7 @@ auto Mpv::initializeGL(QOpenGLContext *ctx) -> void
         return reinterpret_cast<void*>(res);
     };
     auto err = mpv_opengl_cb_init_gl(d->gl, nullptr, getProcAddr, ctx);
-    Q_ASSERT(err >= 0);
+    Q_UNUSED(err); Q_ASSERT(err >= 0);
     d->osd.initialize();
 }
 

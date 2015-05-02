@@ -299,14 +299,10 @@ auto _WritablePath(Location loc, bool create) -> QString
     return path;
 }
 
-auto _OldWritablePath(Location loc) -> QString
+auto _OldConfigPath() -> QString
 {
-    const auto std = static_cast<QStandardPaths::StandardLocation>(loc);
-    auto path = QStandardPaths::writableLocation(std);
-    if (loc == Location::Config)
-        path += '/'_q % qApp->organizationName()
-              % '/'_q % qApp->applicationName();
-    return path;
+    return QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)
+            % '/'_q % qApp->organizationName() % '/'_q % qApp->applicationName();
 }
 
 QByteArray _Uncompress(const QByteArray &data) {

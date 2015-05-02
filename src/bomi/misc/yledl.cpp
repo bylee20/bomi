@@ -41,6 +41,7 @@ auto YleDL::supports(const QString &url) const -> bool
 #ifdef Q_OS_LINUX
     return url.startsWith(u"http://areena.yle.fi"_q, Qt::CaseInsensitive);
 #else
+    Q_UNUSED(url);
     return false;
 #endif
 }

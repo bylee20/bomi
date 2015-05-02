@@ -16,6 +16,7 @@
 #include <QJsonDocument>
 #include <QCommandLineParser>
 #include <QFontDatabase>
+#include <QSettings>
 
 #ifdef Q_OS_LINUX
 #include "player/mpris.hpp"
@@ -30,7 +31,7 @@ DECLARE_LOG_CONTEXT(App)
 namespace Global {
 auto open_folders() -> QMap<QString, QString>;
 auto set_open_folders(const QMap<QString, QString> &folders) -> void;
-auto _OldWritablePath(Location loc) -> QString;
+auto _OldConfigPath() -> QString;
 auto _SetWindowTitle(QWidget *w, const QString &title) -> void
 { cApp.setWindowTitle(w, title); }
 extern bool useLocalConfig;
@@ -172,8 +173,9 @@ struct App::Data {
         };
 
         const auto config = _WritablePath(Location::Config, false);
-        const auto old = _OldWritablePath(Location::Config);
-        if (config != old && !QDir(config).exists() && QDir(old).exists()) {
+        const auto old = _OldConfigPath();
+        if (config != old && !QFile::exists(config % u"/pref.json"_q)
+                && QFile::exists(old % u"/pref.json"_q)) {
             QDir().mkpath(config);
             auto files = QDir(old).entryInfoList(QDir::Files);
             for (auto &file : files)
