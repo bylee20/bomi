@@ -61,7 +61,7 @@
            <bool>true</bool>
           </property>
           <property name="suffix">
-           <string notr="true"> % of height</string>
+           <string> % of height</string>
           </property>
           <property name="decimals">
            <number>1</number>
@@ -134,7 +134,7 @@
             <bool>true</bool>
            </property>
            <property name="suffix">
-            <string notr="true"> %</string>
+            <string> %</string>
            </property>
            <property name="decimals">
             <number>1</number>
@@ -166,7 +166,7 @@
             <bool>true</bool>
            </property>
            <property name="suffix">
-            <string notr="true"> %</string>
+            <string> %</string>
            </property>
            <property name="decimals">
             <number>1</number>
@@ -275,7 +275,7 @@
             <bool>true</bool>
            </property>
            <property name="suffix">
-            <string notr="true"> %</string>
+            <string> %</string>
            </property>
            <property name="decimals">
             <number>1</number>
@@ -378,7 +378,7 @@
               <bool>true</bool>
              </property>
              <property name="suffix">
-              <string notr="true"> %</string>
+              <string> %</string>
              </property>
              <property name="decimals">
               <number>1</number>
@@ -407,7 +407,7 @@
               <bool>true</bool>
              </property>
              <property name="suffix">
-              <string notr="true"> %</string>
+              <string> %</string>
              </property>
              <property name="decimals">
               <number>1</number>
@@ -501,7 +501,7 @@
               <bool>true</bool>
              </property>
              <property name="suffix">
-              <string notr="true"> %</string>
+              <string> %</string>
              </property>
              <property name="decimals">
               <number>1</number>
@@ -530,7 +530,7 @@
               <bool>true</bool>
              </property>
              <property name="suffix">
-              <string notr="true"> %</string>
+              <string> %</string>
              </property>
              <property name="decimals">
               <number>1</number>

@@ -10,9 +10,6 @@
     <height>571</height>
    </rect>
   </property>
-  <property name="styleSheet">
-   <string notr="true"/>
-  </property>
   <layout class="QHBoxLayout" name="horizontalLayout_14">
    <item>
     <widget class="QTreeWidget" name="tree">
@@ -48,7 +45,7 @@
      </property>
      <column>
       <property name="text">
-       <string notr="true">1</string>
+       <string/>
       </property>
      </column>
     </widget>
@@ -72,7 +69,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>20</number>
+        <number>17</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1028,7 +1025,7 @@
                  <bool>true</bool>
                 </property>
                 <property name="suffix">
-                 <string notr="true"> %</string>
+                 <string> %</string>
                 </property>
                 <property name="minimum">
                  <number>1</number>
@@ -1743,7 +1740,7 @@
           <widget class="PrefMouseActionTree" name="mouse_action_map">
            <column>
             <property name="text">
-             <string notr="true">1</string>
+             <string/>
             </property>
            </column>
           </widget>
@@ -2028,14 +2025,15 @@ You don't need to specify to this if geust is allowed.</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BBox</class>
-   <extends>QDialogButtonBox</extends>
-   <header>dialog/bbox.hpp</header>
+   <class>ColorSelectWidget</class>
+   <extends>QWidget</extends>
+   <header>widget/colorselectwidget.hpp</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PathButton</class>
-   <extends>QPushButton</extends>
-   <header>widget/pathbutton.hpp</header>
+   <class>FontComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widget/fontcombobox.hpp</header>
   </customwidget>
   <customwidget>
    <class>OsdStyleWidget</class>
@@ -2044,10 +2042,14 @@ You don't need to specify to this if geust is allowed.</string>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>ColorSelectWidget</class>
-   <extends>QWidget</extends>
-   <header>widget/colorselectwidget.hpp</header>
-   <container>1</container>
+   <class>BBox</class>
+   <extends>QDialogButtonBox</extends>
+   <header>dialog/bbox.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>PathButton</class>
+   <extends>QPushButton</extends>
+   <header>widget/pathbutton.hpp</header>
   </customwidget>
   <customwidget>
    <class>EncodingComboBox</class>
@@ -2148,11 +2150,6 @@ You don't need to specify to this if geust is allowed.</string>
    <class>PrefStepTreeWidget</class>
    <extends>QTreeWidget</extends>
    <header>pref/prefdialog_p.hpp</header>
-  </customwidget>
-  <customwidget>
-   <class>FontComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widget/fontcombobox.hpp</header>
   </customwidget>
   <customwidget>
    <class>JrConnectionComboBox</class>
