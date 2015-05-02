@@ -465,7 +465,7 @@ auto MainWindow::Data::openMimeData(const QMimeData *md) -> void
         const auto lines = md->text().split(QRegEx(uR"([\n\r]+)"_q), QString::SkipEmptyParts);
         for (auto &line : lines) {
             QUrl url(line.trimmed());
-            if (url.isValid() && !urls.contains(url))
+            if (!url.scheme().isEmpty() && url.isValid() && !urls.contains(url))
                 urls.push_back(url);
         }
     }

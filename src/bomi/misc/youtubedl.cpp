@@ -364,6 +364,9 @@ auto YouTubeDL::setProgram(const QString &program) -> void
 
 auto YouTubeDL::supports(const QString &url) -> bool
 {
+    if (!url.startsWith("http://"_a) && !url.startsWith("https://"_a))
+        return false;
+
     QProcess proc;
     QStringList args;
     args << u"-g"_q << url;
