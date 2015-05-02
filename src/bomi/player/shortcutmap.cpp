@@ -104,6 +104,7 @@ auto ShortcutMap::default_(const QString &id) -> QList<Key>
        QMap<QString, QList<Key>> map;
        map[u"open/file"_q] << Qt::CTRL + Qt::Key_F;
        map[u"open/folder"_q] << Qt::CTRL + Qt::Key_G;
+       map[u"open/clipboard"_q] << Qt::CTRL + Qt::Key_V;
 
        map[u"play/play-pause"_q] << Qt::Key_Space;
        map[u"play/prev"_q] << Qt::CTRL + Qt::Key_Left;

@@ -22,6 +22,7 @@
 #include "audio/visualizer.hpp"
 #include "misc/filenamegenerator.hpp"
 #include <QThreadPool>
+#include <QClipboard>
 
 template<class T, class Func>
 auto MainWindow::Data::push(const T &to, const T &from, const Func &func) -> QUndoCommand*
@@ -206,6 +207,8 @@ auto MainWindow::Data::plugMenu() -> void
         if (openDisc(tr("Select Blu-ray device"), as.bluray_device, false))
             openMrl(Mrl::fromDisc(u"bdnav"_q, as.bluray_device, -1, true));
     });
+    connect(open[u"clipboard"_q], &QAction::triggered,
+            p, [=] () { openMimeData(qApp->clipboard()->mimeData()); });
     connect(open(u"recent"_q).g(), &ActionGroup::triggered,
             p, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
     connect(open(u"recent"_q)[u"clear"_q], &QAction::triggered,

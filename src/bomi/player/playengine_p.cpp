@@ -751,7 +751,6 @@ auto PlayEngine::Data::request() -> void
             }
             if (idx < 0)
                 idx = ytResult.videos.size() - 1;
-            qDebug() << ytResult.videos[idx].description();
             path = ytResult.videos[idx].url().toUtf8();
         } else {
             auto file = mpv.get<MpvFile>("stream-open-filename");

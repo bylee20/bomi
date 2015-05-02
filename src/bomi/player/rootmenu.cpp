@@ -282,6 +282,7 @@ RootMenu::RootMenu()
         d->action(u"url"_q, QT_TR_NOOP("URL"));
         d->action(u"dvd"_q, QT_TR_NOOP("DVD"));
         d->action(u"bluray"_q, QT_TR_NOOP("Blu-ray"));
+        d->action(u"clipboard"_q, QT_TR_NOOP("From Clipboard"));
 
         d->separator();
 
