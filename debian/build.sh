@@ -1,11 +1,11 @@
 #! /bin/bash
 
-ver=$1
-distro=$2
-rel=$3
+ver=$(git describe | sed 's/v\([0-9]\+.[0-9]\+.[0-9]\+\).*/\1/')
+distro=$1
+rel=$2
 
-if [ -z "$distro" ] || [ -z "$ver" ]; then
-  echo "Usage: $0 <version> <distro> [<rel>]"
+if [ -z "$distro" ]; then
+  echo "Usage: $0 <distro> [<rel>]"
   exit
 fi
 

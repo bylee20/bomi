@@ -144,11 +144,11 @@ auto Mrl::toCueTrack() const -> CueTrack
 {
     if (!isCueTrack())
         return CueTrack();
-    const auto strs = m_loc.midRef(6).split(u":;"_q);
+    const auto strs = m_loc.mid(6).split(u":;"_q);
     if (strs.size() != 4)
         return CueTrack();
     CueTrack track;
-    track.file = strs[1].toString();
+    track.file = strs[1];
     track.start = strs[2].toInt();
     track.end = strs[3].toInt();
     return track;
