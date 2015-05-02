@@ -731,10 +731,35 @@ auto PlayEngine::Data::request() -> void
         select(StreamSubtitle);
         mpv.flush();
         _PostEvent(p, StartPlayback, editions, edition);
-        auto path = mpv.get<MpvFile>("stream-open-filename");
-        if (disc && edition.number >= 0)
-            path = Mrl(path.data).titleMrl(edition.number).toString();
-        preview->load(path.toMpv());
+        QByteArray path;
+        if (!ytResult.videos.isEmpty()) {
+            int idx = -1;
+            for (int i = ytResult.videos.size() - 1; i >= 0; --i) {
+                const auto &video = ytResult.videos[i];
+                if (video.height() >= 200 && video.extension() == "webm"_a) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (idx < 0) {
+                for (int i = ytResult.videos.size() - 1; i >= 0; --i) {
+                    if (ytResult.videos[i].height() >= 200) {
+                        idx = i;
+                        break;
+                    }
+                }
+            }
+            if (idx < 0)
+                idx = ytResult.videos.size() - 1;
+            qDebug() << ytResult.videos[idx].description();
+            path = ytResult.videos[idx].url().toUtf8();
+        } else {
+            auto file = mpv.get<MpvFile>("stream-open-filename");
+            if (disc && edition.number >= 0)
+                file = Mrl(file).titleMrl(edition.number).toString();
+            path = file.toMpv();
+        }
+        preview->load(path);
     });
     mpv.request(MPV_EVENT_END_FILE, [=] (mpv_event *e) {
         preview->unload();
