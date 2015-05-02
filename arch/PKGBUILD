@@ -21,7 +21,7 @@ optdepends=('libva-intel-driver: hardware acceleration support for Intel GPU'
             'libaacs: AACS decryption for Blu-ray support'
             'libbdplus: BD+ decryption for Blu-ray support')
 source=($pkgname-$pkgver.tar.gz::https://github.com/xylosper/bomi/archive/v$pkgver.tar.gz)
-md5sums=('5e6766ba11b6239aecc37b68646a4e06')
+md5sums=('9604d660ae1de2a97367f83004c8ae08')
 #options=(debug !strip)
 
 build() {
