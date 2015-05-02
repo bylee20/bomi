@@ -304,6 +304,21 @@ auto MainWindow::Data::plugMenu() -> void
         showMessage(fmt.arg(_MSecToString(e.time()), _MSecToString(e.end()),
                             _N(e.rate() * 100, 1), _N(e.speed(), 2)));
     });
+    g = play(u"streaming"_q).g();
+    connect(g, &ActionGroup::triggered, p,
+            [=] (QAction *a) { e.setStreamingFormat(a->data().toString()); });
+    connect(&e, &PlayEngine::streamingFormatsChanged, p, [=, &play] () {
+        g->clear();
+        auto &m = play(u"streaming"_q);
+        const auto current = e.streamingFormat()->id();
+        const auto list = e.streamingFormats();
+        for (auto fmt : list) {
+            auto action = m.addActionNoKey(fmt->name(), true);
+            action->setData(fmt->id());
+            action->setChecked(fmt->id() == current);
+        }
+        m.setEnabled(!list.isEmpty());
+    });
 
     Menu &video = menu(u"video"_q);
 

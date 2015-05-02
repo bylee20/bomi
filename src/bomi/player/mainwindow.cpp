@@ -41,15 +41,6 @@ MainWindow::MainWindow()
     AppObject::setTheme(&d->theme);
     AppObject::setWindow(this);
 
-    d->youtube.setGetFormat([=] (QList<YouTubeFormat> *formats,
-                         const QString &def) -> void {
-        QMutex mutex; QWaitCondition cond;
-        mutex.lock();
-        _PostEvent(this, GetYouTubeFormat, formats, def, &cond);
-        cond.wait(&mutex);
-        mutex.unlock();
-    });
-
     d->playlist.setDownloader(&d->downloader);
     d->e.setHistory(&d->history);
     d->e.setYouTube(&d->youtube);
@@ -514,18 +505,6 @@ auto MainWindow::customEvent(QEvent *event) -> void
             *res = true;
             *smb = dlg->authInfo();
         }
-        cond->wakeAll();
-        break;
-    } case GetYouTubeFormat: {
-        QList<YouTubeFormat> *formats;
-        QString defId;
-        _TakeData(event, formats, defId, cond);
-        auto dlg = d->dialog<YouTubeDialog>();
-        dlg->setFormats(*formats, defId);
-        if (dlg->exec())
-            *formats = dlg->formats();
-        else
-            formats->clear();
         cond->wakeAll();
         break;
     } default:

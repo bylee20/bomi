@@ -373,32 +373,57 @@ auto PlayEngine::Data::onLoad() -> void
 
     if (file.data.startsWith("http://"_a, QCI) || file.data.startsWith("https://"_a, QCI)) {
         file = QUrl(file).toString(QUrl::FullyEncoded);
+        if (file != ytResult.mrl)
+            ytResult.clear();
         if (yle && yle->supports(file)) {
             if (yle->run(file)) {
                 start = -1;
                 file = yle->url();
             }
-        } else if (youtube && youtube->run(file)) {
+        } else if (ytResult.mrl == file || (youtube && youtube->run(file))) {
             mpv.setAsync("file-local-options/cookies", true);
             mpv.setAsync("file-local-options/cookies-file", MpvFile(youtube->cookies()).toMpv());
             mpv.setAsync("file-local-options/user-agent", youtube->userAgent().toUtf8());
-            const auto r = youtube->result();
-            if (!r.url.isEmpty()) {
-                file = r.url;
-                if (!r.audio.isEmpty()) { // DASH
-                    mpv.setAsync("file-local-options/audio-file", MpvFile(r.audio).toMpv());
-                    mpv.setAsync("file-local-options/demuxer-lavf-o", "fflags=+ignidx"_b);
-                }
-                t.duration = r.duration;
-                if (r.live) {
-                    start = -1;
-                    t.seekable = false;
-                }
-            }
+            auto &r = ytResult;
+            if (r.mrl != file)
+                r = youtube->result();
             if (!r.title.isEmpty())
                 mpv.setAsync("file-local-options/media-title", r.title.toUtf8());
+            if (r.duration > 0)
+                t.duration = r.duration;
+            if (r.live)
+                start = -1;
+            if (r.videos.isEmpty()) {
+                if (!r.url.isEmpty())
+                    file = r.url;
+            } else {
+                int idx = -1;
+                mutex.lock();
+                const auto selection = r.selection;
+                mutex.unlock();
+                if (!selection.isEmpty()) {
+                    for (int i = 0; i < r.videos.size(); ++i) {
+                        if (r.videos[i].id() == selection) {
+                            idx = i;
+                            break;
+                        }
+                    }
+                }
+                if (idx < 0)
+                    idx = std::max(0, youtube->select(r.videos));
+                const auto &video = r.videos[idx];
+                mutex.lock();
+                r.selection = video.id();
+                mutex.unlock();
+                file = video.url();
+                if (video.isDash() && r.audio.isValid()) {
+                    mpv.setAsync("file-local-options/audio-file", r.audio.url().toUtf8());
+                    mpv.setAsync("file-local-options/demuxer-lavf-o", "fflags=+ignidx"_b);
+                }
+            }
         }
-    }
+    } else
+        ytResult.clear();
 
     if (local->d->disc) {
         file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
@@ -415,7 +440,7 @@ auto PlayEngine::Data::onLoad() -> void
 
     mpv.setAsync("stream-open-filename", file.toMpv());
     mpv.flush();
-    _PostEvent(p, SyncMrlState, t.local, loads);
+    _PostEvent(p, SyncMrlState, t.local, loads, ytResult);
     t.local.clear();
 
     mutex.lock();
@@ -787,7 +812,8 @@ auto PlayEngine::Data::process(QEvent *event) -> void
     case SyncMrlState: {
         QSharedPointer<MrlState> ms;
         QVector<SubComp> loads;
-        _TakeData(event, ms, loads);
+        YouTubeDL::Result ytr;
+        _TakeData(event, ms, loads, ytr);
         emit p->beginSyncMrlState();
         params.m_mutex = nullptr;
         sr->setComponents(loads);
@@ -798,6 +824,16 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         params.m_mutex = &mutex;
         emit p->endSyncMrlState();
         history->update(&params, false);
+
+        qDeleteAll(info.streamings);
+        info.streamings.clear();
+        for (auto &fmt : ytr.videos) {
+            if (ytr.selection == fmt.id())
+                info.streaming.set(fmt.id(), fmt.description());
+            info.streamings.push_back(new StreamingFormatObject(fmt.id(), fmt.description()));
+        }
+        emit p->streamingFormatsChanged();
+        emit p->streamingFormatChanged();
         break;
     } default:
         break;

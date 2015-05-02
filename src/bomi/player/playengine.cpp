@@ -1208,7 +1208,7 @@ auto PlayEngine::setAudioEqualizer(const AudioEqualizer &eq) -> void
     d->params.set_audio_equalizer(eq);
 }
 
-template<class L, class T = EditionChapterObject>
+template<class T = EditionChapterObject, class L = QVector<T*>>
 SIA makePtrList(const QObject *o, const L *list) -> QQmlListProperty<T>
 {
     auto at = [] (QQmlListProperty<T> *p, int index) -> T*
@@ -1226,6 +1226,29 @@ auto PlayEngine::editionList() const -> QQmlListProperty<EditionChapterObject>
 auto PlayEngine::chapterList() const -> QQmlListProperty<EditionChapterObject>
 {
     return makePtrList(this, &d->info.chapters);
+}
+
+auto PlayEngine::streamingFormatList() const -> QQmlListProperty<StreamingFormatObject>
+{
+    return makePtrList<StreamingFormatObject>(this, &d->info.streamings);
+}
+
+auto PlayEngine::streamingFormat() const -> StreamingFormatObject*
+{
+    return &d->info.streaming;
+}
+
+auto PlayEngine::streamingFormats() const -> const QVector<StreamingFormatObject*>&
+{
+    return d->info.streamings;
+}
+
+auto PlayEngine::setStreamingFormat(const QString &id) -> void
+{
+    d->mutex.lock();
+    d->ytResult.selection = id;
+    d->mutex.unlock();
+    reload();
 }
 
 auto PlayEngine::time_s() const -> int

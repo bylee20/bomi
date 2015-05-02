@@ -598,7 +598,7 @@ auto MainWindow::Data::applyPref() -> void
     e.preview()->setShowKeyframe(controls.showKeyframeForPreview);
     youtube.setUserAgent(p.yt_user_agent());
     youtube.setProgram(p.yt_program());
-    youtube.setAskVideoQuality(p.yt_ask_video_quality());
+    youtube.setPreferredFormat(p.yt_height(), p.yt_fps(), p.yt_container());
     yle.setProgram(p.yle_program());
     history.setRememberImage(p.remember_image());
     history.setPropertiesToRestore(p.restore_properties());

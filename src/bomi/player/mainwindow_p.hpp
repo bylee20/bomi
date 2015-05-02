@@ -40,8 +40,7 @@
 DECLARE_LOG_CONTEXT(Main)
 
 enum MainWindowEvent {
-    GetSmbAuth = QEvent::User + 1,
-    GetYouTubeFormat
+    GetSmbAuth = QEvent::User + 1
 };
 
 template<class Func, class T>

@@ -54,6 +54,21 @@ private:
     Type m_type = NoMedia;
 };
 
+class StreamingFormatObject : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
+    Q_PROPERTY(QString id READ id CONSTANT FINAL)
+public:
+    StreamingFormatObject() = default;
+    StreamingFormatObject(const QString &id, const QString &name)
+        : m_id(id), m_name(name) { }
+    auto name() const -> QString { return m_name; }
+    auto id() const -> QString { return m_id; }
+    auto set(const QString &id, const QString &name) { m_id = id; m_name = name; }
+private:
+    QString m_id, m_name;
+};
+
 class EditionChapterObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(int number READ number CONSTANT FINAL)

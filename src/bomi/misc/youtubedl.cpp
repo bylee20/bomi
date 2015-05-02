@@ -8,9 +8,8 @@
 
 DECLARE_LOG_CONTEXT(YouTubeDL)
 
-auto YouTubeFormat::operator < (const YouTubeFormat &rhs) const -> bool
+static auto operator > (const YouTubeFormat &lhs, const YouTubeFormat &rhs) -> bool
 {
-    auto &lhs = *this;
     if (lhs.isAudio() != rhs.isAudio())
         return lhs.isAudio();
     if (lhs.isAudio()) {
@@ -24,7 +23,38 @@ auto YouTubeFormat::operator < (const YouTubeFormat &rhs) const -> bool
         return ls > rs;
     if (lhs.fps() != rhs.fps())
         return lhs.fps() > rhs.fps();
-    return lhs.tbr() > rhs.tbr();
+    if (lhs.tbr() != rhs.tbr())
+        return lhs.tbr() > rhs.fps();
+    if (lhs.extension() != rhs.extension()) {
+        if (lhs.extension() == "webm"_a)
+            return true;
+        if (rhs.extension() == "webm"_a)
+            return false;
+        return lhs.extension() > rhs.extension();
+    }
+    return false;
+}
+
+auto YouTubeFormat::operator < (const YouTubeFormat &rhs) const -> bool
+{
+    return rhs > *this;
+}
+
+auto YouTubeFormat::description() const -> QString
+{
+    auto _n = [] (int v) { return v ? _N(v) : u"--"_q; };
+    QString desc;
+    if (isAudio())
+        desc = _n(fps() + 0.5) % "Hz@"_a % _n(bitrate());
+    else
+        desc = _n(width()) % 'x'_q % _n(height()) % ','_q % _n(fps() + 0.5) % "fps"_a;
+    if (codec().isEmpty())
+        desc += '('_q % extension() % ')'_q;
+    else
+        desc += '('_q % codec() % ','_q % extension() % ')'_q;
+    if (isDash())
+        desc += u" [DASH]"_q;
+    return desc;
 }
 
 auto YouTubeFormat::isValid() const -> bool
@@ -85,8 +115,9 @@ struct YouTubeDL::Data {
     int timeout = 60000;
     QMutex mutex;
     QJsonObject json;
-    GetFormatFunc getFormat;
     bool ask = false;
+    int height = 720, fps = 30;
+    QString container = u"webm"_q;
 };
 
 YouTubeDL::YouTubeDL(QObject *parent)
@@ -100,21 +131,72 @@ YouTubeDL::~YouTubeDL()
     delete d;
 }
 
-auto YouTubeDL::setAskVideoQuality(bool ask) -> void
+auto YouTubeDL::select(const QList<YouTubeFormat> &formats) const -> int
 {
+    if (formats.isEmpty())
+        return -1;
     d->mutex.lock();
-    d->ask = ask;
+    int targetHeight = d->height, targetFps = d->fps;
+    auto ext = d->container;
     d->mutex.unlock();
+
+    int h = -1;
+    for (int i = 0; i < formats.size(); ++i) {
+        if (formats[i].height() <= targetHeight) {
+            h = formats[i].height();
+            break;
+        }
+    }
+    if (h < 0)
+        h = formats.back().height();
+
+    QList<int> cands;
+    for (int i = 0; i < formats.size(); ++i) {
+        if (formats[i].height() == h)
+            cands.push_back(i);
+    }
+    Q_ASSERT(!cands.isEmpty());
+    if (cands.size() == 1)
+        return cands.front();
+
+    int fps = -1;
+    for (int i : cands) {
+        if (qRound(formats[i].fps()) <= targetFps) {
+            fps = qRound(formats[i].fps());
+            break;
+        }
+    }
+    if (fps < 0)
+        fps = qRound(formats[cands.back()].fps());
+
+    QList<int> cands2;
+    for (int i : cands) {
+        if (qRound(formats[i].fps()) == fps)
+            cands2.push_back(i);
+    }
+    Q_ASSERT(!cands2.isEmpty());
+    if (cands2.size() > 1) {
+        for (int i : cands2) {
+            if (formats[i].extension() == ext)
+                return i;
+        }
+    }
+    return cands2.front();
 }
 
-auto YouTubeDL::setGetFormat(GetFormatFunc &&func) -> void
+auto YouTubeDL::setPreferredFormat(int height, int fps, const QString &container) -> void
 {
-    d->getFormat = std::move(func);
+    d->mutex.lock();
+    d->height = height;
+    d->fps = fps;
+    d->container = container;
+    d->mutex.unlock();
 }
 
 auto YouTubeDL::result() const -> Result
 {
     Result r;
+    r.mrl = d->input;
     if (d->json[u"_type"_q].toString() == "playlist"_a) {
         const auto entries = d->json[u"entries"_q].toArray();
         if (entries.isEmpty()) {
@@ -142,57 +224,44 @@ auto YouTubeDL::result() const -> Result
         return r;
     }
     r.title = d->json[u"title"_q].toString();
+    r.url = d->json[u"url"_q].toString();
+    r.duration = d->json[u"duration"_q].toDouble() * 1000;
 
-    QList<YouTubeFormat> formats;
-    bool live = false;
+    r.live = false;
+    QList<YouTubeFormat> videos, audios;
     for (auto fmt : d->json[u"formats"_q].toArray()) {
         auto format = YouTubeFormat::fromJson(fmt.toObject());
-        live |= format.isLive();
-        if (format.isValid())
-            formats.push_back(format);
+        r.live |= format.isLive();
+        if (format.isValid()) {
+            if (format.isAudio())
+                audios.push_back(format);
+            else
+                videos.push_back(format);
+        }
     }
-    if (live) {
+    if (r.live) {
         QList<YouTubeFormat> fmts;
-        for (auto &fmt : formats) {
+        for (auto &fmt : videos) {
             if (fmt.isLive())
                 fmts.push_back(fmt);
         }
-        formats = std::move(fmts);
+        videos = std::move(fmts);
+        audios.clear();
     }
-    d->mutex.lock();
-    const bool ask = d->ask;
-    d->mutex.unlock();
-    const auto defId = d->json[u"format_id"_q].toString();
-    if (!ask) {
-        if (formats.isEmpty()) {
-            r.url = d->json[u"url"_q].toString();
-            if (r.url.isEmpty()) {
-                _Error("No URL found.");
-                return Result();
-            }
-            return r;
-        }
-        for (auto &fmt : formats) {
-            if (fmt.id() == defId) {
-                r.url = fmt.url();
-                return r;
-            }
-        }
-        qSort(formats);
-        r.url = formats.front().url();
-        return r;
-    }
-    if (!d->getFormat)
-        return Result();
-    d->getFormat(&formats, defId);
-    if (formats.isEmpty())
-        return Result();
-    r.duration = d->json[u"duration"_q].toDouble() * 1000;
-    r.url = formats.front().url();
-    if (formats.size() > 1)
-        r.audio = formats[1].url();
-    r.live = formats.front().isLive();
+    qSort(videos.begin(), videos.end(), qGreater<YouTubeFormat>());
+    r.videos = std::move(videos);
+    r.audio = audios.isEmpty() ? YouTubeFormat() : audios.front();
     return r;
+//    if (!d->getFormat)
+//        return Result();
+//    d->getFormat(&formats, r.format);
+//    if (formats.isEmpty())
+//        return Result();
+//    r.url = formats.front().url();
+//    if (formats.size() > 1)
+//        r.audio = formats[1].url();
+//    r.live = formats.front().isLive();
+//    return r;
 }
 
 auto YouTubeDL::cookies() const -> QString
@@ -312,92 +381,4 @@ auto YouTubeDL::supports(const QString &url) -> bool
     const auto out = proc.readAllStandardOutput().trimmed();
     const auto err = proc.readAllStandardError().trimmed();
     return !out.isEmpty() && err.isEmpty();
-}
-
-struct YouTubeDialog::Data {
-    QComboBox *video, *audio;
-    QList<YouTubeFormat> formats;
-};
-
-YouTubeDialog::YouTubeDialog()
-    : d(new Data)
-{
-    d->video = new QComboBox;
-    d->audio = new QComboBox;
-
-    connect(SIGNAL_VT(d->video, currentIndexChanged, int), this, [=] (int idx) {
-        if (idx != -1)
-            d->audio->setEnabled(d->formats[d->video->currentData().toInt()].isDash());
-    });
-
-    auto form = new QFormLayout(this);
-    form->addRow(tr("Video"), d->video);
-    form->addRow(tr("Audio"), d->audio);
-    form->addRow(BBox::make(this));
-}
-
-YouTubeDialog::~YouTubeDialog()
-{
-    delete d;
-}
-
-auto YouTubeDialog::setFormats(const QList<YouTubeFormat> &formats, const QString &def) -> void
-{
-    d->formats = formats;
-    d->video->clear();
-    d->audio->clear();
-    tmp::sort(d->formats, [] (const YouTubeFormat &lhs, const YouTubeFormat &rhs) {
-        if (lhs.isAudio() != rhs.isAudio())
-            return lhs.isAudio();
-        if (lhs.isAudio()) {
-            if (lhs.tbr() != rhs.tbr())
-                return lhs.tbr() > rhs.tbr();
-            return lhs.fps() > rhs.fps();
-        }
-        const auto ls = lhs.width() * lhs.height();
-        const auto rs = rhs.width() * rhs.height();
-        if (ls != rs)
-            return ls > rs;
-        if (lhs.fps() != rhs.fps())
-            return lhs.fps() > rhs.fps();
-        return lhs.tbr() > rhs.tbr();
-    });
-    for (int i = 0; i < d->formats.size(); ++i) {
-        const auto &f = d->formats[i];
-        if (f.is3D())
-            continue;
-        auto _n = [] (int v) { return v ? _N(v) : u"--"_q; };
-        QString desc;
-        if (f.isAudio())
-            desc = _n(f.fps() + 0.5) % "Hz@"_a % _n(f.bitrate());
-        else {
-            if (f.isDash())
-                desc = '['_q % tr("Video Only") % ']'_q;
-            else if (f.isLive())
-                desc = '['_q % tr("Live") % ']'_q;
-            desc += _n(f.width()) % 'x'_q % _n(f.height()) % ','_q % _n(f.fps() + 0.5) % "fps"_a;
-        }
-        desc += '('_q % f.codec() % ','_q % f.extension() % ')'_q;
-        (f.isAudio() ? d->audio : d->video)->addItem(desc, i);
-    }
-    for (int i = 0; i < d->video->count(); ++i) {
-        if (d->formats[d->video->itemData(i).toInt()].id() == def) {
-            d->video->setCurrentIndex(i);
-            break;
-        }
-    }
-    d->audio->setEnabled(d->formats[d->video->currentData().toInt()].isDash());
-}
-
-auto YouTubeDialog::formats() const -> QList<YouTubeFormat>
-{
-    if (!d->video->count() || !result())
-        return QList<YouTubeFormat>();
-    QList<YouTubeFormat> formats;
-    formats << d->formats[d->video->currentData().toInt()];
-    if (!formats.front().isDash())
-        return formats;
-    if (!d->audio->count())
-        return QList<YouTubeFormat>();
-    return formats << d->formats[d->audio->currentData().toInt()];
 }

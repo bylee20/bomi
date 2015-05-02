@@ -70,6 +70,7 @@ struct PlayEngine::Data {
     VideoProcessor *vp = nullptr;
     FramebufferObjectFormat fboFormat = FramebufferObjectFormat::Auto;
     QByteArray playingVideo, playingAudio;
+    YouTubeDL::Result ytResult;
 
     PlayEngine::Waitings waitings = PlayEngine::NoWaiting;
     PlayEngine::State state = PlayEngine::Stopped;
@@ -86,6 +87,8 @@ struct PlayEngine::Data {
         SubtitleObject subtitle;
         QVector<EditionChapterObject*> chapters, editions;
         EditionChapterObject chapter, edition;
+        StreamingFormatObject streaming;
+        QVector<StreamingFormatObject*> streamings;
         CacheInfoObject cache;
     } info;
 

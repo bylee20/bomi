@@ -22,6 +22,7 @@ struct YouTubeFormat {
     auto url() const -> QString { return m_url; }
     auto isValid() const -> bool;
     auto isLive() const -> bool;
+    auto description() const -> QString;
     static auto fromJson(const QJsonObject &json) -> YouTubeFormat;
 private:
     QString m_ext, m_url, m_id, m_codec;
@@ -30,9 +31,7 @@ private:
     double m_fps = 0.0;
 };
 
-class YouTubeDL : public QObject
-{
-    using GetFormatFunc = std::function<void(QList<YouTubeFormat>*,const QString&)>;
+class YouTubeDL : public QObject {
 public:
     enum Error {
         NoError, Canceled, FailedToStart, Timeout, Crashed,
@@ -42,7 +41,10 @@ public:
         bool direct = false, live = false;
         int duration = -1;
         Playlist playlist;
-        QString url, title, audio;
+        QString url, title, mrl, selection;
+        YouTubeFormat audio;
+        QList<YouTubeFormat> videos;
+        auto clear() -> void { *this = Result(); }
     };
 
     YouTubeDL(QObject *parent = nullptr);
@@ -59,20 +61,8 @@ public:
     auto error() const -> Error;
     auto result() const -> Result;
     auto cancel() -> void;
-    auto setGetFormat(GetFormatFunc &&func) -> void;
-    auto setAskVideoQuality(bool ask) -> void;
-private:
-    struct Data;
-    Data *d;
-};
-
-class YouTubeDialog : public QDialog {
-    Q_DECLARE_TR_FUNCTIONS(YouTubeDialog)
-public:
-    YouTubeDialog();
-    ~YouTubeDialog();
-    auto setFormats(const QList<YouTubeFormat> &formats, const QString &def) -> void;
-    auto formats() const -> QList<YouTubeFormat>;
+    auto setPreferredFormat(int height, int fps, const QString &container) -> void;
+    auto select(const QList<YouTubeFormat> &formats) const -> int;
 private:
     struct Data;
     Data *d;

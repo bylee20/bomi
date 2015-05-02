@@ -84,6 +84,8 @@ class PlayEngine : public QObject {
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(EditionChapterObject* chapter READ chapter NOTIFY chapterChanged)
     Q_PROPERTY(EditionChapterObject* edition READ edition NOTIFY editionChanged)
+    Q_PROPERTY(StreamingFormatObject *streamingFormat READ streamingFormat NOTIFY streamingFormatChanged)
+    Q_PROPERTY(QQmlListProperty<StreamingFormatObject> streamingFormats READ streamingFormatList NOTIFY streamingFormatsChanged)
     Q_PROPERTY(QQmlListProperty<EditionChapterObject> chapters READ chapterList NOTIFY chaptersChanged)
     Q_PROPERTY(QQmlListProperty<EditionChapterObject> editions READ editionList NOTIFY editionsChanged)
 public:
@@ -222,6 +224,10 @@ public:
     auto setChannelLayout(ChannelLayout layout) -> void;
     auto chapterList() const -> QQmlListProperty<EditionChapterObject>;
     auto editionList() const -> QQmlListProperty<EditionChapterObject>;
+    auto streamingFormatList() const ->QQmlListProperty<StreamingFormatObject>;
+    auto streamingFormat() const -> StreamingFormatObject*;
+    auto streamingFormats() const -> const QVector<StreamingFormatObject*>&;
+    auto setStreamingFormat(const QString &id) -> void;
     auto setYle(YleDL *yle) -> void;
     auto setYouTube(YouTubeDL *yt) -> void;
     auto sendMouseClick(const QPointF &pos) -> void;
@@ -331,6 +337,8 @@ signals:
     void framebufferObjectFormatChanged(FramebufferObjectFormat format);
     void audioOnlyChanged(bool audioOnly);
     void subtitleUpdated(int time);
+    void streamingFormatChanged();
+    void streamingFormatsChanged();
 private:
     auto setVideoTrackSelected(int id, bool s) -> void;
     auto setAudioTrackSelected(int id, bool s) -> void;

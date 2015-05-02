@@ -349,7 +349,9 @@ RootMenu::RootMenu()
         })->setEnabled(false);
 
         d->separator() ;
-
+        d->menu(u"streaming"_q, QT_TR_NOOP("Streaming Format"), [=] () {
+            d->group()->setExclusive(true);
+        })->setEnabled(false);
         d->action(u"state"_q, QT_TR_NOOP("Show State"));
     });
 

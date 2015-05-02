@@ -172,6 +172,19 @@ PrefDialog::PrefDialog(QWidget *parent)
     connect(SIGNAL_VT(d->ui.audio_device, currentIndexChanged, int), [this] (int idx)
         { d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(idx).toString()); });
 
+    d->ui.yt_height->addItem("4k"_a, 2160);
+    d->ui.yt_height->addItem("1080p"_a, 1080);
+    d->ui.yt_height->addItem("720p"_a, 720);
+    d->ui.yt_height->addItem("480p"_a, 480);
+    d->ui.yt_height->addItem("360p"_a, 360);
+    d->ui.yt_height->addItem("240p"_a, 240);
+
+    d->ui.yt_fps->addItem(u"60 fps"_q, 60);
+    d->ui.yt_fps->addItem(u"30 fps"_q, 30);
+    d->ui.yt_fps->addItem(u"15 fps"_q, 15);
+
+    d->ui.yt_container->addItems( { u"mp4"_q, u"webm"_q } );
+
     d->ui.network_folders->setAddingAndErasingEnabled(true);
 
     auto checkSubAutoselectMode = [this] (const QVariant &data) {
