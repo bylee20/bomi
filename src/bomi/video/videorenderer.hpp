@@ -59,6 +59,7 @@ public:
     auto isPortrait() const -> bool;
     auto setScalerEnabled(bool on) -> void;
     auto setOsdVisible(bool visible) -> void;
+    auto updateAll() -> void;
     Q_INVOKABLE QRectF mapFromVideo(const QRect &rect);
 signals:
     void offsetChanged(const QPointF &pos);

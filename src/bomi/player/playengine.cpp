@@ -1523,3 +1523,8 @@ auto PlayEngine::lastSubtitleUpdatedTime() const -> int
 {
     return d->sr->lastUpdatedTime();
 }
+
+auto PlayEngine::updateVideoGeometry() -> void
+{
+    d->vr->updateAll();
+}

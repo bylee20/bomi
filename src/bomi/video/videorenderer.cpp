@@ -625,3 +625,9 @@ auto VideoRenderer::setOsdVisible(bool visible) -> void
         reserve(UpdateAll);
     }
 }
+
+auto VideoRenderer::updateAll() -> void
+{
+    polish();
+    reserve(UpdateAll);
+}

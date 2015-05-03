@@ -875,6 +875,7 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
 #ifndef Q_OS_MAC
         p->setIcon(cApp.defaultIcon());
 #endif
+        e.updateVideoGeometry();
     } else {
         if (!pref.pause_minimized() || !e.isPlaying())
             return;

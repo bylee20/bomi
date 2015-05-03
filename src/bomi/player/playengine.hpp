@@ -199,6 +199,7 @@ public:
     auto setOverrideAssScale(bool override) -> void;
     auto setSubtitleScale(double by) -> void;
     auto preview() const -> VideoPreview*;
+    auto updateVideoGeometry() -> void;
 
     auto setSpeed(double speed) -> void;
     auto setAudioSync(int sync) -> void;
