@@ -93,8 +93,8 @@ B.AppWithDock {
                     anchors.horizontalCenter: parent.horizontalCenter
                     MetroButton { prefix: "prev"; action: "play/prev" }
                     MetroButton { prefix: "backward"; action: "play/seek/backward1" }
-                    MetroButton { prefix: "pause"; action: "play/play-pause"; enabled: !engine.stopped }
-                    MetroButton { prefix: engine.running ? "stop" : "play"; action: "play/" + prefix }
+                    MetroButton { prefix: engine.playing ? "pause" : "play"; action: "play/play-pause" }
+                    MetroButton { prefix: "stop"; action: "play/stop"; enabled: !engine.stopped }
                     MetroButton { prefix: "forward"; action: "play/seek/forward1" }
                     MetroButton { prefix: "next"; action: "play/next" }
                 }
