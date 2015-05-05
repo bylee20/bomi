@@ -32,8 +32,10 @@ Item {
         readonly property real rate: (value - min)/(max - min)
         readonly property real arate: ahead == 0 ? 0 : (ahead - min)/(max - min)
         property bool hpressed: pressed
-        property bool hhovered: hovered
+        property bool hhovered: mouseArea.containsMouse
         MouseArea {
+            id: mouseArea
+            hoverEnabled: true
             anchors.fill: parent
             onWheel: wheel.accepted = true
             onPressed: mouse.accepted = false

@@ -41,11 +41,15 @@ B.AppWithDock {
                     }
                 }
             }
-            handle: Image {
-                width: control.height; height: width
-                source: control.hpressed ? "handle-pressed.png"
-                      : control.hhovered ? "handle-hovered.png" : "handle.png"
-                x: (control.rate - 0.5) * width
+            handle: Item {
+                height: control.height
+                Image {
+                    anchors.centerIn: parent
+                    width: control.height; height: width
+                    scale: control.hhovered || control.hpressed ? 1.0 : 0.0
+                    source: control.hpressed ? "handle-pressed.png" : "handle.png"
+                    Behavior on scale { NumberAnimation { duration: 200 } }
+                }
             }
         }
     }
@@ -165,6 +169,7 @@ B.AppWithDock {
 
                 Loader {
                     readonly property var timeDuration: time
+                    readonly property bool animate: false
                     sourceComponent: timeslider
                     width: parent.width; height: 24
                 }
