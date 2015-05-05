@@ -6,17 +6,16 @@ macx:CONFIG -= app_bundle
 QT = core gui network quick widgets sql xml svg
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
-DESTDIR = ../../build
+DESTDIR = $${PWD}/../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../mpv/build kiss_fft
 LIBS += -L$${LIB_DIR} -lbz2 -lz
 
 include(configure.pro)
 !isEmpty(BOMI_RELEASE) {
+	CONFIG -= debug
     CONFIG += release
     macx:CONFIG += app_bundle
-} else {
-	CONFIG -= release
 }
 
 QMAKE_CXXFLAGS_CXX11 = -std=c++1y

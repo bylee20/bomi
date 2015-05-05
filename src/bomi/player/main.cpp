@@ -4,6 +4,9 @@
 #include "player/jrplayer.hpp"
 #include <QCryptographicHash>
 #include <QElapsedTimer>
+#ifdef Q_OS_LINUX
+#include <signal.h>
+#endif
 
 extern "C" void _exit(int);
 
@@ -27,6 +30,7 @@ int main(int argc, char **argv) {
     return 0;
 #endif
 #ifdef Q_OS_LINUX
+    signal(SIGPIPE, SIG_IGN);
     auto gtk_disable_setlocale
             = (void(*)(void))QLibrary::resolve(u"gtk-x11-2.0"_q,
                                                0, "gtk_disable_setlocale");

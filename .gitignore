@@ -9,6 +9,7 @@ src/mpv/.git
 src/libchardet*
 src/ffmpeg*
 src/build-*
+src/.build-*
 src/bomi/bomi_*plugin*.cpp
 src/bomi/bomi_resource.rc
 src/bomi/object_script.bomi*
