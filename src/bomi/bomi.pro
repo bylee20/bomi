@@ -302,7 +302,16 @@ HEADERS += \
     dialog/encoderdialog.hpp \
     misc/filenamegenerator.hpp \
     enum/rotation.hpp \
-    player/videosettings.hpp
+    player/videosettings.hpp \
+    torrent/bencodeparser.h \
+    torrent/connectionmanager.h \
+    torrent/filemanager.h \
+    torrent/metainfo.h \
+    torrent/peerwireclient.h \
+    torrent/ratecontroller.h \
+    torrent/torrentclient.h \
+    torrent/torrentserver.h \
+    torrent/trackerclient.h
 
 SOURCES += \
 	stdafx.cpp \
@@ -520,7 +529,16 @@ SOURCES += \
     dialog/encoderdialog.cpp \
     misc/filenamegenerator.cpp \
     enum/rotation.cpp \
-    player/videosettings.cpp
+    player/videosettings.cpp \
+    torrent/bencodeparser.cpp \
+    torrent/connectionmanager.cpp \
+    torrent/filemanager.cpp \
+    torrent/metainfo.cpp \
+    torrent/peerwireclient.cpp \
+    torrent/ratecontroller.cpp \
+    torrent/torrentclient.cpp \
+    torrent/torrentserver.cpp \
+    torrent/trackerclient.cpp
 
 TRANSLATIONS += translations/bomi_en.ts \
 	translations/bomi_ko.ts \
