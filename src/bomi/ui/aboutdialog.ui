@@ -222,7 +222,7 @@ Developer's E-mail: %4</string>
       <attribute name="title">
        <string>License</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
         <widget class="QLabel" name="license">
          <property name="text">
@@ -252,28 +252,14 @@ Developer's E-mail: %4</string>
           </spacer>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QPushButton" name="view_gpl">
-             <property name="text">
-              <string>View Full Text of GPL</string>
-             </property>
-             <property name="autoDefault">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="view_mpl">
-             <property name="text">
-              <string>View Full Text of MPL </string>
-             </property>
-             <property name="autoDefault">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QPushButton" name="view_gpl">
+           <property name="text">
+            <string>View Full Text of GPL</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
          </item>
          <item>
           <spacer name="horizontalSpacer_3">
@@ -316,7 +302,6 @@ Developer's E-mail: %4</string>
  <tabstops>
   <tabstop>buttonBox</tabstop>
   <tabstop>view_gpl</tabstop>
-  <tabstop>view_mpl</tabstop>
  </tabstops>
  <resources>
   <include location="../rsclist.qrc"/>

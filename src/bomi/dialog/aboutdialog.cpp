@@ -24,7 +24,7 @@ AboutDialog::AboutDialog(QWidget *parent)
     UI_LABEL_ARG(ivan, arg(_L("https://plus.google.com/u/1/117118228830713086299/posts")));
 #undef UI_LABEL_ARG
     d->ui.license->setText(
-        "This program is free software; "
+       u"This program is free software; "
         "you can redistribute it and/or modify it under the terms of "
         "the GNU General Public License "
         "as published by ""the Free Software Foundation; "
@@ -39,11 +39,7 @@ AboutDialog::AboutDialog(QWidget *parent)
         "You should have received a copy of "
         "the GNU General Public License along with this program; "
         "if not, see <a href=\"http://www.gnu.org/licenses\">"
-        "http://www.gnu.org/licenses</a>.<br><br>"
-
-        "Exception:<br>"
-        "libchardet made by JoungKyun.Kim is "
-        "distributed under Mozilla Public License(MPL)."_a
+        "http://www.gnu.org/licenses</a>."_q
     );
 
     auto show = [this] ()
@@ -60,8 +56,7 @@ AboutDialog::AboutDialog(QWidget *parent)
         vbox->addLayout(hbox);
         connect(close, &QPushButton::clicked, &dlg, &QDialog::accept);
 
-        const QString fileName(sender() == d->ui.view_mpl ? ":/mpl.html"_a
-                                                          : ":/gpl.html"_a);
+        const QString fileName(u":/gpl.html"_q);
         QFile file(fileName);
         file.open(QFile::ReadOnly | QFile::Text);
         text->setHtml(QString::fromLatin1(file.readAll()));
@@ -69,7 +64,6 @@ AboutDialog::AboutDialog(QWidget *parent)
         dlg.exec();
     };
     connect(d->ui.view_gpl, &QPushButton::clicked, this, show);
-    connect(d->ui.view_mpl, &QPushButton::clicked, this, show);
 
     adjustSize();
 }
