@@ -130,8 +130,8 @@ auto PlayEngine::Data::videoSubOptions(const MrlState *s) const -> QByteArray
         opts.add("dscale", s->d->intrplDown[s->video_interpolator_down()].toMpvOption("dscale"));
     opts.add("dither-depth", "auto"_b);
     opts.add("dither", _EnumData(s->video_dithering()));
-    opts.add("frame-queue-size", vp->isSkipping() ? 1: 3);
-    opts.add("frame-drop-mode", "clear"_b);
+    opts.add("frame-queue-size", s->video_motion_interpolation() || vp->isSkipping() ? 1 : 3);
+    opts.add("frame-drop-mode", s->video_motion_interpolation() ? "block"_b : "clear"_b);
     opts.add("fancy-downscaling", s->video_hq_downscaling());
     opts.add("sigmoid-upscaling", s->video_hq_upscaling() && OGL::is16bitFramebufferFormatSupported());
     opts.add("interpolation", s->video_motion_interpolation());
