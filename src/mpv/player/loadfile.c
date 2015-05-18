@@ -143,6 +143,15 @@ static void print_stream(struct MPContext *mpctx, struct track *t)
     MP_INFO(mpctx, "%s\n", b);
 }
 
+void print_track_list(struct MPContext *mpctx)
+{
+    for (int t = 0; t < STREAM_TYPE_COUNT; t++) {
+        for (int n = 0; n < mpctx->num_tracks; n++)
+            if (mpctx->tracks[n]->type == t)
+                print_stream(mpctx, mpctx->tracks[n]);
+    }
+}
+
 void update_demuxer_properties(struct MPContext *mpctx)
 {
     struct demuxer *demuxer = mpctx->master_demuxer;
@@ -167,11 +176,7 @@ void update_demuxer_properties(struct MPContext *mpctx)
     struct demuxer *tracks = mpctx->track_layout;
     if (tracks->events & DEMUX_EVENT_STREAMS) {
         add_demuxer_tracks(mpctx, tracks);
-        for (int t = 0; t < STREAM_TYPE_COUNT; t++) {
-            for (int n = 0; n < mpctx->num_tracks; n++)
-                if (mpctx->tracks[n]->type == t)
-                    print_stream(mpctx, mpctx->tracks[n]);
-        }
+        print_track_list(mpctx);
         tracks->events &= ~DEMUX_EVENT_STREAMS;
     }
     if (events & DEMUX_EVENT_METADATA) {
@@ -653,8 +658,16 @@ bool mp_remove_track(struct MPContext *mpctx, struct track *track)
     for (int n = mpctx->num_tracks - 1; n >= 0 && !in_use; n--)
         in_use |= mpctx->tracks[n]->demuxer == d;
 
-    if (!in_use)
+    if (!in_use) {
+        for (int n = 0; n < mpctx->num_sources; n++) {
+            if (mpctx->sources[n] == d) {
+                MP_TARRAY_REMOVE_AT(mpctx->sources, mpctx->num_sources, n);
+                break;
+            }
+        }
+        uninit_stream_sub_decoders(d);
         free_demuxer_and_stream(d);
+    }
 
     mp_notify(mpctx, MPV_EVENT_TRACKS_CHANGED, NULL);
 
@@ -1050,8 +1063,7 @@ static void play_current_file(struct MPContext *mpctx)
 
     mp_load_auto_profiles(mpctx);
 
-    if (opts->position_resume)
-        mp_load_playback_resume(mpctx, mpctx->filename);
+    mp_load_playback_resume(mpctx, mpctx->filename);
 
     load_per_file_options(mpctx->mconfig, mpctx->playing->params,
                           mpctx->playing->num_params);

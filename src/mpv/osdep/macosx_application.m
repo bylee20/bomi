@@ -26,8 +26,13 @@
 #include "osdep/macosx_compat.h"
 #import "osdep/macosx_events_objc.h"
 #include "osdep/threads.h"
+#include "osdep/main-fn.h"
 
 #define MPV_PROTOCOL @"mpv://"
+
+// Whether the NSApplication singleton was created. If this is false, we are
+// running in libmpv mode, and cocoa_main() was never called.
+static bool application_instantiated;
 
 static pthread_t playback_thread_id;
 
@@ -53,9 +58,15 @@ static pthread_t playback_thread_id;
 - (void)setAppleMenu:(NSMenu *)aMenu;
 @end
 
-Application *mpv_shared_app(void)
+static Application *mpv_shared_app(void)
 {
     return (Application *)[Application sharedApplication];
+}
+
+static void terminate_cocoa_application(void)
+{
+    [NSApp hide:NSApp];
+    [NSApp terminate:NSApp];
 }
 
 @implementation Application
@@ -242,16 +253,9 @@ Application *mpv_shared_app(void)
 @end
 
 struct playback_thread_ctx {
-    mpv_main_fn mpv_main;
     int  *argc;
     char ***argv;
 };
-
-void terminate_cocoa_application(void)
-{
-    [NSApp hide:NSApp];
-    [NSApp terminate:NSApp];
-}
 
 static void cocoa_run_runloop(void)
 {
@@ -265,7 +269,7 @@ static void *playback_thread(void *ctx_obj)
     mpthread_set_name("playback core (OSX)");
     @autoreleasepool {
         struct playback_thread_ctx *ctx = (struct playback_thread_ctx*) ctx_obj;
-        int r = ctx->mpv_main(*ctx->argc, *ctx->argv);
+        int r = mpv_main(*ctx->argc, *ctx->argv);
         terminate_cocoa_application();
         // normally never reached - unless the cocoa mainloop hasn't started yet
         exit(r);
@@ -274,7 +278,8 @@ static void *playback_thread(void *ctx_obj)
 
 void cocoa_register_menu_item_action(MPMenuKey key, void* action)
 {
-    [NSApp registerSelector:(SEL)action forKey:key];
+    if (application_instantiated)
+        [NSApp registerSelector:(SEL)action forKey:key];
 }
 
 static void init_cocoa_application(bool regular)
@@ -356,11 +361,12 @@ static bool bundle_started_from_finder(int argc, char **argv)
     }
 }
 
-int cocoa_main(mpv_main_fn mpv_main, int argc, char *argv[])
+int cocoa_main(int argc, char *argv[])
 {
     @autoreleasepool {
+        application_instantiated = true;
+
         struct playback_thread_ctx ctx = {0};
-        ctx.mpv_main = mpv_main;
         ctx.argc     = &argc;
         ctx.argv     = &argv;
 

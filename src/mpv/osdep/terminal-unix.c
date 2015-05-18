@@ -275,8 +275,7 @@ static void enable_kx(bool enable)
     // shouldn't be relied on here either.
     if (isatty(STDOUT_FILENO)) {
         char *cmd = enable ? "\033=" : "\033>";
-        printf("%s", cmd);
-        fflush(stdout);
+        write(STDOUT_FILENO, cmd, strlen(cmd));
     }
 }
 
@@ -488,9 +487,6 @@ int terminal_init(void)
     setsigaction(SIGTSTP, stop_sighandler, SA_RESETHAND, false);
     setsigaction(SIGTTIN, SIG_IGN, 0, true);
     setsigaction(SIGTTOU, SIG_IGN, 0, true);
-
-    // get sane behavior, instead of hysteric UNIX-nonsense
-    setsigaction(SIGPIPE, SIG_IGN, 0, true);
 
     getch2_poll();
 

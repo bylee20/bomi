@@ -284,8 +284,10 @@ static int wait_wakeup(struct mpv_handle *ctx, int64_t end)
     int r = 0;
     pthread_mutex_unlock(&ctx->lock);
     pthread_mutex_lock(&ctx->wakeup_lock);
-    if (!ctx->need_wakeup)
-        r = mpthread_cond_timedwait(&ctx->wakeup, &ctx->wakeup_lock, end);
+    if (!ctx->need_wakeup) {
+        struct timespec ts = mp_time_us_to_timespec(end);
+        r = pthread_cond_timedwait(&ctx->wakeup, &ctx->wakeup_lock, &ts);
+    }
     if (r == 0)
         ctx->need_wakeup = false;
     pthread_mutex_unlock(&ctx->wakeup_lock);
@@ -466,20 +468,7 @@ mpv_handle *mpv_create(void)
     if (ctx) {
         ctx->owner = true;
         ctx->fuzzy_initialized = true;
-        // Set some defaults.
-        mpv_set_option_string(ctx, "config", "no");
-        mpv_set_option_string(ctx, "idle", "yes");
-        mpv_set_option_string(ctx, "terminal", "no");
-        mpv_set_option_string(ctx, "input-terminal", "no");
-        mpv_set_option_string(ctx, "osc", "no");
-        mpv_set_option_string(ctx, "ytdl", "no");
-        mpv_set_option_string(ctx, "input-default-bindings", "no");
-        mpv_set_option_string(ctx, "input-vo-keyboard", "no");
-        mpv_set_option_string(ctx, "input-lirc", "no");
-        mpv_set_option_string(ctx, "input-appleremote", "no");
-        mpv_set_option_string(ctx, "input-media-keys", "no");
-        mpv_set_option_string(ctx, "input-app-events", "no");
-        mpv_set_option_string(ctx, "stop-playback-on-init-failure", "yes");
+        m_config_set_profile(mpctx->mconfig, "libmpv", 0);
     } else {
         mp_destroy(mpctx);
     }

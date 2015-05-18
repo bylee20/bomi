@@ -4483,6 +4483,11 @@ int run_command(struct MPContext *mpctx, struct mp_cmd *cmd, struct mpv_node *re
         break;
     }
 
+    case MP_CMD_PLAYLIST_SHUFFLE: {
+        playlist_shuffle(mpctx->playlist);
+        break;
+    }
+
     case MP_CMD_STOP:
         playlist_clear(mpctx->playlist);
         mpctx->stop_play = PT_STOP;
@@ -4530,6 +4535,7 @@ int run_command(struct MPContext *mpctx, struct mp_cmd *cmd, struct mpv_node *re
         char *lang = cmd->args[3].v.s;
         if (lang && lang[0])
             t->lang = talloc_strdup(t, lang);
+        print_track_list(mpctx);
         break;
     }
 
@@ -4540,6 +4546,7 @@ int run_command(struct MPContext *mpctx, struct mp_cmd *cmd, struct mpv_node *re
         if (!t)
             return -1;
         mp_remove_track(mpctx, t);
+        print_track_list(mpctx);
         break;
     }
 
@@ -4547,14 +4554,17 @@ int run_command(struct MPContext *mpctx, struct mp_cmd *cmd, struct mpv_node *re
     case MP_CMD_AUDIO_RELOAD: {
         int type = cmd->id == MP_CMD_SUB_RELOAD ? STREAM_SUB : STREAM_AUDIO;
         struct track *t = mp_track_by_tid(mpctx, type, cmd->args[0].v.i);
+        struct track *nt = NULL;
         if (t && t->is_external && t->external_filename) {
-            struct track *nt = mp_add_external_file(mpctx, t->external_filename,
-                                                    type);
-            if (nt) {
-                mp_remove_track(mpctx, t);
-                mp_switch_track(mpctx, nt->type, nt);
-                return 0;
-            }
+            char *filename = talloc_strdup(NULL, t->external_filename);
+            mp_remove_track(mpctx, t);
+            nt = mp_add_external_file(mpctx, filename, type);
+            talloc_free(filename);
+        }
+        if (nt) {
+            mp_switch_track(mpctx, nt->type, nt);
+            print_track_list(mpctx);
+            return 0;
         }
         return -1;
     }
@@ -4573,6 +4583,8 @@ int run_command(struct MPContext *mpctx, struct mp_cmd *cmd, struct mpv_node *re
                                            opts->sub_id_ff, opts->sub_lang);
             if (s && s->is_external)
                 mp_switch_track(mpctx, STREAM_SUB, s);
+
+            print_track_list(mpctx);
         }
         break;
     }

@@ -89,8 +89,7 @@ static bool egl_create_context(struct vo_wayland_state *wl,
     MP_VERBOSE(wl, "EGL version %d.%d\n", major, minor);
 
     EGLint context_attribs[] = {
-        EGL_CONTEXT_MAJOR_VERSION_KHR,
-        MPGL_VER_GET_MAJOR(ctx->requested_gl_version),
+        EGL_CONTEXT_MAJOR_VERSION_KHR, 3,
         EGL_NONE
     };
 
@@ -215,7 +214,7 @@ static int control(struct vo *vo, int *events, int request, void *data)
     return r;
 }
 
-static bool is_active(struct MPGLContext *ctx)
+static bool start_frame(struct MPGLContext *ctx)
 {
     struct vo_wayland_state *wl = ctx->vo->wayland;
     return wl->frame.pending;
@@ -229,5 +228,5 @@ void mpgl_set_backend_wayland(MPGLContext *ctx)
     ctx->vo_control = control;
     ctx->vo_init = vo_wayland_init;
     ctx->vo_uninit = vo_wayland_uninit;
-    ctx->is_active = is_active;
+    ctx->start_frame = start_frame;
 }

@@ -525,7 +525,10 @@ typedef void (*MPGLSetBackendFn)(MPGLContext *ctx);
 struct backend {
     const char *name;
     MPGLSetBackendFn init;
+    const struct mpgl_driver *driver;
 };
+
+extern const struct mpgl_driver mpgl_driver_x11;
 
 static const struct backend backends[] = {
 #if HAVE_RPI_GLES
@@ -543,12 +546,10 @@ static const struct backend backends[] = {
     {"wayland", mpgl_set_backend_wayland},
 #endif
 #if HAVE_GL_X11
-    {"x11", mpgl_set_backend_x11},
-    {"x11es", mpgl_set_backend_x11es},
+    {.driver = &mpgl_driver_x11},
 #endif
 #if HAVE_EGL_X11
     {"x11egl", mpgl_set_backend_x11egl},
-    {"x11egles", mpgl_set_backend_x11egles},
 #endif
 #if HAVE_GL_DUMMY
     {"dummy", mpgl_set_backend_dummy},
@@ -560,8 +561,10 @@ int mpgl_find_backend(const char *name)
 {
     if (name == NULL || strcmp(name, "auto") == 0)
         return -1;
-    for (const struct backend *entry = backends; entry->name; entry++) {
-        if (strcmp(entry->name, name) == 0)
+    for (int n = 0; n < MP_ARRAY_SIZE(backends); n++) {
+        const struct backend *entry = &backends[n];
+        const char *ename = entry->driver ? entry->driver->name : entry->name;
+        if (strcmp(ename, name) == 0)
             return entry - backends;
     }
     return -2;
@@ -573,8 +576,11 @@ int mpgl_validate_backend_opt(struct mp_log *log, const struct m_option *opt,
     if (bstr_equals0(param, "help")) {
         mp_info(log, "OpenGL windowing backends:\n");
         mp_info(log, "    auto (autodetect)\n");
-        for (const struct backend *entry = backends; entry->name; entry++)
-            mp_info(log, "    %s\n", entry->name);
+        for (int n = 0; n < MP_ARRAY_SIZE(backends); n++) {
+            const struct backend *entry = &backends[n];
+            const char *ename = entry->driver ? entry->driver->name : entry->name;
+            mp_info(log, "    %s\n", ename);
+        }
         return M_OPT_EXIT - 1;
     }
     char s[20];
@@ -582,52 +588,33 @@ int mpgl_validate_backend_opt(struct mp_log *log, const struct m_option *opt,
     return mpgl_find_backend(s) >= -1 ? 1 : M_OPT_INVALID;
 }
 
-static MPGLContext *init_backend(struct vo *vo, MPGLSetBackendFn set_backend,
-                                 bool probing)
+static MPGLContext *init_backend(struct vo *vo, const struct backend *backend,
+                                 bool probing, int vo_flags)
 {
     MPGLContext *ctx = talloc_ptrtype(NULL, ctx);
     *ctx = (MPGLContext) {
         .gl = talloc_zero(ctx, GL),
         .vo = vo,
+        .driver = backend->driver,
     };
     bool old_probing = vo->probing;
     vo->probing = probing; // hack; kill it once backends are separate
-    set_backend(ctx);
-    if (!ctx->vo_init(vo)) {
-        talloc_free(ctx);
-        ctx = NULL;
+    if (ctx->driver) {
+        ctx->priv = talloc_zero_size(ctx, ctx->driver->priv_size);
+        if (ctx->driver->init(ctx, vo_flags) < 0) {
+            talloc_free(ctx);
+            return NULL;
+        }
+    } else {
+        backend->init(ctx);
+        if (!ctx->vo_init(vo)) {
+            talloc_free(ctx);
+            return NULL;
+        }
     }
     vo->probing = old_probing;
-    return ctx;
-}
 
-static MPGLContext *mpgl_create(struct vo *vo, const char *backend_name)
-{
-    MPGLContext *ctx = NULL;
-    int index = mpgl_find_backend(backend_name);
-    if (index == -1) {
-        for (const struct backend *entry = backends; entry->name; entry++) {
-            ctx = init_backend(vo, entry->init, true);
-            if (ctx)
-                break;
-        }
-    } else if (index >= 0) {
-        ctx = init_backend(vo, backends[index].init, false);
-    }
-    return ctx;
-}
-
-// Create a VO window and create a GL context on it.
-//  vo_flags: passed to the backend's create window function
-MPGLContext *mpgl_init(struct vo *vo, const char *backend_name, int vo_flags)
-{
-    MPGLContext *ctx = mpgl_create(vo, backend_name);
-    if (!ctx)
-        goto cleanup;
-
-    ctx->requested_gl_version = 300;
-
-    if (!ctx->config_window(ctx, vo_flags | VOFLAG_HIDDEN))
+    if (!ctx->driver && !ctx->config_window(ctx, vo_flags | VOFLAG_HIDDEN))
         goto cleanup;
 
     if (!ctx->gl->version && !ctx->gl->es)
@@ -653,29 +640,61 @@ cleanup:
     return NULL;
 }
 
+// Create a VO window and create a GL context on it.
+//  vo_flags: passed to the backend's create window function
+MPGLContext *mpgl_init(struct vo *vo, const char *backend_name, int vo_flags)
+{
+    MPGLContext *ctx = NULL;
+    int index = mpgl_find_backend(backend_name);
+    if (index == -1) {
+        for (int n = 0; n < MP_ARRAY_SIZE(backends); n++) {
+            ctx = init_backend(vo, &backends[n], true, vo_flags);
+            if (ctx)
+                break;
+        }
+    } else if (index >= 0) {
+        ctx = init_backend(vo, &backends[index], false, vo_flags);
+    }
+    return ctx;
+}
+
 // flags: passed to the backend function
 bool mpgl_reconfig_window(struct MPGLContext *ctx, int vo_flags)
 {
-    return ctx->config_window(ctx, vo_flags);
+    if (ctx->driver) {
+        return ctx->driver->reconfig(ctx, vo_flags) >= 0;
+    } else {
+        return ctx->config_window(ctx, vo_flags);
+    }
+}
+
+int mpgl_control(struct MPGLContext *ctx, int *events, int request, void *arg)
+{
+    if (ctx->driver) {
+        return ctx->driver->control(ctx, events, request, arg);
+    } else {
+        return ctx->vo_control(ctx->vo, events, request, arg);
+    }
+}
+
+void mpgl_swap_buffers(struct MPGLContext *ctx)
+{
+    if (ctx->driver) {
+        ctx->driver->swap_buffers(ctx);
+    } else {
+        ctx->swapGlBuffers(ctx);
+    }
 }
 
 void mpgl_uninit(MPGLContext *ctx)
 {
     if (ctx) {
-        ctx->releaseGlContext(ctx);
-        ctx->vo_uninit(ctx->vo);
+        if (ctx->driver) {
+            ctx->driver->uninit(ctx);
+        } else {
+            ctx->releaseGlContext(ctx);
+            ctx->vo_uninit(ctx->vo);
+        }
     }
     talloc_free(ctx);
-}
-
-void mpgl_lock(MPGLContext *ctx)
-{
-    if (ctx->set_current)
-        ctx->set_current(ctx, true);
-}
-
-void mpgl_unlock(MPGLContext *ctx)
-{
-    if (ctx->set_current)
-        ctx->set_current(ctx, false);
 }

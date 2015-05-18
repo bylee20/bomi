@@ -23,10 +23,10 @@ struct MotionInterpolator::Data {
 
     auto push(MpImage &&mpi, double pts, int additional) -> void
     {
-        auto &timing = mpi->frame_timing;
-        timing.pts = pts2us(mpi->pts);
-        timing.next_vsync = pts2us(pts);
-        timing.prev_vsync = timing.next_vsync - pts2us(dt > 0 ? dt : 0);
+//        auto &timing = mpi->frame_timing;
+//        timing.pts = pts2us(mpi->pts);
+//        timing.next_vsync = pts2us(pts);
+//        timing.prev_vsync = timing.next_vsync - pts2us(dt > 0 ? dt : 0);
 
         mpi->pts = pts;
         mpi->fields |= additional;

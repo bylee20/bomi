@@ -84,8 +84,7 @@ bool gl_video_check_format(struct gl_video *p, int mp_format);
 void gl_video_config(struct gl_video *p, struct mp_image_params *params);
 void gl_video_set_output_depth(struct gl_video *p, int r, int g, int b);
 void gl_video_set_lut3d(struct gl_video *p, struct lut3d *lut3d);
-void gl_video_skip_image(struct gl_video *p, struct mp_image *mpi);
-void gl_video_upload_image(struct gl_video *p, struct mp_image *img);
+void gl_video_set_image(struct gl_video *p, struct mp_image *img);
 void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t);
 void gl_video_resize(struct gl_video *p, int vp_w, int vp_h,
                      struct mp_rect *src, struct mp_rect *dst,
@@ -95,7 +94,6 @@ struct mp_csp_equalizer *gl_video_eq_ptr(struct gl_video *p);
 void gl_video_eq_update(struct gl_video *p);
 
 void gl_video_set_debug(struct gl_video *p, bool enable);
-void gl_video_resize_redraw(struct gl_video *p, int w, int h);
 
 float gl_video_scale_ambient_lux(float lmin, float lmax,
                                  float rmin, float rmax, float lux);

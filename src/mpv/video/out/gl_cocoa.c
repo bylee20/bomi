@@ -121,7 +121,9 @@ static bool create_gl_context(struct MPGLContext *ctx)
         return false;
     }
 
-    vo_cocoa_create_nsgl_ctx(ctx->vo, p->ctx);
+    vo_cocoa_set_opengl_ctx(ctx->vo, p->ctx);
+    CGLSetCurrentContext(p->ctx);
+
     ctx->depth_r = ctx->depth_g = ctx->depth_b = cgl_color_size(ctx);
     mpgl_load_functions(ctx->gl, (void *)cocoa_glgetaddr, NULL, ctx->vo->log);
 
@@ -141,7 +143,7 @@ static bool config_window_cocoa(struct MPGLContext *ctx, int flags)
     if (!ctx->gl->SwapInterval)
         ctx->gl->SwapInterval = set_swap_interval;
 
-    vo_cocoa_config_window(ctx->vo, flags, p->ctx);
+    vo_cocoa_config_window(ctx->vo, flags);
 
     return true;
 }
@@ -149,18 +151,12 @@ static bool config_window_cocoa(struct MPGLContext *ctx, int flags)
 static void releaseGlContext_cocoa(MPGLContext *ctx)
 {
     struct cgl_context *p = ctx->priv;
-    vo_cocoa_release_nsgl_ctx(ctx->vo);
     CGLReleaseContext(p->ctx);
 }
 
 static void swapGlBuffers_cocoa(MPGLContext *ctx)
 {
     vo_cocoa_swap_buffers(ctx->vo);
-}
-
-static void set_current_cocoa(MPGLContext *ctx, bool current)
-{
-    vo_cocoa_set_current_context(ctx->vo, current);
 }
 
 void mpgl_set_backend_cocoa(MPGLContext *ctx)
@@ -170,8 +166,6 @@ void mpgl_set_backend_cocoa(MPGLContext *ctx)
     ctx->releaseGlContext = releaseGlContext_cocoa;
     ctx->swapGlBuffers = swapGlBuffers_cocoa;
     ctx->vo_init = vo_cocoa_init;
-    ctx->register_resize_callback = vo_cocoa_register_resize_callback;
     ctx->vo_uninit = vo_cocoa_uninit;
     ctx->vo_control = vo_cocoa_control;
-    ctx->set_current = set_current_cocoa;
 }

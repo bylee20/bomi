@@ -31,7 +31,9 @@
 CFStringRef cfstr_from_cstr(char *str);
 char *cfstr_get_cstr(CFStringRef cfstr);
 
-char *fourcc_repr(void *talloc_ctx, uint32_t code);
+char *fourcc_repr_buf(char *buf, size_t buf_size, uint32_t code);
+#define fourcc_repr(code) fourcc_repr_buf((char[40]){0}, 40, code)
+
 bool check_ca_st(struct ao *ao, int level, OSStatus code, const char *message);
 
 #define CHECK_CA_ERROR_L(label, message) \
@@ -55,6 +57,12 @@ OSStatus ca_select_device(struct ao *ao, char* name, AudioDeviceID *device);
 void ca_fill_asbd(struct ao *ao, AudioStreamBasicDescription *asbd);
 void ca_print_asbd(struct ao *ao, const char *description,
                    const AudioStreamBasicDescription *asbd);
+bool ca_asbd_equals(const AudioStreamBasicDescription *a,
+                    const AudioStreamBasicDescription *b);
+int ca_asbd_to_mp_format(const AudioStreamBasicDescription *asbd);
+bool ca_asbd_is_better(AudioStreamBasicDescription *req,
+                       AudioStreamBasicDescription *old,
+                       AudioStreamBasicDescription *new);
 
 int64_t ca_frames_to_us(struct ao *ao, uint32_t frames);
 int64_t ca_get_latency(const AudioTimeStamp *ts);

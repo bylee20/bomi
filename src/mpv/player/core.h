@@ -335,6 +335,8 @@ typedef struct MPContext {
     // playback rate. Used to avoid showing it multiple times.
     bool drop_message_shown;
 
+    char *cached_watch_later_configdir;
+
     struct screenshot_ctx *screenshot_ctx;
     struct command_ctx *command_ctx;
     struct encode_lavc_context *encode_lavc_ctx;
@@ -396,6 +398,7 @@ struct playlist_entry *mp_next_file(struct MPContext *mpctx, int direction,
 void mp_set_playlist_entry(struct MPContext *mpctx, struct playlist_entry *e);
 void mp_play_files(struct MPContext *mpctx);
 void update_demuxer_properties(struct MPContext *mpctx);
+void print_track_list(struct MPContext *mpctx);
 void reselect_demux_streams(struct MPContext *mpctx);
 void prepare_playlist(struct MPContext *mpctx, struct playlist *pl);
 void autoload_external_files(struct MPContext *mpctx);
@@ -403,7 +406,6 @@ struct track *select_track(struct MPContext *mpctx, enum stream_type type,
                            int tid, int ffid, char **langs);
 
 // main.c
-int mpv_main(int argc, char *argv[]);
 int mp_initialize(struct MPContext *mpctx, char **argv);
 struct MPContext *mp_create(void);
 void mp_destroy(struct MPContext *mpctx);

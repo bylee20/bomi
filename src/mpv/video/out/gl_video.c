@@ -107,6 +107,7 @@ struct texplane {
 struct video_image {
     struct texplane planes[4];
     bool image_flipped;
+    bool needs_upload;
     struct mp_image *mpi;       // original input image
 };
 
@@ -320,7 +321,7 @@ const struct gl_video_opts gl_video_opts_def = {
     .npot = 1,
     .dither_depth = -1,
     .dither_size = 6,
-    .fbo_format = GL_RGBA,
+    .fbo_format = GL_RGBA16,
     .sigmoid_center = 0.75,
     .sigmoid_slope = 6.5,
     .scaler = {
@@ -470,6 +471,7 @@ static void uninit_rendering(struct gl_video *p);
 static void uninit_scaler(struct gl_video *p, struct scaler *scaler);
 static void check_gl_features(struct gl_video *p);
 static bool init_format(int fmt, struct gl_video *init);
+static void gl_video_upload_image(struct gl_video *p);
 
 #define GLSL(x) gl_sc_add(p->sc, #x "\n");
 #define GLSLF(...) gl_sc_addf(p->sc, __VA_ARGS__)
@@ -2057,6 +2059,8 @@ void gl_video_render_frame(struct gl_video *p, int fbo, struct frame_timing *t)
     }
 
     if (vimg->mpi) {
+        gl_video_upload_image(p);
+
         gl_sc_set_vao(p->sc, &p->vao);
 
         if (p->opts.interpolation) {
@@ -2133,26 +2137,29 @@ static bool get_image(struct gl_video *p, struct mp_image *mpi)
     return true;
 }
 
-void gl_video_skip_image(struct gl_video *p, struct mp_image *mpi)
+void gl_video_set_image(struct gl_video *p, struct mp_image *mpi)
 {
+    assert(mpi);
+
     struct video_image *vimg = &p->image;
     talloc_free(vimg->mpi);
     vimg->mpi = mpi;
+    vimg->needs_upload = true;
+
+    p->osd_pts = mpi->pts;
 }
 
-void gl_video_upload_image(struct gl_video *p, struct mp_image *mpi)
+static void gl_video_upload_image(struct gl_video *p)
 {
     GL *gl = p->gl;
 
     struct video_image *vimg = &p->image;
+    struct mp_image *mpi = vimg->mpi;
 
-    p->osd_pts = mpi->pts;
-
-    talloc_free(vimg->mpi);
-    vimg->mpi = mpi;
-
-    if (p->hwdec_active)
+    if (p->hwdec_active || !mpi || !vimg->needs_upload)
         return;
+
+    vimg->needs_upload = false;
 
     assert(mpi->num_planes == p->plane_count);
 
@@ -2690,18 +2697,6 @@ static int validate_window_opt(struct mp_log *log, const m_option_t *opt,
             mp_fatal(log, "No window named '%s' found!\n", s);
     }
     return r;
-}
-
-
-// Resize and redraw the contents of the window without further configuration.
-// Intended to be used in situations where the frontend can't really be
-// involved with reconfiguring the VO properly.
-// gl_video_resize() should be called when user interaction is done.
-void gl_video_resize_redraw(struct gl_video *p, int w, int h)
-{
-    p->vp_w = w;
-    p->vp_h = h;
-    gl_video_render_frame(p, 0, NULL);
 }
 
 float gl_video_scale_ambient_lux(float lmin, float lmax,

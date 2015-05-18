@@ -168,10 +168,10 @@ static void copy_mp_to_vs_frame_props_map(struct vf_priv_s *p, VSMap *map,
     }
     if (pict_type)
         p->vsapi->propSetData(map, "_PictType", &pict_type, 1, 0);
-    p->vsapi->propSetInt(map, "_FieldBased",
-            !!(img->fields & MP_IMGFIELD_INTERLACED), 0);
-    p->vsapi->propSetInt(map, "_Field",
-            !!(img->fields & MP_IMGFIELD_TOP_FIRST), 0);
+    int field = 0;
+    if (img->fields & MP_IMGFIELD_INTERLACED)
+        field = img->fields & MP_IMGFIELD_TOP_FIRST ? 2 : 1;
+    p->vsapi->propSetInt(map, "_FieldBased", field, 0);
 }
 
 static int set_vs_frame_props(struct vf_priv_s *p, VSFrameRef *frame,
@@ -669,6 +669,13 @@ static int config(struct vf_instance *vf, int width, int height,
     fmt = mp_from_vs(vi->format->id);
     if (!fmt) {
         MP_FATAL(vf, "Unsupported output format.\n");
+        destroy_vs(vf);
+        return 0;
+    }
+
+    struct mp_imgfmt_desc desc = mp_imgfmt_get_desc(fmt);
+    if (width % desc.align_x || height % desc.align_y) {
+        MP_FATAL(vf, "VapourSynth does not allow unaligned/cropped video sizes.\n");
         destroy_vs(vf);
         return 0;
     }

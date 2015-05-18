@@ -50,6 +50,7 @@ static const char *const speaker_names[MP_SPEAKER_ID_COUNT][2] = {
     [MP_SPEAKER_ID_SDL]         = {"sdl",  "surround direct left"},
     [MP_SPEAKER_ID_SDR]         = {"sdr",  "surround direct right"},
     [MP_SPEAKER_ID_LFE2]        = {"lfe2", "low frequency 2"},
+    [MP_SPEAKER_ID_NA]          = {"na",   "not available"},
 };
 
 // Names taken from libavutil/channel_layout.c (Not accessible by API.)
@@ -127,7 +128,8 @@ bool mp_chmap_is_valid(const struct mp_chmap *src)
         int sp = src->speaker[n];
         if (sp >= MP_SPEAKER_ID_COUNT || mapped[sp])
             return false;
-        mapped[sp] = true;
+        if (sp != MP_SPEAKER_ID_NA)
+            mapped[sp] = true;
     }
     return src->num > 0;
 }
@@ -142,12 +144,10 @@ bool mp_chmap_is_empty(const struct mp_chmap *src)
 bool mp_chmap_is_unknown(const struct mp_chmap *src)
 {
     for (int n = 0; n < src->num; n++) {
-        int speaker = src->speaker[n];
-        if (speaker >= MP_SPEAKER_ID_UNKNOWN0 &&
-            speaker <= MP_SPEAKER_ID_UNKNOWN_LAST)
-            return true;
+        if (src->speaker[n] != MP_SPEAKER_ID_NA)
+            return false;
     }
-    return false;
+    return mp_chmap_is_valid(src);
 }
 
 // Note: empty channel maps compare as equal. Invalid ones can equal too.
@@ -171,15 +171,6 @@ bool mp_chmap_equals_reordered(const struct mp_chmap *a, const struct mp_chmap *
     return mp_chmap_equals(&t1, &t2);
 }
 
-bool mp_chmap_is_compatible(const struct mp_chmap *a, const struct mp_chmap *b)
-{
-    if (mp_chmap_equals(a, b))
-        return true;
-    if (a->num == b->num && (mp_chmap_is_unknown(a) || mp_chmap_is_unknown(b)))
-        return true;
-    return false;
-}
-
 bool mp_chmap_is_stereo(const struct mp_chmap *src)
 {
     static const struct mp_chmap stereo = MP_CHMAP_INIT_STEREO;
@@ -197,6 +188,26 @@ void mp_chmap_reorder_norm(struct mp_chmap *map)
 {
     uint8_t *arr = &map->speaker[0];
     qsort(arr, map->num, 1, comp_uint8);
+}
+
+// Remove silent (NA) channels, if any.
+void mp_chmap_remove_na(struct mp_chmap *map)
+{
+    struct mp_chmap new = {0};
+    for (int n = 0; n < map->num; n++) {
+        int sp = map->speaker[n];
+        if (sp != MP_SPEAKER_ID_NA)
+            new.speaker[new.num++] = map->speaker[n];
+    }
+    *map = new;
+}
+
+// Add silent (NA) channels to map until map->num >= num.
+void mp_chmap_fill_na(struct mp_chmap *map, int num)
+{
+    assert(num <= MP_NUM_CHANNELS);
+    while (map->num < num)
+        map->speaker[map->num++] = MP_SPEAKER_ID_NA;
 }
 
 // Set *dst to a standard layout with the given number of channels.
@@ -227,6 +238,8 @@ void mp_chmap_from_channels_alsa(struct mp_chmap *dst, int num_channels)
 // Set *dst to an unknown layout for the given numbers of channels.
 // If the number of channels is invalid, an invalid map is set, and
 // mp_chmap_is_valid(dst) will return false.
+// A mp_chmap with all entries set to NA is treated specially in some
+// contexts (watch out for mp_chmap_is_unknown()).
 void mp_chmap_set_unknown(struct mp_chmap *dst, int num_channels)
 {
     if (num_channels < 0 || num_channels > MP_NUM_CHANNELS) {
@@ -234,7 +247,7 @@ void mp_chmap_set_unknown(struct mp_chmap *dst, int num_channels)
     } else {
         dst->num = num_channels;
         for (int n = 0; n < dst->num; n++)
-            dst->speaker[n] = MP_SPEAKER_ID_UNKNOWN0 + n;
+            dst->speaker[n] = MP_SPEAKER_ID_NA;
     }
 }
 
@@ -277,6 +290,7 @@ void mp_chmap_remove_useless_channels(struct mp_chmap *map,
 }
 
 // Return the ffmpeg/libav channel layout as in <libavutil/channel_layout.h>.
+// Speakers not representable by ffmpeg/libav are dropped.
 // Warning: this ignores the order of the channels, and will return a channel
 //          mask even if the order is different from libavcodec's.
 uint64_t mp_chmap_to_lavc_unchecked(const struct mp_chmap *src)
@@ -286,8 +300,10 @@ uint64_t mp_chmap_to_lavc_unchecked(const struct mp_chmap *src)
     if (mp_chmap_is_unknown(&t))
         mp_chmap_from_channels(&t, t.num);
     uint64_t mask = 0;
-    for (int n = 0; n < t.num; n++)
-        mask |= 1ULL << t.speaker[n];
+    for (int n = 0; n < t.num; n++) {
+        if (t.speaker[n] < 64) // ignore MP_SPEAKER_ID_NA etc.
+            mask |= 1ULL << t.speaker[n];
+    }
     return mask;
 }
 
@@ -348,56 +364,51 @@ void mp_chmap_reorder_to_lavc(struct mp_chmap *map)
 
 // Get reordering array for from->to reordering. from->to must have the same set
 // of speakers (i.e. same number and speaker IDs, just different order). Then,
-// for each speaker n, dst[n] will be set such that:
-//      to->speaker[dst[n]] = from->speaker[n]
-// (dst[n] gives the source channel for destination channel n)
-void mp_chmap_get_reorder(int dst[MP_NUM_CHANNELS], const struct mp_chmap *from,
+// for each speaker n, src[n] will be set such that:
+//      to->speaker[n] = from->speaker[src[n]]
+// (src[n] gives the source channel for destination channel n)
+// If *from and *to don't contain the same set of speakers, then the above
+// invariant is not guaranteed. Instead, src[n] can be set to -1 if the channel
+// at to->speaker[n] is unmapped.
+void mp_chmap_get_reorder(int src[MP_NUM_CHANNELS], const struct mp_chmap *from,
                           const struct mp_chmap *to)
 {
-    assert(from->num == to->num);
+    for (int n = 0; n < MP_NUM_CHANNELS; n++)
+        src[n] = -1;
+
     if (mp_chmap_is_unknown(from) || mp_chmap_is_unknown(to)) {
-        for (int n = 0; n < from->num; n++)
-            dst[n] = n;
+        for (int n = 0; n < to->num; n++)
+            src[n] = n < from->num ? n : -1;
         return;
     }
-    // Same set of speakers required
-    assert(mp_chmap_equals_reordered(from, to));
+
     for (int n = 0; n < from->num; n++) {
-        int src = from->speaker[n];
-        dst[n] = -1;
         for (int i = 0; i < to->num; i++) {
-            if (src == to->speaker[i]) {
-                dst[n] = i;
+            if (to->speaker[n] == from->speaker[i]) {
+                src[n] = i;
                 break;
             }
         }
-        assert(dst[n] != -1);
     }
-    for (int n = 0; n < from->num; n++)
-        assert(to->speaker[dst[n]] == from->speaker[n]);
+
+    for (int n = 0; n < to->num; n++)
+        assert(src[n] < 0 || (to->speaker[n] == from->speaker[src[n]]));
 }
 
-// Performs the difference between a and b, and store it in diff. If b has
-// channels that do not appear in a, those will not appear in the difference.
-// To get to those the argument ordering in the function call has to be
-// inverted. For the same reason, the diff with a superset will return no
-// speakers.
-void mp_chmap_diff(const struct mp_chmap *a, const struct mp_chmap *b,
-                   struct mp_chmap *diff)
+static int popcount64(uint64_t bits)
+{
+    int r = 0;
+    for (int n = 0; n < 64; n++)
+        r += !!(bits & (1ULL << n));
+    return r;
+}
+
+// Return the number of channels only in a.
+int mp_chmap_diffn(const struct mp_chmap *a, const struct mp_chmap *b)
 {
     uint64_t a_mask = mp_chmap_to_lavc_unchecked(a);
     uint64_t b_mask = mp_chmap_to_lavc_unchecked(b);
-    mp_chmap_from_lavc(diff, (a_mask ^ b_mask) & a_mask);
-}
-
-// Checks whether a contains all the speakers in b
-bool mp_chmap_contains(const struct mp_chmap *a, const struct mp_chmap *b)
-{
-    struct mp_chmap d1;
-    struct mp_chmap d2;
-    mp_chmap_diff(a, b, &d1);
-    mp_chmap_diff(b, a, &d2);
-    return a->num >= b->num && d1.num >= 0 && d2.num == 0;
+    return popcount64((a_mask ^ b_mask) & a_mask);
 }
 
 // Returns something like "fl-fr-fc". If there's a standard layout in lavc

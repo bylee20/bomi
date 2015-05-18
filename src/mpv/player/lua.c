@@ -277,16 +277,10 @@ static void set_path(lua_State *L)
     const char *path = lua_tostring(L, -1);
 
     char *newpath = talloc_strdup(tmp, path ? path : "");
-    char *dirs[] = {"scripts", "lua", NULL};
-    for (int s = 0; dirs[s]; s++) {
-        char **luadir = mp_find_all_config_files(tmp, get_mpctx(L)->global,
-                                                 dirs[s]);
-        for (int i = 0; luadir && luadir[i]; i++) {
-            // No need to display a warning for lua files in the deprecated
-            // 'lua' dirs since scripting.c already warned on them
-            newpath = talloc_asprintf_append(newpath, ";%s",
-                    mp_path_join(tmp, bstr0(luadir[i]), bstr0("?.lua")));
-        }
+    char **luadir = mp_find_all_config_files(tmp, get_mpctx(L)->global, "scripts");
+    for (int i = 0; luadir && luadir[i]; i++) {
+        newpath = talloc_asprintf_append(newpath, ";%s",
+                        mp_path_join(tmp, luadir[i], "?.lua"));
     }
 
     lua_pushstring(L, newpath);  // package path newpath
@@ -1148,7 +1142,7 @@ static int script_join_path(lua_State *L)
 {
     const char *p1 = luaL_checkstring(L, 1);
     const char *p2 = luaL_checkstring(L, 2);
-    char *r = mp_path_join(NULL, bstr0(p1), bstr0(p2));
+    char *r = mp_path_join(NULL, p1, p2);
     lua_pushstring(L, r);
     talloc_free(r);
     return 1;
@@ -1255,6 +1249,23 @@ static int script_parse_json(lua_State *L)
     return 3;
 }
 
+static int script_format_json(lua_State *L)
+{
+    void *tmp = mp_lua_PITA(L);
+    struct mpv_node node;
+    makenode(tmp, &node, L, 1);
+    char *dst = talloc_strdup(tmp, "");
+    if (json_write(&dst, &node) >= 0) {
+        lua_pushstring(L, dst);
+        lua_pushnil(L);
+    } else {
+        lua_pushnil(L);
+        lua_pushstring(L, "error");
+    }
+    talloc_free_children(tmp);
+    return 2;
+}
+
 #define FN_ENTRY(name) {#name, script_ ## name}
 struct fn_entry {
     const char *name;
@@ -1303,6 +1314,7 @@ static const struct fn_entry utils_fns[] = {
     FN_ENTRY(join_path),
     FN_ENTRY(subprocess),
     FN_ENTRY(parse_json),
+    FN_ENTRY(format_json),
     {0}
 };
 

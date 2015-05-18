@@ -719,6 +719,13 @@ hwaccel_features = [
                             'av_vda_alloc_context()',
                             framework='IOSurface',
                             use='libav')),
+    } , {
+        'name': 'vda-default-init2',
+        'desc': 'libavcodec VDA hwaccel (configurable AVVDAContext)',
+        'deps': [ 'vda-hwaccel' ],
+        'func': check_statement('libavcodec/vda.h',
+                                'av_vda_default_init2(NULL, NULL)',
+                                use='libav'),
     }, {
         'name': '--vda-gl',
         'desc': 'VDA with OpenGL',
@@ -787,12 +794,6 @@ standalone_features = [
         'desc': 'w32 executable',
         'deps_any': [ 'os-win32', 'os-cygwin'],
         'func': check_ctx_vars('WINDRES')
-    }, {
-        'name': 'cocoa-application',
-        'desc': 'standalone Cocoa application',
-        'deps': [ 'cocoa' ],
-        'deps_neg': [ 'libmpv-shared', 'libmpv-static' ],
-        'func': check_true
     }, {
         'name': '--apple-remote',
         'desc': 'Apple Remote support',

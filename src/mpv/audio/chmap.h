@@ -56,10 +56,12 @@ enum mp_speaker_id {
     MP_SPEAKER_ID_SDR,          // SURROUND_DIRECT_RIGHT
     MP_SPEAKER_ID_LFE2,         // LOW_FREQUENCY_2
 
-    // Special mpv-specific speaker entries reserved for channels which have no
-    // known meaning.
-    MP_SPEAKER_ID_UNKNOWN0 = 64,
-    MP_SPEAKER_ID_UNKNOWN_LAST = MP_SPEAKER_ID_UNKNOWN0 + MP_NUM_CHANNELS - 1,
+    // Speaker IDs >= 64 are not representable in WAVEFORMATEXTENSIBLE or libav*.
+
+    // "Silent" channels. These are sometimes used to insert padding for
+    // unused channels. Unlike other speaker types, multiple of these can
+    // occur in a single mp_chmap.
+    MP_SPEAKER_ID_NA = 64,
 
     // Including the unassigned IDs in between. This is not a valid ID anymore,
     // but is still within uint8_t.
@@ -98,10 +100,11 @@ bool mp_chmap_is_empty(const struct mp_chmap *src);
 bool mp_chmap_is_unknown(const struct mp_chmap *src);
 bool mp_chmap_equals(const struct mp_chmap *a, const struct mp_chmap *b);
 bool mp_chmap_equals_reordered(const struct mp_chmap *a, const struct mp_chmap *b);
-bool mp_chmap_is_compatible(const struct mp_chmap *a, const struct mp_chmap *b);
 bool mp_chmap_is_stereo(const struct mp_chmap *src);
 
 void mp_chmap_reorder_norm(struct mp_chmap *map);
+void mp_chmap_remove_na(struct mp_chmap *map);
+void mp_chmap_fill_na(struct mp_chmap *map, int num);
 
 void mp_chmap_from_channels(struct mp_chmap *dst, int num_channels);
 void mp_chmap_set_unknown(struct mp_chmap *dst, int num_channels);
@@ -117,13 +120,10 @@ void mp_chmap_from_lavc(struct mp_chmap *dst, uint64_t src);
 bool mp_chmap_is_lavc(const struct mp_chmap *src);
 void mp_chmap_reorder_to_lavc(struct mp_chmap *map);
 
-void mp_chmap_get_reorder(int dst[MP_NUM_CHANNELS], const struct mp_chmap *from,
+void mp_chmap_get_reorder(int src[MP_NUM_CHANNELS], const struct mp_chmap *from,
                           const struct mp_chmap *to);
 
-void mp_chmap_diff(const struct mp_chmap *a, const struct mp_chmap *b,
-                   struct mp_chmap *diff);
-
-bool mp_chmap_contains(const struct mp_chmap *a, const struct mp_chmap *b);
+int mp_chmap_diffn(const struct mp_chmap *a, const struct mp_chmap *b);
 
 char *mp_chmap_to_str_buf(char *buf, size_t buf_size, const struct mp_chmap *src);
 #define mp_chmap_to_str(m) mp_chmap_to_str_buf((char[64]){0}, 64, (m))

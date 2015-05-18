@@ -73,6 +73,10 @@ The ``mp`` module is preloaded, although it can be loaded manually with
     Run the given command. This is similar to the commands used in input.conf.
     See `List of Input Commands`_.
 
+    By default, this will show something on the OSD (depending on the command),
+    as if it was used in ``input.conf``. See `Input Command Prefixes`_ how
+    to influence OSD usage per command.
+
     Returns ``true`` on success, or ``nil, error`` on error.
 
 ``mp.commandv(arg1, arg2, ...)``
@@ -93,6 +97,9 @@ The ``mp`` module is preloaded, although it can be loaded manually with
     Note that properties are *not* expanded.  You can use either ``mp.command``,
     the ``expand-properties`` prefix, or the ``mp.get_property`` family of
     functions.
+
+    Unlike ``mp.command``, this will not use OSD by default either (except
+    for some OSd-specific commands).
 
 ``mp.command_native(table [,def])``
     Similar to ``mp.commandv``, but pass the argument list as table. This has
@@ -638,6 +645,14 @@ strictly part of the guaranteed API.
     then trailing non-whitespace text is tolerated by the function, and the
     trailing text is returned as 3rd return value. (The 3rd return value is
     always there, but with ``trail`` set, no error is raised.)
+
+``utils.format_json(v)``
+    Format the given Lua table (or value) as a JSON string and return it. On
+    error, returns ``nil, error``. (Errors usually only happen on value types
+    incompatible with JSON.)
+
+    The argument value uses similar conventions as ``mp.set_property_native()``
+    to distinguish empty objects and arrays.
 
 ``utils.to_string(v)``
     Turn the given value into a string. Formats tables and their contents. This

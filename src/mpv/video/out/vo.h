@@ -40,6 +40,8 @@
 #define VO_EVENT_WIN_STATE 8
 // The ambient light conditions changed and need to be reloaded
 #define VO_EVENT_AMBIENT_LIGHTING_CHANGED 16
+// Special mechanism for making resizing with Cocoa react faster
+#define VO_EVENT_LIVE_RESIZING 32
 
 // Set of events the player core may be interested in.
 #define VO_EVENTS_USER (VO_EVENT_RESIZE | VO_EVENT_WIN_STATE)
@@ -128,8 +130,8 @@ struct voctrl_get_equalizer_args {
 #define VO_NOTAVAIL     -2
 #define VO_NOTIMPL      -3
 
-#define VOFLAG_FLIPPING         0x08
 #define VOFLAG_HIDDEN           0x10  //< Use to create a hidden window
+#define VOFLAG_GLES             0x20  // Hint to prefer GLES2 if possible
 #define VOFLAG_GL_DEBUG         0x40  // Hint to request debug OpenGL context
 #define VOFLAG_ALPHA            0x80  // Hint to request alpha framebuffer
 

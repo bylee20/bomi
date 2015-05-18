@@ -199,51 +199,29 @@ bool mp_chmap_sel_adjust(const struct mp_chmap_sel *s, struct mp_chmap *map)
     return false;
 }
 
-#define UPMIX_IDX 0
-#define DOWNMIX_IDX 1
-#define FALLBACK_IDX 2
-
-static bool test_fallbacks(struct mp_chmap *a, struct mp_chmap *b,
-                           int best_diffs[2], struct mp_chmap best[2])
+// Decide whether we should prefer old or new for the requested layout.
+// Return true if new should be used, false if old should be used.
+// If old is empty, always return new (initial case).
+static bool mp_chmap_is_better(struct mp_chmap *req, struct mp_chmap *old,
+                               struct mp_chmap *new)
 {
-    struct mp_chmap diff1, diff2;
+    int old_lost = mp_chmap_diffn(req, old); // num. channels only in req
+    int new_lost = mp_chmap_diffn(req, new);
 
-    mp_chmap_diff(a, b, &diff1);
-    if (mp_chmap_contains(a, b) && best_diffs[UPMIX_IDX] > diff1.num) {
-        best[UPMIX_IDX] = *a;
-        best_diffs[UPMIX_IDX] = diff1.num;
+    // Initial case
+    if (!old->num)
         return true;
-    }
 
-    mp_chmap_diff(b, a, &diff2);
-    if (mp_chmap_contains(b, a) && best_diffs[DOWNMIX_IDX] > diff2.num) {
-        best[DOWNMIX_IDX] = *a;
-        best_diffs[DOWNMIX_IDX] = diff2.num;
-        return true;
-    }
+    // Imperfect upmix (no real superset) - minimize lost channels
+    if (new_lost != old_lost)
+        return new_lost < old_lost;
 
-    if (diff1.num > 0 && best_diffs[FALLBACK_IDX] > diff1.num) {
-        best[FALLBACK_IDX] = *a;
-        best_diffs[FALLBACK_IDX] = diff1.num;
-        return true;
-    }
-
-    if (diff2.num > 0 && best_diffs[FALLBACK_IDX] > diff2.num) {
-        best[FALLBACK_IDX] = *a;
-        best_diffs[FALLBACK_IDX] = diff2.num;
-        return true;
-    }
-
-    return false;
+    // Some kind of upmix. If it's perfect, prefer the smaller one. Even if not,
+    // both have equal loss, so also prefer the smaller one.
+    return new->num < old->num;
 }
 
-// Determine which channel map to fallback to given a source channel map. It
-// uses the following heuristic:
-// 1) If mono is required always prefer stereo to a multichannel upmix.
-// 2) Search for an upmix that is an exact superset of the required chmap.
-// 3) Search for a downmix that is the exact subset of the required chmap.
-// 4) Search for either an upmix or downmix that is the closest (minimum
-//    difference of speakers) to the required chmap.
+// Determine which channel map to fallback to given a source channel map.
 bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
 {
     // special case: if possible always fallback mono to stereo (instead of
@@ -255,8 +233,7 @@ bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
         return true;
     }
 
-    int best_diffs[] = { INT_MAX, INT_MAX, INT_MAX };
-    struct mp_chmap best[] = { {0}, {0}, {0} };
+    struct mp_chmap best = {0};
 
     for (int n = 0; n < s->num_chmaps; n++) {
         struct mp_chmap e = s->chmaps[n];
@@ -264,25 +241,22 @@ bool mp_chmap_sel_fallback(const struct mp_chmap_sel *s, struct mp_chmap *map)
         if (mp_chmap_is_unknown(&e))
             continue;
 
-        if (test_fallbacks(&e, map, best_diffs, best))
-            continue;
-
         // in case we didn't match any fallback retry after replacing speakers
-        for (int i = 0; i < MP_ARRAY_SIZE(speaker_replacements); i++) {
-            struct mp_chmap  t = e;
-            struct mp_chmap *r = (struct mp_chmap *)speaker_replacements[i];
-            if (replace_speakers(&t, r)) {
-                if (test_fallbacks(&t, map, best_diffs, best))
+        for (int i = -1; i < (int)MP_ARRAY_SIZE(speaker_replacements); i++) {
+            struct mp_chmap  t = *map;
+            if (i >= 0) {
+                struct mp_chmap *r = (struct mp_chmap *)speaker_replacements[i];
+                if (!replace_speakers(&t, r))
                     continue;
             }
+            if (mp_chmap_is_better(&t, &best, &e))
+                best = e;
         }
     }
 
-    for (int i = UPMIX_IDX; i < MP_ARRAY_SIZE(best); i++) {
-        if (best_diffs[i] < INT_MAX) {
-            *map = best[i];
-            return true;
-        }
+    if (best.num) {
+        *map = best;
+        return true;
     }
 
     return false;

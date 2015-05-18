@@ -89,6 +89,7 @@ const struct mp_cmd_def mp_cmds[] = {
       OARG_CHOICE(0, ({"weak", 0},
                       {"force", 1})),
   }},
+  { MP_CMD_PLAYLIST_SHUFFLE, "playlist_shuffle", },
   { MP_CMD_SUB_STEP, "sub_step", { ARG_INT }, .allow_auto_repeat = true },
   { MP_CMD_SUB_SEEK, "sub_seek", { ARG_INT }, .allow_auto_repeat = true },
   { MP_CMD_OSD, "osd", { OARG_INT(-1) } },
@@ -210,7 +211,7 @@ const struct mp_cmd_def mp_cmds[] = {
   { MP_CMD_AUDIO_RELOAD, "audio_reload", { OARG_INT(-1) } },
 
   { MP_CMD_RESCAN_EXTERNAL_FILES, "rescan_external_files", {
-      OARG_CHOICE(0, ({"keep-selection", 0},
+      OARG_CHOICE(1, ({"keep-selection", 0},
                       {"reselect", 1})),
   }},
 

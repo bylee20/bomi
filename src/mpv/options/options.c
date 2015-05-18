@@ -67,6 +67,7 @@ extern const struct m_sub_options sws_conf;
 extern const struct m_sub_options demux_rawaudio_conf;
 extern const struct m_sub_options demux_rawvideo_conf;
 extern const struct m_sub_options demux_lavf_conf;
+extern const struct m_sub_options demux_mkv_conf;
 extern const struct m_sub_options vd_lavc_conf;
 extern const struct m_sub_options ad_lavc_conf;
 extern const struct m_sub_options input_config;
@@ -93,10 +94,6 @@ const m_option_t mp_opts[] = {
     { "profile", CONF_TYPE_STRING_LIST, M_OPT_FIXED, .offset = -1},
     { "show-profile", CONF_TYPE_STRING, CONF_NOCFG | M_OPT_FIXED, .offset = -1},
     { "list-options", CONF_TYPE_STORE, CONF_NOCFG | M_OPT_FIXED, .offset = -1},
-
-    // handled in main.c (looks at the raw argv[])
-    { "leak-report", CONF_TYPE_STORE, CONF_GLOBAL | CONF_NOCFG | M_OPT_FIXED,
-      .offset = -1 },
 
     OPT_FLAG("shuffle", shuffle, 0),
 
@@ -311,11 +308,7 @@ const m_option_t mp_opts[] = {
     OPT_SUBSTRUCT("demuxer-lavf", demux_lavf, demux_lavf_conf, 0),
     OPT_SUBSTRUCT("demuxer-rawaudio", demux_rawaudio, demux_rawaudio_conf, 0),
     OPT_SUBSTRUCT("demuxer-rawvideo", demux_rawvideo, demux_rawvideo_conf, 0),
-
-    OPT_FLAG("demuxer-mkv-subtitle-preroll", mkv_subtitle_preroll, 0),
-    OPT_DOUBLE("demuxer-mkv-subtitle-preroll-secs", mkv_subtitle_preroll_secs,
-               M_OPT_MIN, .min = 0),
-    OPT_FLAG("demuxer-mkv-probe-video-duration", mkv_probe_duration, 0),
+    OPT_SUBSTRUCT("demuxer-mkv", demux_mkv, demux_mkv_conf, 0),
 
 // ------------------------- subtitles options --------------------
 
@@ -374,7 +367,8 @@ const m_option_t mp_opts[] = {
     OPT_SETTINGSLIST("ao-defaults", ao_defs, 0, &ao_obj_list),
     OPT_STRING("audio-device", audio_device, 0),
     OPT_STRING("audio-client-name", audio_client_name, 0),
-    OPT_FLAG("force-window", force_vo, 0),
+    OPT_CHOICE("force-window", force_vo, 0,
+               ({"no", 0}, {"yes", 1}, {"immediate", 2})),
     OPT_FLAG("ontop", vo.ontop, M_OPT_FIXED),
     OPT_FLAG("border", vo.border, M_OPT_FIXED),
     OPT_FLAG("on-all-workspaces", vo.all_workspaces, M_OPT_FIXED),
@@ -403,6 +397,7 @@ const m_option_t mp_opts[] = {
     OPT_SIZE_BOX("autofit", vo.autofit, 0),
     OPT_SIZE_BOX("autofit-larger", vo.autofit_larger, 0),
     OPT_SIZE_BOX("autofit-smaller", vo.autofit_smaller, 0),
+    OPT_FLOATRANGE("window-scale", vo.window_scale, 0, 0.001, 100),
     OPT_FLAG("force-window-position", vo.force_window_position, 0),
     // vo name (X classname) and window title strings
     OPT_STRING("x11-name", vo.winname, 0),
@@ -545,6 +540,7 @@ const m_option_t mp_opts[] = {
 
     OPT_SUBSTRUCT("screenshot", screenshot_image_opts, image_writer_conf, 0),
     OPT_STRING("screenshot-template", screenshot_template, 0),
+    OPT_STRING("screenshot-directory", screenshot_directory, 0),
 
     OPT_SUBSTRUCT("input", input_opts, input_config, 0),
 
@@ -665,6 +661,7 @@ const struct MPOpts mp_default_opts = {
         .keepaspect_window = 1,
         .border = 1,
         .WinID = -1,
+        .window_scale = 1.0,
     },
     .allow_win_drag = 1,
     .wintitle = "mpv - ${?media-title:${media-title}}${!media-title:No file.}",
@@ -692,7 +689,7 @@ const struct MPOpts mp_default_opts = {
 #if HAVE_LUA
     .lua_load_osc = 1,
     .lua_load_ytdl = 1,
-    .lua_ytdl_format = NULL,
+    .lua_ytdl_format = "best",
     .lua_ytdl_raw_options = NULL,
 #endif
     .auto_load_scripts = 1,
@@ -764,10 +761,9 @@ const struct MPOpts mp_default_opts = {
     .use_embedded_fonts = 1,
     .sub_fix_timing = 1,
     .sub_cp = "auto",
-    .mkv_subtitle_preroll_secs = 1.0,
-    .screenshot_template = "shot%n",
+    .screenshot_template = "mpv-shot%n",
 
-    .hwdec_codecs = "h264,vc1,wmv3",
+    .hwdec_codecs = "h264,vc1,wmv3,hevc",
 
     .index_mode = 1,
 

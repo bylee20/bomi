@@ -134,6 +134,9 @@ x and z
 l
     Set/clear A-B loop points. See ``ab_loop`` command for details.
 
+L
+    Toggle infinite looping.
+
 Ctrl + and Ctrl -
     Adjust audio delay by +/- 0.1 seconds.
 
@@ -155,6 +158,10 @@ s
 S
     Take a screenshot, without subtitles. (Whether this works depends on VO
     driver support.)
+
+Ctrl s
+    Take a screenshot, as the window shows it (with subtitles, OSD, and scaled
+    video).
 
 I
     Show filename on the OSD.
@@ -327,7 +334,17 @@ additionally wrapped in the fixed-length syntax, e.g. ``%n%string_of_length_n``
 Some mpv options interpret paths starting with ``~``. Currently, the prefix
 ``~~/`` expands to the mpv configuration directory (usually ``~/.config/mpv/``).
 ``~/`` expands to the user's home directory. (The trailing ``/`` is always
-required.)
+required.) There are the following paths as well:
+
+================ ===============================================================
+Name             Meaning
+================ ===============================================================
+``~~home/``      same as ``~~/``
+``~~global/``    the global config path, if available (not on win32)
+``~~osxbundle/`` the OSX bundle resource path (OSX only)
+``~~desktop/``   the path to the desktop (win32, OSX)
+================ ===============================================================
+
 
 Per-File Options
 ----------------
@@ -378,7 +395,8 @@ Location and Syntax
 You can put all of the options in configuration files which will be read every
 time mpv is run. The system-wide configuration file 'mpv.conf' is in your
 configuration directory (e.g. ``/etc/mpv`` or ``/usr/local/etc/mpv``), the
-user-specific one is ``~/.config/mpv/mpv.conf``.
+user-specific one is ``~/.config/mpv/mpv.conf``. For details and platform
+specifics see the `FILES`_ section.
 User-specific options override system-wide options and options given on the
 command line override either. The syntax of the configuration files is
 ``option=<value>``; everything after a *#* is considered a comment. Options
@@ -634,6 +652,7 @@ the ``pseudo-gui`` profile being predefined with the following contents:
     terminal=no
     force-window=yes
     idle=once
+    screenshot-directory=~~desktop/
 
 This follows the mpv config file format. To customize pseudo-GUI mode, you can
 put your own ``pseudo-gui`` profile into your ``mpv.conf``. This profile will
@@ -795,6 +814,8 @@ input command can take an exit code: in this case, that exit code is returned.
 
 FILES
 =====
+
+For Windows-specifics, see `FILES ON WINDOWS`_ section.
 
 ``/usr/local/etc/mpv/mpv.conf``
     mpv system-wide settings (depends on ``--prefix`` passed to configure - mpv

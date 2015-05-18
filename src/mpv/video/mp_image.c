@@ -347,7 +347,6 @@ void mp_image_copy_attributes(struct mp_image *dst, struct mp_image *src)
     dst->pict_type = src->pict_type;
     dst->fields = src->fields;
     dst->pts = src->pts;
-    dst->frame_timing = src->frame_timing;
     dst->hwdec_type = src->hwdec_type;
     dst->params.rotate = src->params.rotate;
     dst->params.stereo_in = src->params.stereo_in;
@@ -627,14 +626,13 @@ void mp_image_copy_fields_from_av_frame(struct mp_image *dst,
 
     dst->pict_type = src->pict_type;
 
-    dst->fields = MP_IMGFIELD_ORDERED;
+    dst->fields = 0;
     if (src->interlaced_frame)
         dst->fields |= MP_IMGFIELD_INTERLACED;
     if (src->top_field_first)
         dst->fields |= MP_IMGFIELD_TOP_FIRST;
     if (src->repeat_pict == 1)
         dst->fields |= MP_IMGFIELD_REPEAT_FIRST;
-
 }
 
 // Copy properties and data of the mp_image into the AVFrame, without taking

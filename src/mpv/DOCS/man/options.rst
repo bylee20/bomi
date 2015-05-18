@@ -459,12 +459,12 @@ Program Behavior
 ``--ytdl-raw-options=<key>=<value>[,<key>=<value>[,...]]``
     Pass arbitraty options to youtube-dl. Parameter and argument should be
     passed as a key-value pair. Options without argument must include ``=``.
-    
+
     There is no sanity checking so it's possible to break things (i.e.
     passing invalid parameters to youtube-dl).
 
     .. admonition:: Example
- 
+
         ``--ytdl-raw-options=username=user,password=pass``
         ``--ytdl-raw-options=force-ipv6=``
 
@@ -497,6 +497,10 @@ Video
 ``--no-video``
     Do not play video. With some demuxers this may not work. In those cases
     you can try ``--vo=null`` instead.
+
+    mpv will try to download the audio only if media is streamed with
+    youtube-dl, because it saves bandwidth. This is done by setting the ytdl_format
+    to "bestaudio/best" in the ytdl_hook.lua script.
 
 ``--untimed``
     Do not sleep when outputting video frames. Useful for benchmarks when used
@@ -729,7 +733,7 @@ Video
     You can get the list of allowed codecs with ``mpv --vd=help``. Remove the
     prefix, e.g. instead of ``lavc:h264`` use ``h264``.
 
-    By default this is set to ``h264,vc1,wmv3``. Note that the hardware
+    By default this is set to ``h264,vc1,wmv3,hevc``. Note that the hardware
     acceleration special codecs like ``h264_vdpau`` are not relevant anymore,
     and in fact have been removed from Libav in this form.
 
@@ -1586,7 +1590,7 @@ Window
     file.mkv normally, then fail to open ``/dev/null``, then exit). (In
     mpv 0.8.0, ``always`` was introduced, which restores the old behavior.)
 
-``--force-window``
+``--force-window=<yes|no|immediate>``
     Create a video output window even if there is no video. This can be useful
     when pretending that mpv is a GUI application. Currently, the window
     always has the size 640x480, and is subject to ``--geometry``,
@@ -1598,7 +1602,9 @@ Window
         window placement still works if the video size is different from the
         ``--force-window`` default window size). This can be a problem if
         initialization doesn't work perfectly, such as when opening URLs with
-        bad network connection, or opening broken video files.
+        bad network connection, or opening broken video files. The ``immediate``
+        mode can be used to create the window always on program start, but this
+        may cause other issues.
 
 ``--ontop``
     Makes the player window stay on top of other windows.
@@ -1724,19 +1730,13 @@ Window
             (depending on the video aspect ratio, the width or height will be
             larger than 500 in order to keep the aspect ratio the same).
 
-``--autosync=<factor>``
-    Gradually adjusts the A/V sync based on audio delay measurements.
-    Specifying ``--autosync=0``, the default, will cause frame timing to be
-    based entirely on audio delay measurements. Specifying ``--autosync=1``
-    will do the same, but will subtly change the A/V correction algorithm. An
-    uneven video framerate in a video which plays fine with ``--no-audio`` can
-    often be helped by setting this to an integer value greater than 1. The
-    higher the value, the closer the timing will be to ``--no-audio``. Try
-    ``--autosync=30`` to smooth out problems with sound drivers which do not
-    implement a perfect audio delay measurement. With this value, if large A/V
-    sync offsets occur, they will only take about 1 or 2 seconds to settle
-    out. This delay in reaction time to sudden A/V offsets should be the only
-    side-effect of turning this option on, for all sound drivers.
+``--window-scale=<factor>``
+    Resize the video window to a multiple (or fraction) of the video size. This
+    option is applied before ``--autofit`` and other options are applied (so
+    they override this option).
+
+    For example, ``--window-scale=0.5`` would show the window at half the
+    video size.
 
 ``--cursor-autohide=<number|no|always>``
     Make mouse cursor automatically hide after given number of milliseconds.
@@ -2112,6 +2112,18 @@ Demuxer
     will be slower (especially when playing over http), or that behavior with
     broken files is much worse. So don't use this option.
 
+``--demuxer-mkv-fix-timestamps=<yes|no>``
+    Fix rounded Matroska timestamps (enabled by default). Matroska usually
+    stores timestamps rounded to milliseconds. This means timestamps jitter
+    by some amount around the intended timestamp. mpv can correct the timestamps
+    based on the framerate value stored in the file: the timestamp is rounded
+    to the next frame (according to the framerate), unless the new timestamp
+    would deviate more than 1ms from the old one. This should undo the rounding
+    done by the muxer.
+
+    (The allowed deviation can be less than 1ms if the file uses a non-standard
+    timecode scale.)
+
 ``--demuxer-rawaudio-channels=<value>``
     Number of channels (or channel layout) if ``--demuxer=rawaudio`` is used
     (default: stereo).
@@ -2134,7 +2146,7 @@ Demuxer
         Play a raw YUV sample::
 
             mpv sample-720x576.yuv --demuxer=rawvideo \
-            --demuxer-rawvideo=w=720:h=576
+            --demuxer-rawvideo-w=720 --demuxer-rawvideo-h=576
 
 ``--demuxer-rawvideo-format=<value>``
     Color space (fourcc) in hex or string for ``--demuxer=rawvideo``
@@ -2558,12 +2570,17 @@ Screenshot
 
     Default: ``yes``.
 
+``--screenshot-high-bit-depth=<yes|no>``
+    If possible, write screenshots with a bit depth similar to the source
+    video (default: yes). This is interesting in particular for PNG, as this
+    sometimes triggers writing 16 bit PNGs with huge file sizes.
+
 ``--screenshot-template=<template>``
     Specify the filename template used to save screenshots. The template
     specifies the filename without file extension, and can contain format
     specifiers, which will be substituted when taking a screenshot.
-    By default the template is ``shot%n``, which results in filenames like
-    ``shot0012.png`` for example.
+    By default the template is ``mpv-shot%n``, which results in filenames like
+    ``mpv-shot0012.png`` for example.
 
     The template can start with a relative or absolute path, in order to
     specify a directory location where screenshots should be saved.
@@ -2645,8 +2662,25 @@ Screenshot
     ``%%``
         Replaced with the ``%`` character itself.
 
+``--screenshot-directory=<path>``
+    Store screenshots in this directory. This path is joined with the filename
+    generated by ``--screenshot-template``. If the template filename is already
+    absolute, the directory is ignored.
+
+    If the directory does not exist, it is created on the first screenshot. If
+    it is not a directory, an error is generated when trying to write a
+    screenshot.
+
+    This option is not set by default, and thus will write screenshots to the
+    directory from which mpv was started. In pseudo-gui mode
+    (see `PSEUDO GUI MODE`_), this is set to the desktop.
+
 ``--screenshot-jpeg-quality=<0-100>``
     Set the JPEG quality level. Higher means better quality. The default is 90.
+
+``--screenshot-jpeg-source-chroma=<yes|no>``
+    Write JPEG files with the same chroma subsampling as the video
+    (default: yes). If disabled, the libjpeg default is used.
 
 ``--screenshot-png-compression=<0-9>``
     Set the PNG compression level. Higher means better compression. This will
@@ -3237,6 +3271,20 @@ Miscellaneous
 
 ``--mc=<seconds/frame>``
     Maximum A-V sync correction per frame (in seconds)
+
+``--autosync=<factor>``
+    Gradually adjusts the A/V sync based on audio delay measurements.
+    Specifying ``--autosync=0``, the default, will cause frame timing to be
+    based entirely on audio delay measurements. Specifying ``--autosync=1``
+    will do the same, but will subtly change the A/V correction algorithm. An
+    uneven video framerate in a video which plays fine with ``--no-audio`` can
+    often be helped by setting this to an integer value greater than 1. The
+    higher the value, the closer the timing will be to ``--no-audio``. Try
+    ``--autosync=30`` to smooth out problems with sound drivers which do not
+    implement a perfect audio delay measurement. With this value, if large A/V
+    sync offsets occur, they will only take about 1 or 2 seconds to settle
+    out. This delay in reaction time to sudden A/V offsets should be the only
+    side-effect of turning this option on, for all sound drivers.
 
 ``--mf-fps=<value>``
     Framerate used when decoding from multiple PNG or JPEG files with ``mf://``

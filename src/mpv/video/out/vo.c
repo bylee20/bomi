@@ -471,8 +471,10 @@ static void wait_vo(struct vo *vo, int64_t until_time)
         pthread_mutex_unlock(&in->lock);
     } else {
         pthread_mutex_lock(&in->lock);
-        if (!in->need_wakeup)
-            mpthread_cond_timedwait(&in->wakeup, &in->lock, until_time);
+        if (!in->need_wakeup) {
+            struct timespec ts = mp_time_us_to_timespec(until_time);
+            pthread_cond_timedwait(&in->wakeup, &in->lock, &ts);
+        }
         in->need_wakeup = false;
         pthread_mutex_unlock(&in->lock);
     }
@@ -482,7 +484,7 @@ static void wakeup_locked(struct vo *vo)
 {
     struct vo_internal *in = vo->in;
 
-    pthread_cond_signal(&in->wakeup);
+    pthread_cond_broadcast(&in->wakeup);
     if (vo->event_fd >= 0)
         wakeup_event_fd(vo);
     if (vo->driver->wakeup)
@@ -559,6 +561,22 @@ void vo_wait_frame(struct vo *vo)
     pthread_mutex_unlock(&in->lock);
 }
 
+// Wait until realtime is >= ts
+// called without lock
+static void wait_until(struct vo *vo, int64_t target)
+{
+    struct vo_internal *in = vo->in;
+    struct timespec ts = mp_time_us_to_timespec(target);
+    pthread_mutex_lock(&in->lock);
+    while (target > mp_time_us()) {
+        if (in->queued_events & VO_EVENT_LIVE_RESIZING)
+            break;
+        if (pthread_cond_timedwait(&in->wakeup, &in->lock, &ts))
+            break;
+    }
+    pthread_mutex_unlock(&in->lock);
+}
+
 // needs lock
 static int64_t prev_sync(struct vo *vo, int64_t ts)
 {
@@ -586,7 +604,7 @@ static bool render_frame(struct vo *vo)
     int64_t duration = in->frame_duration;
     struct mp_image *img = in->frame_queued;
 
-    if (!img && (!in->vsync_timed || in->paused || pts <= 0))
+    if (!img && (!in->vsync_timed || in->paused))
         goto nothing_done;
 
     if (in->vsync_timed && !in->hasframe)
@@ -608,14 +626,22 @@ static bool render_frame(struct vo *vo)
     if (!in->hasframe_rendered)
         duration = -1; // disable framedrop
 
-    // if the clip and display have similar/identical fps, it's possible that
+    // If the clip and display have similar/identical fps, it's possible that
     // we'll be very slightly late frequently due to timing jitter, or if the
     // clip/container timestamps are not very accurate.
-    // so if we dropped the previous frame, keep dropping until we're aligned
+    // So if we dropped the previous frame, keep dropping until we're aligned
     // perfectly, else, allow some slack (1 vsync) to let it settle into a rhythm.
+    // On low clip fps, we don't drop anyway and the slack logic doesn't matter.
+    // If the clip fps is more than ~5% above screen fps, we remove this slack
+    // and use "normal" logic to allow more regular drops of 1 frame at a time.
+    bool use_slack = duration > (0.95 * in->vsync_interval);
     in->dropped_frame = duration >= 0 &&
+                        use_slack ?
                             ((in->dropped_frame && end_time < next_vsync) ||
-                            (end_time < prev_vsync)); // hard threshold - 1 vsync late
+                            (end_time < prev_vsync)) // hard threshold - 1 vsync late
+                            :
+                            end_time < next_vsync; // normal frequent drops
+
 
     in->dropped_frame &= !(vo->driver->caps & VO_CAP_FRAMEDROP);
     in->dropped_frame &= (vo->global->opts->frame_dropping & 1);
@@ -651,7 +677,7 @@ static bool render_frame(struct vo *vo)
 
         MP_STATS(vo, "start video");
 
-        if (in->vsync_timed) {
+        if (vo->driver->draw_image_timed) {
             struct frame_timing t = (struct frame_timing) {
                 .pts        = pts,
                 .next_vsync = next_vsync,
@@ -662,12 +688,7 @@ static bool render_frame(struct vo *vo)
             vo->driver->draw_image(vo, img);
         }
 
-        while (1) {
-            int64_t now = mp_time_us();
-            if (target <= now)
-                break;
-            mp_sleep_us(target - now);
-        }
+        wait_until(vo, target);
 
         bool drop = false;
         if (vo->driver->flip_page_timed)
@@ -701,7 +722,7 @@ static bool render_frame(struct vo *vo)
         in->request_redraw = false;
     }
 
-    pthread_cond_signal(&in->wakeup); // for vo_wait_frame()
+    pthread_cond_broadcast(&in->wakeup); // for vo_wait_frame()
     mp_input_wakeup(vo->input_ctx);
 
     pthread_mutex_unlock(&in->lock);
@@ -961,6 +982,8 @@ void vo_event(struct vo *vo, int event)
     pthread_mutex_lock(&in->lock);
     if ((in->queued_events & event & VO_EVENTS_USER) != (event & VO_EVENTS_USER))
         mp_input_wakeup(vo->input_ctx);
+    if (event)
+        wakeup_locked(vo);
     in->queued_events |= event;
     in->internal_events |= event;
     pthread_mutex_unlock(&in->lock);

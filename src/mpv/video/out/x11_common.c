@@ -1389,6 +1389,9 @@ static void vo_x11_map_window(struct vo *vo, struct mp_rect rc)
     vo_x11_selectinput_witherr(vo, x11->display, x11->window, events);
     XMapWindow(x11->display, x11->window);
 
+    if (vo->opts->fullscreen && (x11->wm_type & vo_wm_FULLSCREEN))
+        x11_set_ewmh_state(x11, "_NET_WM_STATE_FULLSCREEN", 1);
+
     vo_x11_xembed_update(x11, XEMBED_MAPPED);
 }
 
@@ -1752,10 +1755,12 @@ int vo_x11_control(struct vo *vo, int *events, int request, void *arg)
     case VOCTRL_GET_ICC_PROFILE: {
         if (!x11->pseudo_mapped)
             return VO_NOTAVAIL;
+        int cx = x11->winrc.x0 + (x11->winrc.x1 - x11->winrc.x0)/2,
+            cy = x11->winrc.y0 + (x11->winrc.y1 - x11->winrc.y0)/2;
         int screen = 0; // xinerama screen number
         for (int n = 0; n < x11->num_displays; n++) {
             struct xrandr_display *disp = &x11->displays[n];
-            if (disp->overlaps) {
+            if (mp_rect_contains(&disp->rc, cx, cy)) {
                 screen = n;
                 break;
             }

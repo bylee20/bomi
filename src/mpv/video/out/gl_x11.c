@@ -33,7 +33,6 @@ struct glx_context {
     XVisualInfo *vinfo;
     GLXContext context;
     GLXFBConfig fbc;
-    bool force_es;
 };
 
 static bool create_context_x11_old(struct MPGLContext *ctx)
@@ -188,13 +187,6 @@ static bool config_window_x11(struct MPGLContext *ctx, int flags)
     struct vo *vo = ctx->vo;
     struct glx_context *glx_ctx = ctx->priv;
 
-    if (glx_ctx->context) {
-        // GL context and window already exist.
-        // Only update window geometry etc.
-        vo_x11_config_vo_window(vo, glx_ctx->vinfo, flags, "gl");
-        return true;
-    }
-
     int glx_major, glx_minor;
 
     if (!glXQueryVersion(vo->x11->display, &glx_major, &glx_minor)) {
@@ -248,12 +240,11 @@ static bool config_window_x11(struct MPGLContext *ctx, int flags)
     glXGetFBConfigAttrib(vo->x11->display, fbc, GLX_GREEN_SIZE, &ctx->depth_g);
     glXGetFBConfigAttrib(vo->x11->display, fbc, GLX_BLUE_SIZE, &ctx->depth_b);
 
-    vo_x11_config_vo_window(vo, glx_ctx->vinfo, flags, "gl");
+    vo_x11_config_vo_window(vo, glx_ctx->vinfo, flags | VOFLAG_HIDDEN, "gl");
 
-    int gl_version = ctx->requested_gl_version;
     bool success = false;
-    if (!glx_ctx->force_es) {
-        success = create_context_x11_gl3(ctx, flags, gl_version, false);
+    if (!(flags & VOFLAG_GLES)) {
+        success = create_context_x11_gl3(ctx, flags, 300, false);
         if (!success)
             success = create_context_x11_old(ctx);
     }
@@ -264,7 +255,25 @@ static bool config_window_x11(struct MPGLContext *ctx, int flags)
     return success;
 }
 
-static void releaseGlContext_x11(MPGLContext *ctx)
+static int glx_init(struct MPGLContext *ctx, int vo_flags)
+{
+    return vo_x11_init(ctx->vo) && config_window_x11(ctx, vo_flags) ? 0 : -1;
+}
+
+static int glx_reconfig(struct MPGLContext *ctx, int flags)
+{
+    struct glx_context *glx_ctx = ctx->priv;
+    vo_x11_config_vo_window(ctx->vo, glx_ctx->vinfo, flags, "gl");
+    return 0;
+}
+
+static int glx_control(struct MPGLContext *ctx, int *events, int request,
+                       void *arg)
+{
+    return vo_x11_control(ctx->vo, events, request, arg);
+}
+
+static void glx_uninit(MPGLContext *ctx)
 {
     struct glx_context *glx_ctx = ctx->priv;
     XVisualInfo **vinfo = &glx_ctx->vinfo;
@@ -272,33 +281,24 @@ static void releaseGlContext_x11(MPGLContext *ctx)
     Display *display = ctx->vo->x11->display;
     if (*vinfo)
         XFree(*vinfo);
-    *vinfo = NULL;
     if (*context) {
         glXMakeCurrent(display, None, NULL);
         glXDestroyContext(display, *context);
     }
-    *context = 0;
+    vo_x11_uninit(ctx->vo);
 }
 
-static void swapGlBuffers_x11(MPGLContext *ctx)
+static void glx_swap_buffers(struct MPGLContext *ctx)
 {
     glXSwapBuffers(ctx->vo->x11->display, ctx->vo->x11->window);
 }
 
-void mpgl_set_backend_x11(MPGLContext *ctx)
-{
-    ctx->priv = talloc_zero(ctx, struct glx_context);
-    ctx->config_window = config_window_x11;
-    ctx->releaseGlContext = releaseGlContext_x11;
-    ctx->swapGlBuffers = swapGlBuffers_x11;
-    ctx->vo_init = vo_x11_init;
-    ctx->vo_uninit = vo_x11_uninit;
-    ctx->vo_control = vo_x11_control;
-}
-
-void mpgl_set_backend_x11es(MPGLContext *ctx)
-{
-    mpgl_set_backend_x11(ctx);
-    struct glx_context *glx_ctx = ctx->priv;
-    glx_ctx->force_es = true;
-}
+const struct mpgl_driver mpgl_driver_x11 = {
+    .name           = "x11",
+    .priv_size      = sizeof(struct glx_context),
+    .init           = glx_init,
+    .reconfig       = glx_reconfig,
+    .swap_buffers   = glx_swap_buffers,
+    .control        = glx_control,
+    .uninit         = glx_uninit,
+};

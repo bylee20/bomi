@@ -71,9 +71,12 @@ def build(ctx):
         source = "demux/ebml.c",
         target = "ebml_defs.c")
 
-    main_fn_c = {
-        'win32':  'player/main-fn-win.c',
-    }.get(ctx.env.DEST_OS, "player/main-fn-unix.c")
+    if ctx.env.DEST_OS == 'win32':
+        main_fn_c = 'osdep/main-fn-win.c'
+    elif ctx.dependency_satisfied('cocoa'):
+        main_fn_c = 'osdep/main-fn-cocoa.c'
+    else:
+        main_fn_c = 'osdep/main-fn-unix.c'
 
     getch2_c = {
         'win32':  'osdep/terminal-win.c',
@@ -129,6 +132,7 @@ def build(ctx):
         ( "audio/out/ao.c" ),
         ( "audio/out/ao_alsa.c",                 "alsa" ),
         ( "audio/out/ao_coreaudio.c",            "coreaudio" ),
+        ( "audio/out/ao_coreaudio_chmap.c",      "coreaudio" ),
         ( "audio/out/ao_coreaudio_exclusive.c",  "coreaudio" ),
         ( "audio/out/ao_coreaudio_properties.c", "coreaudio" ),
         ( "audio/out/ao_coreaudio_utils.c",      "coreaudio" ),
@@ -374,13 +378,14 @@ def build(ctx):
         ( "osdep/threads.c" ),
 
         ( "osdep/ar/HIDRemote.m",                "apple-remote" ),
-        ( "osdep/macosx_application.m",          "cocoa-application" ),
+        ( "osdep/macosx_application.m",          "cocoa" ),
         ( "osdep/macosx_events.m",               "cocoa" ),
         ( "osdep/semaphore_osx.c" ),
         ( "osdep/subprocess.c" ),
         ( "osdep/subprocess-posix.c",            "posix-spawn" ),
         ( "osdep/subprocess-win.c",              "os-win32" ),
         ( "osdep/path-macosx.m",                 "cocoa" ),
+        ( "osdep/path-unix.c"),
         ( "osdep/path-win.c",                    "os-win32" ),
         ( "osdep/path-win.c",                    "os-cygwin" ),
         ( "osdep/glob-win.c",                    "glob-win32-replacement" ),

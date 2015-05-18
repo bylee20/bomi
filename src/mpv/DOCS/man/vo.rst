@@ -573,12 +573,15 @@ Available video output drivers are:
             Cocoa/OS X
         win
             Win32/WGL
-        x11, x11es
-            X11/GLX (the ``es`` variant forces GLES)
+        x11
+            X11/GLX
         wayland
             Wayland/EGL
-        x11egl, x11egles
-            X11/EGL (the ``es`` variant forces GLES)
+        x11egl
+            X11/EGL
+
+    ``es``
+        Force or prefer GLES2/3 over desktop OpenGL, if supported.
 
     ``fbo-format=<fmt>``
         Selects the internal format of textures used for FBOs. The format can
@@ -586,7 +589,7 @@ Available video output drivers are:
         always used, and typically only when using extended scalers.)
         ``fmt`` can be one of: rgb, rgba, rgb8, rgb10, rgb10_a2, rgb16, rgb16f,
         rgb32f, rgba12, rgba16, rgba16f, rgba32f.
-        Default: rgba.
+        Default: rgba16.
 
     ``gamma=<0.1..2.0>``
         Set a gamma value (default: 1.0). If gamma is adjusted in other ways
@@ -669,11 +672,14 @@ Available video output drivers are:
 
         NOTE: Only implemented on OS X and X11
 
-    ``icc-cache=<file>``
-        Store and load the 3D LUT created from the ICC profile in this file.
+    ``icc-cache-dir=<dirname>``
+        Store and load the 3D LUTs created from the ICC profile in this directory.
         This can be used to speed up loading, since LittleCMS 2 can take a while
-        to create the 3D LUT. Note that this file contains an uncompressed LUT.
-        Its size depends on the ``3dlut-size``, and can be very big.
+        to create a 3D LUT. Note that these files contain uncompressed LUTs.
+        Their size depends on the ``3dlut-size``, and can be very big.
+
+        NOTE: This is not cleaned automatically, so old, unused cache files
+        may stick around indefinitely.
 
     ``icc-intent=<value>``
         Specifies the ICC intent used for the color transformation (when using
@@ -744,7 +750,7 @@ Available video output drivers are:
 
     This is equivalent to::
 
-        --vo=opengl:scale=spline36:cscale=spline36:dscale=mitchell:dither-depth=auto:fbo-format=rgba16:fancy-downscaling:sigmoid-upscaling
+        --vo=opengl:scale=spline36:cscale=spline36:dscale=mitchell:dither-depth=auto:fancy-downscaling:sigmoid-upscaling
 
     Note that some cheaper LCDs do dithering that gravely interferes with
     ``opengl``'s dithering. Disabling dithering with ``dither-depth=no`` helps.
@@ -895,13 +901,15 @@ Available video output drivers are:
     ``frame-queue-size=<1..100>``
         The maximum count of frames which the frame queue can hold (default: 1)
 
-    ``frame-drop-mode=<pop|clear>``
+    ``frame-drop-mode=<pop|clear|block>``
         Select the behavior when the frame queue is full.
 
         pop
-            Drop the oldest frame in the frame queue. (default)
+            Drop the oldest frame in the frame queue.
         clear
             Drop all frames in the frame queue.
+        block
+            Wait for a short time, behave like ``clear`` on timeout. (default)
 
     This also supports many of the suboptions the ``opengl`` VO has. Run
     ``mpv --vo=opengl-cb:help`` for a list.

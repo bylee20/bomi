@@ -20,6 +20,7 @@ struct mp_log;
 
 struct image_writer_opts {
     char *format;
+    int high_bit_depth;
     int png_compression;
     int png_filter;
     int jpeg_quality;
@@ -28,6 +29,7 @@ struct image_writer_opts {
     int jpeg_dpi;
     int jpeg_progressive;
     int jpeg_baseline;
+    int jpeg_source_chroma;
     int tag_csp;
 };
 

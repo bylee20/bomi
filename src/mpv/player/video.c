@@ -377,7 +377,7 @@ static int decode_image(struct MPContext *mpctx)
     if (d_video->header->attached_picture) {
         d_video->waiting_decoded_mpi =
                     video_decode(d_video, d_video->header->attached_picture, 0);
-        return VD_EOF;
+        return d_video->waiting_decoded_mpi ? VD_EOF : VD_PROGRESS;
     }
 
     struct demux_packet *pkt;
@@ -724,9 +724,9 @@ static void update_avsync_after_frame(struct MPContext *mpctx)
     mpctx->last_av_difference = a_pos - mpctx->video_pts + opts->audio_delay;
     if (mpctx->time_frame > 0)
         mpctx->last_av_difference += mpctx->time_frame * opts->playback_speed;
-    if (a_pos == MP_NOPTS_VALUE || mpctx->video_pts == MP_NOPTS_VALUE)
+    if (a_pos == MP_NOPTS_VALUE || mpctx->video_pts == MP_NOPTS_VALUE) {
         mpctx->last_av_difference = MP_NOPTS_VALUE;
-    if (fabs(mpctx->last_av_difference) > 0.5 && !mpctx->drop_message_shown) {
+    } else if (fabs(mpctx->last_av_difference) > 0.5 && !mpctx->drop_message_shown) {
         MP_WARN(mpctx, "%s", av_desync_help_text);
         mpctx->drop_message_shown = true;
     }

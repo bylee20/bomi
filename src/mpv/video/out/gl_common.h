@@ -74,23 +74,58 @@ enum {
 
 #define MPGL_VER_P(ver) MPGL_VER_GET_MAJOR(ver), MPGL_VER_GET_MINOR(ver)
 
+struct MPGLContext;
+
+// A backend (like X11, win32, ...), which provides OpenGL rendering.
+// This should be preferred for new code, instead of setting the callbacks
+// in MPGLContext directly.
+struct mpgl_driver {
+    const char *name;
+
+    // Size of the struct allocated for MPGLContext.priv
+    int priv_size;
+
+    // Init the GL context and possibly the underlying VO backend.
+    // The created context should be compatible to GL 3.2 core profile, but
+    // some other GL versions are supported as well (e.g. GL 2.1 or GLES 2).
+    // Return 0 on success, negative value (-1) on error.
+    int (*init)(struct MPGLContext *ctx, int vo_flags);
+
+    // Resize the window, or create a new window if there isn't one yet.
+    // Currently, there is an unfortunate interaction with ctx->vo, and
+    // display size etc. are determined by it.
+    // Return 0 on success, negative value (-1) on error.
+    int (*reconfig)(struct MPGLContext *ctx, int flags);
+
+    // Present the frame.
+    void (*swap_buffers)(struct MPGLContext *ctx);
+
+    // This behaves exactly like vo_driver.control().
+    int (*control)(struct MPGLContext *ctx, int *events, int request, void *arg);
+
+    // Destroy the GL context and possibly the underlying VO backend.
+    void (*uninit)(struct MPGLContext *ctx);
+};
+
 typedef struct MPGLContext {
     GL *gl;
     struct vo *vo;
+    const struct mpgl_driver *driver;
 
     // Bit size of each component in the created framebuffer. 0 if unknown.
     int depth_r, depth_g, depth_b;
 
-    // GL version requested from config_window_gl3 backend (MPGL_VER mangled).
-    // (Might be different from the actual version in gl->version.)
-    int requested_gl_version;
+    // For free use by the mpgl_driver.
+    void *priv;
+
+    // Warning: all callbacks below are legacy. Newer code should use
+    //          a mpgl_driver struct, which replaces these callbacks.
 
     void (*swapGlBuffers)(struct MPGLContext *);
     int (*vo_init)(struct vo *vo);
     void (*vo_uninit)(struct vo *vo);
     int (*vo_control)(struct vo *vo, int *events, int request, void *arg);
     void (*releaseGlContext)(struct MPGLContext *);
-    void (*set_current)(struct MPGLContext *, bool current);
 
     // Used on windows only, tries to vsync with the DWM, and modifies SwapInterval
     // when it does so. Returns the possibly modified swapinterval value.
@@ -99,35 +134,20 @@ typedef struct MPGLContext {
 
 
     // Resize the window, or create a new window if there isn't one yet.
-    // On the first call, it creates a GL context according to what's specified
-    // in MPGLContext.requested_gl_version. This is just a hint, and if the
-    // requested version is not available, it may return a completely different
-    // GL context. (The caller must check if the created GL version is ok. The
-    // callee must try to fall back to an older version if the requested
-    // version is not available, and newer versions are incompatible.)
+    // On the first call, it creates a GL context.
     bool (*config_window)(struct MPGLContext *ctx, int flags);
 
-    // An optional function to register a resize callback in the backend that
-    // can be called on separate thread to handle resize events immediately
-    // (without waiting for vo_check_events, which will come later for the
-    // proper resize)
-    void (*register_resize_callback)(struct vo *vo,
-                                     void (*cb)(struct vo *vo, int w, int h));
-
-    // Optional activity state of context.
-    // If false, OpenGL renderers should not draw anything.
-    bool (*is_active)(struct MPGLContext *);
-
-    // For free use by the backend.
-    void *priv;
+    // Optional callback on the beginning of a frame. The frame will be finished
+    // with swapGlBuffers(). This returns false if use of the OpenGL context
+    // should be avoided.
+    bool (*start_frame)(struct MPGLContext *);
 } MPGLContext;
-
-void mpgl_lock(MPGLContext *ctx);
-void mpgl_unlock(MPGLContext *ctx);
 
 MPGLContext *mpgl_init(struct vo *vo, const char *backend_name, int vo_flags);
 void mpgl_uninit(MPGLContext *ctx);
 bool mpgl_reconfig_window(struct MPGLContext *ctx, int vo_flags);
+int mpgl_control(struct MPGLContext *ctx, int *events, int request, void *arg);
+void mpgl_swap_buffers(struct MPGLContext *ctx);
 
 int mpgl_find_backend(const char *name);
 
@@ -137,10 +157,7 @@ int mpgl_validate_backend_opt(struct mp_log *log, const struct m_option *opt,
 
 void mpgl_set_backend_cocoa(MPGLContext *ctx);
 void mpgl_set_backend_w32(MPGLContext *ctx);
-void mpgl_set_backend_x11(MPGLContext *ctx);
-void mpgl_set_backend_x11es(MPGLContext *ctx);
 void mpgl_set_backend_x11egl(MPGLContext *ctx);
-void mpgl_set_backend_x11egles(MPGLContext *ctx);
 void mpgl_set_backend_wayland(MPGLContext *ctx);
 void mpgl_set_backend_rpi(MPGLContext *ctx);
 void mpgl_set_backend_dummy(MPGLContext *ctx);

@@ -240,8 +240,6 @@ static int mp_seek(MPContext *mpctx, struct seek_params seek,
     }
     if (hr_seek)
         demuxer_style |= SEEK_HR;
-    if (hr_seek || opts->mkv_subtitle_preroll)
-        demuxer_style |= SEEK_SUBPREROLL;
 
     if (hr_seek)
         demuxer_amount -= hr_seek_offset;
@@ -384,6 +382,13 @@ double get_playback_time(struct MPContext *mpctx)
 {
     double cur = get_current_time(mpctx);
     double start = get_start_time(mpctx);
+    // During seeking, the time corresponds to the last seek time - apply some
+    // cosmetics to it.
+    if (mpctx->playback_pts == MP_NOPTS_VALUE) {
+        double length = get_time_length(mpctx);
+        if (length >= 0)
+            cur = MPCLAMP(cur, start, start + length);
+    }
     return cur >= start ? cur - start : cur;
 }
 
@@ -1044,6 +1049,7 @@ void mp_idle(struct MPContext *mpctx)
     mp_wait_events(mpctx, mpctx->sleeptime);
     mpctx->sleeptime = 100.0;
     mp_process_input(mpctx);
+    handle_command_updates(mpctx);
     handle_cursor_autohide(mpctx);
     handle_vo_events(mpctx);
     update_osd_msg(mpctx);

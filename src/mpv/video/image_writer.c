@@ -42,12 +42,14 @@
 
 const struct image_writer_opts image_writer_opts_defaults = {
     .format = "jpg",
+    .high_bit_depth = 1,
     .png_compression = 7,
     .png_filter = 5,
     .jpeg_quality = 90,
     .jpeg_optimize = 100,
     .jpeg_smooth = 0,
     .jpeg_baseline = 1,
+    .jpeg_source_chroma = 1,
     .tag_csp = 1,
 };
 
@@ -59,9 +61,11 @@ const struct m_sub_options image_writer_conf = {
         OPT_INTRANGE("jpeg-optimize", jpeg_optimize, 0, 0, 100),
         OPT_INTRANGE("jpeg-smooth", jpeg_smooth, 0, 0, 100),
         OPT_FLAG("jpeg-baseline", jpeg_baseline, 0),
+        OPT_FLAG("jpeg-source-chroma", jpeg_source_chroma, 0),
         OPT_INTRANGE("png-compression", png_compression, 0, 0, 9),
         OPT_INTRANGE("png-filter", png_filter, 0, 0, 5),
         OPT_STRING("format", format, 0),
+        OPT_FLAG("high-bit-depth", high_bit_depth, 0),
         OPT_FLAG("tag-colorspace", tag_csp, 0),
         {0},
     },
@@ -193,8 +197,10 @@ static bool write_jpeg(struct image_writer_ctx *ctx, mp_image_t *image, FILE *fp
     cinfo.optimize_coding = ctx->opts->jpeg_optimize;
     cinfo.smoothing_factor = ctx->opts->jpeg_smooth;
 
-    cinfo.comp_info[0].h_samp_factor = 1 << ctx->original_format.chroma_xs;
-    cinfo.comp_info[0].v_samp_factor = 1 << ctx->original_format.chroma_ys;
+    if (ctx->opts->jpeg_source_chroma) {
+        cinfo.comp_info[0].h_samp_factor = 1 << ctx->original_format.chroma_xs;
+        cinfo.comp_info[0].v_samp_factor = 1 << ctx->original_format.chroma_ys;
+    }
 
     jpeg_start_compress(&cinfo, TRUE);
 
@@ -214,6 +220,22 @@ static bool write_jpeg(struct image_writer_ctx *ctx, mp_image_t *image, FILE *fp
 
 #endif
 
+static int get_encoder_format(struct AVCodec *codec, int srcfmt, bool highdepth)
+{
+    const enum AVPixelFormat *pix_fmts = codec->pix_fmts;
+    int current = 0;
+    for (int n = 0; pix_fmts && pix_fmts[n] != AV_PIX_FMT_NONE; n++) {
+        int fmt = pixfmt2imgfmt(pix_fmts[n]);
+        if (!fmt)
+            continue;
+        // Ignore formats larger than 8 bit per pixel.
+        if (!highdepth && IMGFMT_RGB_DEPTH(fmt) > 32)
+            continue;
+        current = current ? mp_imgfmt_select_best(current, fmt, srcfmt) : fmt;
+    }
+    return current;
+}
+
 static int get_target_format(struct image_writer_ctx *ctx, int srcfmt)
 {
     if (!ctx->writer->lavc_codec)
@@ -223,22 +245,14 @@ static int get_target_format(struct image_writer_ctx *ctx, int srcfmt)
     if (!codec)
         goto unknown;
 
-    const enum AVPixelFormat *pix_fmts = codec->pix_fmts;
-    if (!pix_fmts)
+    int target = get_encoder_format(codec, srcfmt, ctx->opts->high_bit_depth);
+    if (!target)
+        target = get_encoder_format(codec, srcfmt, true);
+
+    if (!target)
         goto unknown;
 
-    int current = 0;
-    for (int n = 0; pix_fmts[n] != AV_PIX_FMT_NONE; n++) {
-        int fmt = pixfmt2imgfmt(pix_fmts[n]);
-        if (!fmt)
-            continue;
-        current = current ? mp_imgfmt_select_best(current, fmt, srcfmt) : fmt;
-    }
-
-    if (!current)
-        goto unknown;
-
-    return current;
+    return target;
 
 unknown:
     return IMGFMT_RGB24;
@@ -327,7 +341,7 @@ bool write_image(struct mp_image *image, const struct image_writer_opts *opts,
     if (fp == NULL) {
         mp_err(log, "Error opening '%s' for writing!\n", filename);
     } else {
-        success = writer->write(&ctx, image, fp);
+        success = writer->write(&ctx, dst, fp);
         success = !fclose(fp) && success;
         if (!success)
             mp_err(log, "Error writing file '%s'!\n", filename);

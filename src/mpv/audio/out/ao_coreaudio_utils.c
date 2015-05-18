@@ -88,7 +88,7 @@ OSStatus ca_select_device(struct ao *ao, char* name, AudioDeviceID *device)
     OSStatus err = noErr;
     *device = kAudioObjectUnknown;
 
-    if (name) {
+    if (name && name[0]) {
         CFStringRef uid = cfstr_from_cstr(name);
         AudioValueTranslation v = (AudioValueTranslation) {
             .mInputData = &uid,
@@ -116,9 +116,8 @@ OSStatus ca_select_device(struct ao *ao, char* name, AudioDeviceID *device)
 
     if (mp_msg_test(ao->log, MSGL_V)) {
         char *desc;
-        err = CA_GET_STR(*device, kAudioObjectPropertyName, &desc);
-        CHECK_CA_WARN("could not get selected audio device name");
-        if (err == noErr) {
+        OSStatus err2 = CA_GET_STR(*device, kAudioObjectPropertyName, &desc);
+        if (err2 == noErr) {
             MP_VERBOSE(ao, "selected audio output device: %s (%" PRIu32 ")\n",
                            desc, *device);
             talloc_free(desc);
@@ -129,7 +128,7 @@ coreaudio_error:
     return err;
 }
 
-char *fourcc_repr(void *talloc_ctx, uint32_t code)
+char *fourcc_repr_buf(char *buf, size_t buf_size, uint32_t code)
 {
     // Extract FourCC letters from the uint32_t and finde out if it's a valid
     // code that is made of letters.
@@ -146,43 +145,40 @@ char *fourcc_repr(void *talloc_ctx, uint32_t code)
             valid_fourcc = false;
     }
 
-    char *repr;
     if (valid_fourcc)
-        repr = talloc_asprintf(talloc_ctx, "'%c%c%c%c'",
-                               fcc[0], fcc[1], fcc[2], fcc[3]);
+        snprintf(buf, buf_size, "'%c%c%c%c'", fcc[0], fcc[1], fcc[2], fcc[3]);
     else
-        repr = talloc_asprintf(NULL, "%u", (unsigned int)code);
+        snprintf(buf, buf_size, "%u", (unsigned int)code);
 
-    return repr;
+    return buf;
 }
 
 bool check_ca_st(struct ao *ao, int level, OSStatus code, const char *message)
 {
     if (code == noErr) return true;
 
-    char *error_string = fourcc_repr(NULL, code);
-    mp_msg(ao->log, level, "%s (%s)\n", message, error_string);
-    talloc_free(error_string);
+    mp_msg(ao->log, level, "%s (%s)\n", message, fourcc_repr(code));
 
     return false;
 }
 
-void ca_fill_asbd(struct ao *ao, AudioStreamBasicDescription *asbd)
+static void ca_fill_asbd_raw(AudioStreamBasicDescription *asbd, int mp_format,
+                             int samplerate, int num_channels)
 {
-    asbd->mSampleRate       = ao->samplerate;
+    asbd->mSampleRate       = samplerate;
     // Set "AC3" for other spdif formats too - unknown if that works.
-    asbd->mFormatID         = AF_FORMAT_IS_IEC61937(ao->format) ?
+    asbd->mFormatID         = AF_FORMAT_IS_IEC61937(mp_format) ?
                               kAudioFormat60958AC3 :
                               kAudioFormatLinearPCM;
-    asbd->mChannelsPerFrame = ao->channels.num;
-    asbd->mBitsPerChannel   = af_fmt2bits(ao->format);
+    asbd->mChannelsPerFrame = num_channels;
+    asbd->mBitsPerChannel   = af_fmt2bits(mp_format);
     asbd->mFormatFlags      = kAudioFormatFlagIsPacked;
 
-    if ((ao->format & AF_FORMAT_TYPE_MASK) == AF_FORMAT_F)
+    if ((mp_format & AF_FORMAT_TYPE_MASK) == AF_FORMAT_F) {
         asbd->mFormatFlags |= kAudioFormatFlagIsFloat;
-
-    if ((ao->format & AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI)
+    } else if ((mp_format & AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI) {
         asbd->mFormatFlags |= kAudioFormatFlagIsSignedInteger;
+    }
 
     if (BYTE_ORDER == BIG_ENDIAN)
         asbd->mFormatFlags |= kAudioFormatFlagIsBigEndian;
@@ -193,17 +189,66 @@ void ca_fill_asbd(struct ao *ao, AudioStreamBasicDescription *asbd)
         (asbd->mBitsPerChannel / 8);
 }
 
+void ca_fill_asbd(struct ao *ao, AudioStreamBasicDescription *asbd)
+{
+    ca_fill_asbd_raw(asbd, ao->format, ao->samplerate, ao->channels.num);
+}
+
+static bool ca_formatid_is_digital(uint32_t formatid)
+{
+    switch (formatid)
+    case 'IAC3':
+    case 'iac3':
+    case  kAudioFormat60958AC3:
+    case  kAudioFormatAC3:
+        return true;
+    return false;
+}
+
+// This might be wrong, but for now it's sufficient for us.
+static uint32_t ca_normalize_formatid(uint32_t formatID)
+{
+    return ca_formatid_is_digital(formatID) ? kAudioFormat60958AC3 : formatID;
+}
+
+bool ca_asbd_equals(const AudioStreamBasicDescription *a,
+                    const AudioStreamBasicDescription *b)
+{
+    int flags = kAudioFormatFlagIsPacked | kAudioFormatFlagIsFloat |
+            kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsBigEndian;
+
+    return (a->mFormatFlags & flags) == (b->mFormatFlags & flags) &&
+           a->mBitsPerChannel == b->mBitsPerChannel &&
+           ca_normalize_formatid(a->mFormatID) ==
+                ca_normalize_formatid(b->mFormatID) &&
+           a->mBytesPerPacket == b->mBytesPerPacket;
+}
+
+// Return the AF_FORMAT_* (AF_FORMAT_S16 etc.) corresponding to the asbd.
+int ca_asbd_to_mp_format(const AudioStreamBasicDescription *asbd)
+{
+    for (int n = 0; af_fmtstr_table[n].format; n++) {
+        int mp_format = af_fmtstr_table[n].format;
+        AudioStreamBasicDescription mp_asbd = {0};
+        ca_fill_asbd_raw(&mp_asbd, mp_format, 0, asbd->mChannelsPerFrame);
+        if (ca_asbd_equals(&mp_asbd, asbd))
+            return mp_format;
+    }
+    return 0;
+}
+
 void ca_print_asbd(struct ao *ao, const char *description,
                    const AudioStreamBasicDescription *asbd)
 {
     uint32_t flags  = asbd->mFormatFlags;
-    char *format    = fourcc_repr(NULL, asbd->mFormatID);
+    char *format    = fourcc_repr(asbd->mFormatID);
+    int mpfmt       = ca_asbd_to_mp_format(asbd);
 
     MP_VERBOSE(ao,
-       "%s %7.1fHz %" PRIu32 "bit [%s]"
-       "[%" PRIu32 "][%" PRIu32 "][%" PRIu32 "]"
-       "[%" PRIu32 "][%" PRIu32 "] "
-       "%s %s %s%s%s%s\n",
+       "%s %7.1fHz %" PRIu32 "bit %s "
+       "[%" PRIu32 "][%" PRIu32 "bpp][%" PRIu32 "fbp]"
+       "[%" PRIu32 "bpf][%" PRIu32 "ch] "
+       "%s %s %s%s%s%s (%s)\n",
        description, asbd->mSampleRate, asbd->mBitsPerChannel, format,
        asbd->mFormatFlags, asbd->mBytesPerPacket, asbd->mFramesPerPacket,
        asbd->mBytesPerFrame, asbd->mChannelsPerFrame,
@@ -212,9 +257,49 @@ void ca_print_asbd(struct ao *ao, const char *description,
        (flags & kAudioFormatFlagIsSignedInteger) ? "S" : "U",
        (flags & kAudioFormatFlagIsPacked) ? " packed" : "",
        (flags & kAudioFormatFlagIsAlignedHigh) ? " aligned" : "",
-       (flags & kAudioFormatFlagIsNonInterleaved) ? " P" : "");
+       (flags & kAudioFormatFlagIsNonInterleaved) ? " P" : "",
+       mpfmt ? af_fmt_to_str(mpfmt) : "-");
+}
 
-    talloc_free(format);
+// Return whether new is an improvement over old. Assume a higher value means
+// better quality, and we always prefer the value closest to the requested one,
+// which is still larger than the requested one.
+// Equal values prefer the new one (so ca_asbd_is_better() checks other params).
+static bool value_is_better(double req, double old, double new)
+{
+    if (new >= req) {
+        return old < req || new <= old;
+    } else {
+        return old < req && new >= old;
+    }
+}
+
+// Return whether new is an improvement over old (req is the requested format).
+bool ca_asbd_is_better(AudioStreamBasicDescription *req,
+                       AudioStreamBasicDescription *old,
+                       AudioStreamBasicDescription *new)
+{
+    if (new->mChannelsPerFrame > MP_NUM_CHANNELS)
+        return false;
+    if (old->mChannelsPerFrame > MP_NUM_CHANNELS)
+        return true;
+    if (req->mFormatID != new->mFormatID)
+        return false;
+    if (req->mFormatID != old->mFormatID)
+        return true;
+
+    if (!value_is_better(req->mBitsPerChannel, old->mBitsPerChannel,
+                         new->mBitsPerChannel))
+        return false;
+
+    if (!value_is_better(req->mSampleRate, old->mSampleRate, new->mSampleRate))
+        return false;
+
+    if (!value_is_better(req->mChannelsPerFrame, old->mChannelsPerFrame,
+                         new->mChannelsPerFrame))
+        return false;
+
+    return true;
 }
 
 int64_t ca_frames_to_us(struct ao *ao, uint32_t frames)

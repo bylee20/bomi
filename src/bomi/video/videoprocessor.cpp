@@ -143,7 +143,6 @@ auto VideoProcessor::open(vf_instance *vf) -> int
         d->deint_swdec = DeintOption::fromString(_L(p->swdec_deint));
     if (p->hwdec_deint)
         d->deint_hwdec = DeintOption::fromString(_L(p->hwdec_deint));
-    d->interpolate = p->interpolate;
     d->spaceOpt = (ColorSpace)p->color_space;
     d->rangeOpt = (ColorRange)p->color_range;
     d->updateDeint();
@@ -355,7 +354,6 @@ auto VideoProcessor::filterIn(mp_image *_mpi) -> int
         emit hwdecChanged(hwdec());
 
     MpImage mpi = MpImage::wrap(_mpi);
-    Q_ASSERT(mpi->frame_timing.next_vsync == 0);
     if (d->skip) {
         d->mutex.lock();
         auto scan = d->skip;

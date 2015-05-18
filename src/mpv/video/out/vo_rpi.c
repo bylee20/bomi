@@ -30,6 +30,8 @@
 
 #include <libavutil/rational.h>
 
+#include "osdep/atomics.h"
+
 #include "common/common.h"
 #include "common/msg.h"
 #include "options/m_config.h"
@@ -57,6 +59,7 @@ struct osd_part {
 struct priv {
     DISPMANX_DISPLAY_HANDLE_T display;
     DISPMANX_ELEMENT_HANDLE_T window;
+    DISPMANX_RESOURCE_HANDLE_T window_back;
     DISPMANX_UPDATE_HANDLE_T update;
     uint32_t w, h;
 
@@ -71,6 +74,8 @@ struct priv {
 
     // for RAM input
     MMAL_POOL_T *swpool;
+
+    atomic_bool update_display;
 
     int background_layer;
     int video_layer;
@@ -237,6 +242,64 @@ static void resize(struct vo *vo)
 
     if (mmal_port_parameter_set(input, &dr.hdr))
         MP_WARN(vo, "could not set video rectangle\n");
+}
+
+static int update_display_size(struct vo *vo)
+{
+    struct priv *p = vo->priv;
+
+    uint32_t n_w = 0, n_h = 0;
+    if (graphics_get_display_size(0, &n_w, &n_h) < 0) {
+        MP_FATAL(vo, "Could not get display size.\n");
+        return -1;
+    }
+
+    if (p->w == n_w && p->h == n_h)
+        return 0;
+
+    p->w = n_w;
+    p->h = n_h;
+
+    MP_VERBOSE(vo, "Display size: %dx%d\n", p->w, p->h);
+
+    if (p->window)
+        vc_dispmanx_element_remove(p->update, p->window);
+    if (p->window_back)
+        vc_dispmanx_resource_delete(p->window_back);
+    p->window = 0;
+    p->window_back = 0;
+
+    VC_IMAGE_TYPE_T format = VC_IMAGE_ARGB8888; // assuming RPI is always LE
+    p->window_back = vc_dispmanx_resource_create(format, 1 | (4 << 16), 1,
+                                                 &(int32_t){0});
+    if (!p->window_back) {
+        MP_ERR(vo, "Could not create background bitmap.\n");
+        return -1;
+    }
+
+    uint32_t px = 0;
+    VC_RECT_T rc = {.width = 1, .height = 1};
+    vc_dispmanx_resource_write_data(p->window_back, format, 4, &px, &rc);
+
+    // Use the whole screen.
+    VC_RECT_T dst = {.width = p->w, .height = p->h};
+    VC_RECT_T src = {.width = 1 << 16, .height = 1 << 16};
+    VC_DISPMANX_ALPHA_T alpha = {
+        .flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS,
+        .opacity = 0xFF,
+    };
+    p->window = vc_dispmanx_element_add(p->update, p->display, p->background_layer,
+                                        &dst, p->window_back, &src,
+                                        DISPMANX_PROTECTION_NONE, &alpha, 0, 0);
+    if (!p->window) {
+        MP_FATAL(vo, "Could not add DISPMANX element.\n");
+        return -1;
+    }
+
+    vc_dispmanx_update_submit_sync(p->update);
+    p->update = vc_dispmanx_update_start(10);
+
+    return 0;
 }
 
 static void flip_page(struct vo *vo)
@@ -466,18 +529,42 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_SCREENSHOT_WIN:
         *(struct mp_image **)data = take_screenshot(vo);
         return VO_TRUE;
+    case VOCTRL_CHECK_EVENTS:
+        if (atomic_load(&p->update_display)) {
+            atomic_store(&p->update_display, false);
+            update_display_size(vo);
+            if (p->renderer_enabled)
+                resize(vo);
+        }
+        return VO_TRUE;
     }
 
     return VO_NOTIMPL;
+}
+
+static void tv_callback(void *callback_data, uint32_t reason, uint32_t param1,
+                        uint32_t param2)
+{
+    struct vo *vo = callback_data;
+    struct priv *p = vo->priv;
+    atomic_store(&p->update_display, true);
+    vo_wakeup(vo);
 }
 
 static void uninit(struct vo *vo)
 {
     struct priv *p = vo->priv;
 
+    vc_tv_unregister_callback_full(tv_callback, vo);
+
     talloc_free(p->next_image);
 
     wipe_osd(vo);
+
+    if (p->window)
+        vc_dispmanx_element_remove(p->update, p->window);
+    if (p->window_back)
+        vc_dispmanx_resource_delete(p->window_back);
 
     if (p->update)
         vc_dispmanx_update_submit_sync(p->update);
@@ -521,30 +608,10 @@ static int preinit(struct vo *vo)
         goto fail;
     }
 
-    if (graphics_get_display_size(0, &p->w, &p->h) < 0) {
-        MP_FATAL(vo, "Could not get display size.\n");
+    if (update_display_size(vo) < 0)
         goto fail;
-    }
 
-    MP_VERBOSE(vo, "Display size: %dx%d\n", p->w, p->h);
-
-    // Just use the whole screen.
-    VC_RECT_T dst = {.width = p->w, .height = p->h};
-    VC_RECT_T src = {.width = p->w << 16, .height = p->h << 16};
-    VC_DISPMANX_ALPHA_T alpha = {
-        .flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS,
-        .opacity = 0xFF,
-    };
-    p->window = vc_dispmanx_element_add(p->update, p->display, p->background_layer,
-                                        &dst, 0, &src, DISPMANX_PROTECTION_NONE,
-                                        &alpha, 0, 0);
-    if (!p->window) {
-        MP_FATAL(vo, "Could not add DISPMANX element.\n");
-        goto fail;
-    }
-
-    vc_dispmanx_update_submit_sync(p->update);
-    p->update = vc_dispmanx_update_start(10);
+    vc_tv_register_callback(tv_callback, vo);
 
     return 0;
 

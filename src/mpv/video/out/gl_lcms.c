@@ -36,9 +36,13 @@
 #include "gl_video.h"
 #include "gl_lcms.h"
 
+#include "osdep/io.h"
+
 #if HAVE_LCMS2
 
 #include <lcms2.h>
+#include <libavutil/sha.h>
+#include <libavutil/mem.h>
 
 struct gl_lcms {
     void *icc_data;
@@ -77,9 +81,11 @@ const struct m_sub_options mp_icc_conf = {
     .opts = (const m_option_t[]) {
         OPT_STRING("icc-profile", profile, 0),
         OPT_FLAG("icc-profile-auto", profile_auto, 0),
-        OPT_STRING("icc-cache", cache, 0),
+        OPT_STRING("icc-cache-dir", cache_dir, 0),
         OPT_INT("icc-intent", intent, 0),
         OPT_STRING_VALIDATE("3dlut-size", size_str, 0, validate_3dlut_size_opt),
+
+        OPT_REMOVED("icc-cache", "see icc-cache-dir"),
         {0}
     },
     .size = sizeof(struct mp_icc_opts),
@@ -100,13 +106,11 @@ static struct bstr load_file(void *talloc_ctx, const char *filename,
                              struct mpv_global *global)
 {
     struct bstr res = {0};
-    char *fname = mp_get_user_path(NULL, global, filename);
-    stream_t *s = stream_open(fname, global);
+    stream_t *s = stream_open(filename, global);
     if (s) {
         res = stream_read_complete(s, talloc_ctx, 1000000000);
         free_stream(s);
     }
-    talloc_free(fname);
     return res;
 }
 
@@ -118,8 +122,10 @@ static bool load_profile(struct gl_lcms *p)
     if (!p->icc_path)
         return false;
 
-    MP_INFO(p, "Opening ICC profile '%s'\n", p->icc_path);
-    struct bstr iccdata = load_file(p, p->icc_path, p->global);
+    char *fname = mp_get_user_path(NULL, p->global, p->icc_path);
+    MP_VERBOSE(p, "Opening ICC profile '%s'\n", fname);
+    struct bstr iccdata = load_file(p, fname, p->global);
+    talloc_free(fname);
     if (!iccdata.len)
         return false;
 
@@ -185,8 +191,6 @@ bool gl_lcms_has_changed(struct gl_lcms *p)
     return change;
 }
 
-#define LUT3D_CACHE_HEADER "mpv 3dlut cache 1.0\n"
-
 bool gl_lcms_get_lut3d(struct gl_lcms *p, struct lut3d **result_lut3d)
 {
     int s_r, s_g, s_b;
@@ -203,27 +207,39 @@ bool gl_lcms_get_lut3d(struct gl_lcms *p, struct lut3d **result_lut3d)
     struct lut3d *lut = NULL;
     cmsContext cms = NULL;
 
-    char *cache_info =
+    char *cache_file = NULL;
+    if (p->opts.cache_dir && p->opts.cache_dir[0]) {
         // Gamma is included in the header to help uniquely identify it,
         // because we may change the parameter in the future or make it
         // customizable, same for the primaries.
-        talloc_asprintf(tmp, "intent=%d, size=%dx%dx%d, gamma=2.4, prim=bt2020\n",
-                        p->opts.intent, s_r, s_g, s_b);
+        char *cache_info = talloc_asprintf(tmp,
+                "ver=1.1, intent=%d, size=%dx%dx%d, gamma=2.4, prim=bt2020\n",
+                p->opts.intent, s_r, s_g, s_b);
 
-    bstr iccdata = (bstr) {
-        .start = p->icc_data,
-        .len   = p->icc_size,
-    };
+        uint8_t hash[32];
+        struct AVSHA *sha = av_sha_alloc();
+        if (!sha)
+            abort();
+        av_sha_init(sha, 256);
+        av_sha_update(sha, cache_info, strlen(cache_info));
+        av_sha_update(sha, p->icc_data, p->icc_size);
+        av_sha_final(sha, hash);
+        av_free(sha);
+
+        char *cache_dir = mp_get_user_path(tmp, p->global, p->opts.cache_dir);
+        cache_file = talloc_strdup(tmp, "");
+        for (int i = 0; i < sizeof(hash); i++)
+            cache_file = talloc_asprintf_append(cache_file, "%02X", hash[i]);
+        cache_file = mp_path_join(tmp, cache_dir, cache_file);
+
+        mp_mkdirp(cache_dir);
+    }
 
     // check cache
-    if (p->opts.cache) {
-        MP_INFO(p, "Opening 3D LUT cache in file '%s'.\n", p->opts.cache);
-        struct bstr cachedata = load_file(tmp, p->opts.cache, p->global);
-        if (bstr_eatstart(&cachedata, bstr0(LUT3D_CACHE_HEADER))
-            && bstr_eatstart(&cachedata, bstr0(cache_info))
-            && bstr_eatstart(&cachedata, iccdata)
-            && cachedata.len == talloc_get_size(output))
-        {
+    if (cache_file) {
+        MP_VERBOSE(p, "Opening 3D LUT cache in file '%s'.\n", cache_file);
+        struct bstr cachedata = load_file(tmp, cache_file, p->global);
+        if (cachedata.len == talloc_get_size(output)) {
             memcpy(output, cachedata.start, cachedata.len);
             goto done;
         } else {
@@ -284,16 +300,12 @@ bool gl_lcms_get_lut3d(struct gl_lcms *p, struct lut3d **result_lut3d)
 
     cmsDeleteTransform(trafo);
 
-    if (p->opts.cache) {
-        char *fname = mp_get_user_path(NULL, p->global, p->opts.cache);
-        FILE *out = fopen(fname, "wb");
+    if (cache_file) {
+        FILE *out = fopen(cache_file, "wb");
         if (out) {
-            fprintf(out, "%s%s", LUT3D_CACHE_HEADER, cache_info);
-            fwrite(p->icc_data, p->icc_size, 1, out);
             fwrite(output, talloc_get_size(output), 1, out);
             fclose(out);
         }
-        talloc_free(fname);
     }
 
 done: ;

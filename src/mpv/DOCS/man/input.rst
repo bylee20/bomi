@@ -246,6 +246,10 @@ List of Input Commands
     because index2 refers to the target entry, not the index the entry
     will have after moving.)
 
+``playlist_shuffle``
+    Shuffle the playlist. This is similar to what is done on start if the
+    ``--shuffle`` option is used.
+
 ``run "command" "arg1" "arg2" ...``
     Run the given command. Unlike in MPlayer/mplayer2 and earlier versions of
     mpv (0.2.x and older), this doesn't call the shell. Instead, the command
@@ -405,13 +409,13 @@ List of Input Commands
 
     The ``mode`` argument is one of the following:
 
-    <keep-selection> (default)
-        Do not change current track selections.
-
-    <reselect>
-        Select the default audio and video streams, which typically selects
+    <reselect> (default)
+        Select the default audio and subtitle streams, which typically selects
         external files with highest preference. (The implementation is not
         perfect, and could be improved on request.)
+
+    <keep-selection>
+        Do not change current track selections.
 
 
 Input Commands that are Possibly Subject to Change
@@ -1167,17 +1171,18 @@ Property list
 ``field-dominance`` (RW)
     See ``--field-dominance``
 
-``colormatrix`` (RW)
-    See ``--colormatrix``.
+``colormatrix`` (R)
+    Redirects to ``video-params/colormatrix``. This parameter (as well as
+    similar ones) can be overridden with the ``format`` video filter.
 
-``colormatrix-input-range`` (RW)
-    See ``--colormatrix-input-range``.
+``colormatrix-input-range`` (R)
+    See ``colormatrix``.
 
-``colormatrix-output-range`` (RW)
-    See ``--colormatrix-output-range``.
+``colormatrix-output-range`` (R)
+    See ``colormatrix``.
 
-``colormatrix-primaries`` (RW)
-    See ``--colormatrix-primaries``.
+``colormatrix-primaries`` (R)
+    See ``colormatrix``.
 
 ``ontop`` (RW)
     See ``--ontop``.
@@ -1524,6 +1529,13 @@ Property list
     ``track-list/N/selected``
         ``yes`` if the track is currently decoded, ``no`` otherwise.
 
+    ``track-list/N/ff-index``
+        The stream index as usually used by the FFmpeg utilities. Note that
+        this can be potentially wrong if a demuxer other than libavformat
+        (``--demuxer=lavf``) is used. For mkv files, the index will usually
+        match even if the default (builtin) demuxer is used, but there is
+        no hard guarantee.
+
     When querying the property with the client API using ``MPV_FORMAT_NODE``,
     or with Lua ``mp.get_property_native``, this will return a mpv_node with
     the following contents:
@@ -1771,7 +1783,6 @@ Property list
         For many complex types, this isn't very accurate.
 
     ``option-info/<name>/set-from-commandline``
-
         Return ``yes`` if the option was set from the mpv command line,
         ``no`` otherwise. What this is set to if the option is e.g. changed
         at runtime is left undefined (meaning it could change in the future).
@@ -1798,7 +1809,10 @@ Property Expansion
 ------------------
 
 All string arguments to input commands as well as certain options (like
-``--term-playing-msg``) are subject to property expansion.
+``--term-playing-msg``) are subject to property expansion. Note that property
+expansion does not work in places where e.g. numeric parameters are expected.
+(For example, the ``add`` command does not do property expansion. The ``set``
+command is an exception and not a general rule.)
 
 .. admonition:: Example for input.conf
 

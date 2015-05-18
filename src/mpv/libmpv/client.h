@@ -118,8 +118,10 @@ extern "C" {
  *   (used through libass), ALSA, FFmpeg, and possibly more.
  * - The FPU precision must be set at least to double precision.
  * - On Windows, mpv will call timeBeginPeriod(1).
- * - SIGPIPE should be blocked. Some parts rely on this signal not crashing the
- *   process (such as ffmpeg OpenSSL support, or the mpv IPC code).
+ * - On UNIX, every mpv_initialize() call will block SIGPIPE. This is done
+ *   because FFmpeg makes unsafe use of OpenSSL and GnuTLS, which can raise
+ *   this signal under certain circumstances. Once these libraries (or FFmpeg)
+ *   are fixed, libmpv will not block the signal anymore.
  * - On memory exhaustion, mpv will kill the process.
  *
  * Encoding of filenames
@@ -196,7 +198,7 @@ extern "C" {
  * relational operators (<, >, <=, >=).
  */
 #define MPV_MAKE_VERSION(major, minor) (((major) << 16) | (minor) | 0UL)
-#define MPV_CLIENT_API_VERSION MPV_MAKE_VERSION(1, 16)
+#define MPV_CLIENT_API_VERSION MPV_MAKE_VERSION(1, 17)
 
 /**
  * Return the MPV_CLIENT_API_VERSION the mpv source has been compiled with.
@@ -369,6 +371,8 @@ const char *mpv_client_name(mpv_handle *ctx);
  *   if there are no more files to play on the internal playlist, instead of
  *   exiting. This is equivalent to the --idle option.
  * - Disable parts of input handling.
+ * - Most of the different settings can be viewed with the command line player
+ *   by running "mpv --show-profile=libmpv".
  *
  * All this assumes that API users want a mpv instance that is strictly
  * isolated from the command line player's configuration, user settings, and

@@ -30,13 +30,12 @@
 
 #define MP_PALETTE_SIZE (256 * 4)
 
-#define MP_IMGFIELD_ORDERED 0x01
 #define MP_IMGFIELD_TOP_FIRST 0x02
 #define MP_IMGFIELD_REPEAT_FIRST 0x04
-#define MP_IMGFIELD_TOP 0x08
-#define MP_IMGFIELD_BOTTOM 0x10
 #define MP_IMGFIELD_INTERLACED 0x20
 #define MP_IMGFIELD_ADDITIONAL 0x100
+#define MP_IMGFIELD_TOP 0x200
+#define MP_IMGFIELD_BOTTOM 0x400
 
 // Describes image parameters that usually stay constant.
 // New fields can be added in the future. Code changing the parameters should
@@ -94,14 +93,9 @@ typedef struct mp_image {
 
     /* only inside filter chain */
     double pts;
-    // hack to use motion interpolation
-    struct {
-        int64_t pts;
-        int64_t next_vsync;
-        int64_t prev_vsync;
-    } frame_timing;
+
     int hwdec_type;
-    
+
     /* memory management */
     struct m_refcount *refcount;
     /* for private use */
