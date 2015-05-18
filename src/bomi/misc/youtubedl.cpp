@@ -116,7 +116,7 @@ struct YouTubeDL::Data {
     QMutex mutex;
     QJsonObject json;
     bool ask = false;
-    int height = 720, fps = 30;
+    int height = 720, fps = 0;
     QString container = u"webm"_q;
 };
 
@@ -252,16 +252,6 @@ auto YouTubeDL::result() const -> Result
     r.videos = std::move(videos);
     r.audio = audios.isEmpty() ? YouTubeFormat() : audios.front();
     return r;
-//    if (!d->getFormat)
-//        return Result();
-//    d->getFormat(&formats, r.format);
-//    if (formats.isEmpty())
-//        return Result();
-//    r.url = formats.front().url();
-//    if (formats.size() > 1)
-//        r.audio = formats[1].url();
-//    r.live = formats.front().isLive();
-//    return r;
 }
 
 auto YouTubeDL::cookies() const -> QString

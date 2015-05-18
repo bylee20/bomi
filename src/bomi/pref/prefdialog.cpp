@@ -179,6 +179,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.yt_height->addItem("360p"_a, 360);
     d->ui.yt_height->addItem("240p"_a, 240);
 
+    d->ui.yt_fps->addItem(tr("Ignore"), 0);
     d->ui.yt_fps->addItem(u"60 fps"_q, 60);
     d->ui.yt_fps->addItem(u"30 fps"_q, 30);
     d->ui.yt_fps->addItem(u"15 fps"_q, 15);
