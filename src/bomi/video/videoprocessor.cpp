@@ -12,10 +12,6 @@
 #include "enum/colorspace.hpp"
 extern "C" {
 #include <video/filter/vf.h>
-#ifdef Q_OS_LINUX
-#include <video/vdpau.h>
-#include <video/vaapi.h>
-#endif
 #include <video/hwdec.h>
 #include <video/mp_image_pool.h>
 extern vf_info vf_info_noformat;
