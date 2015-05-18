@@ -82,7 +82,8 @@ auto SubRipParser::_parse(Subtitle &sub) -> void
         const int begin = prev.capturedEnd();
         const int end = m.hasMatch() ? m.capturedStart() : all.size();
         auto caption = all.midRef(begin, end - begin).trimmed().toString();
-        caption.replace(QRegEx(u"(\r\n|\n|\r)"_q), u"<br>"_q);
+        caption.replace(QRegEx(uR"((\r\n|\n|\r|\\N))"_q), u"<br>"_q);
+        caption.replace("\\h"_a, u"&nbsp;"_q);
         if (caption.isEmpty())
             caption = u"<br>"_q;
 #define TO_INT(n) (prev.capturedRef(n).toInt())
