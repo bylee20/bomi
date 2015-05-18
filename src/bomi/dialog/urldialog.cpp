@@ -88,3 +88,9 @@ auto UrlDialog::encoding() const -> EncodingInfo
 {
     return d->enc->encoding();
 }
+
+auto UrlDialog::showEvent(QShowEvent *event) -> void
+{
+    QDialog::showEvent(event);
+    d->url->setFocus();
+}

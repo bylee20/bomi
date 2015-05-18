@@ -13,6 +13,7 @@ public:
     auto isPlaylist() const -> bool;
     auto encoding() const -> EncodingInfo;
 private:
+    auto showEvent(QShowEvent *event) -> void final;
     auto accept() -> void final;
     struct Data;
     Data *d;
