@@ -68,7 +68,13 @@ Mpv::~Mpv()
 
 auto Mpv::create() -> void
 {
-    if (!m_handle) m_handle = mpv_create();
+    if (!m_handle) {
+        m_handle = mpv_create();
+        setOption("config", "no");
+        setOption("fs", "no");
+        setOption("quiet", "yes");
+        setOption("input-terminal", "no");
+    }
 }
 
 auto Mpv::initialize(Log::Level lv, bool ogl) -> void

@@ -207,14 +207,11 @@ PlayEngine::PlayEngine()
 
     const auto hwdec = OS::hwAcc()->name().toLatin1();
     d->mpv.setOption("hwdec", hwdec.isEmpty() ? "no" : hwdec.data());
-    d->mpv.setOption("fs", "no");
     d->mpv.setOption("input-cursor", "yes");
     d->mpv.setOption("softvol", "yes");
     d->mpv.setOption("softvol-max", "1000.0");
     d->mpv.setOption("sub-auto", "no");
     d->mpv.setOption("osd-level", "0");
-    d->mpv.setOption("quiet", "yes");
-    d->mpv.setOption("input-terminal", "no");
     d->mpv.setOption("ad-lavc-downmix", "no");
     d->mpv.setOption("title", "\"\"");
     d->mpv.setOption("audio-pitch-correction", "no");
