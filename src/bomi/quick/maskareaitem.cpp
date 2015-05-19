@@ -105,6 +105,7 @@ auto MaskAreaItem::mousePressEvent(QMouseEvent *event) -> void
     if (!contains(event->localPos()))
         return;
     event->setAccepted(true);
+    d->setHovered(true);
     MouseEventObject mouse(event);
     emit pressed(&mouse);
     d->setPressed(event->isAccepted());
@@ -115,6 +116,7 @@ auto MaskAreaItem::mousePressEvent(QMouseEvent *event) -> void
 auto MaskAreaItem::mouseReleaseEvent(QMouseEvent *event) -> void
 {
     QQuickItem::mouseReleaseEvent(event);
+    d->checkHovered(event->localPos());
     d->setPressed(false);
     MouseEventObject mouse(event);
     emit released(&mouse);
