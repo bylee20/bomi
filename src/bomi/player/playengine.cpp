@@ -1482,7 +1482,7 @@ auto PlayEngine::snapshot(bool osd) const -> QImage
         else if (!qstrcmp(key, "data"))
             bytes = *node.u.ba;
     }
-    return QImage((uchar*)bytes.data, s.width(), s.height(), stride, QImage::Format_ARGB32,
+    return QImage((uchar*)bytes.data, s.width(), s.height(), stride, QImage::Format_RGB32,
                   [] (void *p) { auto res = (mpv_node*)p; mpv_free_node_contents(res); delete res;}, res);
 }
 
