@@ -736,7 +736,7 @@ auto MainWindow::Data::applyPref() -> void
     e.setAudioDevice_locked(p.audio_device());
     e.setVolumeNormalizerOption_locked(p.audio_normalizer());
     e.setChannelLayoutMap_locked(p.channel_manipulation());
-    e.setSoftClip_locked(p.soft_clip());
+    e.setVolumeControl_locked(p.volume_scale(), p.soft_clip());
     e.setResyncAvWhenFilterToggled_locked(p.audio_filter_resync());
 
     e.setSubtitleStyle_locked(p.sub_style());

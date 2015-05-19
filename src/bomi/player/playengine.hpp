@@ -159,7 +159,7 @@ public:
     auto setVolumeNormalizerOption_locked(const AudioNormalizerOption &option) -> void;
     auto setDeintOptions_locked(const DeintOptionSet &set) -> void;
     auto setAudioDevice_locked(const QString &device) -> void;
-    auto setSoftClip_locked(bool soft) -> void;
+    auto setVolumeControl_locked(int scale, bool soft) -> void;
     auto setChannelLayoutMap_locked(const ChannelLayoutMap &map) -> void;
     auto setPriority_locked(const QStringList &audio, const QStringList &sub) -> void;
     auto setAutoloader_locked(const Autoloader &audio, const Autoloader &sub) -> void;

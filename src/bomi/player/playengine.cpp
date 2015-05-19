@@ -508,8 +508,9 @@ auto PlayEngine::relativeSeek(int pos) -> void
     d->vp->stopSkipping();
 }
 
-auto PlayEngine::setSoftClip_locked(bool soft) -> void
+auto PlayEngine::setVolumeControl_locked(int scale, bool soft) -> void
 {
+    d->volumeScale = scale;
     d->ac->setSoftClip(soft);
 }
 

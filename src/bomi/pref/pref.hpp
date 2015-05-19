@@ -92,6 +92,7 @@ private:
     P0(bool, exclude_images, true)
     P0(QStringList, sub_priority, {})
     P0(QStringList, audio_priority, {})
+    P0(int, volume_scale, 60)
 
     P0(OsdTheme, osd_theme, defaultOsdTheme())
     P0(ControlsTheme, controls_theme, {})

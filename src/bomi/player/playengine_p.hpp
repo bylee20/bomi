@@ -111,7 +111,7 @@ struct PlayEngine::Data {
 
     QList<CodecId> hwCodecs;
 
-    int avSync = 0, reload = -1;
+    int avSync = 0, reload = -1, volumeScale = 0;
     int time_s = 0, begin_s = 0, end_s = 0, duration_s = 0;
     int duration = 0, begin = 0, time = 0;
 
@@ -165,10 +165,7 @@ struct PlayEngine::Data {
     auto displaySize() const { return info.video.output()->size(); }
     auto post(State state) -> void { _PostEvent(p, StateChange, state); }
     auto post(Waitings w, bool set) -> void { _PostEvent(p, WaitingChange, w, set); }
-
-    auto volume(const MrlState *s) const -> double
-        { return s->audio_volume() * 100 * s->audio_amplifier() * 100 * 1e-3; }
-
+    auto volume(const MrlState *s) const -> double;
     auto loadfile(const Mrl &mrl, bool resume, const QString &sub = QString()) -> void;
     auto updateMediaName(const QString &name = QString()) -> void;
 
