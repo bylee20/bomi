@@ -4,9 +4,25 @@
 
 DECLARE_LOG_CONTEXT(Audio)
 
+auto _ChmapNameFromLayout(ChannelLayout layout) -> QByteArray
+{
+    auto name = ChannelLayoutInfo::data(layout);
+    switch (layout) {
+#ifdef Q_OS_LINUX
+    case ChannelLayout::_5_0:
+    case ChannelLayout::_4_1:
+    case ChannelLayout::_5_1:
+    case ChannelLayout::_7_1:
+        return name + "(alsa)";
+#endif
+    default:
+        return name;
+    }
+}
+
 auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool
 {
-    const auto data = ChannelLayoutInfo::data(layout);
+    const auto data = _ChmapNameFromLayout(layout);
     return mp_chmap_from_str(chmap, bstr0(data.constData()));
 }
 

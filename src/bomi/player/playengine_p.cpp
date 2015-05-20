@@ -353,7 +353,7 @@ auto PlayEngine::Data::onLoad() -> void
     mpv.setAsync("options/volume", volume(local));
     mpv.setAsync("options/mute", local->audio_muted() ? "yes"_b : "no"_b);
     mpv.setAsync("options/audio-delay", local->audio_sync() * 1e-3);
-    mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(local->audio_channel_layout()));
+    mpv.setAsync("options/audio-channels", _ChmapNameFromLayout(local->audio_channel_layout()));
 
     // missing options: sub_alignment, sub_display, sub_position
     mpv.setAsync("options/sub-visibility", !local->sub_hidden());

@@ -32,6 +32,8 @@
 
 DECLARE_LOG_CONTEXT(Engine)
 
+auto _ChmapNameFromLayout(ChannelLayout layout) -> QByteArray;
+
 enum EventType {
     UserType = QEvent::User, StateChange, WaitingChange,
     PreparePlayback,EndPlayback, StartPlayback, NotifySeek,

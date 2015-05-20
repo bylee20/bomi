@@ -42,6 +42,7 @@ private:
 };
 
 auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool;
+auto _ChmapNameFromLayout(ChannelLayout layout) -> QByteArray;
 
 Q_DECLARE_METATYPE(ChannelLayoutMap)
 

@@ -552,7 +552,7 @@ auto PlayEngine::unlock() -> void
 auto PlayEngine::setChannelLayout(ChannelLayout layout) -> void
 {
     if (d->params.set_audio_channel_layout(layout)) {
-        d->mpv.setAsync("options/audio-channels", ChannelLayoutInfo::data(layout));
+        d->mpv.setAsync("options/audio-channels", _ChmapNameFromLayout(layout));
         if (d->time > 0)
             d->mpv.tellAsync("ao_reload");
     }
