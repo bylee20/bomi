@@ -10,6 +10,7 @@
 #include <QClipboard>
 #include <set>
 #include <QSortFilterProxyModel>
+#include <QFileDialog>
 
 static const int LogEvent = QEvent::User + 10;
 
@@ -181,6 +182,22 @@ LogViewer::LogViewer(QWidget *parent)
             d->ctx.clear();
             d->syncContext();
         }
+    });
+    connect(d->ui.save, &QPushButton::clicked, this, [=] () {
+        auto path = _LastOpenPath(u"log-viewer"_q);
+        path = QFileDialog::getSaveFileName(this, tr("Save Log"), path);
+        if (path.isEmpty())
+            return;
+        _SetLastOpenPath(path, u"log-viewer"_q);
+
+        QFile file(path);
+        if (file.open(QFile::WriteOnly | QFile::Truncate)) {
+            QTextStream out(&file);
+            out.setCodec("UTF-8");
+            for (int i = 0; i < d->model.size(); ++i)
+                out << d->model.at(i).message << endl;
+        } else
+            MBox::error(this, tr("Log Viewer"), tr("Failed to open file to save."), {BBox::Ok});
     });
 }
 
