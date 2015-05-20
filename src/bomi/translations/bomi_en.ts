@@ -42,13 +42,8 @@ Developer&apos;s E-mail: %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/aboutdialog.ui" line="259"/>
+        <location filename="../ui/aboutdialog.ui" line="257"/>
         <source>View Full Text of GPL</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/aboutdialog.ui" line="269"/>
-        <source>View Full Text of MPL </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -57,7 +52,7 @@ Developer&apos;s E-mail: %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../dialog/aboutdialog.cpp" line="53"/>
+        <location filename="../dialog/aboutdialog.cpp" line="49"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1657,34 +1652,50 @@ This requires much more CPU or GPU usage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/logviewer.ui" line="72"/>
+        <location filename="../ui/logviewer.ui" line="74"/>
         <source>Autoscroll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/logviewer.ui" line="82"/>
+        <location filename="../ui/logviewer.ui" line="97"/>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/logviewer.ui" line="106"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="139"/>
-        <location filename="../misc/logviewer.cpp" line="176"/>
+        <location filename="../misc/logviewer.cpp" line="140"/>
+        <location filename="../misc/logviewer.cpp" line="177"/>
+        <location filename="../misc/logviewer.cpp" line="200"/>
         <source>Log Viewer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="103"/>
+        <location filename="../misc/logviewer.cpp" line="104"/>
         <source>Copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="104"/>
+        <location filename="../misc/logviewer.cpp" line="105"/>
         <source>Select All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="177"/>
+        <location filename="../misc/logviewer.cpp" line="178"/>
         <source>Do you want remove all logs and contexts?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="188"/>
+        <source>Save Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="200"/>
+        <source>Failed to open file to save.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2301,12 +2312,12 @@ One of GL_BGRA8 and GL_BGRA16 must be supported at least.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/main.cpp" line="63"/>
+        <location filename="../player/main.cpp" line="67"/>
         <source>OpenGL Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/main.cpp" line="64"/>
+        <location filename="../player/main.cpp" line="68"/>
         <source>Error: %1
 
 Failed to check OpenGL support.
@@ -2558,42 +2569,42 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1196"/>
+        <location filename="../player/playengine.cpp" line="1194"/>
         <source>Playing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1194"/>
+        <location filename="../player/playengine.cpp" line="1192"/>
         <source>Stopped</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1178"/>
+        <location filename="../player/playengine.cpp" line="1176"/>
         <source>Loading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1180"/>
+        <location filename="../player/playengine.cpp" line="1178"/>
         <source>Searching</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1182"/>
+        <location filename="../player/playengine.cpp" line="1180"/>
         <source>Buffering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1184"/>
+        <location filename="../player/playengine.cpp" line="1182"/>
         <source>Seeking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1200"/>
+        <location filename="../player/playengine.cpp" line="1198"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1198"/>
+        <location filename="../player/playengine.cpp" line="1196"/>
         <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2753,7 +2764,7 @@ It may help to update driver of graphics card.</source>
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../pref/prefdialog.cpp" line="278"/>
+        <location filename="../pref/prefdialog.cpp" line="279"/>
         <source>Preferences</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2783,7 +2794,7 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1515"/>
+        <location filename="../ui/prefdialog.ui" line="1552"/>
         <source>Disable screensaver while playing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2793,52 +2804,47 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1094"/>
+        <location filename="../ui/prefdialog.ui" line="1131"/>
         <source>Volume Normalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1140"/>
+        <location filename="../ui/prefdialog.ui" line="1177"/>
         <source>Codec to allow hardware-acceleration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1499"/>
+        <location filename="../ui/prefdialog.ui" line="1536"/>
         <source>Run only single bomi application at the same time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1551"/>
+        <location filename="../ui/prefdialog.ui" line="1588"/>
         <source>Use Lion-style fullscreen mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1778"/>
+        <location filename="../ui/prefdialog.ui" line="1839"/>
         <source>You may need to restart bomi to apply the changes </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1681"/>
-        <source>Background Image</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/prefdialog.ui" line="1385"/>
+        <location filename="../ui/prefdialog.ui" line="1422"/>
         <source>System tray</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1391"/>
+        <location filename="../ui/prefdialog.ui" line="1428"/>
         <source>Show system tray icon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1401"/>
+        <location filename="../ui/prefdialog.ui" line="1438"/>
         <source>Hide the window rather than quit when closed </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="905"/>
+        <location filename="../ui/prefdialog.ui" line="942"/>
         <location filename="../pref/prefdialog.cpp" line="129"/>
         <source>Subtitle</source>
         <translation type="unfinished"></translation>
@@ -2854,9 +2860,9 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="584"/>
-        <location filename="../ui/prefdialog.ui" line="921"/>
-        <location filename="../ui/prefdialog.ui" line="1257"/>
+        <location filename="../ui/prefdialog.ui" line="621"/>
+        <location filename="../ui/prefdialog.ui" line="958"/>
+        <location filename="../ui/prefdialog.ui" line="1294"/>
         <location filename="../pref/prefdialog.cpp" line="127"/>
         <location filename="../pref/prefdialog.cpp" line="130"/>
         <source>Load</source>
@@ -2868,7 +2874,7 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1762"/>
+        <location filename="../ui/prefdialog.ui" line="1823"/>
         <source>Locale</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2884,7 +2890,7 @@ It may help to update driver of graphics card.</source>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="225"/>
-        <location filename="../ui/prefdialog.ui" line="1918"/>
+        <location filename="../ui/prefdialog.ui" line="1979"/>
         <source>Format</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2895,7 +2901,7 @@ It may help to update driver of graphics card.</source>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="245"/>
-        <location filename="../ui/prefdialog.ui" line="1372"/>
+        <location filename="../ui/prefdialog.ui" line="1409"/>
         <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2938,12 +2944,12 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1731"/>
+        <location filename="../ui/prefdialog.ui" line="1706"/>
         <source>Controls</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1869"/>
+        <location filename="../ui/prefdialog.ui" line="1930"/>
         <source>Streaming</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2954,9 +2960,9 @@ It may help to update driver of graphics card.</source>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="173"/>
-        <location filename="../ui/prefdialog.ui" line="601"/>
-        <location filename="../ui/prefdialog.ui" line="667"/>
-        <location filename="../ui/prefdialog.ui" line="696"/>
+        <location filename="../ui/prefdialog.ui" line="638"/>
+        <location filename="../ui/prefdialog.ui" line="704"/>
+        <location filename="../ui/prefdialog.ui" line="733"/>
         <location filename="../misc/stepinfo.cpp" line="41"/>
         <source> sec</source>
         <translation type="unfinished"></translation>
@@ -2982,199 +2988,194 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="549"/>
+        <location filename="../ui/prefdialog.ui" line="586"/>
         <source>Channel Manipulation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="595"/>
+        <location filename="../ui/prefdialog.ui" line="632"/>
         <source>Default Cache</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="620"/>
+        <location filename="../ui/prefdialog.ui" line="657"/>
         <source>Local files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="630"/>
+        <location filename="../ui/prefdialog.ui" line="667"/>
         <source>Network media</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="759"/>
-        <location filename="../ui/prefdialog.ui" line="775"/>
-        <location filename="../ui/prefdialog.ui" line="791"/>
-        <location filename="../ui/prefdialog.ui" line="835"/>
+        <location filename="../ui/prefdialog.ui" line="796"/>
+        <location filename="../ui/prefdialog.ui" line="812"/>
+        <location filename="../ui/prefdialog.ui" line="828"/>
+        <location filename="../ui/prefdialog.ui" line="872"/>
         <source> MiB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="825"/>
+        <location filename="../ui/prefdialog.ui" line="862"/>
         <source>Maximum cache file size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="851"/>
-        <location filename="../ui/prefdialog.ui" line="864"/>
+        <location filename="../ui/prefdialog.ui" line="888"/>
+        <location filename="../ui/prefdialog.ui" line="901"/>
         <source> KiB</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="987"/>
+        <location filename="../ui/prefdialog.ui" line="1024"/>
         <source>Prefer external files to internal tracks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1070"/>
+        <location filename="../ui/prefdialog.ui" line="1107"/>
         <source>Motion Smoothing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1106"/>
+        <location filename="../ui/prefdialog.ui" line="1143"/>
         <source>Resynchronize audio/video whenever filter toggled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1180"/>
+        <location filename="../ui/prefdialog.ui" line="1217"/>
         <source>When display time is not specified in subtitle, calculate interval with this value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1186"/>
+        <location filename="../ui/prefdialog.ui" line="1223"/>
         <source> msec/character</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1626"/>
-        <source>Window style (Restart required)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/prefdialog.ui" line="1418"/>
+        <location filename="../ui/prefdialog.ui" line="1455"/>
         <source>Use &amp;JSON-RPC interface</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1430"/>
+        <location filename="../ui/prefdialog.ui" line="1467"/>
         <source>Connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1449"/>
+        <location filename="../ui/prefdialog.ui" line="1486"/>
         <source>Protocol</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1468"/>
+        <location filename="../ui/prefdialog.ui" line="1505"/>
         <source>Address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1480"/>
+        <location filename="../ui/prefdialog.ui" line="1517"/>
         <source>Port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1845"/>
+        <location filename="../ui/prefdialog.ui" line="1906"/>
         <source>Action</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1850"/>
+        <location filename="../ui/prefdialog.ui" line="1911"/>
         <source>Step</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1858"/>
+        <location filename="../ui/prefdialog.ui" line="1919"/>
         <source>Adjust Window Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1934"/>
+        <location filename="../ui/prefdialog.ui" line="1995"/>
         <source>Username</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1941"/>
+        <location filename="../ui/prefdialog.ui" line="2002"/>
         <source>Username for SMB/CIFS protocol.
 You don&apos;t need to specify to this if geust is allowed.
 You can specify workgroup in the form of &apos;workgroup;username&apos;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1950"/>
+        <location filename="../ui/prefdialog.ui" line="2011"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1957"/>
+        <location filename="../ui/prefdialog.ui" line="2018"/>
         <source>Password for given username.
 You don&apos;t need to specify to this if geust is allowed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1968"/>
+        <location filename="../ui/prefdialog.ui" line="2029"/>
         <source>CAUTION: password will be stored in plain text!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1978"/>
+        <location filename="../ui/prefdialog.ui" line="2039"/>
         <source>Network folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1984"/>
+        <location filename="../ui/prefdialog.ui" line="2045"/>
         <source>Folders of network drives or NFS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="928"/>
+        <location filename="../ui/prefdialog.ui" line="965"/>
         <source>Auto-selection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="934"/>
+        <location filename="../ui/prefdialog.ui" line="971"/>
         <source>Select subtitles from loaded ones automatically</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="952"/>
+        <location filename="../ui/prefdialog.ui" line="989"/>
         <source>Select next subtitles in automatically loaded subtitles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="965"/>
+        <location filename="../ui/prefdialog.ui" line="1002"/>
         <source>Extension</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="997"/>
+        <location filename="../ui/prefdialog.ui" line="1034"/>
         <source>Encoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1003"/>
+        <location filename="../ui/prefdialog.ui" line="1040"/>
         <source>Open subtitle file with selected encoding.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1063"/>
+        <location filename="../ui/prefdialog.ui" line="1100"/>
         <source>Deinterlacing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1130"/>
+        <location filename="../ui/prefdialog.ui" line="1167"/>
         <source>Use hardware-accelerated decoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1240"/>
+        <location filename="../ui/prefdialog.ui" line="1277"/>
         <source>Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1295"/>
+        <location filename="../ui/prefdialog.ui" line="1332"/>
         <source>ID</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3199,36 +3200,36 @@ You don&apos;t need to specify to this if geust is allowed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="686"/>
+        <location filename="../ui/prefdialog.ui" line="723"/>
         <source>Optical disc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1270"/>
+        <location filename="../ui/prefdialog.ui" line="1307"/>
         <source>Menu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1275"/>
-        <location filename="../ui/prefdialog.ui" line="1317"/>
+        <location filename="../ui/prefdialog.ui" line="1312"/>
+        <location filename="../ui/prefdialog.ui" line="1354"/>
         <source>Shortcut1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1280"/>
-        <location filename="../ui/prefdialog.ui" line="1333"/>
+        <location filename="../ui/prefdialog.ui" line="1317"/>
+        <location filename="../ui/prefdialog.ui" line="1370"/>
         <source>Shortcut2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1285"/>
-        <location filename="../ui/prefdialog.ui" line="1349"/>
+        <location filename="../ui/prefdialog.ui" line="1322"/>
+        <location filename="../ui/prefdialog.ui" line="1386"/>
         <source>Shortcut3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1290"/>
-        <location filename="../ui/prefdialog.ui" line="1365"/>
+        <location filename="../ui/prefdialog.ui" line="1327"/>
+        <location filename="../ui/prefdialog.ui" line="1402"/>
         <source>Shortcut4</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3258,104 +3259,134 @@ You don&apos;t need to specify to this if geust is allowed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="647"/>
+        <location filename="../ui/prefdialog.ui" line="548"/>
+        <source>Dynamic range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="555"/>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="558"/>
+        <source> dB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="684"/>
         <source>Demuxer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="657"/>
+        <location filename="../ui/prefdialog.ui" line="694"/>
         <source>Total buffer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="735"/>
-        <location filename="../ui/prefdialog.ui" line="742"/>
-        <location filename="../ui/prefdialog.ui" line="749"/>
+        <location filename="../ui/prefdialog.ui" line="772"/>
+        <location filename="../ui/prefdialog.ui" line="779"/>
+        <location filename="../ui/prefdialog.ui" line="786"/>
         <source>Cache to file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="811"/>
+        <location filename="../ui/prefdialog.ui" line="848"/>
         <source>Minimum cache for playback</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="818"/>
+        <location filename="../ui/prefdialog.ui" line="855"/>
         <source>Minimum cache for seeking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1015"/>
+        <location filename="../ui/prefdialog.ui" line="1052"/>
         <source>Auto-detect encoding when accuracy is above</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1167"/>
+        <location filename="../ui/prefdialog.ui" line="1204"/>
         <source>Display Time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1173"/>
+        <location filename="../ui/prefdialog.ui" line="1210"/>
         <source>Calculate display time when not specified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1411"/>
+        <location filename="../ui/prefdialog.ui" line="1448"/>
         <source>Logging (Restart required)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1506"/>
+        <location filename="../ui/prefdialog.ui" line="1543"/>
         <source>Save persistent data in application folder (restart required)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1544"/>
+        <location filename="../ui/prefdialog.ui" line="1581"/>
         <source>Resize to video resolution in windowed-mode when video is changed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1558"/>
+        <location filename="../ui/prefdialog.ui" line="1595"/>
         <source>Use D-Bus interface for MPRISv2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1638"/>
+        <location filename="../ui/prefdialog.ui" line="1663"/>
         <source>Font</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1661"/>
+        <location filename="../ui/prefdialog.ui" line="1686"/>
         <source>Fixed-width</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1689"/>
+        <location filename="../ui/prefdialog.ui" line="1715"/>
+        <source>Background:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1724"/>
         <source>Show default bo&amp;mi logo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1696"/>
+        <location filename="../ui/prefdialog.ui" line="1731"/>
         <source>Fi&amp;ll color:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1751"/>
+        <location filename="../ui/prefdialog.ui" line="1763"/>
+        <source>Window style:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1775"/>
+        <source>(Restart required)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1812"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1788"/>
+        <location filename="../ui/prefdialog.ui" line="1849"/>
         <source>Audio Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1807"/>
+        <location filename="../ui/prefdialog.ui" line="1868"/>
         <source>Subtitle Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1826"/>
+        <location filename="../ui/prefdialog.ui" line="1887"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
         <translation type="unfinished"></translation>
@@ -3371,7 +3402,7 @@ Regular expression is supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1644"/>
+        <location filename="../ui/prefdialog.ui" line="1669"/>
         <location filename="../pref/prefdialog.cpp" line="107"/>
         <source>General</source>
         <translation type="unfinished"></translation>
@@ -3442,7 +3473,12 @@ Regular expression is supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1603"/>
+        <location filename="../pref/prefdialog.cpp" line="182"/>
+        <source>Ignore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1640"/>
         <source>Skin</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3487,7 +3523,7 @@ Regular expression is supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../pref/prefdialog.cpp" line="248"/>
+        <location filename="../pref/prefdialog.cpp" line="249"/>
         <source>Movist</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3517,7 +3553,7 @@ Regular expression is supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1028"/>
+        <location filename="../ui/prefdialog.ui" line="1065"/>
         <location filename="../dialog/videocolordialog.cpp" line="49"/>
         <location filename="../misc/stepinfo.cpp" line="42"/>
         <location filename="../misc/windowsize.cpp" line="37"/>
@@ -4693,57 +4729,57 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SpeakerId</name>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="216"/>
+        <location filename="../audio/channellayoutmap.cpp" line="232"/>
         <source>Front Left</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="217"/>
+        <location filename="../audio/channellayoutmap.cpp" line="233"/>
         <source>Front Right</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="218"/>
+        <location filename="../audio/channellayoutmap.cpp" line="234"/>
         <source>Front Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="219"/>
+        <location filename="../audio/channellayoutmap.cpp" line="235"/>
         <source>Low Frequency Effects</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="220"/>
+        <location filename="../audio/channellayoutmap.cpp" line="236"/>
         <source>Back Left</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="221"/>
+        <location filename="../audio/channellayoutmap.cpp" line="237"/>
         <source>Back Right</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="222"/>
+        <location filename="../audio/channellayoutmap.cpp" line="238"/>
         <source>Front Left-of-Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="223"/>
+        <location filename="../audio/channellayoutmap.cpp" line="239"/>
         <source>Front Right-of-Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="224"/>
+        <location filename="../audio/channellayoutmap.cpp" line="240"/>
         <source>Back Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="225"/>
+        <location filename="../audio/channellayoutmap.cpp" line="241"/>
         <source>Side Left</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="226"/>
+        <location filename="../audio/channellayoutmap.cpp" line="242"/>
         <source>Side Right</source>
         <translation type="unfinished"></translation>
     </message>

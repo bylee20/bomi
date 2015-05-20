@@ -43,14 +43,9 @@ Twitter: %2
         <translation>Лицензия</translation>
     </message>
     <message>
-        <location filename="../ui/aboutdialog.ui" line="259"/>
+        <location filename="../ui/aboutdialog.ui" line="257"/>
         <source>View Full Text of GPL</source>
         <translation>Показать весь текст GPL</translation>
-    </message>
-    <message>
-        <location filename="../ui/aboutdialog.ui" line="269"/>
-        <source>View Full Text of MPL </source>
-        <translation>Показать весь текст MPL </translation>
     </message>
     <message>
         <location filename="../dialog/aboutdialog.cpp" line="19"/>
@@ -58,7 +53,7 @@ Twitter: %2
         <translation>Lee, Byoung-young</translation>
     </message>
     <message>
-        <location filename="../dialog/aboutdialog.cpp" line="53"/>
+        <location filename="../dialog/aboutdialog.cpp" line="49"/>
         <source>Close</source>
         <translation>Закрыть</translation>
     </message>
@@ -195,6 +190,11 @@ Twitter: %2
         <translation>Среднеквадратичное</translation>
     </message>
     <message>
+        <location filename="../ui/audionormalizeroptionwidget.ui" line="145"/>
+        <source> %</source>
+        <translation>%</translation>
+    </message>
+    <message>
         <location filename="../ui/audionormalizeroptionwidget.ui" line="158"/>
         <source>Smoothing filter radius</source>
         <translation>Сглаживание радиус фильтра</translation>
@@ -261,7 +261,7 @@ Twitter: %2
     <message>
         <location filename="../ui/autoloaderwidget.ui" line="24"/>
         <source>Load next extern files when starting to play a file.</source>
-        <translation>Загрузить следующие Экстерн файлы при запуске воспроизведения файла.</translation>
+        <translation>Загрузить следующие внешние файлы при запуске воспроизведения файла.</translation>
     </message>
     <message>
         <location filename="../ui/autoloaderwidget.ui" line="43"/>
@@ -720,7 +720,7 @@ This requires much more CPU or GPU usage.</source>
     <message>
         <location filename="../enum/channellayout.hpp" line="82"/>
         <source>Channel Layout</source>
-        <translation>Макет канала</translation>
+        <translation>Схема вывода звука</translation>
     </message>
     <message>
         <location filename="../enum/channellayout.hpp" line="101"/>
@@ -933,7 +933,7 @@ This requires much more CPU or GPU usage.</source>
     <message>
         <location filename="../enum/dithering.hpp" line="58"/>
         <source>Dithering</source>
-        <translation>Подмешивание</translation>
+        <translation>Сглаживание</translation>
     </message>
     <message>
         <location filename="../enum/deintmode.hpp" line="71"/>
@@ -946,12 +946,12 @@ This requires much more CPU or GPU usage.</source>
     <message>
         <location filename="../enum/dithering.hpp" line="73"/>
         <source>Random Dithering</source>
-        <translation>Случайное подмешивание</translation>
+        <translation>Случайное сглаживание</translation>
     </message>
     <message>
         <location filename="../enum/dithering.hpp" line="74"/>
         <source>Ordered Dithering</source>
-        <translation>Упорядоченное подмешивание</translation>
+        <translation>Упорядоченное сглаживание</translation>
     </message>
     <message>
         <location filename="../enum/deintmode.hpp" line="57"/>
@@ -1655,35 +1655,51 @@ This requires much more CPU or GPU usage.</source>
         <translation>Контекст фильтра</translation>
     </message>
     <message>
-        <location filename="../ui/logviewer.ui" line="72"/>
+        <location filename="../ui/logviewer.ui" line="74"/>
         <source>Autoscroll</source>
         <translation>Авто прокрутка</translation>
     </message>
     <message>
-        <location filename="../ui/logviewer.ui" line="82"/>
+        <location filename="../ui/logviewer.ui" line="97"/>
+        <source>Save</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/logviewer.ui" line="106"/>
         <source>Clear</source>
         <translation>Очистить</translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="139"/>
-        <location filename="../misc/logviewer.cpp" line="176"/>
+        <location filename="../misc/logviewer.cpp" line="140"/>
+        <location filename="../misc/logviewer.cpp" line="177"/>
+        <location filename="../misc/logviewer.cpp" line="200"/>
         <source>Log Viewer</source>
         <translation>Просмотр отчетов</translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="103"/>
+        <location filename="../misc/logviewer.cpp" line="104"/>
         <source>Copy</source>
         <translation>Копировать</translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="104"/>
+        <location filename="../misc/logviewer.cpp" line="105"/>
         <source>Select All</source>
         <translation>Выделить все</translation>
     </message>
     <message>
-        <location filename="../misc/logviewer.cpp" line="177"/>
+        <location filename="../misc/logviewer.cpp" line="178"/>
         <source>Do you want remove all logs and contexts?</source>
         <translation>Вы хотите удалить все отчеты и контексты?</translation>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="188"/>
+        <source>Save Log</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../misc/logviewer.cpp" line="200"/>
+        <source>Failed to open file to save.</source>
+        <translation type="unfinished"/>
     </message>
 </context>
 <context>
@@ -2087,7 +2103,7 @@ Please wait for a while.</source>
     <message>
         <location filename="../player/mrlstate.hpp" line="103"/>
         <source>Video Dithering</source>
-        <translation>Видео Подмешивание</translation>
+        <translation>Видео Сглаживание</translation>
     </message>
     <message>
         <location filename="../player/mrlstate.hpp" line="104"/>
@@ -2303,12 +2319,12 @@ One of GL_BGRA8 and GL_BGRA16 must be supported at least.</source>
 Один из GL_BGRA8 и GL_BGRA16 должны поддерживаться.</translation>
     </message>
     <message>
-        <location filename="../player/main.cpp" line="63"/>
+        <location filename="../player/main.cpp" line="67"/>
         <source>OpenGL Error</source>
         <translation>OpenGL Ошибка</translation>
     </message>
     <message>
-        <location filename="../player/main.cpp" line="64"/>
+        <location filename="../player/main.cpp" line="68"/>
         <source>Error: %1
 
 Failed to check OpenGL support.
@@ -2381,6 +2397,11 @@ It may help to update driver of graphics card.</source>
         <translation>Размер</translation>
     </message>
     <message>
+        <location filename="../ui/osdstylewidget.ui" line="64"/>
+        <source> % of height</source>
+        <translation>% от высоты</translation>
+    </message>
+    <message>
         <location filename="../ui/osdstylewidget.ui" line="102"/>
         <source>Spacing</source>
         <translation>Интервал</translation>
@@ -2389,6 +2410,17 @@ It may help to update driver of graphics card.</source>
         <location filename="../ui/osdstylewidget.ui" line="124"/>
         <source>New line</source>
         <translation>Новая линия</translation>
+    </message>
+    <message>
+        <location filename="../ui/osdstylewidget.ui" line="137"/>
+        <location filename="../ui/osdstylewidget.ui" line="169"/>
+        <location filename="../ui/osdstylewidget.ui" line="278"/>
+        <location filename="../ui/osdstylewidget.ui" line="381"/>
+        <location filename="../ui/osdstylewidget.ui" line="410"/>
+        <location filename="../ui/osdstylewidget.ui" line="504"/>
+        <location filename="../ui/osdstylewidget.ui" line="533"/>
+        <source> %</source>
+        <translation>%</translation>
     </message>
     <message>
         <location filename="../ui/osdstylewidget.ui" line="156"/>
@@ -2547,42 +2579,42 @@ It may help to update driver of graphics card.</source>
         <translation>Выпуск %1</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1196"/>
+        <location filename="../player/playengine.cpp" line="1194"/>
         <source>Playing</source>
         <translation>Воспроизведение</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1194"/>
+        <location filename="../player/playengine.cpp" line="1192"/>
         <source>Stopped</source>
         <translation>Остановлено</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1178"/>
+        <location filename="../player/playengine.cpp" line="1176"/>
         <source>Loading</source>
         <translation>Загрузка</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1180"/>
+        <location filename="../player/playengine.cpp" line="1178"/>
         <source>Searching</source>
         <translation>Поиск</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1182"/>
+        <location filename="../player/playengine.cpp" line="1180"/>
         <source>Buffering</source>
         <translation>Буферизация</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1184"/>
+        <location filename="../player/playengine.cpp" line="1182"/>
         <source>Seeking</source>
         <translation>Пропуск</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1200"/>
+        <location filename="../player/playengine.cpp" line="1198"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="../player/playengine.cpp" line="1198"/>
+        <location filename="../player/playengine.cpp" line="1196"/>
         <source>Paused</source>
         <translation>Пауза</translation>
     </message>
@@ -2742,174 +2774,169 @@ It may help to update driver of graphics card.</source>
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../pref/prefdialog.cpp" line="278"/>
+        <location filename="../pref/prefdialog.cpp" line="279"/>
         <source>Preferences</source>
         <translation>Параметры</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="88"/>
+        <location filename="../ui/prefdialog.ui" line="85"/>
         <source>Generate the playlist when a media file is open</source>
         <translation>Создавать список при открытии файла</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="376"/>
+        <location filename="../ui/prefdialog.ui" line="373"/>
         <source>Play</source>
         <translation>Воспроизведение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="412"/>
+        <location filename="../ui/prefdialog.ui" line="409"/>
         <source>Auto-pausing</source>
         <translation>Автоматическая пауза</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="418"/>
+        <location filename="../ui/prefdialog.ui" line="415"/>
         <source>Pause when minimized</source>
         <translation>Пауза при сворачивании</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="107"/>
+        <location filename="../ui/prefdialog.ui" line="104"/>
         <source>Add next files to playlist when opening a file.</source>
         <translation>При открытии следующих файлов добавить их в список.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1518"/>
+        <location filename="../ui/prefdialog.ui" line="1552"/>
         <source>Disable screensaver while playing</source>
         <translation>Отключить хранитель экрана при воспроизведении</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="82"/>
+        <location filename="../ui/prefdialog.ui" line="79"/>
         <source>Generating playlist</source>
         <translation>Создание списка воспроизведения</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1097"/>
+        <location filename="../ui/prefdialog.ui" line="1131"/>
         <source>Volume Normalizer</source>
         <translation>Нормализатор звука</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1143"/>
+        <location filename="../ui/prefdialog.ui" line="1177"/>
         <source>Codec to allow hardware-acceleration</source>
         <translation>Кодек разрешающий аппаратное ускорение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1502"/>
+        <location filename="../ui/prefdialog.ui" line="1536"/>
         <source>Run only single bomi application at the same time</source>
         <translation>Разрешить работу только одной копии приложения bomi</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1554"/>
+        <location filename="../ui/prefdialog.ui" line="1588"/>
         <source>Use Lion-style fullscreen mode</source>
         <translation>Использование Lion-стиль полноэкранный режим</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1781"/>
+        <location filename="../ui/prefdialog.ui" line="1839"/>
         <source>You may need to restart bomi to apply the changes </source>
         <translation>Понадобится перезапустить bomi для применения изменений </translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1684"/>
-        <source>Background Image</source>
-        <translation>Фоновое изображение</translation>
-    </message>
-    <message>
-        <location filename="../ui/prefdialog.ui" line="1388"/>
+        <location filename="../ui/prefdialog.ui" line="1422"/>
         <source>System tray</source>
         <translation>Системный лоток</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1394"/>
+        <location filename="../ui/prefdialog.ui" line="1428"/>
         <source>Show system tray icon</source>
         <translation>Показывать иконку в системном лотке</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1404"/>
+        <location filename="../ui/prefdialog.ui" line="1438"/>
         <source>Hide the window rather than quit when closed </source>
         <translation>Скрыть программу в системный лоток при закрытии окна</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="908"/>
+        <location filename="../ui/prefdialog.ui" line="942"/>
         <location filename="../pref/prefdialog.cpp" line="129"/>
         <source>Subtitle</source>
         <translation>Субтитры</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="428"/>
+        <location filename="../ui/prefdialog.ui" line="425"/>
         <source>Apply to video only</source>
         <translation>Применять только для видео</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="448"/>
+        <location filename="../ui/prefdialog.ui" line="445"/>
         <source>Remember image slides history</source>
         <translation>Помнить историю слайдов изображения</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="587"/>
-        <location filename="../ui/prefdialog.ui" line="924"/>
-        <location filename="../ui/prefdialog.ui" line="1260"/>
+        <location filename="../ui/prefdialog.ui" line="621"/>
+        <location filename="../ui/prefdialog.ui" line="958"/>
+        <location filename="../ui/prefdialog.ui" line="1294"/>
         <location filename="../pref/prefdialog.cpp" line="127"/>
         <location filename="../pref/prefdialog.cpp" line="130"/>
         <source>Load</source>
         <translation>Загрузить</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="455"/>
+        <location filename="../ui/prefdialog.ui" line="452"/>
         <source>Save and restore state per media playback</source>
         <translation>Сохранять и восстанавливать состояние медиа воспроизведения</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1765"/>
+        <location filename="../ui/prefdialog.ui" line="1823"/>
         <source>Locale</source>
         <translation>Язык</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="220"/>
+        <location filename="../ui/prefdialog.ui" line="217"/>
         <source>Quick Snapshot</source>
         <translation>Быстрый снимок</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="131"/>
+        <location filename="../ui/prefdialog.ui" line="128"/>
         <source>Exclude images when generate playlist</source>
         <translation>Исключить изображения при создании плейлиста</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="228"/>
-        <location filename="../ui/prefdialog.ui" line="1921"/>
+        <location filename="../ui/prefdialog.ui" line="225"/>
+        <location filename="../ui/prefdialog.ui" line="1979"/>
         <source>Format</source>
         <translation>Формат</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="241"/>
+        <location filename="../ui/prefdialog.ui" line="238"/>
         <source>Quality</source>
         <translation>Качество</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="248"/>
-        <location filename="../ui/prefdialog.ui" line="1375"/>
+        <location filename="../ui/prefdialog.ui" line="245"/>
+        <location filename="../ui/prefdialog.ui" line="1409"/>
         <source>Default</source>
         <translation>По умолчанию</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="275"/>
+        <location filename="../ui/prefdialog.ui" line="272"/>
         <source>Save in</source>
         <translation>Сохранить в</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="311"/>
+        <location filename="../ui/prefdialog.ui" line="308"/>
         <source>Subtitle finder</source>
         <translation>Субтитры поиск</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="317"/>
+        <location filename="../ui/prefdialog.ui" line="314"/>
         <source>Preserve downloaded subtitles</source>
         <translation>Сохранять загруженные субтитры</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="326"/>
+        <location filename="../ui/prefdialog.ui" line="323"/>
         <source>File Name Format</source>
         <translation>Формат Имени Файла</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="333"/>
+        <location filename="../ui/prefdialog.ui" line="330"/>
         <source>Available formatting placeholders:
 %MEDIA_NAME%: the name of media file (extension is excluded)
 %SUBTITLE_NAME%: the name of subtitle file (extension is excluded)
@@ -2920,175 +2947,170 @@ It may help to update driver of graphics card.</source>
 %SUBTITLE_EXT%: расширение файла субтитров</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="343"/>
+        <location filename="../ui/prefdialog.ui" line="340"/>
         <source>Fallback Folder</source>
         <translation>Резервная Папка</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="350"/>
+        <location filename="../ui/prefdialog.ui" line="347"/>
         <source>This is a fallback folder to save downloaded subtitles when original folder is not writable.</source>
         <translation>Это резервная папка для сохранения загруженных субтитров, когда оригинальная папка не доступна для записи.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1734"/>
+        <location filename="../ui/prefdialog.ui" line="1706"/>
         <source>Controls</source>
         <translation>Управление</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1872"/>
+        <location filename="../ui/prefdialog.ui" line="1930"/>
         <source>Streaming</source>
         <translation>Потоковое воспроизведение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="402"/>
+        <location filename="../ui/prefdialog.ui" line="399"/>
         <source>Ignore when switching to next item in playlist</source>
         <translation>Игнорировать при переходе к следующему пункту в плейлисте</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="176"/>
-        <location filename="../ui/prefdialog.ui" line="604"/>
-        <location filename="../ui/prefdialog.ui" line="670"/>
-        <location filename="../ui/prefdialog.ui" line="699"/>
+        <location filename="../ui/prefdialog.ui" line="173"/>
+        <location filename="../ui/prefdialog.ui" line="638"/>
+        <location filename="../ui/prefdialog.ui" line="704"/>
+        <location filename="../ui/prefdialog.ui" line="733"/>
         <location filename="../misc/stepinfo.cpp" line="41"/>
         <source> sec</source>
         <translation>сек</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="441"/>
+        <location filename="../ui/prefdialog.ui" line="438"/>
         <source>Use precise seeking regardless of key frame</source>
         <translation>Использовать точный пропуск независимо от ключевого кадра</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="492"/>
+        <location filename="../ui/prefdialog.ui" line="489"/>
         <source>Audio output device (Restart required)</source>
         <translation>Устройство вывода звука (Требуется перезапуск)</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="500"/>
+        <location filename="../ui/prefdialog.ui" line="497"/>
         <source>Name</source>
         <translation>Имя</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="529"/>
+        <location filename="../ui/prefdialog.ui" line="526"/>
         <source>Volume control</source>
         <translation>Регулятор громкости</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="552"/>
+        <location filename="../ui/prefdialog.ui" line="586"/>
         <source>Channel Manipulation</source>
         <translation>Канал Манипуляции</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="598"/>
+        <location filename="../ui/prefdialog.ui" line="632"/>
         <source>Default Cache</source>
         <translation>Кэш по умолчанию</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="623"/>
+        <location filename="../ui/prefdialog.ui" line="657"/>
         <source>Local files</source>
         <translation>Локальные файлы</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="633"/>
+        <location filename="../ui/prefdialog.ui" line="667"/>
         <source>Network media</source>
         <translation>Медиа сеть</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="762"/>
-        <location filename="../ui/prefdialog.ui" line="778"/>
-        <location filename="../ui/prefdialog.ui" line="794"/>
-        <location filename="../ui/prefdialog.ui" line="838"/>
+        <location filename="../ui/prefdialog.ui" line="796"/>
+        <location filename="../ui/prefdialog.ui" line="812"/>
+        <location filename="../ui/prefdialog.ui" line="828"/>
+        <location filename="../ui/prefdialog.ui" line="872"/>
         <source> MiB</source>
         <translation>Мб</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="828"/>
+        <location filename="../ui/prefdialog.ui" line="862"/>
         <source>Maximum cache file size</source>
         <translation>Максимальный размер файла кэша</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="854"/>
-        <location filename="../ui/prefdialog.ui" line="867"/>
+        <location filename="../ui/prefdialog.ui" line="888"/>
+        <location filename="../ui/prefdialog.ui" line="901"/>
         <source> KiB</source>
         <translation>Кб</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="990"/>
+        <location filename="../ui/prefdialog.ui" line="1024"/>
         <source>Prefer external files to internal tracks</source>
         <translation>Предпочитать внешние файлы для внутренних треков</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1073"/>
+        <location filename="../ui/prefdialog.ui" line="1107"/>
         <source>Motion Smoothing</source>
         <translation>Размытое Движение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1109"/>
+        <location filename="../ui/prefdialog.ui" line="1143"/>
         <source>Resynchronize audio/video whenever filter toggled</source>
         <translation>Ресинхронизирует аудио / видео, когда фильтр переключается</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1183"/>
+        <location filename="../ui/prefdialog.ui" line="1217"/>
         <source>When display time is not specified in subtitle, calculate interval with this value.</source>
         <translation>Когда отображаемое время не указано в подзаголовке, рассчитать интервал с этого значения.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1189"/>
+        <location filename="../ui/prefdialog.ui" line="1223"/>
         <source> msec/character</source>
         <translation>мсек/заголовок</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1629"/>
-        <source>Window style (Restart required)</source>
-        <translation>Стиль окна (Требуется перезапуск)</translation>
-    </message>
-    <message>
-        <location filename="../ui/prefdialog.ui" line="1421"/>
+        <location filename="../ui/prefdialog.ui" line="1455"/>
         <source>Use &amp;JSON-RPC interface</source>
         <translation>Использовать &amp;JSON-RPC интерфейс</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1433"/>
+        <location filename="../ui/prefdialog.ui" line="1467"/>
         <source>Connection</source>
         <translation>Подключение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1452"/>
+        <location filename="../ui/prefdialog.ui" line="1486"/>
         <source>Protocol</source>
         <translation>Протокол</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1471"/>
+        <location filename="../ui/prefdialog.ui" line="1505"/>
         <source>Address</source>
         <translation>Адрес</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1483"/>
+        <location filename="../ui/prefdialog.ui" line="1517"/>
         <source>Port</source>
         <translation>Порт</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1848"/>
+        <location filename="../ui/prefdialog.ui" line="1906"/>
         <source>Action</source>
         <translation>Действие</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1853"/>
+        <location filename="../ui/prefdialog.ui" line="1911"/>
         <source>Step</source>
         <translation>Шаг</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1861"/>
+        <location filename="../ui/prefdialog.ui" line="1919"/>
         <source>Adjust Window Size</source>
         <translation>Регулировка размера окна</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1937"/>
+        <location filename="../ui/prefdialog.ui" line="1995"/>
         <source>Username</source>
         <translation>Имя пользователя</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1944"/>
+        <location filename="../ui/prefdialog.ui" line="2002"/>
         <source>Username for SMB/CIFS protocol.
 You don't need to specify to this if geust is allowed.
 You can specify workgroup in the form of &apos;workgroup;username&apos;.</source>
@@ -3097,260 +3119,290 @@ You can specify workgroup in the form of &apos;workgroup;username&apos;.</source
 Вы можете указать рабочую группу в виде &apos;workgroup;username&apos;.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1953"/>
+        <location filename="../ui/prefdialog.ui" line="2011"/>
         <source>Password</source>
         <translation>Пароль</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1960"/>
+        <location filename="../ui/prefdialog.ui" line="2018"/>
         <source>Password for given username.
 You don&apos;t need to specify to this if geust is allowed.</source>
         <translation>Пароль для данного имени пользователя.
 Вам не нужно указывать это, если гость разрешен</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1971"/>
+        <location filename="../ui/prefdialog.ui" line="2029"/>
         <source>CAUTION: password will be stored in plain text!</source>
         <translation>ВНИМАНИЕ: пароль будет храниться в виде обычного текста!</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1981"/>
+        <location filename="../ui/prefdialog.ui" line="2039"/>
         <source>Network folders</source>
         <translation>Сетевые папки</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1987"/>
+        <location filename="../ui/prefdialog.ui" line="2045"/>
         <source>Folders of network drives or NFS</source>
         <translation>Папки сетевых дисках или NFS</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="931"/>
+        <location filename="../ui/prefdialog.ui" line="965"/>
         <source>Auto-selection</source>
         <translation>Автоматический выбор</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="937"/>
+        <location filename="../ui/prefdialog.ui" line="971"/>
         <source>Select subtitles from loaded ones automatically</source>
         <translation>Выбрать субтитры из загруженных автоматически</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="955"/>
+        <location filename="../ui/prefdialog.ui" line="989"/>
         <source>Select next subtitles in automatically loaded subtitles.</source>
         <translation>Выбрать следующие субтитры при авто загрузке субтитров.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="968"/>
+        <location filename="../ui/prefdialog.ui" line="1002"/>
         <source>Extension</source>
         <translation>Расширения</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1000"/>
+        <location filename="../ui/prefdialog.ui" line="1034"/>
         <source>Encoding</source>
         <translation>Кодировка</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1006"/>
+        <location filename="../ui/prefdialog.ui" line="1040"/>
         <source>Open subtitle file with selected encoding.</source>
         <translation>Открыть файл субтитров с выбранной кодировкой.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1066"/>
+        <location filename="../ui/prefdialog.ui" line="1100"/>
         <source>Deinterlacing</source>
         <translation>Деинтерлейсинг</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1133"/>
+        <location filename="../ui/prefdialog.ui" line="1167"/>
         <source>Use hardware-accelerated decoding</source>
         <translation>Использовать аппаратное декодирование</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1243"/>
+        <location filename="../ui/prefdialog.ui" line="1277"/>
         <source>Preset</source>
         <translation>Преднастройки</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1298"/>
+        <location filename="../ui/prefdialog.ui" line="1332"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="155"/>
+        <location filename="../ui/prefdialog.ui" line="152"/>
         <source>Mouse cursor</source>
         <translation>Курсор мыши</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="163"/>
+        <location filename="../ui/prefdialog.ui" line="160"/>
         <source>Hide mouse cursor after timeout:</source>
         <translation>Скрывать курсор мыши после тайм-аута:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="386"/>
+        <location filename="../ui/prefdialog.ui" line="383"/>
         <source>Resume playback</source>
         <translation>Продолжить воспроизведение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="392"/>
+        <location filename="../ui/prefdialog.ui" line="389"/>
         <source>Resume playback at last played position</source>
         <translation>Возобновить воспроизведение с последней позиции</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="689"/>
+        <location filename="../ui/prefdialog.ui" line="723"/>
         <source>Optical disc</source>
         <translation>Оптический диск</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1273"/>
+        <location filename="../ui/prefdialog.ui" line="1307"/>
         <source>Menu</source>
         <translation>Меню</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1278"/>
-        <location filename="../ui/prefdialog.ui" line="1320"/>
+        <location filename="../ui/prefdialog.ui" line="1312"/>
+        <location filename="../ui/prefdialog.ui" line="1354"/>
         <source>Shortcut1</source>
         <translation>Комбинация 1</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1283"/>
-        <location filename="../ui/prefdialog.ui" line="1336"/>
+        <location filename="../ui/prefdialog.ui" line="1317"/>
+        <location filename="../ui/prefdialog.ui" line="1370"/>
         <source>Shortcut2</source>
         <translation>Комбинация 2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1288"/>
-        <location filename="../ui/prefdialog.ui" line="1352"/>
+        <location filename="../ui/prefdialog.ui" line="1322"/>
+        <location filename="../ui/prefdialog.ui" line="1386"/>
         <source>Shortcut3</source>
         <translation>Комбинация 3</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1293"/>
-        <location filename="../ui/prefdialog.ui" line="1368"/>
+        <location filename="../ui/prefdialog.ui" line="1327"/>
+        <location filename="../ui/prefdialog.ui" line="1402"/>
         <source>Shortcut4</source>
         <translation>Комбинация 4</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="210"/>
+        <location filename="../ui/prefdialog.ui" line="207"/>
         <source>Apply in fullscreen mode only</source>
         <translation>Применить только для полноэкранного режима</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="294"/>
+        <location filename="../ui/prefdialog.ui" line="291"/>
         <source>Save in the same folder where current playing &amp;video exists</source>
         <translation>Сохранить в той же папке от куда запущено воспроизведение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="301"/>
+        <location filename="../ui/prefdialog.ui" line="298"/>
         <source>As&amp;k where to save snapshot</source>
         <translation>&amp;Задать место сохранения снимков</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="535"/>
+        <location filename="../ui/prefdialog.ui" line="532"/>
         <source>Use soft clipping</source>
         <translation>Использовать мягкую вырезку</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="542"/>
+        <location filename="../ui/prefdialog.ui" line="539"/>
         <source>Unmute when volume adjusted</source>
         <translation>Включить звук, при регулировки громкости</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="650"/>
+        <location filename="../ui/prefdialog.ui" line="548"/>
+        <source>Dynamic range</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="555"/>
+        <source>Linear</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="558"/>
+        <source> dB</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="684"/>
         <source>Demuxer</source>
         <translation>Демультиплекс</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="660"/>
+        <location filename="../ui/prefdialog.ui" line="694"/>
         <source>Total buffer</source>
         <translation>Общий буфер</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="738"/>
-        <location filename="../ui/prefdialog.ui" line="745"/>
-        <location filename="../ui/prefdialog.ui" line="752"/>
+        <location filename="../ui/prefdialog.ui" line="772"/>
+        <location filename="../ui/prefdialog.ui" line="779"/>
+        <location filename="../ui/prefdialog.ui" line="786"/>
         <source>Cache to file</source>
         <translation>Кэш в файл</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="814"/>
+        <location filename="../ui/prefdialog.ui" line="848"/>
         <source>Minimum cache for playback</source>
         <translation>Минимальный кэш для воспроизведения</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="821"/>
+        <location filename="../ui/prefdialog.ui" line="855"/>
         <source>Minimum cache for seeking</source>
         <translation>Минимальный кэш для пропуска</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1018"/>
+        <location filename="../ui/prefdialog.ui" line="1052"/>
         <source>Auto-detect encoding when accuracy is above</source>
         <translation>Авто определение кодировки когда нужна большая точность</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1170"/>
+        <location filename="../ui/prefdialog.ui" line="1204"/>
         <source>Display Time</source>
         <translation>Отображаемое Время</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1176"/>
+        <location filename="../ui/prefdialog.ui" line="1210"/>
         <source>Calculate display time when not specified</source>
         <translation>Время показа экранных сообщений по умолчанию</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1414"/>
+        <location filename="../ui/prefdialog.ui" line="1448"/>
         <source>Logging (Restart required)</source>
         <translation>Ведение журнала (Требуется перезапуск)</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1509"/>
+        <location filename="../ui/prefdialog.ui" line="1543"/>
         <source>Save persistent data in application folder (restart required)</source>
         <translation>Сохранение данных в папку приложения (требуется перезапуск)</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1547"/>
+        <location filename="../ui/prefdialog.ui" line="1581"/>
         <source>Resize to video resolution in windowed-mode when video is changed</source>
         <translation>Подгонять под размер видео в оконном режиме</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1561"/>
+        <location filename="../ui/prefdialog.ui" line="1595"/>
         <source>Use D-Bus interface for MPRISv2</source>
         <translation>Использовать D-Bus для MPRISv2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1641"/>
+        <location filename="../ui/prefdialog.ui" line="1663"/>
         <source>Font</source>
         <translation>Шрифт</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1664"/>
+        <location filename="../ui/prefdialog.ui" line="1686"/>
         <source>Fixed-width</source>
         <translation>Моноширинный</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1692"/>
+        <location filename="../ui/prefdialog.ui" line="1715"/>
+        <source>Background:</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1724"/>
         <source>Show default bo&amp;mi logo</source>
         <translation>Показывать стандартный лого bomi</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1699"/>
+        <location filename="../ui/prefdialog.ui" line="1731"/>
         <source>Fi&amp;ll color:</source>
         <translation>Заливка цветом</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1754"/>
+        <location filename="../ui/prefdialog.ui" line="1763"/>
+        <source>Window style:</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1775"/>
+        <source>(Restart required)</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1812"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation>Инвертировать прокрутку колеса мыши</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1791"/>
+        <location filename="../ui/prefdialog.ui" line="1849"/>
         <source>Audio Priority</source>
         <translation>Приоритет аудиодорожки</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1810"/>
+        <location filename="../ui/prefdialog.ui" line="1868"/>
         <source>Subtitle Priority</source>
         <translation>Приоритет языка субтитров</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1829"/>
+        <location filename="../ui/prefdialog.ui" line="1887"/>
         <source>These options will be used to determine audio/subtitle priority.
 Regular expression is supported.</source>
         <translation>Эти параметры будут использоваться для определения приоритета выбора аудио/субтитров.
@@ -3367,7 +3419,7 @@ Regular expression is supported.</source>
         <translation>Аудио</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1647"/>
+        <location filename="../ui/prefdialog.ui" line="1669"/>
         <location filename="../pref/prefdialog.cpp" line="107"/>
         <source>General</source>
         <translation>Общие</translation>
@@ -3438,7 +3490,12 @@ Regular expression is supported.</source>
         <translation>Управление шагом</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1606"/>
+        <location filename="../pref/prefdialog.cpp" line="182"/>
+        <source>Ignore</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1640"/>
         <source>Skin</source>
         <translation>Скин</translation>
     </message>
@@ -3473,17 +3530,17 @@ Regular expression is supported.</source>
         <translation>Аудио фильтр</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="117"/>
+        <location filename="../ui/prefdialog.ui" line="114"/>
         <source>Open from file manager</source>
         <translation>Открыть из файлового менеджера</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="124"/>
+        <location filename="../ui/prefdialog.ui" line="121"/>
         <source>Open by drag-and-drop</source>
         <translation>Открыть путем перетаскивания</translation>
     </message>
     <message>
-        <location filename="../pref/prefdialog.cpp" line="248"/>
+        <location filename="../pref/prefdialog.cpp" line="249"/>
         <source>Movist</source>
         <translation>Movist</translation>
     </message>
@@ -3513,6 +3570,7 @@ Regular expression is supported.</source>
         <translation>Задержка перед двойным кликом в %1 сек</translation>
     </message>
     <message>
+        <location filename="../ui/prefdialog.ui" line="1065"/>
         <location filename="../dialog/videocolordialog.cpp" line="49"/>
         <location filename="../misc/stepinfo.cpp" line="42"/>
         <location filename="../misc/windowsize.cpp" line="37"/>
@@ -3957,7 +4015,7 @@ Playback information
     <message>
         <location filename="../player/rootmenu.cpp" line="285"/>
         <source>From Clipboard</source>
-        <translation type="unfinished"/>
+        <translation>Из буфера обмена</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="289"/>
@@ -4019,7 +4077,7 @@ Playback information
     <message>
         <location filename="../player/rootmenu.cpp" line="353"/>
         <source>Streaming Format</source>
-        <translation type="unfinished"/>
+        <translation>Формат Потока</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="360"/>
@@ -4491,7 +4549,7 @@ Playback information
     <message>
         <location filename="../player/rootmenu.cpp" line="651"/>
         <source>Maximize</source>
-        <translation>Распахнуть</translation>
+        <translation>Развернуть</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="645"/>
@@ -4710,57 +4768,57 @@ Please confirm authentication informations and try again.</source>
 <context>
     <name>SpeakerId</name>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="216"/>
+        <location filename="../audio/channellayoutmap.cpp" line="232"/>
         <source>Front Left</source>
         <translation>Фронтальный Левый</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="217"/>
+        <location filename="../audio/channellayoutmap.cpp" line="233"/>
         <source>Front Right</source>
         <translation>Фронтальный Правый</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="218"/>
+        <location filename="../audio/channellayoutmap.cpp" line="234"/>
         <source>Front Center</source>
         <translation>Фронтальный Центр</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="219"/>
+        <location filename="../audio/channellayoutmap.cpp" line="235"/>
         <source>Low Frequency Effects</source>
         <translation>Низкочастотных Эффектов</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="220"/>
+        <location filename="../audio/channellayoutmap.cpp" line="236"/>
         <source>Back Left</source>
         <translation>Тыловой Левый</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="221"/>
+        <location filename="../audio/channellayoutmap.cpp" line="237"/>
         <source>Back Right</source>
         <translation>Тыловой Правый</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="222"/>
+        <location filename="../audio/channellayoutmap.cpp" line="238"/>
         <source>Front Left-of-Center</source>
         <translation>Фронтальный Левее Центра</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="223"/>
+        <location filename="../audio/channellayoutmap.cpp" line="239"/>
         <source>Front Right-of-Center</source>
         <translation>Фронтальный Правее Центра</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="224"/>
+        <location filename="../audio/channellayoutmap.cpp" line="240"/>
         <source>Back Center</source>
         <translation>Тыловой Центр</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="225"/>
+        <location filename="../audio/channellayoutmap.cpp" line="241"/>
         <source>Side Left</source>
         <translation>Боковой Левый</translation>
     </message>
     <message>
-        <location filename="../audio/channellayoutmap.cpp" line="226"/>
+        <location filename="../audio/channellayoutmap.cpp" line="242"/>
         <source>Side Right</source>
         <translation>Боковой Правый</translation>
     </message>
