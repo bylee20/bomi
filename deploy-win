@@ -26,6 +26,7 @@ cd $dir
 cp -r ../skins .
 cp -r ../imports .
 cp -r ../translations .
+cp -r ../../../mpv-fonts fonts
 
 install -d QtQuick
 
