@@ -29,6 +29,7 @@ public:
     auto showMaximized() -> void final;
     auto showMinimized() -> void final;
     auto showNormal() -> void final;
+    auto screen() const -> QScreen* final;
 private:
     auto nativeEventFilter(const QByteArray &, void *message, long *result) -> bool final;
     auto eventFilter(QObject *obj, QEvent *ev) -> bool final;

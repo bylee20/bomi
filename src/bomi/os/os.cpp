@@ -163,6 +163,11 @@ WindowAdapter::WindowAdapter(QWindow *parent)
 #endif
 }
 
+auto WindowAdapter::screen() const -> QScreen*
+{
+    return m_window->screen();
+}
+
 auto WindowAdapter::setFramelessHint(bool frameless) -> void
 {
     auto flags = m_window->flags();
@@ -218,8 +223,9 @@ auto WindowAdapter::snapHint(const QPoint &pos, const QSize &size,
                              Qt::Edges edges, int threshold) const -> QPoint
 {
     auto p = pos;
-    const auto s = positionArea(m_window->screen()->availableGeometry(), size);
-    const auto g = positionArea(m_window->screen()->geometry(), size);
+    const auto screen = this->screen();
+    const auto s = positionArea(screen->availableGeometry(), size);
+    const auto g = positionArea(screen->geometry(), size);
     auto check = [&] (int &p, int v) -> bool
         { return (qAbs(p - v) > threshold) ? false : (p = v, true); };
     bool x = false, y = false;

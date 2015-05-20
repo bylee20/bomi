@@ -197,6 +197,20 @@ WinWindowAdapter::WinWindowAdapter(QWindow* w)
         { if (!m_hwnd && visible) m_hwnd = (HWND)winId(); });
 }
 
+auto WinWindowAdapter::screen() const -> QScreen*
+{
+    auto screens = qApp->screens();
+    if (screens.size() > 1) {
+        auto g = window()->frameGeometry();
+        qSort(screens.begin(), screens.end(), [&] (QScreen *lhs, QScreen *rhs) {
+            const auto l = lhs->geometry() & g;
+            const auto r = rhs->geometry() & g;
+            return l.width() * l.height() > r.width() * r.height();
+        });
+    }
+    return screens.front();
+}
+
 auto WinWindowAdapter::isImeEnabled() const -> bool
 {
     return !m_ime;
@@ -312,7 +326,7 @@ auto WinWindowAdapter::setFullScreen(bool fs) -> void
     if (m_fs)
         m_normalGeometry = window()->frameGeometry();
     updateFrame();
-    auto g = m_fs ? window()->screen()->geometry() : m_normalGeometry;
+    auto g = m_fs ? screen()->geometry() : m_normalGeometry;
     SetWindowPos(m_hwnd, layer(), g.x(), g.y(), g.width(), g.height(),
                  SWP_FRAMECHANGED | SWP_SHOWWINDOW);
     if (!m_fs)

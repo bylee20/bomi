@@ -52,6 +52,7 @@ public:
     virtual auto showMaximized() -> void { m_window->showMaximized(); }
     virtual auto showMinimized() -> void { m_window->showMinimized(); }
     virtual auto showNormal() -> void { m_window->showNormal(); }
+    virtual auto screen() const -> QScreen*;
     auto snapHint(const QPoint &pos, Qt::Edges edges = Qt::TopEdge
                     | Qt::BottomEdge | Qt::RightEdge | Qt::LeftEdge,
                   int threshold = 10) const -> QPoint;
