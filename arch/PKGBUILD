@@ -2,7 +2,7 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=bomi
-pkgver=0.9.10
+pkgver=0.9.11
 pkgrel=1
 pkgdesc="Powerful and easy-to-use GUI multimedia player based on mpv"
 arch=('i686' 'x86_64')
@@ -21,7 +21,7 @@ optdepends=('libva-intel-driver: hardware acceleration support for Intel GPU'
             'libaacs: AACS decryption for Blu-ray support'
             'libbdplus: BD+ decryption for Blu-ray support')
 source=($pkgname-$pkgver.tar.gz::https://github.com/xylosper/bomi/archive/v$pkgver.tar.gz)
-md5sums=('9604d660ae1de2a97367f83004c8ae08')
+md5sums=('543c592f588c68d6f0c3cf254c288f58')
 #options=(debug !strip)
 
 build() {
