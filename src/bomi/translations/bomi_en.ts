@@ -2579,6 +2579,11 @@ It may help to update driver of graphics card.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../player/playengine.cpp" line="950"/>
+        <source>Autoselect audio output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../player/playengine.cpp" line="1176"/>
         <source>Loading</source>
         <translation type="unfinished"></translation>

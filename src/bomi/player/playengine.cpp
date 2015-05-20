@@ -946,9 +946,9 @@ auto PlayEngine::audioDeviceList() const -> QList<AudioDevice>
         const auto map = one.toMap();
         AudioDevice dev;
         dev.name = map[u"name"_q].toString();
-        if (dev.name == "auto"_a)
-            dev.description = tr("Autoselect audio output device");
-        else
+        if (dev.name == "auto"_a) {
+            dev.description = PlayEngine::tr("Autoselect audio output device");
+        } else
             dev.description = map[u"description"_q].toString();
         devs.push_back(dev);
     }
