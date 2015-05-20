@@ -2,8 +2,8 @@
 <Package>
     <DisplayName>youtube-dl</DisplayName>
     <Description>Install youtube-dl script for streaming support</Description>
-    <Version>2015.04.28-1</Version>
-    <ReleaseDate>2015-04-28</ReleaseDate>
+    <Version>2015.05.20-1</Version>
+    <ReleaseDate>2015-05-20</ReleaseDate>
     <Default>true</Default>
     <SortingPriority>5</SortingPriority>
 </Package>
