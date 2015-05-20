@@ -330,7 +330,7 @@ App::~App() {
 
 auto App::version() -> const char*
 {
-    return "0.9.10";
+    return "0.9.11";
 }
 
 auto _CommonExtList(ExtTypes ext) -> QStringList;

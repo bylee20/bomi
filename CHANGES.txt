@@ -1,3 +1,21 @@
+0.9.11
+
+  * New: save button for log viewer
+  * New: dynamic range option for volume and use exponential scale by default(#364)
+  * Fix: backport fix for wasting CPU (#363)
+  * Fix: workaround for weird behavior of mouse event (#317)
+  * Fix: add 'Ignore' for FPS in youtube-dl options (#360)
+  * Fix: parse \N and \h properly for .srt (#365)
+  * Fix: compile error if vdpau or vaapi are disabled (#366)
+  * Fix: make URL edit get focus when URL dialog open (#370)
+  * Fix: ignore SIGPIPE to prevent termination on reconnection for streaming
+  * Fix: wrong icon of play/pause button for metro skin
+  * Fix: enforce to update video renderer when window gets visible
+  * Fix: ignore invalid URL for mime data
+  * (Linux)Fix: albumart image for mpris wasn't exported properly
+  * (Windows)Fix: workaround for wrong screen geometry
+  * (Windows)Fix: some channel layouts didn't work (#373)
+
 0.9.10
 
   * New: 'Open > From Clipboard' to open URL from clipboard data
