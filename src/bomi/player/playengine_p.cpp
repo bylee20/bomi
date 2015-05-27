@@ -1171,14 +1171,10 @@ auto PlayEngine::Data::resync(bool force) -> void
 auto PlayEngine::Data::volume(const MrlState *s) const -> double
 {
     auto x = s->audio_volume();
-    if (volumeScale > 0) {
+    if (volumeScale > 0 && x > 1e-8) {
         const auto a = M_LN10 * volumeScale / 20.0;
         const auto b = exp(-a);
-        x = b * exp(a * x);
-        if (x > 1.0)
-            x = 1.0;
-        else if (x < 1e-8)
-            x = 0.0;
+        x = std::min(b * exp(a * x), 1.0);
     }
     return x * 100 * s->audio_amplifier() * 100 * 1e-3;
 }
