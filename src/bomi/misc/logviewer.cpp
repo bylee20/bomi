@@ -236,3 +236,13 @@ auto LogViewer::customEvent(QEvent *ev) -> void
     if (d->ui.autoscroll->isChecked())
         d->ui.view->scrollToBottom();
 }
+
+auto LogViewer::showEvent(QShowEvent *event) -> void
+{
+    QDialog::showEvent(event);
+    const auto lv = Log::option().level(LogOutput::Viewer);
+    if (lv <= Log::Off) {
+        d->ui.max->setText(tr("Log viewer is disabled. Turn it on in preferences and restart bomi."));
+    } else
+        d->ui.max->setText(tr("Maximum log level: %1").arg(Log::name(lv)));
+}
