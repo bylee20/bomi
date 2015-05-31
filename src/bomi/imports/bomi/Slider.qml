@@ -15,12 +15,18 @@ Item {
     readonly property alias arate: slider.arate
     readonly property alias hpressed: slider.hpressed
     readonly property alias hhovered: slider.hhovered
+    property bool acceptsWheel: false
 
     property alias __hpressed: slider.hpressed
     property alias __hhovered: slider.hhovered
 
     implicitHeight: slider.implicitHeight
 
+    MouseArea {
+        anchors.fill: parent
+        onWheel: wheel.accepted = true
+        onPressed: mouse.accepted = false
+    }
     Qc.Slider {
         id: slider
         anchors.fill: parent
@@ -37,7 +43,7 @@ Item {
             id: mouseArea
             hoverEnabled: true
             anchors.fill: parent
-            onWheel: wheel.accepted = true
+            onWheel: wheel.accepted = !acceptsWheel
             onPressed: mouse.accepted = false
         }
     }
