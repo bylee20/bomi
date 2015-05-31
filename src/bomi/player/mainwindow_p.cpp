@@ -200,14 +200,12 @@ auto MainWindow::Data::plugEngine() -> void
 
     connect(e.video()->output(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
         { if (pref.fit_to_video() && !s.isEmpty()) setVideoSize(s); });
-    auto showSize = [this] {
+    connect(&e, &PlayEngine::videoScreenRectChanged, [=] (const QRectF &r) {
         const auto num = [] (qreal n) { return _N(qRound(n)); };
-        const auto w = num(e.screen()->width()), h = num(e.screen()->height());
+        const auto w = num(r.width()), h = num(r.height());
         const auto forced = pref.osd_theme().message.show_on_resized;
         showMessage(w % u'×'_q % h, &forced);
-    };
-    connect(e.screen(), &QQuickItem::widthChanged, p, showSize);
-    connect(e.screen(), &QQuickItem::heightChanged, p, showSize);
+    });
     connect(&e, &PlayEngine::volumeChanged,
             p, [=] () { if (pref.auto_unmute()) e.setAudioMuted(false); });
 }

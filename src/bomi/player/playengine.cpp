@@ -113,6 +113,7 @@ PlayEngine::PlayEngine()
     connect(this, &PlayEngine::endChanged, this,
             [=] () { if (_Change(d->end_s, end()/1000)) emit end_sChanged(); });
 
+    connect(d->vr, &VideoRenderer::screenRectChanged, this, &PlayEngine::videoScreenRectChanged);
     auto checkDeint = [=] () {
         auto act = Unavailable;
         if (d->vp->isInputInterlaced())
@@ -1525,4 +1526,9 @@ auto PlayEngine::lastSubtitleUpdatedTime() const -> int
 auto PlayEngine::updateVideoGeometry() -> void
 {
     d->vr->updateAll();
+}
+
+auto PlayEngine::videoScreenRect() const -> QRectF
+{
+    return d->vr->screenRect();
 }

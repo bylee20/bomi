@@ -200,6 +200,7 @@ public:
     auto setSubtitleScale(double by) -> void;
     auto preview() const -> VideoPreview*;
     auto updateVideoGeometry() -> void;
+    auto videoScreenRect() const -> QRectF;
 
     auto setSpeed(double speed) -> void;
     auto setAudioSync(int sync) -> void;
@@ -340,6 +341,7 @@ signals:
     void subtitleUpdated(int time);
     void streamingFormatChanged();
     void streamingFormatsChanged();
+    void videoScreenRectChanged(const QRectF &rect);
 private:
     auto setVideoTrackSelected(int id, bool s) -> void;
     auto setAudioTrackSelected(int id, bool s) -> void;
