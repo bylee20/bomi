@@ -69,7 +69,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>16</number>
+        <number>13</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1593,6 +1593,13 @@
           <widget class="QCheckBox" name="use_mpris2">
            <property name="text">
             <string>Use D-Bus interface for MPRISv2</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="load_last">
+           <property name="text">
+            <string>Load last played media on execution</string>
            </property>
           </widget>
          </item>

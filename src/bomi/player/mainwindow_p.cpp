@@ -28,7 +28,7 @@ auto MainWindow::Data::restoreState() -> void
     playlist.setRepeat(as.playlist_repeat);
     playlist.setShuffled(as.playlist_shuffled);
     playlist.setList(recent.lastPlaylist());
-    if (!recent.lastMrl().isEmpty()) {
+    if (pref.load_last() && !recent.lastMrl().isEmpty()) {
         load(recent.lastMrl(), false);
         setOpen(recent.lastMrl());
     }
