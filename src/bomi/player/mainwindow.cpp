@@ -205,7 +205,10 @@ auto MainWindow::play() -> void
             d->e.unpause();
             break;
         default:
-            d->load(d->e.mrl());
+            if (d->e.mrl().isEmpty())
+                d->menu(u"open"_q)[u"file"_q]->trigger();
+            else
+                d->load(d->e.mrl());
             break;
         }
     }
