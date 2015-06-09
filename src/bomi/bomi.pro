@@ -61,8 +61,7 @@ macx {
     CONFIG += release
     CONFIG += static
     contains(CONFIG, static) {
-        LIBS += -lfontconfig -lfreetype -lfribidi -lxml2 -lz -lintl -lnettle \
-            -ltasn1 -lidn -lhogweed -lgmp -lharfbuzz -lexpat -liconv
+        LIBS += -lfontconfig -lfreetype -lfribidi -lxml2 -lz -lharfbuzz -lexpat
     }
 }
 
