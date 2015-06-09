@@ -338,7 +338,10 @@ auto _CommonExtList(ExtTypes ext) -> QStringList;
 auto App::executeToQuit() -> bool
 {
     bool done = false;
-    auto isSet = [&] (LineCmd cmd) { return done |= d->parser->isSet(cmd); };
+    auto isSet = [&] (LineCmd cmd) {
+        const auto set = d->parser->isSet(cmd);
+        done |= set; return set;
+    };
     if (isSet(LineCmd::DumpApiTree))
         AppObject::dumpInfo();
     if (isSet(LineCmd::DumpActionList))
