@@ -350,16 +350,14 @@ SIA toPoint(LPARAM lParam) -> QPoint
 auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long *res) -> bool
 {
     auto msg = static_cast<MSG*>(message);
-    if (!msg->hwnd)
+    if (!msg->hwnd || m_hwnd != msg->hwnd)
         return false;
     auto w = window();
-    auto available = [&] () { return w->isVisible() && msg->hwnd == m_hwnd; };
-
     switch (msg->message) {
     case WM_ENTERSIZEMOVE:
         m_startMousePos = QPoint(-1, -1);
         m_moving = false;
-        if (!available())
+        if (!w->isVisible())
             return false;
         m_moving = true;
         m_startMousePos = QCursor::pos();
@@ -410,7 +408,7 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         }
         return false;
     case WM_MOVING: { // to snap to edge
-        if (!m_moving || !available() || m_startMousePos.x() < 0 || isFullScreen())
+        if (!m_moving || !w->isVisible() || m_startMousePos.x() < 0 || isFullScreen())
             return false;
         const auto m = frameMargins();
         auto r = reinterpret_cast<LPRECT>(msg->lParam);
@@ -424,10 +422,12 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         r->bottom = p.y() + s.height() + m.bottom();
         *res = TRUE;
         return true;
-    } case WM_MOVE: { // for smooth move
+    } case WM_MOVE: {
+        return false;
+        // for smooth move
         if (!m_moving && !isMovingByDrag())
             return false;
-        if (!available() || m_wmMove || isFullScreen())
+        if (!w->isVisible() || m_wmMove || isFullScreen())
             return false;
         m_wmMove = true;
         w->setPosition(toPoint(msg->lParam));
@@ -435,12 +435,12 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         m_wmMove = false;
         return true;
     } case WM_NCACTIVATE: {
-        if (state() != Qt::WindowMaximized || !available())
+        if (state() != Qt::WindowMaximized || !w->isVisible())
             return false;
         *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
         return true;
     } case WM_NCPAINT: {
-        if (!available())
+        if (!w->isVisible())
             return false;
         if (!m_fs) {
             *res = DefWindowProc(msg->hwnd, msg->message, msg->wParam, msg->lParam);
@@ -462,7 +462,7 @@ auto WinWindowAdapter::nativeEventFilter(const QByteArray &, void *message, long
         *res = 0;
         return true;
     } case WM_NCHITTEST: {
-        if (!m_fs || !available())
+        if (!m_fs || !w->isVisible())
             return false;
         *res = HTCLIENT;
         return true;
