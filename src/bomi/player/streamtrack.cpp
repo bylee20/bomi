@@ -98,8 +98,12 @@ auto StreamTrack::fromMpvData(const QVariant &mpv) -> StreamTrack
         track.m_displayLang = Locale::isoToNativeName(track.m_lang);
     track.m_title = map[u"title"_q].toString();
     track.m_file = map[u"external-filename"_q].toString();
-    if (!track.m_file.isEmpty())
-        track.m_title = QFileInfo(track.m_file).fileName();
+    if (!track.m_file.isEmpty()) {
+        if (track.m_file.contains("googlevideo.com/videoplayback"_a))
+            track.m_title.clear();
+        else
+            track.m_title = QFileInfo(track.m_file).fileName();
+    }
     track.m_selected = map[u"selected"_q].toBool();
     return track;
 }
