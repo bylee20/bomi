@@ -201,6 +201,8 @@ auto MainWindow::Data::plugEngine() -> void
     connect(e.video()->output(), &VideoFormatObject::sizeChanged, p, [=] (const QSize &s)
         { if (pref.fit_to_video() && !s.isEmpty()) setVideoSize(s); });
     connect(&e, &PlayEngine::videoScreenRectChanged, [=] (const QRectF &r) {
+        if (r.isEmpty())
+            return;
         const auto num = [] (qreal n) { return _N(qRound(n)); };
         const auto w = num(r.width()), h = num(r.height());
         const auto forced = pref.osd_theme().message.show_on_resized;
