@@ -348,7 +348,7 @@ Program Behavior
 ``--idle=<no|yes|once>``
     Makes mpv wait idly instead of quitting when there is no file to play.
     Mostly useful in slave mode, where mpv can be controlled through input
-    commands (see also ``--slave-broken``).
+    commands.
 
     ``once`` will only idle at start and let the player close once the
     first playlist has finished playing back.
@@ -457,7 +457,7 @@ Program Behavior
     (Default: ``best``)
 
 ``--ytdl-raw-options=<key>=<value>[,<key>=<value>[,...]]``
-    Pass arbitraty options to youtube-dl. Parameter and argument should be
+    Pass arbitrary options to youtube-dl. Parameter and argument should be
     passed as a key-value pair. Options without argument must include ``=``.
 
     There is no sanity checking so it's possible to break things (i.e.
@@ -528,7 +528,7 @@ Video
         Old, decoder-based framedrop mode. (This is the same as ``--framedrop=yes``
         in mpv 0.5.x and before.) This tells the decoder to skip frames (unless
         they are needed to decode future frames). May help with slow systems,
-        but can produce unwatchably choppy output, or even freeze the display
+        but can produce unwatchable choppy output, or even freeze the display
         completely. Not recommended.
         The ``--vd-lavc-framedrop`` option controls what frames to drop.
     <decoder+vo>
@@ -855,6 +855,25 @@ Audio
     ``--af-clr`` exist to modify a previously specified list, but you
     should not need these for typical use.
 
+``--audio-spdif=<codecs>``
+    List of codecs for which compressed audio passthrough should be used. This
+    works for both classic S/PDIF and HDMI.
+
+    Possible codecs are ``ac3``, ``dts``, ``dts-hd``. Multiple codecs can be
+    specified by separating them with ``,``. ``dts`` refers to low bitrate DTS
+    core, while ``dts-hd`` refers to DTS MA (receiver and OS support varies).
+    You should only use either ``dts`` or ``dts-hd`` (if both are specified,
+    and ``dts`` comes first, only ``dts`` will be used).
+
+    In general, all codecs in the ``spdif`` family listed with ``--ad=help``
+    are supported in theory.
+
+    .. admonition:: Warning
+
+        There is not much reason to use this. HDMI supports uncompressed
+        multichannel PCM, and mpv supports lossless DTS-HD decoding via
+        FFmpeg's libdcadec wrapper.
+
 ``--ad=<[+|-]family1:(*|decoder1),[+|-]family2:(*|decoder2),...[-]>``
     Specify a priority list of audio decoders to be used, according to their
     family and decoder name. Entries like ``family:*`` prioritize all decoders
@@ -882,9 +901,21 @@ Audio
         ``--ad=help``
             List all available decoders.
 
-``--volume=<-1-100>``
-    Set the startup volume. A value of -1 (the default) will not change the
-    volume. See also ``--softvol``.
+    .. admonition:: Warning
+
+        Enabling compressed audio passthrough (AC3 and DTS via SPDIF/HDMI) with
+        this option is deprecated. Use ``--audio-spdif`` instead.
+
+``--volume=<value>``
+    Set the startup volume. 0 means silence, 100 means no volume reduction or
+    amplification. A value of -1 (the default) will not change the volume. See
+    also ``--softvol``.
+
+    .. note::
+
+        This was changed after the mpv 0.9 release. Before that, 100 actually
+        meant maximum volume. At the same time, the volume scale was made cubic,
+        so the old values won't match up with the new ones anyway.
 
 ``--audio-delay=<sec>``
     Audio delay in seconds (positive or negative float value). Positive values
@@ -946,17 +977,12 @@ Audio
     welcome. A full list of AVOptions can be found in the FFmpeg manual.
 
 ``--ad-spdif-dtshd=<yes|no>``, ``--dtshd``, ``--no-dtshd``
-    When using DTS pass-through, output any DTS-HD track as-is.
-    With ``ad-spdif-dtshd=no`` (the default), only the DTS Core parts will be
-    output.
+    If DTS is passed through, use DTS-HD.
 
-    DTS-HD tracks can be sent over HDMI but not over the original
-    coax/TOSLINK S/PDIF system.
+    .. admonition:: Warning
 
-    Some receivers don't accept DTS core-only when ``--ad-spdif-dtshd=yes`` is
-    used, even though they accept DTS-HD.
-
-    ``--dtshd`` and ``--no-dtshd`` are deprecated aliases.
+        This and enabling passthrough via ``--ad`` are deprecated in favor of
+        using ``--audio-spdif=dts-hd``.
 
 ``--audio-channels=<number|layout>``
     Request a channel layout for audio output (default: auto). This  will ask
@@ -1053,19 +1079,9 @@ Audio
     their start timestamps differ, and then video timing is gradually adjusted
     if necessary to reach correct synchronization later.
 
-``--softvol-max=<10.0-10000.0>``
-    Set the maximum amplification level in percent (default: 200). A value of
-    200 will allow you to adjust the volume up to a maximum of double the
-    current level. With values below 100 the initial volume (which is 100%)
-    will be above the maximum, which e.g. the OSD cannot display correctly.
-
-    .. admonition:: Note
-
-        The maximum value of ``--volume`` as well as the ``volume`` property
-        is always 100. Likewise, the volume OSD bar always goes from 0 to 100.
-        This means that with ``--softvol-max=200``, ``--volume=100`` sets
-        maximum amplification, i.e. amplify by 200%. The default volume (no
-        change in volume) will be ``50`` in this case.
+``--softvol-max=<100.0-1000.0>``
+    Set the maximum amplification level in percent (default: 130). A value of
+    130 will allow you to adjust the volume up to about double the normal level.
 
 ``--audio-file-auto=<no|exact|fuzzy|all>``, ``--no-audio-file-auto``
     Load additional audio files matching the video filename. The parameter
@@ -1140,7 +1156,7 @@ Subtitles
     the top of the screen) alongside the normal subtitle, and provides a way
     to render two subtitles at once.
 
-    there are some caveats associated with this feature. For example, bitmap
+    There are some caveats associated with this feature. For example, bitmap
     subtitles will always be rendered in their usual position, so selecting a
     bitmap subtitle as secondary subtitle will result in overlapping subtitles.
     Secondary subtitles are never shown on the terminal if video is disabled.
@@ -1855,7 +1871,7 @@ Window
     ``intptr_t``. mpv will create its own window, and set the wid window as
     parent, like with X11.
 
-    On OSX/Cocoa. the ID is interpreted as ``NSView*``. Pass it as value cast
+    On OSX/Cocoa, the ID is interpreted as ``NSView*``. Pass it as value cast
     to ``intptr_t``. mpv will creates its own sub-view. Because OSX does not
     support window embedding of foreign processes, this works only with libmpv,
     and will crash when used from the command line.
@@ -1949,7 +1965,7 @@ Disc Devices
     (Never) accept imperfect data reconstruction.
 
 ``--cdda-cdtext=<yes|no>``
-    Print CD text. This is disabled by default, because it ruins perfomance
+    Print CD text. This is disabled by default, because it ruins performance
     with CD-ROM drives for unknown reasons.
 
 ``--dvd-speed=<speed>``
@@ -2080,7 +2096,7 @@ Demuxer
     seeks only.
 
     You can use the ``--demuxer-mkv-subtitle-preroll-secs`` option to specify
-    how mach data the demuxer should pre-read at most in order to find subtitle
+    how much data the demuxer should pre-read at most in order to find subtitle
     packets that may overlap. Setting this to 0 will effectively disable this
     preroll mechanism. Setting a very large value can make seeking very slow,
     and an extremely large value would completely reread the entire file from
@@ -2252,8 +2268,6 @@ Input
 
     This can also specify a direct file descriptor with ``fd://N`` (UNIX only).
     In this case, JSON replies will be written if the FD is writable.
-
-    See also ``--slave-broken``.
 
     .. note::
 
@@ -3341,25 +3355,7 @@ Miscellaneous
     You can also try to use ``--no-correct-pts`` for files with completely
     broken timestamps.
 
-``--media-title=<string>``
+``--force-media-title=<string>``
     Force the contents of the ``media-title`` property to this value. Useful
     for scripts which want to set a title, without overriding the user's
     setting in ``--title``.
-
-``--slave-broken``
-    Switches on the old slave mode. This is for testing only, and incompatible
-    to the removed ``--slave`` switch.
-
-    .. attention::
-        Changes incompatible to slave mode applications have been made. In
-        particular, the status line output was changed, which is used by some
-        applications to determine the current playback position. This switch
-        has been renamed to prevent these applications from working with this
-        version of mpv, because it would lead to buggy and confusing behavior
-        only. Moreover, the slave mode protocol is so horribly bad that it
-        should not be used for new programs, nor should existing programs
-        attempt to adapt to the changed output and use the ``--slave-broken``
-        switch. Instead, a new, saner protocol should be developed (and will be,
-        if there is enough interest).
-
-        This affects most third-party GUI frontends.

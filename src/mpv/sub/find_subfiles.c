@@ -16,7 +16,7 @@
 
 static const char *const sub_exts[] = {"utf", "utf8", "utf-8", "idx", "sub", "srt",
                                        "smi", "rt", "txt", "ssa", "aqt", "jss",
-                                       "js", "ass", "mks", "vtt", NULL};
+                                       "js", "ass", "mks", "vtt", "sup", NULL};
 
 static const char *const audio_exts[] = {"mp3", "aac", "mka", "dts", "flac",
                                          "ogg", "m4a", "ac3", NULL};
@@ -142,11 +142,11 @@ static void append_dir_subtitles(struct mpv_global *global,
         int fuzz = -1;
         switch (type) {
         case STREAM_SUB:
-            langs = opts->sub_lang;
+            langs = opts->stream_lang[type];
             fuzz = opts->sub_auto;
             break;
         case STREAM_AUDIO:
-            langs = opts->audio_lang;
+            langs = opts->stream_lang[type];
             fuzz = opts->audiofile_auto;
             break;
         }

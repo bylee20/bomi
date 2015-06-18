@@ -303,6 +303,10 @@ void queue_seek(struct MPContext *mpctx, enum seek_type type, double amount,
                 enum seek_precision exact, bool immediate)
 {
     struct seek_params *seek = &mpctx->seek;
+
+    if (mpctx->stop_play == AT_END_OF_FILE)
+        mpctx->stop_play = KEEP_PLAYING;
+
     switch (type) {
     case MPSEEK_RELATIVE:
         seek->immediate |= immediate;
@@ -691,6 +695,27 @@ void add_frame_pts(struct MPContext *mpctx, double pts)
     mpctx->vo_pts_history_pts[0] = pts;
 }
 
+// Return the last (at most num) frame duration in fd[]. Return the number of
+// entries written to fd[] (range [0, num]). fd[0] is the most recent frame.
+int get_past_frame_durations(struct MPContext *mpctx, double *fd, int num)
+{
+    double next_pts = mpctx->vo_pts_history_pts[0];
+    if (mpctx->vo_pts_history_seek[0] != mpctx->vo_pts_history_seek_ts ||
+        next_pts == MP_NOPTS_VALUE)
+        return 0;
+    int num_ret = 0;
+    for (int n = 1; n < MAX_NUM_VO_PTS && num_ret < num; n++) {
+        double frame_pts = mpctx->vo_pts_history_pts[n];
+        // Discontinuity -> refuse to return a value.
+        if (mpctx->vo_pts_history_seek[n] != mpctx->vo_pts_history_seek_ts ||
+            next_pts <= frame_pts || frame_pts == MP_NOPTS_VALUE)
+            break;
+        fd[num_ret++] = next_pts - frame_pts;
+        next_pts = frame_pts;
+    }
+    return num_ret;
+}
+
 static double find_previous_pts(struct MPContext *mpctx, double pts)
 {
     for (int n = 0; n < MAX_NUM_VO_PTS - 1; n++) {
@@ -1017,6 +1042,8 @@ void run_playloop(struct MPContext *mpctx)
     mp_handle_nav(mpctx);
 
     handle_loop_file(mpctx);
+
+    handle_ab_loop(mpctx);
 
     handle_keep_open(mpctx);
 

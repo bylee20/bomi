@@ -15,119 +15,33 @@
  * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stddef.h>
-#include <assert.h>
-
 #include <libavcodec/avcodec.h>
 #include <libavcodec/vdpau.h>
 #include <libavutil/common.h>
 
-#include "config.h"
 #include "lavc.h"
 #include "common/common.h"
-#include "common/av_common.h"
-#include "video/fmt-conversion.h"
 #include "video/vdpau.h"
 #include "video/hwdec.h"
-#include "video/decode/dec_video.h"
 
 struct priv {
     struct mp_log              *log;
     struct mp_vdpau_ctx        *mpvdp;
-    struct vdp_functions       *vdp;
     uint64_t                    preemption_counter;
-    int                         fmt, w, h;
-
-    AVVDPAUContext             *context;
-};
-
-#define PE(av_codec_id, ff_profile, vdp_profile)                \
-    {AV_CODEC_ID_ ## av_codec_id, FF_PROFILE_ ## ff_profile,    \
-     VDP_DECODER_PROFILE_ ## vdp_profile}
-
-static const struct hwdec_profile_entry profiles[] = {
-    PE(MPEG1VIDEO,  UNKNOWN,            MPEG1),
-    PE(MPEG2VIDEO,  MPEG2_MAIN,         MPEG2_MAIN),
-    PE(MPEG2VIDEO,  MPEG2_SIMPLE,       MPEG2_SIMPLE),
-    PE(MPEG4,       MPEG4_ADVANCED_SIMPLE, MPEG4_PART2_ASP),
-    PE(MPEG4,       MPEG4_SIMPLE,       MPEG4_PART2_SP),
-    PE(H264,        H264_HIGH,          H264_HIGH),
-    PE(H264,        H264_MAIN,          H264_MAIN),
-    PE(H264,        H264_BASELINE,      H264_BASELINE),
-#ifdef VDP_DECODER_PROFILE_H264_HIGH_444_PREDICTIVE
-    PE(H264,        H264_EXTENDED,      H264_EXTENDED),
-    PE(H264,        H264_HIGH,          H264_PROGRESSIVE_HIGH),
-    PE(H264,        H264_HIGH,          H264_CONSTRAINED_HIGH),
-    PE(H264,        H264_HIGH_444_PREDICTIVE, H264_HIGH_444_PREDICTIVE),
-#endif
-    PE(VC1,         VC1_ADVANCED,       VC1_ADVANCED),
-    PE(VC1,         VC1_MAIN,           VC1_MAIN),
-    PE(VC1,         VC1_SIMPLE,         VC1_SIMPLE),
-    PE(WMV3,        VC1_ADVANCED,       VC1_ADVANCED),
-    PE(WMV3,        VC1_MAIN,           VC1_MAIN),
-    PE(WMV3,        VC1_SIMPLE,         VC1_SIMPLE),
-#ifdef VDP_DECODER_PROFILE_HEVC_MAIN_444
-    PE(HEVC,        HEVC_MAIN,          HEVC_MAIN),
-    PE(HEVC,        HEVC_MAIN_10,       HEVC_MAIN_10),
-    PE(HEVC,        HEVC_MAIN_STILL_PICTURE, HEVC_MAIN_STILL),
-    PE(HEVC,        HEVC_REXT,          HEVC_MAIN_12),
-    PE(HEVC,        HEVC_REXT,          HEVC_MAIN_444),
-#endif
-    {0}
 };
 
 static int init_decoder(struct lavc_ctx *ctx, int fmt, int w, int h)
 {
     struct priv *p = ctx->hwdec_priv;
-    struct vdp_functions *vdp = &p->mpvdp->vdp;
-    VdpDevice vdp_device = p->mpvdp->vdp_device;
-    VdpStatus vdp_st;
-
-    p->fmt = fmt;
-    p->w = w;
-    p->h = h;
 
     // During preemption, pretend everything is ok.
     if (mp_vdpau_handle_preemption(p->mpvdp, &p->preemption_counter) < 0)
         return 0;
 
-    if (p->context->decoder != VDP_INVALID_HANDLE)
-        vdp->decoder_destroy(p->context->decoder);
-
-    const struct hwdec_profile_entry *pe = hwdec_find_profile(ctx, profiles);
-    if (!pe) {
-        MP_ERR(p, "Unsupported codec or profile.\n");
-        goto fail;
-    }
-
-    VdpBool supported;
-    uint32_t maxl, maxm, maxw, maxh;
-    vdp_st = vdp->decoder_query_capabilities(vdp_device, pe->hw_profile,
-                                             &supported, &maxl, &maxm,
-                                             &maxw, &maxh);
-    CHECK_VDP_WARNING(p, "Querying VDPAU decoder capabilities");
-    if (!supported) {
-        MP_ERR(p, "Codec or profile not supported by hardware.\n");
-        goto fail;
-    }
-    if (w > maxw || h > maxh) {
-        MP_ERR(p, "Video resolution(%dx%d) is larger than the maximum size(%dx%d) supported.\n",
-               w, h, maxw, maxh);
-        goto fail;
-    }
-
-    int maxrefs = hwdec_get_max_refs(ctx);
-
-    vdp_st = vdp->decoder_create(vdp_device, pe->hw_profile, w, h, maxrefs,
-                                 &p->context->decoder);
-    CHECK_VDP_WARNING(p, "Failed creating VDPAU decoder");
-    if (vdp_st != VDP_STATUS_OK)
-        goto fail;
-    return 0;
-
-fail:
-    p->context->decoder = VDP_INVALID_HANDLE;
-    return -1;
+    return av_vdpau_bind_context(ctx->avctx, p->mpvdp->vdp_device,
+                                 p->mpvdp->get_proc_address,
+                                 AV_HWACCEL_FLAG_IGNORE_LEVEL |
+                                 AV_HWACCEL_FLAG_ALLOW_HIGH_DEPTH);
 }
 
 static struct mp_image *allocate_image(struct lavc_ctx *ctx, int fmt,
@@ -135,50 +49,27 @@ static struct mp_image *allocate_image(struct lavc_ctx *ctx, int fmt,
 {
     struct priv *p = ctx->hwdec_priv;
 
-    if (mp_vdpau_handle_preemption(p->mpvdp, &p->preemption_counter) == 0) {
-        if (init_decoder(ctx, p->fmt, p->w, p->h) < 0)
-            return NULL;
-    }
+    // In case of preemption, reinit the decoder. Setting hwdec_request_reinit
+    // will cause init_decoder() to be called again.
+    if (mp_vdpau_handle_preemption(p->mpvdp, &p->preemption_counter) == 0)
+        ctx->hwdec_request_reinit = true;
 
-    VdpChromaType chroma;
-    mp_vdpau_get_format(IMGFMT_VDPAU, &chroma, NULL);
+    VdpChromaType chroma = 0;
+    uint32_t s_w = w, s_h = h;
+    if (av_vdpau_get_surface_parameters(ctx->avctx, &chroma, &s_w, &s_h) < 0)
+        return NULL;
 
-    return mp_vdpau_get_video_surface(p->mpvdp, chroma, w, h);
+    return mp_vdpau_get_video_surface(p->mpvdp, chroma, s_w, s_h);
 }
 
 static void uninit(struct lavc_ctx *ctx)
 {
     struct priv *p = ctx->hwdec_priv;
 
-    if (!p)
-        return;
-
-    if (p->context && p->context->decoder != VDP_INVALID_HANDLE)
-        p->vdp->decoder_destroy(p->context->decoder);
-
-    av_free(p->context);
     talloc_free(p);
 
-    ctx->hwdec_priv = NULL;
+    av_freep(&ctx->avctx->hwaccel_context);
 }
-
-#if LIBAVCODEC_VERSION_MICRO >= 100
-static int render2(struct AVCodecContext *avctx, struct AVFrame *frame,
-                   const VdpPictureInfo *pic_info, uint32_t buffers_used,
-                   const VdpBitstreamBuffer *buffers)
-{
-    struct dec_video *vd = avctx->opaque;
-    struct lavc_ctx *ctx = vd->priv;
-    struct priv *p = ctx->hwdec_priv;
-    VdpVideoSurface surf = (uintptr_t)frame->data[3];
-    VdpStatus status;
-
-    status = p->vdp->decoder_render(p->context->decoder, surf, pic_info,
-                                    buffers_used, buffers);
-
-    return status;
-}
-#endif
 
 static int init(struct lavc_ctx *ctx)
 {
@@ -189,22 +80,8 @@ static int init(struct lavc_ctx *ctx)
     };
     ctx->hwdec_priv = p;
 
-    p->context = av_vdpau_alloc_context();
-    if (!p->context)
-        goto error;
-
-    p->vdp = &p->mpvdp->vdp;
-#if LIBAVCODEC_VERSION_MICRO >= 100
-    p->context->render2 = render2;
-#else
-    p->context->render = p->vdp->decoder_render;
-#endif
-    p->context->decoder = VDP_INVALID_HANDLE;
-
     if (mp_vdpau_handle_preemption(p->mpvdp, &p->preemption_counter) < 1)
         goto error;
-
-    ctx->avctx->hwaccel_context = p->context;
 
     return 0;
 
@@ -219,8 +96,6 @@ static int probe(struct vd_lavc_hwdec *hwdec, struct mp_hwdec_info *info,
     hwdec_request_api(info, "vdpau");
     if (!info || !info->hwctx || !info->hwctx->vdpau_ctx)
         return HWDEC_ERR_NO_CTX;
-    if (!hwdec_check_codec_support(decoder, profiles))
-        return HWDEC_ERR_NO_CODEC;
     if (mp_vdpau_guess_if_emulated(info->hwctx->vdpau_ctx))
         return HWDEC_ERR_EMULATED;
     return 0;

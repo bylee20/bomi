@@ -813,6 +813,7 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         bool eof = false;
         switch ((mpv_end_file_reason)reason) {
         case MPV_END_FILE_REASON_EOF:
+        case MPV_END_FILE_REASON_REDIRECT:
             last->set_resume_position(-1);
             eof = true;
             _Info("Playback reached end-of-file");

@@ -123,8 +123,6 @@ SOURCES = audio/audio.c \
           audio/filter/af.c \
           audio/filter/af_center.c \
           audio/filter/af_channels.c \
-          audio/filter/af_convert24.c \
-          audio/filter/af_convertsignendian.c \
           audio/filter/af_delay.c \
           audio/filter/af_dummy.c \
           audio/filter/af_equalizer.c \
@@ -160,6 +158,7 @@ SOURCES = audio/audio.c \
           common/tags.c \
           common/version.c \
           demux/codec_tags.c \
+          demux/cue.c \
           demux/demux.c \
           demux/demux_edl.c \
           demux/demux_cue.c \

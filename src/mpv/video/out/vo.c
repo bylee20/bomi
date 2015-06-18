@@ -80,6 +80,9 @@ const struct vo_driver *const video_out_drivers[] =
     &video_out_direct3d_shaders,
     &video_out_direct3d,
 #endif
+#if HAVE_WAYLAND
+    &video_out_wayland,
+#endif
 #if HAVE_XV
     &video_out_xv,
 #endif
@@ -107,9 +110,6 @@ const struct vo_driver *const video_out_drivers[] =
 #if HAVE_GL
     &video_out_opengl_hq,
     &video_out_opengl_cb,
-#endif
-#if HAVE_WAYLAND
-    &video_out_wayland,
 #endif
     NULL
 };
@@ -626,22 +626,28 @@ static bool render_frame(struct vo *vo)
     if (!in->hasframe_rendered)
         duration = -1; // disable framedrop
 
-    // If the clip and display have similar/identical fps, it's possible that
-    // we'll be very slightly late frequently due to timing jitter, or if the
-    // clip/container timestamps are not very accurate.
-    // So if we dropped the previous frame, keep dropping until we're aligned
-    // perfectly, else, allow some slack (1 vsync) to let it settle into a rhythm.
-    // On low clip fps, we don't drop anyway and the slack logic doesn't matter.
-    // If the clip fps is more than ~5% above screen fps, we remove this slack
-    // and use "normal" logic to allow more regular drops of 1 frame at a time.
-    bool use_slack = duration > (0.95 * in->vsync_interval);
-    in->dropped_frame = duration >= 0 &&
-                        use_slack ?
-                            ((in->dropped_frame && end_time < next_vsync) ||
-                            (end_time < prev_vsync)) // hard threshold - 1 vsync late
-                            :
-                            end_time < next_vsync; // normal frequent drops
+    bool prev_dropped_frame = in->dropped_frame;
 
+    // "normal" strict drop threshold.
+    in->dropped_frame = duration >= 0 && end_time < next_vsync;
+
+    // Clip has similar (within ~5%) or lower fps than the display.
+    if (duration >= 0 && duration > 0.95 * in->vsync_interval) {
+        // If the clip and display have similar/identical fps, it's possible that
+        // due to the very tight timing, we'll drop frames frequently even if on
+        // average we can keep up - especially if we have timing jitter (inaccurate
+        // clip timestamps, inaccurate timers, vsync block jitter, etc).
+        // So we're allowing to be 1 vsync late to prevent these frequent drops.
+        // However, once we've dropped a frame - "catch up" by using the strict
+        // threshold - which will typically be dropping 2 frames in a row.
+        // On low clip fps, we don't drop anyway and this logic doesn't matter.
+
+        // if we dropped previously - "catch up" by keeping the strict threshold.
+        in->dropped_frame &= prev_dropped_frame;
+
+        // if we haven't dropped - allow 1 frame late (prev_vsync as threshold).
+        in->dropped_frame |= end_time < prev_vsync;
+    }
 
     in->dropped_frame &= !(vo->driver->caps & VO_CAP_FRAMEDROP);
     in->dropped_frame &= (vo->global->opts->frame_dropping & 1);

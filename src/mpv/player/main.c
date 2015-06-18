@@ -278,6 +278,10 @@ static bool handle_help_options(struct MPContext *mpctx)
         talloc_free(list);
         opt_exit = 1;
     }
+    if (opts->audio_spdif && strcmp(opts->audio_spdif, "help") == 0) {
+        MP_INFO(mpctx, "Choices: ac3,dts-hd,dts (and possibly more)\n");
+        opt_exit = 1;
+    }
     if (opts->video_decoders && strcmp(opts->video_decoders, "help") == 0) {
         struct mp_decoder_list *list = video_decoder_list();
         mp_print_decoders(log, MSGL_INFO, "Video decoders:", list);
@@ -355,6 +359,10 @@ struct MPContext *mp_create(void)
     init_libav(mpctx->global);
     mp_clients_init(mpctx);
 
+#if HAVE_COCOA
+    cocoa_set_input_context(mpctx->input);
+#endif
+
     return mpctx;
 }
 
@@ -410,12 +418,6 @@ int mp_initialize(struct MPContext *mpctx, char **options)
     }
     MP_STATS(mpctx, "start init");
 
-    if (opts->slave_mode) {
-        MP_WARN(mpctx, "--slave-broken is deprecated (see manpage).\n");
-        opts->consolecontrols = 0;
-        m_config_set_option0(mpctx->mconfig, "input-file", "/dev/stdin");
-    }
-
     if (!mpctx->playlist->first && !opts->player_idle_mode)
         return -3;
 
@@ -454,12 +456,12 @@ int mp_initialize(struct MPContext *mpctx, char **options)
 
     mp_get_resume_defaults(mpctx);
 
+    // Lua user scripts (etc.) can call arbitrary functions. Load them at a point
+    // where this is safe.
+    mp_load_scripts(mpctx);
+
     if (opts->consolecontrols && cas_terminal_owner(mpctx, mpctx))
         terminal_setup_getch(mpctx->input);
-
-#if HAVE_COCOA
-    cocoa_set_input_context(mpctx->input);
-#endif
 
     if (opts->force_vo) {
         struct vo_extra ex = {
@@ -477,10 +479,6 @@ int mp_initialize(struct MPContext *mpctx, char **options)
             handle_force_window(mpctx, false);
         mpctx->mouse_cursor_visible = true;
     }
-
-    // Lua user scripts (etc.) can call arbitrary functions. Load them at a point
-    // where this is safe.
-    mp_load_scripts(mpctx);
 
 #if !defined(__MINGW32__)
     mpctx->ipc_ctx = mp_init_ipc(mpctx->clients, mpctx->global);

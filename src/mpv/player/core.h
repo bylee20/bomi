@@ -381,13 +381,12 @@ bool mp_nav_mouse_on_button(struct MPContext *mpctx);
 void uninit_player(struct MPContext *mpctx, unsigned int mask);
 struct track *mp_add_external_file(struct MPContext *mpctx, char *filename,
                                    enum stream_type filter);
+#define FLAG_MARK_SELECTION 1
 void mp_switch_track(struct MPContext *mpctx, enum stream_type type,
-                     struct track *track);
+                     struct track *track, int flags);
 void mp_switch_track_n(struct MPContext *mpctx, int order,
-                       enum stream_type type, struct track *track);
+                       enum stream_type type, struct track *track, int flags);
 void mp_deselect_track(struct MPContext *mpctx, struct track *track);
-void mp_mark_user_track_selection(struct MPContext *mpctx, int order,
-                                  enum stream_type type);
 struct track *mp_track_by_tid(struct MPContext *mpctx, enum stream_type type,
                               int tid);
 double timeline_set_from_time(struct MPContext *mpctx, double pts, bool *need_reset);
@@ -398,12 +397,12 @@ struct playlist_entry *mp_next_file(struct MPContext *mpctx, int direction,
 void mp_set_playlist_entry(struct MPContext *mpctx, struct playlist_entry *e);
 void mp_play_files(struct MPContext *mpctx);
 void update_demuxer_properties(struct MPContext *mpctx);
-void print_track_list(struct MPContext *mpctx);
+void print_track_list(struct MPContext *mpctx, const char *msg);
 void reselect_demux_streams(struct MPContext *mpctx);
 void prepare_playlist(struct MPContext *mpctx, struct playlist *pl);
 void autoload_external_files(struct MPContext *mpctx);
-struct track *select_track(struct MPContext *mpctx, enum stream_type type,
-                           int tid, int ffid, char **langs);
+struct track *select_default_track(struct MPContext *mpctx, int order,
+                                   enum stream_type type);
 
 // main.c
 int mp_initialize(struct MPContext *mpctx, char **argv);
@@ -466,6 +465,7 @@ void mp_idle(struct MPContext *mpctx);
 void idle_loop(struct MPContext *mpctx);
 void handle_force_window(struct MPContext *mpctx, bool reconfig);
 void add_frame_pts(struct MPContext *mpctx, double pts);
+int get_past_frame_durations(struct MPContext *mpctx, double *fd, int num);
 void seek_to_last_frame(struct MPContext *mpctx);
 
 // scripting.c

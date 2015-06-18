@@ -52,6 +52,7 @@ Input
   Also see: http://github.com/mpv-player/mpv/wiki/IR-remotes
 * Joystick support was removed. It was considered useless and was the cause
   of some problems (e.g. a laptop's accelerator being recognized as joystick).
+* Support for relative seeking by percentage.
 
 Audio
 ~~~~~
@@ -396,7 +397,8 @@ Slave mode
 
   Assuming the system supports ``/dev/stdin``.
 
-  (The option was readded in 0.5.1 and sets exactly these options.)
+  (The option was readded in 0.5.1 and sets exactly these options. It was
+  removed in 0.10.x again.)
 
 * A JSON RPC protocol giving access to the client API is also supported. See
   `JSON IPC`_ for more information.

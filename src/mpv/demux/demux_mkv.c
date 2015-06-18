@@ -96,7 +96,6 @@ typedef struct mkv_track {
     struct sh_stream *stream;
 
     char *codec_id;
-    int ms_compat;
     char *language;
 
     int type;
@@ -610,9 +609,6 @@ static void parse_trackentry(struct demuxer *demuxer,
     if (entry->n_codec_id) {
         track->codec_id = talloc_strndup(track, entry->codec_id.start,
                                          entry->codec_id.len);
-        if (!strcmp(track->codec_id, MKV_V_MSCOMP)
-            || !strcmp(track->codec_id, MKV_A_ACM))
-            track->ms_compat = 1;
         MP_VERBOSE(demuxer, "|  + Codec ID: %s\n", track->codec_id);
     } else {
         MP_ERR(demuxer, "Missing codec ID!\n");
@@ -1198,24 +1194,23 @@ static void display_create_tracks(demuxer_t *demuxer)
 
 typedef struct {
     char *id;
-    int fourcc;
-    int extradata;
+    const char *codec;
 } videocodec_info_t;
 
 static const videocodec_info_t vinfo[] = {
-    {MKV_V_MJPEG,     MP_FOURCC('m', 'j', 'p', 'g'), 1},
-    {MKV_V_MPEG1,     MP_FOURCC('m', 'p', 'g', '1'), 0},
-    {MKV_V_MPEG2,     MP_FOURCC('m', 'p', 'g', '2'), 0},
-    {MKV_V_MPEG4_SP,  MP_FOURCC('m', 'p', '4', 'v'), 1},
-    {MKV_V_MPEG4_ASP, MP_FOURCC('m', 'p', '4', 'v'), 1},
-    {MKV_V_MPEG4_AP,  MP_FOURCC('m', 'p', '4', 'v'), 1},
-    {MKV_V_MPEG4_AVC, MP_FOURCC('a', 'v', 'c', '1'), 1},
-    {MKV_V_THEORA,    MP_FOURCC('t', 'h', 'e', 'o'), 1},
-    {MKV_V_VP8,       MP_FOURCC('V', 'P', '8', '0'), 0},
-    {MKV_V_VP9,       MP_FOURCC('V', 'P', '9', '0'), 0},
-    {MKV_V_DIRAC,     MP_FOURCC('d', 'r', 'a', 'c'), 0},
-    {MKV_V_PRORES,    MP_FOURCC('p', 'r', '0', '0'), 0},
-    {MKV_V_HEVC,      MP_FOURCC('H', 'E', 'V', 'C'), 1},
+    {MKV_V_MJPEG,     "mjpeg"},
+    {MKV_V_MPEG1,     "mpeg1video"},
+    {MKV_V_MPEG2,     "mpeg2video"},
+    {MKV_V_MPEG4_SP,  "mpeg4"},
+    {MKV_V_MPEG4_ASP, "mpeg4"},
+    {MKV_V_MPEG4_AP,  "mpeg4"},
+    {MKV_V_MPEG4_AVC, "h264"},
+    {MKV_V_THEORA,    "theora"},
+    {MKV_V_VP8,       "vp8"},
+    {MKV_V_VP9,       "vp9"},
+    {MKV_V_DIRAC,     "dirac"},
+    {MKV_V_PRORES,    "prores"},
+    {MKV_V_HEVC,      "hevc"},
     {0}
 };
 
@@ -1231,7 +1226,9 @@ static int demux_mkv_open_video(demuxer_t *demuxer, mkv_track_t *track)
     sh->demuxer_id = track->tnum;
     sh->title = talloc_strdup(sh_v, track->name);
 
-    if (track->ms_compat) {     /* MS compatibility mode */
+    sh_v->bits_per_coded_sample = 24;
+
+    if (!strcmp(track->codec_id, MKV_V_MSCOMP)) { /* AVI compatibility mode */
         // The private_data contains a BITMAPINFOHEADER struct
         if (track->private_data == NULL || track->private_size < 40)
             return 1;
@@ -1247,68 +1244,66 @@ static int demux_mkv_open_video(demuxer_t *demuxer, mkv_track_t *track)
         extradata = track->private_data + 40;
         extradata_size = track->private_size - 40;
         mp_set_codec_from_tag(sh);
-    } else {
-        sh_v->bits_per_coded_sample = 24;
-
-        if (track->private_size >= RVPROPERTIES_SIZE
-            && (!strcmp(track->codec_id, MKV_V_REALV10)
+        sh_v->avi_dts = true;
+    } else if (track->private_size >= RVPROPERTIES_SIZE
+               && (!strcmp(track->codec_id, MKV_V_REALV10)
                 || !strcmp(track->codec_id, MKV_V_REALV20)
                 || !strcmp(track->codec_id, MKV_V_REALV30)
-                || !strcmp(track->codec_id, MKV_V_REALV40))) {
-            unsigned char *src;
-            uint32_t type2;
-            unsigned int cnt;
+                || !strcmp(track->codec_id, MKV_V_REALV40)))
+    {
+        unsigned char *src;
+        unsigned int cnt;
 
-            src = (uint8_t *) track->private_data + RVPROPERTIES_SIZE;
+        src = (uint8_t *) track->private_data + RVPROPERTIES_SIZE;
 
-            cnt = track->private_size - RVPROPERTIES_SIZE;
-            type2 = AV_RB32(src - 4);
-            if (type2 == 0x10003000 || type2 == 0x10003001)
-                sh->format = MP_FOURCC('R', 'V', '1', '3');
-            else
-                sh->format = MP_FOURCC('R', 'V', track->codec_id[9], '0');
-            // copy type1 and type2 info from rv properties
-            extradata_size = cnt + 8;
-            extradata = src - 8;
-            track->parse = true;
-            track->parse_timebase = 1e3;
-            mp_set_codec_from_tag(sh);
-        } else if (strcmp(track->codec_id, MKV_V_UNCOMPRESSED) == 0) {
-            // raw video, "like AVI" - this is a FourCC
-            sh->format = track->colorspace;
-            sh->codec = "rawvideo";
-        } else if (strcmp(track->codec_id, MKV_V_QUICKTIME) == 0) {
-            uint32_t fourcc1 = 0, fourcc2 = 0;
-            if (track->private_size >= 8) {
-                fourcc1 = AV_RL32(track->private_data + 0);
-                fourcc2 = AV_RL32(track->private_data + 4);
-            }
-            if (fourcc1 == MP_FOURCC('S', 'V', 'Q', '3') ||
-                fourcc2 == MP_FOURCC('S', 'V', 'Q', '3'))
-            {
-                sh->codec = "svq3";
-                extradata = track->private_data;
-                extradata_size = track->private_size;
-            }
-        } else {
-            const videocodec_info_t *vi = vinfo;
-            while (vi->id && strcmp(vi->id, track->codec_id))
-                vi++;
-            if (vi->id) {
-                sh->format = vi->fourcc;
-                mp_set_codec_from_tag(sh);
-            }
-            if (vi->extradata && track->private_data && track->private_size > 0)
-            {
-                extradata = track->private_data;
-                extradata_size = track->private_size;
-            }
+        cnt = track->private_size - RVPROPERTIES_SIZE;
+        uint32_t t2 = AV_RB32(src - 4);
+        switch (t2 == 0x10003000 || t2 == 0x10003001 ? '1' : track->codec_id[9]) {
+        case '1': sh->codec = "rv10"; break;
+        case '2': sh->codec = "rv20"; break;
+        case '3': sh->codec = "rv30"; break;
+        case '4': sh->codec = "rv40"; break;
+        }
+        // copy type1 and type2 info from rv properties
+        extradata_size = cnt + 8;
+        extradata = src - 8;
+        track->parse = true;
+        track->parse_timebase = 1e3;
+    } else if (strcmp(track->codec_id, MKV_V_UNCOMPRESSED) == 0) {
+        // raw video, "like AVI" - this is a FourCC
+        sh->format = track->colorspace;
+        sh->codec = "rawvideo";
+    } else if (strcmp(track->codec_id, MKV_V_QUICKTIME) == 0) {
+        uint32_t fourcc1 = 0, fourcc2 = 0;
+        if (track->private_size >= 8) {
+            fourcc1 = AV_RL32(track->private_data + 0);
+            fourcc2 = AV_RL32(track->private_data + 4);
+        }
+        if (fourcc1 == MP_FOURCC('S', 'V', 'Q', '3') ||
+            fourcc2 == MP_FOURCC('S', 'V', 'Q', '3'))
+        {
+            sh->codec = "svq3";
+            extradata = track->private_data;
+            extradata_size = track->private_size;
+        }
+    } else {
+        const videocodec_info_t *vi = vinfo;
+        while (vi->id && strcmp(vi->id, track->codec_id))
+            vi++;
+        if (vi->codec)
+            sh->codec = vi->codec;
+        if (track->private_data && track->private_size > 0) {
+            extradata = track->private_data;
+            extradata_size = track->private_size;
         }
     }
 
-    if (sh->format == MP_FOURCC('V', 'P', '9', '0')) {
+    const char *codec = sh->codec ? sh->codec : "";
+    if (!strcmp(codec, "vp9")) {
         track->parse = true;
         track->parse_timebase = 1e9;
+    } else if (!strcmp(codec, "mjpeg")) {
+        sh->format = MP_FOURCC('m', 'j', 'p', 'g');
     }
 
     if (extradata_size > 0x1000000) {
@@ -1332,7 +1327,6 @@ static int demux_mkv_open_video(demuxer_t *demuxer, mkv_track_t *track)
     uint32_t dh = track->v_dheight_set ? track->v_dheight : track->v_height;
     sh_v->aspect = (dw && dh) ? (double) dw / dh : 0;
     MP_VERBOSE(demuxer, "Aspect: %f\n", sh_v->aspect);
-    sh_v->avi_dts = track->ms_compat;
     sh_v->stereo_mode = track->stereo_mode;
 
     return 0;
@@ -1397,7 +1391,7 @@ static int demux_mkv_open_audio(demuxer_t *demuxer, mkv_track_t *track)
     if (!track->a_osfreq)
         track->a_osfreq = track->a_sfreq;
 
-    if (track->ms_compat) {
+    if (!strcmp(track->codec_id, MKV_A_ACM)) { /* AVI compatibility mode */
         // The private_data contains a WAVEFORMATEX struct
         if (track->private_size < 18)
             goto error;
@@ -1569,8 +1563,6 @@ static int demux_mkv_open_audio(demuxer_t *demuxer, mkv_track_t *track)
         sh_a->bitrate = 0;
         sh_a->block_align = 0;
 
-        if (track->ms_compat)
-            sh->format = MP_FOURCC('f', 'L', 'a', 'C');
         unsigned char *ptr = extradata;
         unsigned int size = extradata_len;
         if (size < 4 || ptr[0] != 'f' || ptr[1] != 'L' || ptr[2] != 'a'
@@ -1610,7 +1602,7 @@ static int demux_mkv_open_audio(demuxer_t *demuxer, mkv_track_t *track)
         AV_WL32(data + 10, track->a_osfreq);
         // Bogus: last frame won't be played.
         AV_WL32(data + 14, 0);
-    } else if (!track->ms_compat) {
+    } else if (!track->a_formattag) {
         goto error;
     }
 
@@ -2416,7 +2408,7 @@ static int handle_block(demuxer_t *demuxer, struct block_info *block_info)
              * packets resulting from parsing. */
             if (i == 0 || track->default_duration)
                 dp->pts = mkv_d->last_pts + i * track->default_duration;
-            if (track->ms_compat)
+            if (stream->video && stream->video->avi_dts)
                 MPSWAP(double, dp->pts, dp->dts);
             if (i == 0)
                 dp->duration = block_duration / 1e9;

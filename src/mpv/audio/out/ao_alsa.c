@@ -204,14 +204,9 @@ alsa_error:
 }
 
 static const int mp_to_alsa_format[][2] = {
-    {AF_FORMAT_S8,          SND_PCM_FORMAT_S8},
     {AF_FORMAT_U8,          SND_PCM_FORMAT_U8},
-    {AF_FORMAT_U16,         SND_PCM_FORMAT_U16},
     {AF_FORMAT_S16,         SND_PCM_FORMAT_S16},
-    {AF_FORMAT_U32,         SND_PCM_FORMAT_U32},
     {AF_FORMAT_S32,         SND_PCM_FORMAT_S32},
-    {AF_FORMAT_U24,
-            MP_SELECT_LE_BE(SND_PCM_FORMAT_U24_3LE, SND_PCM_FORMAT_U24_3BE)},
     {AF_FORMAT_S24,
             MP_SELECT_LE_BE(SND_PCM_FORMAT_S24_3LE, SND_PCM_FORMAT_S24_3BE)},
     {AF_FORMAT_FLOAT,       SND_PCM_FORMAT_FLOAT},
@@ -251,6 +246,8 @@ static const int alsa_to_mp_channels[][2] = {
     {SND_CHMAP_TRL,     MP_SP(TBL)},
     {SND_CHMAP_TRR,     MP_SP(TBR)},
     {SND_CHMAP_TRC,     MP_SP(TBC)},
+    {SND_CHMAP_RRC,     MP_SP(SDR)},
+    {SND_CHMAP_RLC,     MP_SP(SDL)},
     {SND_CHMAP_MONO,    MP_SP(FC)},
     {SND_CHMAP_NA,      MP_SPEAKER_ID_NA},
     {SND_CHMAP_LAST,    MP_SPEAKER_ID_COUNT}
@@ -304,6 +301,8 @@ static bool query_chmaps(struct ao *ao, struct mp_chmap *chmap)
         mp_chmap_from_alsa(&entry, &maps[i]->map);
 
         if (mp_chmap_is_valid(&entry)) {
+            if (maps[i]->type == SND_CHMAP_TYPE_VAR)
+                mp_chmap_reorder_norm(&entry);
             MP_VERBOSE(ao, "Got supported channel map: %s (type %s)\n",
                        mp_chmap_to_str(&entry),
                        snd_pcm_chmap_type_name(maps[i]->type));
@@ -375,6 +374,7 @@ static char *append_params(void *ta_parent, const char *device, const char *p)
 static int try_open_device(struct ao *ao, const char *device)
 {
     struct priv *p = ao->priv;
+    int err;
 
     if (AF_FORMAT_IS_IEC61937(ao->format)) {
         void *tmp = talloc_new(NULL);
@@ -385,15 +385,29 @@ static int try_open_device(struct ao *ao, const char *device)
                         map_iec958_srate(ao->samplerate));
         const char *ac3_device = append_params(tmp, device, params);
         MP_VERBOSE(ao, "opening device '%s' => '%s'\n", device, ac3_device);
-        int err = snd_pcm_open
-                    (&p->alsa, ac3_device, SND_PCM_STREAM_PLAYBACK, 0);
+        err = snd_pcm_open(&p->alsa, ac3_device, SND_PCM_STREAM_PLAYBACK, 0);
+        if (err < 0) {
+            // Some spdif-capable devices do not accept the AES0 parameter,
+            // and instead require the iec958 pseudo-device (they will play
+            // noise otherwise). Unfortunately, ALSA gives us no way to map
+            // these devices, so try it for the default device only.
+            bstr dev;
+            bstr_split_tok(bstr0(device), ":", &dev, &(bstr){0});
+            if (bstr_equals0(dev, "default")) {
+                ac3_device = append_params(tmp, "iec958", params);
+                MP_VERBOSE(ao, "got error %d; opening iec fallback device '%s'\n",
+                           err, ac3_device);
+                err = snd_pcm_open
+                            (&p->alsa, ac3_device, SND_PCM_STREAM_PLAYBACK, 0);
+            }
+        }
         talloc_free(tmp);
-        if (!err)
-            return 0;
+    } else {
+        MP_VERBOSE(ao, "opening device '%s'\n", device);
+        err = snd_pcm_open(&p->alsa, device, SND_PCM_STREAM_PLAYBACK, 0);
     }
 
-    MP_VERBOSE(ao, "opening device '%s'\n", device);
-    return snd_pcm_open(&p->alsa, device, SND_PCM_STREAM_PLAYBACK, 0);
+    return err;
 }
 
 static void uninit(struct ao *ao)
@@ -419,8 +433,6 @@ static int init_device(struct ao *ao, bool second_try)
     int err;
 
     const char *device = "default";
-    if (AF_FORMAT_IS_IEC61937(ao->format))
-        device = "iec958";
     if (ao->device)
         device = ao->device;
     if (p->cfg_device && p->cfg_device[0])
@@ -482,6 +494,9 @@ static int init_device(struct ao *ao, bool second_try)
     struct mp_chmap dev_chmap = ao->channels;
     if (AF_FORMAT_IS_IEC61937(ao->format) || p->cfg_ignore_chmap) {
         dev_chmap.num = 0; // disable chmap API
+    } else if (dev_chmap.num == 1 && dev_chmap.speaker[0] == MP_SPEAKER_ID_FC) {
+        // As yet another ALSA API inconsistency, mono is not reported correctly.
+        dev_chmap.num = 0;
     } else if (query_chmaps(ao, &dev_chmap)) {
         ao->channels = dev_chmap;
     } else {
@@ -505,8 +520,8 @@ static int init_device(struct ao *ao, bool second_try)
         mp_chmap_from_channels_alsa(&ao->channels, num_channels);
         if (!mp_chmap_is_valid(&ao->channels))
             mp_chmap_from_channels(&ao->channels, 2);
-        MP_ERR(ao, "Couldn't get requested number of channels (%d), fallback "
-               "to %s.\n", req, mp_chmap_to_str(&ao->channels));
+        MP_ERR(ao, "Asked for %d channels, got %d - fallback to %s.\n", req,
+               num_channels, mp_chmap_to_str(&ao->channels));
     }
 
     // Some ALSA drivers have broken delay reporting, so disable the ALSA
@@ -590,17 +605,18 @@ static int init_device(struct ao *ao, bool second_try)
 
             if (mp_chmap_is_valid(&without_na) &&
                 !mp_chmap_equals(&without_na, &chmap) &&
+                !mp_chmap_equals(&chmap, &ao->channels) &&
                 !second_try)
             {
                 // Sometimes, ALSA will advertise certain chmaps, but it's not
                 // possible to set them. This can happen with dmix: as of
                 // alsa 1.0.28, dmix can do stereo only, but advertises the
                 // surround chmaps of the underlying device. In this case,
-                // requesting e.g. 5.1 will fail, but it will still allow
-                // setting 6 channels. Then it will return something like
+                // e.g. setting 6 channels will succeed, but requesting  5.1
+                // afterwards will fail. Then it will return something like
                 // "FL FR NA NA NA NA" as channel map. This means we would
                 // have to pad stereo output to 6 channels with silence, which
-                // is way too complicated in the general case. You can't change
+                // would require lots of extra processing. You can't change
                 // the number of channels to 2 either, because the hw params
                 // are already set! So just fuck it and reopen the device with
                 // the chmap "cleaned out" of NA entries.
@@ -625,8 +641,10 @@ static int init_device(struct ao *ao, bool second_try)
         }
 
         // mpv and ALSA use different conventions for mono
-        if (ao->channels.num == 1)
+        if (ao->channels.num == 1) {
+            MP_VERBOSE(ao, "assuming we actually got MONO from ALSA.\n");
             ao->channels.speaker[0] = MP_SP(FC);
+        }
 
         free(alsa_chmap);
     }

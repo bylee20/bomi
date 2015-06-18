@@ -176,9 +176,8 @@ static void recreate_video_filters(struct MPContext *mpctx)
     vf_append_filter_list(d_video->vfilter, opts->vf_settings);
 
     // for vf_sub
-    vf_control_any(d_video->vfilter, VFCTRL_SET_OSD_OBJ, mpctx->osd);
     osd_set_render_subs_in_filter(mpctx->osd,
-        vf_control_any(d_video->vfilter, VFCTRL_INIT_OSD, NULL) == CONTROL_OK);
+        vf_control_any(d_video->vfilter, VFCTRL_INIT_OSD, mpctx->osd) > 0);
 
     set_allowed_vo_formats(d_video->vfilter, mpctx->video_out);
 }
@@ -215,6 +214,7 @@ void reset_video_state(struct MPContext *mpctx)
     mpctx->video_pts = MP_NOPTS_VALUE;
     mpctx->video_next_pts = MP_NOPTS_VALUE;
     mpctx->total_avsync_change = 0;
+    mpctx->last_av_difference = 0;
     mpctx->dropped_frames_total = 0;
     mpctx->dropped_frames = 0;
     mpctx->drop_message_shown = 0;
@@ -253,12 +253,6 @@ int reinit_video_chain(struct MPContext *mpctx)
     if (!sh)
         goto no_video;
 
-    MP_VERBOSE(mpctx, "[V] fourcc:0x%X  size:%dx%d  fps:%5.3f\n",
-               sh->format,
-               sh->video->disp_w, sh->video->disp_h,
-               sh->video->fps);
-
-    //================== Init VIDEO (codec & libvo) ==========================
     if (!mpctx->video_out) {
         struct vo_extra ex = {
             .input_ctx = mpctx->input,
@@ -559,11 +553,23 @@ static void shift_new_frame(struct MPContext *mpctx)
     double pts = mpctx->next_frame[0]->pts;
     if (mpctx->video_pts != MP_NOPTS_VALUE) {
         frame_time = pts - mpctx->video_pts;
-        if (frame_time <= 0 || frame_time >= 60) {
-            // Assume a PTS difference >= 60 seconds is a discontinuity.
+        double tolerance = 15;
+        if (mpctx->demuxer->ts_resets_possible) {
+            // Fortunately no real framerate is likely to go below this. It
+            // still could be that the file is VFR, but the demuxer reports a
+            // higher rate, so account for the case of e.g. 60hz demuxer fps
+            // but 23hz actual fps.
+            double fps = 23.976;
+            if (mpctx->d_video->fps > 0 && mpctx->d_video->fps < fps)
+                fps = mpctx->d_video->fps;
+            tolerance = 3 * 1.0 / fps;
+        }
+        if (frame_time <= 0 || frame_time >= tolerance) {
+            // Assume a discontinuity.
             MP_WARN(mpctx, "Invalid video timestamp: %f -> %f\n",
                     mpctx->video_pts, pts);
             frame_time = 0;
+            mpctx->audio_status = STATUS_SYNCING;
         }
     }
     mpctx->video_next_pts = pts;
@@ -725,7 +731,7 @@ static void update_avsync_after_frame(struct MPContext *mpctx)
     if (mpctx->time_frame > 0)
         mpctx->last_av_difference += mpctx->time_frame * opts->playback_speed;
     if (a_pos == MP_NOPTS_VALUE || mpctx->video_pts == MP_NOPTS_VALUE) {
-        mpctx->last_av_difference = MP_NOPTS_VALUE;
+        mpctx->last_av_difference = 0;
     } else if (fabs(mpctx->last_av_difference) > 0.5 && !mpctx->drop_message_shown) {
         MP_WARN(mpctx, "%s", av_desync_help_text);
         mpctx->drop_message_shown = true;

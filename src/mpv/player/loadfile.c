@@ -143,8 +143,10 @@ static void print_stream(struct MPContext *mpctx, struct track *t)
     MP_INFO(mpctx, "%s\n", b);
 }
 
-void print_track_list(struct MPContext *mpctx)
+void print_track_list(struct MPContext *mpctx, const char *msg)
 {
+    if (msg)
+        MP_INFO(mpctx, "%s\n", msg);
     for (int t = 0; t < STREAM_TYPE_COUNT; t++) {
         for (int n = 0; n < mpctx->num_tracks; n++)
             if (mpctx->tracks[n]->type == t)
@@ -176,7 +178,7 @@ void update_demuxer_properties(struct MPContext *mpctx)
     struct demuxer *tracks = mpctx->track_layout;
     if (tracks->events & DEMUX_EVENT_STREAMS) {
         add_demuxer_tracks(mpctx, tracks);
-        print_track_list(mpctx);
+        print_track_list(mpctx, NULL);
         tracks->events &= ~DEMUX_EVENT_STREAMS;
     }
     if (events & DEMUX_EVENT_METADATA) {
@@ -453,9 +455,13 @@ static bool compare_track(struct track *t1, struct track *t2, char **langs,
     }
     return t1->user_tid <= t2->user_tid;
 }
-struct track *select_track(struct MPContext *mpctx, enum stream_type type,
-                           int tid, int ffid, char **langs)
+struct track *select_default_track(struct MPContext *mpctx, int order,
+                                   enum stream_type type)
 {
+    struct MPOpts *opts = mpctx->opts;
+    int tid = opts->stream_id[order][type];
+    int ffid = order == 0 ? opts->stream_id_ff[type] : -1;
+    char **langs = order == 0 ? opts->stream_lang[type] : NULL;
     if (ffid != -1)
         tid = -1; // prefer selecting ffid
     if (tid == -2 || ffid == -2)
@@ -508,15 +514,14 @@ static void check_previous_track_selection(struct MPContext *mpctx)
 
     char *h = track_layout_hash(mpctx);
     if (strcmp(h, mpctx->track_layout_hash) != 0) {
-        // Reset selection, but only if they're not "auto" or "off".
-        if (opts->video_id >= 0)
-            mpctx->opts->video_id = -1;
-        if (opts->audio_id >= 0)
-            mpctx->opts->audio_id = -1;
-        if (opts->sub_id >= 0)
-            mpctx->opts->sub_id = -1;
-        if (opts->sub2_id >= 0)
-            mpctx->opts->sub2_id = -2;
+        // Reset selection, but only if they're not "auto" or "off". The
+        // defaults are -1 (default selection), or -2 (off) for secondary tracks.
+        for (int t = 0; t < STREAM_TYPE_COUNT; t++) {
+            for (int i = 0; i < NUM_PTRACKS; i++) {
+                if (opts->stream_id[i][t] >= 0)
+                    opts->stream_id[i][t] = i == 0 ? -1 : -2;
+            }
+        }
         talloc_free(mpctx->track_layout_hash);
         mpctx->track_layout_hash = NULL;
     }
@@ -524,10 +529,19 @@ static void check_previous_track_selection(struct MPContext *mpctx)
 }
 
 void mp_switch_track_n(struct MPContext *mpctx, int order, enum stream_type type,
-                       struct track *track)
+                       struct track *track, int flags)
 {
     assert(!track || track->type == type);
     assert(order >= 0 && order < NUM_PTRACKS);
+
+    // Mark the current track selection as explicitly user-requested. (This is
+    // different from auto-selection or disabling a track due to errors.)
+    if (flags & FLAG_MARK_SELECTION)
+        mpctx->opts->stream_id[order][type] = track ? track->user_tid : -2;
+
+    // No decoder should be initialized yet.
+    if (!mpctx->demuxer)
+        return;
 
     struct track *current = mpctx->current_track[order][type];
     if (track == current)
@@ -589,34 +603,16 @@ void mp_switch_track_n(struct MPContext *mpctx, int order, enum stream_type type
 }
 
 void mp_switch_track(struct MPContext *mpctx, enum stream_type type,
-                     struct track *track)
+                     struct track *track, int flags)
 {
-    mp_switch_track_n(mpctx, 0, type, track);
+    mp_switch_track_n(mpctx, 0, type, track, flags);
 }
 
 void mp_deselect_track(struct MPContext *mpctx, struct track *track)
 {
     if (track && track->selected) {
         for (int t = 0; t < NUM_PTRACKS; t++)
-            mp_switch_track_n(mpctx, t, track->type, NULL);
-    }
-}
-
-// Mark the current track selection as explicitly user-requested. (This is
-// different from auto-selection or disabling a track due to errors.)
-void mp_mark_user_track_selection(struct MPContext *mpctx, int order,
-                                  enum stream_type type)
-{
-    struct track *track = mpctx->current_track[order][type];
-    int user_tid = track ? track->user_tid : -2;
-    if (type == STREAM_VIDEO && order == 0) {
-        mpctx->opts->video_id = user_tid;
-    } else if (type == STREAM_AUDIO && order == 0) {
-        mpctx->opts->audio_id = user_tid;
-    } else if (type == STREAM_SUB && order == 0) {
-        mpctx->opts->sub_id = user_tid;
-    } else if (type == STREAM_SUB && order == 1) {
-        mpctx->opts->sub2_id = user_tid;
+            mp_switch_track_n(mpctx, t, track->type, NULL, 0);
     }
 }
 
@@ -1134,7 +1130,7 @@ goto_reopen_demuxer: ;
             e->stream_flags |= entry_stream_flags;
         transfer_playlist(mpctx, pl);
         mp_notify_property(mpctx, "playlist");
-        mpctx->error_playing = 1;
+        mpctx->error_playing = 2;
         goto terminate_playback;
     }
 
@@ -1151,17 +1147,11 @@ goto_reopen_demuxer: ;
 
     check_previous_track_selection(mpctx);
 
-    mpctx->current_track[0][STREAM_VIDEO] =
-        select_track(mpctx, STREAM_VIDEO, opts->video_id, opts->video_id_ff,
-                     NULL);
-    mpctx->current_track[0][STREAM_AUDIO] =
-        select_track(mpctx, STREAM_AUDIO, opts->audio_id, opts->audio_id_ff,
-                     opts->audio_lang);
-    mpctx->current_track[0][STREAM_SUB] =
-        select_track(mpctx, STREAM_SUB, opts->sub_id, opts->sub_id_ff,
-                     opts->sub_lang);
-    mpctx->current_track[1][STREAM_SUB] =
-        select_track(mpctx, STREAM_SUB, opts->sub2_id, -1, NULL);
+    assert(NUM_PTRACKS == 2); // opts->stream_id is hardcoded to 2
+    for (int t = 0; t < STREAM_TYPE_COUNT; t++) {
+        for (int i = 0; i < NUM_PTRACKS; i++)
+            mpctx->current_track[i][t] = select_default_track(mpctx, i, t);
+    }
     for (int t = 0; t < STREAM_TYPE_COUNT; t++) {
         for (int i = 0; i < NUM_PTRACKS; i++) {
             struct track *track = mpctx->current_track[i][t];
@@ -1310,11 +1300,13 @@ terminate_playback:
     case PT_ERROR:
     case AT_END_OF_FILE:
     {
-        if (mpctx->error_playing >= 0 && nothing_played)
+        if (mpctx->error_playing == 0 && nothing_played)
             mpctx->error_playing = MPV_ERROR_NOTHING_TO_PLAY;
-        end_event.error = mpctx->error_playing;
-        if (end_event.error < 0) {
+        if (mpctx->error_playing < 0) {
+            end_event.error = mpctx->error_playing;
             end_event.reason = MPV_END_FILE_REASON_ERROR;
+        } else if (mpctx->error_playing == 2) {
+            end_event.reason = MPV_END_FILE_REASON_REDIRECT;
         } else {
             end_event.reason = MPV_END_FILE_REASON_EOF;
         }

@@ -32,7 +32,6 @@ static auto priv(af_instance *af) -> AudioController*
 static auto isSupported(int type) -> bool
 {
     switch (type) {
-    case AF_FORMAT_S8:
     case AF_FORMAT_S16:     case AF_FORMAT_S16P:
     case AF_FORMAT_S32:     case AF_FORMAT_S32P:
     case AF_FORMAT_FLOAT:   case AF_FORMAT_FLOATP:
@@ -384,7 +383,6 @@ af_info create_info() {
         "dummy",
         AF_FLAGS_NOT_REENTRANT,
         AudioController::open,
-        AudioController::test,
         sizeof(bomi_af_priv),
         nullptr,
         options

@@ -97,7 +97,7 @@ Available filters are:
 
     All parameters are optional.
 
-    ``<w>,<h>``
+    ``<w>:<h>``
         scaled width/height (default: original width/height)
 
         :0:      scaled d_width/d_height
@@ -669,6 +669,8 @@ Available filters are:
     Loads an external library to filter the image. The library interface
     is the ``vf_dlopen`` interface specified using ``libmpcodecs/vf_dlopen.h``.
 
+    .. warning:: This filter is deprecated.
+
     ``dll=<library>``
         Specify the library to load. This may require a full file system path
         in some cases. This argument is required.
@@ -778,7 +780,7 @@ Available filters are:
 ``vapoursynth-lazy``
     The same as ``vapoursynth``, but doesn't load Python scripts. Instead, a
     custom backend using Lua and the raw VapourSynth API is used. The syntax
-    is completely different, and absolutely no conveniencve features are
+    is completely different, and absolutely no convenience features are
     provided. There's no type checking either, and you can trigger crashes.
 
     .. admonition:: Example:

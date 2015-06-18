@@ -40,7 +40,7 @@
 @interface EventsResponder ()
 {
     struct input_ctx *_inputContext;
-    NSCondition *_input_ready;
+    NSCondition *_input_lock;
     CFMachPortRef _mk_tap_port;
 #if HAVE_APPLE_REMOTE
     HIDRemote *_remote;
@@ -188,9 +188,7 @@ void cocoa_uninit_media_keys(void) {
 
 void cocoa_put_key(int keycode)
 {
-    struct input_ctx *inputContext = [EventsResponder sharedInstance].inputContext;
-    if (inputContext)
-        mp_input_put_key(inputContext, keycode);
+    [[EventsResponder sharedInstance] putKey:keycode];
 }
 
 void cocoa_put_key_event(void *event)
@@ -206,7 +204,7 @@ void cocoa_put_key_with_modifiers(int keycode, int modifiers)
 
 void cocoa_set_input_context(struct input_ctx *input_context)
 {
-    [EventsResponder sharedInstance].inputContext = input_context;
+    [[EventsResponder sharedInstance] setInputContext:input_context];
 }
 
 @implementation EventsResponder
@@ -225,38 +223,64 @@ void cocoa_set_input_context(struct input_ctx *input_context)
 {
     self = [super init];
     if (self) {
-        _input_ready = [NSCondition new];
+        _input_lock = [NSCondition new];
     }
     return self;
 }
 
 - (void)waitForInputContext
 {
-    [_input_ready lock];
-    while (!self.inputContext)
-        [_input_ready wait];
-    [_input_ready unlock];
+    [_input_lock lock];
+    while (!_inputContext)
+        [_input_lock wait];
+    [_input_lock unlock];
 }
 
 - (void)setInputContext:(struct input_ctx *)ctx;
 {
-    [_input_ready lock];
+    [_input_lock lock];
     _inputContext = ctx;
-    [_input_ready signal];
-    [_input_ready unlock];
+    [_input_lock signal];
+    [_input_lock unlock];
 }
 
-- (struct input_ctx *)inputContext
+- (void)wakeup
 {
-    return _inputContext;
+    [_input_lock lock];
+    if (_inputContext)
+        mp_input_wakeup(_inputContext);
+    [_input_lock unlock];
+}
+
+- (bool)queueCommand:(char *)cmd
+{
+    bool r = false;
+    [_input_lock lock];
+    if (_inputContext) {
+        mp_cmd_t *cmdt = mp_input_parse_cmd(_inputContext, bstr0(cmd), "");
+        mp_input_queue_cmd(_inputContext, cmdt);
+        r = true;
+    }
+    [_input_lock unlock];
+    return r;
+}
+
+- (void)putKey:(int)keycode
+{
+    [_input_lock lock];
+    if (_inputContext)
+        mp_input_put_key(_inputContext, keycode);
+    [_input_lock unlock];
 }
 
 - (BOOL)useAltGr
 {
-    if (self.inputContext)
-        return mp_input_use_alt_gr(self.inputContext);
-    else
-        return YES;
+    BOOL r = YES;
+    [_input_lock lock];
+    if (_inputContext)
+        r = mp_input_use_alt_gr(_inputContext);
+    [_input_lock unlock];
+    return r;
 }
 
 - (void)startEventMonitor
@@ -446,7 +470,10 @@ void cocoa_set_input_context(struct input_ctx *input_context)
         size_t bytes   = [p lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
         files_utf8[i]  = talloc_memdup(files_utf8, filename, bytes + 1);
     }];
-    mp_event_drop_files(_inputContext, num_files, files_utf8);
+    [_input_lock lock];
+    if (_inputContext)
+        mp_event_drop_files(_inputContext, num_files, files_utf8);
+    [_input_lock unlock];
     talloc_free(files_utf8);
 }
 

@@ -118,7 +118,6 @@ void mp_audio_set_null_data(struct mp_audio *mpa)
         mpa->allocated[n] = NULL;
     }
     mpa->samples = 0;
-    mpa->readonly = false;
 }
 
 static int get_plane_size(const struct mp_audio *mpa, int samples)
@@ -160,8 +159,8 @@ void mp_audio_realloc(struct mp_audio *mpa, int samples)
         if (!mpa->allocated[n] || size != mpa->allocated[n]->size) {
             if (av_buffer_realloc(&mpa->allocated[n], size) < 0)
                 abort(); // OOM
-            mpa->planes[n] = mpa->allocated[n]->data;
         }
+        mpa->planes[n] = mpa->allocated[n]->data;
     }
     for (int n = mpa->num_planes; n < MP_NUM_CHANNELS; n++) {
         av_buffer_unref(&mpa->allocated[n]);
@@ -192,8 +191,18 @@ int mp_audio_get_allocated_size(struct mp_audio *mpa)
 {
     int size = 0;
     for (int n = 0; n < mpa->num_planes; n++) {
-        int s = mpa->allocated[n] ? mpa->allocated[n]->size / mpa->sstride : 0;
-        size = n == 0 ? s : MPMIN(size, s);
+        for (int i = 0; i < MP_NUM_CHANNELS && mpa->allocated[i]; i++) {
+            uint8_t *start = mpa->allocated[i]->data;
+            uint8_t *end = start + mpa->allocated[i]->size;
+            uint8_t *plane = mpa->planes[n];
+            if (plane >= start && plane < end) {
+                int s = MPMIN((end - plane) / mpa->sstride, INT_MAX);
+                size = n == 0 ? s : MPMIN(size, s);
+                goto next;
+            }
+        }
+        return 0; // plane is not covered by any buffer
+    next: ;
     }
     return size;
 }
@@ -251,7 +260,7 @@ void mp_audio_skip_samples(struct mp_audio *data, int samples)
 // Will return true for non-refcounted frames.
 bool mp_audio_is_writeable(struct mp_audio *data)
 {
-    bool ok = !data->readonly;
+    bool ok = true;
     for (int n = 0; n < MP_NUM_CHANNELS; n++) {
         if (data->allocated[n])
             ok &= av_buffer_is_writable(data->allocated[n]);

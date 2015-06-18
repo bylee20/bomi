@@ -83,7 +83,7 @@ build_options = [
     }, {
         'name': '--test',
         'desc': 'test suite (using cmocka)',
-        'func': check_pkg_config('cmocka', '>= 0.4.1'),
+        'func': check_pkg_config('cmocka', '>= 1.0.0'),
         'default': 'disable',
     }, {
         'name': '--clang-database',
@@ -736,6 +736,14 @@ hwaccel_features = [
         'name': '--vdpau-hwaccel',
         'desc': 'libavcodec VDPAU hwaccel',
         'deps': [ 'vdpau' ],
+        'func': check_statement('libavcodec/vdpau.h',
+                                'av_vdpau_bind_context(0,0,0,AV_HWACCEL_FLAG_ALLOW_HIGH_DEPTH)',
+                                use='libav'),
+    }, {
+        'name': '--vdpau-old-hwaccel',
+        'desc': 'libavcodec VDPAU hwaccel (old API)',
+        'deps': [ 'vdpau' ],
+        'deps_neg': [ 'vdpau-hwaccel' ],
         'func': check_statement('libavcodec/vdpau.h',
                                 'av_vdpau_alloc_context()',
                                 use='libav'),

@@ -194,18 +194,18 @@ const m_option_t mp_opts[] = {
     OPT_CHOICE("index", index_mode, 0, ({"default", 1}, {"recreate", 0})),
 
     // select audio/video/subtitle stream
-    OPT_TRACKCHOICE("aid", audio_id),
-    OPT_TRACKCHOICE("vid", video_id),
-    OPT_TRACKCHOICE("sid", sub_id),
-    OPT_TRACKCHOICE("secondary-sid", sub2_id),
-    OPT_TRACKCHOICE("ff-aid", audio_id_ff),
-    OPT_TRACKCHOICE("ff-vid", video_id_ff),
-    OPT_TRACKCHOICE("ff-sid", sub_id_ff),
-    OPT_FLAG_STORE("no-sub", sub_id, 0, -2),
-    OPT_FLAG_STORE("no-video", video_id, 0, -2),
-    OPT_FLAG_STORE("no-audio", audio_id, 0, -2),
-    OPT_STRINGLIST("alang", audio_lang, 0),
-    OPT_STRINGLIST("slang", sub_lang, 0),
+    OPT_TRACKCHOICE("aid", stream_id[0][STREAM_AUDIO]),
+    OPT_TRACKCHOICE("vid", stream_id[0][STREAM_VIDEO]),
+    OPT_TRACKCHOICE("sid", stream_id[0][STREAM_SUB]),
+    OPT_TRACKCHOICE("secondary-sid", stream_id[1][STREAM_SUB]),
+    OPT_TRACKCHOICE("ff-aid", stream_id_ff[STREAM_AUDIO]),
+    OPT_TRACKCHOICE("ff-vid", stream_id_ff[STREAM_VIDEO]),
+    OPT_TRACKCHOICE("ff-sid", stream_id_ff[STREAM_SUB]),
+    OPT_FLAG_STORE("no-sub", stream_id[0][STREAM_SUB], 0, -2),
+    OPT_FLAG_STORE("no-video", stream_id[0][STREAM_VIDEO], 0, -2),
+    OPT_FLAG_STORE("no-audio", stream_id[0][STREAM_AUDIO], 0, -2),
+    OPT_STRINGLIST("alang", stream_lang[STREAM_AUDIO], 0),
+    OPT_STRINGLIST("slang", stream_lang[STREAM_SUB], 0),
 
     OPT_CHOICE("audio-display", audio_display, 0,
                ({"no", 0}, {"attachment", 1})),
@@ -278,6 +278,8 @@ const m_option_t mp_opts[] = {
 
     OPT_STRING("ad", audio_decoders, 0),
     OPT_STRING("vd", video_decoders, 0),
+
+    OPT_STRING("audio-spdif", audio_spdif, 0),
 
     OPT_FLAG("ad-spdif-dtshd", dtshd, 0),
 
@@ -379,8 +381,8 @@ const m_option_t mp_opts[] = {
                ({"no", SOFTVOL_NO},
                 {"yes", SOFTVOL_YES},
                 {"auto", SOFTVOL_AUTO})),
-    OPT_FLOATRANGE("softvol-max", softvol_max, 0, 10, 10000),
-    OPT_FLOATRANGE("volume", mixer_init_volume, 0, -1, 100),
+    OPT_FLOATRANGE("softvol-max", softvol_max, 0, 100, 1000),
+    OPT_FLOATRANGE("volume", mixer_init_volume, 0, -1, 1000),
     OPT_CHOICE("mute", mixer_init_mute, 0,
                ({"auto", -1},
                 {"no", 0},
@@ -402,7 +404,7 @@ const m_option_t mp_opts[] = {
     // vo name (X classname) and window title strings
     OPT_STRING("x11-name", vo.winname, 0),
     OPT_STRING("title", wintitle, 0),
-    OPT_STRING("media-title", media_title, 0),
+    OPT_STRING("force-media-title", media_title, 0),
     // set aspect ratio of monitor - useful for 16:9 TV-out
     OPT_FLOATRANGE("monitoraspect", vo.force_monitor_aspect, 0, 0.0, 9.0),
     OPT_FLOATRANGE("monitorpixelaspect", vo.monitor_pixel_aspect, 0, 0.2, 9.0),
@@ -477,7 +479,7 @@ const m_option_t mp_opts[] = {
 
     OPT_CHOICE_OR_INT("loop", loop_times, 0, 1, 10000,
                       ({"no", 1},
-                       {"inf", -1},
+                       {"inf", -1}, {"yes", -1},
                        {"force", -2})),
     OPT_CHOICE_OR_INT("loop-file", loop_file, 0, 0, 10000,
                       ({"no", 0},
@@ -555,8 +557,6 @@ const m_option_t mp_opts[] = {
     OPT_SUBSTRUCT("", encode_opts, encode_config, 0),
 #endif
 
-    OPT_FLAG("slave-broken", slave_mode, CONF_GLOBAL),
-
     OPT_REMOVED("a52drc", "use --ad-lavc-ac3drc=level"),
     OPT_REMOVED("afm", "use --ad=..."),
     OPT_REPLACED("aspect", "video-aspect"),
@@ -632,6 +632,7 @@ const m_option_t mp_opts[] = {
     OPT_REPLACED("mkv-subtitle-preroll", "demuxer-mkv-subtitle-preroll"),
     OPT_REPLACED("dtshd", "ad-spdif-dtshd"),
     OPT_REPLACED("ass-use-margins", "sub-use-margins"),
+    OPT_REPLACED("media-title", "force-media-title"),
 
     {0}
 };
@@ -644,7 +645,7 @@ const struct MPOpts mp_default_opts = {
     .video_decoders = NULL,
     .deinterlace = -1,
     .softvol = SOFTVOL_AUTO,
-    .softvol_max = 200,
+    .softvol_max = 130,
     .mixer_init_volume = -1,
     .mixer_init_mute = -1,
     .gapless_audio = -1,
@@ -729,13 +730,15 @@ const struct MPOpts mp_default_opts = {
     .consolecontrols = 1,
     .play_frames = -1,
     .keep_open = 0,
-    .audio_id = -1,
-    .video_id = -1,
-    .sub_id = -1,
-    .audio_id_ff = -1,
-    .video_id_ff = -1,
-    .sub_id_ff = -1,
-    .sub2_id = -2,
+    .stream_id = { { [STREAM_AUDIO] = -1,
+                     [STREAM_VIDEO] = -1,
+                     [STREAM_SUB] = -1, },
+                   { [STREAM_AUDIO] = -2,
+                     [STREAM_VIDEO] = -2,
+                     [STREAM_SUB] = -2, }, },
+    .stream_id_ff = { [STREAM_AUDIO] = -1,
+                      [STREAM_VIDEO] = -1,
+                      [STREAM_SUB] = -1, },
     .audio_display = 1,
     .sub_visibility = 1,
     .sub_pos = 100,

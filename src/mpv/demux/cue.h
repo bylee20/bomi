@@ -1,6 +1,4 @@
 /*
- * Cocoa Application Event Handling
- *
  * This file is part of mpv.
  *
  * mpv is free software; you can redistribute it and/or modify
@@ -17,27 +15,27 @@
  * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#import <Cocoa/Cocoa.h>
-#import "ar/HIDRemote.h"
-#include "osdep/macosx_events.h"
+#ifndef MP_CUE_H_
+#define MP_CUE_H_
 
-struct input_ctx;
+#include <stdbool.h>
 
-@interface EventsResponder : NSObject <HIDRemoteDelegate>
+#include "misc/bstr.h"
 
-+ (EventsResponder *)sharedInstance;
+struct cue_file {
+    struct cue_track *tracks;
+    int num_tracks;
+};
 
-- (void)setInputContext:(struct input_ctx *)ctx;
+struct cue_track {
+    double pregap_start;        // corresponds to INDEX 00
+    double start;               // corresponds to INDEX 01
+    struct bstr filename;
+    int source;
+    struct bstr title;
+};
 
-/// Blocks until inputContext is present.
-- (void)waitForInputContext;
+bool mp_probe_cue(struct bstr data);
+struct cue_file *mp_parse_cue(struct bstr data);
 
-- (void)wakeup;
-
-- (bool)queueCommand:(char *)cmd;
-
-- (void)putKey:(int)keycode;
-
-- (void)handleFilesArray:(NSArray *)files;
-
-@end
+#endif

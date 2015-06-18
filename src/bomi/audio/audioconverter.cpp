@@ -24,8 +24,6 @@ auto AudioConverter::setFormat(const AudioBufferFormat &format) -> void
         return;
     m_convert = [=] () -> Convert {
         switch (format.type()) {
-        case AF_FORMAT_S8:
-            return convert<char>;
         case AF_FORMAT_S16:
         case AF_FORMAT_S16P:
             return convert<qint16>;

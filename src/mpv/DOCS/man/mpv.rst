@@ -116,7 +116,7 @@ o (also P)
     Show progression bar, elapsed time and total duration on the OSD.
 
 O
-    Toggle OSD states: none / seek / seek + timer / seek + timer + total time.
+    Toggle OSD states between normal and playback time/duration.
 
 d
     Toggle frame dropping states: none / skip display / skip decoding (see
@@ -280,7 +280,7 @@ spaces or characters like ``,`` or ``:``, you need to quote them:
     ``mpv '--vo=opengl:icc-profile="file with spaces.icc",xv'``
 
 Shells may actually strip some quotes from the string passed to the commandline,
-so the example quotes the string twice, ensuring that mpv recieves the ``"``
+so the example quotes the string twice, ensuring that mpv receives the ``"``
 quotes.
 
 The ``[...]`` form of quotes wraps everything between ``[`` and ``]``. It's
@@ -807,6 +807,7 @@ If errors happen, the following exit codes can be returned:
         immediately after initialization.
     :3: There were some files that could be played, and some files which
         couldn't (using the definition of success from above).
+    :4: The ``quit`` command was issued (default exit code).
 
 Note that quitting the player manually will always lead to exit code 0,
 overriding the exit code that would be returned normally. Also, the ``quit``

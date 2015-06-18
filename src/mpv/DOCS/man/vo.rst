@@ -69,6 +69,12 @@ Available video output drivers are:
     ``no-colorkey``
         Disables color-keying.
 
+    ``buffers=<number>``
+        Number of image buffers to use for the internal ringbuffer (default: 2).
+        Increasing this will use more memory, but might help with the X server
+        not responding quickly enough if video FPS is close to or higher than
+        the display refresh rate.
+
 ``x11`` (X11 only)
     Shared memory video output driver without hardware acceleration that works
     whenever X11 is present.
@@ -336,6 +342,9 @@ Available video output drivers are:
             exchange for adding some blur. This filter is good at temporal
             interpolation, and also known as "smoothmotion" (see ``tscale``).
 
+        ``custom``
+            A user-defined custom shader (see ``scale-shader``).
+
         There are some more filters, but most are not as useful. For a complete
         list, pass ``help`` as value, e.g.::
 
@@ -506,10 +515,8 @@ Available video output drivers are:
         See the corresponding options for ``scale``.
 
     ``linear-scaling``
-        Scale in linear light. This is automatically enabled if
-        ``target-prim``, ``target-trc``, ``icc-profile`` or
-        ``sigmoid-upscaling`` is set. It should only be used with a
-        ``fbo-format`` that has at least 16 bit precision.
+        Scale in linear light. It should only be used with a ``fbo-format``
+        that has at least 16 bit precision.
 
     ``fancy-downscaling``
         When using convolution based filters, extend the filter size
@@ -519,9 +526,73 @@ Available video output drivers are:
         feature doesn't work correctly with different scale factors in
         different directions.
 
+    ``source-shader=<file>``, ``scale-shader=<file>``, ``pre-shaders=<files>``, ``post-shaders=<files>``
+        Custom GLSL fragment shaders.
+
+        source-shader
+            This gets applied directly onto the source planes, before
+            any sort of upscaling or conversion whatsoever. For YCbCr content,
+            this means it gets applied on the luma and chroma planes
+            separately. In general, this shader shouldn't be making any
+            assumptions about the colorspace. It could be RGB, YCbCr, XYZ or
+            something else entirely. It's used purely for fixing numerical
+            quirks of the input, eg. debanding or deblocking.
+        pre-shaders (list)
+            These get applied after conversion to RGB and before linearization
+            and upscaling. Operates on non-linear RGB (same as input). This is
+            the best place to put things like sharpen filters.
+        scale-shader
+            This gets used instead of scale/cscale when those options are set
+            to ``custom``. The colorspace it operates on depends on the values
+            of ``linear-scaling`` and ``sigmoid-upscaling``, so no assumptions
+            should be made here.
+        post-shaders (list)
+            These get applied after upscaling and subtitle blending (when
+            ``blend-subtitles`` is enabled), but before color management.
+            Operates on linear RGB if ``linear-scaling`` is in effect,
+            otherwise non-linear RGB. This is the best place for colorspace
+            transformations (eg. saturation mapping).
+
+        These files must define a function with the following signature::
+
+            vec4 sample(sampler2D tex, vec2 pos, vec2 tex_size)
+
+        The meanings of the parameters are as follows:
+
+        sampler2D tex
+            The source texture for the shader.
+        vec2 pos
+            The position to be sampled, in coordinate space [0-1].
+        vec2 tex_size
+            The size of the texture, in pixels. This may differ from image_size,
+            eg. for subsampled content or for post-shaders.
+
+        In addition to these parameters, the following uniforms are also
+        globally available:
+
+        float random
+            A random number in the range [0-1], different per frame.
+        int frame
+            A simple count of frames rendered, increases by one per frame and
+            never resets (regardless of seeks).
+        vec2 image_size
+            The size in pixels of the input image.
+        float cmul (source-shader only)
+            The multiplier needed to pull colors up to the right bit depth. The
+            source-shader must multiply any sampled colors by this, in order
+            to normalize them to the full scale.
+
+        For example, a shader that inverts the colors could look like this::
+
+            vec4 sample(sampler2D tex, vec2 pos, vec2 tex_size)
+            {
+                vec4 color = texture(tex, pos);
+                return vec4(1.0 - color.rgb, color.a);
+            }
+
     ``sigmoid-upscaling``
         When upscaling, use a sigmoidal color transform to avoid emphasizing
-        ringing artifacts. This also enables ``linear-scaling``.
+        ringing artifacts. This also implies ``linear-scaling``.
 
     ``sigmoid-center``
         The center of the sigmoid curve used for ``sigmoid-upscaling``, must
@@ -530,10 +601,6 @@ Available video output drivers are:
     ``sigmoid-slope``
         The slope of the sigmoid curve used for ``sigmoid-upscaling``, must
         be a float between 1.0 and 20.0. Defaults to 6.5 if not specified.
-
-    ``no-npot``
-        Force use of power-of-2 texture sizes. For debugging only.
-        Borders will be distorted due to filtering.
 
     ``glfinish``
         Call ``glFinish()`` before and after swapping buffers (default: disabled).
@@ -663,8 +730,7 @@ Available video output drivers are:
     ``icc-profile=<file>``
         Load an ICC profile and use it to transform linear RGB to screen output.
         Needs LittleCMS 2 support compiled in. This option overrides the
-        ``target-prim`` and ``target-trc`` options. It also enables
-        ``linear-scaling``.
+        ``target-prim``, ``target-trc`` and ``icc-profile-auto`` options.
 
     ``icc-profile-auto``
         Automatically select the ICC display profile currently specified by
@@ -703,8 +769,8 @@ Available video output drivers are:
         Blend subtitles directly onto upscaled video frames, before
         interpolation and/or color management (default: no). Enabling this
         causes subtitles to be affected by ``icc-profile``, ``target-prim``,
-        ``target-trc``, ``interpolation``, ``gamma`` and ``linear-scaling``.
-        It also increases subtitle performance when using ``interpolation``.
+        ``target-trc``, ``interpolation``, ``gamma`` and ``post-shader``. It
+        also increases subtitle performance when using ``interpolation``.
 
         The downside of enabling this is that it restricts subtitles to the
         visible portion of the video, so you can't have subtitles exist in the
@@ -821,6 +887,12 @@ Available video output drivers are:
 
 ``null``
     Produces no video output. Useful for benchmarking.
+
+    Usually, it's better to disable video with ``--no-video`` instead.
+
+    ``fps=<value>``
+        Simulate display FPS. This artificially limits how many frames the
+        VO accepts per second.
 
 ``caca``
     Color ASCII art video output driver that works on a text console.
@@ -941,3 +1013,7 @@ Available video output drivers are:
     ``devpath=<filename>``
         Path to graphic card device.
         (default: /dev/dri/card0)
+
+    ``mode=<number>``
+        Mode ID to use (resolution, bit depth and frame rate).
+        (default: 0)

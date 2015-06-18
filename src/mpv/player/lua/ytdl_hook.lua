@@ -144,7 +144,7 @@ mp.add_hook("on_load", 10, function ()
             -- direct URL, nothing to do
             msg.verbose("Got direct URL")
             return
-        elseif not (json["_type"] == nil) and (json["_type"] == "playlist") then
+        elseif not (json["_type"] == nil) and ((json["_type"] == "playlist") or (json["_type"] == "multi_video")) then
             -- a playlist
 
             if (#json.entries == 0) then
@@ -176,7 +176,7 @@ mp.add_hook("on_load", 10, function ()
 
                 mp.set_property("stream-open-filename", playlist)
                 if not (json.title == nil) then
-                    mp.set_property("file-local-options/media-title", json.title)
+                    mp.set_property("file-local-options/force-media-title", json.title)
                 end
 
             else
@@ -234,7 +234,7 @@ mp.add_hook("on_load", 10, function ()
 
             mp.set_property("stream-open-filename", streamurl)
 
-            mp.set_property("file-local-options/media-title", json.title)
+            mp.set_property("file-local-options/force-media-title", json.title)
 
             -- add subtitles
             if not (json.requested_subtitles == nil) then

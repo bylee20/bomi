@@ -65,7 +65,6 @@ enum mp_command_type {
     MP_CMD_SUB_REMOVE,
     MP_CMD_SUB_RELOAD,
     MP_CMD_SET,
-    MP_CMD_GET_PROPERTY,
     MP_CMD_PRINT_TEXT,
     MP_CMD_SHOW_TEXT,
     MP_CMD_SHOW_PROGRESS,
@@ -88,6 +87,9 @@ enum mp_command_type {
     MP_CMD_DROP_BUFFERS,
 
     MP_CMD_MOUSE,
+    MP_CMD_KEYPRESS,
+    MP_CMD_KEYDOWN,
+    MP_CMD_KEYUP,
 
     /// Audio Filter commands
     MP_CMD_AF,

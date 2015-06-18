@@ -37,8 +37,10 @@ struct mp_audio {
     int num_planes;     // number of planes
     int bps;            // size of sub-samples (af_fmt2bps(format))
 
-    // private
-    bool readonly;
+    // --- private
+    // These do not necessarily map directly to planes[]. They can have
+    // different order or count. There shouldn't be more buffers than planes.
+    // If allocated[n] is NULL, allocated[n+1] must also be NULL.
     struct AVBufferRef *allocated[MP_NUM_CHANNELS];
 };
 

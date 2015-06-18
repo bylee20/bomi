@@ -15,6 +15,8 @@
  * with mpv.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
+
 #include <va/va.h>
 #include <va/va_vpp.h>
 
@@ -35,9 +37,15 @@ static bool check_error(struct vf_instance *vf, VAStatus status, const char *msg
 
 struct surface_refs {
     VASurfaceID *surfaces;
-    int num_allocated;
-    int num_required;
+    int num_surfaces;
 };
+
+static void add_surface(void *ta_ctx, struct surface_refs *refs, struct mp_image *s)
+{
+    VASurfaceID id = va_surface_id(s);
+    if (id != VA_INVALID_ID)
+        MP_TARRAY_APPEND(ta_ctx, refs->surfaces, refs->num_surfaces, id);
+}
 
 struct pipeline {
     VABufferID *filters;
@@ -49,7 +57,6 @@ struct pipeline {
 };
 
 struct vf_priv_s {
-    double prev_pts;
     int deint_type; // 0: none, 1: discard, 2: double fps
     bool do_deint;
     VABufferID buffers[VAProcFilterCount];
@@ -62,10 +69,20 @@ struct vf_priv_s {
     struct pipeline pipe;
     struct mp_image_pool *pool;
     int current_rt_format;
+
+    int needed_future_frames;
+    int needed_past_frames;
+
+    // Queue of input frames, used to determine past/current/future frames.
+    // queue[0] is the newest frame, queue[num_queue - 1] the oldest.
+    struct mp_image **queue;
+    int num_queue;
+    // queue[current_pos] is the current frame, unless current_pos is not a
+    // valid index.
+    int current_pos;
 };
 
 static const struct vf_priv_s vf_priv_default = {
-    .prev_pts = MP_NOPTS_VALUE,
     .config = VA_INVALID_ID,
     .context = VA_INVALID_ID,
     .deint_type = 2,
@@ -81,13 +98,13 @@ static const int deint_algorithm[] = {
     [5] = VAProcDeinterlacingMotionCompensated,
 };
 
-static inline void realloc_refs(struct surface_refs *refs, int num)
+static void flush_frames(struct vf_instance *vf)
 {
-    if (refs->num_allocated < num) {
-        refs->surfaces = realloc(refs->surfaces, sizeof(VASurfaceID)*num);
-        refs->num_allocated = num;
-    }
-    refs->num_required = num;
+    struct vf_priv_s *p = vf->priv;
+    for (int n = 0; n < p->num_queue; n++)
+        talloc_free(p->queue[n]);
+    p->num_queue = 0;
+    p->current_pos = -1;
 }
 
 static bool update_pipeline(struct vf_instance *vf, bool deint)
@@ -96,12 +113,12 @@ static bool update_pipeline(struct vf_instance *vf, bool deint)
     VABufferID *filters = p->buffers;
     int num_filters = p->num_buffers;
     if (p->deint_type && !deint) {
-        ++filters;
-        --num_filters;
+        filters++;
+        num_filters--;
     }
     if (filters == p->pipe.filters && num_filters == p->pipe.num_filters)
         return true;
-    p->pipe.forward.num_required = p->pipe.backward.num_required = 0;
+    p->pipe.forward.num_surfaces = p->pipe.backward.num_surfaces = 0;
     p->pipe.num_input_colors = p->pipe.num_output_colors = 0;
     p->pipe.num_filters = 0;
     p->pipe.filters = NULL;
@@ -120,13 +137,13 @@ static bool update_pipeline(struct vf_instance *vf, bool deint)
     p->pipe.num_filters = num_filters;
     p->pipe.num_input_colors = caps.num_input_color_standards;
     p->pipe.num_output_colors = caps.num_output_color_standards;
-    realloc_refs(&p->pipe.forward, caps.num_forward_references);
-    realloc_refs(&p->pipe.backward, caps.num_backward_references);
+    p->needed_future_frames = caps.num_forward_references;
+    p->needed_past_frames = caps.num_backward_references;
     return true;
 }
 
 static inline int get_deint_field(struct vf_priv_s *p, int i,
-                                  const struct mp_image *mpi)
+                                  struct mp_image *mpi)
 {
     if (!p->do_deint || !(mpi->fields & MP_IMGFIELD_INTERLACED))
         return VA_FRAME_PICTURE;
@@ -140,88 +157,123 @@ static struct mp_image *render(struct vf_instance *vf, struct mp_image *in,
     VASurfaceID in_id = va_surface_id(in);
     if (!p->pipe.filters || in_id == VA_INVALID_ID)
         return NULL;
+
     struct mp_image *img = mp_image_pool_get(p->pool, IMGFMT_VAAPI, in->w, in->h);
     if (!img)
         return NULL;
-    enum {Begun = 1, Rendered = 2};
-    int state = 0;
-    do { // not a loop, just for break
-        VASurfaceID id = va_surface_id(img);
-        if (id == VA_INVALID_ID)
-            break;
-        VAStatus status = vaBeginPicture(p->display, p->context, id);
-        if (!check_error(vf, status, "vaBeginPicture()"))
-            break;
-        state |= Begun;
-        VABufferID buffer = VA_INVALID_ID;
-        VAProcPipelineParameterBuffer *param = NULL;
-        status = vaCreateBuffer(p->display, p->context,
-                                VAProcPipelineParameterBufferType,
-                                sizeof(*param), 1, NULL, &buffer);
-        if (!check_error(vf, status, "vaCreateBuffer()"))
-            break;
-        status = vaMapBuffer(p->display, buffer, (void**)&param);
-        if (!check_error(vf, status, "vaMapBuffer()"))
-            break;
 
-        VAProcFilterParameterBufferDeinterlacing *filter_params;
-        status = vaMapBuffer(p->display, *(p->pipe.filters), (void**)&filter_params);
-        if (!check_error(vf, status, "vaMapBuffer()"))
-            break;
-        filter_params->flags = flags & VA_TOP_FIELD ? 0 : VA_DEINTERLACING_BOTTOM_FIELD;
-        vaUnmapBuffer(p->display, *(p->pipe.filters));
+    bool need_end_picture = false;
+    bool success = false;
 
-        param->surface = in_id;
-        param->surface_region = NULL;
-        param->output_region = NULL;
-        param->output_background_color = 0;
-        param->filter_flags = flags;
-        param->filters = p->pipe.filters;
-        param->num_filters = p->pipe.num_filters;
-        vaUnmapBuffer(p->display, buffer);
-        param->forward_references = p->pipe.forward.surfaces;
-        param->backward_references = p->pipe.backward.surfaces;
-        param->num_forward_references = p->pipe.forward.num_required;
-        param->num_backward_references = p->pipe.backward.num_required;
-        status = vaRenderPicture(p->display, p->context, &buffer, 1);
-        if (!check_error(vf, status, "vaRenderPicture()"))
-            break;
-        state |= Rendered;
-    } while (false);
-    if (state & Begun)
+    VASurfaceID id = va_surface_id(img);
+    if (id == VA_INVALID_ID)
+        goto cleanup;
+
+    VAStatus status = vaBeginPicture(p->display, p->context, id);
+    if (!check_error(vf, status, "vaBeginPicture()"))
+        goto cleanup;
+
+    need_end_picture = true;
+
+    VABufferID buffer = VA_INVALID_ID;
+    VAProcPipelineParameterBuffer *param = NULL;
+    status = vaCreateBuffer(p->display, p->context,
+                            VAProcPipelineParameterBufferType,
+                            sizeof(*param), 1, NULL, &buffer);
+    if (!check_error(vf, status, "vaCreateBuffer()"))
+        goto cleanup;
+
+    VAProcFilterParameterBufferDeinterlacing *filter_params;
+    status = vaMapBuffer(p->display, *(p->pipe.filters), (void**)&filter_params);
+    if (!check_error(vf, status, "vaMapBuffer()"))
+        goto cleanup;
+
+    filter_params->flags = flags & VA_TOP_FIELD ? 0 : VA_DEINTERLACING_BOTTOM_FIELD;
+    if (!(in->fields & MP_IMGFIELD_TOP_FIRST))
+        filter_params->flags |= VA_DEINTERLACING_BOTTOM_FIELD_FIRST;
+
+    vaUnmapBuffer(p->display, *(p->pipe.filters));
+
+    status = vaMapBuffer(p->display, buffer, (void**)&param);
+    if (!check_error(vf, status, "vaMapBuffer()"))
+        goto cleanup;
+
+    param->surface = in_id;
+    param->surface_region = NULL;
+    param->output_region = NULL;
+    param->output_background_color = 0;
+    param->filter_flags = flags;
+    param->filters = p->pipe.filters;
+    param->num_filters = p->pipe.num_filters;
+
+    for (int n = 0; n < p->needed_future_frames; n++) {
+        int idx = p->current_pos - 1 - n;
+        if (idx >= 0 && idx < p->num_queue)
+            add_surface(p, &p->pipe.forward, p->queue[idx]);
+    }
+    param->forward_references = p->pipe.forward.surfaces;
+    param->num_forward_references = p->pipe.forward.num_surfaces;
+
+    for (int n = 0; n < p->needed_past_frames; n++) {
+        int idx = p->current_pos + 1 + n;
+        if (idx >= 0 && idx < p->num_queue)
+            add_surface(p, &p->pipe.backward, p->queue[idx]);
+    }
+    param->backward_references = p->pipe.backward.surfaces;
+    param->num_backward_references = p->pipe.backward.num_surfaces;
+
+    vaUnmapBuffer(p->display, buffer);
+
+    status = vaRenderPicture(p->display, p->context, &buffer, 1);
+    if (!check_error(vf, status, "vaRenderPicture()"))
+        goto cleanup;
+
+    success = true;
+
+cleanup:
+    if (need_end_picture)
         vaEndPicture(p->display, p->context);
-    if (state & Rendered)
+    if (success)
         return img;
     talloc_free(img);
     return NULL;
 }
 
-// return value: the number of created images
-static int process(struct vf_instance *vf, struct mp_image *in,
-                   struct mp_image **out1, struct mp_image **out2)
+static void output_frames(struct vf_instance *vf)
 {
     struct vf_priv_s *p = vf->priv;
-    const bool deint = p->do_deint && p->deint_type > 0;
-    if (!update_pipeline(vf, deint) || !p->pipe.filters) // no filtering
-        return 0;
-    const unsigned int csp = va_get_colorspace_flag(p->params.colorspace);
-    const unsigned int field = get_deint_field(p, 0, in);
-    *out1 = render(vf, in, field | csp);
-    if (!*out1) // cannot render
-        return 0;
-    mp_image_copy_attributes(*out1, in);
+
+    struct mp_image *in = p->queue[p->current_pos];
+    double prev_pts = p->current_pos + 1 < p->num_queue
+        ? p->queue[p->current_pos + 1]->pts : MP_NOPTS_VALUE;
+
+    bool deint = p->do_deint && p->deint_type > 0;
+    if (!update_pipeline(vf, deint) || !p->pipe.filters) { // no filtering
+        vf_add_output_frame(vf, mp_image_new_ref(in));
+        return;
+    }
+    unsigned int csp = va_get_colorspace_flag(p->params.colorspace);
+    unsigned int field = get_deint_field(p, 0, in);
+    struct mp_image *out1 = render(vf, in, field | csp);
+    if (!out1) { // cannot render
+        vf_add_output_frame(vf, mp_image_new_ref(in));
+        return;
+    }
+    mp_image_copy_attributes(out1, in);
+    vf_add_output_frame(vf, out1);
     // first-field only
     if (field == VA_FRAME_PICTURE || (p->do_deint && p->deint_type < 2))
-        return 1;
-    const double add = (in->pts - p->prev_pts)*0.5;
-    if (p->prev_pts == MP_NOPTS_VALUE || add <= 0.0 || add > 0.5) // no pts, skip it
-        return 1;
-    *out2 = render(vf, in, get_deint_field(p, 1, in) | csp);
-    if (!*out2) // cannot render
-        return 1;
-    mp_image_copy_attributes(*out2, in);
-    (*out2)->pts = in->pts + add;
-    return 2;
+        return;
+    double add = (in->pts - prev_pts) * 0.5;
+    if (prev_pts == MP_NOPTS_VALUE || add <= 0.0 || add > 0.5) // no pts, skip it
+        return;
+    struct mp_image *out2 = render(vf, in, get_deint_field(p, 1, in) | csp);
+    if (!out2) // cannot render
+        return;
+    mp_image_copy_attributes(out2, in);
+    out2->pts = in->pts + add;
+    vf_add_output_frame(vf, out2);
+    return;
 }
 
 static struct mp_image *upload(struct vf_instance *vf, struct mp_image *in)
@@ -241,36 +293,46 @@ static struct mp_image *upload(struct vf_instance *vf, struct mp_image *in)
 static int filter_ext(struct vf_instance *vf, struct mp_image *in)
 {
     struct vf_priv_s *p = vf->priv;
-    if (!in)
-        return 0;
-    int rt_format = in->imgfmt == IMGFMT_VAAPI ? va_surface_rt_format(in)
-                                               : VA_RT_FORMAT_YUV420;
-    if (!p->pool || p->current_rt_format != rt_format) {
-        talloc_free(p->pool);
-        p->pool = mp_image_pool_new(20);
-        va_pool_set_allocator(p->pool, p->va, rt_format);
-        p->current_rt_format = rt_format;
-    }
-    if (in->imgfmt != IMGFMT_VAAPI) {
-        struct mp_image *tmp = upload(vf, in);
-        talloc_free(in);
-        in = tmp;
-        if (!in)
-            return -1;
+
+    if (in) {
+        int rt_format = in->imgfmt == IMGFMT_VAAPI ? va_surface_rt_format(in)
+                                                   : VA_RT_FORMAT_YUV420;
+        if (!p->pool || p->current_rt_format != rt_format) {
+            talloc_free(p->pool);
+            p->pool = mp_image_pool_new(20);
+            va_pool_set_allocator(p->pool, p->va, rt_format);
+            p->current_rt_format = rt_format;
+        }
+        if (in->imgfmt != IMGFMT_VAAPI) {
+            struct mp_image *tmp = upload(vf, in);
+            talloc_free(in);
+            in = tmp;
+            if (!in)
+                return -1;
+        }
     }
 
-    struct mp_image *out1, *out2;
-    const double pts = in->pts;
-    const int num = process(vf, in, &out1, &out2);
-    if (!num)
-        vf_add_output_frame(vf, in);
-    else {
-        vf_add_output_frame(vf, out1);
-        if (num > 1)
-            vf_add_output_frame(vf, out2);
-        talloc_free(in);
+    if (in) {
+        MP_TARRAY_INSERT_AT(p, p->queue, p->num_queue, 0, in);
+        p->current_pos++;
+        assert(p->num_queue != 1 || p->current_pos == 0);
     }
-    p->prev_pts = pts;
+
+    // Discard unneeded past frames.
+    // Note that we keep at least 1 past frame (for PTS calculations).
+    while (p->num_queue - (p->current_pos + 1) > MPMAX(p->needed_past_frames, 1)) {
+        assert(p->num_queue > 0);
+        talloc_free(p->queue[p->num_queue - 1]);
+        p->num_queue--;
+    }
+
+    if (p->current_pos < p->needed_future_frames && in)
+        return 0; // wait until future frames have been filled
+
+    if (p->current_pos >= 0 && p->current_pos < p->num_queue) {
+        output_frames(vf);
+        p->current_pos--;
+    }
     return 0;
 }
 
@@ -279,25 +341,24 @@ static int reconfig(struct vf_instance *vf, struct mp_image_params *in,
 {
     struct vf_priv_s *p = vf->priv;
 
-    p->prev_pts = MP_NOPTS_VALUE;
     p->params = *in;
     *out = *in;
     out->imgfmt = IMGFMT_VAAPI;
+    flush_frames(vf);
     return 0;
 }
 
 static void uninit(struct vf_instance *vf)
 {
     struct vf_priv_s *p = vf->priv;
-    for (int i=0; i<p->num_buffers; ++i)
+    for (int i = 0; i < p->num_buffers; i++)
         vaDestroyBuffer(p->display, p->buffers[i]);
     if (p->context != VA_INVALID_ID)
         vaDestroyContext(p->display, p->context);
     if (p->config != VA_INVALID_ID)
         vaDestroyConfig(p->display, p->config);
-    free(p->pipe.forward.surfaces);
-    free(p->pipe.backward.surfaces);
     talloc_free(p->pool);
+    flush_frames(vf);
 }
 
 static int query_format(struct vf_instance *vf, unsigned int imgfmt)
@@ -317,6 +378,9 @@ static int control(struct vf_instance *vf, int request, void* data)
         return true;
     case VFCTRL_SET_DEINTERLACE:
         p->do_deint = *(int*)data;
+        return true;
+    case VFCTRL_SEEK_RESET:
+        flush_frames(vf);
         return true;
     default:
         return CONTROL_UNKNOWN;
@@ -368,9 +432,9 @@ static bool initialize(struct vf_instance *vf)
         return false;
 
     VABufferID buffers[VAProcFilterCount];
-    for (int i=0; i<VAProcFilterCount; ++i)
+    for (int i = 0; i < VAProcFilterCount; i++)
         buffers[i] = VA_INVALID_ID;
-    for (int i=0; i<num_filters; ++i) {
+    for (int i = 0; i < num_filters; i++) {
         if (filters[i] == VAProcFilterDeinterlacing) {
             if (p->deint_type < 2)
                 continue;

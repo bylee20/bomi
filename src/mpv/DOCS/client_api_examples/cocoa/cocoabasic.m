@@ -1,9 +1,7 @@
-// Plays a video from the command line in a window provided by mpv.
-// You likely want to play the video in your own window instead,
-// but that's not quite ready yet.
-// You may need a basic Info.plist and MainMenu.xib to make this work.
+// Plays a video from the command line in a view provided by the client
+// application.
 
-// Build with: clang -o cocoabasic cocoabasic.m `pkg-config --libs --cflags mpv`
+// Build with: clang -o cocoabasic cocoabasic.m `pkg-config --libs --cflags mpv` -framework cocoa
 
 #include <mpv/client.h>
 
@@ -207,5 +205,5 @@ int main(int argc, const char * argv[]) {
         app.delegate = delegate;
         [app run];
     }
-    return EXIT_SUCCESS;
+    return 0;
 }

@@ -84,7 +84,7 @@ struct vdpctx {
 
     struct mp_image                   *current_image;
 
-    int                                output_surface_width, output_surface_height;
+    int                                output_surface_w, output_surface_h;
 
     int                                force_yuv;
     struct mp_vdpau_mixer             *video_mixer;
@@ -115,7 +115,6 @@ struct vdpctx {
     uint64_t                           dropped_time;
     uint32_t                           vid_width, vid_height;
     uint32_t                           image_format;
-    VdpChromaType                      vdp_chroma_type;
     VdpYCbCrFormat                     vdp_pixel_format;
     bool                               rgb_mode;
 
@@ -215,11 +214,11 @@ static void forget_frames(struct vo *vo, bool seek_reset)
     vc->dropped_frame = false;
 }
 
-static int s_size(int s, int disp)
+static int s_size(int max, int s, int disp)
 {
     disp = MPMAX(1, disp);
     s += s / 2;
-    return s >= disp ? s : disp;
+    return MPMIN(max, s >= disp ? s : disp);
 }
 
 static void resize(struct vo *vo)
@@ -239,15 +238,22 @@ static void resize(struct vo *vo)
     vc->src_rect_vid.y0 = src_rect.y0;
     vc->src_rect_vid.y1 = src_rect.y1;
 
+    VdpBool ok;
+    uint32_t max_w, max_h;
+    vdp_st = vdp->output_surface_query_capabilities(vc->vdp_device,
+                                                    OUTPUT_RGBA_FORMAT,
+                                                    &ok, &max_w, &max_h);
+    if (vdp_st != VDP_STATUS_OK || !ok)
+        return;
+
     vc->flip_offset_us = vo->opts->fullscreen ?
                          1000LL * vc->flip_offset_fs :
                          1000LL * vc->flip_offset_window;
     vo_set_flip_queue_params(vo, vc->flip_offset_us, false);
 
-    if (vc->output_surface_width < vo->dwidth
-        || vc->output_surface_height < vo->dheight) {
-        vc->output_surface_width = s_size(vc->output_surface_width, vo->dwidth);
-        vc->output_surface_height = s_size(vc->output_surface_height, vo->dheight);
+    if (vc->output_surface_w < vo->dwidth || vc->output_surface_h < vo->dheight) {
+        vc->output_surface_w = s_size(max_w, vc->output_surface_w, vo->dwidth);
+        vc->output_surface_h = s_size(max_h, vc->output_surface_h, vo->dheight);
         // Creation of output_surfaces
         for (int i = 0; i < vc->num_output_surfaces; i++)
             if (vc->output_surfaces[i] != VDP_INVALID_HANDLE) {
@@ -258,8 +264,8 @@ static void resize(struct vo *vo)
         for (int i = 0; i < vc->num_output_surfaces; i++) {
             vdp_st = vdp->output_surface_create(vc->vdp_device,
                                                 OUTPUT_RGBA_FORMAT,
-                                                vc->output_surface_width,
-                                                vc->output_surface_height,
+                                                vc->output_surface_w,
+                                                vc->output_surface_h,
                                                 &vc->output_surfaces[i]);
             CHECK_VDP_WARNING(vo, "Error when calling vdp_output_surface_create");
             MP_DBG(vo, "vdpau out create: %u\n",
@@ -339,10 +345,8 @@ static int initialize_vdpau_objects(struct vo *vo)
     struct vdp_functions *vdp = vc->vdp;
     VdpStatus vdp_st;
 
-    mp_vdpau_get_format(vc->image_format, &vc->vdp_chroma_type,
-                        &vc->vdp_pixel_format);
+    mp_vdpau_get_format(vc->image_format, NULL, &vc->vdp_pixel_format);
 
-    vc->video_mixer->chroma_type = vc->vdp_chroma_type;
     vc->video_mixer->initialized = false;
 
     if (win_x11_init_vdpau_flip_queue(vo) < 0)
@@ -384,7 +388,7 @@ static void mark_vdpau_objects_uninitialized(struct vo *vo)
             .surface = VDP_INVALID_HANDLE,
         };
     }
-    vc->output_surface_width = vc->output_surface_height = -1;
+    vc->output_surface_w = vc->output_surface_h = -1;
 }
 
 static bool check_preemption(struct vo *vo)
@@ -415,9 +419,28 @@ static bool status_ok(struct vo *vo)
 static int reconfig(struct vo *vo, struct mp_image_params *params, int flags)
 {
     struct vdpctx *vc = vo->priv;
+    struct vdp_functions *vdp = vc->vdp;
+    VdpStatus vdp_st;
 
     if (!check_preemption(vo))
         return -1;
+
+    VdpChromaType chroma_type = VDP_CHROMA_TYPE_420;
+    mp_vdpau_get_format(params->imgfmt, &chroma_type, NULL);
+
+    VdpBool ok;
+    uint32_t max_w, max_h;
+    vdp_st = vdp->video_surface_query_capabilities(vc->vdp_device, chroma_type,
+                                                   &ok, &max_w, &max_h);
+    CHECK_VDP_ERROR(vo, "Error when calling vdp_video_surface_query_capabilities");
+
+    if (!ok)
+        return -1;
+    if (params->w > max_w || params->h > max_h) {
+        if (ok)
+            MP_ERR(vo, "Video too large for vdpau.\n");
+        return -1;
+    }
 
     vc->image_format = params->imgfmt;
     vc->vid_width    = params->w;
@@ -819,8 +842,7 @@ static void draw_image(struct vo *vo, struct mp_image *mpi)
 // warning: the size and pixel format of surface must match that of the
 //          surfaces in vc->output_surfaces
 static struct mp_image *read_output_surface(struct vo *vo,
-                                            VdpOutputSurface surface,
-                                            int width, int height)
+                                            VdpOutputSurface surface)
 {
     struct vdpctx *vc = vo->priv;
     VdpStatus vdp_st;
@@ -828,7 +850,15 @@ static struct mp_image *read_output_surface(struct vo *vo,
     if (!vo->params)
         return NULL;
 
-    struct mp_image *image = mp_image_alloc(IMGFMT_BGR0, width, height);
+    VdpRGBAFormat fmt;
+    uint32_t w, h;
+    vdp_st = vdp->output_surface_get_parameters(surface, &fmt, &w, &h);
+    if (vdp_st != VDP_STATUS_OK)
+        return NULL;
+
+    assert(fmt == OUTPUT_RGBA_FORMAT);
+
+    struct mp_image *image = mp_image_alloc(IMGFMT_BGR0, w, h);
     if (!image)
         return NULL;
 
@@ -850,10 +880,9 @@ static struct mp_image *get_window_screenshot(struct vo *vo)
     struct vdpctx *vc = vo->priv;
     int last_surface = WRAP_ADD(vc->surface_num, -1, vc->num_output_surfaces);
     VdpOutputSurface screen = vc->output_surfaces[last_surface];
-    struct mp_image *image = read_output_surface(vo, screen,
-                                                 vc->output_surface_width,
-                                                 vc->output_surface_height);
-    mp_image_set_size(image, vo->dwidth, vo->dheight);
+    struct mp_image *image = read_output_surface(vo, screen);
+    if (image && image->w >= vo->dwidth && image->h >= vo->dheight)
+        mp_image_set_size(image, vo->dwidth, vo->dheight);
     return image;
 }
 

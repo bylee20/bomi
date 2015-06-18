@@ -37,6 +37,7 @@
 #include "osdep/io.h"
 #include "osdep/threads.h"
 #include "osdep/w32_keyboard.h"
+#include "osdep/atomics.h"
 #include "misc/dispatch.h"
 #include "misc/rendezvous.h"
 #include "talloc.h"
@@ -111,7 +112,7 @@ struct vo_w32_state {
 
 typedef struct tagDropTarget {
     IDropTarget iface;
-    ULONG refCnt;
+    atomic_int refCnt;
     DWORD lastEffect;
     IDataObject* dataObj;
     struct vo_w32_state *w32;
@@ -148,13 +149,13 @@ static HRESULT STDMETHODCALLTYPE DropTarget_QueryInterface(IDropTarget* This,
 static ULONG STDMETHODCALLTYPE DropTarget_AddRef(IDropTarget* This)
 {
     DropTarget* t = (DropTarget*)This;
-    return ++(t->refCnt);
+    return atomic_fetch_add(&t->refCnt, 1) + 1;
 }
 
 static ULONG STDMETHODCALLTYPE DropTarget_Release(IDropTarget* This)
 {
     DropTarget* t = (DropTarget*)This;
-    ULONG cRef = --(t->refCnt);
+    ULONG cRef = atomic_fetch_add(&t->refCnt, -1) - 1;
 
     if (cRef == 0) {
         DropTarget_Destroy(t);
@@ -295,7 +296,7 @@ static void DropTarget_Init(DropTarget* This, struct vo_w32_state *w32)
     };
 
     This->iface.lpVtbl = vtbl;
-    This->refCnt = 0;
+    atomic_store(&This->refCnt, 0);
     This->lastEffect = 0;
     This->dataObj = NULL;
     This->w32 = w32;
@@ -1070,8 +1071,6 @@ static void gui_thread_reconfig(void *ptr)
     struct vo_win_geometry geo;
     vo_calc_window_geometry(vo, &w32->screenrc, &geo);
     vo_apply_window_geometry(vo, &geo);
-    w32->dw = vo->dwidth;
-    w32->dh = vo->dheight;
 
     bool reset_size = w32->o_dwidth != vo->dwidth || w32->o_dheight != vo->dheight;
 
@@ -1104,6 +1103,9 @@ static void gui_thread_reconfig(void *ptr)
         vo->dwidth = r.right;
         vo->dheight = r.bottom;
     }
+
+    w32->dw = vo->dwidth;
+    w32->dh = vo->dheight;
 
     *res = reinit_window_state(w32);
 }

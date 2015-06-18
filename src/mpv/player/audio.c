@@ -150,6 +150,8 @@ void uninit_audio_out(struct MPContext *mpctx)
             ao_drain(mpctx->ao);
         mixer_uninit_audio(mpctx->mixer);
         ao_uninit(mpctx->ao);
+
+        mp_notify(mpctx, MPV_EVENT_AUDIO_RECONFIG, NULL);
     }
     mpctx->ao = NULL;
     talloc_free(mpctx->ao_decoder_fmt);
@@ -166,6 +168,8 @@ void uninit_audio_chain(struct MPContext *mpctx)
         mpctx->ao_buffer = NULL;
         mpctx->audio_status = STATUS_EOF;
         reselect_demux_streams(mpctx);
+
+        mp_notify(mpctx, MPV_EVENT_AUDIO_RECONFIG, NULL);
     }
 }
 
@@ -190,8 +194,9 @@ void reinit_audio_chain(struct MPContext *mpctx)
         mpctx->d_audio->pool = mp_audio_pool_create(mpctx->d_audio);
         mpctx->d_audio->afilter = af_new(mpctx->global);
         mpctx->d_audio->afilter->replaygain_data = sh->audio->replaygain_data;
+        mpctx->d_audio->spdif_passthrough = true;
         mpctx->ao_buffer = mp_audio_buffer_create(NULL);
-        if (!audio_init_best_codec(mpctx->d_audio, opts->audio_decoders))
+        if (!audio_init_best_codec(mpctx->d_audio))
             goto init_error;
         reset_audio_state(mpctx);
 
@@ -249,15 +254,37 @@ void reinit_audio_chain(struct MPContext *mpctx)
         mpctx->ao = ao_init_best(mpctx->global, mpctx->input,
                                  mpctx->encode_lavc_ctx, afs->output.rate,
                                  afs->output.format, afs->output.channels);
-        struct ao *ao = mpctx->ao;
-        if (!ao) {
+
+        struct mp_audio fmt = {0};
+        if (mpctx->ao)
+            ao_get_format(mpctx->ao, &fmt);
+
+        // Verify passthrough format was not changed.
+        if (mpctx->ao && AF_FORMAT_IS_SPECIAL(afs->output.format)) {
+            if (!mp_audio_config_equals(&afs->output, &fmt)) {
+                MP_ERR(mpctx, "Passthrough format unsupported.\n");
+                ao_uninit(mpctx->ao);
+                mpctx->ao = NULL;
+            }
+        }
+
+        if (!mpctx->ao) {
+            // If spdif was used, try to fallback to PCM.
+            if (AF_FORMAT_IS_SPECIAL(afs->output.format) &&
+                mpctx->d_audio->spdif_passthrough)
+            {
+                mpctx->d_audio->spdif_passthrough = false;
+                if (!audio_init_best_codec(mpctx->d_audio))
+                    goto init_error;
+                reset_audio_state(mpctx);
+                reinit_audio_chain(mpctx);
+                return;
+            }
+
             MP_ERR(mpctx, "Could not open/initialize audio device -> no sound.\n");
             mpctx->error_playing = MPV_ERROR_AO_INIT_FAILED;
             goto init_error;
         }
-
-        struct mp_audio fmt;
-        ao_get_format(ao, &fmt);
 
         mp_audio_buffer_reinit(mpctx->ao_buffer, &fmt);
         afs->output = fmt;
@@ -267,9 +294,9 @@ void reinit_audio_chain(struct MPContext *mpctx)
         mpctx->ao_decoder_fmt = talloc(NULL, struct mp_audio);
         *mpctx->ao_decoder_fmt = in_format;
 
-        MP_INFO(mpctx, "AO: [%s] %s\n", ao_get_name(ao),
+        MP_INFO(mpctx, "AO: [%s] %s\n", ao_get_name(mpctx->ao),
                 mp_audio_config_to_str(&fmt));
-        MP_VERBOSE(mpctx, "AO: Description: %s\n", ao_get_description(ao));
+        MP_VERBOSE(mpctx, "AO: Description: %s\n", ao_get_description(mpctx->ao));
         update_window_title(mpctx, true);
     }
 
@@ -424,7 +451,7 @@ static bool get_sync_samples(struct MPContext *mpctx, int *skip)
     return true;
 }
 
-static void do_fill_audio_out_buffers(struct MPContext *mpctx, double endpts)
+void fill_audio_out_buffers(struct MPContext *mpctx, double endpts)
 {
     struct MPOpts *opts = mpctx->opts;
     struct dec_audio *d_audio = mpctx->d_audio;
@@ -582,22 +609,13 @@ static void do_fill_audio_out_buffers(struct MPContext *mpctx, double endpts)
     mp_audio_buffer_skip(mpctx->ao_buffer, played);
 
     mpctx->audio_status = STATUS_PLAYING;
-    if (audio_eof) {
+    if (audio_eof && !mpctx->paused) {
         mpctx->audio_status = STATUS_DRAINING;
         // Wait until the AO has played all queued data. In the gapless case,
         // we trigger EOF immediately, and let it play asynchronously.
         if (ao_eof_reached(mpctx->ao) || opts->gapless_audio)
             mpctx->audio_status = STATUS_EOF;
     }
-}
-
-void fill_audio_out_buffers(struct MPContext *mpctx, double endpts)
-{
-    do_fill_audio_out_buffers(mpctx, endpts);
-    // Run audio playback state machine again to display the actual audio PTS
-    // as current time on OSD in audio-only mode in most situations.
-    if (mpctx->audio_status == STATUS_SYNCING)
-        do_fill_audio_out_buffers(mpctx, endpts);
 }
 
 // Drop data queued for output, or which the AO is currently outputting.

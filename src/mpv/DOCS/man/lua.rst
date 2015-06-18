@@ -99,7 +99,7 @@ The ``mp`` module is preloaded, although it can be loaded manually with
     functions.
 
     Unlike ``mp.command``, this will not use OSD by default either (except
-    for some OSd-specific commands).
+    for some OSD-specific commands).
 
 ``mp.command_native(table [,def])``
     Similar to ``mp.commandv``, but pass the argument list as table. This has
@@ -519,7 +519,7 @@ Example implementation::
         optionC = true,
     }
     read_options(options, "myscript")
-    print(option.optionA)
+    print(options.optionA)
 
 
 The config file will be stored in ``lua-settings/identifier.conf`` in mpv's user
@@ -689,6 +689,33 @@ List of events
 ``end-file``
     Happens after a file was unloaded. Typically, the player will load the
     next file right away, or quit if this was the last file.
+
+    The event has the ``reason`` field, which takes one of these values:
+
+    ``eof``
+        The file has ended. This can (but doesn't have to) include
+        incomplete files or broken network connections under
+        circumstances.
+
+    ``stop``
+        Playback was ended by a command.
+
+    ``quit``
+        Playback was ended by sending the quit command.
+
+    ``error``
+        An error happened. In this case, an ``error`` field is present with
+        the error string.
+
+    ``redirect``
+        Happens with playlists and similar. Details see
+        ``MPV_END_FILE_REASON_REDIRECT`` in the C API.
+
+    ``unknown``
+        Unknown. Normally doesn't happen, unless the Lua API is out of sync
+        with the C API. (Likewise, it could happen that your script gets
+        reason strings that did not exist yet at the time your script was
+        written.)
 
 ``file-loaded``
     Happens after a file was loaded and begins playback.

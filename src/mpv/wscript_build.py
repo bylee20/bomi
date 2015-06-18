@@ -103,8 +103,6 @@ def build(ctx):
         ( "audio/filter/af_bs2b.c",              "libbs2b" ),
         ( "audio/filter/af_center.c" ),
         ( "audio/filter/af_channels.c" ),
-        ( "audio/filter/af_convert24.c" ),
-        ( "audio/filter/af_convertsignendian.c" ),
         ( "audio/filter/af_delay.c" ),
         ( "audio/filter/af_drc.c" ),
         ( "audio/filter/af_dummy.c" ),
@@ -167,6 +165,7 @@ def build(ctx):
 
         ## Demuxers
         ( "demux/codec_tags.c" ),
+        ( "demux/cue.c" ),
         ( "demux/demux.c" ),
         ( "demux/demux_cue.c" ),
         ( "demux/demux_disc.c" ),
@@ -296,6 +295,7 @@ def build(ctx):
         ( "video/decode/vd_lavc.c" ),
         ( "video/decode/vda.c",                  "vda-hwaccel" ),
         ( "video/decode/vdpau.c",                "vdpau-hwaccel" ),
+        ( "video/decode/vdpau_old.c",            "vdpau-old-hwaccel" ),
         ( "video/filter/vf.c" ),
         ( "video/filter/vf_buffer.c" ),
         ( "video/filter/vf_crop.c" ),
