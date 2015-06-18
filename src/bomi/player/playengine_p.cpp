@@ -1177,6 +1177,6 @@ auto PlayEngine::Data::volume(const MrlState *s) const -> double
         const auto b = exp(-a);
         x = std::min(b * exp(a * x), 1.0);
     }
-    return x * 100 * s->audio_amplifier() * 100 * 1e-3;
+    return x * 100 * s->audio_amplifier();
 }
 
