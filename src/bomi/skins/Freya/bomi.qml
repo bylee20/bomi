@@ -4,10 +4,11 @@ import QtQuick.Controls.Styles 1.0
 import QtQuick.Layouts 1.0
 import bomi 1.0 as B
 
-B.BaseApp {
+B.AppWithDock {
     id: app
     name: "net.xylosper.Freya"
     minimumSize: Qt.size(450, 200)
+    overlaps: true; blurBackground: true
 
     readonly property QtObject engine: B.App.engine
     Component {
@@ -38,31 +39,9 @@ B.BaseApp {
         }
     }
 
-    B.Player {
-        id: playerItem
-        anchors.fill: parent
-        topPadding: controls.height + controls.anchors.topMargin
-    }
-
-    player: playerItem
-
-    states: State {
-        name: "hidden"; when: !B.App.window.mouse.cursor
-        PropertyChanges { target: controls; anchors.topMargin: -controls.height }
-    }
-
-    transitions: Transition {
-        reversible: true; to: "hidden"
-        NumberAnimation { target: controls; property: "anchors.topMargin"; duration: 200 }
-    }
-
-    MouseArea {
+    topControls: Item {
         id: controls
-        width: parent.width; height: 56; anchors.top: parent.top
-        hoverEnabled: true
-        onContainsMouseChanged: B.App.window.mouse.hidingCursorBlocked = containsMouse
-        Component.onCompleted: B.App.registerToAccept(controls, B.App.DoubleClickEvent)
-
+        width: parent.width; height: 56
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
