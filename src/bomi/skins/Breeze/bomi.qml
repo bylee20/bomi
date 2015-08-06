@@ -34,7 +34,7 @@ B.AppWithDock {
                 }
             }
             handle: Image {
-                width: 24; height: 24
+                width: 22; height: 22
                 source: control.pressed ? "handle-pressed.png" : control.hovered ? "handle-hovered.png" : "handle.png"
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -52,21 +52,21 @@ B.AppWithDock {
             anchors { fill: parent; margins: 4 } spacing: 3;
 
             B.Button {
-                id: playPrev; width: 24; height: 24
+                id: playPrev; width: 22; height: 22
                 action: "play/prev"; icon.prefix: "previous"
             }
 
             B.Button {
-                id: playPause; width: 24; height: 24
+                id: playPause; width: 22; height: 22
                 action: "play/play-pause"; icon.prefix: engine.playing ? "pause" : "play"
             }
             B.Button {
-                id: playStop; width: 24; height: 24
+                id: playStop; width: 22; height: 22
                 action: "play/stop"; icon.prefix: "stop"
             }
 
             B.Button {
-                id: playNext; width: 24; height: 24
+                id: playNext; width: 22; height: 22
                 action: "play/next"; icon.prefix: "next"
             }
 
@@ -76,23 +76,22 @@ B.AppWithDock {
                 height: parent.height;
                 textStyle {
                     color: "#1e1e1e"
-                    monospace: true
                     font.pixelSize: 10
                 }
             }
 
             Row {
                 B.Button {
-                    id: playlistIcon; width: 24; height: 24; icon.prefix: "playlist"
+                    id: playlistIcon; width: 22; height: 22; icon.prefix: "playlist"
                     action: "tool/playlist/toggle"; action2: "tool/playlist"
                     tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
                 }
                 B.Button {
-                    id: fullscreen; width: 24; height: 24
+                    id: fullscreen; width: 22; height: 22
                     action: "window/full"; icon.prefix: "fullscreen"
                 }
                 B.Button {
-                    id: mute; width: 24; height: 24
+                    id: mute; width: 22; height: 22
                     action: "audio/volume/mute"; icon.prefix: engine.muted ? "speaker-off" : "speaker-on"
                 }
             }

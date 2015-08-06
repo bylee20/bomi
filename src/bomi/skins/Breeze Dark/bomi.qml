@@ -34,7 +34,7 @@ Cp.AppWithDock {
                 }
             }
             handle: Image {
-                width: 24; height: 24
+                width: 22; height: 22
                 source: control.pressed ? "handle-pressed.png" : control.hovered ? "handle-hovered.png" : "handle.png"
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -52,21 +52,21 @@ Cp.AppWithDock {
             anchors { fill: parent; margins: 4 } spacing: 3;
 
             Cp.Button {
-                id: playPrev; width: 24; height: 24
+                id: playPrev; width: 22; height: 22
                 action: "play/prev"; icon.prefix: "previous"
             }
 
             Cp.Button {
-                id: playPause; width: 24; height: 24
+                id: playPause; width: 22; height: 22
                 action: "play/play-pause"; icon.prefix: engine.running ? "pause" : "play"
             }
             Cp.Button {
-                id: playStop; width: 24; height: 24
+                id: playStop; width: 22; height: 22
                 action: "play/stop"; icon.prefix: "stop"
             }
 
             Cp.Button {
-                id: playNext; width: 24; height: 24
+                id: playNext; width: 22; height: 22
                 action: "play/next"; icon.prefix: "next"
             }
 
@@ -74,21 +74,21 @@ Cp.AppWithDock {
 
             Cp.TimeDuration {
                 height: parent.height
-                textStyle { color: "#fff"; monospace: true; font.pixelSize: 10 }
+                textStyle { color: "#fff"; font.pixelSize: 10 }
             }
 
             Row {
                 Cp.Button {
-                    id: playlistIcon; width: 24; height: 24
+                    id: playlistIcon; width: 22; height: 22
                     action: "tool/playlist/toggle"; icon.prefix: "playlist"; action2: "tool/playlist"
                     tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
                 }
                 Cp.Button {
-                    id: fullscreen; width: 24; height: 24
+                    id: fullscreen; width: 22; height: 22
                     action: "window/full"; icon.prefix: "fullscreen"
                 }
                 Cp.Button {
-                    id: mute; width: 24; height: 24
+                    id: mute; width: 22; height: 22
                     action: "audio/volume/mute"; icon.prefix: engine.muted ? "speaker-off" : "speaker-on"
                 }
             }
