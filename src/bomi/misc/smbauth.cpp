@@ -180,7 +180,7 @@ auto SmbAuth::errorString(Error error) -> QString
     case AlreadyExists:
         return u"Given file already exists"_q;
     case UnknownError:
-        return u"Unkown error"_q;
+        return u"Unknown error"_q;
     }
     return QString();
 }
@@ -195,7 +195,7 @@ struct SmbAuthDialog::Data {
 SmbAuthDialog::SmbAuthDialog(QWidget *parent)
     : QDialog(parent), d(new Data)
 {
-    _SetWindowTitle(this, tr("Authentication Informations for SMB"));
+    _SetWindowTitle(this, tr("Authentication Information for SMB"));
     _New(d->username);
     _New(d->password);
     _New(d->text);
@@ -220,10 +220,10 @@ auto SmbAuthDialog::setAuthInfo(const SmbAuth &smb) -> void
 {
     switch (smb.lastError()) {
     case SmbAuth::NoPermission:
-        d->text->setText(tr("No permission granted.\nPlease confirm authentication informations and try again."));
+        d->text->setText(tr("No permission granted.\nPlease confirm authentication information and try again."));
         break;
     default:
-        d->text->setText(tr("Please input informations for authentication."));
+        d->text->setText(tr("Please input information for authentication."));
         break;
     }
 
