@@ -1,6 +1,6 @@
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header \
-	c++11 object_parallel_to_source
+	c++14 object_parallel_to_source
 macx:CONFIG -= app_bundle
 
 QT = core gui network quick widgets sql xml svg
