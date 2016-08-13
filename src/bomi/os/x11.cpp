@@ -187,7 +187,7 @@ X11::X11()
     api = new VdpauInfo;
 #endif
     if (api && !api->isOk()) {
-        _Info("Failed to initalize hardware acceration API.");
+        _Info("Failed to initialize hardware acceration API.");
         _Delete(api);
     }
     if (api)

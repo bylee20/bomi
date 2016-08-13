@@ -220,7 +220,7 @@ auto LogViewer::customEvent(QEvent *ev) -> void
     Q_ASSERT(entry.message.at(3) == '['_q);
     const int idx = entry.message.indexOf(']'_q, 4);
     if (idx < 0) {
-        qDebug("Unkown logging context. Skip it.");
+        qDebug("Unknown logging context. Skip it.");
         return;
     }
     entry.context = entry.message.mid(4, idx -4 );
