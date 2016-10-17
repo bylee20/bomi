@@ -101,7 +101,7 @@ struct MainWindow::Data {
 
     struct {
         QDate date; QTime time, position;
-        quint64 unix = 0;
+        quint64 unix_ = 0;
         QMap<QString, std::function<QString(void)>> get;
     } ph;
     QTimer waiter, hider, dialogWorkaround;
