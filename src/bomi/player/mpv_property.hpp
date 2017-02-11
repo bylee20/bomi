@@ -84,8 +84,6 @@ using MpvFile = MpvLocal8Bit;
 using MpvFile = MpvUtf8;
 #endif
 
-SIA _ToLog(const MpvFile &file) -> QByteArray { return _ToLog(file.data); }
-
 struct MpvFileList {
     MpvFileList() = default;
     MpvFileList(const QStringList &names): names(names) { }
