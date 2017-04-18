@@ -1446,9 +1446,9 @@ auto PlayEngine::snapshot(bool osd) const -> QImage
 {
     mpv_node values[2];
     values[0].format = MPV_FORMAT_STRING;
-    values[0].u.string = const_cast<char*>("screenshot_raw");
+    values[0].u.string = const_cast<char*>("screenshot-raw");
     values[1].format = MPV_FORMAT_STRING;
-    values[1].u.string = const_cast<char*>(osd ? "subtitle" : "video");
+    values[1].u.string = const_cast<char*>(osd ? "subtitles" : "video");
 
     mpv_node_list list;
     list.num = 2;
