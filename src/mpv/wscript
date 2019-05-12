@@ -811,6 +811,7 @@ standalone_features = [
 ]
 
 _INSTALL_DIRS_LIST = [
+    ('confdir', '${SYSCONFDIR}/mpv', 'configuration files'),
     ('zshdir',  '${DATADIR}/zsh/site-functions', 'zsh completion functions'),
 ]
 
