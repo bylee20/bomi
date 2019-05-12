@@ -811,15 +811,6 @@ standalone_features = [
 ]
 
 _INSTALL_DIRS_LIST = [
-    ('bindir',  '${PREFIX}/bin',      'binary files'),
-    ('libdir',  '${PREFIX}/lib',      'library files'),
-    ('confdir', '${PREFIX}/etc/mpv',  'configuration files'),
-
-    ('incdir',  '${PREFIX}/include',  'include files'),
-
-    ('datadir', '${PREFIX}/share',    'data files'),
-    ('mandir',  '${DATADIR}/man',     'man pages '),
-    ('docdir',  '${DATADIR}/doc/mpv', 'documentation files'),
     ('zshdir',  '${DATADIR}/zsh/site-functions', 'zsh completion functions'),
 ]
 
@@ -827,6 +818,7 @@ def options(opt):
     opt.load('compiler_c')
     opt.load('waf_customizations')
     opt.load('features')
+    opt.load('gnu_dirs')
 
     group = opt.get_option_group("build and install options")
     for ident, default, desc in _INSTALL_DIRS_LIST:
@@ -897,6 +889,7 @@ def configure(ctx):
     ctx.load('dependencies')
     ctx.load('detections.compiler')
     ctx.load('detections.devices')
+    ctx.load('gnu_dirs')
 
     ctx.parse_dependencies(build_options)
     ctx.parse_dependencies(main_dependencies)

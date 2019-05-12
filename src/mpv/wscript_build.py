@@ -510,14 +510,14 @@ def build(ctx):
             features     = 'subst',
             PREFIX       = ctx.env.PREFIX,
             LIBDIR       = ctx.env.LIBDIR,
-            INCDIR       = ctx.env.INCDIR,
+            INCDIR       = ctx.env.INCLUDEDIR,
             VERSION      = libversion,
             PRIV_LIBS    = get_deps(),
         )
 
         headers = ["client.h", "qthelper.hpp", "opengl_cb.h"]
         for f in headers:
-            ctx.install_as(ctx.env.INCDIR + '/mpv/' + f, 'libmpv/' + f)
+            ctx.install_as(ctx.env.INCLUDEDIR + '/mpv/' + f, 'libmpv/' + f)
 
         ctx.install_as(ctx.env.LIBDIR + '/pkgconfig/mpv.pc', 'libmpv/mpv.pc')
 
