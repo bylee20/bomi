@@ -910,7 +910,7 @@ auto MainWindow::Data::fileNameGenerator(const QTime &end) const -> FileNameGene
     g.dateTime = QDateTime::currentDateTime();
     g.start = QTime::fromMSecsSinceStartOfDay(e.time());
     g.end = end.isNull() ? g.start : end;
-    g.unix = QDateTime::currentMSecsSinceEpoch();
+    g.unix_ = QDateTime::currentMSecsSinceEpoch();
     g.mrl = e.mrl();
     g.mediaName = e.media()->name();
     return g;

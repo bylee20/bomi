@@ -51,8 +51,8 @@ auto get(const FileNameGenerator *g, const QString &ph) -> QString
         };
         get[u"%MEDIA_DISPLAY_NAME%"_q] = [] (const FileNameGenerator *g) { return g->mediaName; };
 
-        get[u"%UNIX%"_q]     = [] (const FileNameGenerator *g) { return _N(g->unix / 1000llu); };
-        get[u"%UNIX_MS%"_q]  = [] (const FileNameGenerator *g) { return _N(g->unix); };
+        get[u"%UNIX%"_q]     = [] (const FileNameGenerator *g) { return _N(g->unix_ / 1000llu); };
+        get[u"%UNIX_MS%"_q]  = [] (const FileNameGenerator *g) { return _N(g->unix_); };
         return get;
     }();
     auto ret = func.value(ph);
