@@ -35,3 +35,6 @@ SimpleBlur			1.0 SimpleBlur.qml
 ToolPlaneStyle		1.0 ToolPlaneStyle.qml
 BarVisualizer		1.0 BarVisualizer.qml
 StateButton			1.0 StateButton.qml
+internal Osd           Osd.qml
+internal PlayInfoText  PlayInfoText.qml
+internal PlayInfoTrack PlayInfoTrack.qml
