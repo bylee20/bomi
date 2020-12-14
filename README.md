@@ -1,5 +1,6 @@
 # bomi
 
+This project is unmaintained. See: https://github.com/xylosper/bomi/issues/540
 
 ## Introduction
 
